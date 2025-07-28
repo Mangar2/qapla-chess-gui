@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -100,11 +100,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_GLFW_WIN32;_GLFW_WGL;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)imgui;$(ProjectDir)glfw\include;$(ProjectDir)glad\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -114,16 +118,58 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_GLFW_WIN32;_GLFW_WGL;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)imgui;$(ProjectDir)glfw\include;$(ProjectDir)glad\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="qapla-chess-gui.cpp" />
+    <ClCompile Include="glad\src\glad.c" />
+    <ClCompile Include="glfw\src\context.c" />
+    <ClCompile Include="glfw\src\egl_context.c" />
+    <ClCompile Include="glfw\src\init.c" />
+    <ClCompile Include="glfw\src\input.c" />
+    <ClCompile Include="glfw\src\monitor.c" />
+    <ClCompile Include="glfw\src\null_init.c" />
+    <ClCompile Include="glfw\src\null_joystick.c" />
+    <ClCompile Include="glfw\src\null_monitor.c" />
+    <ClCompile Include="glfw\src\null_window.c" />
+    <ClCompile Include="glfw\src\osmesa_context.c" />
+    <ClCompile Include="glfw\src\platform.c" />
+    <ClCompile Include="glfw\src\vulkan.c" />
+    <ClCompile Include="glfw\src\wgl_context.c" />
+    <ClCompile Include="glfw\src\win32_init.c" />
+    <ClCompile Include="glfw\src\win32_joystick.c" />
+    <ClCompile Include="glfw\src\win32_module.c" />
+    <ClCompile Include="glfw\src\win32_monitor.c" />
+    <ClCompile Include="glfw\src\win32_thread.c" />
+    <ClCompile Include="glfw\src\win32_time.c" />
+    <ClCompile Include="glfw\src\win32_window.c" />
+    <ClCompile Include="glfw\src\window.c" />
+    <ClCompile Include="imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="imgui\imgui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_tables.cpp" />
+    <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\board.cpp" />
+    <ClCompile Include="src\font.cpp" />
+    <ClCompile Include="src\gui.cpp" />
+    <ClCompile Include="src\qapla-chess-gui.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\board.h" />
+    <ClInclude Include="src\font.h" />
+    <ClInclude Include="src\gui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

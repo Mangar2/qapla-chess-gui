@@ -13,10 +13,123 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Quelldateien\imgui">
+      <UniqueIdentifier>{f2f6c4ab-6c81-4fab-86b4-20bf4884b1e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\glad">
+      <UniqueIdentifier>{98ca5d07-d5dc-442e-ab7f-36ba03d98075}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\glfw">
+      <UniqueIdentifier>{84f3b271-c29e-4c92-af31-30ac9a39c78e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="qapla-chess-gui.cpp">
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_tables.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_widgets.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Quelldateien\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="glad\src\glad.c">
+      <Filter>Quelldateien\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\init.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\context.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\window.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\monitor.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\wgl_context.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_init.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_joystick.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_module.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_monitor.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_thread.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_time.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\win32_window.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\input.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\platform.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\vulkan.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\null_init.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\null_window.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\null_monitor.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\null_joystick.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\egl_context.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw\src\osmesa_context.c">
+      <Filter>Quelldateien\glfw</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-chess-gui.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\font.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gui.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\board.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\font.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\board.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
