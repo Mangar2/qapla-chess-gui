@@ -18,11 +18,52 @@
  */
 #pragma once
 
+#include "qapla-tester/game-state.h"
+
+#include <unordered_set>
+#include <utility>
+
+#include <imgui.h>
+
 namespace gui {
 
-	/**
-	 * @brief Draws a dynamically sized 8×8 chessboard with placeholder figures.
-	 */
-	void drawChessBoard(int width, int height);
+    class ChessBoardWindow {
+    public:
+        explicit ChessBoardWindow(std::shared_ptr<GameState> gameState);
+
+        /**
+         * Draws the chessboard and handles user interaction.
+         *
+         * @param width Available width for rendering.
+         * @param height Available height for rendering.
+         */
+        void draw(int width, int height);
+
+    private:
+        void drawPromotionPopup(float cellSize);
+        bool promotionPending_ = false;
+        std::string id_ = "#0";
+
+        std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
+            QaplaBasics::File file, QaplaBasics::Rank rank);
+        
+        void drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, float cellSize,
+            QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
+        void drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize);
+        
+        void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
+            const ImVec2& cellMin, float cellSize, ImFont* font);
+        void drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font);
+
+        void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
+
+        bool boardInverted_ = false;
+        std::shared_ptr<GameState> gameState_;
+
+        std::optional<QaplaBasics::Square> selectedFrom_;
+        std::optional<QaplaBasics::Square> selectedTo_;
+
+    };
+
 
 }

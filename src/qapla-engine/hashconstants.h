@@ -13,32 +13,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker BÃ¶hm
+ * @copyright Copyright (c) 2021 Volker BÃ¶hm
+ * @Overview
+ * Defines a list of standard constants for calculating transposition table hashes
  */
+
 #pragma once
 
-#include <array>
-#include <optional>
+#include <cstdint>
+#include "types.h"
 
-namespace board {
+namespace QaplaBasics {
 
-    /**
-     * @brief Figurentypen auf dem Schachbrett.
-     */
-    enum class Piece {
-        WhitePawn, WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, WhiteKing,
-        BlackPawn, BlackKnight, BlackBishop, BlackRook, BlackQueen, BlackKing
-    };
+	typedef uint64_t hash_t;
 
-    /**
-     * @brief 8x8 Schachbrett mit optionalen Figuren.
-     */
-    using Board = std::array<std::array<std::optional<Piece>, 8>, 8>;
+	class HashConstants
+	{
+	public:
+		static const hash_t cHashBoardRandoms[BOARD_SIZE][PIECE_AMOUNT];
+		static const hash_t EP_RANDOMS[BOARD_SIZE];
+		static const hash_t COLOR_RANDOMS[2];
+		static const hash_t CASTLE_RANDOMS[64];
 
-    /**
-     * @brief Gibt das aktuelle Brett zurück (Testaufstellung).
-     */
-    Board createTestBoard();
+	private:
+		HashConstants() = default;
+
+	};
 
 }
+
+

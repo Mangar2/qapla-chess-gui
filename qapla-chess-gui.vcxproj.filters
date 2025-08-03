@@ -22,6 +22,12 @@
     <Filter Include="Quelldateien\glfw">
       <UniqueIdentifier>{84f3b271-c29e-4c92-af31-30ac9a39c78e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Quelldateien\qapla-engine">
+      <UniqueIdentifier>{e993a8d7-c42a-4712-815f-20a39d5ec49b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\qapla-tester">
+      <UniqueIdentifier>{8b9bba89-a0f3-4da7-8671-561ca383d3c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui\imgui.cpp">
@@ -117,8 +123,32 @@
     <ClCompile Include="src\gui.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="src\board.cpp">
-      <Filter>Quelldateien</Filter>
+    <ClCompile Include="src\qapla-engine\board.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\magics.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\movegenerator.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\piecesignature.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\pst.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\hashconstants.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-engine\bitboardmasks.cpp">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-state.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-record.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,8 +158,77 @@
     <ClInclude Include="src\gui.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
-    <ClInclude Include="src\board.h">
-      <Filter>Quelldateien</Filter>
+    <ClInclude Include="src\qapla-engine\bits.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\board.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\boardstate.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\fenscanner.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\magics.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\materialbalance.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\move.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\movegenerator.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\movelist.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\piecesignature.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\pst.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\types.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\evalvalue.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\hashconstants.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\bitboardmasks.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-state.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-record.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-result.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-start-position.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-engine\movescanner.h">
+      <Filter>Quelldateien\qapla-engine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\logger.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\move-record.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\time-control.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-event.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

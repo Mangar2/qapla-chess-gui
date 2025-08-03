@@ -16,6 +16,10 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
+
+#include "qapla-tester/game-state.h"
+#include "qapla-tester/game-record.h"
+
 #include <iostream>
 #include <stdexcept>
 
@@ -25,6 +29,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+
 
 #include "font.h"
 #include "gui.h"
@@ -80,6 +85,11 @@ namespace {
 
     int runApp() {
         auto* window = initGlfwContext();
+        auto gameState = std::make_shared<GameState>();
+        GameRecord gameRecord;
+        gui::ChessBoardWindow boardWindow(gameState);
+
+        gameState->setFen(false, "rnbqkb2/pppppp1P/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
         initGlad();
         initImGui(window);
         font::loadChessFont("fonts/chess_merida_unicode.ttf", 32.0f);
@@ -89,11 +99,9 @@ namespace {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-            //ImGui::Begin("ChessBoard", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
-            //ImGui::End();
             int width{}, height{};
             glfwGetFramebufferSize(window, &width, &height);
-            gui::drawChessBoard(width, height);
+            boardWindow.draw(width, height);
             ImGui::Render();
             glViewport(0, 0, width, height);
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);

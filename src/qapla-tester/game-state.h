@@ -1,0 +1,159 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#pragma once
+
+#include <string>
+#include <vector>
+#include <cstdint>
+#include "../qapla-engine/movegenerator.h"
+#include "game-result.h"
+#include "game-record.h"
+
+using MoveStr = std::string;
+using MoveStrList = std::vector<MoveStr>;
+
+ /**
+  * @brief Represents the current state of a chess game for engine interaction,
+  *        including starting setup and played moves.
+  */
+class GameState {
+public:
+	GameState();
+
+	bool isWhiteToMove() const { return position_.isWhiteToMove(); }
+
+	std::string getFen() const { return position_.getFen(); }
+
+	/**
+	 * @brief Performs a move on the current position and updates the move list.
+	 * @param move The move to perform.
+	 */
+	void doMove(const QaplaBasics::Move& move);
+
+	/**
+	 * @brief Sets the game position to a specific FEN string.
+	 * @param startPos If true, sets the position to the starting position.
+	 * @param fen The FEN string to set, if startPos = false. 
+	 */
+	void setFen(bool startPos, const std::string fen = "");
+
+	/**
+	 * @brief Undo the last move and restore the previous position.
+	 */
+	void undoMove();
+
+	/**
+	 * Find the correct move providing a partial move information
+	 * @param moveStr The move string to parse.
+	 */
+	QaplaBasics::Move stringToMove(std::string moveStr, bool requireLan);
+
+	/**
+	 * Attempts to resolve a move from partially specified parameters.
+	 *
+	 * @param movingPiece Moving piece type if known.
+	 * @param fromSquare Source square if specified.
+	 * @param toSquare Destination square if specified.
+	 * @param promotionPiece Promotion piece type if applicable.
+	 * @return Tuple of:
+	 *         - Move if uniquely identified, otherwise empty.
+	 *         - Bool indicating that one or more moves match.
+	 *         - Bool indicating that all matching moves are promotions.
+	 */
+	std::tuple<QaplaBasics::Move, bool, bool> resolveMove(
+		std::optional<QaplaBasics::Piece> movingPiece,
+		std::optional<QaplaBasics::Square> fromSquare,
+		std::optional<QaplaBasics::Square> toSquare,
+		std::optional<QaplaBasics::Piece> promotionPiece);
+
+	/**
+	 * @brief Returns a move as San notation. The move must be a legal move in the current position.
+	 * @param move The move to convert to San notation.
+	 */
+	std::string moveToSan(const QaplaBasics::Move& move) const;
+
+	/**
+	 * @brief Checks if the game is over and returns the result.
+	 * @return The result of the game and the winner side.
+	 */
+	std::tuple<GameEndCause, GameResult> getGameResult();
+
+	/**
+	 * @brief Get the Halfmove Clock -> the total number of half moves without pawn move or capture
+	 * ("total includes the start value from fen to implement the 50-moves-draw rule")
+	 * 
+	 * @return int32_t 
+	 */
+	uint32_t getHalfmoveClock() const {
+		return position_.getTotalHalfmovesWithoutPawnMoveOrCapture();
+	}
+
+	/**
+	 * @brief Sets the game result and the cause of the game end.
+	 * @param cause The cause of the game end.
+	 * @param result The result of the game.
+	 */
+	void setGameResult(GameEndCause cause, GameResult result) {
+		gameEndCause_ = cause;
+		gameResult_ = result;
+	}
+
+	/**
+	 * @brief sets the game state from a game record information
+	 * @param record The game record to set the state from.
+	 * @param plies The ply number to set the game state to.
+	 */
+	GameRecord setFromGameRecord(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
+
+	/**
+	 * @brief Incrementally synchronizes this GameState to match the move history of the given reference state.
+	 *
+	 * This method assumes that both GameStates were originally in sync and have diverged only by a small number
+	 * of recent moves. It avoids full history or FEN comparison for performance reasons. It performs:
+	 * 1. A single undo if the last move differs from the reference at the same position.
+	 * 2. A reapplication of all moves present in the reference but missing here.
+	 *
+	 * This is not a perfect synchronization; correctness depends on both states sharing a common history.
+	 *
+	 * @param referenceState The GameState whose move history this state should approximate.
+	 */
+	void synchronizeIncrementalFrom(const GameState& referenceState);
+	
+	const QaplaMoveGenerator::MoveGenerator& position() const {
+		return position_;
+	}
+private:
+	/**
+	 * @brief Computes if the game is over and returns the result based on the chess board.
+	 * @return The result of the game and the winner side.
+	 */
+	std::tuple<GameEndCause, GameResult> computeGameResult();
+    QaplaMoveGenerator::MoveGenerator position_;
+
+	bool isThreefoldRepetition() const;
+
+	QaplaBasics::MoveList legalMoves_; // legalMoves of the current position
+	bool moveListOutdated = true;
+	std::vector<QaplaBasics::Move> moveList_;  // list of moves played so far
+	std::vector<QaplaBasics::BoardState> boardState_; // list of board states
+	std::vector<uint64_t> hashList_; // list of hash values
+	GameEndCause gameEndCause_ = GameEndCause::Ongoing; // cause of game end
+	GameResult gameResult_ = GameResult::Unterminated; // result of the game
+};
