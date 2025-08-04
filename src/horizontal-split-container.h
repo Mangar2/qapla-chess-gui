@@ -43,12 +43,12 @@ namespace QaplaWindows {
             ImVec2 region = ImGui::GetContentRegionAvail();
             float height = region.y;
 
-            float splitterWidth = 4.0f;
-            float minSize = 50.0f;
-            float availableWidth = region.x - splitterWidth;
+            float splitterWidth = 5.0f;
+            float minSize = 100.0f;
+            float availableWidth = std::max(region.x - splitterWidth - 13, 2 * minSize);
 
-            leftWidth_ = std::max(leftWidth_, minSize, availableWidth - minSize);
-            float rightWidth = availableWidth - leftWidth_;
+            leftWidth_ = std::clamp(leftWidth_, minSize, availableWidth - minSize);
+            
 
             std::string idPrefix = "##hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
@@ -71,11 +71,16 @@ namespace QaplaWindows {
                 leftWidth_ += ImGui::GetIO().MouseDelta.x;
             }
 
-            ImGui::PopStyleColor(3);
+            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW); // oder ResizeNS
+            }
 
+            ImGui::PopStyleColor(3);
             ImGui::SameLine();
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 4.0f); 
-            // Right window
+
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8.0f); 
+            float rightWidth = region.x - ImGui::GetCursorPosX();
+
             ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height), 
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);

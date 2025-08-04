@@ -40,7 +40,7 @@ void MoveListWindow::draw() {
         ImGui::TextUnformatted("Internal Error");
         return;
     }
-
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
     constexpr ImGuiTableFlags flags =
         ImGuiTableFlags_RowBg
         | ImGuiTableFlags_SizingFixedFit
@@ -49,7 +49,7 @@ void MoveListWindow::draw() {
 
     ImVec2 avail = ImGui::GetContentRegionAvail();
 
-    if (ImGui::BeginTable("MoveListTable", 5, flags, ImVec2(avail.x - 15, avail.y))) {
+    if (ImGui::BeginTable("MoveListTable", 5, flags, ImVec2(avail.x, avail.y))) {
         ImGui::TableSetupColumn("Move", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f);
         ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 50.0f);

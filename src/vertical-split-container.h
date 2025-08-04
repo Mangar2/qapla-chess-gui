@@ -45,9 +45,9 @@ namespace QaplaWindows {
             ImVec2 region = ImGui::GetContentRegionAvail();
             float width = region.x;
 
-            float splitterHeight = 4.0f;
-            float minSize = 50.0f;
-            float availableHeight = region.y - splitterHeight;
+            float splitterHeight = 5.0f;
+            float minSize = 100.0f;
+            float availableHeight = std::max(region.y - splitterHeight, 2 * minSize);
 
             topHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
             float bottomHeight = availableHeight - topHeight;
@@ -72,6 +72,10 @@ namespace QaplaWindows {
             ImGui::Button((idPrefix + "_splitter").c_str(), ImVec2(width, splitterHeight));
             if (ImGui::IsItemActive()) {
                 topHeight += ImGui::GetIO().MouseDelta.y;
+            }
+
+            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS); // oder ResizeNS
             }
 
             ImGui::PopStyleVar(2);
