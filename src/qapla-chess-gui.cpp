@@ -20,6 +20,12 @@
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
 
+#include "chess-board-window.h"
+#include "move-list-window.h"
+#include "horizontal-split-container.h"
+#include "vertical-split-container.h"
+#include "board-workspace.h"
+
 #include <iostream>
 #include <stdexcept>
 
@@ -30,9 +36,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-
 #include "font.h"
-#include "gui.h"
 
 namespace {
 
@@ -84,12 +88,20 @@ namespace {
     }
 
     int runApp() {
-        auto* window = initGlfwContext();
         auto gameState = std::make_shared<GameState>();
-        GameRecord gameRecord;
-        gui::ChessBoardWindow boardWindow(gameState);
-
+		auto gameRecord = std::make_shared<GameRecord>();
         gameState->setFen(false, "rnbqkb2/pppppp1P/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
+                
+        QaplaWindows::BoardWorkspace workspace;
+        auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
+        auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+        hSplitContainer->setLeft(std::make_unique<QaplaWindows::ChessBoardWindow>(gameState, gameRecord));
+		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(gameRecord));
+        vSplitContainer->setTop(std::move(hSplitContainer));
+        vSplitContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(gameRecord));
+		workspace.setRootWindow(std::move(vSplitContainer));
+
+        auto* window = initGlfwContext();
         initGlad();
         initImGui(window);
         font::loadChessFont("fonts/chess_merida_unicode.ttf", 32.0f);
@@ -101,7 +113,7 @@ namespace {
             ImGui::NewFrame();
             int width{}, height{};
             glfwGetFramebufferSize(window, &width, &height);
-            boardWindow.draw(width, height);
+            workspace.draw();
             ImGui::Render();
             glViewport(0, 0, width, height);
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);

@@ -19,25 +19,22 @@
 #pragma once
 
 #include "qapla-tester/game-state.h"
+#include "qapla-tester/game-record.h"
+#include "embedded-window.h"
 
 #include <unordered_set>
 #include <utility>
 
 #include <imgui.h>
 
-namespace gui {
+namespace QaplaWindows {
 
-    class ChessBoardWindow {
+    class ChessBoardWindow : public EmbeddedWindow {
     public:
-        explicit ChessBoardWindow(std::shared_ptr<GameState> gameState);
+        explicit ChessBoardWindow(std::shared_ptr<GameState> gameState,
+            std::shared_ptr<GameRecord> gameRecord);
 
-        /**
-         * Draws the chessboard and handles user interaction.
-         *
-         * @param width Available width for rendering.
-         * @param height Available height for rendering.
-         */
-        void draw(int width, int height);
+        void draw() override;
 
     private:
         void drawPromotionPopup(float cellSize);
@@ -59,6 +56,7 @@ namespace gui {
 
         bool boardInverted_ = false;
         std::shared_ptr<GameState> gameState_;
+		std::shared_ptr<GameRecord> gameRecord_;
 
         std::optional<QaplaBasics::Square> selectedFrom_;
         std::optional<QaplaBasics::Square> selectedTo_;

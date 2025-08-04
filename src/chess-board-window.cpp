@@ -16,7 +16,7 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
-#include "gui.h"
+#include "chess-board-window.h"
 #include "qapla-engine/types.h"
 #include "qapla-engine/movegenerator.h"
 #include "qapla-tester/game-state.h"
@@ -28,7 +28,7 @@
 #include <cmath>
 #include <string>
 
-namespace gui {
+namespace QaplaWindows {
 
     static const char8_t* pieceSymbol(QaplaBasics::Piece p) {
         using enum QaplaBasics::Piece;
@@ -100,10 +100,11 @@ namespace gui {
         return { cellMin, cellMax };
     }
 
-    ChessBoardWindow::ChessBoardWindow(std::shared_ptr<GameState> gameState)
-        : gameState_(std::move(gameState)),
+    ChessBoardWindow::ChessBoardWindow(std::shared_ptr<GameState> gameState, std::shared_ptr<GameRecord> gameRecord)
+		: gameState_(std::move(gameState)), gameRecord_(std::move(gameRecord)),
         selectedFrom_(std::nullopt),
-        selectedTo_(std::nullopt) {
+        selectedTo_(std::nullopt) 
+    {
     }
 
     void ChessBoardWindow::drawPromotionPopup(float cellSize)
@@ -147,6 +148,8 @@ namespace gui {
                     std::nullopt, selectedFrom_, selectedTo_, pieces[i]);
 
                 if (valid && !move.isEmpty()) {
+                    gameRecord_->addMove({ .original = move.getLAN(),
+                        .lan = move.getLAN(), .san = gameState_->moveToSan(move) });
                     gameState_->doMove(move);
                 }
 
@@ -204,6 +207,8 @@ namespace gui {
                     selectedTo_.reset();
                 }
                 else if (!move.isEmpty()) {
+                    gameRecord_->addMove({ .original = move.getLAN(),
+                        .lan = move.getLAN(), .san = gameState_->moveToSan(move) });
                     gameState_->doMove(move);
                     selectedFrom_.reset();
                     selectedTo_.reset();
@@ -268,7 +273,6 @@ namespace gui {
         }
     }
 
-
     void ChessBoardWindow::drawBoardCoordinates(ImDrawList* drawList,
         const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize)
     {
@@ -293,17 +297,15 @@ namespace gui {
         }
     }
 
-    void ChessBoardWindow::draw(int width, int height)
+    void ChessBoardWindow::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
 
-        ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(static_cast<float>(width), static_cast<float>(height)));
-        ImGui::Begin("Chess Board", nullptr);
+        //ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(static_cast<float>(width), static_cast<float>(height)));
 
         const ImVec2 region = ImGui::GetContentRegionAvail();
         if (region.x <= 0.0f || region.y <= 0.0f) {
-            ImGui::End();
             return;
         }
 
@@ -323,7 +325,9 @@ namespace gui {
         }
 
         const float boardSize = cellSize * gridSize;
-        const ImVec2 boardPos = ImGui::GetCursorScreenPos();
+        ImVec2 boardPos = ImGui::GetCursorScreenPos();
+        boardPos.x += 3;
+        boardPos.y += 3;
         const ImVec2 boardEnd = { boardPos.x + boardSize, boardPos.y + boardSize };
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImFont* font = ImGui::GetFont();
@@ -332,9 +336,10 @@ namespace gui {
         drawBoardPieces(drawList, boardPos, cellSize, font);
         drawBoardCoordinates(drawList, boardPos, cellSize, boardSize, font, maxBorderTextSize);
 
-        ImGui::Dummy(ImVec2(boardSize, boardSize));
+        const float coordTextHeight = std::min(cellSize * 0.5f, maxBorderTextSize);
+        ImGui::Dummy(ImVec2(boardSize, boardSize + coordTextHeight));
+
         ImGui::PopFont();
-        ImGui::End();
     }
    
 }

@@ -120,7 +120,7 @@
     <ClCompile Include="src\font.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="src\gui.cpp">
+    <ClCompile Include="src\chess-board-window.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="src\qapla-engine\board.cpp">
@@ -150,12 +150,21 @@
     <ClCompile Include="src\qapla-tester\game-record.cpp">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
+    <ClCompile Include="src\move-list-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\board-workspace.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
-    <ClInclude Include="src\gui.h">
+    <ClInclude Include="src\chess-board-window.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\qapla-engine\bits.h">
@@ -229,6 +238,24 @@
     </ClInclude>
     <ClInclude Include="src\qapla-tester\engine-event.h">
       <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\embedded-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\move-list-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\board-workspace.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\horizontal-split-container.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\vertical-split-container.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine-window.h">
+      <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

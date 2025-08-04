@@ -161,8 +161,11 @@
     <ClCompile Include="imgui\imgui_draw.cpp" />
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\board-workspace.cpp" />
+    <ClCompile Include="src\engine-window.cpp" />
     <ClCompile Include="src\font.cpp" />
-    <ClCompile Include="src\gui.cpp" />
+    <ClCompile Include="src\chess-board-window.cpp" />
+    <ClCompile Include="src\move-list-window.cpp" />
     <ClCompile Include="src\qapla-chess-gui.cpp" />
     <ClCompile Include="src\qapla-engine\bitboardmasks.cpp" />
     <ClCompile Include="src\qapla-engine\board.cpp" />
@@ -175,8 +178,13 @@
     <ClCompile Include="src\qapla-tester\game-state.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\board-workspace.h" />
+    <ClInclude Include="src\embedded-window.h" />
+    <ClInclude Include="src\engine-window.h" />
     <ClInclude Include="src\font.h" />
-    <ClInclude Include="src\gui.h" />
+    <ClInclude Include="src\chess-board-window.h" />
+    <ClInclude Include="src\horizontal-split-container.h" />
+    <ClInclude Include="src\move-list-window.h" />
     <ClInclude Include="src\qapla-engine\bitboardmasks.h" />
     <ClInclude Include="src\qapla-engine\bits.h" />
     <ClInclude Include="src\qapla-engine\board.h" />
@@ -201,6 +209,7 @@
     <ClInclude Include="src\qapla-tester\logger.h" />
     <ClInclude Include="src\qapla-tester\move-record.h" />
     <ClInclude Include="src\qapla-tester\time-control.h" />
+    <ClInclude Include="src\vertical-split-container.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
