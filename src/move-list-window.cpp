@@ -25,8 +25,9 @@
 
 using namespace QaplaWindows;
 
-MoveListWindow::MoveListWindow(std::shared_ptr<const GameRecord> record) {
-    gameRecord_ = std::move(record);
+MoveListWindow::MoveListWindow(std::shared_ptr<GameState> gameState, std::shared_ptr<GameRecord> record) 
+    : gameState_(std::move(gameState)), gameRecord_(std::move(record))
+{
 }
 
 static void alignRight(const std::string& content) {
@@ -50,6 +51,7 @@ void MoveListWindow::draw() {
     ImVec2 avail = ImGui::GetContentRegionAvail();
 
     if (ImGui::BeginTable("MoveListTable", 5, flags, ImVec2(avail.x, avail.y))) {
+        ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableSetupColumn("Move", ImGuiTableColumnFlags_WidthFixed, 80.0f);
         ImGui::TableSetupColumn("Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f);
         ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 50.0f);
@@ -74,16 +76,28 @@ void MoveListWindow::draw() {
 
         ImGui::TableSetColumnIndex(4);
         ImGui::TextUnformatted("PV");
+        checkKeyboard();
 
         int moveNumber = 1;
         const auto& moves = gameRecord_->history();
+        bool wtm = gameRecord_->wtmAtPly(0);
+        for (size_t i = 0; i < moves.size(); ++i) {
 
-        for (size_t i = 0; i < moves.size(); i += 2) {
-            renderMoveLine(std::to_string(moveNumber) + ".", moves[i]);
-            if (i + 1 < moves.size()) {
-                renderMoveLine("...", moves[i + 1]);
+            if (wtm) {
+                renderMoveLine(std::to_string(moveNumber) + ".", moves[i], i);
+            } 
+            else {
+                renderMoveLine("...", moves[i], i);
+                moveNumber++;
             }
-            moveNumber++;
+            wtm = !wtm;
+            if (i + 1 == gameRecord_->nextMoveIndex()) {
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(64, 96, 160, 160));
+                if (i + 1 != currentPly_) {
+                    ImGui::SetScrollHereY(0.5f);
+                    currentPly_ = i + 1;
+                }
+            }
         }
 
         ImGui::EndTable();
@@ -91,11 +105,46 @@ void MoveListWindow::draw() {
 
 }
 
-void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& move) {
-    ImGui::TableNextRow();
+void MoveListWindow::checkKeyboard() {
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+		int currentFrame = ImGui::GetFrameCount();
+        if (currentFrame == lastInputFrame_) {
+            return; 
+		}
+		lastInputFrame_ = currentFrame;
+        uint32_t index = gameRecord_->nextMoveIndex();
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 1) {
+            gameRecord_->setNextMoveIndex(index - 1);
+            gameState_->setFromGameRecord(*gameRecord_, index - 1);
+        }
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true) && index < gameRecord_->history().size()) {
+            gameRecord_->setNextMoveIndex(index + 1);
+            gameState_->setFromGameRecord(*gameRecord_, index + 1);
+        }
+    }
+}
 
+
+bool MoveListWindow::isRowClicked(size_t index) {
+    std::string id =  "/MoveListTable/row/" + std::to_string(index);
+    ImGui::PushID(id.c_str());
+    bool clicked = ImGui::Selectable("##row", false,
+        ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
+    ImGui::PopID();
+    ImGui::SameLine(0.0f, 0.0f);
+    return clicked;
+}
+
+void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& move, uint32_t index) {
+    ImGui::TableNextRow();
     // Move + SAN
     ImGui::TableSetColumnIndex(0);
+
+    if (isRowClicked(index)) {
+        gameRecord_->setNextMoveIndex(index + 1);
+        gameState_->setFromGameRecord(*gameRecord_, index + 1);
+    }
+
     std::string moveLabel = label + move.san;
     if (!label.empty() && label[0] == '.') {
         alignRight(moveLabel);
@@ -124,5 +173,5 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
 
     // PV
     ImGui::TableSetColumnIndex(4);
-    ImGui::TextUnformatted("Hello World");//move.pv.c_str());
+    ImGui::TextUnformatted(move.pv.c_str());
 }

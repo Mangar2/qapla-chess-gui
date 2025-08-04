@@ -143,6 +143,18 @@ public:
 		return isWhiteToMove_;
 	}
 
+	/**
+	 * @brief Determines who was to move at the start of the game.
+	 * @param game The game record.
+	 * @return True if white was to move at ply 0, false if black.
+	 */
+	bool wtmAtPly(size_t ply) const {
+		if (ply > history().size()) {
+			throw std::out_of_range("Ply index exceeds game history size");
+		}
+		return ((history().size() - ply) % 2 == 0) ? isWhiteToMove() : !isWhiteToMove();
+	}
+
 	const std::string& getWhiteEngineName() const {
 		return whiteEngineName_;
 	}

@@ -21,6 +21,7 @@
 
 #include "embedded-window.h"
 #include "qapla-tester/game-record.h"
+#include "qapla-tester/game-state.h"
 #include <memory>
 
 namespace QaplaWindows {
@@ -35,13 +36,23 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        MoveListWindow(std::shared_ptr<const GameRecord> record);
+        MoveListWindow(std::shared_ptr<GameState> gameState, 
+            std::shared_ptr<GameRecord> record);
 
         void draw() override;
 
     private:
-        void renderMoveLine(const std::string& label, const MoveRecord& move);
-        std::shared_ptr<const GameRecord> gameRecord_;
+        void renderMoveLine(const std::string& label, const MoveRecord& move, uint32_t index);
+        void checkKeyboard();
+        /**
+         * Returns true if the table row with the given index is currently clicked.
+         * Must be called during draw(), at the point where the row with this index is being rendered.
+         */
+        bool isRowClicked(size_t index);
+        std::shared_ptr<GameState> gameState_;
+        std::shared_ptr<GameRecord> gameRecord_;
+		uint32_t currentPly_ = 0;
+        int lastInputFrame_ = -1;
     };
 
 } // namespace QaplaWindows

@@ -387,6 +387,14 @@ namespace QaplaBasics {
 			return _boardState.pawnHash;
 		}
 
+		void setStartHalfmoves(uint32_t startHalfmoves) {
+			_startHalfmoves = startHalfmoves;
+		}
+
+		uint32_t getStartHalfmoves() const {
+			return _startHalfmoves;
+		}
+
 	protected:
 		std::array<Square, COLOR_COUNT> kingSquares;
 

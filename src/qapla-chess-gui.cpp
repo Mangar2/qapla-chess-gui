@@ -22,6 +22,7 @@
 
 #include "chess-board-window.h"
 #include "move-list-window.h"
+#include "engine-window.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
@@ -96,9 +97,9 @@ namespace {
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
         hSplitContainer->setLeft(std::make_unique<QaplaWindows::ChessBoardWindow>(gameState, gameRecord));
-		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(gameRecord));
+		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(gameState, gameRecord));
         vSplitContainer->setTop(std::move(hSplitContainer));
-        vSplitContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(gameRecord));
+        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(gameState, gameRecord));
 		workspace.setRootWindow(std::move(vSplitContainer));
 
         auto* window = initGlfwContext();

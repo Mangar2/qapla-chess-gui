@@ -174,8 +174,22 @@
     <ClCompile Include="src\qapla-engine\movegenerator.cpp" />
     <ClCompile Include="src\qapla-engine\piecesignature.cpp" />
     <ClCompile Include="src\qapla-engine\pst.cpp" />
+    <ClCompile Include="src\qapla-tester\cli-settings-manager.cpp" />
+    <ClCompile Include="src\qapla-tester\compute-task.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-adapter.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-config-manager.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-config.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-process.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-report.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-worker-factory.cpp" />
+    <ClCompile Include="src\qapla-tester\engine-worker.cpp" />
+    <ClCompile Include="src\qapla-tester\game-context.cpp" />
     <ClCompile Include="src\qapla-tester\game-record.cpp" />
     <ClCompile Include="src\qapla-tester\game-state.cpp" />
+    <ClCompile Include="src\qapla-tester\player-context.cpp" />
+    <ClCompile Include="src\qapla-tester\tournament-result.cpp" />
+    <ClCompile Include="src\qapla-tester\uci-adpater.cpp" />
+    <ClCompile Include="src\qapla-tester\winboard-adapter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\board-workspace.h" />
@@ -201,14 +215,34 @@
     <ClInclude Include="src\qapla-engine\piecesignature.h" />
     <ClInclude Include="src\qapla-engine\pst.h" />
     <ClInclude Include="src\qapla-engine\types.h" />
+    <ClInclude Include="src\qapla-tester\app-error.h" />
+    <ClInclude Include="src\qapla-tester\cli-settings-manager.h" />
+    <ClInclude Include="src\qapla-tester\compute-task.h" />
+    <ClInclude Include="src\qapla-tester\elo-helper.h" />
+    <ClInclude Include="src\qapla-tester\engine-adapter.h" />
+    <ClInclude Include="src\qapla-tester\engine-config-manager.h" />
+    <ClInclude Include="src\qapla-tester\engine-config.h" />
     <ClInclude Include="src\qapla-tester\engine-event.h" />
+    <ClInclude Include="src\qapla-tester\engine-option.h" />
+    <ClInclude Include="src\qapla-tester\engine-process.h" />
+    <ClInclude Include="src\qapla-tester\engine-report.h" />
+    <ClInclude Include="src\qapla-tester\engine-worker-factory.h" />
+    <ClInclude Include="src\qapla-tester\engine-worker.h" />
+    <ClInclude Include="src\qapla-tester\game-context.h" />
     <ClInclude Include="src\qapla-tester\game-record.h" />
     <ClInclude Include="src\qapla-tester\game-result.h" />
     <ClInclude Include="src\qapla-tester\game-start-position.h" />
     <ClInclude Include="src\qapla-tester\game-state.h" />
     <ClInclude Include="src\qapla-tester\logger.h" />
     <ClInclude Include="src\qapla-tester\move-record.h" />
+    <ClInclude Include="src\qapla-tester\player-context.h" />
+    <ClInclude Include="src\qapla-tester\string-helper.h" />
     <ClInclude Include="src\qapla-tester\time-control.h" />
+    <ClInclude Include="src\qapla-tester\timer.h" />
+    <ClInclude Include="src\qapla-tester\tournament-result.h" />
+    <ClInclude Include="src\qapla-tester\uci-adapter.h" />
+    <ClInclude Include="src\qapla-tester\uci-option.h" />
+    <ClInclude Include="src\qapla-tester\winboard-adapter.h" />
     <ClInclude Include="src\vertical-split-container.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

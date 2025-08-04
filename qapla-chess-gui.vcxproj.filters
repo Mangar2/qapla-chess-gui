@@ -144,12 +144,6 @@
     <ClCompile Include="src\qapla-engine\bitboardmasks.cpp">
       <Filter>Quelldateien\qapla-engine</Filter>
     </ClCompile>
-    <ClCompile Include="src\qapla-tester\game-state.cpp">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClCompile>
-    <ClCompile Include="src\qapla-tester\game-record.cpp">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClCompile>
     <ClCompile Include="src\move-list-window.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
@@ -158,6 +152,54 @@
     </ClCompile>
     <ClCompile Include="src\engine-window.cpp">
       <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-state.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\player-context.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\tournament-result.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\uci-adpater.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\winboard-adapter.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\compute-task.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-adapter.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-config.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-config-manager.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-process.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-report.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-worker.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-context.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-record.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\engine-worker-factory.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\cli-settings-manager.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -212,32 +254,8 @@
     <ClInclude Include="src\qapla-engine\bitboardmasks.h">
       <Filter>Quelldateien\qapla-engine</Filter>
     </ClInclude>
-    <ClInclude Include="src\qapla-tester\game-state.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\game-record.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\game-result.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\game-start-position.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
     <ClInclude Include="src\qapla-engine\movescanner.h">
       <Filter>Quelldateien\qapla-engine</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\logger.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\move-record.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\time-control.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
-    </ClInclude>
-    <ClInclude Include="src\qapla-tester\engine-event.h">
-      <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
     <ClInclude Include="src\embedded-window.h">
       <Filter>Quelldateien</Filter>
@@ -256,6 +274,90 @@
     </ClInclude>
     <ClInclude Include="src\engine-window.h">
       <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-record.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-result.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-start-position.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-state.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\logger.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\move-record.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\player-context.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\string-helper.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\time-control.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\tournament-result.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\uci-adapter.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\uci-option.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\winboard-adapter.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\app-error.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\compute-task.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-adapter.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-config.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-config-manager.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-event.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-option.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-process.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-report.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-worker.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-context.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\timer.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\elo-helper.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-worker-factory.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\cli-settings-manager.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
