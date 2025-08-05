@@ -201,7 +201,7 @@
     <ClCompile Include="src\qapla-tester\cli-settings-manager.cpp">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
-    <ClCompile Include="src\game-data.cpp">
+    <ClCompile Include="src\board-data.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -362,7 +362,7 @@
     <ClInclude Include="src\qapla-tester\cli-settings-manager.h">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
-    <ClInclude Include="src\game-data.h">
+    <ClInclude Include="src\board-data.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

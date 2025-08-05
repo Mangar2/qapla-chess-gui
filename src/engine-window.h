@@ -20,7 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "game-data.h"
+#include "board-data.h"
 #include <memory>
 
 struct MoveRecord;
@@ -37,13 +37,13 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        EngineWindow(std::shared_ptr<GameData> gameData) : gameData_(std::move(gameData)) {}
+        EngineWindow(std::shared_ptr<BoardData> BoardData) : BoardData_(std::move(BoardData)) {}
 
         void draw() override;
 
     private:
         void renderMoveLine(const std::string& label, const MoveRecord& move);
-        std::shared_ptr<const GameData> gameData_;
+        std::shared_ptr<const BoardData> BoardData_;
     };
 
 } // namespace QaplaWindows

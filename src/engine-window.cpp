@@ -34,11 +34,11 @@ static void alignRight(const std::string& content) {
 }
 
 void EngineWindow::draw() {
-    if (!gameData_) {
+    if (!BoardData_) {
         ImGui::TextUnformatted("Internal Error");
         return;
     }
-	auto& gameRecord = gameData_->gameRecord();
+	auto& gameRecord = BoardData_->gameRecord();
     ImGui::BeginChild("MoveListScroll", ImVec2(0, 0), false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 

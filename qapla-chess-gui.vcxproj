@@ -165,7 +165,7 @@
     <ClCompile Include="src\engine-window.cpp" />
     <ClCompile Include="src\font.cpp" />
     <ClCompile Include="src\chess-board-window.cpp" />
-    <ClCompile Include="src\game-data.cpp" />
+    <ClCompile Include="src\board-data.cpp" />
     <ClCompile Include="src\move-list-window.cpp" />
     <ClCompile Include="src\qapla-chess-gui.cpp" />
     <ClCompile Include="src\qapla-engine\bitboardmasks.cpp" />
@@ -198,7 +198,7 @@
     <ClInclude Include="src\engine-window.h" />
     <ClInclude Include="src\font.h" />
     <ClInclude Include="src\chess-board-window.h" />
-    <ClInclude Include="src\game-data.h" />
+    <ClInclude Include="src\board-data.h" />
     <ClInclude Include="src\horizontal-split-container.h" />
     <ClInclude Include="src\move-list-window.h" />
     <ClInclude Include="src\qapla-engine\bitboardmasks.h" />

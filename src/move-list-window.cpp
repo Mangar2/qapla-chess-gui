@@ -26,8 +26,8 @@
 
 using namespace QaplaWindows;
 
-MoveListWindow::MoveListWindow(std::shared_ptr<GameData> gameData) 
-    : gameData_(std::move(gameData))
+MoveListWindow::MoveListWindow(std::shared_ptr<BoardData> BoardData) 
+    : BoardData_(std::move(BoardData))
 {
 }
 
@@ -38,11 +38,11 @@ static void alignRight(const std::string& content) {
 }
 
 void MoveListWindow::draw() {
-    if (!gameData_) {
+    if (!BoardData_) {
         ImGui::TextUnformatted("Internal Error");
         return;
     }
-    auto& gameRecord = gameData_->gameRecord();
+    auto& gameRecord = BoardData_->gameRecord();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
     constexpr ImGuiTableFlags flags =
         ImGuiTableFlags_RowBg
@@ -93,7 +93,7 @@ void MoveListWindow::draw() {
                 moveNumber++;
             }
             wtm = !wtm;
-            if (i + 1 == gameData_->nextMoveIndex()) {
+            if (i + 1 == BoardData_->nextMoveIndex()) {
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(64, 96, 160, 160));
                 if (i + 1 != currentPly_) {
                     ImGui::SetScrollHereY(0.5f);
@@ -114,12 +114,12 @@ void MoveListWindow::checkKeyboard() {
             return; 
 		}
 		lastInputFrame_ = currentFrame;
-        uint32_t index = gameData_->nextMoveIndex();
+        uint32_t index = BoardData_->nextMoveIndex();
         if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 0) {
-            gameData_->setNextMoveIndex(index - 1);
+            BoardData_->setNextMoveIndex(index - 1);
         }
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            gameData_->setNextMoveIndex(index + 1);
+            BoardData_->setNextMoveIndex(index + 1);
         }
     }
 }
@@ -141,7 +141,7 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
     ImGui::TableSetColumnIndex(0);
 
     if (isRowClicked(index)) {
-        gameData_->setNextMoveIndex(index + 1);
+        BoardData_->setNextMoveIndex(index + 1);
     }
 
     std::string moveLabel = label + move.san;

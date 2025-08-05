@@ -104,7 +104,7 @@ namespace QaplaWindows {
     {
         using QaplaBasics::Piece;
         constexpr float SHRINK_CELL_SIZE = 0.8f;
-		auto& gameState = gameData_->gameState();
+		auto& gameState = BoardData_->gameState();
 
         if (!selectedTo_)
             return;
@@ -138,7 +138,7 @@ namespace QaplaWindows {
             ImGui::InvisibleButton(("promo_" + std::to_string(i)).c_str(), ImVec2(cellSize, cellSize));
 
             if (ImGui::IsItemClicked()) {
-                gameData_->addMove(selectedFrom_, selectedTo_, pieces[i]);
+                BoardData_->addMove(selectedFrom_, selectedTo_, pieces[i]);
 
                 selectedFrom_.reset();
                 selectedTo_.reset();
@@ -160,7 +160,7 @@ namespace QaplaWindows {
     {
         using QaplaBasics::Square;
         using QaplaBasics::Piece;
-        auto& gameState = gameData_->gameState();
+        auto& gameState = BoardData_->gameState();
 
         const Square square = computeSquare(file, rank);
         const Piece piece = gameState.position()[square];
@@ -187,7 +187,7 @@ namespace QaplaWindows {
             }
 
             if (selectedTo_) {
-                const auto [partial, promotion] = gameData_->addMove(selectedFrom_, selectedTo_, QaplaBasics::Piece::NO_PIECE);
+                const auto [partial, promotion] = BoardData_->addMove(selectedFrom_, selectedTo_, QaplaBasics::Piece::NO_PIECE);
                 if (promotion) {
                     promotionPending_ = true;
                     ImGui::OpenPopup((id_ + "Promotion").c_str());
@@ -240,7 +240,7 @@ namespace QaplaWindows {
         using QaplaBasics::File;
         using QaplaBasics::Square;
         using QaplaBasics::Piece;
-        auto& gameState = gameData_->gameState();
+        auto& gameState = BoardData_->gameState();
 
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank) {
             for (File file = File::A; file <= File::H; ++file) {

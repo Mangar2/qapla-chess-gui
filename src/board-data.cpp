@@ -18,7 +18,7 @@
  */
 
 
-#include "game-data.h"
+#include "board-data.h"
 
 #include "qapla-engine/move.h"
 #include "qapla-tester/game-state.h"
@@ -26,12 +26,12 @@
 
 using namespace QaplaWindows;
 
-GameData::GameData() : 
+BoardData::BoardData() : 
 	gameState_(std::make_unique<GameState>()), gameRecord_(std::make_unique<GameRecord>())
 {
 }
 
-std::pair<bool, bool> GameData::addMove(std::optional<QaplaBasics::Square> departure,
+std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> departure,
 		std::optional<QaplaBasics::Square> destination, QaplaBasics::Piece promote) 
 {
     const auto [move, valid, promotion] = gameState_->resolveMove(
@@ -55,11 +55,11 @@ std::pair<bool, bool> GameData::addMove(std::optional<QaplaBasics::Square> depar
 	return { true, false };
 }
 
-uint32_t GameData::nextMoveIndex() const {
+uint32_t BoardData::nextMoveIndex() const {
 	return gameRecord_->nextMoveIndex();
 }
 
-void GameData::setNextMoveIndex(uint32_t moveIndex) {
+void BoardData::setNextMoveIndex(uint32_t moveIndex) {
 	if (moveIndex <= gameRecord_->history().size()) {
 		gameRecord_->setNextMoveIndex(moveIndex);
 		gameState_->setFromGameRecord(*gameRecord_, moveIndex);

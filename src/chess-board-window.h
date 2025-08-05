@@ -19,7 +19,7 @@
 #pragma once
 
 #include "qapla-engine/types.h"
-#include "game-data.h"
+#include "board-data.h"
 #include "embedded-window.h"
 
 #include <optional>
@@ -32,7 +32,7 @@ namespace QaplaWindows {
 
     class ChessBoardWindow : public EmbeddedWindow {
     public:
-        explicit ChessBoardWindow(std::shared_ptr<GameData> gameData) : gameData_(std::move(gameData)) {}
+        explicit ChessBoardWindow(std::shared_ptr<BoardData> BoardData) : BoardData_(std::move(BoardData)) {}
 
         void draw() override;
 
@@ -58,7 +58,7 @@ namespace QaplaWindows {
 
         bool boardInverted_ = false;
         bool maximized_ = false;
-        std::shared_ptr<GameData> gameData_;
+        std::shared_ptr<BoardData> BoardData_;
 
         std::optional<QaplaBasics::Square> selectedFrom_;
         std::optional<QaplaBasics::Square> selectedTo_;

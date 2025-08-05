@@ -32,12 +32,12 @@ class GameRecord;
 
 namespace QaplaWindows {
 
-	class GameData {
+	class BoardData {
 	public:
 		/**
-		 * @brief Constructs a new GameData object.
+		 * @brief Constructs a new BoardData object.
 		 */
-		GameData();
+		BoardData();
 
 		/**
 		 * @brief Returns a const reference to the current GameState.

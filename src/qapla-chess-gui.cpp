@@ -19,7 +19,7 @@
 
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
-#include "game-data.h"
+#include "board-data.h"
 
 #include "chess-board-window.h"
 #include "move-list-window.h"
@@ -90,7 +90,7 @@ namespace {
     }
 
     int runApp() {
-		auto gameData = std::make_shared<QaplaWindows::GameData>();
+		auto BoardData = std::make_shared<QaplaWindows::BoardData>();
         auto gameState = std::make_shared<GameState>();
 		auto gameRecord = std::make_shared<GameRecord>();
         gameState->setFen(false, "rnbqkb2/pppppp1P/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
@@ -99,10 +99,10 @@ namespace {
         workspace.maximize(true);
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
-        hSplitContainer->setLeft(std::make_unique<QaplaWindows::ChessBoardWindow>(gameData));
-		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(gameData));
+        hSplitContainer->setLeft(std::make_unique<QaplaWindows::ChessBoardWindow>(BoardData));
+		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(BoardData));
         vSplitContainer->setTop(std::move(hSplitContainer));
-        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(gameData));
+        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(BoardData));
 		workspace.setRootWindow(std::move(vSplitContainer));
 
         auto* window = initGlfwContext();
