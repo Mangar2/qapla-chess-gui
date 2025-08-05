@@ -1,0 +1,67 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+
+#include "game-data.h"
+
+#include "qapla-engine/move.h"
+#include "qapla-tester/game-state.h"
+#include "qapla-tester/game-record.h"
+
+using namespace QaplaWindows;
+
+GameData::GameData() : 
+	gameState_(std::make_unique<GameState>()), gameRecord_(std::make_unique<GameRecord>())
+{
+}
+
+std::pair<bool, bool> GameData::addMove(std::optional<QaplaBasics::Square> departure,
+		std::optional<QaplaBasics::Square> destination, QaplaBasics::Piece promote) 
+{
+    const auto [move, valid, promotion] = gameState_->resolveMove(
+        std::nullopt, departure, destination, std::nullopt);
+
+    if (!valid) {
+        return { false, false };
+    }
+    else if (!move.isEmpty()) {
+		gameRecord_->addMove({
+			.original = move.getLAN(),
+			.lan = move.getLAN(),
+			.san = gameState_->moveToSan(move)
+			});
+		gameState_->doMove(move);
+		return { false, false };
+    }
+    else if (promotion) {
+		return { true, true };
+    }
+	return { true, false };
+}
+
+uint32_t GameData::nextMoveIndex() const {
+	return gameRecord_->nextMoveIndex();
+}
+
+void GameData::setNextMoveIndex(uint32_t moveIndex) {
+	if (moveIndex <= gameRecord_->history().size()) {
+		gameRecord_->setNextMoveIndex(moveIndex);
+		gameState_->setFromGameRecord(*gameRecord_, moveIndex);
+	}
+}

@@ -18,6 +18,7 @@
  */
 
 #include "move-list-window.h"
+#include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 #include "imgui.h"
 
@@ -25,8 +26,8 @@
 
 using namespace QaplaWindows;
 
-MoveListWindow::MoveListWindow(std::shared_ptr<GameState> gameState, std::shared_ptr<GameRecord> record) 
-    : gameState_(std::move(gameState)), gameRecord_(std::move(record))
+MoveListWindow::MoveListWindow(std::shared_ptr<GameData> gameData) 
+    : gameData_(std::move(gameData))
 {
 }
 
@@ -37,10 +38,11 @@ static void alignRight(const std::string& content) {
 }
 
 void MoveListWindow::draw() {
-    if (!gameRecord_) {
+    if (!gameData_) {
         ImGui::TextUnformatted("Internal Error");
         return;
     }
+    auto& gameRecord = gameData_->gameRecord();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
     constexpr ImGuiTableFlags flags =
         ImGuiTableFlags_RowBg
@@ -79,8 +81,8 @@ void MoveListWindow::draw() {
         checkKeyboard();
 
         int moveNumber = 1;
-        const auto& moves = gameRecord_->history();
-        bool wtm = gameRecord_->wtmAtPly(0);
+        const auto& moves = gameRecord.history();
+        bool wtm = gameRecord.wtmAtPly(0);
         for (size_t i = 0; i < moves.size(); ++i) {
 
             if (wtm) {
@@ -91,7 +93,7 @@ void MoveListWindow::draw() {
                 moveNumber++;
             }
             wtm = !wtm;
-            if (i + 1 == gameRecord_->nextMoveIndex()) {
+            if (i + 1 == gameData_->nextMoveIndex()) {
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(64, 96, 160, 160));
                 if (i + 1 != currentPly_) {
                     ImGui::SetScrollHereY(0.5f);
@@ -112,14 +114,12 @@ void MoveListWindow::checkKeyboard() {
             return; 
 		}
 		lastInputFrame_ = currentFrame;
-        uint32_t index = gameRecord_->nextMoveIndex();
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 1) {
-            gameRecord_->setNextMoveIndex(index - 1);
-            gameState_->setFromGameRecord(*gameRecord_, index - 1);
+        uint32_t index = gameData_->nextMoveIndex();
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 0) {
+            gameData_->setNextMoveIndex(index - 1);
         }
-        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true) && index < gameRecord_->history().size()) {
-            gameRecord_->setNextMoveIndex(index + 1);
-            gameState_->setFromGameRecord(*gameRecord_, index + 1);
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
+            gameData_->setNextMoveIndex(index + 1);
         }
     }
 }
@@ -141,8 +141,7 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
     ImGui::TableSetColumnIndex(0);
 
     if (isRowClicked(index)) {
-        gameRecord_->setNextMoveIndex(index + 1);
-        gameState_->setFromGameRecord(*gameRecord_, index + 1);
+        gameData_->setNextMoveIndex(index + 1);
     }
 
     std::string moveLabel = label + move.san;

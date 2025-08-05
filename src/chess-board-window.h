@@ -18,25 +18,27 @@
  */
 #pragma once
 
-#include "qapla-tester/game-state.h"
-#include "qapla-tester/game-record.h"
+#include "qapla-engine/types.h"
+#include "game-data.h"
 #include "embedded-window.h"
 
+#include <optional>
 #include <unordered_set>
 #include <utility>
-
+#include <string>
 #include <imgui.h>
 
 namespace QaplaWindows {
 
     class ChessBoardWindow : public EmbeddedWindow {
     public:
-        explicit ChessBoardWindow(std::shared_ptr<GameState> gameState,
-            std::shared_ptr<GameRecord> gameRecord);
+        explicit ChessBoardWindow(std::shared_ptr<GameData> gameData) : gameData_(std::move(gameData)) {}
 
         void draw() override;
 
     private:
+        void drawMaximized();
+
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
         std::string id_ = "#0";
@@ -55,8 +57,8 @@ namespace QaplaWindows {
         void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
 
         bool boardInverted_ = false;
-        std::shared_ptr<GameState> gameState_;
-		std::shared_ptr<GameRecord> gameRecord_;
+        bool maximized_ = false;
+        std::shared_ptr<GameData> gameData_;
 
         std::optional<QaplaBasics::Square> selectedFrom_;
         std::optional<QaplaBasics::Square> selectedTo_;

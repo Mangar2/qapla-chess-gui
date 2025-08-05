@@ -20,9 +20,11 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/game-state.h"
+#include "game-data.h"
+
 #include <memory>
+
+struct MoveRecord;
 
 namespace QaplaWindows {
 
@@ -34,10 +36,9 @@ namespace QaplaWindows {
     public:
         /**
          * @brief Sets the data source for this window.
-         * @param record Shared pointer to the constant game record.
+         * @param gameData full set of information about the current chess Game
          */
-        MoveListWindow(std::shared_ptr<GameState> gameState, 
-            std::shared_ptr<GameRecord> record);
+        MoveListWindow(std::shared_ptr<GameData> gameData);
 
         void draw() override;
 
@@ -49,8 +50,7 @@ namespace QaplaWindows {
          * Must be called during draw(), at the point where the row with this index is being rendered.
          */
         bool isRowClicked(size_t index);
-        std::shared_ptr<GameState> gameState_;
-        std::shared_ptr<GameRecord> gameRecord_;
+        std::shared_ptr<GameData> gameData_;
 		uint32_t currentPly_ = 0;
         int lastInputFrame_ = -1;
     };

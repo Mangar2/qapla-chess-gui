@@ -25,14 +25,28 @@ namespace QaplaWindows {
         rootWindow = std::move(window);
     }
 
+    void BoardWorkspace::drawMaximized()
+    {
+        if (!maximized_) return;
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        /*
+        ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(1000, 1000));
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos);
+        ImGui::SetNextWindowSize(ImGui::GetMainViewport()->WorkSize);
+        ImGui::Begin(id_.c_str(), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        draw();
+        ImGui::End();
+        */
+    }
+
     void BoardWorkspace::draw() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-
+		drawMaximized();
         ImGui::Begin("Board Workspace", nullptr,
             ImGuiWindowFlags_NoScrollbar |
             ImGuiWindowFlags_NoScrollWithMouse);
-
-        ImVec2 region = ImGui::GetContentRegionAvail();
 
         if (rootWindow) {
             rootWindow->draw();

@@ -42,8 +42,11 @@ namespace QaplaWindows
          * @brief Renders the full workspace, including the root embedded window.
          */
         void draw();
+        void maximize(bool maximized) { maximized_ = maximized; }
 
     private:
+		void drawMaximized();
+		bool maximized_ = false;
         std::unique_ptr<EmbeddedWindow> rootWindow;
     };
 }

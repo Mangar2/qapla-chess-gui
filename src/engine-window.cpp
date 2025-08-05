@@ -18,17 +18,14 @@
  */
 
 #include "engine-window.h"
+#include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
+
 #include "imgui.h"
 
 #include <sstream>
 
 using namespace QaplaWindows;
-
-EngineWindow::EngineWindow(std::shared_ptr<const GameState> gameState, std::shared_ptr<const GameRecord> record) 
-: gameState_(std::move(gameState)), gameRecord_(std::move(record))
-{
-}
 
 static void alignRight(const std::string& content) {
     float colWidth = ImGui::GetColumnWidth();
@@ -37,11 +34,11 @@ static void alignRight(const std::string& content) {
 }
 
 void EngineWindow::draw() {
-    if (!gameRecord_) {
+    if (!gameData_) {
         ImGui::TextUnformatted("Internal Error");
         return;
     }
-
+	auto& gameRecord = gameData_->gameRecord();
     ImGui::BeginChild("MoveListScroll", ImVec2(0, 0), false,
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
@@ -68,7 +65,7 @@ void EngineWindow::draw() {
     ImGui::Separator();
 
     int moveNumber = 1;
-    const auto& moves = gameRecord_->history();
+    const auto& moves = gameRecord.history();
 
     for (size_t i = 0; i < moves.size(); i += 2) {
         renderMoveLine(std::to_string(moveNumber) + ".", moves[i]);

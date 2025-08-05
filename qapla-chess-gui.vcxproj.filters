@@ -201,6 +201,9 @@
     <ClCompile Include="src\qapla-tester\cli-settings-manager.cpp">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
+    <ClCompile Include="src\game-data.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -358,6 +361,9 @@
     </ClInclude>
     <ClInclude Include="src\qapla-tester\cli-settings-manager.h">
       <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\game-data.h">
+      <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
