@@ -139,6 +139,10 @@ public:
         return gameContext_.gameRecord();
 	}
 
+    const GameContext& getGameContext() const {
+        return gameContext_;
+	}
+
 private:
     GameContext gameContext_;
 

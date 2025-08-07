@@ -62,8 +62,11 @@ void PlayerContext::checkPV(const EngineEvent& event) {
 void PlayerContext::handleInfo(const EngineEvent& event) {
     if (!event.searchInfo.has_value()) return;
     const auto& searchInfo = *event.searchInfo;
-
-    currentMove_.updateFromSearchInfo(searchInfo);
+    
+    {
+        std::lock_guard lock(currentMoveMutex_);
+        currentMove_.updateFromSearchInfo(searchInfo);
+    }
 
     if (searchInfo.currMove) {
         auto& state = computeState_ == ComputeState::ComputingMove ? gameState_ : ponderState_;
@@ -102,6 +105,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     if (!checklist_->logReport("legalmove", event.bestMove.has_value())) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
+        std::lock_guard lock(currentMoveMutex_);
         currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
         return QaplaBasics::Move();
     }
@@ -110,6 +114,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         "Encountered illegal move \"" + *event.bestMove + "\" in bestmove, raw info line \"" + event.rawLine + "\"")) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
+        std::lock_guard lock(currentMoveMutex_);
         currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
         Logger::engineLogger().log(engine_->getIdentifier() + " Illegal move in bestmove: " + *event.bestMove +
             " in raw info line \"" + event.rawLine + "\"", TraceLevel::info);
@@ -120,6 +125,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     std::string san = gameState_.moveToSan(move);
     gameState_.doMove(move);
 
+    std::lock_guard lock(currentMoveMutex_);
     currentMove_.updateFromBestMove(gameState_.getHalfmovePlayed(), engine_->getIdentifier(),
         event, move.getLAN(), san, computeMoveStartTimestamp_, 
         gameState_.getHalfmoveClock());
@@ -295,8 +301,11 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
 		throw AppError::make("PlayerContext::computeMove; Cannot compute move while already computing a move.");
 	}
 
-    currentMove_.clear();
-	currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed();
+    {
+        std::lock_guard lock(currentMoveMutex_);
+        currentMove_.clear();
+        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed();
+    }
     goLimits_ = goLimits;
     // Race-condition safety setting. We will get the true timestamp returned from the EngineProcess sending
     // the compute move string to the engine. As it is asynchronous, we might get a bestmove event before receiving the
@@ -324,7 +333,10 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
 		throw AppError::make("PlayerContext::allowPonder; Cannot allow pondering while already computing a move.");
 	}
 	goLimits_ = goLimits;
-    currentMove_.clear();
+    {
+        std::lock_guard lock(currentMoveMutex_);
+        currentMove_.clear();
+    }
     ponderMove_ = event->ponderMove ? *event->ponderMove : "";
 
     if (!ponderMove_.empty()) {

@@ -148,6 +148,7 @@ public:
 	 * @brief Returns the current move record.
 	 */
 	const MoveRecord& getCurrentMove() const {
+		std::lock_guard lock(currentMoveMutex_);
 		return currentMove_;
 	}
 
@@ -310,5 +311,6 @@ private:
 
     std::string ponderMove_ = "";
     MoveRecord currentMove_;
+    mutable std::mutex currentMoveMutex_;
 	EngineReport* checklist_ = nullptr; 
 };

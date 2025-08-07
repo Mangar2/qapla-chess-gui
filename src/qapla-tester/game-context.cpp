@@ -60,14 +60,17 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
     const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
     const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
 
-    gameRecord_.setStartPosition(useStartPosition, fen, true, whiteName, blackName);
+    {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_.setStartPosition(useStartPosition, fen, true, whiteName, blackName);
 
-    if (playedMoves) {
-        for (const auto& move : *playedMoves) {
-			MoveRecord moveRecord(gameRecord_.nextMoveIndex(), "#gui");
-			moveRecord.original = move;
-			moveRecord.lan = move;
-            gameRecord_.addMove(moveRecord);
+        if (playedMoves) {
+            for (const auto& move : *playedMoves) {
+                MoveRecord moveRecord(gameRecord_.nextMoveIndex(), "#gui");
+                moveRecord.original = move;
+                moveRecord.lan = move;
+                gameRecord_.addMove(moveRecord);
+            }
         }
     }
 
@@ -77,14 +80,17 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
 }
 
 void GameContext::setPosition(const GameRecord& record) {
-    gameRecord_ = record;
-    auto* white = getWhite();
-    auto* black = getBlack();
-    const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
-    const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
+    {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_ = record;
+        auto* white = getWhite();
+        auto* black = getBlack();
+        const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
+        const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
 
-    gameRecord_.setWhiteEngineName(whiteName);
-    gameRecord_.setBlackEngineName(blackName);
+        gameRecord_.setWhiteEngineName(whiteName);
+        gameRecord_.setBlackEngineName(blackName);
+    }
 
     for (auto& player : players_) {
         player->setStartPosition(gameRecord_);
@@ -128,12 +134,13 @@ void GameContext::setEventCallback(std::function<void(EngineEvent&&)> callback) 
     }
 }
 
-GameRecord& GameContext::gameRecord() {
+const GameRecord& GameContext::gameRecord() const {
     return gameRecord_;
 }
 
-const GameRecord& GameContext::gameRecord() const {
-    return gameRecord_;
+void GameContext::withGameRecord(std::function<void(const GameRecord&)> accessFn) const {
+    std::lock_guard lock(gameRecordMutex_);
+    accessFn(gameRecord_);
 }
 
 std::tuple<GameEndCause, GameResult> GameContext::checkGameResult() {
@@ -141,6 +148,7 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult() {
     for (auto& player : players_) {
         auto [pcause, presult] = player->getGameResult();
         if (presult != GameResult::Unterminated) {
+            std::lock_guard lock(gameRecordMutex_);
             gameRecord_.setGameEnd(pcause, presult);
             break;
         }

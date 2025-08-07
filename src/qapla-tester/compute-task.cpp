@@ -221,8 +221,7 @@ void ComputeTask::handleBestMove(const EngineEvent& event) {
     moveRecord = player->getCurrentMove();
 
     if (!move.isEmpty()) {
-        auto& gameRecord = gameContext_.gameRecord();
-        gameRecord.addMove(moveRecord);
+        gameContext_.addMove(moveRecord);
 
         PlayerContext* opponent =
             (player == gameContext_.getWhite()) ? gameContext_.getBlack() : gameContext_.getWhite();

@@ -45,8 +45,6 @@
 
 namespace {
 
-   
-
     void glfwErrorCallback(int error, const char* description) {
         std::cerr << "GLFW Error " << error << ": " << description << '\n';
     }
@@ -141,7 +139,10 @@ namespace {
 
             auto engineRecords = compute.getEngineRecords();
             boardData->setEngineRecords(engineRecords);
-            boardData->setGameIfExtended(compute.gameRecord());
+
+            compute.getGameContext().withGameRecord([&](const GameRecord& g) {
+                boardData->setGameIfExtended(g);
+                });
 
             workspace.draw();
 

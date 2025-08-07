@@ -144,14 +144,35 @@ public:
     void setEventCallback(std::function<void(EngineEvent&&)> callback);
 
     /**
-     * @brief Returns the current game record.
+	 * @brief sets the game record.
+	 * @param record The game record to set.
      */
-    GameRecord& gameRecord();
+    void setGameRecord(const GameRecord& record) {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_ = record;
+	}
+
+    /**
+     * @brief Adds a move to the game record.
+     * @param move The move to add.
+	 */
+    void addMove(const MoveRecord& move) {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_.addMove(move);
+	}
 
     /**
      * @brief Returns the current game record (const).
      */
     const GameRecord& gameRecord() const;
+
+    /**
+     * Executes the given callable with thread-safe access to the game record.
+     * The callable receives a const reference to the game record.
+     *
+     * @param accessFn A callable that takes a const GameRecord&.
+     */
+    void withGameRecord(std::function<void(const GameRecord&)> accessFn) const;
 
     /**
 	 * @brief Returns the result of the game.
@@ -199,6 +220,7 @@ public:
 private:
     std::vector<std::unique_ptr<PlayerContext>> players_;
     GameRecord gameRecord_;
+    mutable std::mutex gameRecordMutex_;
     std::function<void(EngineEvent&&)> eventCallback_;
     bool switchedSide_ = false;
 };
