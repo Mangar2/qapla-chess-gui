@@ -43,15 +43,15 @@ namespace QaplaWindows {
         void draw() override;
 
     private:
-        void renderMoveLine(const std::string& label, const MoveRecord& move, uint32_t index);
+        void renderMoveLine(const std::string& label, const MoveRecord& move, size_t index);
         void checkKeyboard();
         /**
          * Returns true if the table row with the given index is currently clicked.
          * Must be called during draw(), at the point where the row with this index is being rendered.
          */
         bool isRowClicked(size_t index);
-        std::shared_ptr<BoardData> BoardData_;
-		uint32_t currentPly_ = 0;
+        std::shared_ptr<BoardData> boardData_;
+		size_t currentPly_ = 0;
         int lastInputFrame_ = -1;
     };
 

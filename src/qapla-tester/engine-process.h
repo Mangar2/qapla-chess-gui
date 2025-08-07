@@ -149,7 +149,6 @@ private:
      * @throws std::runtime_error if the process cannot be started.
      */
     void start();
-    void startWin32();
     void startWin32Overlapped();
     ReadResult readFromStdOutOverlapped();
     void writeLineOverlapped(const std::string& line);

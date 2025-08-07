@@ -185,3 +185,28 @@ void GameContext::cancelCompute() {
     }
 }
 
+EngineRecords GameContext::getEngineRecords() const {
+    EngineRecords records;
+    for (const auto& player : players_) {
+        if (!player->getEngine()) {
+            continue;
+        }
+		auto engine = player->getEngine();
+        EngineRecord record = {
+            .config = engine->getConfig(),
+            .supportedOptions = engine->getSupportedOptions(),
+            .memoryUsageB = engine->getEngineMemoryUsage()
+        };
+        switch (engine->workerState()) {
+        case EngineWorker::WorkerState::notStarted: record.status = EngineRecord::Status::NotStarted; break;
+        case EngineWorker::WorkerState::starting: record.status = EngineRecord::Status::Starting; break;
+        case EngineWorker::WorkerState::running: record.status = EngineRecord::Status::Running; break;
+        case EngineWorker::WorkerState::stopped: record.status = EngineRecord::Status::NotStarted; break;
+        case EngineWorker::WorkerState::terminated: record.status = EngineRecord::Status::NotStarted; break;
+        default: record.status = EngineRecord::Status::Error; break;
+        }
+        records.push_back(record);
+    }
+	return records;
+}
+

@@ -69,6 +69,7 @@ void EngineWorker::asyncStartup(const OptionValues& optionValues) {
                 }
             }
             startupPromise_.set_value(); 
+			workerState_ = WorkerState::running;
         }
         catch (...) {
             workerState_ = WorkerState::failure;

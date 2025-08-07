@@ -20,8 +20,11 @@
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
 #include "board-data.h"
+#include "qapla-tester/compute-task.h"
+#include "qapla-tester/engine-worker-factory.h"
+#include "qapla-tester/engine-config-manager.h"
 
-#include "chess-board-window.h"
+#include "board-window.h"
 #include "move-list-window.h"
 #include "engine-window.h"
 #include "horizontal-split-container.h"
@@ -90,19 +93,28 @@ namespace {
     }
 
     int runApp() {
-		auto BoardData = std::make_shared<QaplaWindows::BoardData>();
-        auto gameState = std::make_shared<GameState>();
-		auto gameRecord = std::make_shared<GameRecord>();
-        gameState->setFen(false, "rnbqkb2/pppppp1P/8/8/8/8/PPPPPPP1/RNBQKBNR w KQkq - 0 1");
-                
+        ComputeTask compute;
+        EngineConfigManager configManager;
+        configManager.loadFromFile("./test/engines.ini");
+		EngineWorkerFactory::setConfigManager(configManager);
+        auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
+		auto engines = EngineWorkerFactory::createEngines(*config, 2);
+        compute.initEngines(std::move(engines));
+		TimeControl timeControl;
+        timeControl.addTimeSegment({ 0, 100000, 1000 }); 
+        //timeControl.addTimeSegment({ 0, 1000, 10 }); 
+		compute.setTimeControl(timeControl);
+		compute.autoPlay(true);
+		auto boardData = std::make_shared<QaplaWindows::BoardData>();
+                        
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
-        hSplitContainer->setLeft(std::make_unique<QaplaWindows::ChessBoardWindow>(BoardData));
-		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(BoardData));
+        hSplitContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
+		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
         vSplitContainer->setTop(std::move(hSplitContainer));
-        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(BoardData));
+        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
 		workspace.setRootWindow(std::move(vSplitContainer));
 
         auto* window = initGlfwContext();
@@ -117,6 +129,10 @@ namespace {
             ImGui::NewFrame();
             int width{}, height{};
             glfwGetFramebufferSize(window, &width, &height);
+            auto engineRecords = compute.getEngineRecords();
+            boardData->setEngineRecords(engineRecords);
+            boardData->setGameIfExtended(compute.gameRecord());
+
             workspace.draw();
             ImGui::Render();
             glViewport(0, 0, width, height);

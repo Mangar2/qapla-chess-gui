@@ -116,10 +116,12 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         return QaplaBasics::Move();
     }
     checkTime(event);
+    // Must be calculated before doMove
+    std::string san = gameState_.moveToSan(move);
     gameState_.doMove(move);
 
-    currentMove_.updateFromBestMove(event, move.getLAN(), gameState_.moveToSan(move),
-        computeMoveStartTimestamp_, gameState_.getHalfmoveClock());
+    currentMove_.updateFromBestMove(event, move.getLAN(), san, computeMoveStartTimestamp_, 
+        gameState_.getHalfmoveClock());
     return move;
 }
 

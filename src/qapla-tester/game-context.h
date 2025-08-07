@@ -27,6 +27,7 @@
 #include "game-result.h"
 #include "game-record.h"
 #include "engine-event.h"
+#include "engine-record.h"
 
  /**
   * @brief Manages all player contexts and game configuration including time control,
@@ -188,6 +189,12 @@ public:
      * @brief Cancels any running computation on all players.
      */
     void cancelCompute();
+
+    /**
+	 * @brief Returns list of information about all engines.
+	 * @return A vector of EngineRecords containing engine information for each player.
+	 */ 
+    EngineRecords getEngineRecords() const;
 
 private:
     std::vector<std::unique_ptr<PlayerContext>> players_;

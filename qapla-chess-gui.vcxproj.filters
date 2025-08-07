@@ -120,7 +120,7 @@
     <ClCompile Include="src\font.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="src\chess-board-window.cpp">
+    <ClCompile Include="src\board-window.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="src\qapla-engine\board.cpp">
@@ -204,12 +204,15 @@
     <ClCompile Include="src\board-data.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\imgui-table.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
-    <ClInclude Include="src\chess-board-window.h">
+    <ClInclude Include="src\board-window.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\qapla-engine\bits.h">
@@ -363,6 +366,12 @@
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
     <ClInclude Include="src\board-data.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\engine-record.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui-table.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

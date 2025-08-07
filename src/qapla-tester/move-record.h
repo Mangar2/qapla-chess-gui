@@ -43,6 +43,7 @@ struct MoveRecord {
     uint32_t multipv = 1;
     uint64_t nodes = 0;
     std::string pv{};
+	std::vector<SearchInfo> info; 
 
     void clear() {
 		original.clear();
@@ -58,6 +59,7 @@ struct MoveRecord {
 		multipv = 1;
 		nodes = 0;
 		pv.clear();
+        info.clear();
     }
 
     /**
@@ -106,6 +108,7 @@ struct MoveRecord {
                 pv += info.pv[i];
             }
         }
+        this->info.push_back(info);
     }
 
 	/**

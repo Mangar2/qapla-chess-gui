@@ -20,6 +20,7 @@
 #pragma once
 
 #include "qapla-engine/types.h"
+#include "qapla-tester/engine-record.h"
 #include <memory>
 #include <optional>
 
@@ -94,9 +95,33 @@ namespace QaplaWindows {
 		 */
 		void setNextMoveIndex(uint32_t moveIndex);
 
+		const EngineRecords& engineRecords() const {
+			return engineRecords_;
+		}
+
+		void setEngineRecords(const EngineRecords& records) {
+			engineRecords_ = records;
+		}
+
+		/**
+		 * @brief Sets the game state from a GameRecord, if the new state extends the existing state.
+		 * @param record The GameRecord to set the game state from.
+		 */
+		void setGameIfExtended(const GameRecord& record);
+
+		/**
+		 * @brief Checks if the game is over. 
+		 * 1. The game must have a result (not GameResult::Unterminated).
+		 * 2. The move index must be at the end of the game record.
+		 * @return true if the game is over, false otherwise.
+		 */
+		bool isGameOver() const;
+
 	private:
+		void checkForGameEnd();
 		std::unique_ptr<GameState> gameState_;
 		std::unique_ptr<GameRecord> gameRecord_;
+		EngineRecords engineRecords_;
 	};
 
 }

@@ -232,7 +232,6 @@ public:
 		cliTraceLevel_ = traceLevel;
 	}
 
-private:
 
 	enum class WorkerState {
 		notStarted,
@@ -242,6 +241,12 @@ private:
 		stopped,
 		terminated
 	};
+
+	WorkerState workerState() {
+		return workerState_;
+	}
+
+private:
 
 	/*
 	 * @brief processs the startup of the engine asynchronously.

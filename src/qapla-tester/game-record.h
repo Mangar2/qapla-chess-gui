@@ -45,11 +45,10 @@ public:
 	 * @brief Initializes this GameRecord using another GameRecord (for PGN-based start setup).
 	 * @param source Source GameRecord to extract setup information from.
 	 * @param toPly Number of plies to import from the source game history.
-	 * @param isWhiteToMove True if it is white's turn to move, false for black.
 	 * @param whiteEngineName White engine name to override.
 	 * @param blackEngineName Black engine name to override.
 	 */
-	void setStartPosition(const GameRecord& source, uint32_t toPly, bool isWhiteToMove,
+	void setStartPosition(const GameRecord& source, uint32_t toPly,
 		const std::string& whiteEngineName, const std::string& blackEngineName);
 
     /** Adds a move at the current ply position, overwriting any future moves. */
@@ -140,7 +139,7 @@ public:
 	 * @brief Returns the current side to move.
 	 */
 	bool isWhiteToMove() const {
-		return isWhiteToMove_;
+		return wtmAtPly(currentPly_);
 	}
 
 	/**
@@ -149,10 +148,7 @@ public:
 	 * @return True if white was to move at ply 0, false if black.
 	 */
 	bool wtmAtPly(size_t ply) const {
-		if (ply > history().size()) {
-			throw std::out_of_range("Ply index exceeds game history size");
-		}
-		return ((history().size() - ply) % 2 == 0) ? isWhiteToMove() : !isWhiteToMove();
+		return ply % 2 == 0 ? isWhiteToMoveAtStart_ : !isWhiteToMoveAtStart_;
 	}
 
 	const std::string& getWhiteEngineName() const {
@@ -227,6 +223,6 @@ private:
     TimeControl blackTimeControl_;
     std::string whiteEngineName_;
     std::string blackEngineName_;
-	bool isWhiteToMove_ = true;
+	bool isWhiteToMoveAtStart_ = true; 
     uint32_t round_ = 0;
 };

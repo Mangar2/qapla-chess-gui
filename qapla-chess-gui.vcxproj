@@ -123,6 +123,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)imgui;$(ProjectDir)glfw\include;$(ProjectDir)glad\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -164,8 +165,9 @@
     <ClCompile Include="src\board-workspace.cpp" />
     <ClCompile Include="src\engine-window.cpp" />
     <ClCompile Include="src\font.cpp" />
-    <ClCompile Include="src\chess-board-window.cpp" />
+    <ClCompile Include="src\board-window.cpp" />
     <ClCompile Include="src\board-data.cpp" />
+    <ClCompile Include="src\imgui-table.cpp" />
     <ClCompile Include="src\move-list-window.cpp" />
     <ClCompile Include="src\qapla-chess-gui.cpp" />
     <ClCompile Include="src\qapla-engine\bitboardmasks.cpp" />
@@ -197,9 +199,10 @@
     <ClInclude Include="src\embedded-window.h" />
     <ClInclude Include="src\engine-window.h" />
     <ClInclude Include="src\font.h" />
-    <ClInclude Include="src\chess-board-window.h" />
+    <ClInclude Include="src\board-window.h" />
     <ClInclude Include="src\board-data.h" />
     <ClInclude Include="src\horizontal-split-container.h" />
+    <ClInclude Include="src\imgui-table.h" />
     <ClInclude Include="src\move-list-window.h" />
     <ClInclude Include="src\qapla-engine\bitboardmasks.h" />
     <ClInclude Include="src\qapla-engine\bits.h" />
@@ -227,6 +230,7 @@
     <ClInclude Include="src\qapla-tester\engine-event.h" />
     <ClInclude Include="src\qapla-tester\engine-option.h" />
     <ClInclude Include="src\qapla-tester\engine-process.h" />
+    <ClInclude Include="src\qapla-tester\engine-record.h" />
     <ClInclude Include="src\qapla-tester\engine-report.h" />
     <ClInclude Include="src\qapla-tester\engine-worker-factory.h" />
     <ClInclude Include="src\qapla-tester\engine-worker.h" />

@@ -27,6 +27,7 @@ struct MoveRecord;
 
 namespace QaplaWindows {
 
+    class ImGuiTable;
 
     /**
      * @brief Displays the move list with associated search data for a game.
@@ -37,13 +38,14 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        EngineWindow(std::shared_ptr<BoardData> BoardData) : BoardData_(std::move(BoardData)) {}
+        EngineWindow(std::shared_ptr<BoardData> boardData);
 
         void draw() override;
 
     private:
+        std::unique_ptr<ImGuiTable> table_;
         void renderMoveLine(const std::string& label, const MoveRecord& move);
-        std::shared_ptr<const BoardData> BoardData_;
+        std::shared_ptr<const BoardData> boardData_;
     };
 
 } // namespace QaplaWindows

@@ -23,7 +23,7 @@
 void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
     std::string whiteEngineName, std::string blackEngineName) {
     moves_.clear();
-    isWhiteToMove_ = isWhiteToMove;
+	isWhiteToMoveAtStart_ = isWhiteToMove;
     currentPly_ = 0;
     startPos_ = startPos;
     startFen_ = startPos ? "" : startFen;
@@ -33,13 +33,13 @@ void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWh
     blackEngineName_ = blackEngineName;
 }
 
-void GameRecord::setStartPosition(const GameRecord& source, uint32_t toPly, bool isWhiteToMove,
+void GameRecord::setStartPosition(const GameRecord& source, uint32_t toPly, 
     const std::string& whiteEngineName, const std::string& blackEngineName) {
     moves_.clear();
     const auto& sourceHistory = source.history();
     moves_.insert(moves_.end(), sourceHistory.begin(), sourceHistory.begin() + 
         std::min<uint32_t>(toPly, static_cast<uint32_t>(sourceHistory.size())));
-    isWhiteToMove_ = isWhiteToMove;
+    isWhiteToMoveAtStart_ = source.isWhiteToMoveAtStart_;
     currentPly_ = 0;
     startPos_ = source.startPos_;
     startFen_ = source.startFen_;
@@ -57,7 +57,6 @@ void GameRecord::addMove(const MoveRecord& move) {
     }
     moves_.push_back(move);
     ++currentPly_;
-	isWhiteToMove_ = !isWhiteToMove_;
 }
 
 uint32_t GameRecord::nextMoveIndex() const {

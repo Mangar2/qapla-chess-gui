@@ -16,7 +16,7 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
-#include "chess-board-window.h"
+#include "board-window.h"
 #include "qapla-engine/types.h"
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
@@ -87,7 +87,7 @@ namespace QaplaWindows {
         return u8" ";
     }
 
-    std::pair<ImVec2, ImVec2> ChessBoardWindow::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
+    std::pair<ImVec2, ImVec2> BoardWindow::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
         QaplaBasics::File file, QaplaBasics::Rank rank) {
         float cellY = boardInverted_ ?
             static_cast<float>(rank) : static_cast<float>(QaplaBasics::Rank::R8 - rank);
@@ -100,11 +100,11 @@ namespace QaplaWindows {
         return { cellMin, cellMax };
     }
 
-    void ChessBoardWindow::drawPromotionPopup(float cellSize)
+    void BoardWindow::drawPromotionPopup(float cellSize)
     {
         using QaplaBasics::Piece;
         constexpr float SHRINK_CELL_SIZE = 0.8f;
-		auto& gameState = BoardData_->gameState();
+		auto& gameState = boardData_->gameState();
 
         if (!selectedTo_)
             return;
@@ -138,7 +138,7 @@ namespace QaplaWindows {
             ImGui::InvisibleButton(("promo_" + std::to_string(i)).c_str(), ImVec2(cellSize, cellSize));
 
             if (ImGui::IsItemClicked()) {
-                BoardData_->addMove(selectedFrom_, selectedTo_, pieces[i]);
+                boardData_->addMove(selectedFrom_, selectedTo_, pieces[i]);
 
                 selectedFrom_.reset();
                 selectedTo_.reset();
@@ -155,12 +155,12 @@ namespace QaplaWindows {
     }
 
 
-    void ChessBoardWindow::drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, 
+    void BoardWindow::drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, 
         float cellSize, QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite)
     {
         using QaplaBasics::Square;
         using QaplaBasics::Piece;
-        auto& gameState = BoardData_->gameState();
+        auto& gameState = boardData_->gameState();
 
         const Square square = computeSquare(file, rank);
         const Piece piece = gameState.position()[square];
@@ -177,7 +177,7 @@ namespace QaplaWindows {
         ImGui::SetCursorScreenPos(cellMin);
         ImGui::InvisibleButton(("cell_" + std::to_string(square)).c_str(), ImVec2(cellSize, cellSize));
 
-        if (ImGui::IsItemClicked()) {
+        if (ImGui::IsItemClicked() && !boardData_->isGameOver()) {
 			bool wtm = gameState.isWhiteToMove();
             if (piece != Piece::NO_PIECE && getPieceColor(piece) == (wtm ? Piece::WHITE : Piece::BLACK)) {
                 selectedFrom_ = square;
@@ -187,7 +187,7 @@ namespace QaplaWindows {
             }
 
             if (selectedTo_) {
-                const auto [partial, promotion] = BoardData_->addMove(selectedFrom_, selectedTo_, QaplaBasics::Piece::NO_PIECE);
+                const auto [partial, promotion] = boardData_->addMove(selectedFrom_, selectedTo_, QaplaBasics::Piece::NO_PIECE);
                 if (promotion) {
                     promotionPending_ = true;
                     ImGui::OpenPopup((id_ + "Promotion").c_str());
@@ -199,8 +199,7 @@ namespace QaplaWindows {
         }
     }
 
-
-    void ChessBoardWindow::drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize)
+    void BoardWindow::drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize)
     {
         using QaplaBasics::Rank;
         using QaplaBasics::File;
@@ -215,7 +214,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ChessBoardWindow::drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, 
+    void BoardWindow::drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, 
         const ImVec2& cellMin, float cellSize, ImFont* font)
     {
         if (piece == QaplaBasics::Piece::NO_PIECE)
@@ -234,13 +233,13 @@ namespace QaplaWindows {
         drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
     }
 
-    void ChessBoardWindow::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
+    void BoardWindow::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
     {
         using QaplaBasics::Rank;
         using QaplaBasics::File;
         using QaplaBasics::Square;
         using QaplaBasics::Piece;
-        auto& gameState = BoardData_->gameState();
+        auto& gameState = boardData_->gameState();
 
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank) {
             for (File file = File::A; file <= File::H; ++file) {
@@ -252,7 +251,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ChessBoardWindow::drawBoardCoordinates(ImDrawList* drawList,
+    void BoardWindow::drawBoardCoordinates(ImDrawList* drawList,
         const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize)
     {
         const int gridSize = 8;
@@ -276,7 +275,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ChessBoardWindow::draw()
+    void BoardWindow::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;

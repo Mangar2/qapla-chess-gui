@@ -87,90 +87,6 @@ EngineProcess::EngineProcess(const std::filesystem::path &path,
     start();
 }
 
-void EngineProcess::startWin32() {
-#ifdef _WIN32
-    constexpr bool useStdErr = false;
-    constexpr DWORD READ_PUFFER_SIZE = 64 * 1024;
-
-    SECURITY_ATTRIBUTES saAttr{};
-    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    saAttr.bInheritHandle = TRUE;
-    saAttr.lpSecurityDescriptor = nullptr;
-
-    HANDLE stdinReadTmp, stdoutWriteTmp, stderrWriteTmp;
-    HANDLE nulHandle = nullptr;
-
-    if (!CreatePipe(&stdinReadTmp, &stdinWrite_, &saAttr, 0) ||
-        !SetHandleInformation(stdinWrite_, HANDLE_FLAG_INHERIT, 0))
-    {
-        throw std::runtime_error("Failed to create stdin pipe");
-    }
-
-    if (!CreatePipe(&stdoutRead_, &stdoutWriteTmp, &saAttr, READ_PUFFER_SIZE) ||
-        !SetHandleInformation(stdoutRead_, HANDLE_FLAG_INHERIT, 0))
-    {
-        throw std::runtime_error("Failed to create stdout pipe");
-    }
-
-    if (useStdErr)
-    {
-        if (!CreatePipe(&stderrRead_, &stderrWriteTmp, &saAttr, 0) ||
-            !SetHandleInformation(stderrRead_, HANDLE_FLAG_INHERIT, 0))
-        {
-            throw std::runtime_error("Failed to create stderr pipe");
-        }
-    }
-    else
-    {
-        nulHandle = CreateFileA("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (nulHandle == INVALID_HANDLE_VALUE)
-        {
-            throw std::runtime_error("Failed to open NUL device for stderr redirection");
-        }
-    }
-
-    PROCESS_INFORMATION piProcInfo{};
-    STARTUPINFOA siStartInfo{};
-    siStartInfo.cb = sizeof(STARTUPINFOA);
-    siStartInfo.hStdInput = stdinReadTmp;
-    siStartInfo.hStdOutput = stdoutWriteTmp;
-    siStartInfo.hStdError = useStdErr ? stderrWriteTmp : nulHandle;
-    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
-
-    std::string cmd = executablePath_.string();
-
-    BOOL success = CreateProcessA(
-        nullptr,
-        cmd.data(),
-        nullptr,
-        nullptr,
-        TRUE,
-        0,
-        nullptr,
-        workingDirectory_ ? workingDirectory_->string().c_str() : nullptr,
-        &siStartInfo,
-        &piProcInfo);
-    CloseHandle(stdinReadTmp);
-    CloseHandle(stdoutWriteTmp);
-    if (useStdErr)
-    {
-        CloseHandle(stderrWriteTmp);
-    }
-    else
-    {
-        CloseHandle(nulHandle);
-    }
-
-    if (!success)
-    {
-        throw std::runtime_error("Failed to create process");
-    }
-
-    childProcess_ = piProcInfo.hProcess;
-    CloseHandle(piProcInfo.hThread);
-#endif
-}
-
 void EngineProcess::startWin32Overlapped() {
 #ifdef _WIN32
 
@@ -230,7 +146,7 @@ void EngineProcess::startWin32Overlapped() {
         nullptr,
         nullptr,
         TRUE,
-        0,
+        CREATE_NO_WINDOW,
         nullptr,
         workingDirectory_ ? workingDirectory_->string().c_str() : nullptr,
         &siStartInfo,

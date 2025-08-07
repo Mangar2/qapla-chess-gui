@@ -40,6 +40,7 @@ namespace QaplaWindows {
         }
 
         void draw() override {
+            
             ImVec2 region = ImGui::GetContentRegionAvail();
             float height = region.y;
 
@@ -48,12 +49,9 @@ namespace QaplaWindows {
             float availableWidth = std::max(region.x - splitterWidth - 13, 2 * minSize);
 
             leftWidth_ = std::clamp(leftWidth_, minSize, availableWidth - minSize);
-            
+            std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
-            std::string idPrefix = "##hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
-
-            // Left window
-            ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(leftWidth_, height), 
+            ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(leftWidth_, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             if (leftWindow_) leftWindow_->draw();
@@ -81,11 +79,12 @@ namespace QaplaWindows {
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8.0f); 
             float rightWidth = region.x - ImGui::GetCursorPosX();
 
-            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height), 
+            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             if (rightWindow_) rightWindow_->draw();
             ImGui::EndChild();
+
         }
 
     private:

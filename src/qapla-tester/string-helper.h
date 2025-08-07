@@ -87,15 +87,15 @@ inline std::optional<std::pair<std::string, std::string>> parseKeyValue(const st
     return std::make_pair(key, value);
 }
 
-inline std::string formatMs(uint64_t ms) {
+inline std::string formatMs(uint64_t ms, uint32_t mdigits = 3) {
     std::ostringstream oss;
     uint64_t minutes = ms / 60000;
-    uint64_t seconds = (ms % 60000) / 1000;
-    uint64_t millis = ms % 1000;
-    oss << minutes << ":" 
+    double seconds = static_cast<double>(ms % 60000) / 1000.0;
+    oss << minutes << ":"
         << std::right
-        << std::setw(2) << std::setfill('0') << seconds << "." 
-        << std::setw(3) << std::setfill('0') << millis;
+        << std::fixed << std::setprecision(mdigits)
+        << std::setw(mdigits + 3) << std::setfill('0')
+        << seconds;
     return oss.str();
 }
 

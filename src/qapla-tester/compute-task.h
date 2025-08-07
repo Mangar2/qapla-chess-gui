@@ -128,6 +128,17 @@ public:
      */
     void stop();
 
+    /**
+     * Engine Information
+     */
+    EngineRecords getEngineRecords() { 
+        return gameContext_.getEngineRecords(); 
+    }
+
+    const GameRecord& gameRecord() const {
+        return gameContext_.gameRecord();
+	}
+
 private:
     GameContext gameContext_;
 

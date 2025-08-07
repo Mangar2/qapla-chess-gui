@@ -31,6 +31,13 @@ BoardData::BoardData() :
 {
 }
 
+void BoardData::checkForGameEnd() {
+	auto [cause, result] = gameState_->getGameResult();
+	if (result != GameResult::Unterminated) {
+		gameRecord_->setGameEnd(cause, result);
+	}
+}
+
 std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> departure,
 		std::optional<QaplaBasics::Square> destination, QaplaBasics::Piece promote) 
 {
@@ -47,12 +54,20 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 			.san = gameState_->moveToSan(move)
 			});
 		gameState_->doMove(move);
+		checkForGameEnd();
 		return { false, false };
     }
     else if (promotion) {
 		return { true, true };
     }
 	return { true, false };
+}
+
+void BoardData::setGameIfExtended(const GameRecord& record) {
+	if (gameRecord_->history().size() < record.history().size()) {
+		*gameRecord_ = record;
+		gameState_->setFromGameRecord(*gameRecord_, gameRecord_->nextMoveIndex());
+	}
 }
 
 uint32_t BoardData::nextMoveIndex() const {
@@ -64,4 +79,10 @@ void BoardData::setNextMoveIndex(uint32_t moveIndex) {
 		gameRecord_->setNextMoveIndex(moveIndex);
 		gameState_->setFromGameRecord(*gameRecord_, moveIndex);
 	}
+}
+
+bool BoardData::isGameOver() const {
+	auto [cause, result] = gameRecord_->getGameResult();
+	return result != GameResult::Unterminated && 
+		gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
 }
