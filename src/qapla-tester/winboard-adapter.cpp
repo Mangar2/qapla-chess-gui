@@ -691,7 +691,9 @@ EngineEvent WinboardAdapter::readEvent() {
         logFromEngine(line, TraceLevel::command);
         std::string move;
 		iss >> move;
-        gameRecord_.addMove({ .original = move });
+		MoveRecord engineMove;
+		engineMove.original = move;
+        gameRecord_.addMove(engineMove);
 		return EngineEvent::createBestMove(identifier_, engineLine.timestampMs, line, move, "");
     }
 

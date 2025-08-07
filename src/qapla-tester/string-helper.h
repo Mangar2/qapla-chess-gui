@@ -94,7 +94,7 @@ inline std::string formatMs(uint64_t ms, uint32_t mdigits = 3) {
     oss << minutes << ":"
         << std::right
         << std::fixed << std::setprecision(mdigits)
-        << std::setw(mdigits + 3) << std::setfill('0')
+        << std::setw(mdigits == 0 ? 2 : mdigits + 3) << std::setfill('0')
         << seconds;
     return oss.str();
 }

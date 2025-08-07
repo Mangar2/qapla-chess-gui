@@ -239,7 +239,9 @@ namespace QaplaInterface {
 		void scanFullMoves(const std::string& fen, std::string::iterator& fenIterator, 
 			QaplaMoveGenerator::MoveGenerator& chessBoard) {
 			auto fullmoves = scanInteger(fen, fenIterator);
-				chessBoard.setStartHalfmoves(fullmoves * 2 + (!chessBoard.isWhiteToMove()));
+			// fullmoves are not 0 indexed
+			if (fullmoves > 0) fullmoves--;
+			chessBoard.setStartHalfmoves(fullmoves * 2 + (!chessBoard.isWhiteToMove()));
 		}
 
 		bool isPieceChar(char pieceChar) {

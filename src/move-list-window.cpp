@@ -86,7 +86,6 @@ void MoveListWindow::draw() {
         ImGui::TableSetupColumn("PV", ImGuiTableColumnFlags_WidthFixed);
         
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-        ImGui::TableHeadersRow();
         
         ImGui::TableSetColumnIndex(0);
         ImGui::TextUnformatted("Move");

@@ -66,10 +66,31 @@ namespace QaplaWindows {
         void clear();
 
         /**
+         * @brief Returns the number of rows in the table.
+         * @return Number of rows.
+		 */
+        size_t size() const {
+            return rows_.size();
+		}
+
+        /**
          * @brief Renders the table with dynamic content.
          * @param size Size of the table in ImGui units.
          */
         void draw(const ImVec2& size);
+
+        std::string getField(size_t row, size_t column) const {
+            if (row < rows_.size() && column < columns_.size()) {
+                return rows_[row][column];
+            }
+            return "";
+		}
+
+        void setField(size_t row, size_t column, const std::string& value) {
+            if (row < rows_.size() && column < columns_.size()) {
+                rows_[row][column] = value;
+            }
+		}
 
     private:
         void tableHeadersRow();
@@ -77,6 +98,5 @@ namespace QaplaWindows {
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;
         std::vector<std::vector<std::string>> rows_;
-		std::mutex rowsMutex;
     };
 }

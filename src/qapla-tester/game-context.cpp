@@ -64,7 +64,10 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
 
     if (playedMoves) {
         for (const auto& move : *playedMoves) {
-            gameRecord_.addMove({ .original = move, .lan = move });
+			MoveRecord moveRecord(gameRecord_.nextMoveIndex(), "#gui");
+			moveRecord.original = move;
+			moveRecord.lan = move;
+            gameRecord_.addMove(moveRecord);
         }
     }
 
@@ -193,9 +196,11 @@ EngineRecords GameContext::getEngineRecords() const {
         }
 		auto engine = player->getEngine();
         EngineRecord record = {
+			.identifier = engine->getIdentifier(),
             .config = engine->getConfig(),
             .supportedOptions = engine->getSupportedOptions(),
-            .memoryUsageB = engine->getEngineMemoryUsage()
+            .memoryUsageB = engine->getEngineMemoryUsage(),
+            .curMoveRecord = player->getCurrentMove()
         };
         switch (engine->workerState()) {
         case EngineWorker::WorkerState::notStarted: record.status = EngineRecord::Status::NotStarted; break;

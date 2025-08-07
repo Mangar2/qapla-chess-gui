@@ -102,7 +102,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     if (!checklist_->logReport("legalmove", event.bestMove.has_value())) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
-		currentMove_ = MoveRecord{};
+        currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
         return QaplaBasics::Move();
     }
     const auto move = gameState_.stringToMove(*event.bestMove, requireLan_);
@@ -110,7 +110,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         "Encountered illegal move \"" + *event.bestMove + "\" in bestmove, raw info line \"" + event.rawLine + "\"")) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
-        currentMove_ = MoveRecord{};
+        currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
         Logger::engineLogger().log(engine_->getIdentifier() + " Illegal move in bestmove: " + *event.bestMove +
             " in raw info line \"" + event.rawLine + "\"", TraceLevel::info);
         return QaplaBasics::Move();
@@ -120,7 +120,8 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     std::string san = gameState_.moveToSan(move);
     gameState_.doMove(move);
 
-    currentMove_.updateFromBestMove(event, move.getLAN(), san, computeMoveStartTimestamp_, 
+    currentMove_.updateFromBestMove(gameState_.getHalfmovePlayed(), engine_->getIdentifier(),
+        event, move.getLAN(), san, computeMoveStartTimestamp_, 
         gameState_.getHalfmoveClock());
     return move;
 }
@@ -295,6 +296,7 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
 	}
 
     currentMove_.clear();
+	currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed();
     goLimits_ = goLimits;
     // Race-condition safety setting. We will get the true timestamp returned from the EngineProcess sending
     // the compute move string to the engine. As it is asynchronous, we might get a bestmove event before receiving the

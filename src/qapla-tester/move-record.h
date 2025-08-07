@@ -45,6 +45,14 @@ struct MoveRecord {
     std::string pv{};
 	std::vector<SearchInfo> info; 
 
+    uint32_t halfmoveNo_ = 0;
+    std::string engineId_{};
+
+	MoveRecord() = default;
+    MoveRecord(uint32_t halfmoveNo, const std::string& id = "")
+		: halfmoveNo_(halfmoveNo), engineId_(id) {
+	}
+
     void clear() {
 		original.clear();
 		lan.clear();
@@ -60,6 +68,8 @@ struct MoveRecord {
 		nodes = 0;
 		pv.clear();
         info.clear();
+		halfmoveNo_ = 0;
+		engineId_.clear();
     }
 
     /**
@@ -71,8 +81,11 @@ struct MoveRecord {
      * @param computeStartTimestamp Timestamp when move computation started, in milliseconds.
      * @param halfmoveClk The current halfmove clock value, used for the 50-move rule.
      */
-    void updateFromBestMove(const EngineEvent& event, std::string lanMove, std::string sanMove,
+    void updateFromBestMove(uint32_t halfmoveNo, const std::string& engineId, 
+        const EngineEvent& event, std::string lanMove, std::string sanMove,
         uint64_t computeStartTimestamp, uint32_t halfmoveClk) {
+		halfmoveNo_ = halfmoveNo;
+		engineId_ = engineId;
         if (event.bestMove) {
             original = *event.bestMove;
 			lan = lanMove;

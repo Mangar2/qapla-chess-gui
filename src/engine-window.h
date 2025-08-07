@@ -24,6 +24,7 @@
 #include <memory>
 
 struct MoveRecord;
+struct SearchInfo;
 
 namespace QaplaWindows {
 
@@ -39,12 +40,16 @@ namespace QaplaWindows {
          * @param record Shared pointer to the constant game record.
          */
         EngineWindow(std::shared_ptr<BoardData> boardData);
+        ~EngineWindow();
 
         void draw() override;
 
     private:
-        std::unique_ptr<ImGuiTable> table_;
-        void renderMoveLine(const std::string& label, const MoveRecord& move);
+        void addTables(size_t size);
+        std::vector<std::unique_ptr<ImGuiTable>> tables_;
+        std::vector<uint32_t> displayedMoveNo_;
+		void setTable(size_t index);
+        void setTable(size_t index, const MoveRecord& moveRecord);
         std::shared_ptr<const BoardData> boardData_;
     };
 

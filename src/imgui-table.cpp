@@ -22,11 +22,15 @@
 
 namespace QaplaWindows {
 
+    static void alignRight(const std::string& content) {
+        float colWidth = ImGui::GetColumnWidth();
+        float textWidth = ImGui::CalcTextSize(content.c_str()).x;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + colWidth - textWidth - 10);
+	}
+
     static void textAligned(const std::string& content, bool right) {
         if (right) {
-            float region = ImGui::GetContentRegionAvail().x;
-            float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + region - textWidth);
+			alignRight(content);
         }
         ImGui::TextUnformatted(content.c_str());
     }
@@ -40,17 +44,14 @@ namespace QaplaWindows {
     }
 
     void ImGuiTable::push(const std::vector<std::string>& row) {
-        std::lock_guard<std::mutex> lock(rowsMutex);
         rows_.push_back(row);
     }
 
     void ImGuiTable::push_front(const std::vector<std::string>& row) {
-        std::lock_guard<std::mutex> lock(rowsMutex);
         rows_.insert(rows_.begin(), row);
     }
 
     void ImGuiTable::clear() {
-        std::lock_guard<std::mutex> lock(rowsMutex);
         rows_.clear();
     }
 
@@ -62,7 +63,7 @@ namespace QaplaWindows {
                 continue;
 			std::string name = columns_[columnN].name;
             ImGui::PushID(columnN);
-            ImGui::TableHeader(name.c_str());
+            textAligned(columns_[columnN].name, columns_[columnN].alignRight);
             ImGui::PopID();
         }
     }
@@ -74,7 +75,6 @@ namespace QaplaWindows {
             }
             tableHeadersRow();
 
-            std::lock_guard<std::mutex> lock(rowsMutex);
             for (const auto& row : rows_) {
                 ImGui::TableNextRow();
                 for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {

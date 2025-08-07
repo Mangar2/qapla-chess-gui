@@ -48,11 +48,11 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
         return { false, false };
     }
     else if (!move.isEmpty()) {
-		gameRecord_->addMove({
-			.original = move.getLAN(),
-			.lan = move.getLAN(),
-			.san = gameState_->moveToSan(move)
-			});
+		MoveRecord moveRecord(gameRecord_->nextMoveIndex(), "#gui");
+		moveRecord.original = move.getLAN();
+		moveRecord.lan = moveRecord.original;
+		moveRecord.san = gameState_->moveToSan(move);
+		gameRecord_->addMove(moveRecord);
 		gameState_->doMove(move);
 		checkForGameEnd();
 		return { false, false };

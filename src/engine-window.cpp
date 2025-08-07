@@ -22,6 +22,7 @@
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
+#include "qapla-tester/engine-event.h"
 
 #include "imgui.h"
 
@@ -31,12 +32,6 @@
 #include <memory>
 
 using namespace QaplaWindows;
-
-static void alignRight(const std::string& content) {
-    float colWidth = ImGui::GetColumnWidth();
-    float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + colWidth - textWidth - 10);
-}
 
 /**
  * Renders a vertical list of readonly text display fields styled like input boxes,
@@ -70,13 +65,6 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines) {
     }
 }
 
-static void textAlignRight(const std::string& content) {
-    float region = ImGui::GetContentRegionAvail().x;
-    float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + region - textWidth);
-    ImGui::TextUnformatted(content.c_str());
-}
-
 static void drawEngineInfo(const EngineRecord& record) {
     ImGui::PushID("EngineInfo");
     std::string name = record.config.getName();
@@ -87,109 +75,120 @@ static void drawEngineInfo(const EngineRecord& record) {
     ImGui::PopID();
 }
 
-static void drawPVTableLine(const SearchInfo& searchInfo) {
-    ImGui::TableNextRow();
-    
-    ImGui::TableSetColumnIndex(0);
-    textAlignRight(searchInfo.depth ? std::to_string(*searchInfo.depth).c_str(): "-");
-
-    ImGui::TableSetColumnIndex(1);
-    textAlignRight(searchInfo.timeMs ? 
-        formatMs(*searchInfo.timeMs, *searchInfo.timeMs < 60000 ? 1 : 0) : "-");
-
-    ImGui::TableSetColumnIndex(2);
-    textAlignRight(searchInfo.nodes ? std::format("{:L}", *searchInfo.nodes).c_str() : "-");
-
-    ImGui::TableSetColumnIndex(3);
-    std::string nps = "-";
-    if (searchInfo.nps) {
-        nps = std::format("{:L}", *searchInfo.nps);
-    }
-    else if (searchInfo.timeMs && searchInfo.nodes && *searchInfo.timeMs != 0) {
-        nps = std::format("{:L}", static_cast<int64_t>(
-            static_cast<double>(*searchInfo.nodes) * 1000.0 / static_cast<double>(*searchInfo.timeMs)));
-    }
-    textAlignRight(nps.c_str());
-
-    ImGui::TableSetColumnIndex(4);
-    textAlignRight(searchInfo.tbhits ? std::format("{:L}", *searchInfo.tbhits).c_str() : "-");
-
-    ImGui::TableSetColumnIndex(5);
-    if (searchInfo.scoreMate)  {
-        textAlignRight(std::format("{}M{}", *searchInfo.scoreMate < 0 ? "-" : "", 
-            std::abs(*searchInfo.scoreMate)));
-    }
-    else if (searchInfo.scoreCp) {
-        textAlignRight(std::format("{:.2f}", *searchInfo.scoreCp / 100.0f));
-    }
-    else {
-        textAlignRight("-");
-    }
-
-    if (searchInfo.pv.size() > 0) {
-        std::string pv = "";
-        for (auto& move : searchInfo.pv) {
-            if (!pv.empty()) pv += ' ';
-            pv += move;
-		}
-        ImGui::TableSetColumnIndex(6);
-        ImGui::TextUnformatted(pv.c_str());
-    }
-
-}
-
 
 EngineWindow::EngineWindow(std::shared_ptr<BoardData> boardData)
     : boardData_(std::move(boardData))
 {
-    table_ = std::make_unique<ImGuiTable>("EngineTable",
-        ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
-        std::vector<ImGuiTable::ColumnDef>{
-            {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
-            { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-            { "Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0f, true },
-            { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0f, true },
-            { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-            { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-            { "Primary variant", ImGuiTableColumnFlags_WidthFixed }
-    });
 }
 
-static void drawPVTable(const ImVec2& size, std::vector<SearchInfo> searchInfos) {
-    constexpr ImGuiTableFlags flags =
-        ImGuiTableFlags_RowBg
-        | ImGuiTableFlags_SizingFixedFit
-        | ImGuiTableFlags_ScrollX
-        | ImGuiTableFlags_ScrollY;
+EngineWindow::~EngineWindow() = default;
 
-    if (ImGui::BeginTable("EngineTable", 7, flags, size)) {
-        ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-        ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-        ImGui::TableSetupColumn("Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-        ImGui::TableSetupColumn("NPS", ImGuiTableColumnFlags_WidthFixed, 60.0f);
-        ImGui::TableSetupColumn("Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, 50.0f);
-        ImGui::TableSetupColumn("Primary variant", ImGuiTableColumnFlags_WidthFixed);
+void EngineWindow::addTables(size_t size) {
+    for (size_t i = tables_.size(); i < size; ++i) {
+		displayedMoveNo_.push_back(0);
+        tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
+                { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0f, true },
+                { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0f, true },
+                { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Primary variant", ImGuiTableColumnFlags_WidthFixed }
+        }));
+	}
+}
 
-        ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-        uint32_t index = 0;
-        for (std::string text : { "Depth", "Time", "Nodes", "NPS", "Tb hits", "Score" }) {
-            ImGui::TableSetColumnIndex(index);
-            textAlignRight(text);
-            index++;
+void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
+    
+    if (index >= tables_.size()) {
+        return; 
+    }
+    auto& table = tables_[index];
+	auto& searchInfos = moveRecord.info;
+	auto& moveNo = moveRecord.halfmoveNo_;
+    if (searchInfos.size() == table->size() && moveNo == displayedMoveNo_[index]) {
+        return; 
+    }
+	displayedMoveNo_[index] = moveNo;
+    table->clear();
+    bool last = true;
+    for (size_t i = searchInfos.size(); i > 0; --i) {
+        auto& info = searchInfos[i - 1];
+        if (info.pv.empty() && !last) continue;
+        last = false;
+        std::string nps = "-";
+        std::string score = "-";
+        std::string pv = "";
+        if (info.nps) {
+            nps = std::format("{:L}", *info.nps);
         }
-        ImGui::TableSetColumnIndex(6);
-        ImGui::TextUnformatted("Primary variant");
-        for (size_t i = searchInfos.size(); i > 0; --i) {
-			auto& info = searchInfos[i - 1];
-            if (info.pv.size() > 0) {
-                ImGui::PushID(("PVLine" + std::to_string(i)).c_str());
-                drawPVTableLine(info);
-                ImGui::PopID();
-            }
+        else if (info.timeMs && info.nodes && *info.timeMs != 0) {
+            nps = std::format("{:L}", static_cast<int64_t>(
+                static_cast<double>(*info.nodes) * 1000.0 / static_cast<double>(*info.timeMs)));
+        }
+        if (info.scoreMate) {
+            score = std::format("{}M{}", *info.scoreMate < 0 ? "-" : "", std::abs(*info.scoreMate));
+        }
+        else if (info.scoreCp) {
+            score = std::format("{:.2f}", *info.scoreCp / 100.0f);
+        }
+        if (score != "-" && table->size() == 1 && table->getField(0, 5)  == "-") {
+            table->setField(0, 5, score);
 		}
-        ImGui::EndTable();
+        if (!info.pv.empty()) {
+            for (auto& move : info.pv) {
+                if (!pv.empty()) pv += ' ';
+                pv += move;
+            }
+        } else if (info.currMove) {
+            pv = *info.currMove;
+        } 
+        std::vector<std::string> row = {
+            info.depth ? std::to_string(*info.depth) : "-",
+            info.timeMs ? formatMs(*info.timeMs, *info.timeMs < 60000 ? 1 : 0) : "-",
+            info.nodes ? std::format("{:L}", *info.nodes) : "-",
+            nps,
+            info.tbhits ? std::format("{:L}", *info.tbhits) : "-",
+            score,
+            pv
+        };
+        table->push(row);
+    }
+}
+
+void EngineWindow::setTable(size_t index) {
+	addTables(boardData_->engineRecords().size());
+
+    if (index >= tables_.size() || index >= boardData_->engineRecords().size()) {
+        return;
+    }
+
+	auto& engineRecord = boardData_->engineRecords()[index];
+
+    std::vector<SearchInfo> searchInfos;
+    auto& history = boardData_->gameRecord().history();
+
+	// Only display search info with matching engine ID in range of nextMoveIndex
+    auto nextMoveIndex = boardData_->gameRecord().nextMoveIndex();
+    auto& curMoveRecord = boardData_->engineRecords()[index].curMoveRecord;
+    for (int i = 0; i < 2; i++) {
+        int curIndex = static_cast<int>(nextMoveIndex) - i - 1;
+        if (curMoveRecord->halfmoveNo_ == nextMoveIndex) {
+			setTable(index, *curMoveRecord);
+            continue;
+        }
+        if (curIndex < 0 || curIndex >= history.size()) {
+            // No matching move record found
+			tables_[index]->clear();
+            return;
+        }
+        auto& moveRecord = history[static_cast<size_t>(curIndex)];
+        if (moveRecord.engineId_ == engineRecord.identifier) {
+            setTable(index, moveRecord);
+            return;
+        }
     }
 }
 
@@ -241,49 +240,10 @@ void EngineWindow::draw() {
 		ImVec2 tableMin = ImVec2(min.x + cEngineInfoWidth + cSectionSpacing, min.y);
         ImGui::SetCursorScreenPos(tableMin);
 
-        int64_t indexModifier = 0;
-        if (engineRecords.size() > 1) {
-            indexModifier = !boardData_->gameRecord().isWhiteToMove() == (i == 0) ? 0 : 1;
-        }
-
-        std::vector<SearchInfo> searchInfos;
-		auto& history = boardData_->gameRecord().history();
-		int64_t nextMoveIndex = static_cast<int64_t>(boardData_->gameRecord().nextMoveIndex());
-		int64_t index = nextMoveIndex - 1 - indexModifier;
-        if (index >= 0 && static_cast<size_t>(index) < history.size()) {
-			searchInfos = history[static_cast<size_t>(index)].info;
-		}
-        drawPVTable(ImVec2(max.x - tableMin.x, rowHeight), searchInfos);
+        setTable(i);
+        tables_[i]->draw(ImVec2(max.x - tableMin.x, rowHeight));
         ImGui::Dummy(ImVec2(tableMinWidth, rowHeight));
         ImGui::PopID();
     }
 }
 
-void EngineWindow::renderMoveLine(const std::string& label, const MoveRecord& move) {
-    std::ostringstream stream;
-    std::string moveLabel = label + move.san;
-
-    if (label.at(0) == '.') {
-        alignRight(moveLabel);
-    }
-    ImGui::TextUnformatted(moveLabel.c_str()); 
-    ImGui::NextColumn();
-    
-    std::string depthLabel = move.depth == 0 ? "-" : std::to_string(move.depth);
-    alignRight(depthLabel);
-    ImGui::TextUnformatted(depthLabel.c_str());
-    
-    ImGui::NextColumn();
-    stream << std::fixed << std::setprecision(2) << (move.timeMs / 1000.0) << "s";
-    std::string timeLabel = stream.str();
-    alignRight(timeLabel);
-    ImGui::TextUnformatted(timeLabel.c_str());
-
-    ImGui::NextColumn();
-    std::string scoreLabel = move.scoreCp ? std::to_string(*move.scoreCp).c_str() : "-";
-    alignRight(scoreLabel);
-    ImGui::TextUnformatted(scoreLabel.c_str());
-    ImGui::NextColumn();
-    ImGui::TextUnformatted(move.pv.c_str()); 
-    ImGui::NextColumn();
-}

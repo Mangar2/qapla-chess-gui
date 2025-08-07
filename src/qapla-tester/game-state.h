@@ -99,10 +99,20 @@ public:
 	 * @brief Get the Halfmove Clock -> the total number of half moves without pawn move or capture
 	 * ("total includes the start value from fen to implement the 50-moves-draw rule")
 	 * 
-	 * @return int32_t 
+	 * @return the total number of half moves without pawn move or capture
 	 */
 	uint32_t getHalfmoveClock() const {
 		return position_.getTotalHalfmovesWithoutPawnMoveOrCapture();
+	}
+
+	/**
+	 * @brief Get the number of half moves played so far in the game.
+	 * This includes the starting position's halfmoves.
+	 * 
+	 * @return The total number of half moves played.
+	 */ 
+	uint32_t getHalfmovePlayed() const {
+		return position_.getStartHalfmoves() + static_cast<uint32_t>(moveList_.size());
 	}
 
 	/**

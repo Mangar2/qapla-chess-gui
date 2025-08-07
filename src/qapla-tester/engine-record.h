@@ -18,12 +18,14 @@
  */
 #pragma once
 
+#include "move-record.h"
 #include "engine-config.h"
 #include "engine-option.h"
 #include <vector>
 #include <optional>
 
 struct EngineRecord {
+    std::string identifier;
     EngineConfig config;
     std::optional<EngineOptions> supportedOptions;
     enum class Status {
@@ -42,6 +44,7 @@ struct EngineRecord {
 		default: return "Unknown";
         }
 	}
+    std::optional<MoveRecord> curMoveRecord;
 };
 
 using EngineRecords = std::vector<EngineRecord>;

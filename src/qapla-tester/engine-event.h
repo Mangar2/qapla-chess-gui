@@ -26,6 +26,7 @@
 #include "logger.h"
 
 struct SearchInfo {
+    uint32_t halfMoveNo = 0;
     std::optional<uint32_t> depth;
     std::optional<uint32_t> selDepth;
     std::optional<uint32_t> multipv;

@@ -101,7 +101,7 @@ namespace {
 		auto engines = EngineWorkerFactory::createEngines(*config, 2);
         compute.initEngines(std::move(engines));
 		TimeControl timeControl;
-        timeControl.addTimeSegment({ 0, 100000, 1000 }); 
+        timeControl.addTimeSegment({ 0, 1000000, 1000 }); 
         //timeControl.addTimeSegment({ 0, 1000, 10 }); 
 		compute.setTimeControl(timeControl);
 		compute.autoPlay(true);
@@ -123,21 +123,29 @@ namespace {
         font::loadChessFont("fonts/chess_merida_unicode.ttf", 32.0f);
 
         while (!glfwWindowShouldClose(window)) {
+            if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
+                glfwWaitEvents(); 
+                continue;
+            }
             glfwPollEvents();
+
+            int width{}, height{};
+            glfwGetFramebufferSize(window, &width, &height);
+            glViewport(0, 0, width, height);
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-            int width{}, height{};
-            glfwGetFramebufferSize(window, &width, &height);
+
             auto engineRecords = compute.getEngineRecords();
             boardData->setEngineRecords(engineRecords);
             boardData->setGameIfExtended(compute.gameRecord());
 
             workspace.draw();
+
             ImGui::Render();
-            glViewport(0, 0, width, height);
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);

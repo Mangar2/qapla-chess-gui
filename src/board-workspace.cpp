@@ -41,20 +41,51 @@ namespace QaplaWindows {
         */
     }
 
+    /*
     void BoardWorkspace::draw() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		drawMaximized();
         ImGui::Begin("Board Workspace", nullptr,
             ImGuiWindowFlags_NoScrollbar |
             ImGuiWindowFlags_NoScrollWithMouse);
-
         if (rootWindow) {
             rootWindow->draw();
         }
-
         ImGui::End();
         ImGui::PopStyleVar();
     }
+    */
+    void BoardWorkspace::draw() {
+        try {
+            ImVec2 pos = ImGui::GetMainViewport()->Pos;
+            ImVec2 size = ImGui::GetMainViewport()->Size;
+
+            ImGui::SetNextWindowPos(pos);
+            ImGui::SetNextWindowSize(size);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+            ImGui::Begin("RootOverlay", nullptr,
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoBringToFrontOnFocus |
+                ImGuiWindowFlags_NoNavFocus);
+
+            if (rootWindow) {
+                rootWindow->draw();
+            }
+
+            ImGui::End();
+            ImGui::PopStyleVar(3);
+        }
+        catch (...) {
+            ImGui::TextUnformatted("Error rendering Board Workspace");
+        }
+    }
+
 
 
 } // namespace QaplaWindows
