@@ -207,6 +207,9 @@
     <ClCompile Include="src\imgui-table.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\clock-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -372,6 +375,9 @@
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui-table.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\clock-window.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

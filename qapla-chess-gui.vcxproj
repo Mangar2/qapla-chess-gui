@@ -163,6 +163,7 @@
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\board-workspace.cpp" />
+    <ClCompile Include="src\clock-window.cpp" />
     <ClCompile Include="src\engine-window.cpp" />
     <ClCompile Include="src\font.cpp" />
     <ClCompile Include="src\board-window.cpp" />
@@ -196,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\board-workspace.h" />
+    <ClInclude Include="src\clock-window.h" />
     <ClInclude Include="src\embedded-window.h" />
     <ClInclude Include="src\engine-window.h" />
     <ClInclude Include="src\font.h" />

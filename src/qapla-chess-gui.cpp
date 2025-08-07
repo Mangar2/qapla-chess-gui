@@ -27,6 +27,7 @@
 #include "board-window.h"
 #include "move-list-window.h"
 #include "engine-window.h"
+#include "clock-window.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
@@ -99,7 +100,7 @@ namespace {
 		auto engines = EngineWorkerFactory::createEngines(*config, 2);
         compute.initEngines(std::move(engines));
 		TimeControl timeControl;
-        timeControl.addTimeSegment({ 0, 1000000, 1000 }); 
+        timeControl.addTimeSegment({ 0, 100000, 1000 }); 
         //timeControl.addTimeSegment({ 0, 1000, 10 }); 
 		compute.setTimeControl(timeControl);
 		compute.autoPlay(true);
@@ -109,8 +110,11 @@ namespace {
         workspace.maximize(true);
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+        auto vSplitRight = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         hSplitContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
-		hSplitContainer->setRight(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
+		vSplitRight->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
+        vSplitRight->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
+		hSplitContainer->setRight(std::move(vSplitRight));
         vSplitContainer->setTop(std::move(hSplitContainer));
         vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
 		workspace.setRootWindow(std::move(vSplitContainer));

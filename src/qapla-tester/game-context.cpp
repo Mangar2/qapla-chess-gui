@@ -44,6 +44,8 @@ void GameContext::setTimeControl(const TimeControl& timeControl) {
     for (auto& player : players_) {
         player->setTimeControl(timeControl);
     }
+    std::lock_guard lock(gameRecordMutex_);
+    gameRecord_.setTimeControl(timeControl, timeControl);
 }
 
 void GameContext::newGame() {
