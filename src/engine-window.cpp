@@ -175,7 +175,7 @@ void EngineWindow::setTable(size_t index) {
     auto& curMoveRecord = boardData_->engineRecords()[index].curMoveRecord;
     for (int i = 0; i < 2; i++) {
         int curIndex = static_cast<int>(nextMoveIndex) - i - 1;
-        if (curMoveRecord->halfmoveNo_ == nextMoveIndex) {
+        if (curMoveRecord->halfmoveNo_ == nextMoveIndex + 1) {
 			setTable(index, *curMoveRecord);
             continue;
         }

@@ -49,11 +49,23 @@ bool ClockWindow::setClockData() {
         gameRecord.nextMoveIndex(), whiteTime, blackTime, gameRecord.isWhiteToMove());
     uint64_t wCur = 0;
 	uint64_t bCur = 0;
+
+	auto nextMoveIndex = gameRecord.nextMoveIndex();
+    uint32_t curHalfmoveNo = 0;
+    if (nextMoveIndex > 0 && nextMoveIndex <= gameRecord.history().size()) {
+        curHalfmoveNo =gameRecord.history()[nextMoveIndex - 1].halfmoveNo_;
+    }
+
+	// We need to adjust the current time for the engines currently calculating a move,
     if (boardData_->engineRecords().size() >= 1) {
+		auto halfmoveNo = boardData_->engineRecords()[0].curMoveRecord->halfmoveNo_;
 		wCur = boardData_->engineRecords()[0].curMoveRecord->timeMs;
+		if (halfmoveNo > curHalfmoveNo) goLimits.wtimeMs -= wCur;
     }
     if (boardData_->engineRecords().size() >= 2) {
+        auto halfmoveNo = boardData_->engineRecords()[1].curMoveRecord->halfmoveNo_;
         bCur = boardData_->engineRecords()[1].curMoveRecord->timeMs;
+		if (halfmoveNo > curHalfmoveNo) goLimits.btimeMs -= bCur;
     }
 
     clockData_ = {
@@ -73,52 +85,42 @@ void ClockWindow::draw() {
 
     // Gesamtkoordination
     ImVec2 regionPos = ImGui::GetCursorScreenPos();
-    float totalWidth = ImGui::GetContentRegionAvail().x;
-    float clockWidth = totalWidth * 0.4f;
-    float spacing = totalWidth * 0.05f;
-    float totalContentWidth = 2 * clockWidth + spacing;
+    constexpr float topSpace = 10.0f;
+    constexpr float clockHeight = 60.0f;
 
-    // Box-Größen
-    float clockHeight = 60.0f; // Deine Wunschhöhe, ggf. anpassen
+    const float totalWidth = ImGui::GetContentRegionAvail().x;
+    const float clockWidth = totalWidth * 0.4f;
+    const float spacing = totalWidth * 0.05f;
+    const float totalContentWidth = 2 * clockWidth + spacing;
 
-    // Linke Box: weiße Uhr
+    // White Clock
     ImVec2 whiteMin = ImVec2(regionPos.x + (totalWidth - totalContentWidth) * 0.5f,
-        regionPos.y);
-    ImVec2 whiteMax = ImVec2(whiteMin.x + clockWidth,
-        whiteMin.y + clockHeight);
+        regionPos.y + topSpace);
+    ImVec2 whiteMax = ImVec2(whiteMin.x + clockWidth, whiteMin.y + clockHeight + topSpace);
 
-    // Rechte Box: schwarze Uhr
-    ImVec2 blackMin = ImVec2(whiteMax.x + spacing,
-        regionPos.y);
-    ImVec2 blackMax = ImVec2(blackMin.x + clockWidth,
-        blackMin.y + clockHeight);
+    // Black Clock
+    ImVec2 blackMin = ImVec2(whiteMax.x + spacing, whiteMin.y);
+    ImVec2 blackMax = ImVec2(blackMin.x + clockWidth, whiteMax.y);
 
-    // Rahmen zeichnen (1px, kein Anti-Aliasing nötig, da rechteck)
-    drawList->AddRect(whiteMin, whiteMax, IM_COL32(200, 200, 200, 255), 0.0f, 0, 1.0f);
-    drawList->AddRect(blackMin, blackMax, IM_COL32(200, 200, 200, 255), 0.0f, 0, 1.0f);
-
-    // Innen-Inhalt zentriert positionieren
     auto drawClockText = [&](ImVec2 boxMin, ImVec2 boxMax,
         const std::string& engineName,
         std::uint64_t timeLeftMs,
         std::uint64_t moveTimeMs) {
-            // Mittlere X-Position
+
+            drawList->AddRect(boxMin, boxMax, IM_COL32(200, 200, 200, 255), 0.0f, 0, 1.0f);
+
             float centerX = (boxMin.x + boxMax.x) * 0.5f;
             float y = boxMin.y + 5.0f;
 
-            // Zeitformatieren
-            char buf[64];
-            std::snprintf(buf, sizeof(buf), "%02llu:%02llu",
-                timeLeftMs / 60000,
-                (timeLeftMs / 1000) % 60);
-            drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(buf).x * 0.5f, y),
-                IM_COL32(255, 255, 255, 255), buf);
+            auto clock = formatMs(timeLeftMs, 0);
+            drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(clock.c_str()).x * 0.5f, y),
+                IM_COL32(255, 255, 255, 255), clock.c_str());
 
             y += ImGui::GetFontSize() + 2.0f;
 
-            std::snprintf(buf, sizeof(buf), "Move: %llums", moveTimeMs);
-            drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(buf).x * 0.5f, y),
-                IM_COL32(200, 200, 200, 255), buf);
+            auto time = formatMs(moveTimeMs, 0);
+            drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(time.c_str()).x * 0.5f, y),
+                IM_COL32(200, 200, 200, 255), time.c_str());
 
             y += ImGui::GetFontSize() + 2.0f;
 

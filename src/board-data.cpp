@@ -63,8 +63,8 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 	return { true, false };
 }
 
-void BoardData::setGameIfExtended(const GameRecord& record) {
-	if (gameRecord_->history().size() < record.history().size()) {
+void BoardData::setGameIfDifferent(const GameRecord& record) {
+	if (gameRecord_->isDifferent(record)) {
 		*gameRecord_ = record;
 		gameState_->setFromGameRecord(*gameRecord_, gameRecord_->nextMoveIndex());
 	}

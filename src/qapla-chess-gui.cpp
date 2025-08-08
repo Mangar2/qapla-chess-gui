@@ -100,9 +100,10 @@ namespace {
 		auto engines = EngineWorkerFactory::createEngines(*config, 2);
         compute.initEngines(std::move(engines));
 		TimeControl timeControl;
-        timeControl.addTimeSegment({ 0, 100000, 1000 }); 
+        timeControl.addTimeSegment({ 0, 1000000, 1000 }); 
         //timeControl.addTimeSegment({ 0, 1000, 10 }); 
 		compute.setTimeControl(timeControl);
+        compute.setPosition(true);
 		compute.autoPlay(true);
 		auto boardData = std::make_shared<QaplaWindows::BoardData>();
                         
@@ -145,7 +146,7 @@ namespace {
             boardData->setEngineRecords(engineRecords);
 
             compute.getGameContext().withGameRecord([&](const GameRecord& g) {
-                boardData->setGameIfExtended(g);
+                boardData->setGameIfDifferent(g);
                 });
 
             workspace.draw();

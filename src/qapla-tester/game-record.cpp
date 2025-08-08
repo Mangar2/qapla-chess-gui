@@ -97,4 +97,18 @@ std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const {
     return { whiteTime, blackTime };
 }
 
+bool GameRecord::isDifferent(const GameRecord& other) const {
+    return startPos_ != other.startPos_ ||
+        startFen_ != other.startFen_ ||
+        isWhiteToMoveAtStart_ != other.isWhiteToMoveAtStart_ ||
+        whiteEngineName_ != other.whiteEngineName_ ||
+        blackEngineName_ != other.blackEngineName_ ||
+        round_ != other.round_ ||
+        tags_ != other.tags_ ||
+		moves_.size() != other.moves_.size() ||
+		whiteTimeControl_ != other.whiteTimeControl_ ||
+        blackTimeControl_ != other.blackTimeControl_ ||
+        gameEndCause_ != other.gameEndCause_ ||
+        gameResult_ != other.gameResult_;
+}
 

@@ -210,6 +210,21 @@ public:
 		return tags_;
 	}
 
+	/**
+	 * @brief Checks if this game record is different from another.
+	 * @param other The other game record to compare with.
+	 * @return True if the records differ, false if they are the same.
+	 */
+	bool isDifferent(const GameRecord& other) const;
+	
+	/**
+	 * @brief Returns the current ply index.
+	 * @return Current ply index (0 = before first move).
+	 */ 
+	uint32_t currentPly() const {
+		return currentPly_;
+	}
+
 private:
 	
 	std::map<std::string, std::string> tags_;

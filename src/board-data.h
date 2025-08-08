@@ -107,7 +107,7 @@ namespace QaplaWindows {
 		 * @brief Sets the game state from a GameRecord, if the new state extends the existing state.
 		 * @param record The GameRecord to set the game state from.
 		 */
-		void setGameIfExtended(const GameRecord& record);
+		void setGameIfDifferent(const GameRecord& record);
 
 		/**
 		 * @brief Checks if the game is over. 

@@ -138,6 +138,7 @@ void PlayerContext::checkTime(const EngineEvent& event) {
         
     const bool white = gameState_.isWhiteToMove();
     const uint64_t moveElapsedMs = event.timestampMs - computeMoveStartTimestamp_;
+	currentMove_.timeMs = moveElapsedMs;
 
     const uint64_t timeLeft = white ? goLimits_.wtimeMs : goLimits_.btimeMs;
     int numLimits = goLimits_.hasTimeControl + goLimits_.movetimeMs.has_value() +
@@ -199,6 +200,7 @@ bool PlayerContext::checkEngineTimeout() {
 
     uint64_t moveElapsedMs = Timer::getCurrentTimeMs() - computeMoveStartTimestamp_;
     moveElapsedMs = moveElapsedMs < GRACE_MS ? 0 : moveElapsedMs - GRACE_MS;
+    currentMove_.timeMs = moveElapsedMs;
 
     const bool white = gameState_.isWhiteToMove();
     bool restarted = false;
@@ -304,7 +306,7 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
     {
         std::lock_guard lock(currentMoveMutex_);
         currentMove_.clear();
-        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed();
+        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
     }
     goLimits_ = goLimits;
     // Race-condition safety setting. We will get the true timestamp returned from the EngineProcess sending
