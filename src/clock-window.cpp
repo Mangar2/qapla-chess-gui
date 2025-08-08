@@ -85,18 +85,19 @@ void ClockWindow::draw() {
 
     // Gesamtkoordination
     ImVec2 regionPos = ImGui::GetCursorScreenPos();
-    constexpr float topSpace = 10.0f;
-    constexpr float clockHeight = 60.0f;
+    constexpr float clockHeight = 80.0f;
+	constexpr float clockWidth = 200.0f;
 
     const float totalWidth = ImGui::GetContentRegionAvail().x;
-    const float clockWidth = totalWidth * 0.4f;
+	const float totalHeight = ImGui::GetContentRegionAvail().y;
     const float spacing = totalWidth * 0.05f;
     const float totalContentWidth = 2 * clockWidth + spacing;
+	const float topSpace = (totalHeight - clockHeight) * 0.5f;
 
     // White Clock
     ImVec2 whiteMin = ImVec2(regionPos.x + (totalWidth - totalContentWidth) * 0.5f,
         regionPos.y + topSpace);
-    ImVec2 whiteMax = ImVec2(whiteMin.x + clockWidth, whiteMin.y + clockHeight + topSpace);
+    ImVec2 whiteMax = ImVec2(whiteMin.x + clockWidth, whiteMin.y + clockHeight);
 
     // Black Clock
     ImVec2 blackMin = ImVec2(whiteMax.x + spacing, whiteMin.y);
@@ -112,20 +113,25 @@ void ClockWindow::draw() {
             float centerX = (boxMin.x + boxMax.x) * 0.5f;
             float y = boxMin.y + 5.0f;
 
+            ImFont* font = ImGui::GetFont();
             auto clock = formatMs(timeLeftMs, 0);
-            drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(clock.c_str()).x * 0.5f, y),
+            ImGui::PushFont(font, 28.0f);
+            drawList->AddText(font, 32.0f, ImVec2(centerX - ImGui::CalcTextSize(clock.c_str()).x * 0.5f, y),
                 IM_COL32(255, 255, 255, 255), clock.c_str());
-
             y += ImGui::GetFontSize() + 2.0f;
+            ImGui::PopFont();
 
+            ImGui::PushFont(font, 18.0f);
             auto time = formatMs(moveTimeMs, 0);
             drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(time.c_str()).x * 0.5f, y),
                 IM_COL32(200, 200, 200, 255), time.c_str());
-
             y += ImGui::GetFontSize() + 2.0f;
-
+            ImGui::PopFont();
+            
+            ImGui::PushFont(font, 24.0f);
             drawList->AddText(ImVec2(centerX - ImGui::CalcTextSize(engineName.c_str()).x * 0.5f, y),
                 IM_COL32(200, 200, 50, 255), engineName.c_str());
+			ImGui::PopFont();
         };
 
     drawClockText(whiteMin, whiteMax, clockData_.wEngineName, clockData_.wTimeLeftMs, clockData_.wTimeCurMove);

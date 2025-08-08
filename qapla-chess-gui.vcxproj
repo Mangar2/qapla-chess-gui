@@ -163,12 +163,14 @@
     <ClCompile Include="imgui\imgui_tables.cpp" />
     <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\board-workspace.cpp" />
+    <ClCompile Include="src\chess-font.cpp" />
     <ClCompile Include="src\clock-window.cpp" />
     <ClCompile Include="src\engine-window.cpp" />
     <ClCompile Include="src\font.cpp" />
     <ClCompile Include="src\board-window.cpp" />
     <ClCompile Include="src\board-data.cpp" />
     <ClCompile Include="src\imgui-table.cpp" />
+    <ClCompile Include="src\inter-variable.cpp" />
     <ClCompile Include="src\move-list-window.cpp" />
     <ClCompile Include="src\qapla-chess-gui.cpp" />
     <ClCompile Include="src\qapla-engine\bitboardmasks.cpp" />
@@ -197,6 +199,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\board-workspace.h" />
+    <ClInclude Include="src\chess-font.h" />
     <ClInclude Include="src\clock-window.h" />
     <ClInclude Include="src\embedded-window.h" />
     <ClInclude Include="src\engine-window.h" />
@@ -205,6 +208,7 @@
     <ClInclude Include="src\board-data.h" />
     <ClInclude Include="src\horizontal-split-container.h" />
     <ClInclude Include="src\imgui-table.h" />
+    <ClInclude Include="src\inter-variable.h" />
     <ClInclude Include="src\move-list-window.h" />
     <ClInclude Include="src\qapla-engine\bitboardmasks.h" />
     <ClInclude Include="src\qapla-engine\bits.h" />

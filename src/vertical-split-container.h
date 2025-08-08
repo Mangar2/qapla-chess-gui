@@ -49,7 +49,12 @@ namespace QaplaWindows {
             float minSize = 100.0f;
             float availableHeight = std::max(region.y - splitterHeight, 2 * minSize);
 
-            topHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
+            if (fixedTopHeight) {
+                topHeight = std::clamp(*fixedTopHeight, minSize, availableHeight - minSize);
+            }
+            else {
+                topHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
+            }
             float bottomHeight = availableHeight - topHeight;
 
             std::string idPrefix = "##vsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
@@ -67,15 +72,17 @@ namespace QaplaWindows {
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
-
             ImGui::Button((idPrefix + "_splitter").c_str(), ImVec2(width, splitterHeight));
-            if (ImGui::IsItemActive()) {
-                topHeight += ImGui::GetIO().MouseDelta.y;
-            }
 
-            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS); // oder ResizeNS
+            if (!fixedTopHeight) {
+                if (ImGui::IsItemActive()) {
+                    topHeight += ImGui::GetIO().MouseDelta.y;
+                }
+                if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+                    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                }
             }
 
             ImGui::PopStyleVar(2);
@@ -89,9 +96,15 @@ namespace QaplaWindows {
             ImGui::EndChild();
         }
 
+        void setFixedTopHeight(float height) {
+            fixedTopHeight = height;
+        }
+
     private:
         std::unique_ptr<EmbeddedWindow> topWindow;
         std::unique_ptr<EmbeddedWindow> bottomWindow;
+        std::optional<float> fixedTopHeight;
+
         float topHeight = 500.0f;
     };
 

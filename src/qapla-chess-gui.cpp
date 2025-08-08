@@ -115,6 +115,7 @@ namespace {
         hSplitContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
 		vSplitRight->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
         vSplitRight->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
+		vSplitRight->setFixedTopHeight(120.0f);
 		hSplitContainer->setRight(std::move(vSplitRight));
         vSplitContainer->setTop(std::move(hSplitContainer));
         vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
@@ -123,7 +124,7 @@ namespace {
         auto* window = initGlfwContext();
         initGlad();
         initImGui(window);
-        font::loadChessFont("fonts/chess_merida_unicode.ttf", 32.0f);
+        font::loadFonts();
 
         while (!glfwWindowShouldClose(window)) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {

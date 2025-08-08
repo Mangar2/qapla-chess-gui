@@ -25,12 +25,13 @@
 namespace font {
 
 	inline ImFont* chessFont = nullptr;
+	inline ImFont* interVariable = nullptr;
 
 	/**
 	 * @brief Loads a TrueType chess font into the ImGui font system.
 	 * @param path Path to the .ttf font file.
 	 * @param size Font size in pixels.
 	 */
-	void loadChessFont(const std::string& path, float size);
+	void loadFonts();
 
 }

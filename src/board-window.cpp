@@ -204,7 +204,7 @@ namespace QaplaWindows {
         using QaplaBasics::Rank;
         using QaplaBasics::File;
 
-        bool isWhite = true;
+        bool isWhite = false;
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank) {
             for (File file = File::A; file <= File::H; ++file) {
                 drawBoardSquare(drawList, boardPos, cellSize, file, rank, isWhite);

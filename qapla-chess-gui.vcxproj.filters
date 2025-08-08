@@ -210,6 +210,12 @@
     <ClCompile Include="src\clock-window.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\chess-font.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\inter-variable.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -378,6 +384,12 @@
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\clock-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\chess-font.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\inter-variable.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

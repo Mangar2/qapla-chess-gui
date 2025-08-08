@@ -18,26 +18,37 @@
  */
 
 #include "font.h"
+#include "chess-font.h"
+#include "inter-variable.h"
 #include <imgui.h>
 #include <stdexcept>
 #include <filesystem>
 
 namespace font {
 
-    void loadChessFont(const std::string& path, float size) {
-        if (!std::filesystem::exists(path)) {
-            throw std::runtime_error("Font file not found: " + path);
-        }
-
+    void loadFonts() {
         auto& io = ImGui::GetIO();
 
         io.Fonts->AddFontDefault(); // Default UI font
-        chessFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size);
-        if (!chessFont) {
-            throw std::runtime_error("Failed to load chess font: " + path);
-        }
+        //chessFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size);
+        ImFontConfig fontCfg;
+        fontCfg.FontDataOwnedByAtlas = false;
 
-        io.FontDefault = io.Fonts->Fonts[0]; // Ensure UI font stays default
+        chessFont = io.Fonts->AddFontFromMemoryTTF(
+            reinterpret_cast<void*>(const_cast<uint32_t*>(chessFontData)),
+            static_cast<int>(chessFontSize),
+            32,
+            &fontCfg
+        );
+
+        interVariable = io.Fonts->AddFontFromMemoryTTF(
+            reinterpret_cast<void*>(const_cast<uint32_t*>(interVariableData)),
+            static_cast<int>(interVariableSize),
+            16,
+            &fontCfg
+        );
+
+        io.FontDefault = io.Fonts->Fonts[2]; 
     }
 
 }
