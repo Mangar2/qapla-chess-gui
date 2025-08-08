@@ -207,6 +207,7 @@
     <ClInclude Include="src\board-window.h" />
     <ClInclude Include="src\board-data.h" />
     <ClInclude Include="src\horizontal-split-container.h" />
+    <ClInclude Include="src\imgui-button.h" />
     <ClInclude Include="src\imgui-table.h" />
     <ClInclude Include="src\inter-variable.h" />
     <ClInclude Include="src\move-list-window.h" />

@@ -48,19 +48,20 @@ namespace QaplaWindows {
             float splitterHeight = 5.0f;
             float minSize = 100.0f;
             float availableHeight = std::max(region.y - splitterHeight, 2 * minSize);
+            float adjustedHeight;
 
             if (fixedTopHeight) {
-                topHeight = std::clamp(*fixedTopHeight, minSize, availableHeight - minSize);
+                adjustedHeight = std::clamp(*fixedTopHeight, minSize, availableHeight - minSize);
             }
             else {
-                topHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
+                adjustedHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
             }
-            float bottomHeight = availableHeight - topHeight;
+            float bottomHeight = availableHeight - adjustedHeight;
 
             std::string idPrefix = "##vsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
             // Top window
-            ImGui::BeginChild((idPrefix + "_top").c_str(), ImVec2(width, topHeight), 
+            ImGui::BeginChild((idPrefix + "_top").c_str(), ImVec2(width, adjustedHeight),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             if (topWindow) topWindow->draw();

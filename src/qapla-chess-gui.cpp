@@ -91,6 +91,24 @@ namespace {
         ImGui::DestroyContext();
     }
 
+    void executeCommand(ComputeTask& compute, const std::string& command) {
+        if (command == "Stop") {
+            compute.stop();
+        } else if (command == "Newgame") {
+            compute.newGame();
+        } else if (command == "Play") {
+            compute.computeMove();
+        } else if (command == "Analyze") {
+            //compute.analyze();
+        } else if (command == "Auto") {
+            compute.autoPlay();
+        } else if (command == "Manual") {
+            compute.stop();
+        } else {
+            std::cerr << "Unknown command: " << command << '\n';
+        }
+	}
+
     int runApp() {
         ComputeTask compute;
         EngineConfigManager configManager;
@@ -112,7 +130,11 @@ namespace {
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
         auto vSplitRight = std::make_unique<QaplaWindows::VerticalSplitContainer>();
-        hSplitContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
+		auto boardWindow = std::make_unique<QaplaWindows::BoardWindow>(boardData);
+        boardWindow->setExecuteCallback([&compute](const char* command) {
+            executeCommand(compute, command);
+			});
+        hSplitContainer->setLeft(std::move(boardWindow));
 		vSplitRight->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
         vSplitRight->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
 		vSplitRight->setFixedTopHeight(120.0f);

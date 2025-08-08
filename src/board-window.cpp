@@ -21,6 +21,7 @@
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
 #include "font.h"
+#include "imgui-button.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -283,13 +284,14 @@ namespace QaplaWindows {
         //ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(static_cast<float>(width), static_cast<float>(height)));
 
         const ImVec2 region = ImGui::GetContentRegionAvail();
-        if (region.x <= 0.0f || region.y <= 0.0f) {
+        const float boardHeight = region.y - 40;
+        if (region.x <= 0.0f || boardHeight <= 0.0f) {
             return;
         }
 
         ImGui::PushFont(font::chessFont);
 
-        const float cellSize = std::floor(std::min(region.x, region.y) / gridSize) * 0.95f;
+        const float cellSize = std::floor(std::min(region.x, boardHeight) / gridSize) * 0.95f;
 
         if (promotionPending_) {
             ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
@@ -318,6 +320,18 @@ namespace QaplaWindows {
         ImGui::Dummy(ImVec2(boardSize, boardSize + coordTextHeight));
 
         ImGui::PopFont();
+		constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+		const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+        auto pos = ImVec2(boardPos.x + 20.0f, boardPos.y + region.y - 5 - totalSize.y);
+        for (const char* button : { "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
+            ImGui::SetCursorScreenPos(pos);
+            if (QaplaButton::drawIconButton(button, button, buttonSize,
+                [](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+                })) {
+                execute(button);
+            }
+            pos.x += totalSize.x + 5.0f;
+        }
     }
    
 }

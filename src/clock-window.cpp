@@ -85,7 +85,7 @@ void ClockWindow::draw() {
 
     // Gesamtkoordination
     ImVec2 regionPos = ImGui::GetCursorScreenPos();
-    constexpr float clockHeight = 80.0f;
+    constexpr float clockHeight = 85.0f;
 	constexpr float clockWidth = 200.0f;
 
     const float totalWidth = ImGui::GetContentRegionAvail().x;

@@ -392,5 +392,8 @@
     <ClInclude Include="src\inter-variable.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui-button.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -47,11 +47,12 @@ namespace QaplaWindows {
             float splitterWidth = 5.0f;
             float minSize = 100.0f;
             float availableWidth = std::max(region.x - splitterWidth - 13, 2 * minSize);
+            float adjustedLeftWidth;
 
-            leftWidth_ = std::clamp(leftWidth_, minSize, availableWidth - minSize);
+            adjustedLeftWidth = std::clamp(leftWidth_, minSize, availableWidth - minSize);
             std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
-            ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(leftWidth_, height),
+            ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             if (leftWindow_) leftWindow_->draw();
