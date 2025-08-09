@@ -20,15 +20,19 @@
 
 #include "game-record.h"
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
-    std::string whiteEngineName, std::string blackEngineName) {
+void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove) {
     moves_.clear();
-	isWhiteToMoveAtStart_ = isWhiteToMove;
+    isWhiteToMoveAtStart_ = isWhiteToMove;
     currentPly_ = 0;
     startPos_ = startPos;
     startFen_ = startPos ? "" : startFen;
     gameEndCause_ = GameEndCause::Ongoing;
     gameResult_ = GameResult::Unterminated;
+}
+
+void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
+    std::string whiteEngineName, std::string blackEngineName) {
+	setStartPosition(startPos, startFen, isWhiteToMove);
     whiteEngineName_ = whiteEngineName;
     blackEngineName_ = blackEngineName;
 }
@@ -97,6 +101,21 @@ std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const {
     return { whiteTime, blackTime };
 }
 
+bool GameRecord::isUpdate(const GameRecord& other) const {
+    return startPos_ != other.startPos_ ||
+        startFen_ != other.startFen_ ||
+        isWhiteToMoveAtStart_ != other.isWhiteToMoveAtStart_ ||
+        whiteEngineName_ != other.whiteEngineName_ ||
+        blackEngineName_ != other.blackEngineName_ ||
+        round_ != other.round_ ||
+        tags_ != other.tags_ ||
+		moves_.size() > other.moves_.size() ||
+		whiteTimeControl_ != other.whiteTimeControl_ ||
+        blackTimeControl_ != other.blackTimeControl_ ||
+        gameEndCause_ != other.gameEndCause_ ||
+        gameResult_ != other.gameResult_;
+}
+
 bool GameRecord::isDifferent(const GameRecord& other) const {
     return startPos_ != other.startPos_ ||
         startFen_ != other.startFen_ ||
@@ -105,8 +124,9 @@ bool GameRecord::isDifferent(const GameRecord& other) const {
         blackEngineName_ != other.blackEngineName_ ||
         round_ != other.round_ ||
         tags_ != other.tags_ ||
-		moves_.size() != other.moves_.size() ||
-		whiteTimeControl_ != other.whiteTimeControl_ ||
+        moves_.size() != other.moves_.size() ||
+        currentPly_ != other.currentPly_ ||
+        whiteTimeControl_ != other.whiteTimeControl_ ||
         blackTimeControl_ != other.blackTimeControl_ ||
         gameEndCause_ != other.gameEndCause_ ||
         gameResult_ != other.gameResult_;

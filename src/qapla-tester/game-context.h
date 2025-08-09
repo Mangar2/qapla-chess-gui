@@ -174,6 +174,10 @@ public:
      */
     void withGameRecord(std::function<void(const GameRecord&)> accessFn) const;
 
+    void updatePositionIfDifferent(const GameRecord& record) {
+
+    }
+
     /**
 	 * @brief Returns the result of the game.
      */

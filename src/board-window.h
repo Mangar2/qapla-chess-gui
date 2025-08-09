@@ -26,7 +26,6 @@
 #include <unordered_set>
 #include <utility>
 #include <string>
-#include <functional>
 #include <imgui.h>
 
 namespace QaplaWindows {
@@ -35,20 +34,10 @@ namespace QaplaWindows {
     public:
         explicit BoardWindow(std::shared_ptr<BoardData> BoardData) : boardData_(std::move(BoardData)) {}
 
-        void setExecuteCallback(const std::function<void(const char*)>& callback) {
-            executeCallback_ = callback;
-		}
-
         void draw() override;
 
     private:
-        void drawMaximized();
-        void execute(const char* command) {
-            if (executeCallback_) {
-                executeCallback_(command);
-            }
-		}
-		std::function<void(const char*)> executeCallback_;
+        void drawButtons();
 
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
@@ -68,7 +57,6 @@ namespace QaplaWindows {
         void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
 
         bool boardInverted_ = false;
-        bool maximized_ = false;
         std::shared_ptr<BoardData> boardData_;
 
         std::optional<QaplaBasics::Square> selectedFrom_;

@@ -276,15 +276,39 @@ namespace QaplaWindows {
         }
     }
 
+    void BoardWindow::drawButtons() {
+        constexpr float space = 3.0f;
+		constexpr float topOffset = 5.0f;
+		constexpr float bottomOffset = 8.0f;
+		constexpr float leftOffset = 20.0f;
+        ImVec2 boardPos = ImGui::GetCursorScreenPos();
+
+        constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+        auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        for (const char* button : { "New", "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
+            ImGui::SetCursorScreenPos(pos);
+            if (QaplaButton::drawIconButton(button, button, buttonSize,
+                [](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+                })) {
+                boardData_->execute(button);
+            }
+            pos.x += totalSize.x + space;
+        }
+
+		ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    }
+
     void BoardWindow::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
+		const auto startScreenPos = ImGui::GetCursorScreenPos();
+        drawButtons();
 
-        //ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(static_cast<float>(width), static_cast<float>(height)));
-
-        const ImVec2 region = ImGui::GetContentRegionAvail();
-        const float boardHeight = region.y - 40;
+        const auto screenPos = ImGui::GetCursorScreenPos();
+        const auto region = ImGui::GetContentRegionAvail();
+        const auto boardHeight = std::max(50.0f, region.y - (screenPos.y - startScreenPos.y));
         if (region.x <= 0.0f || boardHeight <= 0.0f) {
             return;
         }
@@ -305,33 +329,22 @@ namespace QaplaWindows {
         }
 
         const float boardSize = cellSize * gridSize;
-        ImVec2 boardPos = ImGui::GetCursorScreenPos();
-        boardPos.x += 3;
-        boardPos.y += 3;
-        const ImVec2 boardEnd = { boardPos.x + boardSize, boardPos.y + boardSize };
+
+		auto topLeft = ImVec2(screenPos.x + 3, screenPos.y + 3);
+
+        const ImVec2 boardEnd = { screenPos.x + boardSize, screenPos.y + boardSize };
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImFont* font = ImGui::GetFont();
 
-        drawBoardSquares(drawList, boardPos, cellSize);
-        drawBoardPieces(drawList, boardPos, cellSize, font);
-        drawBoardCoordinates(drawList, boardPos, cellSize, boardSize, font, maxBorderTextSize);
+        drawBoardSquares(drawList, topLeft, cellSize);
+        drawBoardPieces(drawList, topLeft, cellSize, font);
+        drawBoardCoordinates(drawList, topLeft, cellSize, boardSize, font, maxBorderTextSize);
 
         const float coordTextHeight = std::min(cellSize * 0.5f, maxBorderTextSize);
         ImGui::Dummy(ImVec2(boardSize, boardSize + coordTextHeight));
 
         ImGui::PopFont();
-		constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
-		const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
-        auto pos = ImVec2(boardPos.x + 20.0f, boardPos.y + region.y - 5 - totalSize.y);
-        for (const char* button : { "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
-            ImGui::SetCursorScreenPos(pos);
-            if (QaplaButton::drawIconButton(button, button, buttonSize,
-                [](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-                })) {
-                execute(button);
-            }
-            pos.x += totalSize.x + 5.0f;
-        }
+
     }
    
 }

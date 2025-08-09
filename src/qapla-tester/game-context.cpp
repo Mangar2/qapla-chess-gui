@@ -57,6 +57,7 @@ void GameContext::newGame() {
 
 void GameContext::setPosition(bool useStartPosition, const std::string& fen,
     std::optional<std::vector<std::string>> playedMoves) {
+    cancelCompute();
     auto* white = getWhite();
     auto* black = getBlack();
     const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
@@ -82,6 +83,7 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
 }
 
 void GameContext::setPosition(const GameRecord& record) {
+    cancelCompute();
     {
         std::lock_guard lock(gameRecordMutex_);
         gameRecord_ = record;

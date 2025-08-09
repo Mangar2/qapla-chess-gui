@@ -38,8 +38,10 @@
  */
 class GameRecord {
 public:
+	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove);
 	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
 		std::string whiteEngineName, std::string blackEngineName);
+
 
 	/**
 	 * @brief Initializes this GameRecord using another GameRecord (for PGN-based start setup).
@@ -209,6 +211,13 @@ public:
 	const std::map<std::string, std::string>& getTags() const {
 		return tags_;
 	}
+
+	/**
+	 * @brief Checks if this game record is an update from another.
+	 * @param other The other game record to compare with.
+	 * @return True if the records differ, false if they are the same.
+	 */
+	bool isUpdate(const GameRecord& other) const;
 
 	/**
 	 * @brief Checks if this game record is different from another.

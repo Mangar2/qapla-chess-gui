@@ -54,7 +54,7 @@ namespace QaplaButton {
 
         ImVec2 labelSize = ImGui::CalcTextSize(label);
         ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5f - labelSize.x * 0.5f, topLeft.y + size.y + 4.0f);
-        drawList->AddText(labelPos, IM_COL32(255, 255, 255, 255), label);
+        drawList->AddText(labelPos, IM_COL32(192, 192, 192, 255), label);
 
         return clicked;
     }

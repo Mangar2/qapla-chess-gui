@@ -137,6 +137,16 @@ public:
         ponderMove_ = "";
     }
 
+    /**
+	 * @brief Tells the engine to stop computing and return the best move.
+     */
+    void moveNow() {
+        if (!engine_) return;
+        if (computeState_ == ComputeState::ComputingMove) {
+            engine_->moveNow();
+        }
+	}
+
 	/**
 	 * @brief returns player to move
 	 */

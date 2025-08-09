@@ -104,6 +104,19 @@ public:
     }
 
     /**
+     * @brief Sets the current game position for all engines using a GameRecord.
+     *
+     * Initializes the game state and engine contexts from the provided GameRecord,
+     * including starting position, move history, and any associated metadata.
+     * All engines are updated to reflect the position and history described in the record.
+     *
+     * @param record The GameRecord containing the full game setup and move history.
+     */
+    void setPosition(const GameRecord& record) {
+        gameContext_.setPosition(record);
+    }
+
+    /**
 	 * @brief computes a single move for the current position.
      */
     void computeMove();

@@ -94,6 +94,8 @@ namespace {
     void executeCommand(ComputeTask& compute, const std::string& command) {
         if (command == "Stop") {
             compute.stop();
+        } else if (command == "Now") {
+            compute.moveNow();
         } else if (command == "Newgame") {
             compute.newGame();
         } else if (command == "Play") {
@@ -109,6 +111,10 @@ namespace {
         }
 	}
 
+    void setPosition(ComputeTask& compute, const GameRecord record) {
+        compute.setPosition(record);
+    }
+
     int runApp() {
         ComputeTask compute;
         EngineConfigManager configManager;
@@ -122,18 +128,20 @@ namespace {
         //timeControl.addTimeSegment({ 0, 1000, 10 }); 
 		compute.setTimeControl(timeControl);
         compute.setPosition(true);
-		compute.autoPlay(true);
 		auto boardData = std::make_shared<QaplaWindows::BoardData>();
-                        
+        boardData->setExecuteCallback([&compute](const std::string& command) {
+            executeCommand(compute, command);
+            });
+        boardData->setPositionCallback([&compute](const GameRecord& record) {
+            setPosition(compute, record);
+            });
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
         auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
         auto vSplitRight = std::make_unique<QaplaWindows::VerticalSplitContainer>();
 		auto boardWindow = std::make_unique<QaplaWindows::BoardWindow>(boardData);
-        boardWindow->setExecuteCallback([&compute](const char* command) {
-            executeCommand(compute, command);
-			});
+
         hSplitContainer->setLeft(std::move(boardWindow));
 		vSplitRight->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
         vSplitRight->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));

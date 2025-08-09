@@ -41,20 +41,6 @@ namespace QaplaWindows {
         */
     }
 
-    /*
-    void BoardWorkspace::draw() {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		drawMaximized();
-        ImGui::Begin("Board Workspace", nullptr,
-            ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoScrollWithMouse);
-        if (rootWindow) {
-            rootWindow->draw();
-        }
-        ImGui::End();
-        ImGui::PopStyleVar();
-    }
-    */
     void BoardWorkspace::draw() {
         try {
             ImVec2 pos = ImGui::GetMainViewport()->Pos;

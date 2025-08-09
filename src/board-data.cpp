@@ -55,6 +55,7 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 		gameRecord_->addMove(moveRecord);
 		gameState_->doMove(move);
 		checkForGameEnd();
+		setPositionCallback_(*gameRecord_);
 		return { false, false };
     }
     else if (promotion) {
@@ -63,8 +64,20 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 	return { true, false };
 }
 
+void BoardData::execute(std::string command) {
+	if (command == "New" && gameRecord_ != nullptr) {
+		gameState_->setFen(true, "");
+		gameRecord_->setStartPosition(true, "", gameState_->isWhiteToMove());
+		setPositionCallback_(*gameRecord_);
+	}
+	else if (executeCallback_) {
+		executeCallback_(command);
+	}
+}
+
+
 void BoardData::setGameIfDifferent(const GameRecord& record) {
-	if (gameRecord_->isDifferent(record)) {
+	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_)) {
 		*gameRecord_ = record;
 		gameState_->setFromGameRecord(*gameRecord_, gameRecord_->nextMoveIndex());
 	}

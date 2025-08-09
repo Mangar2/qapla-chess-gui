@@ -95,10 +95,10 @@ void ComputeTask::moveNow() {
     auto& gameRecord = gameContext_.gameRecord();
 
     if (gameRecord.isWhiteToMove()) {
-        gameContext_.getWhite()->getEngine()->moveNow();
+        gameContext_.getWhite()->moveNow();
     }
     else {
-        gameContext_.getBlack()->getEngine()->moveNow();
+        gameContext_.getBlack()->moveNow();
     }
 }
 

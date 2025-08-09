@@ -23,6 +23,7 @@
 #include "qapla-tester/engine-record.h"
 #include <memory>
 #include <optional>
+#include <functional>
 
 namespace QaplaBasics{
 	class Move;
@@ -117,7 +118,20 @@ namespace QaplaWindows {
 		 */
 		bool isGameOver() const;
 
+		void setExecuteCallback(const std::function<void(const std::string& str)>& callback) {
+			executeCallback_ = callback;
+		}
+
+		void setPositionCallback(const std::function<void(const GameRecord&)>& callback) {
+			setPositionCallback_ = callback;
+		}
+
+		void execute(std::string command); 
+
 	private:
+		std::function<void(const std::string& str)> executeCallback_;
+		std::function<void(const GameRecord&)> setPositionCallback_;
+
 		void checkForGameEnd();
 		std::unique_ptr<GameState> gameState_;
 		std::unique_ptr<GameRecord> gameRecord_;

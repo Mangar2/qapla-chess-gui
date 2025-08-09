@@ -100,7 +100,6 @@ void MoveListWindow::draw() {
         ImGui::TableSetColumnIndex(4);
         ImGui::TextUnformatted("PV");
         
-
         checkKeyboard();
 
         int moveNumber = 1;
