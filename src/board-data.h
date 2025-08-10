@@ -106,6 +106,9 @@ namespace QaplaWindows {
 		const EpdData& epdData() const {
 			return epdData_;
 		}
+		EpdData& epdData() {
+			return epdData_;
+		}
 
 		void setEngineRecords(const EngineRecords& records) {
 			engineRecords_ = records;

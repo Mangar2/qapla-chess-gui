@@ -155,6 +155,7 @@ void EpdManager::analyzeEpd(const std::string& filepath, const EngineConfig& eng
     }
 
     initializeTestCases(maxTimeInS, minTimeInS, seenPlies);
+	updateCnt_++;
     currentIndex_ = 0;
     oldestIndexInUse_ = 0;
     tc_.setMoveTime(maxTimeInS * 1000);

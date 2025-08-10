@@ -86,8 +86,17 @@ void EpdWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
+void EpdWindow::drawInput() {
+    int maxConcurrency = 32;
+    int concurrency = static_cast<int>(boardData_->epdData().config().concurrency);
+    //ImGui::DragInt("Concurrency", &concurrency, 1, 1, maxConcurrency);
+    ImGui::SliderInt("Concurrency", &concurrency, 1, maxConcurrency);
+	boardData_->epdData().config().concurrency = static_cast<uint32_t>(concurrency);
+}
+
 void EpdWindow::draw() {
     drawButtons();
+    drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
     boardData_->epdData().drawTable(size);
 }

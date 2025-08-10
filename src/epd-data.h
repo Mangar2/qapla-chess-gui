@@ -38,8 +38,7 @@ namespace QaplaWindows {
         void pollData();
         void analyse() const;
         void drawTable(const ImVec2& size) const;
-
-	private:
+        
         struct EpdConfig {
             std::string filepath;
             EngineConfig engine;
@@ -48,6 +47,12 @@ namespace QaplaWindows {
             uint64_t minTimeInS;
             uint32_t seenPlies;
         };
+        EpdConfig& config() {
+            return epdConfig_;
+		}
+
+	private:
+
         EpdConfig epdConfig_;
         uint64_t updateCnt = 0;
         void populateTable();

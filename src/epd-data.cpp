@@ -35,9 +35,9 @@ namespace QaplaWindows {
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 80.0f },
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 200.0f },
                 { "Best move", ImGuiTableColumnFlags_WidthFixed, 80.0f },
-                { "Result", ImGuiTableColumnFlags_WidthFixed, 80.0f, true }
+                { "Result", ImGuiTableColumnFlags_WidthFixed, 100.0f, true }
             }
         )
     { 
@@ -47,8 +47,8 @@ namespace QaplaWindows {
             .filepath = "test/speelman Endgame.epd",
             .engine = *config,
             .concurrency = 1,
-            .maxTimeInS = 60,
-            .minTimeInS = 5,
+            .maxTimeInS = 10,
+            .minTimeInS = 2,
             .seenPlies = 3
         };
     }
@@ -57,6 +57,7 @@ namespace QaplaWindows {
 
     void EpdData::populateTable() {
         if (!epdTests_) return;
+		table_.clear();
         for (auto& test : *epdTests_) {
             std::vector<std::string> row{};
             row.push_back(test.id);
@@ -67,10 +68,13 @@ namespace QaplaWindows {
             }
             row.push_back(bestMoves);
             if (test.correct) {
-                row.push_back(formatMs(test.timeMs, 2) + " (d: " + std::to_string(test.correctAtDepth) + ")");
+                row.push_back("d" + std::to_string(test.correctAtDepth) + ", " + formatMs(test.correctAtTimeInMs, 2));
             } 
-            else {
+            else if (test.searchDepth >= 0) {
                 row.push_back("-");
+            }
+            else {
+                row.push_back("?");
             }
 			table_.push(row);
         }
