@@ -197,7 +197,7 @@ void EngineWindow::draw() {
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
-    constexpr float cCornerRounding = 6.0f;
+    constexpr float cCornerRounding = 0.0f;
     constexpr ImU32 cEvenBg = IM_COL32(40, 44, 52, 255);  
     constexpr ImU32 cOddBg = IM_COL32(30, 34, 40, 255);   
     constexpr ImU32 cBorder = IM_COL32(70, 80, 100, 255);

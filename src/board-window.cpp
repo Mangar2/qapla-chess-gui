@@ -286,11 +286,33 @@ namespace QaplaWindows {
         constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-        for (const char* button : { "New", "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
+        for (const std::string button : { "New", "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
             ImGui::SetCursorScreenPos(pos);
             if (QaplaButton::drawIconButton(button, button, buttonSize,
-                [](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-                })) {
+                [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, bool hover) {
+                    if (button == "Stop") {
+                        QaplaButton::drawStop(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "Play") {
+						QaplaButton::drawArrow(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "Analyze") {
+                        QaplaButton::drawAnalyze(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "New") {
+                        QaplaButton::drawNew(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "Auto") {
+                        //QaplaButton::drawAuto(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "Manual") {
+						//QaplaButton::drawManual(drawList, topLeft, size, hover);
+                    }
+                    else if (button == "Now") {
+                        QaplaButton::drawNow(drawList, topLeft, size, hover);
+                    }
+                })) 
+            {
                 boardData_->execute(button);
             }
             pos.x += totalSize.x + space;
@@ -303,12 +325,12 @@ namespace QaplaWindows {
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
-		const auto startScreenPos = ImGui::GetCursorScreenPos();
         drawButtons();
 
         const auto screenPos = ImGui::GetCursorScreenPos();
         const auto region = ImGui::GetContentRegionAvail();
-        const auto boardHeight = std::max(50.0f, region.y - (screenPos.y - startScreenPos.y));
+        const auto boardHeight = std::max(50.0f, region.y - 10.0f);
+
         if (region.x <= 0.0f || boardHeight <= 0.0f) {
             return;
         }

@@ -88,17 +88,18 @@ void MoveListWindow::draw() {
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
         
         ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Move");
+        ImGui::TableHeader("Move");
 
         uint32_t index = 1;
         for (std::string text : { "Depth", "Time", "Score" }) {
             ImGui::TableSetColumnIndex(index);
-            textAlignRight(text);
+			alignRight(text);
+			ImGui::TableHeader(text.c_str());   
             index++;
         }
 
         ImGui::TableSetColumnIndex(4);
-        ImGui::TextUnformatted("PV");
+        ImGui::TableHeader("PV");
         
         checkKeyboard();
 

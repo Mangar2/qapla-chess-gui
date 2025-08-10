@@ -19,8 +19,11 @@
 
 #pragma once
 
+#include "epd-data.h"
+
 #include "qapla-engine/types.h"
 #include "qapla-tester/engine-record.h"
+
 #include <memory>
 #include <optional>
 #include <functional>
@@ -100,6 +103,10 @@ namespace QaplaWindows {
 			return engineRecords_;
 		}
 
+		const EpdData& epdData() const {
+			return epdData_;
+		}
+
 		void setEngineRecords(const EngineRecords& records) {
 			engineRecords_ = records;
 		}
@@ -128,7 +135,12 @@ namespace QaplaWindows {
 
 		void execute(std::string command); 
 
+		void pollData();
+
 	private:
+
+		EpdData epdData_;
+
 		std::function<void(const std::string& str)> executeCallback_;
 		std::function<void(const GameRecord&)> setPositionCallback_;
 

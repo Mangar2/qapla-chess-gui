@@ -35,6 +35,13 @@ namespace QaplaWindows {
         ImGui::TextUnformatted(content.c_str());
     }
 
+    static void headerAligned(const std::string& content, bool right) {
+        if (right) {
+            alignRight(content);
+        }
+        ImGui::TableHeader(content.c_str());
+    }
+
     ImGuiTable::ImGuiTable(const std::string& tableId,
         ImGuiTableFlags tableFlags,
         const std::vector<ColumnDef>& columns)
@@ -55,7 +62,7 @@ namespace QaplaWindows {
         rows_.clear();
     }
 
-    void ImGuiTable::tableHeadersRow() {
+    void ImGuiTable::tableHeadersRow() const {
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
         for (int columnN = 0; columnN < columns_.size(); columnN++) {
@@ -63,12 +70,12 @@ namespace QaplaWindows {
                 continue;
 			std::string name = columns_[columnN].name;
             ImGui::PushID(columnN);
-            textAligned(columns_[columnN].name, columns_[columnN].alignRight);
+            headerAligned(columns_[columnN].name, columns_[columnN].alignRight);
             ImGui::PopID();
         }
     }
 
-    void ImGuiTable::draw(const ImVec2& size) {
+    void ImGuiTable::draw(const ImVec2& size) const {
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, size)) {
             for (const auto& column : columns_) {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);

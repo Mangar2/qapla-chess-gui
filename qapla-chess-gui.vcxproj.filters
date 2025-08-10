@@ -216,6 +216,33 @@
     <ClCompile Include="src\inter-variable.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\epd-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\os-dialogs.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\epd-manager.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\epd-reader.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-manager.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\game-manager-pool.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\input-handler.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\adjucation-manager.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\epd-data.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -393,6 +420,36 @@
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui-button.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\epd-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\os-dialogs.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\epd-manager.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\epd-reader.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-task.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-manager.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\game-manager-pool.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\input-handler.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\adjucation-manager.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\epd-data.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

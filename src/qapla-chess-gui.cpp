@@ -23,11 +23,13 @@
 #include "qapla-tester/compute-task.h"
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/engine-config-manager.h"
+#include "qapla-tester/logger.h"
 
 #include "board-window.h"
 #include "move-list-window.h"
 #include "engine-window.h"
 #include "clock-window.h"
+#include "epd-window.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
@@ -63,7 +65,7 @@ namespace {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-        auto* window = glfwCreateWindow(800, 800, "Qapla Chess GUI", nullptr, nullptr);
+        auto* window = glfwCreateWindow(1400, 800, "Qapla Chess GUI", nullptr, nullptr);
         if (!window)
             throw std::runtime_error("Failed to create GLFW window");
 
@@ -115,7 +117,37 @@ namespace {
         compute.setPosition(record);
     }
 
+    QaplaWindows::BoardWorkspace initWindows(std::shared_ptr<QaplaWindows::BoardData> boardData) {
+
+        QaplaWindows::BoardWorkspace workspace;
+        workspace.maximize(true);
+
+        auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
+        ClockMovesContainer->setFixedTopHeight(120.0f);
+        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
+        ClockMovesContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
+
+        auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
+        BoardMovesContainer->setRight(std::move(ClockMovesContainer));
+
+        auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
+        BoardEngineContainer->setTop(std::move(BoardMovesContainer));
+        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
+
+        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+		mainContainer->setRight(std::move(BoardEngineContainer));
+		mainContainer->setLeft(std::make_unique<QaplaWindows::EpdWindow>(boardData));
+        workspace.setRootWindow(std::move(mainContainer));
+        return workspace;
+    }
+
     int runApp() {
+        Logger::setLogPath("./log");
+        Logger::testLogger().setLogFile("report");
+        Logger::testLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
+		Logger::engineLogger().setLogFile("enginelog");
+        Logger::engineLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
         ComputeTask compute;
         EngineConfigManager configManager;
         configManager.loadFromFile("./test/engines.ini");
@@ -135,21 +167,7 @@ namespace {
         boardData->setPositionCallback([&compute](const GameRecord& record) {
             setPosition(compute, record);
             });
-        QaplaWindows::BoardWorkspace workspace;
-        workspace.maximize(true);
-        auto vSplitContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
-        auto hSplitContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
-        auto vSplitRight = std::make_unique<QaplaWindows::VerticalSplitContainer>();
-		auto boardWindow = std::make_unique<QaplaWindows::BoardWindow>(boardData);
-
-        hSplitContainer->setLeft(std::move(boardWindow));
-		vSplitRight->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
-        vSplitRight->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
-		vSplitRight->setFixedTopHeight(120.0f);
-		hSplitContainer->setRight(std::move(vSplitRight));
-        vSplitContainer->setTop(std::move(hSplitContainer));
-        vSplitContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
-		workspace.setRootWindow(std::move(vSplitContainer));
+        auto workspace = initWindows(boardData);
 
         auto* window = initGlfwContext();
         initGlad();
@@ -179,6 +197,7 @@ namespace {
             compute.getGameContext().withGameRecord([&](const GameRecord& g) {
                 boardData->setGameIfDifferent(g);
                 });
+			boardData->pollData();
 
             workspace.draw();
 

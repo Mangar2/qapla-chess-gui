@@ -77,7 +77,7 @@ namespace QaplaWindows {
          * @brief Renders the table with dynamic content.
          * @param size Size of the table in ImGui units.
          */
-        void draw(const ImVec2& size);
+        void draw(const ImVec2& size) const;
 
         std::string getField(size_t row, size_t column) const {
             if (row < rows_.size() && column < columns_.size()) {
@@ -93,7 +93,7 @@ namespace QaplaWindows {
 		}
 
     private:
-        void tableHeadersRow();
+        void tableHeadersRow() const;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;

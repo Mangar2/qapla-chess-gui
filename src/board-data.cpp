@@ -75,6 +75,9 @@ void BoardData::execute(std::string command) {
 	}
 }
 
+void BoardData::pollData() {
+	epdData_.pollData();
+}
 
 void BoardData::setGameIfDifferent(const GameRecord& record) {
 	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_)) {

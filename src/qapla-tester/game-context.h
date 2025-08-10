@@ -162,6 +162,17 @@ public:
 	}
 
     /**
+     * @brief Sets the end state of the current game.
+     *
+     * @param cause The reason why the game ended (e.g. checkmate, draw, resignation).
+     * @param result The result of the game (e.g. win, loss, draw).
+     */
+    void setGameEnd(GameEndCause cause, GameResult result) {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_.setGameEnd(cause, result);
+    }
+
+    /**
      * @brief Returns the current game record (const).
      */
     const GameRecord& gameRecord() const;
