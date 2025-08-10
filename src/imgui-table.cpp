@@ -75,23 +75,42 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiTable::draw(const ImVec2& size) const {
+    bool ImGuiTable::isRowClicked(size_t index) const {
+        ImGui::TableSetColumnIndex(0);
+        std::string id = "row" + std::to_string(index);
+        ImGui::PushID(id.c_str());
+        bool clicked = ImGui::Selectable("##row", false,
+            ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
+        ImGui::PopID();
+        ImGui::SameLine(0.0f, 0.0f);
+        return clicked;
+    }
+
+    std::optional<size_t> ImGuiTable::draw(const ImVec2& size) const {
+        std::optional<size_t> clickedRowIndex;
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, size)) {
             for (const auto& column : columns_) {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
             }
             tableHeadersRow();
-
+            size_t index = 0;
             for (const auto& row : rows_) {
                 ImGui::TableNextRow();
+                if (clickable_) {
+                    if (isRowClicked(index)) {
+                        clickedRowIndex = index;
+                    }
+				}
                 for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
                     ImGui::TableSetColumnIndex(static_cast<int>(col));
 					textAligned(row[col], columns_[col].alignRight);
                 }
+                index++;
             }
 
             ImGui::EndTable();
         }
+		return clickedRowIndex;
     }
 
 }

@@ -22,6 +22,7 @@
 #include "qapla-tester/engine-config.h"
 #include "imgui-table.h"
 #include <memory>
+#include <optional>
 
 class EpdManager;
 struct EpdTestCase;
@@ -35,9 +36,11 @@ namespace QaplaWindows {
         EpdData();
         ~EpdData();
 
+        void init();
+
         void pollData();
         void analyse() const;
-        void drawTable(const ImVec2& size) const;
+        std::optional<size_t> drawTable(const ImVec2& size) const;
         
         struct EpdConfig {
             std::string filepath;
@@ -50,6 +53,12 @@ namespace QaplaWindows {
         EpdConfig& config() {
             return epdConfig_;
 		}
+
+        const std::vector<EpdTestCase>& epdTest() const {
+            return *epdTests_;
+		}
+
+        std::optional<std::string> getFen(size_t index) const;
 
 	private:
 

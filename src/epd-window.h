@@ -45,9 +45,7 @@ namespace QaplaWindows {
     private:
         void drawButtons();
         void drawInput();
-        std::unique_ptr<ImGuiTable> table_;
         std::shared_ptr<BoardData> boardData_;
-		void initTable();
     };
 
 } // namespace QaplaWindows

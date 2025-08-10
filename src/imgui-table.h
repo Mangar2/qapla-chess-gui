@@ -23,6 +23,7 @@
 #include  <mutex>
 #include <string>
 #include <vector>
+#include <optional>
 
 namespace QaplaWindows {
 
@@ -37,6 +38,10 @@ namespace QaplaWindows {
 			float width = 0.0f; 
 			bool alignRight = false; 
         };
+
+        void setClickable(bool clickable) {
+			clickable_ = clickable;
+		}
 
         /**
          * @brief Constructs an ImGuiTable with static table configuration.
@@ -76,8 +81,9 @@ namespace QaplaWindows {
         /**
          * @brief Renders the table with dynamic content.
          * @param size Size of the table in ImGui units.
+         * @return Number of row clicked, if any
          */
-        void draw(const ImVec2& size) const;
+        std::optional<size_t> draw(const ImVec2& size) const;
 
         std::string getField(size_t row, size_t column) const {
             if (row < rows_.size() && column < columns_.size()) {
@@ -93,7 +99,9 @@ namespace QaplaWindows {
 		}
 
     private:
+        bool clickable_ = false;
         void tableHeadersRow() const;
+		bool isRowClicked(size_t index) const;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;

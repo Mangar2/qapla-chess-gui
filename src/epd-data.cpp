@@ -41,6 +41,12 @@ namespace QaplaWindows {
             }
         )
     { 
+        table_.setClickable(true);
+    }
+
+    EpdData::~EpdData() = default;
+
+    void EpdData:: init() {
         auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
         if (!config) return;
         epdConfig_ = EpdConfig{
@@ -53,7 +59,13 @@ namespace QaplaWindows {
         };
     }
 
-    EpdData::~EpdData() = default;
+    std::optional<std::string> EpdData::getFen(size_t index) const {
+        if (index < epdTests_->size()) {
+            auto testCase = (*epdTests_)[index];
+            return testCase.fen;
+        }
+        return std::nullopt;
+    }
 
     void EpdData::populateTable() {
         if (!epdTests_) return;
@@ -101,8 +113,8 @@ namespace QaplaWindows {
         epdManager_->schedule(epdManager_, epdConfig_.engine);
     }
 
-    void EpdData::drawTable(const ImVec2& size) const {
-        table_.draw(size);
+    std::optional<size_t> EpdData::drawTable(const ImVec2& size) const {
+        return table_.draw(size);
     }
 
 }

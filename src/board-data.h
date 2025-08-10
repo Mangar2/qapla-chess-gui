@@ -34,6 +34,7 @@ namespace QaplaBasics{
 
 class GameState;
 class GameRecord;
+class ComputeTask;
 
 namespace QaplaWindows {
 
@@ -43,6 +44,8 @@ namespace QaplaWindows {
 		 * @brief Constructs a new BoardData object.
 		 */
 		BoardData();
+
+		~BoardData();
 
 		/**
 		 * @brief Returns a const reference to the current GameState.
@@ -88,6 +91,13 @@ namespace QaplaWindows {
 			QaplaBasics::Piece promote);
 
 		/**
+		 * @brief Sets the position of the game.
+		 * @param startPosition If true, sets the position to the starting position.
+		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.
+		 */
+		void setPosition(bool startPosition, const std::string& fen = "");
+
+		/**
 		 * @brief Returns the current move index.
 		 * @return Current move index (uint32_t).
 		 */
@@ -128,28 +138,23 @@ namespace QaplaWindows {
 		 */
 		bool isGameOver() const;
 
-		void setExecuteCallback(const std::function<void(const std::string& str)>& callback) {
-			executeCallback_ = callback;
-		}
-
-		void setPositionCallback(const std::function<void(const GameRecord&)>& callback) {
-			setPositionCallback_ = callback;
-		}
-
 		void execute(std::string command); 
 
+		/**
+		 * @brief Polls data from several data provider (computeTask, edpData, ...) to provide them for imgui windows.
+		 * This method must be called in the main gui loop to keep the data up-to-date.
+		 */
 		void pollData();
+
 
 	private:
 
 		EpdData epdData_;
 
-		std::function<void(const std::string& str)> executeCallback_;
-		std::function<void(const GameRecord&)> setPositionCallback_;
-
 		void checkForGameEnd();
 		std::unique_ptr<GameState> gameState_;
 		std::unique_ptr<GameRecord> gameRecord_;
+		std::unique_ptr<ComputeTask> computeTask_;
 		EngineRecords engineRecords_;
 	};
 

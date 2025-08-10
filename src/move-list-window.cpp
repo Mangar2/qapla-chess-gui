@@ -153,7 +153,6 @@ void MoveListWindow::checkKeyboard() {
     }
 }
 
-
 bool MoveListWindow::isRowClicked(size_t index) {
     std::string id =  "/MoveListTable/row/" + std::to_string(index);
     ImGui::PushID(id.c_str());

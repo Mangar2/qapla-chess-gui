@@ -21,15 +21,35 @@
 #include "board-data.h"
 
 #include "qapla-engine/move.h"
+#include "qapla-tester/time-control.h"
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
+#include "qapla-tester/compute-task.h"
+#include "qapla-tester/engine-config-manager.h"
+#include "qapla-tester/engine-worker-factory.h"
 
 using namespace QaplaWindows;
 
 BoardData::BoardData() : 
-	gameState_(std::make_unique<GameState>()), gameRecord_(std::make_unique<GameRecord>())
+	gameState_(std::make_unique<GameState>()),
+	gameRecord_(std::make_unique<GameRecord>()),
+	computeTask_(std::make_unique<ComputeTask>())
 {
+	EngineConfigManager configManager;
+	configManager.loadFromFile("./test/engines.ini");
+	EngineWorkerFactory::setConfigManager(configManager);
+	auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
+	auto engines = EngineWorkerFactory::createEngines(*config, 2);
+	computeTask_->initEngines(std::move(engines));
+	TimeControl timeControl;
+	timeControl.addTimeSegment({ 0, 1000000, 1000 });
+	//timeControl.addTimeSegment({ 0, 1000, 10 }); 
+	computeTask_->setTimeControl(timeControl);
+	computeTask_->setPosition(true);
+	epdData_.init();
 }
+
+BoardData::~BoardData() = default;
 
 void BoardData::checkForGameEnd() {
 	auto [cause, result] = gameState_->getGameResult();
@@ -55,7 +75,7 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 		gameRecord_->addMove(moveRecord);
 		gameState_->doMove(move);
 		checkForGameEnd();
-		setPositionCallback_(*gameRecord_);
+		computeTask_->setPosition(*gameRecord_);
 		return { false, false };
     }
     else if (promotion) {
@@ -64,18 +84,49 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 	return { true, false };
 }
 
+void BoardData::setPosition(bool startPosition, const std::string& fen) {
+	computeTask_->setPosition(startPosition, fen);
+}
+
 void BoardData::execute(std::string command) {
 	if (command == "New" && gameRecord_ != nullptr) {
 		gameState_->setFen(true, "");
 		gameRecord_->setStartPosition(true, "", gameState_->isWhiteToMove());
-		setPositionCallback_(*gameRecord_);
+		computeTask_->setPosition(*gameRecord_);
 	}
-	else if (executeCallback_) {
-		executeCallback_(command);
+	else if (command == "Stop") {
+		computeTask_->stop();
+	}
+	else if (command == "Now") {
+	computeTask_->moveNow();
+	}
+	else if (command == "Newgame") {
+	computeTask_->newGame();
+	}
+	else if (command == "Play") {
+	computeTask_->computeMove();
+	}
+	else if (command == "Analyze") {
+		//compute.analyze();
+	}
+	else if (command == "Auto") {
+	computeTask_->autoPlay();
+	}
+	else if (command == "Manual") {
+	computeTask_->stop();
+	}
+	else {
+		std::cerr << "Unknown command: " << command << '\n';
 	}
 }
 
 void BoardData::pollData() {
+	auto engineRecords = computeTask_->getEngineRecords();
+	setEngineRecords(engineRecords);
+
+	computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
+		setGameIfDifferent(g);
+		});
 	epdData_.pollData();
 }
 

@@ -17,12 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "qapla-tester/game-state.h"
-#include "qapla-tester/game-record.h"
 #include "board-data.h"
-#include "qapla-tester/compute-task.h"
-#include "qapla-tester/engine-worker-factory.h"
-#include "qapla-tester/engine-config-manager.h"
 #include "qapla-tester/logger.h"
 
 #include "board-window.h"
@@ -93,30 +88,6 @@ namespace {
         ImGui::DestroyContext();
     }
 
-    void executeCommand(ComputeTask& compute, const std::string& command) {
-        if (command == "Stop") {
-            compute.stop();
-        } else if (command == "Now") {
-            compute.moveNow();
-        } else if (command == "Newgame") {
-            compute.newGame();
-        } else if (command == "Play") {
-            compute.computeMove();
-        } else if (command == "Analyze") {
-            //compute.analyze();
-        } else if (command == "Auto") {
-            compute.autoPlay();
-        } else if (command == "Manual") {
-            compute.stop();
-        } else {
-            std::cerr << "Unknown command: " << command << '\n';
-        }
-	}
-
-    void setPosition(ComputeTask& compute, const GameRecord record) {
-        compute.setPosition(record);
-    }
-
     QaplaWindows::BoardWorkspace initWindows(std::shared_ptr<QaplaWindows::BoardData> boardData) {
 
         QaplaWindows::BoardWorkspace workspace;
@@ -148,25 +119,8 @@ namespace {
         Logger::testLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
 		Logger::engineLogger().setLogFile("enginelog");
         Logger::engineLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
-        ComputeTask compute;
-        EngineConfigManager configManager;
-        configManager.loadFromFile("./test/engines.ini");
-		EngineWorkerFactory::setConfigManager(configManager);
-        auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-		auto engines = EngineWorkerFactory::createEngines(*config, 2);
-        compute.initEngines(std::move(engines));
-		TimeControl timeControl;
-        timeControl.addTimeSegment({ 0, 1000000, 1000 }); 
-        //timeControl.addTimeSegment({ 0, 1000, 10 }); 
-		compute.setTimeControl(timeControl);
-        compute.setPosition(true);
+
 		auto boardData = std::make_shared<QaplaWindows::BoardData>();
-        boardData->setExecuteCallback([&compute](const std::string& command) {
-            executeCommand(compute, command);
-            });
-        boardData->setPositionCallback([&compute](const GameRecord& record) {
-            setPosition(compute, record);
-            });
         auto workspace = initWindows(boardData);
 
         auto* window = initGlfwContext();
@@ -191,13 +145,7 @@ namespace {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            auto engineRecords = compute.getEngineRecords();
-            boardData->setEngineRecords(engineRecords);
-
-            compute.getGameContext().withGameRecord([&](const GameRecord& g) {
-                boardData->setGameIfDifferent(g);
-                });
-			boardData->pollData();
+  			boardData->pollData();
 
             workspace.draw();
 

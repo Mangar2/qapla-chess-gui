@@ -43,17 +43,6 @@ EpdWindow::EpdWindow(std::shared_ptr<BoardData> boardData)
 
 EpdWindow::~EpdWindow() = default;
 
-void EpdWindow::initTable() {
-    table_ = std::make_unique<ImGuiTable>("EpdTable",
-        ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
-        std::vector<ImGuiTable::ColumnDef>{
-            { "Name", ImGuiTableColumnFlags_WidthFixed, 100.0f, true},
-            { "Request", ImGuiTableColumnFlags_WidthFixed, 100.0f, true },
-            { "Result", ImGuiTableColumnFlags_WidthFixed, 80.0f, true }
-        }
-    );
-}
-
 void EpdWindow::drawButtons() {
     constexpr float space = 3.0f;
     constexpr float topOffset = 5.0f;
@@ -98,6 +87,12 @@ void EpdWindow::draw() {
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
-    boardData_->epdData().drawTable(size);
+    auto clickedRow = boardData_->epdData().drawTable(size);
+    if (clickedRow) {
+        auto fen = boardData_->epdData().getFen(*clickedRow);
+        if (fen) {
+            boardData_->setPosition(false, *fen);
+        }
+	}
 }
 
