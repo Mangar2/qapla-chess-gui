@@ -120,6 +120,9 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
             " in raw info line \"" + event.rawLine + "\"", TraceLevel::info);
         return QaplaBasics::Move();
     }
+	
+    if (isAnalyzing_) return QaplaBasics::Move();
+
     checkTime(event);
     // Must be calculated before doMove
     std::string san = gameState_.moveToSan(move);
@@ -133,6 +136,8 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
 }
 
 void PlayerContext::checkTime(const EngineEvent& event) {
+
+    if (isAnalyzing_) return;
     const uint64_t GRACE_MS = 100;
     const uint64_t GRACE_NODES = 1000;
         
@@ -195,6 +200,8 @@ void PlayerContext::checkTime(const EngineEvent& event) {
 bool PlayerContext::checkEngineTimeout() {
     if (computeState_ != ComputeState::ComputingMove) return false;
     if (!engine_) return false;
+	if (isAnalyzing_) return false;
+
 	const uint64_t GRACE_MS = 1000;
     const uint64_t OVERRUN_TIMEOUT = 5000;
 
@@ -295,7 +302,7 @@ void PlayerContext::doMove(QaplaBasics::Move move) {
     gameState_.doMove(move);
 }
 
-void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& goLimits) {
+void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& goLimits, bool analyze) {
 	if (!engine_) {
 		throw AppError::make("PlayerContext::computeMove; Cannot compute move without an engine.");
 	}
@@ -307,6 +314,7 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
         std::lock_guard lock(currentMoveMutex_);
         currentMove_.clear();
         currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
+		isAnalyzing_ = analyze;
     }
     goLimits_ = goLimits;
     // Race-condition safety setting. We will get the true timestamp returned from the EngineProcess sending
@@ -338,6 +346,7 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
     {
         std::lock_guard lock(currentMoveMutex_);
         currentMove_.clear();
+		isAnalyzing_ = false;
     }
     ponderMove_ = event->ponderMove ? *event->ponderMove : "";
 

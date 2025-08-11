@@ -39,7 +39,9 @@ ComputeTask::~ComputeTask() {
 void ComputeTask::computeMove() {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
+    if (taskType_ != ComputeTaskType::None) return;
     logMoves_ = false;
+    taskType_ = ComputeTaskType::ComputeMove;
     markRunning();
 
     auto& gameRecord = gameContext_.gameRecord();
@@ -59,6 +61,26 @@ void ComputeTask::computeMove() {
     }
 }
 
+void ComputeTask::analyze() {
+    if (gameContext_.getPlayerCount() == 0) return;
+    if (checkGameOver()) return;
+    if (taskType_ != ComputeTaskType::None) return;
+    logMoves_ = false;
+    taskType_ = ComputeTaskType::Analyze;
+    markRunning();
+    auto& gameRecord = gameContext_.gameRecord();
+    TimeControl time;
+    GoLimits goLimits;
+    goLimits.hasTimeControl = true;
+	goLimits.infinite = true;
+    for (size_t i = 0; i < gameContext_.getPlayerCount(); ++i) {
+        auto player = gameContext_.player(i);
+        if (player) {
+            player->computeMove(gameRecord, goLimits, true);
+        }
+	}
+}
+
 void ComputeTask::autoPlay(bool logMoves) {
     logMoves_ = logMoves;
     autoPlay(std::nullopt);
@@ -68,6 +90,8 @@ void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
 
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
+    if (taskType_ != ComputeTaskType::None) return;
+
     markRunning();
 	auto& gameRecord = gameContext_.gameRecord();
 	auto white = gameContext_.getWhite();
@@ -154,6 +178,8 @@ void ComputeTask::processQueue() {
             }
             processEvent(event);
         }
+
+        if (taskType_ == ComputeTaskType::Analyze) continue;
 
         if (std::chrono::steady_clock::now() >= nextTimeoutCheck) {
             nextTimeoutCheck = std::chrono::steady_clock::now() + timeoutInterval;

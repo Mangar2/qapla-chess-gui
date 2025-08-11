@@ -122,6 +122,12 @@ public:
     void computeMove();
 
     /**
+	 * @brief Analyzes the current position 
+	 * Computes a best move with unlimited time and depth without playing it.
+	 */
+    void analyze();
+
+    /**
      * @brief Starts a game continuation until the end.
      */
     void autoPlay(bool logMoves = false);
@@ -164,7 +170,9 @@ private:
      */
     enum class ComputeTaskType {
         None,
-        Autoplay
+        Analyze,
+        Autoplay,
+        ComputeMove
     };
     ComputeTaskType taskType_ = ComputeTaskType::None;
 

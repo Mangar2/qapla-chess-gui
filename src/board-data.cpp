@@ -99,22 +99,22 @@ void BoardData::execute(std::string command) {
 		computeTask_->stop();
 	}
 	else if (command == "Now") {
-	computeTask_->moveNow();
+		computeTask_->moveNow();
 	}
 	else if (command == "Newgame") {
-	computeTask_->newGame();
+		computeTask_->newGame();
 	}
 	else if (command == "Play") {
-	computeTask_->computeMove();
+		computeTask_->computeMove();
 	}
 	else if (command == "Analyze") {
-		//compute.analyze();
+		computeTask_->analyze();
 	}
 	else if (command == "Auto") {
-	computeTask_->autoPlay();
+		computeTask_->autoPlay();
 	}
 	else if (command == "Manual") {
-	computeTask_->stop();
+		computeTask_->stop();
 	}
 	else {
 		std::cerr << "Unknown command: " << command << '\n';

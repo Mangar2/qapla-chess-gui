@@ -89,6 +89,7 @@ namespace QaplaWindows {
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size) const {
         std::optional<size_t> clickedRowIndex;
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, size)) {
+            ImGui::TableSetupScrollFreeze(0, 1);
             for (const auto& column : columns_) {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
             }

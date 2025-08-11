@@ -458,5 +458,8 @@
     <ClInclude Include="src\qapla-tester\epd-test.h">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui-tab-bar.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

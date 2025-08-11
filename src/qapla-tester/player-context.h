@@ -108,8 +108,12 @@ public:
 
     /**
 	 * @brief Tells the engine to compute a new move
+	 * @param gameRecord The current game with startposition and moves played so far.
+	 * @param goLimits The time limits for the next move
+	 * @param analyze If true, the engine will analyze the position without playing the move.
      */
-    void computeMove(const GameRecord& gameRecord, const GoLimits& goLimits);
+    void computeMove(const GameRecord& gameRecord, const GoLimits& goLimits, bool analyze = false);
+
 
     /**
 	 * @brief Allows the engine to ponder during its turn.
@@ -318,6 +322,7 @@ private:
     GoLimits goLimits_;
     bool requireLan_;
     std::atomic<ComputeState> computeState_ = ComputeState::Idle;
+	bool isAnalyzing_ = false;
 
     std::string ponderMove_ = "";
     MoveRecord currentMove_;

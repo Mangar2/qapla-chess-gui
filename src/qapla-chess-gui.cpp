@@ -25,6 +25,7 @@
 #include "engine-window.h"
 #include "clock-window.h"
 #include "epd-window.h"
+#include "imgui-tab-bar.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
@@ -106,9 +107,14 @@ namespace {
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
 
+		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
+		tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
+
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
 		mainContainer->setRight(std::move(BoardEngineContainer));
-		mainContainer->setLeft(std::make_unique<QaplaWindows::EpdWindow>(boardData));
+		mainContainer->setLeft(std::move(tabBar));
+
+
         workspace.setRootWindow(std::move(mainContainer));
         return workspace;
     }

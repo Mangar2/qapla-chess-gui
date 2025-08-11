@@ -119,33 +119,15 @@ void EpdWindow::drawInput() {
 }
 
 void EpdWindow::draw() {
-    if (ImGui::BeginTabBar("Addins")) {
-        if (ImGui::BeginTabItem("Epd")) {
-            drawButtons();
-            drawInput();
-            ImVec2 size = ImGui::GetContentRegionAvail();
-            auto clickedRow = boardData_->epdData().drawTable(size);
-            if (clickedRow) {
-                auto fen = boardData_->epdData().getFen(*clickedRow);
-                if (fen) {
-                    boardData_->setPosition(false, *fen);
-                }
-            }
-            ImGui::EndTabItem();
+    drawButtons();
+    drawInput();
+    ImVec2 size = ImGui::GetContentRegionAvail();
+    auto clickedRow = boardData_->epdData().drawTable(size);
+    if (clickedRow) {
+        auto fen = boardData_->epdData().getFen(*clickedRow);
+        if (fen) {
+            boardData_->setPosition(false, *fen);
         }
-        if (ImGui::BeginTabItem("Engines")) {
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Setup")) {
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("PGN")) {
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("Tournament")) {
-            ImGui::EndTabItem();
-        }
-		ImGui::EndTabBar();
     }
 }
 
