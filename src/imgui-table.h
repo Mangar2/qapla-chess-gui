@@ -98,6 +98,12 @@ namespace QaplaWindows {
             }
 		}
 
+        void extend(size_t row, const std::string& col) {
+            if (row < rows_.size()) {
+                rows_[row].push_back(col);
+            }
+        }
+
     private:
         bool clickable_ = false;
         void tableHeadersRow() const;

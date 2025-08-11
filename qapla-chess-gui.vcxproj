@@ -195,6 +195,7 @@
     <ClCompile Include="src\qapla-tester\engine-worker.cpp" />
     <ClCompile Include="src\qapla-tester\epd-manager.cpp" />
     <ClCompile Include="src\qapla-tester\epd-reader.cpp" />
+    <ClCompile Include="src\qapla-tester\epd-test.cpp" />
     <ClCompile Include="src\qapla-tester\game-context.cpp" />
     <ClCompile Include="src\qapla-tester\game-manager-pool.cpp" />
     <ClCompile Include="src\qapla-tester\game-manager.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="src\qapla-tester\engine-worker.h" />
     <ClInclude Include="src\qapla-tester\epd-manager.h" />
     <ClInclude Include="src\qapla-tester\epd-reader.h" />
+    <ClInclude Include="src\qapla-tester\epd-test.h" />
     <ClInclude Include="src\qapla-tester\game-context.h" />
     <ClInclude Include="src\qapla-tester\game-manager-pool.h" />
     <ClInclude Include="src\qapla-tester\game-manager.h" />

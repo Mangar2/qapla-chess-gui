@@ -54,10 +54,6 @@ namespace QaplaWindows {
             return epdConfig_;
 		}
 
-        const std::vector<EpdTestCase>& epdTest() const {
-            return *epdTests_;
-		}
-
         std::optional<std::string> getFen(size_t index) const;
 
 	private:
@@ -67,7 +63,6 @@ namespace QaplaWindows {
         void populateTable();
 
 		std::shared_ptr<EpdManager> epdManager_;
-		std::unique_ptr<std::vector<EpdTestCase>> epdTests_;
 		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
 
         ImGuiTable table_;

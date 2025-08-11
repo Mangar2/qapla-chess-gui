@@ -29,7 +29,6 @@ namespace QaplaWindows {
 
     EpdData::EpdData() : 
         epdManager_(std::make_shared<EpdManager>()),
-        epdTests_(std::make_unique<std::vector<EpdTestCase>>()),
         epdResults_(std::make_unique<std::vector<EpdTestResult>>()),
         table_(
             "EpdResult",
@@ -60,42 +59,49 @@ namespace QaplaWindows {
     }
 
     std::optional<std::string> EpdData::getFen(size_t index) const {
-        if (index < epdTests_->size()) {
-            auto testCase = (*epdTests_)[index];
+		if (epdResults_->size() == 0) return std::nullopt;
+		auto& result = (*epdResults_)[0].result;
+        if (index < result.size()) {
+            auto testCase = result[index];
             return testCase.fen;
         }
         return std::nullopt;
     }
 
     void EpdData::populateTable() {
-        if (!epdTests_) return;
+        if (!epdResults_) return;
 		table_.clear();
-        for (auto& test : *epdTests_) {
-            std::vector<std::string> row{};
-            row.push_back(test.id);
-            std::string bestMoves;
-            for (auto& move : test.bestMoves) {
-                if (!bestMoves.empty()) bestMoves += ", ";
-                bestMoves += move;
+        bool first = true;
+        for (auto& result : *epdResults_) {
+            size_t row = 0;
+            for (auto& test : result.result) {
+                if (first) {
+                    std::vector<std::string> row{};
+                    row.push_back(test.id);
+                    std::string bestMoves;
+                    for (auto& move : test.bestMoves) {
+                        if (!bestMoves.empty()) bestMoves += ", ";
+                        bestMoves += move;
+                    }
+                    row.push_back(bestMoves);
+                    table_.push(row);
+                }
+                if (test.correct) {
+                    table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + formatMs(test.correctAtTimeInMs, 2));
+                }
+                else if (test.searchDepth >= 0) {
+                    table_.extend(row, "-");
+                }
+                else {
+                    table_.extend(row, "?");
+                }
             }
-            row.push_back(bestMoves);
-            if (test.correct) {
-                row.push_back("d" + std::to_string(test.correctAtDepth) + ", " + formatMs(test.correctAtTimeInMs, 2));
-            } 
-            else if (test.searchDepth >= 0) {
-                row.push_back("-");
-            }
-            else {
-                row.push_back("?");
-            }
-			table_.push(row);
+            first = false;
         }
-
     }
 
     void EpdData::pollData() {
         if (updateCnt != epdManager_->getUpdateCount()) {
-            epdTests_ = std::make_unique<std::vector<EpdTestCase>>(epdManager_->getTestsCopy());
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt = epdManager_->getUpdateCount();
             populateTable();
@@ -103,14 +109,12 @@ namespace QaplaWindows {
     }
 
     void EpdData::analyse() const {
-        epdManager_->analyzeEpd(
+        epdManager_->initialize(
             epdConfig_.filepath, 
-            epdConfig_.engine, 
-            epdConfig_.concurrency, 
             epdConfig_.maxTimeInS, 
             epdConfig_.minTimeInS, 
             epdConfig_.seenPlies);
-        epdManager_->schedule(epdManager_, epdConfig_.engine);
+        epdManager_->schedule(epdConfig_.engine);
     }
 
     std::optional<size_t> EpdData::drawTable(const ImVec2& size) const {

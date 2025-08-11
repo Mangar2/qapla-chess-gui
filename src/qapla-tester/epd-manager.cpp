@@ -22,6 +22,7 @@
 #include "game-manager.h"
 #include "game-manager-pool.h"
 #include "game-state.h"
+#include "string-helper.h"
 
 void EpdManager::printHeaderLine() const {
     auto formatEngineName = [](const std::string& name) -> std::string {
@@ -38,36 +39,32 @@ void EpdManager::printHeaderLine() const {
 
     std::ostringstream header;
     header << std::setw(20) << std::left << "TestId";
-
-    for (const auto& result : results_) {
-        if (result.engineName != engineName_ && result.testSetName == epdFileName_) {
+    auto results = getResultsCopy();
+    for (const auto& result : results) {
+        if (result.testSetName == epdFileName_) {
             header << "|" << formatEngineName(result.engineName);
         }
     }
 
-    header << "|" << formatEngineName(engineName_) << "| BM:";
+    header << "| BM:";
     Logger::testLogger().log(header.str(), TraceLevel::result);
 }
 
 void EpdManager::printTestResultLine(const EpdTestCase& current) const {
     std::ostringstream line;
     line << std::setw(20) << std::left << current.id;
-
-    for (const auto& result : results_) {
-        if (result.engineName != engineName_ && result.testSetName == epdFileName_) {
-            const auto it = std::find_if(result.results.begin(), result.results.end(), [&](const EpdTestCase& t) {
-                return t.id == current.id;
-                });
-            if (it != result.results.end()) {
-                line << formatInlineResult(*it);
-            }
-            else {
-                line << "|" << std::setw(23) << "-";
-            }
+	auto results = getResultsCopy();
+    for (const auto& result : results) {
+        const auto it = std::find_if(result.result.begin(), result.result.end(), [&](const EpdTestCase& t) {
+            return t.id == current.id;
+            });
+        if (it != result.result.end()) {
+            line << formatInlineResult(*it);
+        }
+        else {
+            line << "|" << std::setw(23) << "-";
         }
     }
-
-    line << formatInlineResult(current);
 
     line << "| BM: ";
     for (const auto& bm : current.bestMoves) {
@@ -77,40 +74,19 @@ void EpdManager::printTestResultLine(const EpdTestCase& current) const {
 	Logger::testLogger().log(line.str(), TraceLevel::result);
 }
 
-std::string EpdManager::formatTime(uint64_t ms) const {
-    if (ms == 0) return "-";
-    uint64_t seconds = (ms / 1000);
-    uint64_t milliseconds = ms % 1000;
-    std::ostringstream timeStream;
-    timeStream << std::setfill('0')
-        << std::setw(2) << seconds << "."
-        << std::setw(3) << milliseconds;
-    return timeStream.str();
-}
-
 std::string EpdManager::formatInlineResult(const EpdTestCase& test) const {
     std::ostringstream out;
-    out << "|" << std::setw(8) << std::right << (test.correct ? formatTime(test.correctAtTimeInMs) : "-")
+    out << "|" << std::setw(8) << std::right << (test.correct ? formatMs(test.correctAtTimeInMs, 2) : "-")
         << ", D:" << std::setw(3) << std::right << (test.correct ? std::to_string(test.correctAtDepth) : "-")
         << ", M: " << std::setw(5) << std::left << test.playedMove;
     return out.str();
 }
 
 inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
-    auto formatTime = [](uint64_t ms) -> std::string {
-        if (ms == 0) return "-";
-        uint64_t seconds = (ms / 1000);
-        uint64_t milliseconds = ms % 1000;
-        std::ostringstream timeStream;
-        timeStream << std::setfill('0')  
-            << std::setw(2) << seconds << "."
-            << std::setw(3) << milliseconds;
-        return timeStream.str();
-        };
 
     os << std::setw(20) << std::left << test.id
         << "|" << std::setw(8) << std::right
-        << (test.correct ? formatTime(test.correctAtTimeInMs) : "-")
+        << (test.correct ? formatMs(test.correctAtTimeInMs, 2) : "-")
         << ", D:" << std::setw(3) << std::right
         << (test.correct ? std::to_string(test.correctAtDepth) : "-")
         << ", M: " << std::setw(5) << std::left << test.playedMove
@@ -122,14 +98,11 @@ inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
     return os;
 }
 
-void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies, bool clearTests) {
+void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies) {
     if (!reader_) {
         throw std::runtime_error("EpdReader must be initialized before loading test cases.");
     }
 
-    if (clearTests) {
-        tests_.clear();
-    }
     reader_->reset();
 
     while (true) {
@@ -140,14 +113,13 @@ void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, u
 		testCase->maxTimeInS = maxTimeInS;
 		testCase->minTimeInS = minTimeInS;
 		testCase->seenPlies = static_cast<int>(seenPlies);
-        tests_.push_back(std::move(*testCase));
+        testsRead_.push_back(std::move(*testCase));
     }
 }
 
-void EpdManager::analyzeEpd(const std::string& filepath, const EngineConfig& engine, 
-    uint32_t concurrency, uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies)
+void EpdManager::initialize(const std::string& filepath, 
+    uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies)
 {
-	engineName_ = engine.getName();
 	epdFileName_ = filepath;
     bool sameFile = reader_ && reader_->getFilePath() == filepath;
     if (!sameFile) {
@@ -156,160 +128,20 @@ void EpdManager::analyzeEpd(const std::string& filepath, const EngineConfig& eng
 
     initializeTestCases(maxTimeInS, minTimeInS, seenPlies);
 	updateCnt_++;
-    currentIndex_ = 0;
-    oldestIndexInUse_ = 0;
     tc_.setMoveTime(maxTimeInS * 1000);
-    printHeaderLine();
-	GameManagerPool::getInstance().setConcurrency(concurrency, true);
 }
 
-void EpdManager::schedule(const std::shared_ptr<EpdManager>& self, const EngineConfig& engine) {
-    GameManagerPool::getInstance().addTaskProvider(self, engine);
-    GameManagerPool::getInstance().assignTaskToManagers();
+void EpdManager::schedule(const EngineConfig& engineConfig) {
+    EpdTestResult test;
+	test.tc_ = tc_;
+    test.engineName = engineConfig.getName();
+    test.result = testsRead_;
+	test.testSetName = epdFileName_;
+	auto newTest = std::make_shared<EpdTest>();
+	newTest->initialize(test);
+	testInstances_.emplace_back(newTest);
+    newTest->schedule(newTest, engineConfig);
 }
-
-bool EpdManager::wait() {
-    GameManagerPool::getInstance().waitForTask();
-    results_.push_back({
-        engineName_,
-        epdFileName_,
-        tests_
-        });
-	return true;
-}
-
-std::optional<GameTask> EpdManager::nextTask() {
-    std::lock_guard<std::mutex> lock(taskMutex_);
-    if (currentIndex_ >= tests_.size()) {
-        return std::nullopt;
-    }
-
-    GameTask task;
-    task.taskType = GameTask::Type::ComputeMove;
-    
-    GameState gameState;
-    gameState.setFen(false, tests_[currentIndex_].fen);
-    auto correctedFen = gameState.getFen();
-    task.gameRecord.setStartPosition(false, correctedFen, gameState.isWhiteToMove(), "", "");
-    task.gameRecord.setTimeControl(tc_, tc_);
-    task.taskId = std::to_string(currentIndex_);
-    currentIndex_++;
-
-    return task;
-}
-
-bool EpdManager::setPV(const std::string& taskId,
-    const std::vector<std::string>& pv,
-    uint64_t timeInMs,
-    std::optional<uint32_t> depth,
-    std::optional<uint64_t> nodes,
-    [[maybe_unused]] std::optional<uint32_t> multipv) 
-{
-    if (pv.empty()) {
-        return false;
-    }
-
-    const auto index = (std::stoi(taskId));
-    std::lock_guard<std::mutex> lock(taskMutex_);
-
-    if (index < 0 || index >= static_cast<int>(tests_.size())) {
-        return false;
-    }
-
-    auto& test = tests_[static_cast<uint32_t>(index)];
-    assert(test.playedMove.empty());
-
-    const std::string& firstMove = pv.front();
-    bool found = std::any_of(test.bestMoves.begin(), test.bestMoves.end(),
-        [&](const std::string& bm) {
-            return isSameMove(test.fen, firstMove, bm);
-        });
-
-    if (found) {
-        if (test.correctAtDepth == -1 && depth.has_value()) {
-            test.correctAtDepth = static_cast<int>(depth.value());
-        }
-        if (test.correctAtTimeInMs == 0) {
-            test.correctAtTimeInMs = timeInMs;
-        }
-        if (test.correctAtNodeCount == 0 && nodes.has_value()) {
-            test.correctAtNodeCount = nodes.value();
-        }
-    }
-    else {
-        test.correctAtDepth = -1;
-        test.correctAtTimeInMs = 0;
-        test.correctAtNodeCount = 0;
-    }
-
-    bool earlyStop =
-		test.seenPlies > 0 && test.correctAtDepth >= 0 && depth.has_value() &&
-        timeInMs >= test.minTimeInS * 1000 &&
-        static_cast<int>(*depth) - test.correctAtDepth >= test.seenPlies;
-
-    return earlyStop;
-}
-
-void EpdManager::setGameRecord(const std::string& taskId, const GameRecord& record) {
-    const std::string& fen = record.getStartFen();
-
-    const auto& moves = record.history();
-    if (moves.empty()) return;
-
-    const auto& move = moves.back();
-    const std::string& played = move.lan;
-
-    int taskIdIndex = -1;
-    try {
-        taskIdIndex = std::stoi(taskId);
-    }
-    catch (...) {
-		throw AppError::make("Invalid taskId: " + taskId + ". Must be a valid integer.");
-    }
-    if (taskIdIndex < 0 || taskIdIndex >= static_cast<int>(tests_.size())) {
-        return;
-	}
-	const size_t index = static_cast<size_t>(taskIdIndex);
-
-    std::lock_guard<std::mutex> lock(taskMutex_);
-    updateCnt_++;
-    auto& test = tests_[index];
-    assert(test.playedMove.empty());
-
-    test.playedMove = played;
-    test.correct = std::any_of(
-        test.bestMoves.begin(), test.bestMoves.end(),
-        [&](const std::string& bm) {
-            return isSameMove(fen, played, bm);
-        }
-    );
-    test.timeMs = move.timeMs;
-    test.searchDepth = static_cast<int>(move.depth);
-    test.nodeCount = move.nodes;
-
-    // Note: SetPV might have set the correct depth, time, nodes already
-    if (test.correct && test.correctAtDepth == -1) {
-        test.correctAtDepth = static_cast<int>(move.depth);
-        test.correctAtTimeInMs = move.timeMs;
-        test.correctAtNodeCount = move.nodes;
-    }
-
-    // If SetPV saw the correct move but it was finally not played, we need to remove the former result
-    if (!test.correct) {
-        test.correctAtDepth = -1;
-        test.correctAtTimeInMs = 0;
-        test.correctAtNodeCount = 0;
-    }
-
-    // Close gap, if oldest
-    if (index == oldestIndexInUse_) {
-        while (oldestIndexInUse_ < tests_.size() && !tests_[oldestIndexInUse_].playedMove.empty()) {
-            printTestResultLine(tests_[oldestIndexInUse_]);
-            ++oldestIndexInUse_;
-        }
-    }
-}
-
 
 std::optional<EpdTestCase> EpdManager::nextTestCaseFromReader() {
     if (!reader_) {
@@ -339,23 +171,11 @@ std::optional<EpdTestCase> EpdManager::nextTestCaseFromReader() {
     return testCase;
 }
 
-
-bool EpdManager::isSameMove(const std::string& fen, const std::string& lanMove, const std::string& sanMove) const {
-    GameState gameState;
-    gameState.setFen(false, fen);
-	auto lMove = gameState.stringToMove(lanMove, true);
-    auto sMove = gameState.stringToMove(sanMove, false);
-    return lMove == sMove;
-}
-
 double EpdManager::getSuccessRate() const {
 	int totalTests = 0;
 	int correctTests = 0;
-	for (const auto& result : results_) {
-		if (result.engineName != engineName_ || result.testSetName != epdFileName_) {
-			continue;
-		}
-		for (const auto& test : result.results) {
+	for (const auto& instance : testInstances_) {
+		for (const auto& test : instance->getResultsCopy().result) {
 			++totalTests;
 			if (test.correct) {
 				++correctTests;

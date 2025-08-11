@@ -67,7 +67,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
 #include <objc/runtime.h>
 
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
-    std::vector<std::string> results;
+    std::vector<std::string> result;
 
     @autoreleasepool{
         id panel = ((id(*)(Class, SEL))objc_msgSend)(objc_getClass("NSOpenPanel"), sel_registerName("openPanel"));
@@ -80,10 +80,10 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
             id url = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), i);
             id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
             const char* cPath = ((const char* (*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-            results.emplace_back(cPath);
+            result.emplace_back(cPath);
         }
     }
-    return results;
+    return result;
 }
 
 #elif defined(__linux__)
@@ -91,7 +91,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
 #include <gtk/gtk.h>
 
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
-    std::vector<std::string> results;
+    std::vector<std::string> result;
 
     gtk_init(nullptr, nullptr);
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Open File", nullptr,
@@ -105,7 +105,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
         for (GSList* iter = files; iter != nullptr; iter = iter->next) {
-            results.emplace_back((char*)iter->data);
+            result.emplace_back((char*)iter->data);
             g_free(iter->data);
         }
         g_slist_free(files);
@@ -113,7 +113,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     gtk_widget_destroy(dialog);
     while (gtk_events_pending()) gtk_main_iteration();
 
-    return results;
+    return result;
 }
 
 #else
