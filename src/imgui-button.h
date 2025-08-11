@@ -84,6 +84,12 @@ namespace QaplaButton {
         }
     }
 
+    inline void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+        auto color = hover ? HOVER : PASSIV;
+        ImVec2 textPos = ImVec2(topLeft.x + BORDER + 3.0f, topLeft.y + BORDER + 3.0f);
+        list->AddText(textPos, color, text.c_str());
+	}
+
     inline void drawArrow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
 		auto yReduce = BORDER + 5.0f;
         auto thickness = 7.0f;

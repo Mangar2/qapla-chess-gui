@@ -27,6 +27,7 @@
 #include "qapla-tester/compute-task.h"
 #include "qapla-tester/engine-config-manager.h"
 #include "qapla-tester/engine-worker-factory.h"
+#include "qapla-tester/game-manager-pool.h"
 
 using namespace QaplaWindows;
 
@@ -118,6 +119,18 @@ void BoardData::execute(std::string command) {
 	else {
 		std::cerr << "Unknown command: " << command << '\n';
 	}
+}
+
+void BoardData::stopPool() {
+	GameManagerPool::getInstance().stopAll();
+}
+
+void BoardData::clearPool() {
+	GameManagerPool::getInstance().clearAll();
+}
+
+void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start) {
+	GameManagerPool::getInstance().setConcurrency(count, nice, start);
 }
 
 void BoardData::pollData() {

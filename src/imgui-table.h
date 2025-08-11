@@ -98,11 +98,30 @@ namespace QaplaWindows {
             }
 		}
 
+        /**
+		 * @brief Adds a new column to a specific row.
+		 * @param row Index of the row to extend.
+		 * @param col New column content to add.
+		 */
         void extend(size_t row, const std::string& col) {
             if (row < rows_.size()) {
                 rows_[row].push_back(col);
             }
         }
+
+        /**
+         * @brief Sets the column header definition for a specific column.
+         * @param col Index of the column to set.
+         * @param column Column definition including name, flags, and width.
+		 */
+        void setColumnHead(size_t col, const ColumnDef& column) {
+            if (col >= columns_.size()) {
+                columns_.resize(col + 1);
+			}
+            if (col < columns_.size()) {
+                columns_[col] = column;
+			}
+		}
 
     private:
         bool clickable_ = false;

@@ -21,6 +21,7 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/epd-manager.h"
+#include "qapla-tester/game-manager-pool.h"
 #include "imgui-table.h"
 
 #include "imgui.h"
@@ -34,8 +35,8 @@ namespace QaplaWindows {
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 200.0f },
-                { "Best move", ImGuiTableColumnFlags_WidthFixed, 80.0f },
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 160.0f },
+                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0f },
                 { "Result", ImGuiTableColumnFlags_WidthFixed, 100.0f, true }
             }
         )
@@ -46,11 +47,12 @@ namespace QaplaWindows {
     EpdData::~EpdData() = default;
 
     void EpdData:: init() {
-        auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-        if (!config) return;
+        auto c1 = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
+		auto c2 = EngineWorkerFactory::getConfigManager().getConfig("Spike 1.4.1");
+        if (!c1 || !c2) return;
         epdConfig_ = EpdConfig{
             .filepath = "test/speelman Endgame.epd",
-            .engine = *config,
+            .engines = { *c1, *c2 },
             .concurrency = 1,
             .maxTimeInS = 10,
             .minTimeInS = 2,
@@ -71,11 +73,12 @@ namespace QaplaWindows {
     void EpdData::populateTable() {
         if (!epdResults_) return;
 		table_.clear();
-        bool first = true;
+		size_t col = 0; // first two columns are Name and Best Move
         for (auto& result : *epdResults_) {
             size_t row = 0;
+            auto& engineName = result.engineName;
             for (auto& test : result.result) {
-                if (first) {
+                if (col == 0) {
                     std::vector<std::string> row{};
                     row.push_back(test.id);
                     std::string bestMoves;
@@ -86,6 +89,12 @@ namespace QaplaWindows {
                     row.push_back(bestMoves);
                     table_.push(row);
                 }
+                table_.setColumnHead(col + 2, {
+                    .name = engineName,
+                    .flags = ImGuiTableColumnFlags_WidthFixed,
+                    .width = 100.0f,
+                    .alignRight = true
+					});
                 if (test.correct) {
                     table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + formatMs(test.correctAtTimeInMs, 2));
                 }
@@ -95,8 +104,9 @@ namespace QaplaWindows {
                 else {
                     table_.extend(row, "?");
                 }
+                row++;
             }
-            first = false;
+            col++;
         }
     }
 
@@ -114,7 +124,14 @@ namespace QaplaWindows {
             epdConfig_.maxTimeInS, 
             epdConfig_.minTimeInS, 
             epdConfig_.seenPlies);
-        epdManager_->schedule(epdConfig_.engine);
+		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true);
+        for (const auto& engineConfig : epdConfig_.engines) {
+            epdManager_->schedule(engineConfig);
+		}
+    }
+
+    void EpdData::clear() {
+        epdManager_->clear();
     }
 
     std::optional<size_t> EpdData::drawTable(const ImVec2& size) const {

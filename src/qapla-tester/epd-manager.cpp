@@ -104,6 +104,7 @@ void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, u
     }
 
     reader_->reset();
+    testInstances_.clear();
 
     while (true) {
         auto testCase = nextTestCaseFromReader();
@@ -127,8 +128,14 @@ void EpdManager::initialize(const std::string& filepath,
     }
 
     initializeTestCases(maxTimeInS, minTimeInS, seenPlies);
-	updateCnt_++;
     tc_.setMoveTime(maxTimeInS * 1000);
+}
+
+void EpdManager::clear() {
+    if (reader_) {
+        reader_->reset();
+    }
+    testInstances_.clear();
 }
 
 void EpdManager::schedule(const EngineConfig& engineConfig) {

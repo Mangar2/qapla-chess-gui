@@ -56,6 +56,12 @@ public:
     void initialize(const std::string& filepath, uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies);
 
     /**
+	 * @brief Removes all current test cases and resets the EPD manager.
+	 * *** Attention: You need to ensure that the ManagerPool is cleared before ***
+	 */
+    void clear();
+
+    /**
      * @brief Registers this EpdManager instance as a task provider in the GameManagerPool.
      *
      * This method must be called with a shared_ptr to this instance, ensuring proper lifetime management.
@@ -74,8 +80,16 @@ public:
         return results;
 	}
 
+    /**
+	 * @brief Returns the update count of all test instances. 
+	 * Use this to check, if the EPD tests have been updated since the last getResultsCopy call.
+	 */
     uint64_t getUpdateCount() const {
-        return updateCnt_;
+		uint64_t count = 0;
+        for (const auto& instance : testInstances_) {
+			count += instance->getUpdateCount();
+        }
+        return count;
 	}
 
 private:
@@ -99,6 +113,5 @@ private:
     std::vector<EpdTestCase> testsRead_;
     std::vector<std::shared_ptr<EpdTest>> testInstances_;
     TimeControl tc_;
-    uint64_t updateCnt_ = 0;
     std::string epdFileName_;
 };

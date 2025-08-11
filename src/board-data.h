@@ -146,6 +146,24 @@ namespace QaplaWindows {
 		 */
 		void pollData();
 
+		/**
+		 * @brief Stops all ongoing tasks in the pool.
+		 */ 
+		void stopPool();
+
+		/**
+		 * @brief Stops all ongoing tasks and clears all task providers in the pool.
+		 */
+		void clearPool();
+
+		/**
+		 * @brief Sets the pool concurrency level.
+		 * @param count The number of concurrent tasks to allow.
+		 * @param nice If true, reduces the number of active managers gradually.
+		 * @param start If true, starts new tasks immediately.
+		 */
+		void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
+
 
 	private:
 

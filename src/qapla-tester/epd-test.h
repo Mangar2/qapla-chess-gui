@@ -139,6 +139,5 @@ private:
     size_t oldestIndexInUse_ = 0;
     size_t testIndex_ = 0;
 	uint64_t updateCnt_ = 0;
-    TimeControl tc_;
 
 };

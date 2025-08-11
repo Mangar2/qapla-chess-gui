@@ -136,6 +136,7 @@ void GameManagerPool::addTaskProvider(std::shared_ptr<GameTaskProvider> taskProv
 }
 
 void GameManagerPool::setConcurrency(uint32_t count, bool nice, bool start) {
+    if (count == maxConcurrency_ && !start) return;
     std::lock_guard<std::mutex> lock(managerMutex_);
     maxConcurrency_ = count;
     niceMode_ = nice;
@@ -150,6 +151,16 @@ void GameManagerPool::stopAll() {
     for (auto& manager : managers_) {
         manager->stop();
     }
+}
+
+void GameManagerPool::clearAll() {
+    stopAll();
+    for (auto& manager : managers_) {
+        manager->getFinishedFuture().wait();
+    }
+
+    std::lock_guard<std::mutex> lock(taskMutex_);
+    taskAssignments_.clear();
 }
 
 void GameManagerPool::togglePause() {

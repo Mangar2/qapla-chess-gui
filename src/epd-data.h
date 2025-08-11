@@ -38,13 +38,32 @@ namespace QaplaWindows {
 
         void init();
 
+        /**
+		 * @brief Polls the EPD data for new entries.
+		 */
         void pollData();
+
+        /**
+         * @brief Starts the analysis of the EPD test set.
+         * This method will load the EPD file and start the analysis with the configured engines.
+		 */
         void analyse() const;
+
+        /**
+		 * @brief Clears the current analysis results.
+		 */
+        void clear();
+
+        /**
+         * @brief Draws the EPD test results table.
+         * @param size Size of the table to draw.
+         * @return The index of the selected row, or std::nullopt if no row was selected.
+		 */
         std::optional<size_t> drawTable(const ImVec2& size) const;
         
         struct EpdConfig {
             std::string filepath;
-            EngineConfig engine;
+            std::vector<EngineConfig> engines;
             uint32_t concurrency;
             uint64_t maxTimeInS;
             uint64_t minTimeInS;
@@ -54,6 +73,11 @@ namespace QaplaWindows {
             return epdConfig_;
 		}
 
+        /**
+         * @brief Retrieves the FEN string for a given index in the results.
+         * @param index Index of the test case in the results.
+         * @return Optional containing the FEN string if available, otherwise std::nullopt.
+		 */
         std::optional<std::string> getFen(size_t index) const;
 
 	private:

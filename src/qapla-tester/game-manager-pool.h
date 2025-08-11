@@ -66,15 +66,19 @@ public:
      *
      * @param count Maximum number of concurrent managers
      * @param nice If true, idle managers are reduced gradually
+	 * @param start If true, starts the managers immediately
      */
-	void setConcurrency(uint32_t count, bool nice) {
-		setConcurrency(count, nice, false);
-	}
+    void setConcurrency(uint32_t count, bool nice = true, bool start = false);
 
     /**
      * @brief Stops all managers and clears all resources.
      */
     void stopAll();
+
+    /**
+     * @brief Clears all task assignments and stops all managers.
+	 */
+    void clearAll();
 
     void togglePause();
 
@@ -118,7 +122,7 @@ public:
 	bool maybeDeactivateManager(std::shared_ptr<GameTaskProvider>& taskProvider);
 
 private:
-    void setConcurrency(uint32_t count, bool nice, bool start);
+    
 
     void printRunningGames() const;
     void viewEngineTrace(int gameManagerIndex) const;
