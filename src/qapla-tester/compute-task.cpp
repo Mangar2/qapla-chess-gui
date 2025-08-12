@@ -85,14 +85,15 @@ void ComputeTask::analyze() {
 
 void ComputeTask::autoPlay(bool logMoves) {
     logMoves_ = logMoves;
+    if (taskType_ != ComputeTaskType::None) return;
+    taskType_ = ComputeTaskType::Autoplay;
     autoPlay(std::nullopt);
 }
 
 void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
-
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
-    if (taskType_ != ComputeTaskType::None) return;
+    if (taskType_ != ComputeTaskType::Autoplay ) return;
     markRunning();
     gameContext_.ensureStarted();
     auto& gameRecord = gameContext_.gameRecord();
@@ -112,7 +113,6 @@ void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
         black->computeMove(gameRecord, goLimits);
         white->allowPonder(gameRecord, goLimits, event);
     }
-    taskType_ = ComputeTaskType::Autoplay;
 }
 
 void ComputeTask::moveNow() {

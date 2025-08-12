@@ -98,6 +98,13 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Resets the confirmation state to std::nullopt to avoid reprocessing a previous result.
+         */
+        void resetConfirmation() {
+			confirmed_ = std::nullopt;
+		}
+
+        /**
          * @brief Opens the popup manually.
          */
         void open() {

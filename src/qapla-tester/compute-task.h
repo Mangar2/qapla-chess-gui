@@ -42,6 +42,7 @@ public:
      * @param engines A vector of unique pointers to EngineWorker instances.
      */
     void initEngines(std::vector<std::unique_ptr<EngineWorker>> engines) {
+        stop();
         gameContext_.initPlayers(std::move(engines));
     }
 

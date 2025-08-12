@@ -43,7 +43,7 @@ BoardData::BoardData() :
 	auto engines = EngineWorkerFactory::createEngines(*config, 2);
 	computeTask_->initEngines(std::move(engines));
 	TimeControl timeControl;
-	timeControl.addTimeSegment({ 0, 1000000, 1000 });
+	timeControl.addTimeSegment({ 0, 100000, 100 });
 	//timeControl.addTimeSegment({ 0, 1000, 10 }); 
 	computeTask_->setTimeControl(timeControl);
 	computeTask_->setPosition(true);
@@ -179,4 +179,18 @@ void BoardData::restartEngine(size_t index) {
 		auto id = engineRecords_[index].identifier;
 		computeTask_->restartEngine(id);
 	}
+}
+
+void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
+	EngineList allEngined;
+	for (auto& config: engines) {
+		auto created = EngineWorkerFactory::createEngines(config, 1);
+		if (!created.empty()) {
+			allEngined.emplace_back(std::move(created[0]));
+		}
+	}
+	computeTask_->initEngines(std::move(allEngined));
+	TimeControl tc;
+	tc.addTimeSegment({ 0, 10000, 100 });
+	computeTask_->setTimeControl(tc);
 }

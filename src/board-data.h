@@ -176,6 +176,12 @@ namespace QaplaWindows {
 		 */
 		void restartEngine(size_t index);
 
+		/**
+		 * @brief Sets the engines to use
+		 * @param engines Vector of EngineConfig objects representing the engines to set.
+		 */
+		void setEngines(const std::vector<EngineConfig>& engines);
+
 
 	private:
 

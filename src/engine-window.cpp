@@ -258,8 +258,9 @@ void EngineWindow::drawEngineSelectionPopup() {
 
    if (auto confirmed = setupWindow_->confirmed()) {
         if (*confirmed) {
-            // result = popup->content()->getActiveEngines();
+			boardData_->setEngines(setupWindow_->content().getActiveEngines());
         }
+        setupWindow_->resetConfirmation();
     }
 }
 
