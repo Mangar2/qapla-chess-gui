@@ -164,6 +164,18 @@ namespace QaplaWindows {
 		 */
 		void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
 
+		/**
+		 * @brief stops the engine located at an index
+		 * @param index index of the engine to stop
+		 */
+		void stopEngine(size_t index); 
+
+		/**
+		 * @brief Restarts the engine located at an index.
+		 * @param index Index of the engine to restart.
+		 */
+		void restartEngine(size_t index);
+
 
 	private:
 

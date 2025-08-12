@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #pragma once
@@ -74,15 +74,62 @@ namespace QaplaButton {
     inline void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
         for (int i = 1; i <= 2; i++) {
             auto reduce = BORDER + static_cast<float>(i);
+			auto color = hover ? HOVER : PASSIV;
             list->AddRect(
                 ImVec2(topLeft.x + reduce, topLeft.y + reduce),
                 ImVec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
-                hover ? HOVER : PASSIV,
+                color,
                 0.0f,
                 ImDrawFlags_None,
                 1.0f);
         }
     }
+
+    inline void drawRestart (ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+        ImVec2 center = topLeft;
+        center.x += size.x / 2;
+        center.y += size.y / 2;
+        float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
+
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        constexpr float pi = 3.14159265358979323846f;
+
+        auto color = hover ? HOVER : PASSIV;
+
+        float startAngle = 1.5f * pi;   // 270° = 3/2 Pi
+        float endAngle = startAngle + 1.5f * pi;  // 270° → 45° 
+        drawList->PathArcTo(center, radius, startAngle, endAngle, 20);
+        drawList->PathStroke(color, false, 1.5f);
+
+        // Pfeilspitze
+        ImVec2 arrowTip = ImVec2(center.x + cosf(pi) * radius,
+            center.y + sinf(pi) * radius);
+
+        for (int i = 0; i < 3; ++i) {
+            float width = std::max(5.0f - 2.0f * static_cast<float>(i), 1.0f);
+            float yOffset = -2.0f * i;
+            ImVec2 p1 = ImVec2(arrowTip.x - width / 2.0f, arrowTip.y + yOffset);
+            ImVec2 p2 = ImVec2(arrowTip.x + width / 2.0f, arrowTip.y + yOffset);
+            drawList->AddLine(p1, p2, color, 2.0f);
+        }
+    }
+
+    inline void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+        auto color = hover ? HOVER : PASSIV;
+        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0f, topLeft.y + size.y / 2.0f);
+        float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
+        constexpr float pi = 3.14159265358979323846f;
+        
+        float innerRadius = radius - 2.0f;
+        list->AddCircle(center, innerRadius, color, 0, 3.0f);
+        // Draw the gear shape
+        for (int i = 0; i < 8; ++i) {
+            float angle = i * (pi / 4.0f); // 45 degrees
+            float x = center.x + cos(angle) * radius;
+            float y = center.y + sin(angle) * radius;
+            list->AddCircleFilled(ImVec2(x, y), 2.0f, color);
+        }
+	}
 
     inline void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
         auto color = hover ? HOVER : PASSIV;

@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 #include "game-context.h"
+#include "engine-worker-factory.h"
 
 GameContext::GameContext() = default;
 
@@ -32,11 +33,41 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
     }
 }
 
+void GameContext::ensureStarted() {
+    for (auto& player : players_) {
+        if (player->getEngine()->isStopped()) {
+            player->restartEngine(true);
+            if (eventCallback_) {
+                player->getEngine()->setEventSink(eventCallback_);
+			}
+        }
+    }
+}
+
 void GameContext::restartPlayer(uint32_t index) {
     if (index >= players_.size()) return;
     players_[index]->restartEngine();
     if (eventCallback_) {
         players_[index]->getEngine()->setEventSink(eventCallback_);
+    }
+}
+
+void GameContext::restartPlayer(const std::string& id) {
+    for (auto& player : players_) {
+        if (player->getIdentifier() == id) {
+            player->restartEngine(true);
+            if (eventCallback_) {
+                player->getEngine()->setEventSink(eventCallback_);
+            }
+        }
+    }
+}
+
+void GameContext::stopEngine(const std::string& id) {
+    for (auto& player : players_) {
+        if (player->getIdentifier() == id) {
+            player->stopEngine();
+        }
     }
 }
 
@@ -49,6 +80,7 @@ void GameContext::setTimeControl(const TimeControl& timeControl) {
 }
 
 void GameContext::newGame() {
+    ensureStarted();
     for (size_t i = 0; i < players_.size(); ++i) {
         bool isWhite = (i == 0 && !switchedSide_) || (i == 1 && switchedSide_);
         players_[i]->newGame(gameRecord_, isWhite);
@@ -190,6 +222,9 @@ void GameContext::restartIfConfigured() {
 
         if (player->getEngine()->getConfig().getRestartOption() == RestartOption::Always) {
             player->restartEngine();
+            if (eventCallback_) {
+                player->getEngine()->setEventSink(eventCallback_);
+			}
         }
     }
 }
@@ -204,6 +239,15 @@ EngineRecords GameContext::getEngineRecords() const {
     EngineRecords records;
     for (const auto& player : players_) {
         if (!player->getEngine()) {
+            EngineRecord record = {
+                .identifier{},
+                .config{},
+                .supportedOptions{},
+                .status = EngineRecord::Status::NotStarted,
+                .memoryUsageB = 0,
+                .curMoveRecord = player->getCurrentMove()
+            };
+            records.push_back(record);
             continue;
         }
 		auto engine = player->getEngine();
@@ -219,7 +263,6 @@ EngineRecords GameContext::getEngineRecords() const {
         case EngineWorker::WorkerState::starting: record.status = EngineRecord::Status::Starting; break;
         case EngineWorker::WorkerState::running: record.status = EngineRecord::Status::Running; break;
         case EngineWorker::WorkerState::stopped: record.status = EngineRecord::Status::NotStarted; break;
-        case EngineWorker::WorkerState::terminated: record.status = EngineRecord::Status::NotStarted; break;
         default: record.status = EngineRecord::Status::Error; break;
         }
         records.push_back(record);

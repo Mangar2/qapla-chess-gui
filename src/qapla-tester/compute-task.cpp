@@ -40,6 +40,7 @@ void ComputeTask::computeMove() {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
     if (taskType_ != ComputeTaskType::None) return;
+	gameContext_.ensureStarted();
     logMoves_ = false;
     taskType_ = ComputeTaskType::ComputeMove;
     markRunning();
@@ -65,6 +66,7 @@ void ComputeTask::analyze() {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
     if (taskType_ != ComputeTaskType::None) return;
+    gameContext_.ensureStarted();
     logMoves_ = false;
     taskType_ = ComputeTaskType::Analyze;
     markRunning();
@@ -91,9 +93,9 @@ void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
     if (taskType_ != ComputeTaskType::None) return;
-
     markRunning();
-	auto& gameRecord = gameContext_.gameRecord();
+    gameContext_.ensureStarted();
+    auto& gameRecord = gameContext_.gameRecord();
 	auto white = gameContext_.getWhite();
 	auto black = gameContext_.getBlack();
 

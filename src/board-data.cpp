@@ -166,3 +166,17 @@ bool BoardData::isGameOver() const {
 	return result != GameResult::Unterminated && 
 		gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
 }
+
+void BoardData::stopEngine(size_t index) {
+	if (index < engineRecords_.size()) {
+		auto id = engineRecords_[index].identifier;
+		computeTask_->stopEngine(id);
+	}
+}
+
+void BoardData::restartEngine(size_t index) {
+	if (index < engineRecords_.size()) {
+		auto id = engineRecords_[index].identifier;
+		computeTask_->restartEngine(id);
+	}
+}

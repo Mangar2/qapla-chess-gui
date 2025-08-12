@@ -50,7 +50,6 @@ void EngineWorker::asyncStartup(const OptionValues& optionValues) {
     post([this, options = optionValues](EngineAdapter& adapter) {
         try {
             readThread_ = std::thread(&EngineWorker::readLoop, this);
-            
             // Define expected response for the reader before initiating the protocol command.
             // This ensures the read thread knows which handshake response to watch for.
             waitForHandshake_ = EngineEvent::Type::ProtocolOk;

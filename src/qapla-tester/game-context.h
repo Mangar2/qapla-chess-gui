@@ -51,6 +51,22 @@ public:
     void restartPlayer(uint32_t index);
 
     /**
+	 * @brief Restarts the player with the given identifier.
+	 * @param id The unique identifier of the player to restart.
+     */
+    void restartPlayer(const std::string& id);
+
+    /**
+     * @brief Stops the engine process for the player with the given identifier.
+     *
+     * This method searches for the player whose engine matches the provided ID
+     * and terminates its engine process. 
+     *
+     * @param id The unique identifier of the engine to stop.
+     */
+    void stopEngine(const std::string& id);
+
+    /**
      * @brief Sets the time control for all players.
      * @param timeControl The time control.
      */
@@ -232,7 +248,12 @@ public:
 	 */ 
     EngineRecords getEngineRecords() const;
 
+    /**
+     * @brief Ensures all engines are started and ready for the next command.
+     */
+    void ensureStarted();
 private:
+
     std::vector<std::unique_ptr<PlayerContext>> players_;
     GameRecord gameRecord_;
     mutable std::mutex gameRecordMutex_;

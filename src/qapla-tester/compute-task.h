@@ -69,6 +69,20 @@ public:
 		gameContext_.restartPlayer(index);
     }
 
+    void restartEngine(const std::string& id) {
+        stop();
+        gameContext_.restartPlayer(id);
+	}
+
+    /**
+     * @brief Stops the engine with the given identifier.
+     * @param id The unique identifier of the engine to stop.
+	 */
+    void stopEngine(const std::string& id) {
+        stop();
+        gameContext_.stopEngine(id);
+    }
+
     /**
 	 * @brief Sets the time controls for the players.
      * @param timeControl The time control.
@@ -100,6 +114,7 @@ public:
      */
     void setPosition(bool useStartPosition, const std::string& fen = "",
         std::optional<std::vector<std::string>> playedMoves = std::nullopt) {
+        stop();
 		gameContext_.setPosition(useStartPosition, fen, playedMoves);
     }
 
@@ -113,6 +128,7 @@ public:
      * @param record The GameRecord containing the full game setup and move history.
      */
     void setPosition(const GameRecord& record) {
+        stop();
         gameContext_.setPosition(record);
     }
 

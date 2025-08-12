@@ -251,11 +251,11 @@ void PlayerContext::handleDisconnect(bool isWhitePlayer) {
     restartEngine();
 }
 
-void PlayerContext::restartEngine() {
+void PlayerContext::restartEngine(bool outside) {
 	if (!engine_) {
 		throw AppError::make("PlayerContext::restart; Cannot restart without an engine.");
 	}
-    if (!isEventQueueThread) {
+    if (!isEventQueueThread && !outside) {
 		std::cerr << "PlayerContext::restartEngine called outside of the GameManager thread. This is not allowed." << std::endl;
         throw AppError::make("PlayerContext::restart; Cannot restart engine outside of the GameManager thread.");
 	}

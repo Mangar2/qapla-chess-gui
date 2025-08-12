@@ -55,17 +55,48 @@ namespace QaplaWindows {
             ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            if (leftWindow_) leftWindow_->draw();
+            try {
+                if (leftWindow_) leftWindow_->draw();
+			}
+            catch (const std::exception& e) {
+                ImGui::Text("Error in left window: %s", e.what());
+            }
+            catch (...) {
+                ImGui::Text("Unknown error in left window");
+			}
             ImGui::EndChild();
-
+            
+            ImGui::SameLine();
+            drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth, height));
             ImGui::SameLine();
 
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8.0f); 
+            float rightWidth = region.x - ImGui::GetCursorPosX();
+
+            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height),
+                ImGuiChildFlags_None,
+                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            try {
+                if (rightWindow_) rightWindow_->draw();
+            }
+            catch (const std::exception& e) {
+                ImGui::Text("Error in right window: %s", e.what());
+			}
+            catch (...) {
+                ImGui::Text("Unknown error in right window");
+			}
+            ImGui::EndChild();
+
+        }
+
+    private:
+        void drawSplitter(const std::string& id, const ImVec2& vec) {
             // Splitter
             ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
 
-            ImGui::Button((idPrefix + "_splitter").c_str(), ImVec2(splitterWidth, height));
+            ImGui::Button(id.c_str(), vec);
             if (ImGui::IsItemActive()) {
                 leftWidth_ += ImGui::GetIO().MouseDelta.x;
             }
@@ -75,20 +106,7 @@ namespace QaplaWindows {
             }
 
             ImGui::PopStyleColor(3);
-            ImGui::SameLine();
-
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8.0f); 
-            float rightWidth = region.x - ImGui::GetCursorPosX();
-
-            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height),
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            if (rightWindow_) rightWindow_->draw();
-            ImGui::EndChild();
-
-        }
-
-    private:
+		}
         std::unique_ptr<EmbeddedWindow> leftWindow_;
         std::unique_ptr<EmbeddedWindow> rightWindow_;
         float leftWidth_ = 400.0f;

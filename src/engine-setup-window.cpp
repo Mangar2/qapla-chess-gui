@@ -72,8 +72,16 @@ bool EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index)
             changed = true;
         }
 
-        static const char* traceItems[] = { "none", "all", "commands" };
-        int traceIndex = static_cast<int>(config.getTraceLevel());
+        static const char* traceItems[] = { "none", "all", "command" };
+        auto traceLevel = config.getTraceLevel();
+		int traceIndex = 0;
+        if (traceLevel == TraceLevel::info) {
+            traceIndex = 1;
+        } else if (traceLevel == TraceLevel::command) {
+            traceIndex = 2;
+        } else {
+            traceIndex = 0; // Default to none if unknown
+		}
         if (ImGui::Combo("Trace", &traceIndex, traceItems, IM_ARRAYSIZE(traceItems))) {
             config.setTraceLevel(traceItems[traceIndex]);
             changed = true;

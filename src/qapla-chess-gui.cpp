@@ -109,8 +109,8 @@ namespace {
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
 
 		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-		tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
         tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(boardData));
+        tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
 		mainContainer->setRight(std::move(BoardEngineContainer));

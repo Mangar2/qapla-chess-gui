@@ -19,6 +19,7 @@
 
 #include "engine-window.h"
 #include "imgui-table.h"
+#include "imgui-button.h"
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
@@ -192,6 +193,63 @@ void EngineWindow::setTable(size_t index) {
     }
 }
 
+void EngineWindow::drawButtons(uint32_t index) {
+    constexpr float space = 3.0f;
+    constexpr float topOffset = 5.0f;
+    constexpr float bottomOffset = 8.0f;
+    constexpr float leftOffset = 20.0f;
+    std::vector<std::string> buttons{ "Restart", "Stop", "Config" };
+    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+	boardPos.x = std::round(boardPos.x);
+	boardPos.y = std::round(boardPos.y);
+
+    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    auto totalSize = buttonSize; 
+    for (const auto& button : buttons) {
+        auto total = QaplaButton::calcIconButtonTotalSize(buttonSize, button.c_str());
+		totalSize.x = std::max(totalSize.x, total.x);
+		totalSize.y = std::max(totalSize.y, total.y);
+    }
+	totalSize.x = std::round(totalSize.x);
+	totalSize.y = std::round(totalSize.y);
+    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    for (const auto& button : buttons) {
+        ImGui::SetCursorScreenPos(pos);
+        if (QaplaButton::drawIconButton(button, button, buttonSize,
+            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, bool hover) {
+                if (button == "Restart") {
+                    QaplaButton::drawRestart(drawList, topLeft, size, hover);
+                }
+                if (button == "Stop") {
+                    QaplaButton::drawStop(drawList, topLeft, size, hover);
+                }
+                if (button == "Config") {
+                    QaplaButton::drawConfig(drawList, topLeft, size, hover);
+                }
+            }))
+        {
+            try {
+                if (button == "Restart") {
+					boardData_->restartEngine(index);
+                }
+                else if (button == "Stop") {
+                    boardData_->stopEngine(index);
+                }
+                else if (button == "Config") {
+
+                }
+            }
+            catch (...) {
+
+            }
+        }
+        pos.x += totalSize.x + space;
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+}
+
+
 void EngineWindow::draw() {
     constexpr float cMinRowHeight = 80.0f;
     constexpr float cEngineInfoWidth = 160.0f;
@@ -227,6 +285,7 @@ void EngineWindow::draw() {
         ImGui::Dummy(ImVec2(cEngineInfoWidth, rowHeight));
         ImGui::SetCursorScreenPos(ImVec2(min.x, min.y + 5));
         ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
+        drawButtons(i);
         ImGui::Indent(5.0f);
 		drawEngineInfo(engineRecords[i]);
 		ImGui::Unindent(5.0f);

@@ -50,7 +50,10 @@ namespace QaplaWindows {
         std::vector<uint32_t> displayedMoveNo_;
 		void setTable(size_t index);
         void setTable(size_t index, const MoveRecord& moveRecord);
-        std::shared_ptr<const BoardData> boardData_;
+
+        void drawButtons(uint32_t index);
+
+        std::shared_ptr<BoardData> boardData_;
     };
 
 } // namespace QaplaWindows

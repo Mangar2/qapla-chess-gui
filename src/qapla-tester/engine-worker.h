@@ -238,12 +238,15 @@ public:
 		starting,
 		running,
 		failure,
-		stopped,
-		terminated
+		stopped
 	};
 
 	WorkerState workerState() {
 		return workerState_;
+	}
+
+	bool isStopped() const {
+		return workerState_ == WorkerState::stopped;
 	}
 
 private:

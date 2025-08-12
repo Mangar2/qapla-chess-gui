@@ -65,18 +65,20 @@ public:
      * This function clears the current engine worker and resets the compute state to Idle.
 	 * It is typically called when the engine is no longer needed.
 	 */
-    void resetEngine() {
+    void stopEngine() {
 		if (!engine_) return;
-        engine_.reset();
+		engine_->stop();
         computeState_ = ComputeState::Idle;
 	}
 
     /**
      * @brief Restarts the engine process.
+     * 
+	 * @param outsideThread If true, the restart will be performed outside the engine thread.
      *
      * Terminates the current engine instance and starts a new one.
      */
-    void restartEngine();
+    void restartEngine(bool outsideThread = false);
 
     /**
      * @brief Returns a raw pointer to the EngineWorker instance.

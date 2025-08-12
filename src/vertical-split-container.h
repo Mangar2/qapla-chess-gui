@@ -64,10 +64,42 @@ namespace QaplaWindows {
             ImGui::BeginChild((idPrefix + "_top").c_str(), ImVec2(width, adjustedHeight),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            if (topWindow) topWindow->draw();
+            try {
+                if (topWindow) topWindow->draw();
+            }
+            catch (const std::exception& e) {
+                ImGui::Text("Error in top window: %s", e.what());
+			}
+            catch (...) {
+                ImGui::Text("Unknown error in top window.");
+			}
             ImGui::EndChild();
 
-            // Splitter
+			drawSplitter(idPrefix + "_splitter", ImVec2(width, splitterHeight));
+
+            // Bottom window
+            ImGui::BeginChild((idPrefix + "_bottom").c_str(), ImVec2(width, bottomHeight), 
+                ImGuiChildFlags_None,
+                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            try {
+                if (bottomWindow) bottomWindow->draw();
+			}
+            catch (const std::exception& e) {
+                ImGui::Text("Error in bottom window: %s", e.what());
+            }
+            catch (...) {
+                ImGui::Text("Unknown error in bottom window.");
+			}
+            ImGui::EndChild();
+        }
+
+        void setFixedTopHeight(float height) {
+            fixedTopHeight = height;
+        }
+
+    private:
+        void drawSplitter(const std::string& id, const ImVec2& size) {
+
             ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
@@ -75,7 +107,7 @@ namespace QaplaWindows {
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
-            ImGui::Button((idPrefix + "_splitter").c_str(), ImVec2(width, splitterHeight));
+            ImGui::Button(id.c_str(), size);
 
             if (!fixedTopHeight) {
                 if (ImGui::IsItemActive()) {
@@ -88,20 +120,7 @@ namespace QaplaWindows {
 
             ImGui::PopStyleVar(2);
             ImGui::PopStyleColor(3);
-
-            // Bottom window
-            ImGui::BeginChild((idPrefix + "_bottom").c_str(), ImVec2(width, bottomHeight), 
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            if (bottomWindow) bottomWindow->draw();
-            ImGui::EndChild();
-        }
-
-        void setFixedTopHeight(float height) {
-            fixedTopHeight = height;
-        }
-
-    private:
+		}
         std::unique_ptr<EmbeddedWindow> topWindow;
         std::unique_ptr<EmbeddedWindow> bottomWindow;
         std::optional<float> fixedTopHeight;

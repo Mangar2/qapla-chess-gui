@@ -63,13 +63,15 @@ void EngineConfig::setTimeControl(const std::string& tc) {
 }
 
 void EngineConfig::setTraceLevel(const std::string& level) {
-	if (level == "none") {
+
+    const auto lowercaseLevel = to_lowercase(level);
+	if (lowercaseLevel == "none") {
 		traceLevel_ = TraceLevel::none;
 	}
-	else if (level == "all") {
+	else if (lowercaseLevel == "all") {
 		traceLevel_ = TraceLevel::info;
 	}
-	else if (level == "command") {
+	else if (lowercaseLevel == "command") {
 		traceLevel_ = TraceLevel::command;
 	}
 	else {
@@ -79,11 +81,7 @@ void EngineConfig::setTraceLevel(const std::string& level) {
 }
 
 void EngineConfig::setProtocol(const std::string& proto) {
-    if (proto == "uci") protocol_ = EngineProtocol::Uci;
-    else if (proto == "xboard") protocol_ = EngineProtocol::XBoard;
-    else {
-		AppError::throwOnInvalidOption({ "uci", "xboard" }, proto, "Unknown protocol");
-    }
+	protocol_ = parseEngineProtocol(proto);
 }
 
 void EngineConfig::setCommandLineOptions(const ValueMap& values, bool update) {
