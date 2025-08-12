@@ -60,6 +60,36 @@ inline std::string to_string(EngineProtocol protocol) {
 	}
 }
 
+inline EngineProtocol parseEngineProtocol(const std::string& value) {
+	if (value == "uci") return EngineProtocol::Uci;
+	if (value == "xboard") return EngineProtocol::XBoard;
+	AppError::throwOnInvalidOption({ "uci", "xboard" }, value, "protocol option");
+	return EngineProtocol::Uci;
+}
+
+enum class EngineTraceLevel {
+	None,
+	All,
+	Commands
+};
+
+inline std::string to_string(EngineTraceLevel tracelevel) {
+	switch (tracelevel) {
+	case EngineTraceLevel::None: return "none";
+	case EngineTraceLevel::All: return "all";
+	case EngineTraceLevel::Commands: return "commands";
+	default: assert(false && "Unknown trace level"); return "unknown";
+	}
+}
+
+inline EngineTraceLevel parseEngineTraceLevel(const std::string& value) {
+	if (value == "none") return EngineTraceLevel::None;
+	if (value == "all") return EngineTraceLevel::All;
+	if (value == "commands") return EngineTraceLevel::Commands;
+	AppError::throwOnInvalidOption({ "none", "all", "commands" }, value, "trace level option");
+	return EngineTraceLevel::None; 
+}
+
  /**
   * Represents an option that can be set for a chess engine.
   */

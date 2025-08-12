@@ -246,6 +246,12 @@
     <ClCompile Include="src\qapla-tester\epd-test.cpp">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine-data.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine-setup-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -459,6 +465,15 @@
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui-tab-bar.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine-data.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\engine-setup-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui-controls.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

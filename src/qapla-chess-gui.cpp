@@ -29,6 +29,7 @@
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
+#include "engine-setup-window.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -109,6 +110,7 @@ namespace {
 
 		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
 		tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
+        tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(boardData));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
 		mainContainer->setRight(std::move(BoardEngineContainer));
