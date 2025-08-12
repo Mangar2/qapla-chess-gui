@@ -61,7 +61,7 @@ namespace QaplaWindows {
 		void setTable(size_t index);
         void setTable(size_t index, const MoveRecord& moveRecord);
 
-        void drawButtons(uint32_t index);
+        void drawButtons(size_t index);
 
         std::shared_ptr<BoardData> boardData_;
     };

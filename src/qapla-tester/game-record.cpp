@@ -28,6 +28,7 @@ void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWh
     startFen_ = startPos ? "" : startFen;
     gameEndCause_ = GameEndCause::Ongoing;
     gameResult_ = GameResult::Unterminated;
+    updateCnt_++;
 }
 
 void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
@@ -53,6 +54,7 @@ void GameRecord::setStartPosition(const GameRecord& source, uint32_t toPly,
     blackEngineName_ = blackEngineName;
     round_ = source.round_;
     tags_ = source.tags_;
+    updateCnt_++;
 }
 
 void GameRecord::addMove(const MoveRecord& move) {
@@ -61,6 +63,7 @@ void GameRecord::addMove(const MoveRecord& move) {
     }
     moves_.push_back(move);
     ++currentPly_;
+    updateCnt_++;
 }
 
 uint32_t GameRecord::nextMoveIndex() const {
@@ -69,18 +72,21 @@ uint32_t GameRecord::nextMoveIndex() const {
 
 void GameRecord::setNextMoveIndex(uint32_t ply) {
     if (ply <= moves_.size()) {
+        updateCnt_++;
         currentPly_ = ply;
     }
 }
 
 void GameRecord::advance() {
     if (currentPly_ < moves_.size()) {
+        updateCnt_++;
         ++currentPly_;
     }
 }
 
 void GameRecord::rewind() {
     if (currentPly_ > 0) {
+		updateCnt_++;
         --currentPly_;
     }
 }
@@ -102,18 +108,7 @@ std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const {
 }
 
 bool GameRecord::isUpdate(const GameRecord& other) const {
-    return startPos_ != other.startPos_ ||
-        startFen_ != other.startFen_ ||
-        isWhiteToMoveAtStart_ != other.isWhiteToMoveAtStart_ ||
-        whiteEngineName_ != other.whiteEngineName_ ||
-        blackEngineName_ != other.blackEngineName_ ||
-        round_ != other.round_ ||
-        tags_ != other.tags_ ||
-		moves_.size() > other.moves_.size() ||
-		whiteTimeControl_ != other.whiteTimeControl_ ||
-        blackTimeControl_ != other.blackTimeControl_ ||
-        gameEndCause_ != other.gameEndCause_ ||
-        gameResult_ != other.gameResult_;
+    return other.updateCnt_ != updateCnt_;
 }
 
 bool GameRecord::isDifferent(const GameRecord& other) const {

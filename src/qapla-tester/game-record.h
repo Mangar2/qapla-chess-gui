@@ -100,6 +100,7 @@ public:
 	 * @param result The result of the game.
      */
 	void setGameEnd(GameEndCause cause, GameResult result) {
+		updateCnt_++;
 		gameEndCause_ = cause;
 		gameResult_ = result;
 	}
@@ -114,6 +115,7 @@ public:
 	 * @brief Sets the time control for the game.
      */
     void setTimeControl(const TimeControl& whiteTimeControl, const TimeControl& blackTimeControl) {
+		updateCnt_++;
         whiteTimeControl_ = whiteTimeControl;
 		blackTimeControl_ = blackTimeControl;
     }
@@ -157,6 +159,7 @@ public:
 		return whiteEngineName_;
 	}
 	void setWhiteEngineName(const std::string& name) {
+		updateCnt_++;
 		whiteEngineName_ = name;
 	}
 
@@ -164,6 +167,7 @@ public:
 		return blackEngineName_;
     }
 	void setBlackEngineName(const std::string& name) {
+		updateCnt_++;
 		blackEngineName_ = name;
 	}
 
@@ -178,6 +182,7 @@ public:
 	 * @param r The round number to set.
 	 */
 	void setRound(uint32_t r) {
+		updateCnt_++;
 		round_ = r;
 	}
 
@@ -187,6 +192,7 @@ public:
 	 * @param value The tag value.
 	 */
 	void setTag(const std::string& key, const std::string& value) {
+		updateCnt_++;
 		if (value.empty()) {
 			tags_.erase(key);
 		}
@@ -249,4 +255,5 @@ private:
     std::string blackEngineName_;
 	bool isWhiteToMoveAtStart_ = true; 
     uint32_t round_ = 0;
+	uint64_t updateCnt_ = 1; 
 };

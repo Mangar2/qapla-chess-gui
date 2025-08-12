@@ -197,7 +197,7 @@ void EngineWindow::setTable(size_t index) {
     }
 }
 
-void EngineWindow::drawButtons(uint32_t index) {
+void EngineWindow::drawButtons(size_t index) {
     constexpr float space = 3.0f;
     constexpr float topOffset = 5.0f;
     constexpr float bottomOffset = 8.0f;
