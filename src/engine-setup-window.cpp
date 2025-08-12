@@ -35,21 +35,21 @@
 using namespace QaplaWindows;
 
 
-EngineSetupWindow::EngineSetupWindow(std::shared_ptr<BoardData> boardData)
-    : boardData_(std::move(boardData))
-{
-}
-
+EngineSetupWindow::EngineSetupWindow() = default;
 EngineSetupWindow::~EngineSetupWindow() = default;
 
-bool EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index) {
+std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
     std::string headerLabel = config.getName().empty()
         ? std::format("Engine {}", index + 1)
         : std::format("{}##engineHeader{}", config.getName(), index);
     bool changed = false;
-    if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID(index);
+    ImGui::PushID(index);
+ 
+    ImGui::Checkbox("##select", &selected);
+    ImGui::SameLine(0.0f, 4.0f);
 
+    if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_Selected)) {
+        ImGui::Indent(32.0f);
         if (auto name = ImGuiControls::inputText("Name", config.getName())) {
             config.setName(*name);
             changed = true;
@@ -93,22 +93,36 @@ bool EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index)
             config.setRestartOption(static_cast<RestartOption>(restartIndex));
             changed = true;
         }
-
-        ImGui::PopID();
+        ImGui::Indent(-32.0f);
     }
-    return changed;
+    ImGui::PopID();
+    return { changed, selected };
 }
-
-
 
 void EngineSetupWindow::draw() {
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
     int index = 0;
     for (auto& config : configs) {
-        if (drawEngineConfigSection(config, index)) {
+        bool inSelection = false;
+        for (auto& active : activeEngines_) {
+            if (active == config) {
+                inSelection = true;
+                break;
+            }
+		}
+        auto [changed, selected] = drawEngineConfigSection(config, index, inSelection);
+        if (changed) {
             configManager.addOrReplaceConfig(config);
         }
+        if (selected) {
+            if (std::find(activeEngines_.begin(), activeEngines_.end(), config) == activeEngines_.end()) {
+                activeEngines_.push_back(config);
+            }
+        } else {
+            activeEngines_.erase(std::remove(activeEngines_.begin(), activeEngines_.end(), config), activeEngines_.end());
+		}
+
 		index++;
 	}
 }

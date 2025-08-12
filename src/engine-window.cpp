@@ -20,6 +20,8 @@
 #include "engine-window.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
+#include "imgui-popup.h"
+#include "engine-setup-window.h"
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
@@ -78,7 +80,9 @@ static void drawEngineInfo(const EngineRecord& record) {
 
 
 EngineWindow::EngineWindow(std::shared_ptr<BoardData> boardData)
-    : boardData_(std::move(boardData))
+    : setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
+        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" })),
+    boardData_(std::move(boardData))
 {
 }
 
@@ -236,7 +240,7 @@ void EngineWindow::drawButtons(uint32_t index) {
                     boardData_->stopEngine(index);
                 }
                 else if (button == "Config") {
-
+                    setupWindow_->open();
                 }
             }
             catch (...) {
@@ -249,6 +253,15 @@ void EngineWindow::drawButtons(uint32_t index) {
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
+void EngineWindow::drawEngineSelectionPopup() {
+	setupWindow_->draw();
+
+   if (auto confirmed = setupWindow_->confirmed()) {
+        if (*confirmed) {
+            // result = popup->content()->getActiveEngines();
+        }
+    }
+}
 
 void EngineWindow::draw() {
     constexpr float cMinRowHeight = 80.0f;
@@ -286,6 +299,7 @@ void EngineWindow::draw() {
         ImGui::SetCursorScreenPos(ImVec2(min.x, min.y + 5));
         ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
         drawButtons(i);
+        drawEngineSelectionPopup();
         ImGui::Indent(5.0f);
 		drawEngineInfo(engineRecords[i]);
 		ImGui::Unindent(5.0f);

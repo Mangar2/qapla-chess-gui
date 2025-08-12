@@ -19,11 +19,10 @@
 
 #pragma once
 
+#include "qapla-tester/engine-config.h"
 #include "embedded-window.h"
 #include "board-data.h"
 #include <memory>
-
-class EngineConfig;
 
 namespace QaplaWindows {
 
@@ -38,10 +37,25 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        EngineSetupWindow(std::shared_ptr<BoardData> boardData);
+        EngineSetupWindow();
         ~EngineSetupWindow();
 
         void draw() override;
+
+        /**
+         * @brief Returns the list of active engine configurations.
+         * @return Vector of EngineConfig objects representing the active engines.
+		 */
+        const std::vector<EngineConfig>& getActiveEngines() const {
+            return activeEngines_;
+        }
+        /**
+         * @brief Sets the list of active engine configurations.
+         * @param engines Vector of EngineConfig objects to set as active engines.
+         */
+        void setActiveEngines(const std::vector<EngineConfig>& engines) {
+            activeEngines_ = engines;
+		}
 
     private:
 
@@ -49,10 +63,10 @@ namespace QaplaWindows {
          * @brief Draws a collapsible section for editing a single engine configuration.
          * @param config Reference to the engine configuration to edit.
          * @param index Index of the engine, used to generate unique ImGui IDs.
+		 * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
          */
-        bool drawEngineConfigSection(EngineConfig& config, int index);
-
-        std::shared_ptr<BoardData> boardData_;
+        std::tuple<bool, bool> drawEngineConfigSection(EngineConfig& config, int index, bool selected);
+        std::vector<EngineConfig> activeEngines_;
     };
 
 } // namespace QaplaWindows

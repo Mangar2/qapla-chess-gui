@@ -20,6 +20,8 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "engine-setup-window.h"
+#include "imgui-popup.h"
 #include "board-data.h"
 #include <memory>
 
@@ -46,6 +48,14 @@ namespace QaplaWindows {
 
     private:
         void addTables(size_t size);
+
+        /**
+         * @brief Shows a popup window to select engines using EngineSetupWindow.
+         * @return Optional list of selected EngineConfig objects if user confirmed.
+         */
+        void drawEngineSelectionPopup();
+        std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
+
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
         std::vector<uint32_t> displayedMoveNo_;
 		void setTable(size_t index);

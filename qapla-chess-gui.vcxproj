@@ -225,6 +225,7 @@
     <ClInclude Include="src\horizontal-split-container.h" />
     <ClInclude Include="src\imgui-button.h" />
     <ClInclude Include="src\imgui-controls.h" />
+    <ClInclude Include="src\imgui-popup.h" />
     <ClInclude Include="src\imgui-tab-bar.h" />
     <ClInclude Include="src\imgui-table.h" />
     <ClInclude Include="src\inter-variable.h" />

@@ -80,6 +80,8 @@ namespace {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
+        //ImGui::StyleColorsClassic();
+		//ImGui::StyleColorsLight();
         ImGui_ImplGlfw_InitForOpenGL(window, true);
         ImGui_ImplOpenGL3_Init("#version 330");
     }
@@ -109,7 +111,7 @@ namespace {
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
 
 		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(boardData));
+        tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
         tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();

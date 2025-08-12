@@ -476,5 +476,8 @@
     <ClInclude Include="src\imgui-controls.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
+    <ClInclude Include="src\imgui-popup.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

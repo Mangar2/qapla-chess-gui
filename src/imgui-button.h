@@ -120,8 +120,8 @@ namespace QaplaButton {
         float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
         constexpr float pi = 3.14159265358979323846f;
         
-        float innerRadius = radius - 2.0f;
-        list->AddCircle(center, innerRadius, color, 0, 3.0f);
+        float innerRadius = radius - 0.5f;
+        list->AddCircle(center, innerRadius, color, 0, 2.0f);
         // Draw the gear shape
         for (int i = 0; i < 8; ++i) {
             float angle = i * (pi / 4.0f); // 45 degrees
