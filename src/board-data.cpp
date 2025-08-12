@@ -134,13 +134,18 @@ void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start) {
 }
 
 void BoardData::pollData() {
-	auto engineRecords = computeTask_->getEngineRecords();
-	setEngineRecords(engineRecords);
+	try {
+		auto engineRecords = computeTask_->getEngineRecords();
+		setEngineRecords(engineRecords);
 
-	computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
-		setGameIfDifferent(g);
-		});
-	epdData_.pollData();
+		computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
+			setGameIfDifferent(g);
+			});
+		epdData_.pollData();
+	}
+	catch (const std::exception& ex) {
+		assert(false && "Error while polling data");
+	}
 }
 
 void BoardData::setGameIfDifferent(const GameRecord& record) {

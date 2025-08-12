@@ -162,10 +162,18 @@ public:
 
 	/**
 	 * @brief Returns the current move record.
+	 * It is not thread-safe to call this function as it returns a reference to the current move.
 	 */
 	const MoveRecord& getCurrentMove() const {
-		std::lock_guard lock(currentMoveMutex_);
 		return currentMove_;
+	}
+
+    /**
+	 * @brief Returns a thread save copy of the current move record.
+     */
+    MoveRecord getCurrentMoveCopy() const {
+        std::lock_guard lock(currentMoveMutex_);
+        return currentMove_;
 	}
 
 	/**

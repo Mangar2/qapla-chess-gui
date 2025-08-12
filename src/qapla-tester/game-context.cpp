@@ -245,7 +245,7 @@ EngineRecords GameContext::getEngineRecords() const {
                 .supportedOptions{},
                 .status = EngineRecord::Status::NotStarted,
                 .memoryUsageB = 0,
-                .curMoveRecord = player->getCurrentMove()
+                .curMoveRecord = player->getCurrentMoveCopy()
             };
             records.push_back(record);
             continue;
@@ -256,7 +256,7 @@ EngineRecords GameContext::getEngineRecords() const {
             .config = engine->getConfig(),
             .supportedOptions = engine->getSupportedOptions(),
             .memoryUsageB = engine->getEngineMemoryUsage(),
-            .curMoveRecord = player->getCurrentMove()
+            .curMoveRecord = player->getCurrentMoveCopy()
         };
         switch (engine->workerState()) {
         case EngineWorker::WorkerState::notStarted: record.status = EngineRecord::Status::NotStarted; break;
