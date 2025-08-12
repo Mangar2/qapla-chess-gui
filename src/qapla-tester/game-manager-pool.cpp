@@ -156,7 +156,10 @@ void GameManagerPool::stopAll() {
 void GameManagerPool::clearAll() {
     stopAll();
     for (auto& manager : managers_) {
-        manager->getFinishedFuture().wait();
+        auto& future = manager->getFinishedFuture();
+        if (future.valid()) {
+            future.wait();
+        }
     }
 
     std::lock_guard<std::mutex> lock(taskMutex_);
@@ -197,7 +200,10 @@ void GameManagerPool::waitForTask() {
 		}
 
         for (auto& manager : managers) {
-            manager->getFinishedFuture().wait();
+            auto& future = manager->getFinishedFuture();
+            if (future.valid()) {
+                future.wait();
+            }
         }
     }
 
