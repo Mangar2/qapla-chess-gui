@@ -48,6 +48,7 @@ namespace QaplaWindows {
 			std::uint64_t bTimeLeftMs;
             std::uint64_t wTimeCurMove;
 			std::uint64_t bTimeCurMove;
+			bool wtm = true; 
 		};
         ClockData clockData_;
 		bool setClockData();

@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "qapla-engine/types.h"
 #include <string>
 #include <imgui.h>
 
@@ -33,5 +34,26 @@ namespace font {
 	 * @param size Font size in pixels.
 	 */
 	void loadFonts();
+
+	/**
+	 * Gets the piece symbol for the given piece type.
+	 */
+	const char8_t* pieceSymbol(QaplaBasics::Piece p);
+
+	/**
+	 * Gets the piece background symbol for the given piece type.
+	 */
+	const char8_t* pieceBackground(QaplaBasics::Piece p);
+
+	/**
+	 * Draws a chess piece at the specified cell position.
+	 * @param drawList ImGui draw list to use for rendering.
+	 * @param piece The piece type to draw.
+	 * @param cellMin Minimum coordinates of the cell.
+	 * @param cellSize Size of the cell in pixels.
+	 * @param font Optional font to use for drawing the piece symbol.
+	 */
+	void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
+		const ImVec2& cellMin, float cellSize, ImFont* font = chessFont);
 
 }

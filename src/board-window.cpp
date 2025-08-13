@@ -31,63 +31,7 @@
 
 namespace QaplaWindows {
 
-    static const char8_t* pieceSymbol(QaplaBasics::Piece p) {
-        using enum QaplaBasics::Piece;
-        switch (p) {
-        case WHITE_PAWN:   return (u8"♙");
-        case WHITE_KNIGHT: return (u8"♘");
-        case WHITE_BISHOP: return (u8"♗");
-        case WHITE_ROOK:   return (u8"♖");
-        case WHITE_QUEEN:  return (u8"♕");
-        case WHITE_KING:   return (u8"♔");
-        case BLACK_PAWN:   return (u8"♟");
-        case BLACK_KNIGHT: return (u8"♞");
-        case BLACK_BISHOP: return (u8"♝");
-        case BLACK_ROOK:   return (u8"♜");
-        case BLACK_QUEEN:  return (u8"♛");
-        case BLACK_KING:   return (u8"♚");
-		case NO_PIECE:     return (u8" ");
-		case PIECE_AMOUNT: return (u8" ");
-		case BLACK: return (u8" ");
-        default: return (u8"");
-        }
-    }
-
-    static const char8_t* pieceBackground(QaplaBasics::Piece p) {
-        using enum QaplaBasics::Piece;
-        switch (p) {
-        case WHITE_PAWN:   return (u8"");
-        case WHITE_KNIGHT:  return (u8"");
-        case WHITE_BISHOP: return (u8"");
-        case WHITE_ROOK:   return (u8"");
-        case WHITE_QUEEN:  return (u8"");
-        case WHITE_KING:   return (u8"");
-        case BLACK_PAWN:   return (u8"");
-        case BLACK_KNIGHT: return (u8"");
-        case BLACK_BISHOP: return (u8"");
-        case BLACK_ROOK:   return (u8"");
-        case BLACK_QUEEN:  return (u8"");
-        case BLACK_KING:   return (u8"");
-        case NO_PIECE:     return (u8" ");
-        case PIECE_AMOUNT: return (u8" ");
-        case BLACK: return (u8" ");
-        default: return (u8"");
-            /*
-        case WhiteBishop: return (u8"");
-        case WhiteRook:   return (u8"");
-        case WhiteQueen:  return (u8"");
-        case WhiteKing:   return (u8"");
-        case BlackPawn:   return (u8"");
-        case BlackKnight: return (u8"");
-        case BlackBishop: return (u8"");
-        case BlackRook:   return (u8"");
-        case BlackQueen:  return (u8"");
-        case BlackKing:   return (u8"");
-        */
-        }
-        return u8" ";
-    }
-
+   
     std::pair<ImVec2, ImVec2> BoardWindow::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
         QaplaBasics::File file, QaplaBasics::Rank rank) {
         float cellY = boardInverted_ ?
@@ -149,7 +93,7 @@ namespace QaplaWindows {
 
             const ImU32 bgColor = IM_COL32(240, 217, 181, 255);
             drawList->AddRectFilled(cellMin, cellMax, bgColor);
-            drawPiece(drawList, pieces[i], cellMin, cellSize, font);
+            font::drawPiece(drawList, pieces[i], cellMin, cellSize, font);
         }
 
         ImGui::PopFont();
@@ -215,25 +159,6 @@ namespace QaplaWindows {
         }
     }
 
-    void BoardWindow::drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, 
-        const ImVec2& cellMin, float cellSize, ImFont* font)
-    {
-        if (piece == QaplaBasics::Piece::NO_PIECE)
-            return;
-
-        const float fontSize = cellSize * 0.9f;
-        const char* text = reinterpret_cast<const char*>(pieceSymbol(piece));
-        const char* background = reinterpret_cast<const char*>(pieceBackground(piece));
-        const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0f, text);
-        const ImVec2 textPos = {
-            cellMin.x + (cellSize - textSize.x) * 0.5f,
-            cellMin.y + (cellSize - textSize.y) * 0.5f
-        };
-
-        drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
-        drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
-    }
-
     void BoardWindow::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
     {
         using QaplaBasics::Rank;
@@ -247,7 +172,7 @@ namespace QaplaWindows {
                 Square sq = computeSquare(file, rank);
                 Piece piece = gameState.position()[sq];
                 const auto [cellMin, _] = computeCellCoordinates(boardPos, cellSize, file, rank);
-                drawPiece(drawList, piece, cellMin, cellSize, font);
+                font::drawPiece(drawList, piece, cellMin, cellSize, font);
             }
         }
     }

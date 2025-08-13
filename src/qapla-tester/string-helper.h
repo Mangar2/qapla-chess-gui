@@ -94,10 +94,10 @@ inline std::string formatMs(uint64_t ms, uint32_t mdigits = 3) {
     uint64_t hours = minutes / 60;
     double dSeconds = static_cast<double>(ms % 60000) / 1000.0;
     if (hours > 0) {
-        oss << hours << ":" 
-            << std::right << std::setfill('0') << std::setw(2);
+        oss << hours << ":";
     }
-    oss << std::right << (minutes % 60) << ":"
+    oss << std::right 
+        << std::setfill('0') << std::setw(2) << (minutes % 60) << ":"
         << std::fixed << std::setprecision(mdigits)
         << std::setw(mdigits == 0 ? 2 : mdigits + 3) << std::setfill('0')
         << dSeconds;

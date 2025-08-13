@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #include "font.h"
@@ -25,6 +25,70 @@
 #include <filesystem>
 
 namespace font {
+
+    const char8_t* pieceSymbol(QaplaBasics::Piece p) {
+        using enum QaplaBasics::Piece;
+        switch (p) {
+        case WHITE_PAWN:   return (u8"♙");
+        case WHITE_KNIGHT: return (u8"♘");
+        case WHITE_BISHOP: return (u8"♗");
+        case WHITE_ROOK:   return (u8"♖");
+        case WHITE_QUEEN:  return (u8"♕");
+        case WHITE_KING:   return (u8"♔");
+        case BLACK_PAWN:   return (u8"♟");
+        case BLACK_KNIGHT: return (u8"♞");
+        case BLACK_BISHOP: return (u8"♝");
+        case BLACK_ROOK:   return (u8"♜");
+        case BLACK_QUEEN:  return (u8"♛");
+        case BLACK_KING:   return (u8"♚");
+        case NO_PIECE:     return (u8" ");
+        case PIECE_AMOUNT: return (u8" ");
+        case BLACK: return (u8" ");
+        default: return (u8"");
+        }
+    }
+
+    const char8_t* pieceBackground(QaplaBasics::Piece p) {
+        using enum QaplaBasics::Piece;
+        switch (p) {
+        case WHITE_PAWN:   return (u8"");
+        case WHITE_KNIGHT:  return (u8"");
+        case WHITE_BISHOP: return (u8"");
+        case WHITE_ROOK:   return (u8"");
+        case WHITE_QUEEN:  return (u8"");
+        case WHITE_KING:   return (u8"");
+        case BLACK_PAWN:   return (u8"");
+        case BLACK_KNIGHT: return (u8"");
+        case BLACK_BISHOP: return (u8"");
+        case BLACK_ROOK:   return (u8"");
+        case BLACK_QUEEN:  return (u8"");
+        case BLACK_KING:   return (u8"");
+        case NO_PIECE:     return (u8" ");
+        case PIECE_AMOUNT: return (u8" ");
+        case BLACK: return (u8" ");
+        default: return (u8"");
+        }
+        return u8" ";
+    }
+
+    void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
+        const ImVec2& cellMin, float cellSize, ImFont* font)
+    {
+        if (piece == QaplaBasics::Piece::NO_PIECE)
+            return;
+
+        const float fontSize = cellSize * 0.9f;
+        const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
+        const char* background = reinterpret_cast<const char*>(font::pieceBackground(piece));
+        const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0f, text);
+        const ImVec2 textPos = {
+            cellMin.x + (cellSize - textSize.x) * 0.5f,
+            cellMin.y + (cellSize - textSize.y) * 0.5f
+        };
+
+        drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
+        drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
+    }
 
     void loadFonts() {
         auto& io = ImGui::GetIO();

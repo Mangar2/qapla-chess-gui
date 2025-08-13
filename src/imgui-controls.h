@@ -50,4 +50,20 @@ namespace QaplaWindows::ImGuiControls {
         return std::nullopt;
     }
 
+    inline void drawBoxWithShadow(ImVec2 topLeft, ImVec2 bottomRight)
+    {
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        const ImGuiStyle& style = ImGui::GetStyle();
+
+        ImU32 borderCol = ImGui::GetColorU32(ImGuiCol_Border);
+        ImU32 shadowCol = ImGui::GetColorU32(ImGuiCol_BorderShadow);
+
+        const float shadowSpread = 2.0f; 
+        ImVec2 shadowMin = ImVec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
+        ImVec2 shadowMax = ImVec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
+        drawList->AddRect(shadowMin, shadowMax, shadowCol, style.FrameRounding + shadowSpread);
+
+        drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0f);
+    }
+
 }

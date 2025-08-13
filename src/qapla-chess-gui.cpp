@@ -80,6 +80,7 @@ namespace {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
+        ImGui::GetStyle().Colors[ImGuiCol_BorderShadow] = ImVec4(0.25f, 0.28f, 0.32f, 0.40f);
         //ImGui::StyleColorsClassic();
 		//ImGui::StyleColorsLight();
         ImGui_ImplGlfw_InitForOpenGL(window, true);

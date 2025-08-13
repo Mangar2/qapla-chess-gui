@@ -50,8 +50,6 @@ namespace QaplaWindows {
             QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
         void drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize);
         
-        void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
-            const ImVec2& cellMin, float cellSize, ImFont* font);
         void drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font);
 
         void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
