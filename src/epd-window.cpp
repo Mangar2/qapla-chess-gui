@@ -55,16 +55,16 @@ void EpdWindow::drawButtons() {
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     for (const std::string button : { "Run", "Stop", "Clear" }) {
         ImGui::SetCursorScreenPos(pos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize,
-            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, bool hover) {
+        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
+            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Run") {
-                    QaplaButton::drawArrow(drawList, topLeft, size, hover);
+                    QaplaButton::drawPlay(drawList, topLeft, size);
                 }
                 if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size, hover);
+                    QaplaButton::drawStop(drawList, topLeft, size);
 				}
                 if (button == "Clear") {
-                    QaplaButton::drawText("X", drawList, topLeft, size, hover);
+                    QaplaButton::drawText("X", drawList, topLeft, size);
                 }
             }))
         {

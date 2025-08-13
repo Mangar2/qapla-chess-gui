@@ -29,7 +29,9 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
         }
         auto player = std::make_unique<PlayerContext>();
         player->setEngine(std::move(engine));
+        player->setStartPosition(gameRecord_);
         players_.emplace_back(std::move(player));
+
     }
 }
 
@@ -130,6 +132,19 @@ void GameContext::setPosition(const GameRecord& record) {
 
     for (auto& player : players_) {
         player->setStartPosition(gameRecord_);
+    }
+
+}
+
+void GameContext::setMove(const MoveRecord& move) {
+    cancelCompute();
+    {
+        std::lock_guard lock(gameRecordMutex_);
+		gameRecord_.addMove(move);
+    }
+
+    for (auto& player : players_) {
+        player->doMove(move);
     }
 
 }

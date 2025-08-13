@@ -73,10 +73,7 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 		moveRecord.original = move.getLAN();
 		moveRecord.lan = moveRecord.original;
 		moveRecord.san = gameState_->moveToSan(move);
-		gameRecord_->addMove(moveRecord);
-		gameState_->doMove(move);
-		checkForGameEnd();
-		computeTask_->setPosition(*gameRecord_);
+		computeTask_->setMove(moveRecord);
 		return { false, false };
     }
     else if (promotion) {
@@ -105,7 +102,7 @@ void BoardData::execute(std::string command) {
 		computeTask_->newGame();
 	}
 	else if (command == "Play") {
-		computeTask_->computeMove();
+		computeTask_->playSide();
 	}
 	else if (command == "Analyze") {
 		computeTask_->analyze();
@@ -198,4 +195,20 @@ void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
 	TimeControl tc;
 	tc.addTimeSegment({ 0, 10000, 100 });
 	computeTask_->setTimeControl(tc);
+}
+
+bool BoardData::isModeActive(const std::string& mode) const {
+	auto status = computeTask_->getStatus();
+	switch (status) {
+		case ComputeTask::Status::Stopped:
+			return mode == "Manual";
+		case ComputeTask::Status::Play:
+			return mode == "Play";
+		case ComputeTask::Status::Autoplay:
+			return mode == "Auto";
+		case ComputeTask::Status::Analyze:
+			return mode == "Analyze";
+		default:
+			return false;
+	}
 }

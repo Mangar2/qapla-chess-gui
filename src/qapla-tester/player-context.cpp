@@ -273,6 +273,11 @@ bool PlayerContext::restartIfNotReady() {
     return false;
 }
 
+void PlayerContext::doMove(const MoveRecord& moveRecord) {
+    const auto move = gameState_.stringToMove(moveRecord.original, false);
+    doMove(move);
+}
+
 void PlayerContext::doMove(QaplaBasics::Move move) {
 	if (move.isEmpty()) {
 		throw AppError::make("PlayerContext::doMove; Illegal move in for doMove");

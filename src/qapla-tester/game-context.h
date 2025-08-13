@@ -119,9 +119,14 @@ public:
 
     /**
      * @brief Sets the game record and initializes players from it.
-     * @param record The game record to adopt.
+     * @param game The game record to adopt.
      */
-    void setPosition(const GameRecord& record);
+    void setPosition(const GameRecord& game);
+
+    /**
+	 * @brief Sets a new move in the game record.
+     */
+    void setMove(const MoveRecord& move);
 
     /**
      * @brief Returns the number of players.

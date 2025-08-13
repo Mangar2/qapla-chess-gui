@@ -25,16 +25,33 @@
 namespace QaplaButton {
 
     constexpr float BORDER = 4.0f;
-    constexpr auto PASSIV = IM_COL32(192, 192, 192, 255);
-    constexpr auto HOVER = IM_COL32(255, 255, 255, 255);
 
-    using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size, bool hover)>;
+    using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
-    inline void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline auto getBgColor(bool active) {
+        bool hovered = ImGui::IsItemHovered();
+		active = active || ImGui::IsItemActive();
+
+		if (active) return ImGui::GetColorU32(ImGuiCol_ButtonActive);
+		if (hovered) return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		return ImGui::GetColorU32(ImGuiCol_Button);
+    }
+
+    inline auto getFgColor(bool active = false) {
+        bool hovered = ImGui::IsItemHovered();
+        active = active || ImGui::IsItemActive();
+
+        if (active) return ImGui::GetColorU32(ImGuiCol_Text);
+        if (hovered) return ImGui::GetColorU32(ImGuiCol_Text);
+        return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+
+    }
+
+    inline void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
         constexpr float FIELD_SIZE = 3;
         auto xPos = topLeft.x + BORDER;
         auto yPos = topLeft.y + BORDER;
-		auto color = hover ? HOVER : PASSIV;
+        auto color = getFgColor();
         for (int y = 0; y < 6; y++) {
             for (int x = 0; x < 6; x++) {
                 if ((x + y) % 2 == 1) {
@@ -48,13 +65,13 @@ namespace QaplaButton {
         }
     }
 
-    inline void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
         auto yReduce = BORDER + 5.0f;
         auto thickness = 7.0f;
         auto arrowInset = 4.0f;
         auto xPos = topLeft.x + BORDER - 1.0f;
         auto yPos = topLeft.y + yReduce;
-        auto color = hover ? HOVER : PASSIV;
+        auto color = getFgColor();
         list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3.0f, yPos + thickness), color);
         xPos += 3.0f;
         for (int i = 0; i < 8; i++) {
@@ -71,10 +88,10 @@ namespace QaplaButton {
         }
     }
 
-    inline void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
         for (int i = 1; i <= 2; i++) {
             auto reduce = BORDER + static_cast<float>(i);
-			auto color = hover ? HOVER : PASSIV;
+            auto color = getFgColor();
             list->AddRect(
                 ImVec2(topLeft.x + reduce, topLeft.y + reduce),
                 ImVec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
@@ -85,7 +102,7 @@ namespace QaplaButton {
         }
     }
 
-    inline void drawRestart (ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline void drawRestart (ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
         ImVec2 center = topLeft;
         center.x += size.x / 2;
         center.y += size.y / 2;
@@ -94,7 +111,7 @@ namespace QaplaButton {
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         constexpr float pi = 3.14159265358979323846f;
 
-        auto color = hover ? HOVER : PASSIV;
+        auto color = getFgColor();
 
         float startAngle = 1.5f * pi;   // 270° = 3/2 Pi
         float endAngle = startAngle + 1.5f * pi;  // 270° → 45° 
@@ -114,8 +131,8 @@ namespace QaplaButton {
         }
     }
 
-    inline void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
-        auto color = hover ? HOVER : PASSIV;
+    inline void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
+        auto color = getFgColor();
         ImVec2 center = ImVec2(topLeft.x + size.x / 2.0f, topLeft.y + size.y / 2.0f);
         float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
         constexpr float pi = 3.14159265358979323846f;
@@ -131,25 +148,23 @@ namespace QaplaButton {
         }
 	}
 
-    inline void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
-        auto color = hover ? HOVER : PASSIV;
+    inline void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
+        auto color = getFgColor();
         ImVec2 textPos = ImVec2(topLeft.x + BORDER + 3.0f, topLeft.y + BORDER + 3.0f);
         list->AddText(textPos, color, text.c_str());
 	}
 
-    inline void drawArrow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false) {
 		auto yReduce = BORDER + 5.0f;
         auto thickness = 7.0f;
         auto arrowInset = 4.0f;
         auto xPos = topLeft.x + BORDER - 1.0f;
         auto yPos = topLeft.y + yReduce;
-		auto color = hover ? HOVER : PASSIV;
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 2, yPos + thickness), color);
-        xPos += 3.0f;
-		list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3, yPos + thickness), color);
-        xPos += 4.0f;
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 5, yPos + thickness), color);
-        xPos += 5.0f;
+        auto color = getFgColor(active);
+        for (auto add : { 3.0f, 4.0f, 5.0f }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
+            xPos += add;
+        }
         for (int i = 0; i < 8; i++) {
             list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i), 
                 ImVec2(xPos + i, yPos + thickness + arrowInset - i),
@@ -157,19 +172,17 @@ namespace QaplaButton {
         }
     }
 
-    inline void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool hover) {
+    inline void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false) {
         auto yReduce = BORDER + 4.0f;
         auto thickness = 5.0f;
         auto arrowInset = 3.0f;
         auto xPos = topLeft.x + BORDER;
         auto yPos = topLeft.y + yReduce;
-        auto color = hover ? HOVER : PASSIV;
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 2, yPos + thickness), color);
-        xPos += 3;
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3, yPos + thickness), color);
-        xPos += 4;
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 5, yPos + thickness), color);
-        xPos += 5;
+        auto color = getFgColor(active);
+        for (auto add : { 3.0f, 4.0f, 5.0f }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
+            xPos += add;
+        }
         for (int i = 0; i < 6; i++) {
             list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i), 
                 ImVec2(xPos + i, yPos + thickness + arrowInset - i),
@@ -183,6 +196,46 @@ namespace QaplaButton {
         }
     }
 
+    inline void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false) {
+        auto yReduce = BORDER + 2.0f;
+        auto thickness = 5.0f;
+        auto arrowInset = 3.0f;
+        auto xPos = topLeft.x + BORDER;
+		auto x2Pos = topLeft.x + size.x - BORDER;
+        auto yPos = topLeft.y + yReduce;
+		auto y2Pos = topLeft.y + yReduce + thickness + 3.0f;
+        auto color = getFgColor(active);
+        for (auto add : { 3.0f, 4.0f, 5.0f }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f) , yPos + thickness), color);
+            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0f ? 0.0f : 1.0f), y2Pos + thickness), color);
+            xPos += add;
+			x2Pos -= add;
+		}
+        for (int i = 0; i < 6; i++) {
+            list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i),
+                ImVec2(xPos + i, yPos + thickness + arrowInset - i),
+                color);
+			list->AddLine(ImVec2(x2Pos - i, y2Pos - arrowInset + i),
+                ImVec2(x2Pos - i, y2Pos + thickness + arrowInset - i),
+				color);
+        }
+    }
+
+    inline void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false) {
+        auto yReduce = BORDER + 2.0f;
+        auto thickness = 5.0f;
+        auto xPos = topLeft.x + BORDER + 3.0f;
+        auto x2Pos = topLeft.x + size.x - BORDER - 2.0f;
+        auto yPos = topLeft.y + yReduce;
+        auto y2Pos = topLeft.y + yReduce + thickness + 3.0f;
+        auto color = getFgColor(active);
+        for (auto add : { 3.0f, 4.0f, 5.0f }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
+            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0f ? 0.0f : 1.0f), y2Pos + thickness), color);
+            xPos += add;
+            x2Pos -= add;
+        }
+    }
 
     /**
      * @brief Draws a clickable icon-style button with optional icon and label below.
@@ -193,22 +246,19 @@ namespace QaplaButton {
      * @param iconDraw  Optional callback to draw the icon content (may be nullptr).
      * @return true if the button was clicked.
      */
-    inline bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, 
+    inline bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, bool active,
         IconDrawCallback iconDraw = nullptr) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();
         bool clicked = ImGui::InvisibleButton(id.c_str(), size);
-        bool hovered = ImGui::IsItemHovered();
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-        ImU32 bgColor = hovered
-            ? IM_COL32(64, 64, 64, 255)
-            : IM_COL32(32, 32, 32, 255);
+		ImU32 bgColor = getBgColor(active);
 
         drawList->AddRectFilled(topLeft, ImVec2(topLeft.x + size.x, topLeft.y + size.y), bgColor, 3.0f);
 
         if (iconDraw) {
-            iconDraw(drawList, topLeft, size, hovered);
+            iconDraw(drawList, topLeft, size);
         }
 
         ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());

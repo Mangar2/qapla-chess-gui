@@ -39,10 +39,10 @@ ComputeTask::~ComputeTask() {
 void ComputeTask::computeMove() {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;
-    if (taskType_ != ComputeTaskType::None) return;
+    if (taskType_ != ComputeTaskType::None && taskType_ != ComputeTaskType::PlaySide) return;
 	gameContext_.ensureStarted();
     logMoves_ = false;
-    taskType_ = ComputeTaskType::ComputeMove;
+    taskType_ = taskType_ == ComputeTaskType::None ? ComputeTaskType::ComputeMove : taskType_;
     markRunning();
 
     auto& gameRecord = gameContext_.gameRecord();
@@ -261,17 +261,19 @@ void ComputeTask::handleBestMove(const EngineEvent& event) {
 }
 
 void ComputeTask::nextMove(const EngineEvent& event) {
-    if (taskType_ != ComputeTaskType::Autoplay) {
+    if (checkGameOver(true)) {
         markFinished();
         return;
     }
-
-    if (checkGameOver(true)) {
-        markFinished();
-    }
-    else {
+    if (taskType_ == ComputeTaskType::Autoplay) {
         autoPlay(event);
+        return;
     }
+    if (taskType_ == ComputeTaskType::PlaySide) {
+        return;
+    }
+
+    markFinished();
 }
 
 

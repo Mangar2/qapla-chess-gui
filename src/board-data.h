@@ -182,6 +182,12 @@ namespace QaplaWindows {
 		 */
 		void setEngines(const std::vector<EngineConfig>& engines);
 
+		/**
+		 * Returns true, if the given mode is active.
+		 * @param mode The mode to check (e.g., "autoplay", "analyze", "play", "manual").
+		 */
+		bool isModeActive(const std::string& mode) const;
+
 
 	private:
 

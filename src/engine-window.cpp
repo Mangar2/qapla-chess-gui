@@ -219,16 +219,16 @@ void EngineWindow::drawButtons(size_t index) {
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     for (const auto& button : buttons) {
         ImGui::SetCursorScreenPos(pos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize,
-            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, bool hover) {
+        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
+            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Restart") {
-                    QaplaButton::drawRestart(drawList, topLeft, size, hover);
+                    QaplaButton::drawRestart(drawList, topLeft, size);
                 }
                 if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size, hover);
+                    QaplaButton::drawStop(drawList, topLeft, size);
                 }
                 if (button == "Config") {
-                    QaplaButton::drawConfig(drawList, topLeft, size, hover);
+                    QaplaButton::drawConfig(drawList, topLeft, size);
                 }
             }))
         {
@@ -270,9 +270,9 @@ void EngineWindow::draw() {
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
     constexpr float cCornerRounding = 0.0f;
-    constexpr ImU32 cEvenBg = IM_COL32(40, 44, 52, 255);  
-    constexpr ImU32 cOddBg = IM_COL32(30, 34, 40, 255);   
-    constexpr ImU32 cBorder = IM_COL32(70, 80, 100, 255);
+    const ImU32 cEvenBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    const ImU32 cOddBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
 
     const auto engineRecords = boardData_->engineRecords();
     if (engineRecords.empty()) {

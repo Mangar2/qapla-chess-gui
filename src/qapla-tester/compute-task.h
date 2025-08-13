@@ -37,6 +37,13 @@ public:
     ComputeTask();
     ~ComputeTask();
 
+    enum class Status {
+        Stopped,
+        Play,
+		Autoplay,
+		Analyze
+	};
+
     /**
      * @brief Initializes engines
      * @param engines A vector of unique pointers to EngineWorker instances.
@@ -126,11 +133,18 @@ public:
      * including starting position, move history, and any associated metadata.
      * All engines are updated to reflect the position and history described in the record.
      *
-     * @param record The GameRecord containing the full game setup and move history.
+     * @param game The GameRecord containing the full game setup and move history.
      */
-    void setPosition(const GameRecord& record) {
+    void setPosition(const GameRecord& game) {
         stop();
-        gameContext_.setPosition(record);
+        gameContext_.setPosition(game);
+    }
+
+    void setMove(const MoveRecord& move) {
+        gameContext_.setMove(move);
+        if (taskType_ == ComputeTaskType::PlaySide) {
+            computeMove();
+		}
     }
 
     /**
@@ -143,6 +157,16 @@ public:
 	 * Computes a best move with unlimited time and depth without playing it.
 	 */
     void analyze();
+
+    /**
+     * @brief Starts playing the game from the current position.
+     *        The engine will play as white and black alternately.
+	 */
+    void playSide() {
+        stop();
+		taskType_ = ComputeTaskType::PlaySide;
+        computeMove();
+    }
 
     /**
      * @brief Starts a game continuation until the end.
@@ -179,6 +203,22 @@ public:
         return gameContext_;
 	}
 
+    /**
+     * @brief Returns the current status of the task.
+     */
+    Status getStatus() const {
+        if (taskType_ == ComputeTaskType::Autoplay) {
+            return Status::Autoplay;
+        }
+        else if (taskType_ == ComputeTaskType::Analyze) {
+            return Status::Analyze;
+        }
+        else if (taskType_ == ComputeTaskType::PlaySide) {
+            return Status::Play;
+		}
+        return Status::Stopped;
+	}
+
 private:
     GameContext gameContext_;
 
@@ -189,7 +229,8 @@ private:
         None,
         Analyze,
         Autoplay,
-        ComputeMove
+        ComputeMove,
+        PlaySide
     };
     ComputeTaskType taskType_ = ComputeTaskType::None;
 

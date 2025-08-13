@@ -278,6 +278,16 @@ public:
      * @param move The move.
      */
     void doMove(QaplaBasics::Move move);
+
+    /**
+     * @brief Plays a move in the game based on an external move information.
+     *
+     * This function updates the game state with the given move and updates the current move record.
+     * It is used to apply a move to the game state, typically after validating the move.
+     *
+     * @param move The MoveRecord containing the move to play.
+	 */
+    void doMove(const MoveRecord& move);
     
     /**
 	 * @brief Sets the game state from a GameRecord.

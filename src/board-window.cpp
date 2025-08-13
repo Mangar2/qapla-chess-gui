@@ -288,28 +288,29 @@ namespace QaplaWindows {
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         for (const std::string button : { "New", "Now", "Stop", "Play", "Analyze", "Auto", "Manual" }) {
             ImGui::SetCursorScreenPos(pos);
-            if (QaplaButton::drawIconButton(button, button, buttonSize,
-                [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, bool hover) {
+            bool active = boardData_->isModeActive(button);
+            if (QaplaButton::drawIconButton(button, button, buttonSize, active,  
+                [&active, &button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                     if (button == "Stop") {
-                        QaplaButton::drawStop(drawList, topLeft, size, hover);
+                        QaplaButton::drawStop(drawList, topLeft, size);
                     }
                     else if (button == "Play") {
-						QaplaButton::drawArrow(drawList, topLeft, size, hover);
+						QaplaButton::drawPlay(drawList, topLeft, size, active);
                     }
                     else if (button == "Analyze") {
-                        QaplaButton::drawAnalyze(drawList, topLeft, size, hover);
+                        QaplaButton::drawAnalyze(drawList, topLeft, size, active);
                     }
                     else if (button == "New") {
-                        QaplaButton::drawNew(drawList, topLeft, size, hover);
+                        QaplaButton::drawNew(drawList, topLeft, size);
                     }
                     else if (button == "Auto") {
-                        //QaplaButton::drawAuto(drawList, topLeft, size, hover);
+                        QaplaButton::drawAutoPlay(drawList, topLeft, size, active);
                     }
                     else if (button == "Manual") {
-						//QaplaButton::drawManual(drawList, topLeft, size, hover);
+						QaplaButton::drawManualPlay(drawList, topLeft, size, active);
                     }
                     else if (button == "Now") {
-                        QaplaButton::drawNow(drawList, topLeft, size, hover);
+                        QaplaButton::drawNow(drawList, topLeft, size);
                     }
                 })) 
             {
