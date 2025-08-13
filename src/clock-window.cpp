@@ -57,14 +57,14 @@ bool ClockWindow::setClockData() {
     }
 
 	// We need to adjust the current time for the engines currently calculating a move,
-    if (boardData_->engineRecords().size() >= 1) {
-		auto halfmoveNo = boardData_->engineRecords()[0].curMoveRecord->halfmoveNo_;
-		wCur = boardData_->engineRecords()[0].curMoveRecord->timeMs;
+    if (boardData_->moveInfos().size() >= 1) {
+		auto halfmoveNo = boardData_->moveInfos()[0]->halfmoveNo_;
+		wCur = boardData_->moveInfos()[0]->timeMs;
 		if (halfmoveNo > curHalfmoveNo) goLimits.wtimeMs -= wCur;
     }
-    if (boardData_->engineRecords().size() >= 2) {
-        auto halfmoveNo = boardData_->engineRecords()[1].curMoveRecord->halfmoveNo_;
-        bCur = boardData_->engineRecords()[1].curMoveRecord->timeMs;
+    if (boardData_->moveInfos().size() >= 2) {
+        auto halfmoveNo = boardData_->moveInfos()[1]->halfmoveNo_;
+        bCur = boardData_->moveInfos()[1]->timeMs;
 		if (halfmoveNo > curHalfmoveNo) goLimits.btimeMs -= bCur;
     }
 

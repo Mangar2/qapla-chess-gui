@@ -113,6 +113,10 @@ namespace QaplaWindows {
 			return engineRecords_;
 		}
 
+		const MoveInfos& moveInfos() const {
+			return moveInfos_;
+		}
+
 		const EpdData& epdData() const {
 			return epdData_;
 		}
@@ -197,7 +201,9 @@ namespace QaplaWindows {
 		std::unique_ptr<GameState> gameState_;
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;
+		std::vector<size_t> searchInfoCnt_;
 		EngineRecords engineRecords_;
+		MoveInfos moveInfos_;
 	};
 
 }

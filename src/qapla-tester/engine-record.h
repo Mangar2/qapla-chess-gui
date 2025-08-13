@@ -44,8 +44,7 @@ struct EngineRecord {
 		default: return "Unknown";
         }
 	}
-    std::optional<MoveRecord> curMoveRecord;
 };
 
 using EngineRecords = std::vector<EngineRecord>;
-
+using MoveInfos = std::vector<std::optional<MoveRecord>>;

@@ -132,8 +132,8 @@ void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start) {
 
 void BoardData::pollData() {
 	try {
-		auto engineRecords = computeTask_->getEngineRecords();
-		setEngineRecords(engineRecords);
+		setEngineRecords(computeTask_->getEngineRecords());
+		moveInfos_ = computeTask_->getMoveInfos();
 
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
 			setGameIfDifferent(g);

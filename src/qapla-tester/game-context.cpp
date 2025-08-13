@@ -21,6 +21,15 @@
 
 GameContext::GameContext() = default;
 
+void GameContext::updateEngineNames() {
+    auto* white = getWhite();
+    auto* black = getBlack();
+    const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
+    const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
+    gameRecord_.setWhiteEngineName(whiteName);
+    gameRecord_.setBlackEngineName(blackName);
+}
+
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines) {
     players_.clear();
     for (auto& engine : engines) {
@@ -31,8 +40,8 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
         player->setEngine(std::move(engine));
         player->setStartPosition(gameRecord_);
         players_.emplace_back(std::move(player));
-
     }
+	updateEngineNames();
 }
 
 void GameContext::ensureStarted() {
@@ -92,14 +101,10 @@ void GameContext::newGame() {
 void GameContext::setPosition(bool useStartPosition, const std::string& fen,
     std::optional<std::vector<std::string>> playedMoves) {
     cancelCompute();
-    auto* white = getWhite();
-    auto* black = getBlack();
-    const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
-    const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
-
     {
         std::lock_guard lock(gameRecordMutex_);
-        gameRecord_.setStartPosition(useStartPosition, fen, true, whiteName, blackName);
+        gameRecord_.setStartPosition(useStartPosition, fen, true);
+        updateEngineNames();
 
         if (playedMoves) {
             for (const auto& move : *playedMoves) {
@@ -121,13 +126,7 @@ void GameContext::setPosition(const GameRecord& record) {
     {
         std::lock_guard lock(gameRecordMutex_);
         gameRecord_ = record;
-        auto* white = getWhite();
-        auto* black = getBlack();
-        const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
-        const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
-
-        gameRecord_.setWhiteEngineName(whiteName);
-        gameRecord_.setBlackEngineName(blackName);
+		updateEngineNames();
     }
 
     for (auto& player : players_) {
@@ -250,6 +249,14 @@ void GameContext::cancelCompute() {
     }
 }
 
+MoveInfos GameContext::getMoveInfos() const {
+    MoveInfos infos;
+    for (const auto& player : players_) {
+        infos.emplace_back(player->getCurrentMoveCopy());
+    }
+    return infos;
+}
+
 EngineRecords GameContext::getEngineRecords() const {
     EngineRecords records;
     for (const auto& player : players_) {
@@ -259,8 +266,7 @@ EngineRecords GameContext::getEngineRecords() const {
                 .config{},
                 .supportedOptions{},
                 .status = EngineRecord::Status::NotStarted,
-                .memoryUsageB = 0,
-                .curMoveRecord = player->getCurrentMoveCopy()
+                .memoryUsageB = 0
             };
             records.push_back(record);
             continue;
@@ -270,8 +276,7 @@ EngineRecords GameContext::getEngineRecords() const {
 			.identifier = engine->getIdentifier(),
             .config = engine->getConfig(),
             .supportedOptions = engine->getSupportedOptions(),
-            .memoryUsageB = engine->getEngineMemoryUsage(),
-            .curMoveRecord = player->getCurrentMoveCopy()
+            .memoryUsageB = engine->getEngineMemoryUsage()
         };
         switch (engine->workerState()) {
         case EngineWorker::WorkerState::notStarted: record.status = EngineRecord::Status::NotStarted; break;

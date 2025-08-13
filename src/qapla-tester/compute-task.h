@@ -195,6 +195,10 @@ public:
         return gameContext_.getEngineRecords(); 
     }
 
+    MoveInfos getMoveInfos() const {
+        return gameContext_.getMoveInfos();
+	}
+
     const GameRecord& gameRecord() const {
         return gameContext_.gameRecord();
 	}

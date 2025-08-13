@@ -254,10 +254,18 @@ public:
     EngineRecords getEngineRecords() const;
 
     /**
+     * @brief Returns the current move information for all players.
+     * @return A vector of MoveInfos containing move information for each player.
+	 */
+    MoveInfos getMoveInfos() const;
+
+    /**
      * @brief Ensures all engines are started and ready for the next command.
      */
     void ensureStarted();
 private:
+
+    void updateEngineNames();
 
     std::vector<std::unique_ptr<PlayerContext>> players_;
     GameRecord gameRecord_;

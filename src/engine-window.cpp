@@ -91,6 +91,7 @@ EngineWindow::~EngineWindow() = default;
 void EngineWindow::addTables(size_t size) {
     for (size_t i = tables_.size(); i < size; ++i) {
 		displayedMoveNo_.push_back(0);
+		infoCnt_.push_back(0);
         tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
@@ -110,12 +111,15 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
     if (index >= tables_.size()) {
         return; 
     }
+    
     auto& table = tables_[index];
 	auto& searchInfos = moveRecord.info;
 	auto& moveNo = moveRecord.halfmoveNo_;
-    if (searchInfos.size() == table->size() && moveNo == displayedMoveNo_[index]) {
+    if (searchInfos.size() == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
         return; 
     }
+	infoCnt_[index] = searchInfos.size();
+
 	displayedMoveNo_[index] = moveNo;
     table->clear();
     bool last = true;
@@ -152,7 +156,7 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
         } 
         std::vector<std::string> row = {
             info.depth ? std::to_string(*info.depth) : "-",
-            info.timeMs ? formatMs(*info.timeMs, *info.timeMs < 60000 ? 1 : 0) : "-",
+            info.timeMs ? formatMs(*info.timeMs, 0) : "-",
             info.nodes ? std::format("{:L}", *info.nodes) : "-",
             nps,
             info.tbhits ? std::format("{:L}", *info.tbhits) : "-",
@@ -166,7 +170,9 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
 void EngineWindow::setTable(size_t index) {
 	addTables(boardData_->engineRecords().size());
 
-    if (index >= tables_.size() || index >= boardData_->engineRecords().size()) {
+    if (index >= tables_.size() || 
+        index >= boardData_->engineRecords().size() || 
+        index >= boardData_->moveInfos().size()) {
         return;
     }
 
@@ -177,7 +183,7 @@ void EngineWindow::setTable(size_t index) {
 
 	// Only display search info with matching engine ID in range of nextMoveIndex
     auto nextMoveIndex = boardData_->gameRecord().nextMoveIndex();
-    auto& curMoveRecord = boardData_->engineRecords()[index].curMoveRecord;
+    auto& curMoveRecord = boardData_->moveInfos()[index];
     for (int i = 0; i < 2; i++) {
         int curIndex = static_cast<int>(nextMoveIndex) - i - 1;
         if (curMoveRecord->halfmoveNo_ == nextMoveIndex + 1) {
