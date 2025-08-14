@@ -173,6 +173,7 @@ namespace {
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);
+            QaplaConfiguration::Configuration::instance().autosave();
         }
 
         shutdownImGui();
@@ -187,7 +188,15 @@ namespace {
 #include <windows.h>
 int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     try {
-        return runApp();
+        try {
+            auto code = runApp();
+            QaplaConfiguration::Configuration::instance().saveFile();
+            return code;
+        }
+        catch (...) {
+            QaplaConfiguration::Configuration::instance().saveFile();
+			throw; 
+        }
     }
     catch (const std::exception& e) {
         MessageBoxA(nullptr, e.what(), "Fatal Error", MB_ICONERROR | MB_OK);

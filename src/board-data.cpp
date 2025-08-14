@@ -19,6 +19,7 @@
 
 
 #include "board-data.h"
+#include "configuration.h"
 
 #include "qapla-engine/move.h"
 #include "qapla-tester/time-control.h"
@@ -42,10 +43,9 @@ BoardData::BoardData() :
 	auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
 	auto engines = EngineWorkerFactory::createEngines(*config, 2);
 	computeTask_->initEngines(std::move(engines));
-	TimeControl timeControl;
-	timeControl.addTimeSegment({ 0, 100000, 100 });
-	//timeControl.addTimeSegment({ 0, 1000, 10 }); 
-	computeTask_->setTimeControl(timeControl);
+	timeControl_ = QaplaConfiguration::Configuration::instance()
+		.getTimeControlSettings().getSelectedTimeControl();
+	computeTask_->setTimeControl(timeControl_);
 	computeTask_->setPosition(true);
 	epdData_.init();
 }
@@ -137,8 +137,14 @@ void BoardData::pollData() {
 
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
 			setGameIfDifferent(g);
+			timeControl_ = g.getWhiteTimeControl();
 			});
 		epdData_.pollData();
+		auto timeControl = QaplaConfiguration::Configuration::instance()
+			.getTimeControlSettings().getSelectedTimeControl();
+		if (timeControl != timeControl_) {
+			computeTask_->setTimeControl(timeControl);
+		}
 	}
 	catch (const std::exception& ex) {
 		assert(false && "Error while polling data");
@@ -157,9 +163,13 @@ uint32_t BoardData::nextMoveIndex() const {
 }
 
 void BoardData::setNextMoveIndex(uint32_t moveIndex) {
+	if (!gameRecord_) {
+		return; 
+	}
 	if (moveIndex <= gameRecord_->history().size()) {
 		gameRecord_->setNextMoveIndex(moveIndex);
 		gameState_->setFromGameRecord(*gameRecord_, moveIndex);
+		computeTask_->setPosition(*gameRecord_);
 	}
 }
 

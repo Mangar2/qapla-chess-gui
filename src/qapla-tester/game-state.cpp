@@ -240,7 +240,6 @@ std::tuple<QaplaBasics::Move, bool, bool> GameState::resolveMove(
 	return { matchCount == 1 ? foundMove : QaplaBasics::Move(), matchCount > 0, promotion && matchCount > 0 };
 }
 
-
 GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t> plies) {
 	GameRecord copy;
 	setFen(game.getStartPos(), game.getStartFen());
@@ -265,6 +264,8 @@ GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<ui
 		copy.addMove(move);
 		doMove(parsed);
 	}
+	uint32_t nextMoveIndex = game.nextMoveIndex();
+	copy.setNextMoveIndex(nextMoveIndex);
 	auto [gameCause, gameResult] = game.getGameResult();
 	auto [cause, result] = getGameResult();
 	if (result == GameResult::Unterminated) {

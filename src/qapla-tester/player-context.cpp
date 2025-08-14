@@ -109,6 +109,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
         return QaplaBasics::Move();
     }
+    
     const auto move = gameState_.stringToMove(*event.bestMove, requireLan_);
     if (!checklist_->logReport("legalmove", !move.isEmpty(),
         "Encountered illegal move \"" + *event.bestMove + "\" in bestmove, raw info line \"" + event.rawLine + "\"")) {

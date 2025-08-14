@@ -205,8 +205,11 @@
     <ClCompile Include="src\qapla-tester\game-record.cpp" />
     <ClCompile Include="src\qapla-tester\game-state.cpp" />
     <ClCompile Include="src\qapla-tester\input-handler.cpp" />
+    <ClCompile Include="src\qapla-tester\pair-tournament.cpp" />
+    <ClCompile Include="src\qapla-tester\pgn-io.cpp" />
     <ClCompile Include="src\qapla-tester\player-context.cpp" />
     <ClCompile Include="src\qapla-tester\tournament-result.cpp" />
+    <ClCompile Include="src\qapla-tester\tournament.cpp" />
     <ClCompile Include="src\qapla-tester\uci-adpater.cpp" />
     <ClCompile Include="src\qapla-tester\winboard-adapter.cpp" />
     <ClCompile Include="src\time-control-window.cpp" />
@@ -279,11 +282,15 @@
     <ClInclude Include="src\qapla-tester\input-handler.h" />
     <ClInclude Include="src\qapla-tester\logger.h" />
     <ClInclude Include="src\qapla-tester\move-record.h" />
+    <ClInclude Include="src\qapla-tester\openings.h" />
+    <ClInclude Include="src\qapla-tester\pair-tournament.h" />
+    <ClInclude Include="src\qapla-tester\pgn-io.h" />
     <ClInclude Include="src\qapla-tester\player-context.h" />
     <ClInclude Include="src\qapla-tester\string-helper.h" />
     <ClInclude Include="src\qapla-tester\time-control.h" />
     <ClInclude Include="src\qapla-tester\timer.h" />
     <ClInclude Include="src\qapla-tester\tournament-result.h" />
+    <ClInclude Include="src\qapla-tester\tournament.h" />
     <ClInclude Include="src\qapla-tester\uci-adapter.h" />
     <ClInclude Include="src\qapla-tester\uci-option.h" />
     <ClInclude Include="src\qapla-tester\winboard-adapter.h" />

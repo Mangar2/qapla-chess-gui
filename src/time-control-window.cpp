@@ -35,16 +35,51 @@ TimeControlWindow::TimeControlWindow()
 void TimeControlWindow::draw() {
 	auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
 
-    // Radio button state
-    static int selectedMode = 0;
-
+    std::string activeButtonId;
+    switch (timeControls.selected) {
+    case QaplaConfiguration::selectedTimeControl::Blitz:
+        activeButtonId = "##blitz";
+        break;
+    case QaplaConfiguration::selectedTimeControl::Tournament:
+        activeButtonId = "##tournament";
+        break;
+    case QaplaConfiguration::selectedTimeControl::TimePerMove:
+        activeButtonId = "##timePerMove";
+        break;
+    case QaplaConfiguration::selectedTimeControl::FixedDepth:
+        activeButtonId = "##fixedDepth";
+        break;
+    case QaplaConfiguration::selectedTimeControl::NodesPerMove:
+        activeButtonId = "##nodesPerMove";
+        break;
+    default:
+        "##blitz";
+    }
+    
     ImGui::PushID("TimeControlWindow");
 
     // Lambda to handle radio buttons and collapsing headers
-    auto drawSection = [&](const char* radioButtonId, const char* headerLabel, int mode, 
+    auto drawSection = [&](const char* radioButtonId, const char* headerLabel,  
         TimeControl& timeControl, auto drawFunction) {
-        if (ImGui::RadioButton(radioButtonId, selectedMode == mode)) {
-            selectedMode = mode;
+        if (ImGui::RadioButton(radioButtonId, activeButtonId == radioButtonId)) {
+            if (std::string(radioButtonId) == "##blitz") {
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::Blitz;
+            }
+            else if (std::string(radioButtonId) == "##tournament") {
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::Tournament;
+            }
+            else if (std::string(radioButtonId) == "##timePerMove") {
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::TimePerMove;
+            }
+            else if (std::string(radioButtonId) == "##fixedDepth") {
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::FixedDepth;
+            }
+            else if (std::string(radioButtonId) == "##nodesPerMove") {
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::NodesPerMove;
+            }
+            else {
+				throw(std::runtime_error("Unknown radio button ID: " + std::string(radioButtonId)));
+            }
         }
         ImGui::SameLine();
         if (ImGui::CollapsingHeader(headerLabel)) {
@@ -59,15 +94,15 @@ void TimeControlWindow::draw() {
     };
 
     // Draw each section
-    drawSection("##blitz", "Blitz Time", 0, timeControls.blitzTime,
+    drawSection("##blitz", "Blitz Time", timeControls.blitzTime,
         [&](const TimeControl& tc) { return drawBlitzTime(tc); });
-	drawSection("##tournament", "Tournament Time", 1, timeControls.tournamentTime,
+	drawSection("##tournament", "Tournament Time", timeControls.tournamentTime,
         [&](const TimeControl& tc) { return drawTournamentTime(tc); });
-	drawSection("##timePerMove", "Time per Move", 2, timeControls.timePerMove,
+	drawSection("##timePerMove", "Time per Move", timeControls.timePerMove,
         [&](const TimeControl& tc) { return drawTimePerMove(tc); });
-	drawSection("##fixedDepth", "Fixed Depth", 3, timeControls.fixedDepth,
+	drawSection("##fixedDepth", "Fixed Depth", timeControls.fixedDepth,
         [&](const TimeControl& tc) { return drawFixedDepth(tc); });
-	drawSection("##nodesPerMove", "Nodes per Move", 4, timeControls.nodesPerMove,
+	drawSection("##nodesPerMove", "Nodes per Move", timeControls.nodesPerMove,
         [&](const TimeControl& tc) { return drawNodesPerMove(tc); });
 
     ImGui::PopID();

@@ -294,8 +294,8 @@ public:
 	 * @param startPosition The GameRecord to set the game state from.
      */
     void setStartPosition(const GameRecord& startPosition) {
-        gameState_.setFromGameRecord(startPosition);
-        ponderState_.setFromGameRecord(startPosition);
+        gameState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
+        ponderState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
     }
 
     /**

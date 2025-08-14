@@ -232,14 +232,6 @@ public:
 	 */
 	bool isDifferent(const GameRecord& other) const;
 	
-	/**
-	 * @brief Returns the current ply index.
-	 * @return Current ply index (0 = before first move).
-	 */ 
-	uint32_t currentPly() const {
-		return currentPly_;
-	}
-
 private:
 	
 	std::map<std::string, std::string> tags_;

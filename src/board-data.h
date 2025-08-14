@@ -23,6 +23,7 @@
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/engine-record.h"
+#include "qapla-tester/time-control.h"
 
 #include <memory>
 #include <optional>
@@ -204,6 +205,7 @@ namespace QaplaWindows {
 		std::vector<size_t> searchInfoCnt_;
 		EngineRecords engineRecords_;
 		MoveInfos moveInfos_;
+		TimeControl timeControl_;
 	};
 
 }

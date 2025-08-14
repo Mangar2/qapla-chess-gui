@@ -26,6 +26,7 @@
 #include <cctype>
 #include <charconv>
 #include <optional>
+#include <vector>
 
 inline std::string to_lowercase(const std::string& input) {
     std::string result = input;

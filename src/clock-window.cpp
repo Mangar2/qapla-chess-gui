@@ -63,12 +63,12 @@ bool ClockWindow::setClockData() {
     if (boardData_->moveInfos().size() >= 1) {
 		auto halfmoveNo = boardData_->moveInfos()[0]->halfmoveNo_;
 		wCur = boardData_->moveInfos()[0]->timeMs;
-		if (halfmoveNo > curHalfmoveNo) goLimits.wtimeMs -= wCur;
+		if (halfmoveNo > curHalfmoveNo) goLimits.wtimeMs -= std::min(goLimits.wtimeMs, wCur);
     }
     if (boardData_->moveInfos().size() >= 2) {
         auto halfmoveNo = boardData_->moveInfos()[1]->halfmoveNo_;
         bCur = boardData_->moveInfos()[1]->timeMs;
-		if (halfmoveNo > curHalfmoveNo) goLimits.btimeMs -= bCur;
+		if (halfmoveNo > curHalfmoveNo) goLimits.btimeMs -= std::min(goLimits.btimeMs, bCur);
     }
 
     clockData_ = {

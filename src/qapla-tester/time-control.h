@@ -18,11 +18,14 @@
  */
 #pragma once
 
+#include "string-helper.h"
+
 #include <optional>
 #include <vector>
 #include <cstdint>
 #include <string>
 #include <sstream>
+#include <map>
 #include <iomanip>
 
 
@@ -190,6 +193,47 @@ public:
         setInfinite(false);
     }
 
+    std::map<std::string, std::string> toMap() const {
+		std::map<std::string, std::string> result;
+        if (movetimeMs_) {
+			result.emplace("movetime", std::to_string(*movetimeMs_));
+        }
+        if (depth_) {
+			result.emplace("depth", std::to_string(*depth_));
+        }
+        if (nodes_) {
+			result.emplace("nodes", std::to_string(*nodes_));
+        }
+        if (mateIn_) {
+			result.emplace("matein", std::to_string(*mateIn_));
+        }
+        if (infinite_) {
+			result.emplace("infinite", (*infinite_ ? "true" : "false"));
+        }
+        if (!timeSegments_.empty()) {
+			result.emplace("tc", toPgnTimeControlString());
+		}
+		return result;
+    }
+
+    void fromMap(const std::map<std::string, std::string>& map) {
+        for (const auto& [key, value] : map) {
+            if (key == "movetime") {
+                movetimeMs_ = std::stoull(value);
+            } else if (key == "depth") {
+                depth_ = std::stoul(value);
+            } else if (key == "nodes") {
+                nodes_ = std::stoul(value);
+            } else if (key == "matein") {
+                mateIn_ = std::stoul(value);
+            } else if (key == "infinite") {
+                infinite_ = (value == "true");
+            } else if (key == "tc") {
+                fromPgnTimeControlString(value);
+            }
+        }
+	}
+
 
 private:
     std::optional<uint64_t> movetimeMs_;
@@ -282,7 +326,7 @@ inline GoLimits createGoLimits(
             ++i;
         }
 
-        timeLeftMs = std::max<uint64_t>(0, timeLeftMs - timeUsedMs);
+        timeLeftMs = timeLeftMs < timeUsedMs ? 0 : timeLeftMs - timeUsedMs;
         };
 
     compute(white, wMovesPlayed, whiteTimeUsedMs, limits.wtimeMs, limits.wincMs, limits.movesToGo);

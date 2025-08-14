@@ -258,6 +258,15 @@
     <ClCompile Include="src\configuration.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\qapla-tester\tournament.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\pair-tournament.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
+    <ClCompile Include="src\qapla-tester\pgn-io.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -490,6 +499,18 @@
     </ClInclude>
     <ClInclude Include="src\configuration.h">
       <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\tournament.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\pair-tournament.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\pgn-io.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\openings.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
