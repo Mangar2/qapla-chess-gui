@@ -20,6 +20,8 @@
 #include "board-data.h"
 #include "qapla-tester/logger.h"
 
+#include "configuration.h"
+#include "time-control-window.h"
 #include "board-window.h"
 #include "move-list-window.h"
 #include "engine-window.h"
@@ -113,6 +115,7 @@ namespace {
 
 		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
+        tabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
         tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
@@ -124,12 +127,18 @@ namespace {
         return workspace;
     }
 
-    int runApp() {
+    void initLogging() {
         Logger::setLogPath("./log");
         Logger::testLogger().setLogFile("report");
         Logger::testLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
-		Logger::engineLogger().setLogFile("enginelog");
+        Logger::engineLogger().setLogFile("enginelog");
         Logger::engineLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
+    }
+
+    int runApp() {
+    
+        initLogging();
+        QaplaConfiguration::Configuration::instance().loadFile();
 
 		auto boardData = std::make_shared<QaplaWindows::BoardData>();
         auto workspace = initWindows(boardData);

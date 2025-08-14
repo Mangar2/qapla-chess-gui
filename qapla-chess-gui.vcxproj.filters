@@ -252,6 +252,12 @@
     <ClCompile Include="src\engine-setup-window.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\time-control-window.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="src\configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -477,6 +483,12 @@
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui-popup.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\time-control-window.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\configuration.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

@@ -165,6 +165,7 @@
     <ClCompile Include="src\board-workspace.cpp" />
     <ClCompile Include="src\chess-font.cpp" />
     <ClCompile Include="src\clock-window.cpp" />
+    <ClCompile Include="src\configuration.cpp" />
     <ClCompile Include="src\engine-data.cpp" />
     <ClCompile Include="src\engine-setup-window.cpp" />
     <ClCompile Include="src\engine-window.cpp" />
@@ -208,11 +209,13 @@
     <ClCompile Include="src\qapla-tester\tournament-result.cpp" />
     <ClCompile Include="src\qapla-tester\uci-adpater.cpp" />
     <ClCompile Include="src\qapla-tester\winboard-adapter.cpp" />
+    <ClCompile Include="src\time-control-window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\board-workspace.h" />
     <ClInclude Include="src\chess-font.h" />
     <ClInclude Include="src\clock-window.h" />
+    <ClInclude Include="src\configuration.h" />
     <ClInclude Include="src\embedded-window.h" />
     <ClInclude Include="src\engine-data.h" />
     <ClInclude Include="src\engine-setup-window.h" />
@@ -284,6 +287,7 @@
     <ClInclude Include="src\qapla-tester\uci-adapter.h" />
     <ClInclude Include="src\qapla-tester\uci-option.h" />
     <ClInclude Include="src\qapla-tester\winboard-adapter.h" />
+    <ClInclude Include="src\time-control-window.h" />
     <ClInclude Include="src\vertical-split-container.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

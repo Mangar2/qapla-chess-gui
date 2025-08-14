@@ -55,5 +55,6 @@ namespace font {
 	 */
 	void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
 		const ImVec2& cellMin, float cellSize, ImFont* font = chessFont);
+	void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, ImFont* font = chessFont);
 
 }

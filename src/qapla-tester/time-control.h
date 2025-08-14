@@ -84,7 +84,7 @@ public:
     bool infinite() const { return infinite_.value_or(false); }
 	std::vector<TimeSegment> timeSegments() const { return timeSegments_; }
 
-    std::string toPgnTimeControlString() const {
+    std::string toPgnTimeControlString(int basePrecision = 1, int incrementPrecision = 2) const {
         std::ostringstream oss;
         for (size_t i = 0; i < timeSegments_.size(); ++i) {
             const auto& segment = timeSegments_[i];
@@ -94,10 +94,10 @@ public:
             if (segment.movesToPlay > 0) {
                 oss << segment.movesToPlay << "/";
             }
-            oss << std::fixed << std::setprecision(1) 
+            oss << std::fixed << std::setprecision(basePrecision)
                 << static_cast<double>(segment.baseTimeMs) / 1000.0;
             if (segment.incrementMs > 0) {
-                oss << "+" << std::fixed << std::setprecision(2) 
+                oss << "+" << std::fixed << std::setprecision(incrementPrecision)
                     << static_cast<double>(segment.incrementMs) / 1000.0;
             }
         }

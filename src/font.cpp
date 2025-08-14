@@ -71,6 +71,20 @@ namespace font {
         return u8" ";
     }
 
+    void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, ImFont* font)
+    {
+        if (piece == QaplaBasics::Piece::NO_PIECE)
+            return;
+
+        const float fontSize = ImGui::GetFontSize();
+        const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
+        const char* background = reinterpret_cast<const char*>(font::pieceBackground(piece));
+        const ImVec2 textPos = ImGui::GetCursorScreenPos();
+
+        drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
+        drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
+    }
+
     void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
         const ImVec2& cellMin, float cellSize, ImFont* font)
     {

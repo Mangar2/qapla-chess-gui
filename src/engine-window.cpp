@@ -18,6 +18,7 @@
  */
 
 #include "engine-window.h"
+#include "font.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "imgui-popup.h"
@@ -26,6 +27,7 @@
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
+#include "qapla-engine/types.h"
 
 #include "imgui.h"
 
@@ -42,7 +44,7 @@ using namespace QaplaWindows;
  *
  * @param lines Vector of text lines to display, each as its own styled box.
  */
-static void renderReadonlyTextBoxes(const std::vector<std::string>& lines) {
+static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_t index) {
     constexpr float boxPaddingX = 4.0f;
     constexpr float boxPaddingY = 2.0f;
     constexpr float boxRounding = 2.0f;
@@ -61,20 +63,25 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines) {
         drawList->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
         drawList->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
 
-        ImGui::SetCursorScreenPos(ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY));
+        auto textTopLeft = ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
+        ImGui::SetCursorScreenPos(textTopLeft);
+        if (i == 0 && index <= 1) {
+            font::drawPiece(drawList, index == 0 ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING);
+            ImGui::SetCursorScreenPos(ImVec2(textTopLeft.x + 20, textTopLeft.y));
+        }
         ImGui::TextUnformatted(lines[i].c_str());
 
         ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y + size.y + spacingY));
     }
 }
 
-static void drawEngineInfo(const EngineRecord& record) {
+static void drawEngineInfo(const EngineRecord& record, size_t index) {
     ImGui::PushID("EngineInfo");
     std::string name = record.config.getName();
 	std::string status = EngineRecord::to_string(record.status);
 	std::string memory = record.memoryUsageB ? 
         ", " + std::to_string(*record.memoryUsageB / (1024 * 1024)) + " MB" : "";
-	renderReadonlyTextBoxes({ name, status + memory });
+	renderReadonlyTextBoxes({ name, status + memory }, index);
     ImGui::PopID();
 }
 
@@ -308,7 +315,7 @@ void EngineWindow::draw() {
         drawButtons(i);
         drawEngineSelectionPopup();
         ImGui::Indent(5.0f);
-		drawEngineInfo(engineRecords[i]);
+		drawEngineInfo(engineRecords[i], i);
 		ImGui::Unindent(5.0f);
 		ImGui::PopItemWidth();
         
