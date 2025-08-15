@@ -20,8 +20,10 @@
 #pragma once
 
 #include "qapla-tester/time-control.h"
+#include "engine-capabilities.h"
 #include <memory>
 #include <array>
+#include <unordered_map>
 
 namespace QaplaConfiguration {
 
@@ -32,6 +34,8 @@ namespace QaplaConfiguration {
         FixedDepth = 3,
         NodesPerMove = 4
 	};
+
+	using ConfigMap = std::unordered_map<std::string, std::string>;
 
     /**
      * @brief Represents a collection of TimeControl settings for different types.
@@ -142,7 +146,7 @@ namespace QaplaConfiguration {
          * @param map The map containing key-value pairs to be saved.
          * @throws std::runtime_error If an error occurs during writing.
          */
-        void saveMap(std::ofstream& outFile, const std::map<std::string, std::string>& map);
+        void saveMap(std::ofstream& outFile, const ConfigMap& map);
 
         /**
          * @brief Placeholder for the actual save logic.
@@ -154,7 +158,6 @@ namespace QaplaConfiguration {
          * @brief Placeholder for the actual load logic.
          */
         void loadData(std::ifstream& in);
-		TimeControlSettings timeControlSettings_; 
 
         /**
         * @brief Processes a specific section from the configuration file.
@@ -162,31 +165,36 @@ namespace QaplaConfiguration {
         * @param keyValueMap A map containing key-value pairs for the section.
         * @throws std::runtime_error If an error occurs while processing the section.
         */
-        void processSection(const std::string& section, const std::map<std::string, std::string>& keyValueMap);
+        void processSection(const std::string& section, const ConfigMap& keyValueMap);
 
         /**
          * @brief Parses the "timecontrol" section and updates the corresponding TimeControl settings.
          * @param keyValueMap A map containing key-value pairs for the "timecontrol" section.
          * @throws std::runtime_error If an error occurs while parsing the timecontrol section.
          */
-        void parseTimeControl(const std::map<std::string, std::string>& keyValueMap);
+        void parseTimeControl(const ConfigMap& keyValueMap);
 
         /**
          * @brief Parses the "board" section and updates the time control settings.
          * @param keyValueMap A map containing key-value pairs for the "board" section.
 		 */
-        void parseBoard(const std::map<std::string, std::string>& keyValueMap);
+        void parseBoard(const ConfigMap& keyValueMap);
 
         /**
          * @brief Speichert die TimeControl-Einstellungen in den Abschnitt [timecontrol] der Konfigurationsdatei.
          */
         void saveTimeControls(std::ofstream& out);
 
+        EngineCapabilities engineCapabilities_;
+        TimeControlSettings timeControlSettings_;
+
+
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";
         static constexpr const char* BACKUP_FILE = "qapla-chess-gui.ini.bak";
 
         std::string configFilePath_;
 		std::string backupFilePath_;
+		
 
     };
 

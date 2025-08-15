@@ -49,7 +49,7 @@ inline EngineOption parseUciOptionLine(const std::string& line) {
             opt.name = std::move(valueBuffer);
         }
         else if (key == "type") {
-            opt.type = parseOptionType(valueBuffer);
+            opt.type = EngineOption::parseType(valueBuffer);
         }
         else if (key == "default") {
             opt.defaultValue = std::move(valueBuffer);

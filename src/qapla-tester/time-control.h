@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <string>
 #include <sstream>
-#include <map>
+#include <unordered_map>
 #include <iomanip>
 
 
@@ -193,8 +193,8 @@ public:
         setInfinite(false);
     }
 
-    std::map<std::string, std::string> toMap() const {
-		std::map<std::string, std::string> result;
+    std::unordered_map<std::string, std::string> toMap() const {
+		std::unordered_map<std::string, std::string> result;
         if (movetimeMs_) {
 			result.emplace("movetime", std::to_string(*movetimeMs_));
         }
@@ -216,7 +216,7 @@ public:
 		return result;
     }
 
-    void fromMap(const std::map<std::string, std::string>& map) {
+    void fromMap(const std::unordered_map<std::string, std::string>& map) {
         for (const auto& [key, value] : map) {
             if (key == "movetime") {
                 movetimeMs_ = std::stoull(value);

@@ -447,7 +447,7 @@ void WinboardAdapter::parseOptionFeature(const std::string& optionStr, EngineEve
 
     EngineOption opt;
     opt.name = name;
-    opt.type = parseOptionType(kind);
+    opt.type = EngineOption::parseType(kind);
 
     if (opt.type == EngineOption::Type::Spin || opt.type == EngineOption::Type::Slider) {
         std::string value;

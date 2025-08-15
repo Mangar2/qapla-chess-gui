@@ -166,6 +166,7 @@
     <ClCompile Include="src\chess-font.cpp" />
     <ClCompile Include="src\clock-window.cpp" />
     <ClCompile Include="src\configuration.cpp" />
+    <ClCompile Include="src\engine-capability.cpp" />
     <ClCompile Include="src\engine-data.cpp" />
     <ClCompile Include="src\engine-setup-window.cpp" />
     <ClCompile Include="src\engine-window.cpp" />
@@ -221,6 +222,8 @@
     <ClInclude Include="src\clock-window.h" />
     <ClInclude Include="src\configuration.h" />
     <ClInclude Include="src\embedded-window.h" />
+    <ClInclude Include="src\engine-capabilities.h" />
+    <ClInclude Include="src\engine-capability.h" />
     <ClInclude Include="src\engine-data.h" />
     <ClInclude Include="src\engine-setup-window.h" />
     <ClInclude Include="src\engine-window.h" />

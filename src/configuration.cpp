@@ -28,6 +28,7 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <unordered_map>
 
 
 using namespace QaplaConfiguration;
@@ -134,6 +135,7 @@ void Configuration::loadFile() {
 
 void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
+	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
 }
 
@@ -142,7 +144,7 @@ void Configuration::loadData(std::ifstream& in) {
         std::string line;
 
         while (auto sectionHeader = readSectionHeader(in)) {
-            std::map<std::string, std::string> keyValueMap;
+            ConfigMap keyValueMap;
             while (in && in.peek() != '[' && std::getline(in, line)) {
 				line = trim(line);
                 if (line.empty() || line[0] == '#' || line[0] == ';') continue;
@@ -189,7 +191,7 @@ void Configuration::saveTimeControls(std::ofstream& out) {
     }
 }
 
-void Configuration::saveMap(std::ofstream& outFile, const std::map<std::string, std::string>& map) {
+void Configuration::saveMap(std::ofstream& outFile, const ConfigMap& map) {
     try {
         for (const auto& [key, value] : map) {
             outFile << key << "=" << value << "\n";
@@ -200,13 +202,16 @@ void Configuration::saveMap(std::ofstream& outFile, const std::map<std::string, 
     }
 }
 
-void Configuration::processSection(const std::string& section, const std::map<std::string, std::string>& keyValueMap) {
+void Configuration::processSection(const std::string& section, const ConfigMap& keyValueMap) {
     try {
         if (section == "timecontrol") {
             parseTimeControl(keyValueMap);
         }
         else if (section == "board") {
             parseBoard(keyValueMap);
+        }
+        else if (section == "enginecapability") {
+            engineCapabilities_.addOrReplace(keyValueMap);
         }
         else if (section == "engine") {
             EngineConfig config;
@@ -226,7 +231,7 @@ void Configuration::processSection(const std::string& section, const std::map<st
     }
 }
 
-void Configuration::parseTimeControl(const std::map<std::string, std::string>& keyValueMap) {
+void Configuration::parseTimeControl(const ConfigMap& keyValueMap) {
     try {
         auto it = keyValueMap.find("name");
         if (it == keyValueMap.end()) {
@@ -260,7 +265,7 @@ void Configuration::parseTimeControl(const std::map<std::string, std::string>& k
     }
 }
 
-void Configuration::parseBoard(const std::map<std::string, std::string>& keyValueMap) {
+void Configuration::parseBoard(const ConfigMap& keyValueMap) {
     try {
         auto it = keyValueMap.find("timecontrol");
         if (it == keyValueMap.end()) {

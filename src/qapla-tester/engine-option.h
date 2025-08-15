@@ -71,7 +71,7 @@ inline EngineProtocol parseEngineProtocol(const std::string& value) {
   * Represents an option that can be set for a chess engine.
   */
 struct EngineOption {
-    enum class Type { File, Path, Check, Spin, Slider, Combo, Button, String, Unknown };
+    enum class Type { File, Path, Check, Spin, Slider, Combo, Button, Save, Reset, String, Unknown };
 
     std::string name;
     Type type = Type::Unknown;
@@ -79,18 +79,38 @@ struct EngineOption {
     std::optional<int> min;
     std::optional<int> max;
     std::vector<std::string> vars;
+
+	static EngineOption::Type parseType(const std::string& typeStr) {
+		if (typeStr == "button") return EngineOption::Type::Button;
+		if (typeStr == "save") return EngineOption::Type::Save;
+		if (typeStr == "reset") return EngineOption::Type::Reset;
+		if (typeStr == "check")  return EngineOption::Type::Check;
+		if (typeStr == "string") return EngineOption::Type::String;
+		if (typeStr == "file")   return EngineOption::Type::File;
+		if (typeStr == "path")   return EngineOption::Type::Path;
+		if (typeStr == "spin")   return EngineOption::Type::Spin;
+		if (typeStr == "slider") return EngineOption::Type::Spin;
+		if (typeStr == "combo")  return EngineOption::Type::Combo;
+		return EngineOption::Type::Unknown;
+	}
+
+	static std::string to_string(Type type) {
+		switch (type) {
+		case Type::File: return "file";
+		case Type::Path: return "path";
+		case Type::Check: return "check";
+		case Type::Spin: return "spin";
+		case Type::Slider: return "slider";
+		case Type::Combo: return "combo";
+		case Type::Button: return "button";
+		case Type::Save: return "save";
+		case Type::Reset: return "reset";
+		case Type::String: return "string";
+		default: return "unknown";
+		}
+	}
+
 };
 
 using EngineOptions = std::vector<EngineOption>;
 
-inline EngineOption::Type parseOptionType(const std::string& typeStr) {
-	if (typeStr == "button" || typeStr == "save" || typeStr == "reset") return EngineOption::Type::Button;
-	if (typeStr == "check")  return EngineOption::Type::Check;
-	if (typeStr == "string") return EngineOption::Type::String;
-	if (typeStr == "file")   return EngineOption::Type::File;
-	if (typeStr == "path")   return EngineOption::Type::Path;
-	if (typeStr == "spin")   return EngineOption::Type::Spin;
-	if (typeStr == "slider") return EngineOption::Type::Spin;
-	if (typeStr == "combo")  return EngineOption::Type::Combo;
-	return EngineOption::Type::Unknown;
-}

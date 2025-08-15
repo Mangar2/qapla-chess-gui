@@ -20,7 +20,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <map>
 #include <unordered_set>
 #include <vector>
 #include <optional>
@@ -213,7 +212,7 @@ public:
      * @brief Sets multiple values at once from a map of key-value pairs.
      * @param values A map of names and their values.
 	 */
-    void setValues(const std::map<std::string, std::string>& values) {
+    void setValues(const std::unordered_map<std::string, std::string>& values) {
         for (const auto& [name, value] : values) {
             setValue(name, value);
         }
