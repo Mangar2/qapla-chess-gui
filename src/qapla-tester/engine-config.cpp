@@ -145,9 +145,9 @@ void EngineConfig::finalizeSetOptions() {
     if (protocol_ == EngineProtocol::Unknown) protocol_ = EngineProtocol::Uci;
 }
 
-
 bool operator==(const EngineConfig& lhs, const EngineConfig& rhs) {
     return lhs.name_ == rhs.name_
+        && lhs.author_ == rhs.author_
         && lhs.cmd_ == rhs.cmd_
         && lhs.dir_ == rhs.dir_
         && lhs.tc_ == rhs.tc_
@@ -155,6 +155,24 @@ bool operator==(const EngineConfig& lhs, const EngineConfig& rhs) {
         && lhs.ponder_ == rhs.ponder_
         // && lhs.gauntlet_ == rhs.gauntlet_ decided to not compare gauntlet setting
         && lhs.optionValues_ == rhs.optionValues_;
+}
+
+void  EngineConfig::setValue(const std::string& key, const std::string& value) {
+    if (key == "name") setName(value);
+    else if (key == "author") setAuthor(value);
+    else if (key == "cmd") setCmd(value);
+    else if (key == "dir") setDir(value);
+    else if (key == "tc") setTimeControl(value);
+    else if (key == "ponder") {
+        if (value == "true" || value == "1" || value == "") setPonder(true);
+        else if (value == "false" || value == "0") setPonder(false);
+        else throw std::runtime_error("Invalid ponder value: " + value);
+    }
+    else if (key == "restart") restart_ = parseRestartOption(value);
+    else if (key == "proto") setProtocol(value);
+    else {
+        setOptionValue(key, value);
+    }
 }
 
 std::istream& operator>>(std::istream& in, EngineConfig& config) {
@@ -182,20 +200,7 @@ std::istream& operator>>(std::istream& in, EngineConfig& config) {
 
         if (!seenKeys.insert(key).second)
             throw std::runtime_error("Duplicate key: " + key);
-        if (key == "name") config.setName(value);
-        else if (key == "cmd") config.setCmd(value);
-        else if (key == "dir") config.setDir(value);
-        else if (key == "tc") config.setTimeControl(value);
-        else if (key == "ponder") {
-            if (value == "true" || value == "1" || value == "") config.setPonder(true);
-            else if (value == "false" || value == "0") config.setPonder(false);
-            else throw std::runtime_error("Invalid ponder value: " + value);
-        }
-        else if (key == "restart") config.restart_ = parseRestartOption(value);
-        else if (key == "proto") config.setProtocol(value);
-        else {
-            config.setOptionValue(key, value);
-        }
+		config.setValue(key, value);
     }
 
     config.finalizeSetOptions();
@@ -207,11 +212,15 @@ std::ostream& operator<<(std::ostream& out, const EngineConfig& config) {
 
     out << "[engine]\n";
 	out << "name=" << config.name_ << '\n';
+    out << "author=" << config.author_ << '\n';
     out << "cmd=" << config.cmd_ << '\n';
     out << "dir=" << config.dir_ << '\n';
     out << "restart=" << to_string(config.restart_) << '\n';
     out << "proto=" << to_string(config.protocol_) << '\n';
-    out << "tc=" << config.tc_.toPgnTimeControlString() << '\n';
+	auto timeControl = config.tc_.toPgnTimeControlString();
+    if (!timeControl.empty()) {
+        out << "tc=" << config.tc_.toPgnTimeControlString() << '\n';
+    }
 	if (config.ponder_) out << "ponder=" << (config.ponder_ ? "true" : "false") << '\n';
     for (const auto& [_, value] : config.optionValues_) {
         out << value.originalName << "=" << value.value << '\n';
@@ -225,6 +234,10 @@ std::unordered_map<std::string, std::string> EngineConfig::toDisambiguationMap()
 
     if (!name_.empty())
         result["name"] = name_;
+
+    if (!author_.empty()) {
+        result["author"] = author_;
+    }
 
     result["proto"] = to_string(protocol_);
 

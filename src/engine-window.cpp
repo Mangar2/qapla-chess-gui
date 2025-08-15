@@ -175,6 +175,7 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
 }
 
 void EngineWindow::setTable(size_t index) {
+    if (boardData_->engineRecords().size() == 0) return;
 	addTables(boardData_->engineRecords().size());
 
     if (index >= tables_.size() || 
@@ -216,22 +217,18 @@ void EngineWindow::drawButtons(size_t index) {
     constexpr float bottomOffset = 8.0f;
     constexpr float leftOffset = 20.0f;
     std::vector<std::string> buttons{ "Restart", "Stop", "Config" };
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
-	boardPos.x = std::round(boardPos.x);
-	boardPos.y = std::round(boardPos.y);
+    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+	topLeft.x = std::round(topLeft.x);
+	topLeft.y = std::round(topLeft.y);
+    auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
+
 
     constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
-    auto totalSize = buttonSize; 
+    
+    auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
+
     for (const auto& button : buttons) {
-        auto total = QaplaButton::calcIconButtonTotalSize(buttonSize, button.c_str());
-		totalSize.x = std::max(totalSize.x, total.x);
-		totalSize.y = std::max(totalSize.y, total.y);
-    }
-	totalSize.x = std::round(totalSize.x);
-	totalSize.y = std::round(totalSize.y);
-    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const auto& button : buttons) {
-        ImGui::SetCursorScreenPos(pos);
+        ImGui::SetCursorScreenPos(curPos);
         if (QaplaButton::drawIconButton(button, button, buttonSize, false,
             [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Restart") {
@@ -260,14 +257,14 @@ void EngineWindow::drawButtons(size_t index) {
 
             }
         }
-        pos.x += totalSize.x + space;
+        curPos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
 }
 
 void EngineWindow::drawEngineSelectionPopup() {
-	setupWindow_->draw();
+	setupWindow_->draw("Use", "Cancel");
 
    if (auto confirmed = setupWindow_->confirmed()) {
         if (*confirmed) {
@@ -277,60 +274,72 @@ void EngineWindow::drawEngineSelectionPopup() {
     }
 }
 
+void EngineWindow::drawEngineSpace(size_t index, ImVec2 size) {
+
+    constexpr float cEngineInfoWidth = 160.0f;
+    constexpr float cCornerRounding = 0.0f;
+    constexpr float cSectionSpacing = 4.0f;
+    const ImU32 cEvenBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    const ImU32 cOddBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
+    const auto engineRecords = boardData_->engineRecords();
+
+    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    ImGui::PushID(std::to_string(index).c_str());
+    const ImU32 bg = (index % 2 == 0) ? cEvenBg : cOddBg;
+    ImVec2 max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
+
+    drawList->AddRectFilled(topLeft, max, bg, cCornerRounding);
+
+    drawList->AddRect(topLeft, max, cBorder, cCornerRounding);
+
+    ImGui::SetCursorScreenPos(topLeft);
+    ImGui::Dummy(ImVec2(cEngineInfoWidth, size.y));
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5));
+    ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
+    drawButtons(index);
+    drawEngineSelectionPopup();
+    ImGui::Indent(5.0f);
+    if (index < engineRecords.size()) {
+        drawEngineInfo(engineRecords[index], index);
+    }
+    ImGui::Unindent(5.0f);
+    ImGui::PopItemWidth();
+
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
+    ImVec2 spacerMin = ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y);
+    ImVec2 spacerMax = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y + size.y);
+    drawList->AddRectFilled(spacerMin, spacerMax, IM_COL32(60, 60, 70, 120), 3.0f);
+
+    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    ImGui::SetCursorScreenPos(tableMin);
+    
+    setTable(index);
+    if (index < tables_.size()) {
+        tables_[index]->draw(ImVec2(max.x - tableMin.x, size.y));
+    }
+    ImGui::SetCursorScreenPos(topLeft);
+    ImGui::Dummy(size);
+    ImGui::PopID();
+}
+
 void EngineWindow::draw() {
     constexpr float cMinRowHeight = 80.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
-    constexpr float cCornerRounding = 0.0f;
-    const ImU32 cEvenBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
-    const ImU32 cOddBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
-    const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
 
     const auto engineRecords = boardData_->engineRecords();
-    if (engineRecords.empty()) {
-        return;
-    }
+	const auto records = engineRecords.empty() ? 1 : engineRecords.size();
 
     ImVec2 avail = ImGui::GetContentRegionAvail();
-
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
-    const float rowHeight = std::max(cMinRowHeight, avail.y / static_cast<float>(engineRecords.size()));
+    const float rowHeight = std::max(cMinRowHeight, avail.y / static_cast<float>(records));
 
-    ImVec2 start = ImGui::GetCursorScreenPos();
-    for (size_t i = 0; i < engineRecords.size(); ++i) {
-        ImGui::PushID(std::to_string(i).c_str());
-        const ImU32 bg = (i % 2 == 0) ? cEvenBg : cOddBg;
-        ImVec2 min = ImVec2(start.x, start.y + i * rowHeight);
-        ImVec2 max = ImVec2(min.x + cEngineInfoWidth + tableMinWidth + cSectionSpacing, min.y + rowHeight);
-
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        drawList->AddRectFilled(min, max, bg, cCornerRounding);
-        drawList->AddRect(min, max, cBorder, cCornerRounding);
-
-        ImGui::SetCursorScreenPos(ImVec2(min.x, min.y));
-        ImGui::Dummy(ImVec2(cEngineInfoWidth, rowHeight));
-        ImGui::SetCursorScreenPos(ImVec2(min.x, min.y + 5));
-        ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
-        drawButtons(i);
-        drawEngineSelectionPopup();
-        ImGui::Indent(5.0f);
-		drawEngineInfo(engineRecords[i], i);
-		ImGui::Unindent(5.0f);
-		ImGui::PopItemWidth();
-        
-        ImGui::SetCursorScreenPos(ImVec2(min.x + cEngineInfoWidth, min.y));
-        ImVec2 spacerMin = ImVec2(min.x + cEngineInfoWidth, min.y);
-        ImVec2 spacerMax = ImVec2(min.x + cEngineInfoWidth + cSectionSpacing, min.y + rowHeight);
-        drawList->AddRectFilled(spacerMin, spacerMax, IM_COL32(60, 60, 70, 120), 3.0f);
-
-		ImVec2 tableMin = ImVec2(min.x + cEngineInfoWidth + cSectionSpacing, min.y);
-        ImGui::SetCursorScreenPos(tableMin);
-
-        setTable(i);
-        tables_[i]->draw(ImVec2(max.x - tableMin.x, rowHeight));
-        ImGui::Dummy(ImVec2(tableMinWidth, rowHeight));
-        ImGui::PopID();
+    for (size_t i = 0; i < records; ++i) {
+		drawEngineSpace(i, ImVec2(tableMinWidth, rowHeight));
     }
 }
 

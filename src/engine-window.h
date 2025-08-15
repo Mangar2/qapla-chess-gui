@@ -50,6 +50,13 @@ namespace QaplaWindows {
         void addTables(size_t size);
 
         /**
+         * @brief Draws the engine space for a given index.
+         * @param index Index of the engine to draw.
+		 * @param size Size of the engine space.
+		 */ 
+        void drawEngineSpace(size_t index, const ImVec2 size);
+
+        /**
          * @brief Shows a popup window to select engines using EngineSetupWindow.
          * @return Optional list of selected EngineConfig objects if user confirmed.
          */

@@ -33,15 +33,18 @@ void EngineConfigManager::loadFromStream(std::istream& in) {
     }
 }
 
+void EngineConfigManager::saveToStream(std::ostream& out) const {
+    for (const auto& config : configs) {
+        out << config;
+        out << "\n";
+    }
+}
 
 void EngineConfigManager::saveToFile(const std::string& filePath) const {
     std::ofstream file(filePath);
     if (!file.is_open()) throw std::runtime_error("Unable to write file");
 
-    for (const auto& config : configs) {
-        file << config;
-        file << "\n";
-    }
+    saveToStream(file);
 }
 
 std::vector<EngineConfig> EngineConfigManager::getAllConfigs() const {
@@ -58,6 +61,13 @@ const EngineConfig* EngineConfigManager::getConfig(const std::string& name) cons
 EngineConfig* EngineConfigManager::getConfigMutable(const std::string& name)  {
     for (auto& config : configs) {
         if (to_lowercase(config.getName()) == to_lowercase(name)) return &config;
+    }
+    return nullptr;
+}
+
+EngineConfig* EngineConfigManager::getConfigMutableByCmd(const std::string& cmd) {
+    for (auto& config : configs) {
+        if (config.getCmd() == cmd) return &config;
     }
     return nullptr;
 }

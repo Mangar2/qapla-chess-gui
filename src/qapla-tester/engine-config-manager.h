@@ -66,6 +66,12 @@ public:
      * @param filePath Path to the INI file.
      */
     void saveToFile(const std::string& filePath) const;
+    
+    /**
+	 * @brief Saves all configurations to an output stream.
+	 * @param out The output stream to write the configurations to.
+     */
+    void saveToStream(std::ostream& out) const;
 
     /**
      * Returns all engine configurations.
@@ -80,12 +86,31 @@ public:
      */
     const EngineConfig* getConfig(const std::string& name) const;
     EngineConfig* getConfigMutable(const std::string& name);
+    EngineConfig* getConfigMutableByCmd(const std::string& cmd);
 
     /**
      * Adds a new configuration or replaces the existing one with the same name.
      * @param config The EngineConfig to add or update.
      */
     void addOrReplaceConfig(const EngineConfig& config);
+
+    /**
+     * Adds a new configuration without checking for duplicates.
+     * @param config The EngineConfig to add.
+	 */
+    void addConfig(const EngineConfig& config) {
+        configs.push_back(config);
+	}
+
+    /**
+	 * @brief Removes a configuration by value.
+     */
+    void removeConfig(const EngineConfig& remove) {
+        auto it = std::remove(configs.begin(), configs.end(), remove);
+        if (it != configs.end()) {
+            configs.erase(it, configs.end());
+        }
+    }
 
 	/**
 	 * @brief Returns a list of error messages encountered during parsing.
@@ -100,7 +125,7 @@ public:
 	 * @param instances A collection of GroupInstances, each containing a map of configuration values.
      * @throws std::runtime_error if any EngineConfig is invalid.
      */
-    void addOrReplaceConfigurations(const CliSettings::GroupInstances& instances) {
+    void addOrReplaceConfig(const CliSettings::GroupInstances& instances) {
         for (const auto& instance : instances) {
 			CliSettings::ValueMap map = instance.getValues();
             EngineConfig config = EngineConfig::createFromValueMap(map);
@@ -112,7 +137,7 @@ public:
 	 * @brief Add or replaces a single EngineConfig instance from a GroupInstance.
 	 * @param valueMap The values for the configuraiton.
 	 */
-    void addOrReplaceConfiguration(const CliSettings::ValueMap& valueMap) {
+    void addOrReplaceConfig(const CliSettings::ValueMap& valueMap) {
 		EngineConfig config = EngineConfig::createFromValueMap(valueMap);
 		addOrReplaceConfig(config);
 	}

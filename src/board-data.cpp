@@ -37,12 +37,6 @@ BoardData::BoardData() :
 	gameRecord_(std::make_unique<GameRecord>()),
 	computeTask_(std::make_unique<ComputeTask>())
 {
-	EngineConfigManager configManager;
-	configManager.loadFromFile("./test/engines.ini");
-	EngineWorkerFactory::setConfigManager(configManager);
-	auto config = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-	auto engines = EngineWorkerFactory::createEngines(*config, 2);
-	computeTask_->initEngines(std::move(engines));
 	timeControl_ = QaplaConfiguration::Configuration::instance()
 		.getTimeControlSettings().getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
@@ -194,17 +188,9 @@ void BoardData::restartEngine(size_t index) {
 }
 
 void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
-	EngineList allEngined;
-	for (auto& config: engines) {
-		auto created = EngineWorkerFactory::createEngines(config, 1);
-		if (!created.empty()) {
-			allEngined.emplace_back(std::move(created[0]));
-		}
-	}
-	computeTask_->initEngines(std::move(allEngined));
-	TimeControl tc;
-	tc.addTimeSegment({ 0, 10000, 100 });
-	computeTask_->setTimeControl(tc);
+	if (engines.size() == 0) return;
+	auto created = EngineWorkerFactory::createEngines(engines, true);
+	computeTask_->initEngines(std::move(created));
 }
 
 bool BoardData::isModeActive(const std::string& mode) const {

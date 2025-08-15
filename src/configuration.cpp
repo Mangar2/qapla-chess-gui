@@ -22,7 +22,9 @@
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/timer.h"
 #include "qapla-tester/time-control.h"
+#include "qapla-tester/engine-worker-factory.h"
 
+#include <cstdlib>
 #include <fstream>
 #include <filesystem>
 #include <iostream>
@@ -32,6 +34,17 @@ using namespace QaplaConfiguration;
 
 Configuration::Configuration() 
 {
+}
+
+static std::string getConfigDirectory() {
+    namespace fs = std::filesystem;
+
+    // Fallback: Benutzerverzeichnis verwenden
+#ifdef _WIN32
+    return std::string(std::getenv("LOCALAPPDATA")) + "/qapla-chess-gui";
+#else
+    return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";
+#endif
 }
 
 void Configuration::autosave() {
@@ -51,27 +64,31 @@ void Configuration::saveFile() {
 
     try {
         // Rename existing file to backup
-        if (fs::exists(CONFIG_FILE)) {
-            fs::rename(CONFIG_FILE, BACKUP_FILE);
+        if (fs::exists(configFilePath_)) {
+            fs::rename(configFilePath_, backupFilePath_);
         }
 
-        std::ofstream outFile(CONFIG_FILE, std::ios::trunc);
+        // Open the configuration file for writing
+        std::ofstream outFile(configFilePath_, std::ios::trunc);
         if (!outFile) {
             throw std::ios_base::failure("Failed to open configuration file for writing.");
         }
 
-        saveData(outFile); 
+        // Save the configuration data
+        saveData(outFile);
         outFile.close();
 
-        if (fs::exists(CONFIG_FILE)) {
-            fs::remove(BACKUP_FILE);
+        // Remove the backup file if saving was successful
+        if (fs::exists(configFilePath_)) {
+            fs::remove(backupFilePath_);
         }
     }
     catch (const std::exception& e) {
         Logger::testLogger().log(std::string("Error saving configuration: ") + e.what(), TraceLevel::error);
-        // Restore backup if saving failed
-        if (fs::exists(BACKUP_FILE)) {
-            fs::rename(BACKUP_FILE, CONFIG_FILE);
+
+        // Restore the backup if saving failed
+        if (fs::exists(backupFilePath_)) {
+            fs::rename(backupFilePath_, configFilePath_);
         }
     }
 }
@@ -80,16 +97,20 @@ void Configuration::loadFile() {
     namespace fs = std::filesystem;
 
     try {
+        const std::string configDir = getConfigDirectory();
+        fs::create_directories(configDir);
+
+        configFilePath_ = configDir + "/" + CONFIG_FILE;
+		backupFilePath_ = configDir + "/" + BACKUP_FILE;
+
         std::ifstream inFile;
 
-        if (fs::exists(CONFIG_FILE)) {
-            // Open the main configuration file
-            inFile.open(CONFIG_FILE, std::ios::in);
+        if (fs::exists(configFilePath_)) {
+            inFile.open(configFilePath_, std::ios::in);
         }
-        else if (fs::exists(BACKUP_FILE)) {
-            // Rename and open the backup file if the main file is missing
-            fs::rename(BACKUP_FILE, CONFIG_FILE);
-            inFile.open(CONFIG_FILE, std::ios::in);
+        else if (fs::exists(backupFilePath_)) {
+            fs::rename(backupFilePath_, configFilePath_);
+            inFile.open(configFilePath_, std::ios::in);
         }
         else {
             throw std::ios_base::failure("No configuration file found.");
@@ -99,21 +120,21 @@ void Configuration::loadFile() {
             throw std::ios_base::failure("Failed to open configuration file for reading.");
         }
 
-        // Pass the opened file stream to loadData
         loadData(inFile);
-
-        // Close the file stream after loading
         inFile.close();
-		lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-		changed_ = false; 
+
+        lastSaveTimestamp_ = Timer::getCurrentTimeMs();
+        changed_ = false;
     }
     catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Error loading configuration: ") + e.what(), TraceLevel::error);
+        Logger::testLogger().log(std::string("Error loading configuration: ") + e.what(), 
+            TraceLevel::error);
     }
 }
 
 void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
+	EngineWorkerFactory::getConfigManager().saveToStream(out);
 }
 
 void Configuration::loadData(std::ifstream& in) {
@@ -143,9 +164,10 @@ void Configuration::saveTimeControls(std::ofstream& out) {
     saveCnt++;
     try {
         out << "#" << saveCnt << "\n";
-		out << "\n[board]\n";
+		out << "[board]\n";
 		out << "timecontrol=" << timeControlSettings_.getSelectionString() << "\n";
-        out << "\n[timecontrol]\n";
+        out << "\n";
+        out << "[timecontrol]\n";
         out << "name=BlitzTime\n";
         saveMap(out, timeControlSettings_.blitzTime.toMap());
         out << "\n[timecontrol]\n";
@@ -160,6 +182,7 @@ void Configuration::saveTimeControls(std::ofstream& out) {
         out << "\n[timecontrol]\n";
         out << "name=NodesPerMoves\n";
 		saveMap(out, timeControlSettings_.nodesPerMove.toMap());
+        out << "\n";
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error in saveTimeControls: ") + e.what());
@@ -186,8 +209,9 @@ void Configuration::processSection(const std::string& section, const std::map<st
             parseBoard(keyValueMap);
         }
         else if (section == "engine") {
-            // Engine section processing can be added here in the future
-            Logger::testLogger().log("Engine section processing not implemented yet", TraceLevel::info);
+            EngineConfig config;
+			config.setValues(keyValueMap);
+			EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
         }
         else if (section == "tournament") {
             // Tournament section processing can be added here in the future

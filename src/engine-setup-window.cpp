@@ -21,6 +21,8 @@
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "imgui-controls.h"
+#include "os-dialogs.h"
+#include "configuration.h"
 
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-config.h"
@@ -31,6 +33,7 @@
 #include <string>
 #include <format>
 #include <memory>
+#include <filesystem>
 
 using namespace QaplaWindows;
 
@@ -52,6 +55,11 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
         ImGui::Indent(32.0f);
         if (auto name = ImGuiControls::inputText("Name", config.getName())) {
             config.setName(*name);
+            changed = true;
+        }
+
+        if (auto author = ImGuiControls::inputText("Author", config.getAuthor())) {
+            config.setAuthor(*author);
             changed = true;
         }
 
@@ -99,10 +107,76 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
     return { changed, selected };
 }
 
+void EngineSetupWindow::drawButtons() {
+    constexpr float space = 3.0f;
+    constexpr float topOffset = 5.0f;
+    constexpr float bottomOffset = 8.0f;
+    constexpr float leftOffset = 20.0f;
+    
+    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    topLeft.x = std::round(topLeft.x);
+    topLeft.y = std::round(topLeft.y);
+    auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
+    
+    std::vector<std::string> buttons{ "Add", "Remove", "Detect" };
+    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
+    bool detecting = false;
+
+    for (const auto& button : buttons) {
+        ImGui::SetCursorScreenPos(curPos);
+        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
+            [&button, &detecting](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+                if (button == "Add") {
+                    QaplaButton::drawAdd(drawList, topLeft, size);
+                }
+                if (button == "Remove") {
+                    QaplaButton::drawRemove(drawList, topLeft, size);
+                }
+                if (button == "Detect") {
+                    QaplaButton::drawAutoDetect(drawList, topLeft, size, detecting);
+                }
+            }))
+        {
+            try {
+                if (button == "Add") {
+                    auto commands = OsDialogs::openFileDialog(true);
+                    for (auto& command : commands) {
+						EngineWorkerFactory::getConfigManagerMutable().addConfig(EngineConfig::createFromPath(command));
+                    }
+                    QaplaConfiguration::Configuration::instance().setModified();
+                }
+                else if (button == "Remove") {
+                    for (auto& active : activeEngines_) {
+						EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
+                    }
+                }
+                else if (button == "Detect") {
+                    EngineWorkerFactory::autoDetect();
+                    QaplaConfiguration::Configuration::instance().setModified();
+                }
+            }
+            catch (...) {
+
+            }
+        }
+        curPos.x += totalSize.x + space;
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
+}
+
 void EngineSetupWindow::draw() {
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
     int index = 0;
+	drawButtons();
+
+    if (configs.empty()) {
+        ImVec2 avail = ImGui::GetContentRegionAvail();
+        ImGui::Dummy(ImVec2(avail.x, avail.y));
+    }
+
     for (auto& config : configs) {
         bool inSelection = false;
         for (auto& active : activeEngines_) {
@@ -114,6 +188,7 @@ void EngineSetupWindow::draw() {
         auto [changed, selected] = drawEngineConfigSection(config, index, inSelection);
         if (changed) {
             configManager.addOrReplaceConfig(config);
+            QaplaConfiguration::Configuration::instance().setModified();
         }
         if (selected) {
             if (std::find(activeEngines_.begin(), activeEngines_.end(), config) == activeEngines_.end()) {

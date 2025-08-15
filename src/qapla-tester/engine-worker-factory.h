@@ -63,6 +63,24 @@ public:
 	 */
 	static EngineList createEngines(const EngineConfig& config, std::size_t count = 1);
 
+	/**
+	 * @brief Creates a list of EngineWorker instances, one for each configuration in the provided vector.
+	 * @param configs Vector of engine configurations to create workers for.
+	 * @param noWait If true, the engines are created without waiting for their startup to complete.
+	 * @return A vector of unique pointers to EngineWorker instances.
+	 */
+	static EngineList createEngines(const std::vector<EngineConfig>& configs, bool noWait = false);
+
+	/**
+	 * @brief Detects missing engine configurations.
+	 *
+	 * This function attempts to start engines using the file paths and reads their parameters
+	 * (e.g., supported options, protocol, and other metadata) as well as their names for 
+	 * configurations where the engine name is not set.
+	 *
+	 */
+	static void autoDetect();
+
 	static void setSuppressInfoLines(bool suppress) {
 		suppressInfoLines_ = suppress;
 	}

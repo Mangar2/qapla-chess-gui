@@ -267,6 +267,9 @@
     <ClCompile Include="src\qapla-tester\pgn-io.cpp">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClCompile>
+    <ClCompile Include="src\imgui-button.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">

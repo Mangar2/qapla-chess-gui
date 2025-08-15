@@ -20,6 +20,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <vector>
 #include <optional>
@@ -60,14 +61,44 @@ public:
 		EngineConfig config;
         config.setCmd(executablePath);
         config.finalizeSetOptions();
+        config.unconfigured_ = true;
 		return config;
     }
+
+    /**
+     * @brief Checks if the engine configuration was created solely from a path.
+     *
+     * This flag indicates that the engine was created using only a file path
+     * (e.g., via `createFromPath`) and has not been further configured, either
+     * automatically or manually.
+     *
+     * @return True if the engine was created solely from a path, false otherwise.
+     */
+    bool isUnconfigured() {
+        return unconfigured_;
+    }
+
+    /**
+     * @brief Marks the engine configuration as properly configured.
+     *
+     */
+    void setConfigured() {
+        unconfigured_ = false;
+    }
+
     /**
      * 
      * Sets the name of the engine.
      * @param engineName The name to assign.
      */
     void setName(const std::string& engineName) { name_ = engineName; }
+
+    /**
+     * @brief Sets the author of the engine.
+     *
+     * @param engineAuthor The name of the engine's author.
+     */
+    void setAuthor(const std::string& engineAuthor) { author_ = engineAuthor; }
 
     /**
      * Sets the path to the engine executable.
@@ -95,6 +126,12 @@ public:
      * @return The engine name.
      */
     const std::string& getName() const { return name_; }
+
+    /**
+     * Gets the engines author.
+     * @return the engines author.
+     */
+    const std::string& getAuthor() const { return author_; }
 
     /**
      * Gets the path to the engine executable.
@@ -166,6 +203,23 @@ public:
     }
 
     /**
+     * @brief Sets a specific value, overwriting any existing value.
+     * @param name The option name.
+     * @param value The value to assign.
+	 */
+    void setValue(const std::string& name, const std::string& value);
+
+    /**
+     * @brief Sets multiple values at once from a map of key-value pairs.
+     * @param values A map of names and their values.
+	 */
+    void setValues(const std::map<std::string, std::string>& values) {
+        for (const auto& [name, value] : values) {
+            setValue(name, value);
+        }
+    }
+
+    /**
      * @brief Sets multiple options at once from a map of key-value pairs coming from the command line
      * @param values A map of option names and their values.
      * @throw std::runtime_error 
@@ -226,7 +280,9 @@ private:
     void warnOnNameMismatch(const std::string& fileName, const std::string& engineName) const;
 
     std::string toString(const Value& value);
+    bool unconfigured_ = false;
     std::string name_;
+    std::string author_;
     std::string cmd_;
     std::string dir_;
     TimeControl tc_;

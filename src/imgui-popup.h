@@ -54,7 +54,7 @@ namespace QaplaWindows {
         /**
          * @brief Renders the popup. Should be called every frame.
          */
-        void draw() {
+        void draw(const std::string& ok = "OK", const std::string& cancel = "Cancel") {
             if (!isOpen_) return;
             ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_Once);
             if (!ImGui::BeginPopupModal(config_.title.c_str(), nullptr, ImGuiWindowFlags_None))

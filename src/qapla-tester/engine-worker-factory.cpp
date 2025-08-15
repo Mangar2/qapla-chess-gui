@@ -139,3 +139,87 @@ EngineList EngineWorkerFactory::createEngines(const EngineConfig& config, std::s
     }
     return runningEngines;
 }
+
+EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& configs, bool noWait) {
+    EngineList engines;
+    std::vector<std::future<void>> futures;
+    engines.reserve(configs.size());
+    constexpr int RETRY = 3;
+    for (int retry = 0; retry < RETRY; retry++) {
+        futures.clear();
+        uint32_t index = 0;
+        for (auto& config: configs) {
+            // We initialize all engines in the first loop
+            if (engines.size() <= index) {
+                engines.push_back(createEngine(config));
+                futures.push_back(engines.back()->getStartupFuture());
+            }
+            else if (engines[index]->failure()) {
+                // The retry loops recreate engines having exceptions in the startup process
+                engines[index] = createEngine(config);
+                futures.push_back(engines[index]->getStartupFuture());
+            }
+            index++;
+        }
+        if (noWait) {
+            // If noWait is true, we skip waiting for the startup futures.
+            // This allows engines to start asynchronously.
+            continue;
+		}
+        // Wait for all newly created engines.
+        index = 0;
+        for (auto& f : futures) {
+            EngineReport* checklist;
+            auto& name = configs[index].getName();
+            try {
+                f.get();
+            }
+            catch (const std::exception& e) {
+                if (!name.empty()) {
+                    checklist = EngineReport::getChecklist(name);
+                    checklist->logReport("starts-and-stops-cleanly", false, std::string(e.what()));
+                }
+            }
+            catch (...) {
+                if (!name.empty()) {
+                    checklist = EngineReport::getChecklist(name);
+                    checklist->logReport("starts-and-stops-cleanly", false, "Unknown error");
+                }
+            }
+            index++;
+        }
+    }
+
+    EngineList runningEngines;
+    for (auto& engine : engines) {
+        if (noWait || !engine->failure()) {
+            runningEngines.push_back(std::move(engine));
+        }
+    }
+    return runningEngines;
+}
+
+void EngineWorkerFactory::autoDetect() {
+    std::thread([]() {
+        std::vector<EngineConfig> configs;
+        for (auto& config : getConfigManager().getAllConfigs()) {
+            if (config.isUnconfigured()) {
+                configs.push_back(config);
+            }
+        }
+        auto engines = createEngines(configs);
+        for (auto& engine : engines) {
+            auto& command = engine->getConfig().getCmd();
+            auto config = configManager_.getConfigMutableByCmd(command);
+            if (config) {
+                config->setName(engine->getEngineName());
+                config->setAuthor(engine->getEngineAuthor());
+                auto engineOptions = engine->getSupportedOptions();
+                for (const auto& option : engineOptions) {
+                    config->setOptionValue(option.name, option.defaultValue);
+                }
+                config->setConfigured();
+            }
+        }
+		}).detach();
+}

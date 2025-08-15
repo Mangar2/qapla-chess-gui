@@ -267,13 +267,16 @@ GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<ui
 	uint32_t nextMoveIndex = game.nextMoveIndex();
 	copy.setNextMoveIndex(nextMoveIndex);
 	auto [gameCause, gameResult] = game.getGameResult();
-	auto [cause, result] = getGameResult();
-	if (result == GameResult::Unterminated) {
+	copy.setGameEnd(gameCause, gameResult);
+	auto [myCause, myResult] = getGameResult();
+
+	if (myResult != GameResult::Unterminated && gameResult == GameResult::Unterminated) {
+		copy.setGameEnd(myCause, myResult);
+	}
+	// Only set the game result if we are at the end of the game record
+	if ((!plies || nextMoveIndex == *plies) && myResult == GameResult::Unterminated) {
 		setGameResult(gameCause, gameResult);
 	}
-	auto [sumCause, sumResult] = getGameResult();
-
-	copy.setGameEnd(sumCause, sumResult);
 	return copy;
 }
 	

@@ -59,6 +59,8 @@ namespace QaplaWindows {
 
     private:
 
+        void drawButtons();
+
         /**
          * @brief Draws a collapsible section for editing a single engine configuration.
          * @param config Reference to the engine configuration to edit.

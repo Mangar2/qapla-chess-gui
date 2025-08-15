@@ -128,6 +128,10 @@ namespace QaplaConfiguration {
          */
         void loadFile();
 
+        void setModified() {
+            changed_ = true;
+		}
+
     private:
         bool changed_ = false;
 		uint64_t lastSaveTimestamp_ = 0;
@@ -180,6 +184,9 @@ namespace QaplaConfiguration {
 
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";
         static constexpr const char* BACKUP_FILE = "qapla-chess-gui.ini.bak";
+
+        std::string configFilePath_;
+		std::string backupFilePath_;
 
     };
 
