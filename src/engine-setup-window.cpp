@@ -43,8 +43,8 @@ EngineSetupWindow::~EngineSetupWindow() = default;
 
 std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
     std::string headerLabel = config.getName().empty()
-        ? std::format("Engine {}", index + 1)
-        : std::format("{}##engineHeader{}", config.getName(), index);
+        ? std::format("Engine {}###engineHeader{}", index + 1, index)
+        : std::format("{}###engineHeader{}", config.getName(), index, index);
     bool changed = false;
     ImGui::PushID(index);
  
@@ -149,10 +149,12 @@ void EngineSetupWindow::drawButtons() {
                 else if (button == "Remove") {
                     for (auto& active : activeEngines_) {
 						EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
+                        QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
+							active.getCmd(), active.getProtocol());
                     }
                 }
                 else if (button == "Detect") {
-                    EngineWorkerFactory::autoDetect();
+                    QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
                     QaplaConfiguration::Configuration::instance().setModified();
                 }
             }

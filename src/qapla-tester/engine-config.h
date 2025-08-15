@@ -60,29 +60,7 @@ public:
 		EngineConfig config;
         config.setCmd(executablePath);
         config.finalizeSetOptions();
-        config.unconfigured_ = true;
 		return config;
-    }
-
-    /**
-     * @brief Checks if the engine configuration was created solely from a path.
-     *
-     * This flag indicates that the engine was created using only a file path
-     * (e.g., via `createFromPath`) and has not been further configured, either
-     * automatically or manually.
-     *
-     * @return True if the engine was created solely from a path, false otherwise.
-     */
-    bool isUnconfigured() {
-        return unconfigured_;
-    }
-
-    /**
-     * @brief Marks the engine configuration as properly configured.
-     *
-     */
-    void setConfigured() {
-        unconfigured_ = false;
     }
 
     /**
@@ -279,7 +257,6 @@ private:
     void warnOnNameMismatch(const std::string& fileName, const std::string& engineName) const;
 
     std::string toString(const Value& value);
-    bool unconfigured_ = false;
     std::string name_;
     std::string author_;
     std::string cmd_;

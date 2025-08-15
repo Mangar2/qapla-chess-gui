@@ -40,7 +40,9 @@ static std::string to_string(const EngineOption& option) {
     json += "\"type\": \"" + EngineOption::to_string(option.type) + "\", ";
 
     // Add defaultValue
-    json += "\"defaultValue\": \"" + option.defaultValue + "\", ";
+    if (!option.defaultValue.empty()) {
+        json += "\"defaultValue\": \"" + option.defaultValue + "\", ";
+    }
 
     // Add min (if present)
     if (option.min.has_value()) {
@@ -53,14 +55,16 @@ static std::string to_string(const EngineOption& option) {
     }
 
     // Add vars (if not empty)
-    json += "\"vars\": [";
-    for (size_t i = 0; i < option.vars.size(); ++i) {
-        json += "\"" + option.vars[i] + "\"";
-        if (i < option.vars.size() - 1) {
-            json += ", ";
+    if (!option.vars.empty()) {
+        json += "\"vars\": [";
+        for (size_t i = 0; i < option.vars.size(); ++i) {
+            json += "\"" + option.vars[i] + "\"";
+            if (i < option.vars.size() - 1) {
+                json += ", ";
+            }
         }
+        json += "]";
     }
-    json += "]";
 
     json += "}";
     return json;
@@ -155,6 +159,8 @@ void EngineCapability::save(std::ostream& out) const {
     for (const auto& option : supportedOptions_) {
         out << "option=" << to_string(option) << std::endl;
     }
+	// Add a blank line at the end for separation
+    out << "\n";
 }
 
 EngineCapability EngineCapability::createFromKeyValueMap(const std::unordered_map<std::string, std::string>& keyValueMap) {

@@ -166,6 +166,7 @@
     <ClCompile Include="src\chess-font.cpp" />
     <ClCompile Include="src\clock-window.cpp" />
     <ClCompile Include="src\configuration.cpp" />
+    <ClCompile Include="src\engine-capabilities.cpp" />
     <ClCompile Include="src\engine-capability.cpp" />
     <ClCompile Include="src\engine-data.cpp" />
     <ClCompile Include="src\engine-setup-window.cpp" />

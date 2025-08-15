@@ -71,16 +71,6 @@ public:
 	 */
 	static EngineList createEngines(const std::vector<EngineConfig>& configs, bool noWait = false);
 
-	/**
-	 * @brief Detects missing engine configurations.
-	 *
-	 * This function attempts to start engines using the file paths and reads their parameters
-	 * (e.g., supported options, protocol, and other metadata) as well as their names for 
-	 * configurations where the engine name is not set.
-	 *
-	 */
-	static void autoDetect();
-
 	static void setSuppressInfoLines(bool suppress) {
 		suppressInfoLines_ = suppress;
 	}

@@ -61,6 +61,16 @@ public:
     }
 
     /**
+     * @brief Deletes an EngineCapability based on its path and protocol.
+     * @param path The path to the engine executable.
+     * @param protocol The protocol used by the engine.
+	 */
+    void deleteCapability(const std::string& path, EngineProtocol protocol) {
+        auto key = makeKey(path, protocol);
+        capabilities_.erase(key);
+	}
+
+    /**
      * @brief Retrieves an EngineCapability based on its path and protocol.
      * @param path The path to the engine executable.
      * @param protocol The protocol used by the engine.
@@ -74,6 +84,30 @@ public:
         } 
         return std::nullopt;
     }
+
+    /**
+     * @brief Checks if any capability exists for a given path.
+     * @param path The path to check for capabilities.
+     * @return True if any capability exists for the given path, false otherwise.
+	 */
+    const bool hasAnyCapability(const std::string& path) const {
+        for (const auto& [key, capability] : capabilities_) {
+            if (capability.getPath() == path) {
+                return true;
+            }
+        }
+        return false;
+	}
+
+    /**
+     * @brief Detects missing engine configurations.
+     *
+     * This function attempts to start engines using the file paths and reads their parameters
+     * (e.g., supported options, protocol, and other metadata) as well as their names for
+     * configurations where the engine name is not set.
+     *
+     */
+    void autoDetect();
 
 private:
     /**

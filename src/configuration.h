@@ -135,6 +135,14 @@ namespace QaplaConfiguration {
         void setModified() {
             changed_ = true;
 		}
+        
+        const EngineCapabilities& getEngineCapabilities() const {
+            return engineCapabilities_;
+        }
+
+        EngineCapabilities& getEngineCapabilities() {
+            return engineCapabilities_;
+		}
 
     private:
         bool changed_ = false;

@@ -199,27 +199,4 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
     return runningEngines;
 }
 
-void EngineWorkerFactory::autoDetect() {
-    std::thread([]() {
-        std::vector<EngineConfig> configs;
-        for (auto& config : getConfigManager().getAllConfigs()) {
-            if (config.isUnconfigured()) {
-                configs.push_back(config);
-            }
-        }
-        auto engines = createEngines(configs);
-        for (auto& engine : engines) {
-            auto& command = engine->getConfig().getCmd();
-            auto config = configManager_.getConfigMutableByCmd(command);
-            if (config) {
-                config->setName(engine->getEngineName());
-                config->setAuthor(engine->getEngineAuthor());
-                auto engineOptions = engine->getSupportedOptions();
-                for (const auto& option : engineOptions) {
-                    config->setOptionValue(option.name, option.defaultValue);
-                }
-                config->setConfigured();
-            }
-        }
-		}).detach();
-}
+

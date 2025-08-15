@@ -74,7 +74,7 @@ EngineConfig* EngineConfigManager::getConfigMutableByCmd(const std::string& cmd)
 
 void EngineConfigManager::addOrReplaceConfig(const EngineConfig& config) {
     for (auto& existing : configs) {
-        if (existing.getName() == config.getName()) {
+        if (existing.getCmd() == config.getCmd() && existing.getProtocol() == config.getProtocol()) {
             existing = config;
             return;
         }
