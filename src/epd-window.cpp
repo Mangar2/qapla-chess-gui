@@ -102,8 +102,6 @@ void EpdWindow::drawInput() {
 	constexpr int maxSeenPlies = 32;
     
     ImGui::SetNextItemWidth(inputWidth);
-    
-    ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
         boardData_->epdData().config().concurrency, 1, maxConcurrency)) {
         boardData_->setPoolConcurrency(boardData_->epdData().config().concurrency, true, true);
@@ -123,27 +121,12 @@ void EpdWindow::drawInput() {
         boardData_->epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
     ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint64_t>("Max time (s)", 
+    ImGuiControls::inputInt<uint64_t>("Min time (s)", 
         boardData_->epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
     ImGui::Spacing();
-    ImGui::TextUnformatted("Epd or RAW position file:");
-    if (ImGui::Button("Select")) {
-        try {
-            auto selectedFiles = OsDialogs::openFileDialog();
-            if (!selectedFiles.empty()) {
-                boardData_->epdData().config().filepath = selectedFiles[0]; // Use the first selected file
-            }
-        }
-        catch (const std::exception& e) {
-            SnackbarManager::instance().showError(e.what());
-        }
-    }
-    ImGui::SetNextItemWidth(inputWidth * 2);
-    ImGui::SameLine();
-    if (auto path = ImGuiControls::inputText("Epd file", filePath)) {
-        boardData_->epdData().config().filepath = *path;
-    }
+    ImGuiControls::fileInput("Epd or RAW position file:", 
+        boardData_->epdData().config().filepath, inputWidth * 2.0f);
     ImGui::Spacing();
     ImGui::Unindent(10.0f);
 }

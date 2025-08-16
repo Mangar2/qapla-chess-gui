@@ -33,35 +33,28 @@
 static std::string to_string(const EngineOption& option) {
     std::string json = "{";
 
-    // Add name
-    json += "\"name\": \"" + option.name + "\", ";
+    json += "\"name\": \"" + option.name + "\"";
 
-    // Add type
-    json += "\"type\": \"" + EngineOption::to_string(option.type) + "\", ";
+    json += ", \"type\": \"" + EngineOption::to_string(option.type) + "\"";
 
-    // Add defaultValue
     if (!option.defaultValue.empty()) {
-        json += "\"defaultValue\": \"" + option.defaultValue + "\", ";
+        json += ", \"defaultValue\": \"" + option.defaultValue + "\"";
     }
 
-    // Add min (if present)
     if (option.min.has_value()) {
-        json += "\"min\": " + std::to_string(option.min.value()) + ", ";
+        json += ", \"min\": " + std::to_string(option.min.value());
     }
 
-    // Add max (if present)
     if (option.max.has_value()) {
-        json += "\"max\": " + std::to_string(option.max.value()) + ", ";
+        json += ", \"max\": " + std::to_string(option.max.value());
     }
 
-    // Add vars (if not empty)
     if (!option.vars.empty()) {
-        json += "\"vars\": [";
+        json += ", \"vars\": [";
+		std::string delimiter = "";
         for (size_t i = 0; i < option.vars.size(); ++i) {
-            json += "\"" + option.vars[i] + "\"";
-            if (i < option.vars.size() - 1) {
-                json += ", ";
-            }
+            json += delimiter + "\"" + option.vars[i] + "\"";
+			delimiter = ", ";
         }
         json += "]";
     }
@@ -71,65 +64,115 @@ static std::string to_string(const EngineOption& option) {
 }
 
 /**
- * @brief Parses a JSON-Line formatted string to create an EngineOption object.
- * @param json The JSON-Line formatted string.
- * @return An EngineOption object created from the string.
- * @throws std::invalid_argument if the string is not properly formatted or contains invalid data.
+ * @brief Removes surrounding quotes from a string if present.
  */
+std::string removeQotes(std::string str) {
+    if (str.front() == '"' && str.back() == '"') {
+        str = str.substr(1, str.size() - 2);
+    }
+    return str;
+}
+
+/**
+ * @brief Splits a string into tokens, treating special characters (e.g., '{', '}', ':', ',') as separate tokens.
+ * @param str The input string to tokenize.
+ * @return A vector of tokens extracted from the input string.
+ */
+static std::vector<std::string> tokenize(const std::string& str) {
+    std::vector<std::string> tokens;
+    std::string currentToken;
+    bool insideString = false;
+    char lastChar = '\0';
+
+    for (char c : str) {
+        if (c == '"' && lastChar != '\\') {
+            insideString = !insideString;
+        }
+        else if (!insideString && (c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',')) {
+            // If we encounter a special character outside a string
+            if (!currentToken.empty()) {
+                tokens.push_back(trim(currentToken));
+                currentToken.clear();
+            }
+            tokens.push_back(std::string(1, c)); // Add the special character as a token
+        }
+        else {
+            currentToken += c;
+        }
+
+        lastChar = c;
+    }
+
+    // Add the last token (if any)
+    if (!currentToken.empty()) {
+        tokens.push_back(trim(currentToken));
+    }
+
+    return tokens;
+}
+
 static EngineOption parseEngineOption(const std::string& json) {
     EngineOption option;
-    std::istringstream stream(json);
-    std::string token;
 
+    // Tokenize the input JSON string
+    auto tokens = tokenize(json);
 
-    // Ensure the string starts and ends with curly braces
-    if (json.front() != '{' || json.back() != '}') {
+    // Ensure the JSON starts and ends with curly braces
+    if (tokens.empty() || tokens.front() != "{" || tokens.back() != "}") {
         throw std::invalid_argument("Invalid JSON format: Missing opening or closing braces.");
     }
 
-    // Remove the outer braces
-    std::string content = json.substr(1, json.size() - 2);
-
-    // Parse key-value pairs
-    std::istringstream contentStream(content);
-    while (std::getline(contentStream, token, ',')) {
-        size_t colonPos = token.find(':');
-        if (colonPos == std::string::npos) {
-            throw std::invalid_argument("Invalid JSON format: Missing colon in key-value pair.");
+    size_t i = 1; 
+    while (i < tokens.size()) { 
+		std::string currentKey = tokens[i];
+        i++;
+        if (i >= tokens.size() || tokens[i] != ":") {
+            throw std::invalid_argument("Invalid JSON format: Expected ':' after key '" + currentKey + "'.");
+		}
+		i++; 
+        if (i >= tokens.size()) {
+			throw std::invalid_argument("Invalid JSON format: Expected value after ':' for key '" + currentKey + "'.");
         }
-
-        std::string key = trim(token.substr(0, colonPos));
-        std::string value = trim(token.substr(colonPos + 1));
-
-        if (key == "name") {
+		std::string value = tokens[i];
+        i++;
+        
+        // Process the value for the current key
+        if (currentKey == "name") {
             option.name = value;
         }
-        else if (key == "type") {
+        else if (currentKey == "type") {
             option.type = EngineOption::parseType(value);
         }
-        else if (key == "defaultValue") {
+        else if (currentKey == "defaultValue") {
             option.defaultValue = value;
         }
-        else if (key == "min") {
+        else if (currentKey == "min") {
             option.min = std::stoi(value);
         }
-        else if (key == "max") {
+        else if (currentKey == "max") {
             option.max = std::stoi(value);
         }
-        else if (key == "vars") {
-            if (value.front() != '[' || value.back() != ']') {
-                throw std::invalid_argument("Invalid JSON format: 'vars' must be an array.");
+        else if (currentKey == "vars") {
+            if (value != "[") {
+                throw std::invalid_argument("Invalid JSON format: 'vars' must start with '['.");
             }
-            std::string varsContent = value.substr(1, value.size() - 2);
-            std::istringstream varsStream(varsContent);
-            std::string var;
-            while (std::getline(varsStream, var, ',')) {
-                option.vars.push_back(trim(var));
+
+            // Parse the array
+            while (i < tokens.size() && tokens[i] != "]") {
+                if (tokens[i] != ",") {
+                    option.vars.push_back(tokens[i]);
+                }
+                ++i;
+            }
+
+            if (i >= tokens.size() || tokens[i] != "]") {
+                throw std::invalid_argument("Invalid JSON format: 'vars' array not properly closed.");
             }
         }
-        else {
-            throw std::invalid_argument("Unknown key in JSON: " + key);
+        if (i >= tokens.size() || (tokens[i] != "," && tokens[i] != "}")) {
+			throw std::invalid_argument("Invalid JSON format: Unexpected end of input after key '" + currentKey + "'.");
         }
+        i++;
     }
 
     return option;
@@ -157,7 +200,7 @@ void EngineCapability::save(std::ostream& out) const {
 
     // Write the supported options
     for (const auto& option : supportedOptions_) {
-        out << "option=" << to_string(option) << std::endl;
+        out << "option." << option.name << "=" << to_string(option) << std::endl;
     }
 	// Add a blank line at the end for separation
     out << "\n";
@@ -187,7 +230,7 @@ EngineCapability EngineCapability::createFromKeyValueMap(const std::unordered_ma
         else if (key == "author") {
             capability.setAuthor(value);
         }
-        else if (key == "option") {
+        else if (key.rfind("option.", 0) == 0) {
             try {
                 capability.supportedOptions_.push_back(parseEngineOption(value));
             }

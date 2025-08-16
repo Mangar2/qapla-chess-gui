@@ -62,7 +62,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
 
         drawList->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
         drawList->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
-		drawList->PushClipRect(pos, ImVec2(pos.x + size.x - 4.0f, pos.y + size.y), false);
+		drawList->PushClipRect(pos, ImVec2(pos.x + size.x - 4.0f, pos.y + size.y), true);
         auto textTopLeft = ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
         ImGui::SetCursorScreenPos(textTopLeft);
         if (i == 0 && index <= 1) {

@@ -20,6 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "snackbar.h"
 #include <memory>
 #include <algorithm>
 #include <imgui.h>
@@ -59,10 +60,11 @@ namespace QaplaWindows {
                 if (leftWindow_) leftWindow_->draw();
 			}
             catch (const std::exception& e) {
-                ImGui::Text("Error in left window: %s", e.what());
+                SnackbarManager::instance().showError(
+					std::format("Error in left window: {}", e.what()));
             }
             catch (...) {
-                ImGui::Text("Unknown error in left window");
+				SnackbarManager::instance().showError("Unknown error in left window");
 			}
             ImGui::EndChild();
             
@@ -80,10 +82,11 @@ namespace QaplaWindows {
                 if (rightWindow_) rightWindow_->draw();
             }
             catch (const std::exception& e) {
-                ImGui::Text("Error in right window: %s", e.what());
+				SnackbarManager::instance().showError(
+					std::format("Error in right window: {}", e.what()));
 			}
             catch (...) {
-                ImGui::Text("Unknown error in right window");
+				SnackbarManager::instance().showError("Unknown error in right window");
 			}
             ImGui::EndChild();
 

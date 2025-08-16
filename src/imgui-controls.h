@@ -19,6 +19,9 @@
 
 #pragma once
 
+#include "os-dialogs.h"
+#include "snackbar.h"
+
 #include "imgui.h"
 #include <string>
 #include <optional>
@@ -102,6 +105,173 @@ namespace QaplaWindows::ImGuiControls {
         // Update the original value if it was modified
         if (modified) {
             value = static_cast<T>(tempValue);
+        }
+
+        return modified;
+    }
+
+    /**
+     * @brief File input control for selecting and displaying file paths.
+     * @param label Label to display next to the input box.
+     * @param filePath Reference to the file path string to modify.
+     * @param inputWidth Width of the input box.
+     * @param buttonLabel Label for the file selection button.
+     * @return True if the file path was modified, false otherwise.
+     */
+    inline bool fileInput(const char* label, std::string& filePath, float inputWidth = 200.0f, const char* buttonLabel = "Select") {
+        bool modified = false;
+
+        // Display label
+        ImGui::TextUnformatted(label);
+
+        // File selection button
+        if (ImGui::Button(buttonLabel)) {
+            try {
+                auto selectedFiles = OsDialogs::openFileDialog();
+                if (!selectedFiles.empty()) {
+                    filePath = selectedFiles[0]; // Use the first selected file
+                    modified = true;
+                }
+            }
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showError(e.what());
+            }
+        }
+
+        // Input box for file path
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::SameLine();
+        if (auto path = inputText("##filePath", filePath)) {
+            filePath = *path;
+            modified = true;
+        }
+
+        return modified;
+    }
+
+    /**
+     * @brief Selection box for choosing a string from a list of options.
+     * @param label Label to display next to the selection box.
+     * @param currentItem Reference to the currently selected item (index in the options vector).
+     * @param options Vector of strings representing the selectable options.
+     * @param boxWidth Width of the selection box.
+     * @return True if the selection was changed, false otherwise.
+     */
+    inline bool selectionBox(const char* label, int& currentItem, const std::vector<std::string>& options) {
+        bool modified = false;
+
+        // Ensure the current item index is valid
+        if (currentItem < 0 || currentItem >= static_cast<int>(options.size())) {
+            currentItem = 0; // Default to the first item if out of range
+        }
+
+        // Convert options to a format suitable for ImGui
+        std::vector<const char*> cStrings;
+        cStrings.reserve(options.size());
+        for (const auto& option : options) {
+            cStrings.push_back(option.c_str());
+        }
+
+        // Render the combo box
+        if (ImGui::Combo(label, &currentItem, cStrings.data(), static_cast<int>(cStrings.size()))) {
+            modified = true;
+        }
+
+        return modified;
+    }
+
+    /**
+     * @brief Input field for a boolean value using a selection box with "Yes" and "No" options.
+     * @param label Label to display next to the input field.
+     * @param value Reference to the boolean value to modify.
+     * @param boxWidth Width of the selection box.
+     * @return True if the value was modified, false otherwise.
+     */
+    inline bool booleanInput(const char* label, bool& value) {
+        // Define the options for the selection box
+        static const std::vector<std::string> options = { "No", "Yes" };
+
+        // Map the boolean value to the selection index
+        int currentItem = value ? 1 : 0;
+
+        // Use the selectionBox function to render the input
+        if (selectionBox(label, currentItem, options)) {
+            // Update the boolean value based on the selected index
+            value = (currentItem == 1);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+    * @brief Creates an input control for an EngineOption.
+    * @param option The EngineOption to create the input for.
+    * @param value Reference to the current value of the option as a string.
+    * @param inputWidth Optional width for a file Input field.
+    * @return True if the value was modified, false otherwise.
+    */
+    inline bool engineOptionControl(const EngineOption& option, std::string& value, float fileInputWidth = 400.0f) {
+        bool modified = false;
+
+        switch (option.type) {
+        case EngineOption::Type::File: {
+            // File input
+            modified = fileInput(option.name.c_str(), value, fileInputWidth);
+            break;
+        }
+        case EngineOption::Type::Check: {
+            // Boolean input (converted to "true"/"false")
+            bool boolValue = (value == "true");
+            if (booleanInput(option.name.c_str(), boolValue)) {
+                value = boolValue ? "true" : "false";
+                modified = true;
+            }
+            break;
+        }
+        case EngineOption::Type::Spin: {
+            // Integer input with min/max
+            int intValue = value.empty() ? option.min.value_or(0) : std::stoi(value);
+            if (inputInt(option.name.c_str(), intValue, option.min.value_or(0), option.max.value_or(100))) {
+                value = std::to_string(intValue);
+                modified = true;
+            }
+            break;
+        }
+        case EngineOption::Type::Slider: {
+            // Slider input with min/max
+            int intValue = value.empty() ? option.min.value_or(0) : std::stoi(value);
+            if (sliderInt(option.name.c_str(), intValue, option.min.value_or(0), option.max.value_or(100))) {
+                value = std::to_string(intValue);
+                modified = true;
+            }
+            break;
+        }
+        case EngineOption::Type::Combo: {
+            // Combo box for selecting from predefined options
+            int currentIndex = 0;
+            auto it = std::find(option.vars.begin(), option.vars.end(), value);
+            if (it != option.vars.end()) {
+                currentIndex = static_cast<int>(std::distance(option.vars.begin(), it));
+            }
+            if (selectionBox(option.name.c_str(), currentIndex, option.vars)) {
+                value = option.vars[currentIndex];
+                modified = true;
+            }
+            break;
+        }
+        case EngineOption::Type::String: {
+            // Text input
+            if (auto newValue = inputText(option.name.c_str(), value)) {
+                value = *newValue;
+                modified = true;
+            }
+            break;
+        }
+        default:
+            // Unsupported type
+            ImGui::Text("Unsupported option type: %s", EngineOption::to_string(option.type).c_str());
+            break;
         }
 
         return modified;

@@ -71,6 +71,14 @@ namespace QaplaWindows {
 		 * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
          */
         std::tuple<bool, bool> drawEngineConfigSection(EngineConfig& config, int index, bool selected);
+
+        /**
+         * @brief Draws the options for a given engine configuration.
+         * @param config Reference to the engine configuration.
+         * @param inputWidth Width of the input fields for options.
+         * @return True if any option was changed, false otherwise.
+		 */
+        bool drawOptions(EngineConfig& config, float inputWidth);
         std::vector<EngineConfig> activeEngines_;
     };
 

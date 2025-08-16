@@ -23,6 +23,7 @@
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 #include "configuration.h"
+#include "snackbar.h"
 
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-config.h"
@@ -48,9 +49,31 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>
     for (auto& engine : engines) {
         auto matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
 		if (matching) {
-            activeEngines_.push_back(*matching);
+            if (std::find(activeEngines_.begin(), activeEngines_.end(), *matching) == activeEngines_.end()) {
+                activeEngines_.push_back(*matching);
+            }
         }
     }
+}
+
+bool EngineSetupWindow::drawOptions(EngineConfig& config, float inputWidth) {
+    auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+    auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
+    if (!capability) return false;
+	auto& options = capability->getSupportedOptions();
+    bool changed = false;
+    
+    auto optionMap = config.getOptionValues();
+    for (const auto& option : options) {
+		auto it = optionMap.find(option.name);
+        std::string value = (it != optionMap.end()) ? it->second : option.defaultValue; 
+        if (ImGuiControls::engineOptionControl(option, value, inputWidth)) {
+            changed = true;
+            // Update the capability with the new value
+			config.setOptionValue(option.name, value);
+		}
+    }
+	return changed;
 }
 
 std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
@@ -113,7 +136,16 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
             config.setRestartOption(static_cast<RestartOption>(restartIndex));
             changed = true;
         }
-        ImGui::Indent(-32.0f);
+
+        try {
+            changed |= drawOptions(config, 400.0f);
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showError(
+				std::format("Error in options: {}", e.what()));
+		}
+
+        ImGui::Unindent(32.0f);
     }
     ImGui::PopID();
     return { changed, selected };
@@ -205,7 +237,16 @@ void EngineSetupWindow::draw() {
             QaplaConfiguration::Configuration::instance().setModified();
         }
         if (selected) {
-            if (std::find(activeEngines_.begin(), activeEngines_.end(), config) == activeEngines_.end()) {
+            bool found = false;
+            for (size_t i = 0; i < activeEngines_.size(); i++) {
+				auto& active = activeEngines_[i];
+                if (active.getCmd() == config.getCmd() && active.getProtocol() == config.getProtocol()) {
+					activeEngines_[i] = config; 
+                    found = true;
+                    break;
+                }
+			}
+			if (!found) {
                 activeEngines_.push_back(config);
             }
         } else {

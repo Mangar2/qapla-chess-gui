@@ -52,6 +52,10 @@ public:
 
     void show(const std::string& message, SnackbarType type) {
         SnackbarEntry entry;
+        if (snackbarStack_.size() >0 && snackbarStack_.back().message == message && snackbarStack_.back().type == type) {
+            snackbarStack_.back().startTime = std::chrono::steady_clock::now();
+            return;
+		}
         entry.message = message;
         entry.startTime = std::chrono::steady_clock::now();
         entry.duration = durations[static_cast<int>(type)];
