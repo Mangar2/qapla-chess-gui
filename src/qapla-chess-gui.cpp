@@ -32,6 +32,7 @@
 #include "vertical-split-container.h"
 #include "board-workspace.h"
 #include "engine-setup-window.h"
+#include "snackbar.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -168,6 +169,7 @@ namespace {
   			boardData->pollData();
 
             workspace.draw();
+			SnackbarManager::instance().draw();
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

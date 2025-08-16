@@ -18,12 +18,13 @@
  */
 
 #pragma once
+#include "engine-capability.h"
 
 #include <unordered_map>
 #include <string>
 #include <ostream>
 #include <optional>
-#include "engine-capability.h"
+#include <atomic>
 
  /**
   * @class EngineCapabilities
@@ -109,6 +110,14 @@ public:
      */
     void autoDetect();
 
+    /**
+     * @brief Checks if detection is currently in progress.
+     * @return True if detection is ongoing, false otherwise.
+	 */
+    bool isDetecting() const {
+        return detecting_.load();
+	}
+
 private:
     /**
      * @brief Creates a unique key for the unordered_map based on path and protocol.
@@ -121,4 +130,5 @@ private:
     }
 
     std::unordered_map<std::string, EngineCapability> capabilities_; ///< Stores EngineCapability objects indexed by a unique key.
+	std::atomic<bool> detecting_; ///< True, if detection is currently in progress.
 };

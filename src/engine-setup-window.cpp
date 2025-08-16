@@ -41,6 +41,18 @@ using namespace QaplaWindows;
 EngineSetupWindow::EngineSetupWindow() = default;
 EngineSetupWindow::~EngineSetupWindow() = default;
 
+void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>& engines) {
+    activeEngines_.clear();
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    for (auto& engine : engines) {
+        auto matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
+		if (matching) {
+            activeEngines_.push_back(*matching);
+        }
+    }
+}
+
 std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
     std::string headerLabel = config.getName().empty()
         ? std::format("Engine {}###engineHeader{}", index + 1, index)
@@ -121,7 +133,7 @@ void EngineSetupWindow::drawButtons() {
     std::vector<std::string> buttons{ "Add", "Remove", "Detect" };
     constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
-    bool detecting = false;
+    bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
 
     for (const auto& button : buttons) {
         ImGui::SetCursorScreenPos(curPos);

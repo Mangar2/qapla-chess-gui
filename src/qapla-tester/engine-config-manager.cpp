@@ -65,9 +65,11 @@ EngineConfig* EngineConfigManager::getConfigMutable(const std::string& name)  {
     return nullptr;
 }
 
-EngineConfig* EngineConfigManager::getConfigMutableByCmd(const std::string& cmd) {
+EngineConfig* EngineConfigManager::getConfigMutableByCmdAndProtocol(
+    const std::string& cmd, EngineProtocol proto) 
+{
     for (auto& config : configs) {
-        if (config.getCmd() == cmd) return &config;
+        if (config.getCmd() == cmd && config.getProtocol() == proto) return &config;
     }
     return nullptr;
 }

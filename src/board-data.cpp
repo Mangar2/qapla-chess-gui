@@ -188,7 +188,10 @@ void BoardData::restartEngine(size_t index) {
 }
 
 void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
-	if (engines.size() == 0) return;
+	if (engines.size() == 0) {
+		computeTask_->initEngines(EngineList{});
+		return;
+	}
 	auto created = EngineWorkerFactory::createEngines(engines, true);
 	computeTask_->initEngines(std::move(created));
 }

@@ -299,6 +299,7 @@
     <ClInclude Include="src\qapla-tester\uci-adapter.h" />
     <ClInclude Include="src\qapla-tester\uci-option.h" />
     <ClInclude Include="src\qapla-tester\winboard-adapter.h" />
+    <ClInclude Include="src\snackbar.h" />
     <ClInclude Include="src\time-control-window.h" />
     <ClInclude Include="src\vertical-split-container.h" />
   </ItemGroup>

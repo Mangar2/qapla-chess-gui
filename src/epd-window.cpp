@@ -20,6 +20,9 @@
 #include "epd-window.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
+#include "snackbar.h"
+#include "os-dialogs.h"
+#include "imgui-controls.h"
 
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
@@ -81,8 +84,8 @@ void EpdWindow::drawButtons() {
                     boardData_->epdData().clear();
                 }
             } 
-            catch (...) {
-
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showSnackbar(std::string("Fehler: ") + e.what(), 5.0f);
             }
         }
         pos.x += totalSize.x + space;
@@ -92,6 +95,9 @@ void EpdWindow::drawButtons() {
 }
 
 void EpdWindow::drawInput() {
+    
+    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected)) return;
+	ImGui::Indent(10.0f);
 	constexpr float inputWidth = 200.0f;
     constexpr int maxConcurrency = 32;
 	constexpr int maxSeenPlies = 32;
@@ -99,6 +105,7 @@ void EpdWindow::drawInput() {
 	int maxTimeInS = static_cast<int>(boardData_->epdData().config().maxTimeInS);
 	int minTimeInS = static_cast<int>(boardData_->epdData().config().minTimeInS);
 	int seenPlies = static_cast<int>(boardData_->epdData().config().seenPlies);
+    std::string filePath = boardData_->epdData().config().filepath;
     //ImGui::DragInt("Concurrency", &concurrency, 1, 1, maxConcurrency);
     ImGui::SetNextItemWidth(inputWidth);
     ImGui::SliderInt("Concurrency", &concurrency, 1, maxConcurrency);
@@ -108,6 +115,23 @@ void EpdWindow::drawInput() {
     ImGui::InputInt("Max time (s)", &maxTimeInS);
     ImGui::SetNextItemWidth(inputWidth);
 	ImGui::InputInt("Min time (s)", &minTimeInS);
+    if (ImGui::Button("Select")) {
+        try {
+            auto selectedFiles = OsDialogs::openFileDialog();
+            if (!selectedFiles.empty()) {
+                boardData_->epdData().config().filepath = selectedFiles[0]; // Use the first selected file
+            }
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showSnackbar(std::string("Error: ") + e.what(), 5.0f);
+        }
+    }
+    ImGui::SetNextItemWidth(inputWidth * 2);
+    ImGui::SameLine();
+    if (auto path = ImGuiControls::inputText("Epd file", filePath)) {
+        boardData_->epdData().config().filepath = *path;
+    }
+
 
     if (concurrency != static_cast<int>(boardData_->epdData().config().concurrency)) {
         boardData_->setPoolConcurrency(concurrency, true, true);
@@ -116,6 +140,8 @@ void EpdWindow::drawInput() {
     boardData_->epdData().config().maxTimeInS = static_cast<uint64_t>(maxTimeInS);
 	boardData_->epdData().config().minTimeInS = static_cast<uint64_t>(minTimeInS);
 	boardData_->epdData().config().seenPlies = static_cast<uint32_t>(seenPlies);
+	
+    ImGui::Unindent(10.0f);
 }
 
 void EpdWindow::draw() {

@@ -40,7 +40,7 @@ namespace QaplaWindows::ImGuiControls {
         ImGuiInputTextCallback callback = nullptr,
         void* userData = nullptr) {
         std::string buffer = value;
-        buffer.resize(512);  // Fixed buffer size
+        buffer.resize(1024);  // Fixed buffer size
 
         if (ImGui::InputText(label, buffer.data(), buffer.size(), flags, callback, userData)) {
             size_t nullPos = buffer.find('\0');

@@ -28,6 +28,7 @@
 
 void EngineCapabilities::autoDetect() {
     std::thread([this]() {
+		detecting_ = true;
         std::vector<EngineConfig> configs;
         for (auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
             if (!hasAnyCapability(config.getCmd())) {
@@ -37,7 +38,8 @@ void EngineCapabilities::autoDetect() {
         auto engines = EngineWorkerFactory::createEngines(configs);
         for (auto& engine : engines) {
             auto& command = engine->getConfig().getCmd();
-            auto config = EngineWorkerFactory::getConfigManagerMutable().getConfigMutableByCmd(command);
+            auto config = EngineWorkerFactory::getConfigManagerMutable()
+                .getConfigMutableByCmdAndProtocol(command, EngineProtocol::Uci);
             if (config) {
                 config->setName(engine->getEngineName());
                 config->setAuthor(engine->getEngineAuthor());
@@ -51,6 +53,7 @@ void EngineCapabilities::autoDetect() {
 			addOrReplace(capability);
 
         }
+		detecting_ = false;
         }).detach();
 }
 

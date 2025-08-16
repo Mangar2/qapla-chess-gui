@@ -527,5 +527,8 @@
     <ClInclude Include="src\engine-capabilities.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
+    <ClInclude Include="src\snackbar.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

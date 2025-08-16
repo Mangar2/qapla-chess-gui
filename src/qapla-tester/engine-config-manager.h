@@ -86,7 +86,7 @@ public:
      */
     const EngineConfig* getConfig(const std::string& name) const;
     EngineConfig* getConfigMutable(const std::string& name);
-    EngineConfig* getConfigMutableByCmd(const std::string& cmd);
+    EngineConfig* getConfigMutableByCmdAndProtocol(const std::string& cmd, EngineProtocol proto);
 
     /**
      * Adds a new configuration or replaces the existing one with the same name.

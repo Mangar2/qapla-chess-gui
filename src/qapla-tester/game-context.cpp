@@ -43,7 +43,9 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
     }
 	updateEngineNames();
     setTimeControl(gameRecord_.getWhiteTimeControl());
-	getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
+    if (getBlack() && getWhite() != getBlack()) {
+        getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
+    }
 }
 
 void GameContext::ensureStarted() {

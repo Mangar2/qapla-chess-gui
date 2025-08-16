@@ -51,11 +51,14 @@ namespace QaplaWindows {
         }
         /**
          * @brief Sets the list of active engine configurations.
+         * 
+		 * It searches for matching EngineConfig objects in the EngineConfigManager and
+		 * sets the configurations from the configManager that match the provided engines.
+		 * Matching is done by comparing the command and protocol of each EngineConfig.
+         * 
          * @param engines Vector of EngineConfig objects to set as active engines.
          */
-        void setActiveEngines(const std::vector<EngineConfig>& engines) {
-            activeEngines_ = engines;
-		}
+        void setMatchingActiveEngines(const std::vector<EngineConfig>& engines);
 
     private:
 
