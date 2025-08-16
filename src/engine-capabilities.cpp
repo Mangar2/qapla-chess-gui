@@ -19,6 +19,7 @@
 
 #include "configuration.h"
 #include "engine-capabilities.h"
+#include "snackbar.h"
 
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/engine-config-manager.h"
@@ -36,6 +37,20 @@ void EngineCapabilities::autoDetect() {
 			}
         }
         auto engines = EngineWorkerFactory::createEngines(configs);
+        for (auto& config : configs) {
+			// search matching eninge from the created engines
+            auto matchingEngine = std::find_if(engines.begin(), engines.end(),
+                [&config](const std::unique_ptr<EngineWorker>& engine) {
+                    return engine->getConfig().getCmd() == config.getCmd() &&
+                           engine->getConfig().getProtocol() == config.getProtocol();
+                });
+            if (matchingEngine == engines.end()) {
+                SnackbarManager::instance().showError(
+					"Could not start engine: " + config.getCmd() + " using protocol " +
+					to_string(config.getProtocol()));
+			}
+		}
+
         for (auto& engine : engines) {
             auto& command = engine->getConfig().getCmd();
             auto config = EngineWorkerFactory::getConfigManagerMutable()

@@ -151,8 +151,14 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
         for (auto& config: configs) {
             // We initialize all engines in the first loop
             if (engines.size() <= index) {
-                engines.push_back(createEngine(config));
-                futures.push_back(engines.back()->getStartupFuture());
+                try {
+                    engines.push_back(createEngine(config));
+                    futures.push_back(engines.back()->getStartupFuture());
+                } 
+                catch (const std::exception& e) {
+                    EngineReport::getChecklist(config.getName())
+                        ->logReport("starts-and-stops-cleanly", false, std::string(e.what()));
+                }
             }
             else if (engines[index]->failure()) {
                 // The retry loops recreate engines having exceptions in the startup process
