@@ -57,7 +57,7 @@ std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> depa
 		std::optional<QaplaBasics::Square> destination, QaplaBasics::Piece promote) 
 {
     const auto [move, valid, promotion] = gameState_->resolveMove(
-        std::nullopt, departure, destination, std::nullopt);
+        std::nullopt, departure, destination, promote);
 
     if (!valid) {
         return { false, false };

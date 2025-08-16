@@ -50,6 +50,63 @@ namespace QaplaWindows::ImGuiControls {
         return std::nullopt;
     }
 
+    /**
+     * @brief Template for InputInt with min/max validation for various integer types.
+     * @tparam T Integer type (e.g., int, short, long).
+     * @param label Label to display next to the input box.
+     * @param value Reference to the integer value to modify.
+     * @param min Minimum allowed value.
+     * @param max Maximum allowed value.
+     * @param flags Optional ImGuiInputTextFlags.
+     * @return True if the value was modified, false otherwise.
+     */
+    template <typename T>
+    inline bool inputInt(const char* label, T& value, T min, T max, int step = 1, int stepFast = 10, 
+        ImGuiInputTextFlags flags = 0) 
+    {
+        static_assert(std::is_integral_v<T>, "inputInt only supports integral types");
+		assert(min < max && "Min must be less than max");
+
+        int tempValue = static_cast<int>(value);
+        bool modified = ImGui::InputInt(label, &tempValue, step, stepFast, flags);
+
+        if (tempValue < static_cast<int>(min)) tempValue = static_cast<int>(min);
+        if (tempValue > static_cast<int>(max)) tempValue = static_cast<int>(max);
+
+        if (modified) {
+            value = static_cast<T>(tempValue);
+        }
+
+        return modified;
+    }
+
+    /**
+     * @brief Template for SliderInt with min/max validation for various integer types.
+     * @tparam T Integer type (e.g., int, short, long).
+     * @param label Label to display next to the slider.
+     * @param value Reference to the integer value to modify.
+     * @param min Minimum allowed value.
+     * @param max Maximum allowed value.
+     * @param format Optional format string (e.g., "%d").
+     * @return True if the value was modified, false otherwise.
+     */
+    template <typename T>
+    inline bool sliderInt(const char* label, T& value, T min, T max, const char* format = "%d") {
+        static_assert(std::is_integral_v<T>, "sliderInt only supports integral types");
+        assert(min < max && "Min must be less than max");
+
+        // Convert value to int for ImGui::SliderInt
+        int tempValue = static_cast<int>(value);
+        bool modified = ImGui::SliderInt(label, &tempValue, static_cast<int>(min), static_cast<int>(max), format);
+
+        // Update the original value if it was modified
+        if (modified) {
+            value = static_cast<T>(tempValue);
+        }
+
+        return modified;
+    }
+
     inline void drawBoxWithShadow(ImVec2 topLeft, ImVec2 bottomRight)
     {
         ImDrawList* drawList = ImGui::GetWindowDrawList();

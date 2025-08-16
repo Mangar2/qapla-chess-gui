@@ -75,6 +75,7 @@ void EpdWindow::drawButtons() {
                 if (button == "Run") {
                     boardData_->clearPool();
                     boardData_->epdData().analyse();
+                    SnackbarManager::instance().showSuccess("Epd analysis started");
                 } 
                 else if (button == "Stop") {
                     boardData_->stopPool();
@@ -85,7 +86,7 @@ void EpdWindow::drawButtons() {
                 }
             } 
             catch (const std::exception& e) {
-                SnackbarManager::instance().showSnackbar(std::string("Fehler: ") + e.what(), 5.0f);
+                SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
             }
         }
         pos.x += totalSize.x + space;
@@ -96,25 +97,37 @@ void EpdWindow::drawButtons() {
 
 void EpdWindow::drawInput() {
     
-    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected)) return;
-	ImGui::Indent(10.0f);
 	constexpr float inputWidth = 200.0f;
     constexpr int maxConcurrency = 32;
 	constexpr int maxSeenPlies = 32;
-    int concurrency = static_cast<int>(boardData_->epdData().config().concurrency);
-	int maxTimeInS = static_cast<int>(boardData_->epdData().config().maxTimeInS);
-	int minTimeInS = static_cast<int>(boardData_->epdData().config().minTimeInS);
-	int seenPlies = static_cast<int>(boardData_->epdData().config().seenPlies);
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
+        boardData_->epdData().config().concurrency, 1, maxConcurrency)) {
+        boardData_->setPoolConcurrency(boardData_->epdData().config().concurrency, true, true);
+    }
+
+    ImGui::Spacing();
+    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected)) return;
+    ImGui::Indent(10.0f);
+
     std::string filePath = boardData_->epdData().config().filepath;
-    //ImGui::DragInt("Concurrency", &concurrency, 1, 1, maxConcurrency);
     ImGui::SetNextItemWidth(inputWidth);
-    ImGui::SliderInt("Concurrency", &concurrency, 1, maxConcurrency);
+	ImGuiControls::inputInt<uint32_t>("Seen plies", 
+        boardData_->epdData().config().seenPlies, 1, maxSeenPlies);
+
     ImGui::SetNextItemWidth(inputWidth);
-    ImGui::SliderInt("Seen plies", &seenPlies, 1, maxSeenPlies);
+	ImGuiControls::inputInt<uint64_t>("Max time (s)", 
+        boardData_->epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+
     ImGui::SetNextItemWidth(inputWidth);
-    ImGui::InputInt("Max time (s)", &maxTimeInS);
-    ImGui::SetNextItemWidth(inputWidth);
-	ImGui::InputInt("Min time (s)", &minTimeInS);
+    ImGuiControls::inputInt<uint64_t>("Max time (s)", 
+        boardData_->epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+
+    ImGui::Spacing();
+    ImGui::TextUnformatted("Epd or RAW position file:");
     if (ImGui::Button("Select")) {
         try {
             auto selectedFiles = OsDialogs::openFileDialog();
@@ -123,7 +136,7 @@ void EpdWindow::drawInput() {
             }
         }
         catch (const std::exception& e) {
-            SnackbarManager::instance().showSnackbar(std::string("Error: ") + e.what(), 5.0f);
+            SnackbarManager::instance().showError(e.what());
         }
     }
     ImGui::SetNextItemWidth(inputWidth * 2);
@@ -131,16 +144,7 @@ void EpdWindow::drawInput() {
     if (auto path = ImGuiControls::inputText("Epd file", filePath)) {
         boardData_->epdData().config().filepath = *path;
     }
-
-
-    if (concurrency != static_cast<int>(boardData_->epdData().config().concurrency)) {
-        boardData_->setPoolConcurrency(concurrency, true, true);
-    }
-	boardData_->epdData().config().concurrency = static_cast<uint32_t>(concurrency);
-    boardData_->epdData().config().maxTimeInS = static_cast<uint64_t>(maxTimeInS);
-	boardData_->epdData().config().minTimeInS = static_cast<uint64_t>(minTimeInS);
-	boardData_->epdData().config().seenPlies = static_cast<uint32_t>(seenPlies);
-	
+    ImGui::Spacing();
     ImGui::Unindent(10.0f);
 }
 
