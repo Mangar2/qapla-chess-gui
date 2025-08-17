@@ -63,6 +63,7 @@ namespace QaplaWindows {
     private:
 
         void drawButtons();
+		void drawEngineList();
 
         /**
          * @brief Draws a collapsible section for editing a single engine configuration.

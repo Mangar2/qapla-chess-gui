@@ -68,11 +68,10 @@ namespace QaplaWindows {
 			}
             ImGui::EndChild();
             
-            ImGui::SameLine();
+            ImGui::SameLine(0, 0);
             drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth, height));
-            ImGui::SameLine();
+            ImGui::SameLine(0, 0);
 
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 8.0f); 
             float rightWidth = region.x - ImGui::GetCursorPosX();
 
             ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height),

@@ -212,17 +212,15 @@ void EngineSetupWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
 }
 
-void EngineSetupWindow::draw() {
+void EngineSetupWindow::drawEngineList() {
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
-    int index = 0;
-	drawButtons();
-
     if (configs.empty()) {
         ImVec2 avail = ImGui::GetContentRegionAvail();
         ImGui::Dummy(ImVec2(avail.x, avail.y));
     }
 
+    int index = 0;
     for (auto& config : configs) {
         bool inSelection = false;
         for (auto& active : activeEngines_) {
@@ -230,7 +228,7 @@ void EngineSetupWindow::draw() {
                 inSelection = true;
                 break;
             }
-		}
+        }
         auto [changed, selected] = drawEngineConfigSection(config, index, inSelection);
         if (changed) {
             configManager.addOrReplaceConfig(config);
@@ -239,21 +237,30 @@ void EngineSetupWindow::draw() {
         if (selected) {
             bool found = false;
             for (size_t i = 0; i < activeEngines_.size(); i++) {
-				auto& active = activeEngines_[i];
+                auto& active = activeEngines_[i];
                 if (active.getCmd() == config.getCmd() && active.getProtocol() == config.getProtocol()) {
-					activeEngines_[i] = config; 
+                    activeEngines_[i] = config;
                     found = true;
                     break;
                 }
-			}
-			if (!found) {
+            }
+            if (!found) {
                 activeEngines_.push_back(config);
             }
-        } else {
+        }
+        else {
             activeEngines_.erase(std::remove(activeEngines_.begin(), activeEngines_.end(), config), activeEngines_.end());
-		}
+        }
 
-		index++;
-	}
+        index++;
+    }
+}
+
+void EngineSetupWindow::draw() {
+	drawButtons();
+    
+    ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+    drawEngineList();
+    ImGui::EndChild();
 }
 

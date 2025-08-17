@@ -118,11 +118,12 @@ namespace QaplaWindows::ImGuiControls {
      * @param buttonLabel Label for the file selection button.
      * @return True if the file path was modified, false otherwise.
      */
-    inline bool fileInput(const char* label, std::string& filePath, float inputWidth = 200.0f, const char* buttonLabel = "Select") {
+    inline bool fileInput(const std::string& label, std::string& filePath, 
+        float inputWidth = 200.0f, const char* buttonLabel = "Select") {
         bool modified = false;
-
+		ImGui::PushID(label.c_str()); 
         // Display label
-        ImGui::TextUnformatted(label);
+        ImGui::TextUnformatted(label.c_str());
 
         // File selection button
         if (ImGui::Button(buttonLabel)) {
@@ -145,7 +146,7 @@ namespace QaplaWindows::ImGuiControls {
             filePath = *path;
             modified = true;
         }
-
+		ImGui::PopID(); 
         return modified;
     }
 
@@ -163,6 +164,7 @@ namespace QaplaWindows::ImGuiControls {
         // Ensure the current item index is valid
         if (currentItem < 0 || currentItem >= static_cast<int>(options.size())) {
             currentItem = 0; // Default to the first item if out of range
+			modified = true;
         }
 
         // Convert options to a format suitable for ImGui
@@ -177,6 +179,30 @@ namespace QaplaWindows::ImGuiControls {
             modified = true;
         }
 
+        return modified;
+    }
+
+    /**
+     * @brief Selection box for choosing a string from a list of options.
+     * @param label Label to display next to the selection box.
+     * @param currentItem Reference to the currently selected item (index in the options vector).
+     * @param options Vector of strings representing the selectable options.
+     * @param boxWidth Width of the selection box.
+     * @return True if the selection was changed, false otherwise.
+     */
+    inline bool selectionBox(const char* label, std::string& currentItem, const std::vector<std::string>& options) {
+
+        int currentIndex = 0;
+        currentIndex = std::find(options.begin(), options.end(), currentItem) - options.begin();
+        auto modified = selectionBox(label, currentIndex, options);
+        if (modified) {
+            if (currentIndex >= 0 && currentIndex < static_cast<int>(options.size())) {
+                currentItem = options[currentIndex];
+            }
+            else {
+                currentItem = ""; // Reset to empty if index is out of bounds
+            }
+        }
         return modified;
     }
 
