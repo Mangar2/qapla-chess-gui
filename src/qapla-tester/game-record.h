@@ -251,6 +251,20 @@ public:
 	 * @return A `GameStruct` object 
 	 */
 	GameStruct createGameStruct() const;
+
+	/**
+	 * @brief Reserves memory for the move history to avoid repeated reallocations.
+	 *
+	 * This method pre-allocates memory for the internal move history (`moves_`),
+	 * ensuring that no additional memory allocations are required when adding
+	 * the specified number of moves. This is useful when the number of moves
+	 * to be added is known in advance, improving performance.
+	 *
+	 * @param count The number of moves to reserve space for.
+	 */
+	void reserveMoves(size_t count) {
+		moves_.reserve(count);
+	}
 	
 private:
 	

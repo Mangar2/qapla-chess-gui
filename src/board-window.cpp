@@ -256,6 +256,7 @@ namespace QaplaWindows {
         const auto screenPos = ImGui::GetCursorScreenPos();
         const auto region = ImGui::GetContentRegionAvail();
         const auto boardHeight = std::max(50.0f, region.y - 10.0f);
+		const auto boardWidth = std::max(50.0f, region.x - 10.0f);
 
         if (region.x <= 0.0f || boardHeight <= 0.0f) {
             return;
@@ -263,7 +264,7 @@ namespace QaplaWindows {
 
         ImGui::PushFont(font::chessFont);
 
-        const float cellSize = std::floor(std::min(region.x, boardHeight) / gridSize) * 0.95f;
+        const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95f;
 
         if (promotionPending_) {
             ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));

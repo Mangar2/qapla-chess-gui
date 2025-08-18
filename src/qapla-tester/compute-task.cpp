@@ -161,13 +161,19 @@ void ComputeTask::processQueue() {
     constexpr std::chrono::seconds timeoutInterval(1);
     auto nextTimeoutCheck = std::chrono::steady_clock::now() + timeoutInterval;
     isEventQueueThread = true;
-
     while (!stopThread_) {
         {
             std::unique_lock<std::mutex> lock(queueMutex_);
-            queueCondition_.wait_until(lock, nextTimeoutCheck, [this] {
-                return !eventQueue_.empty() || stopThread_;
-                });
+            if (taskType_ == ComputeTaskType::Analyze) {
+                queueCondition_.wait(lock, [this] {
+                    return !eventQueue_.empty() || stopThread_;
+                    });
+            }
+            else {
+                queueCondition_.wait_until(lock, nextTimeoutCheck, [this] {
+                    return !eventQueue_.empty() || stopThread_;
+                    });
+            }
         }
 
         while (true) {

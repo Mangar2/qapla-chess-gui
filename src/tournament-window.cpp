@@ -77,8 +77,10 @@ void TournamentWindow::drawButtons() {
                     TournamentData::instance().startTournament();
                 } 
                 else if (button == "Stop") {
+                    TournamentData::instance().stopPool();
 			    } 
                 else if (button == "Clear") {
+                    TournamentData::instance().clearPool();
                 }
             } 
             catch (const std::exception& e) {

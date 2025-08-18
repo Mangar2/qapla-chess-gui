@@ -240,7 +240,7 @@ std::tuple<QaplaBasics::Move, bool, bool> GameState::resolveMove(
 	return { matchCount == 1 ? foundMove : QaplaBasics::Move(), matchCount > 0, promotion && matchCount > 0 };
 }
 
-GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t> plies) {
+GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies) {
 	GameRecord copy;
 	setFen(game.getStartPos(), game.getStartFen());
 	copy.setStartPosition(game.getStartPos(), getFen(),
@@ -250,6 +250,7 @@ GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<ui
 	if (plies) {
 		maxPly = std::min(maxPly, *plies);
 	}
+	copy.reserveMoves(maxPly);
 	for (uint32_t i = 0; i < maxPly; ++i) {
 		MoveRecord move = moves[i];
 		auto& moveStr = move.original;
@@ -278,5 +279,31 @@ GameRecord GameState::setFromGameRecord(const GameRecord& game, std::optional<ui
 		setGameResult(gameCause, gameResult);
 	}
 	return copy;
+}
+
+void GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t> plies) {
+	setFen(game.getStartPos(), game.getStartFen());
+	const auto& moves = game.history();
+	uint32_t maxPly = static_cast<uint32_t>(moves.size());
+	if (plies) {
+		maxPly = std::min(maxPly, *plies);
+	}
+	for (uint32_t i = 0; i < maxPly; ++i) {
+		auto parsed = stringToMove(moves[i].lan, false);
+		if (parsed.isEmpty()) {
+			Logger::testLogger().log("Illegal move in game record: " + moves[i].lan + " pos: " + getFen(),
+				TraceLevel::error);
+			return;
+		}
+		doMove(parsed);
+	}
+	uint32_t nextMoveIndex = game.nextMoveIndex();
+	auto [gameCause, gameResult] = game.getGameResult();
+	auto [myCause, myResult] = getGameResult();
+
+	// Only set the game result if we are at the end of the game record
+	if ((!plies || nextMoveIndex == *plies) && myResult == GameResult::Unterminated) {
+		setGameResult(gameCause, gameResult);
+	}
 }
 	

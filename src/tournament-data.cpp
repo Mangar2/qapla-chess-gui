@@ -129,10 +129,12 @@ namespace QaplaWindows {
 
     void TournamentData::stopPool() {
         GameManagerPool::getInstance().stopAll();
+        SnackbarManager::instance().showSuccess("Tournament stopped");
     }
 
     void TournamentData::clearPool() {
         GameManagerPool::getInstance().clearAll();
+        tournament_ = std::make_unique<Tournament>();
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool start) {

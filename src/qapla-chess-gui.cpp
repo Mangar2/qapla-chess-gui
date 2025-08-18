@@ -151,7 +151,6 @@ namespace {
         initGlad();
         initImGui(window);
         font::loadFonts();
-
         while (!glfwWindowShouldClose(window)) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
                 glfwWaitEvents(); 

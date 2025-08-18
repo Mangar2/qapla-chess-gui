@@ -102,7 +102,6 @@ void MoveListWindow::draw() {
         ImGui::TableHeader("PV");
         
         checkKeyboard();
-
         int moveNumber = 1;
         const auto& moves = gameRecord.history();
         bool wtm = gameRecord.wtmAtPly(0);
@@ -130,7 +129,6 @@ void MoveListWindow::draw() {
             ImGui::TableSetColumnIndex(0);
             ImGui::TextUnformatted(causeToString(cause).c_str());
         }
-
         ImGui::EndTable();
     }
 

@@ -126,11 +126,23 @@ public:
 	}
 
 	/**
-	 * @brief sets the game state from a game record information
+	 * @brief sets the game state from a game record information and copies the GameRecord until the given ply number.
 	 * @param record The game record to set the state from.
 	 * @param plies The ply number to set the game state to.
+	 * @return The copy of the GameRecord up to the given ply number.
 	 */
-	GameRecord setFromGameRecord(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
+	GameRecord setFromGameRecordAndCopy(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
+
+	/**
+	 * @brief Sets the game state from a game record information.
+	 * 
+	 * This method sets the game state to the position described by the given GameRecord.
+	 * It does not create and return a copy of the GameRecord and is thus faster than setFromGameRecordAndCopy.
+	 * 
+	 * @param record The game record to set the state from.
+	 * @param plies The ply number to set the game state to. If not provided, the full game record is used.
+	 */
+	void setFromGameRecord(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
 
 	/**
 	 * @brief Incrementally synchronizes this GameState to match the move history of the given reference state.

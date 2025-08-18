@@ -108,7 +108,7 @@ void PairTournament::updateOpening(uint32_t openingIndex) {
     GameState gameState;
     openingIndex_ = openingIndex;
     if (startPositions_->fens.empty()) {
-        curRecord_ = gameState.setFromGameRecord(startPositions_->games[openingIndex], config_.openings.plies);
+        curRecord_ = gameState.setFromGameRecordAndCopy(startPositions_->games[openingIndex], config_.openings.plies);
     }
     else {
         auto& fen = startPositions_->fens[openingIndex];
