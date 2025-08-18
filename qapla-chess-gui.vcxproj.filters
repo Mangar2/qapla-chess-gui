@@ -282,6 +282,9 @@
     <ClCompile Include="src\tournament-data.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\tournament-result-incremental.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -540,6 +543,9 @@
       <Filter>Quelldateien</Filter>
     </ClInclude>
     <ClInclude Include="src\tournament-data.h">
+      <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tournament-result-incremental.h">
       <Filter>Quelldateien</Filter>
     </ClInclude>
   </ItemGroup>

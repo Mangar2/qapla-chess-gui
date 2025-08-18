@@ -36,6 +36,7 @@
 #include <sstream>
 #include <random>
 #include <functional>
+#include <atomic>
 
 /**
  * @brief Represents a collection of chess openings for a tournament.
@@ -214,6 +215,14 @@ public:
      */
     std::string load(std::istream& in);
 
+    /**
+	 * @brief Checks, if the tournament is finished.
+     *
+	 * @return true if all games have been played, false otherwise.
+	 */
+    bool isFinished() const {
+        return isFinished_.load();
+	}
 
 private:
 
@@ -252,4 +261,5 @@ private:
     size_t nextIndex_ = 0;
     bool started_ = false;
     bool verbose_ = true;
+    std::atomic<bool> isFinished_ = false;
 };

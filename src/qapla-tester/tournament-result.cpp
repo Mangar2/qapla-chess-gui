@@ -196,9 +196,25 @@ void EngineResult::printResults(std::ostream &os) const
     }
 }
 
-void TournamentResult::add(const EngineDuelResult &result)
+void TournamentResult::push_back(const EngineDuelResult &result)
 {
     results_.push_back(result);
+}
+
+void TournamentResult::add(const EngineDuelResult& result) {
+    // We do not skip if engineB is empty, because this is a wildercard 
+    if (result.getEngineA().empty()) return;
+
+    auto it = std::find_if(results_.begin(), results_.end(),
+        [&result](const EngineDuelResult& r) {
+            return r.engineNamesMatch(result);
+        });
+    if (it != results_.end()) {
+        *it += result;
+    }
+    else {
+        results_.push_back(result);
+    }
 }
 
 std::vector<std::string> TournamentResult::engineNames() const

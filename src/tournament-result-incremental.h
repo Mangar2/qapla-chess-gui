@@ -1,0 +1,70 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#pragma once
+
+#include "qapla-tester/tournament-result.h"
+
+class Tournament;
+
+namespace QaplaWindows {
+
+
+	class TournamentResultIncremental {
+    public: 
+        void poll(const Tournament& tournament);
+
+        /*
+		 * @brief clears the internal state, removing all results and resetting counters.
+         */
+        void clear() {
+            finishedResultsAggregate_.clear();
+			totalResult_.clear();
+            updateCount_ = 0;
+            currentIndex_ = 0;
+		}
+
+		/**
+		 * @brief Returns the update count of the tournament results.
+		 * @return The total number of updates for change detection.
+         */
+        uint64_t getUpdateCount() const {
+            return updateCount_;
+		}
+		
+        /**
+		 * @brief Returns the total aggregated result of the tournament. 
+         * 
+		 * It includes both finished and non-finished tournament pairings.
+         */ 
+        const TournamentResult& getResult() const {
+            return totalResult_;
+		}
+    private:
+
+        TournamentResult finishedResultsAggregate_;
+		TournamentResult totalResult_; ///< total sum of finalized and non finalized results
+        std::unordered_set<std::string> engineNames_;
+
+		uint64_t updateCount_ = 0; ///< Number of updates 
+		size_t currentIndex_ = 0; 
+		size_t tournamentUpdateCount_ = 0; ///< Tournament update count, used to track changes
+    };
+
+}

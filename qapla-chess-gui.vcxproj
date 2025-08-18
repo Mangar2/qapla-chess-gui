@@ -217,6 +217,7 @@
     <ClCompile Include="src\qapla-tester\winboard-adapter.cpp" />
     <ClCompile Include="src\time-control-window.cpp" />
     <ClCompile Include="src\tournament-data.cpp" />
+    <ClCompile Include="src\tournament-result-incremental.cpp" />
     <ClCompile Include="src\tournament-window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -304,6 +305,7 @@
     <ClInclude Include="src\snackbar.h" />
     <ClInclude Include="src\time-control-window.h" />
     <ClInclude Include="src\tournament-data.h" />
+    <ClInclude Include="src\tournament-result-incremental.h" />
     <ClInclude Include="src\tournament-window.h" />
     <ClInclude Include="src\vertical-split-container.h" />
   </ItemGroup>

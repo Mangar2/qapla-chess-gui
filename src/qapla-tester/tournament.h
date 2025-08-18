@@ -113,7 +113,7 @@ public:
 	TournamentResult getResult() const {
 		TournamentResult result;
 		for (const auto& pairing : pairings_) {
-			result.add(pairing->getResult());
+			result.push_back(pairing->getResult());
 		}
 		return result;
 	}
@@ -132,6 +132,19 @@ public:
             return { updateCnt_, result_ };
 		}
         return { updateCnt_, std::nullopt };
+	}
+
+    /**
+	 * @brief Return a pointer to the PairTournament at the given index.
+	 * @result std::optional containing the PairTournament pointer if index is valid, otherwise std::nullopt.
+	 */
+    std::optional<const PairTournament*> getPairTournament(size_t index) const {
+        if (index < pairings_.size()) return pairings_[index].get();
+        return std::nullopt;
+    }
+
+    uint64_t getUpdateCount() const {
+        return updateCnt_;
 	}
 
 private:

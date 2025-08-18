@@ -202,6 +202,8 @@ void PairTournament::setGameRecord([[maybe_unused]] const std::string& taskId, c
         Logger::testLogger().log(oss.str(), TraceLevel::result);
     }
 
+    isFinished_ = nextIndex_ >= config_.games;
+
     if (onGameFinished_){
         onGameFinished_(this);
     } 

@@ -145,6 +145,17 @@ public:
     }
 
     /**
+     * @brief Checks if the engine names match, allowing for ANY_ENGINE wildcard.
+     * @param other The other duel result to compare against
+     * @return True if engine names match, false otherwise
+	 */
+    bool engineNamesMatch(const EngineDuelResult& other) const
+    {
+        return (engineA == other.engineA && (engineB == other.engineB || engineB == ANY_ENGINE)) ||
+			(engineA == other.engineB && (engineB == other.engineA || engineB == ANY_ENGINE));
+	}
+
+    /**
      * @brief Adds the stats from another duel result.
      * @param other The result to accumulate
      * @return Reference to this object
@@ -190,11 +201,18 @@ public:
         int error;              ///< Error margin for the Elo rating
     };
     /**
-     * @brief Adds a single EngineDuelResult to the internal collection.
+     * @brief pushes a single EngineDuelResult to the internal collection.
      *        Can include matches between any engine pair.
      * @param result A duel result to include.
      */
-    void add(const EngineDuelResult &result);
+    void push_back(const EngineDuelResult &result);
+
+    /**
+     * @brief Adds a duel result to the collection.
+     *        If the engines match, it accumulates the results.
+     * @param result The duel result to add.
+	 */
+    void add(const EngineDuelResult& result);
 
     /**
      * @brief Returns the names of all engines for which results have been recorded.
@@ -240,6 +258,16 @@ public:
      * @return Vector of scored engines sorted by descending Elo
      */
     std::vector<Scored> computeAllElos(int baseElo = 2600, int passes = 50) const;
+
+    /**
+     * @brief Clears all stored results and resets the internal state.
+     *
+     * This will remove all duel results and reset the collection.
+	 */ 
+    void clear()
+    {
+        results_.clear();
+	}
 
 private:
     /**
