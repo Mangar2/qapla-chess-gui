@@ -18,6 +18,7 @@
  */
 
 #include "configuration.h"
+#include "tournament-data.h"
 #include "qapla-tester/logger.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/timer.h"
@@ -137,6 +138,7 @@ void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
+	QaplaWindows::TournamentData::instance().saveConfig(out);
 }
 
 void Configuration::loadData(std::ifstream& in) {
@@ -215,12 +217,23 @@ void Configuration::processSection(const std::string& section, const ConfigMap& 
         }
         else if (section == "engine") {
             EngineConfig config;
-			config.setValues(keyValueMap);
-			EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
+            config.setValues(keyValueMap);
+            EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
         }
+        else if (section == "tournamentopening") {
+            QaplaWindows::TournamentData::instance().loadOpenings(keyValueMap);
+        } 
         else if (section == "tournament") {
-            // Tournament section processing can be added here in the future
-            Logger::testLogger().log("Tournament section processing not implemented yet", TraceLevel::info);
+			QaplaWindows::TournamentData::instance().loadTournamentConfig(keyValueMap);
+		}
+        else if (section == "tournamenteachengine") {
+            QaplaWindows::TournamentData::instance().loadEachEngineConfig(keyValueMap);
+        }
+        else if (section == "drawadjudication") {
+            //QaplaWindows::TournamentData::instance().drawConfig().loadFromMap(keyValueMap);
+        }
+        else if (section == "resignadjudication") {
+            //QaplaWindows::TournamentData::instance().resignConfig().loadFromMap(keyValueMap);
 		}
         else {
             Logger::testLogger().log("Unknown section: " + section, TraceLevel::warning);

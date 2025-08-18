@@ -87,6 +87,7 @@ inline std::ostream& operator<<(std::ostream& os, const SearchInfo& info) {
 }
 
 struct EngineEvent {
+    EngineEvent() = default;
     enum class Type {
         None,
         SendingComputeMove,

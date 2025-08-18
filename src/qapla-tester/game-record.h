@@ -32,6 +32,15 @@
 #include "time-control.h"
 #include "game-result.h"
 
+struct GameStruct {
+	std::string fen;
+	std::string lanMoves;
+	std::string sanMoves;
+	// For winboard the move the engine has sent in original format;
+	std::string originalMove;
+	bool isWhiteToMove;
+};
+
 /**
  * Stores a list of moves and manages current game state pointer.
  * Supports forward/backward navigation and time control evaluation.
@@ -231,6 +240,17 @@ public:
 	 * @return True if the records differ, false if they are the same.
 	 */
 	bool isDifferent(const GameRecord& other) const;
+
+	/**
+	 * @brief Creates a GameStruct containing the essential game data.
+	 *
+	 * This method generates a `GameStruct` object that includes the starting FEN
+	 * position and a concatenated list of moves in both LAN (long algebraic notation)
+	 * and SAN (short algebraic notation). 
+	 *
+	 * @return A `GameStruct` object 
+	 */
+	GameStruct createGameStruct() const;
 	
 private:
 	

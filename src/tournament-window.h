@@ -26,7 +26,6 @@
 namespace QaplaWindows {
 
     class ImGuiTable;
-    class TournamentData;
 
     /**
      * @brief Displays the move list with associated search data for a game.
@@ -45,7 +44,6 @@ namespace QaplaWindows {
     private:
         void drawButtons();
         void drawInput();
-		std::unique_ptr<TournamentData> tournamentData_;
     };
 
 } // namespace QaplaWindows

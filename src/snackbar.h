@@ -57,6 +57,9 @@ public:
             return;
 		}
         entry.message = message;
+        if (entry.message[0] == '\n') {
+            entry.message.erase(0, 1); 
+		}
         entry.startTime = std::chrono::steady_clock::now();
         entry.duration = durations[static_cast<int>(type)];
 		entry.type = type;
@@ -69,7 +72,7 @@ public:
     }
 
     void draw() {
-        constexpr ImVec2 snackbarSize = ImVec2(400.0f, 100.0f); 
+        constexpr ImVec2 snackbarSize = ImVec2(450.0f, 120.0f); 
         constexpr float closeButtonRadius = 10.0f;
 
         while (!snackbarStack_.empty()) {
@@ -94,9 +97,10 @@ public:
             ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
             ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-            ImGui::SetWindowFontScale(1.2f);
-			ImGui::SetCursorPos(ImVec2(0.0f, 30.0f)); // Position des Textes
+            ImGui::SetWindowFontScale(1.1f);
+			ImGui::SetCursorPos(ImVec2(0.0f, 20.0f)); // Position des Textes
 			ImGui::Indent(20.0f); 
+			ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
             ImGui::Text("%s", currentSnackbar.message.c_str());
 			ImGui::Unindent(20.0f);
             ImGui::SetWindowFontScale(1.0f);

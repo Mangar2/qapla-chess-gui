@@ -98,7 +98,7 @@ void UciAdapter::ticker() {
     // Currently unused in UCI
 }
 
-uint64_t UciAdapter::allowPonder(const GameRecord & game, const GoLimits & limits, std::string ponderMove) {
+uint64_t UciAdapter::allowPonder(const GameStruct & game, const GoLimits & limits, std::string ponderMove) {
     if (ponderMove == "") return 0;
 	sendPosition(game, ponderMove);
 
@@ -108,7 +108,7 @@ uint64_t UciAdapter::allowPonder(const GameRecord & game, const GoLimits & limit
     return writeCommand(oss.str());
 }
 
-uint64_t UciAdapter::computeMove(const GameRecord& game, const GoLimits& limits, bool ponderHit) {
+uint64_t UciAdapter::computeMove(const GameStruct& game, const GoLimits& limits, bool ponderHit) {
     if (ponderHit) {
 		return writeCommand("ponderhit");
     }
@@ -141,19 +141,16 @@ void UciAdapter::askForReady() {
 	writeCommand("isready");
 }
 
-void UciAdapter::sendPosition(const GameRecord& game, std::string ponderMove) {
+void UciAdapter::sendPosition(const GameStruct& game, std::string ponderMove) {
     std::ostringstream oss;
-    if (game.getStartPos()) {
+    if (game.fen.empty()) {
         oss << "position startpos";
     }
     else {
-        oss << "position fen " << game.getStartFen();
+        oss << "position fen " << game.fen;
     }
-    if (game.nextMoveIndex() != 0 || ponderMove != "") {
-        oss << " moves";
-		for (uint32_t ply = 0; ply < game.nextMoveIndex(); ++ply) {
-            oss << " " << game.history()[ply].lan;
-		}
+    if (!game.lanMoves.empty()) {
+        oss << " moves " << game.lanMoves;
         if (ponderMove != "") {
             oss << " " << ponderMove;
         }

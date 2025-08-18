@@ -56,7 +56,38 @@ struct TimeSegment {
     int movesToPlay = 0;            ///< Number of moves in this time segment (0 = sudden death)
     uint64_t baseTimeMs = 0;         ///< Time for this segment in milliseconds
     uint64_t incrementMs = 0;        ///< Increment per move in milliseconds
+    static TimeSegment fromString(std::string str) {
+        TimeSegment segment;
+        if (str.empty()) return segment;
+        size_t slashPos = str.find('/');
+        if (slashPos != std::string::npos) {
+            segment.movesToPlay = std::stoi(str.substr(0, slashPos));
+            str = str.substr(slashPos + 1);
+        }
+        size_t plusPos = str.find('+');
+        if (plusPos != std::string::npos) {
+            segment.baseTimeMs = static_cast<uint64_t>(std::stod(str.substr(0, plusPos)) * 1000);
+            segment.incrementMs = static_cast<uint64_t>(std::stod(str.substr(plusPos + 1)) * 1000);
+        } else {
+            segment.baseTimeMs = static_cast<uint64_t>(std::stod(str) * 1000);
+        }
+        return segment;
+	}
 };
+
+inline std::string to_string(TimeSegment segment, int basePrecision = 1, int incrementPrecision = 2) {
+    std::ostringstream oss;
+    if (segment.movesToPlay > 0) {
+        oss << segment.movesToPlay << "/";
+    }
+    oss << std::fixed << std::setprecision(basePrecision)
+        << static_cast<double>(segment.baseTimeMs) / 1000.0;
+    if (segment.incrementMs > 0) {
+        oss << "+" << std::fixed << std::setprecision(incrementPrecision)
+            << static_cast<double>(segment.incrementMs) / 1000.0;
+    }
+	return oss.str();
+}
 
 /**
  * @brief User-facing representation of a test time control.
@@ -88,23 +119,15 @@ public:
 	std::vector<TimeSegment> timeSegments() const { return timeSegments_; }
 
     std::string toPgnTimeControlString(int basePrecision = 1, int incrementPrecision = 2) const {
-        std::ostringstream oss;
+        std::string result;
         for (size_t i = 0; i < timeSegments_.size(); ++i) {
             const auto& segment = timeSegments_[i];
             if (i > 0) {
-                oss << ":";
+                result += ":";
             }
-            if (segment.movesToPlay > 0) {
-                oss << segment.movesToPlay << "/";
-            }
-            oss << std::fixed << std::setprecision(basePrecision)
-                << static_cast<double>(segment.baseTimeMs) / 1000.0;
-            if (segment.incrementMs > 0) {
-                oss << "+" << std::fixed << std::setprecision(incrementPrecision)
-                    << static_cast<double>(segment.incrementMs) / 1000.0;
-            }
+			result += to_string(segment, basePrecision, incrementPrecision);
         }
-        return oss.str();
+        return result;
     }
 
     static TimeControl parse(const std::string tc) {
@@ -142,7 +165,6 @@ public:
             timeSegments_.push_back(segment);
         }
     }
-
 
     /**
      * @brief Parses a cutechess-cli-style time control string and sets up the time control.

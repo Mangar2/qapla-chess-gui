@@ -27,6 +27,7 @@
 #include "engine-window.h"
 #include "clock-window.h"
 #include "epd-window.h"
+#include "tournament-data.h"
 #include "tournament-window.h"
 #include "imgui-tab-bar.h"
 #include "horizontal-split-container.h"
@@ -169,6 +170,7 @@ namespace {
             ImGui::NewFrame();
 
   			boardData->pollData();
+            QaplaWindows::TournamentData::instance().pollData();
 
             workspace.draw();
 			SnackbarManager::instance().draw();

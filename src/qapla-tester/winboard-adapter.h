@@ -80,8 +80,8 @@ public:
     void setPonder(bool enabled) override;
     void ticker() override;
 
-    uint64_t allowPonder(const GameRecord& game, const GoLimits& limits, std::string ponderMove) override;
-    uint64_t computeMove(const GameRecord& game, const GoLimits& limits, bool ponderHit) override;
+    uint64_t allowPonder(const GameStruct& game, const GoLimits& limits, std::string ponderMove) override;
+    uint64_t computeMove(const GameStruct& game, const GoLimits& limits, bool ponderHit) override;
 
     /**
      * @brief Sends a are you ready command to the engine.
@@ -147,9 +147,9 @@ private:
 
     /**
      * @brief Sends the current position to the engine.
-     * @param game The current game record containing the position and moves played.
+     * @param game The current game structure containing the position and moves played.
      */
-    void sendPosition(const GameRecord& game);
+    void sendPosition(const GameStruct& game);
 
     /**
      * @brief Sends only the new opponent moves from the given GameRecord compared to the last known state.
@@ -157,7 +157,7 @@ private:
      *
      * @param game The current game state with full move history.
      */
-    uint64_t catchupMovesAndGo(const GameRecord& game);
+    uint64_t catchupMovesAndGo(const GameStruct& game);
 
     /**
      * Ensures all known boolean features are present in featureMap_ with correct defaults.
@@ -185,6 +185,6 @@ private:
 	uint64_t pingCounter_ = 0;
     bool forceMode_ = false;
 
-	GameRecord gameRecord_; 
+	GameStruct gameStruct_; 
 };
 

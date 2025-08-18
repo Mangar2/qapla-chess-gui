@@ -42,7 +42,6 @@ using namespace QaplaWindows;
 
 
 TournamentWindow::TournamentWindow()
-	: tournamentData_(std::make_unique<TournamentData>())
 {
 }
 
@@ -75,8 +74,7 @@ void TournamentWindow::drawButtons() {
         {
             try {
                 if (button == "Run") {
-					tournamentData_->startTournament();
-                    SnackbarManager::instance().showSuccess("Tournament started");
+                    TournamentData::instance().startTournament();
                 } 
                 else if (button == "Stop") {
 			    } 
@@ -84,7 +82,7 @@ void TournamentWindow::drawButtons() {
                 }
             } 
             catch (const std::exception& e) {
-                SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
+                SnackbarManager::instance().showError(e.what());
             }
         }
         pos.x += totalSize.x + space;
@@ -97,98 +95,137 @@ void TournamentWindow::drawInput() {
     
 	constexpr float inputWidth = 300.0f;
     constexpr int maxConcurrency = 32;
+	auto& tournamentData = TournamentData::instance();
     
+    ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
-        tournamentData_->concurrency(), 1, maxConcurrency)) {
-        tournamentData_->setPoolConcurrency(tournamentData_->concurrency(), true, true);
+        tournamentData.concurrency(), 1, maxConcurrency)) {
+        tournamentData.setPoolConcurrency(tournamentData.concurrency(), true, true);
     }
+    ImGui::Unindent(10.0f);
     ImGui::Spacing();
-    ImGuiControls::fileInput("Tournament file", tournamentData_->config().tournamentFilename, 2 * inputWidth);
+    ImGuiControls::fileInput("Tournament file", tournamentData.config().tournamentFilename, 2 * inputWidth);
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
-        ImGuiControls::fileInput("Opening file", tournamentData_->config().openings.file, 2 * inputWidth);
+        ImGuiControls::fileInput("Opening file", tournamentData.config().openings.file, 2 * inputWidth);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::selectionBox("File format", tournamentData_->config().openings.format, { "epd", "raw", "pgn" });
+        ImGuiControls::selectionBox("File format", tournamentData.config().openings.format, { "epd", "raw", "pgn" });
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::selectionBox("Order", tournamentData_->config().openings.order, { "random", "sequential" });
+        ImGuiControls::selectionBox("Order", tournamentData.config().openings.order, { "random", "sequential" });
+
+		auto xPos = ImGui::GetCursorPosX();
+        ImGuiControls::optionalInput<int>(
+            "Set plies",
+            tournamentData.config().openings.plies,
+            [&](int& plies) {
+                ImGui::SetCursorPosX(xPos + 100);
+                ImGui::SetNextItemWidth(inputWidth - 100);
+                return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
+            }
+        );
+       
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("First opening", tournamentData_->config().openings.start, 0, 1000);
+        ImGuiControls::inputInt<uint32_t>("First opening", tournamentData.config().openings.start, 0, 1000);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Random seed", tournamentData_->config().openings.seed, 0, 1000);
+        ImGuiControls::inputInt<uint32_t>("Random seed", tournamentData.config().openings.seed, 0, 1000);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::selectionBox("Switch policy", tournamentData_->config().openings.policy, { "default", "encounter", "round" });
+        ImGuiControls::selectionBox("Switch policy", tournamentData.config().openings.policy, { "default", "encounter", "round" });
         ImGui::Unindent(10.0f);
     }
     if (ImGui::CollapsingHeader("Tournament", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
-        ImGuiControls::inputText("Event", tournamentData_->config().event, inputWidth);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::selectionBox("Type", tournamentData_->config().type, { "gauntlet", "round-robin" });
+        ImGuiControls::inputText("Event", tournamentData.config().event);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData_->config().rounds, 1, 1000);
+        ImGuiControls::selectionBox("Type", tournamentData.config().type, { "gauntlet", "round-robin" });
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData_->config().games, 1, 1000);
+        ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData.config().rounds, 1, 1000);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Same opening", tournamentData_->config().repeat, 1, 1000);
+        ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData.config().games, 1, 1000);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::booleanInput("No color swap", tournamentData_->config().noSwap);
+        ImGuiControls::inputInt<uint32_t>("Same opening", tournamentData.config().repeat, 1, 1000);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<int>("Average Elo", tournamentData_->config().averageElo, 1000, 5000);
+        ImGuiControls::booleanInput("No color swap", tournamentData.config().noSwap);
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Save interval (s)", tournamentData_->config().saveInterval, 0, 1000);
+        ImGuiControls::inputInt<int>("Average Elo", tournamentData.config().averageElo, 1000, 5000);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGuiControls::inputInt<uint32_t>("Save interval (s)", tournamentData.config().saveInterval, 0, 1000);
         ImGui::Unindent(10.0f);
     }
+    if (ImGui::CollapsingHeader("All Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::Indent(10.0f);
+
+        ImGuiControls::timeControlInput(tournamentData.eachEngineConfig().tc, false, inputWidth);
+        ImGui::SetNextItemWidth(inputWidth);
+        if (ImGuiControls::selectionBox("Predefined time control", tournamentData.eachEngineConfig().tc, {
+            "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
+            })) {
+        };
+        
+        ImGui::SetNextItemWidth(inputWidth);
+		ImGuiControls::inputInt<uint32_t>("Hash (MB)", tournamentData.eachEngineConfig().hash, 1, 10000);
+		ImGui::SetNextItemWidth(inputWidth);
+		ImGuiControls::selectionBox("Restart", tournamentData.eachEngineConfig().restart, 
+            {"auto", "on", "off"});
+        ImGui::SetNextItemWidth(inputWidth);
+		ImGuiControls::selectionBox("Trace", tournamentData.eachEngineConfig().traceLevel, 
+            { "none", "all", "command" });
+		ImGui::SetNextItemWidth(inputWidth);
+		ImGuiControls::booleanInput("Ponder", tournamentData.eachEngineConfig().ponder);
+
+        ImGui::Unindent(10.0f);
+	}
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
-        ImGuiControls::fileInput("Pgn file", tournamentData_->pgnConfig().file, 2 * inputWidth);
+        ImGuiControls::fileInput("Pgn file", tournamentData.pgnConfig().file, 2 * inputWidth);
 
         ImGui::SetNextItemWidth(inputWidth);
-		std::string append = tournamentData_->pgnConfig().append ? "Append" : "Overwrite";
+		std::string append = tournamentData.pgnConfig().append ? "Append" : "Overwrite";
 		ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
-		tournamentData_->pgnConfig().append = (append == "Append");
+		tournamentData.pgnConfig().append = (append == "Append");
 
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Save only finished games", tournamentData_->pgnConfig().onlyFinishedGames);
+		ImGuiControls::booleanInput("Save only finished games", tournamentData.pgnConfig().onlyFinishedGames);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Minimal tags", tournamentData_->pgnConfig().minimalTags);
+		ImGuiControls::booleanInput("Minimal tags", tournamentData.pgnConfig().minimalTags);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Save after each move", tournamentData_->pgnConfig().saveAfterMove);
+		ImGuiControls::booleanInput("Save after each move", tournamentData.pgnConfig().saveAfterMove);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Include clock", tournamentData_->pgnConfig().includeClock);
+		ImGuiControls::booleanInput("Include clock", tournamentData.pgnConfig().includeClock);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Include eval", tournamentData_->pgnConfig().includeEval);
+		ImGuiControls::booleanInput("Include eval", tournamentData.pgnConfig().includeEval);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Include PV", tournamentData_->pgnConfig().includePv);
+		ImGuiControls::booleanInput("Include PV", tournamentData.pgnConfig().includePv);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Include depth", tournamentData_->pgnConfig().includeDepth);
+		ImGuiControls::booleanInput("Include depth", tournamentData.pgnConfig().includeDepth);
 
         ImGui::Unindent(10.0f);
 	}
     if (ImGui::CollapsingHeader("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData_->drawConfig().minFullMoves, 0, 1000);
+		ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData.drawConfig().minFullMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData_->drawConfig().requiredConsecutiveMoves, 0, 1000);
+		ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.drawConfig().requiredConsecutiveMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData_->drawConfig().centipawnThreshold, -10000, 10000);
+		ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.drawConfig().centipawnThreshold, -10000, 10000);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Only test adjucation", tournamentData_->drawConfig().testOnly);
+		ImGuiControls::booleanInput("Only test adjucation", tournamentData.drawConfig().testOnly);
         ImGui::Unindent(10.0f);
 	}
     if (ImGui::CollapsingHeader("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData_->resignConfig().requiredConsecutiveMoves, 0, 1000);
+		ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.resignConfig().requiredConsecutiveMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData_->resignConfig().centipawnThreshold, -10000, 10000);
+		ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.resignConfig().centipawnThreshold, -10000, 10000);
 		ImGui::SetNextItemWidth(inputWidth);
-		ImGuiControls::booleanInput("Both side decides", tournamentData_->resignConfig().twoSided);
+		ImGuiControls::booleanInput("Both side decides", tournamentData.resignConfig().twoSided);
 		ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::booleanInput("Only test adjucation", tournamentData_->resignConfig().testOnly);
+        ImGuiControls::booleanInput("Only test adjucation", tournamentData.resignConfig().testOnly);
         ImGui::Unindent(10.0f);
 	}
 	
@@ -199,6 +236,6 @@ void TournamentWindow::draw() {
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
-    auto clickedRow = tournamentData_->drawTable(size);
+    /* auto clickedRow = */TournamentData::instance().drawTable(size);
 }
 

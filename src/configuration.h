@@ -29,7 +29,7 @@ namespace QaplaConfiguration {
 
     enum selectedTimeControl {
         Blitz = 0,
-        Tournament = 1,
+        tcTournament = 1,
         TimePerMove = 2,
         FixedDepth = 3,
         NodesPerMove = 4
@@ -45,7 +45,7 @@ namespace QaplaConfiguration {
         const TimeControl& getSelectedTimeControl() const {
             switch (selected) {
                 case Blitz: return blitzTime;
-                case Tournament: return tournamentTime;
+                case tcTournament: return tournamentTime;
                 case TimePerMove: return timePerMove;
                 case FixedDepth: return fixedDepth;
                 case NodesPerMove: return nodesPerMove;

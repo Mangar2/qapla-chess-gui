@@ -125,14 +125,16 @@ namespace QaplaButton {
         int verticalStartY = static_cast<int>(topLeft.y) + (height - verticalLength) / 2;
 
         list->AddRectFilled(
-            ImVec2(horizontalStartX, horizontalStartY),
-            ImVec2(horizontalStartX + horizontalLength, horizontalStartY + thickness),
+            ImVec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
+            ImVec2(static_cast<float>(horizontalStartX + horizontalLength),
+                static_cast<float>(horizontalStartY + thickness)),
             color
         );
 
         list->AddRectFilled(
-            ImVec2(verticalStartX, verticalStartY),
-            ImVec2(verticalStartX + thickness, verticalStartY + verticalLength),
+            ImVec2(static_cast<float>(verticalStartX), static_cast<float>(verticalStartY)),
+            ImVec2(static_cast<float>(verticalStartX + thickness), 
+                static_cast<float>(verticalStartY + verticalLength)),
             color
         );
     }
@@ -156,8 +158,9 @@ namespace QaplaButton {
         int horizontalStartY = static_cast<int>(topLeft.y) + (height - thickness) / 2;
 
         list->AddRectFilled(
-            ImVec2(horizontalStartX, horizontalStartY),
-            ImVec2(horizontalStartX + horizontalLength, horizontalStartY + thickness),
+            ImVec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
+            ImVec2(static_cast<float>(horizontalStartX + horizontalLength), 
+                static_cast<float>(horizontalStartY + thickness)),
             color
         );
 
@@ -317,7 +320,7 @@ namespace QaplaButton {
 
         // Draw scanning line
         if (rotate) {
-            float angle = ImGui::GetTime() * 2.0f;
+            float angle = static_cast<float>(ImGui::GetTime()) * 2.0f;
             ImVec2 endPoint = ImVec2(
                 center.x + cos(angle) * (radius + 2),
                 center.y + sin(angle) * (radius + 2)

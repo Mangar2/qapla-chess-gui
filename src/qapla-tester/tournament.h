@@ -34,7 +34,7 @@
   */
 struct TournamentConfig {
     std::string event;
-    std::string type;
+    std::string type = "gauntlet";
     std::string tournamentFilename;
     uint32_t saveInterval = 0;
     uint32_t games = 2;
@@ -69,8 +69,10 @@ public:
      * @brief Schedules all active pairings for execution.
      * 
 	 * @param concurrency Number of parallel workers to use.
+	 * @param registerToInputhandler If true, registers the tournament to the InputHandler 
+     *  for interactive mode on cli usage.
      */
-    void scheduleAll(uint32_t concurrency);
+    void scheduleAll(uint32_t concurrency, bool registerToInputhandler = true);
 
     /**
      * @brief Waits for all engines to finish.
@@ -124,7 +126,18 @@ public:
         return oss.str();
     }
 
+    std::pair<uint64_t, std::optional<TournamentResult>> pollResult(uint64_t updateCnt) {
+        if (updateCnt < updateCnt_) {
+			std::lock_guard<std::mutex> lock(stateMutex_);
+            return { updateCnt_, result_ };
+		}
+        return { updateCnt_, std::nullopt };
+	}
+
 private:
+    TournamentResult result_;
+    uint64_t updateCnt_ = 0;
+
     /**
     * @brief Called after a game finishes in any PairTournament.
     *
@@ -160,6 +173,8 @@ private:
     uint32_t raitingTrigger_ = 0;
     uint32_t outcomeTrigger_ = 0;
     uint32_t saveTrigger_ = 0;
+
+	mutable std::mutex stateMutex_; ///< Mutex for thread-safe access to tournament state
     
     // Registration
     std::unique_ptr<InputHandler::CallbackRegistration> tournamentCallback_;

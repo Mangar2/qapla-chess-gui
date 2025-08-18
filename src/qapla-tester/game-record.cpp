@@ -127,3 +127,27 @@ bool GameRecord::isDifferent(const GameRecord& other) const {
         gameResult_ != other.gameResult_;
 }
 
+GameStruct GameRecord::createGameStruct() const {
+    GameStruct gs;
+    gs.fen = getStartFen();
+
+    size_t moveCount = moves_.size();
+    gs.lanMoves.reserve(moveCount * 6); 
+    gs.sanMoves.reserve(moveCount * 5); 
+
+    std::string spacer{};
+    uint32_t index = 0;
+    for (const auto& move : moves_) {
+        if (index >= currentPly_) break;
+        index++;
+
+        gs.lanMoves += spacer + move.lan;
+        gs.sanMoves += spacer + move.san;
+        spacer = " ";
+    }
+    gs.isWhiteToMove = isWhiteToMove();
+	gs.originalMove = currentPly_ == 0 ? "" : moves_[currentPly_ - 1].original;
+
+    return gs;
+}
+

@@ -163,7 +163,11 @@ void Tournament::onGameFinished([[maybe_unused]] PairTournament*) {
     ++raitingTrigger_;
     ++outcomeTrigger_;
     ++saveTrigger_;
-
+    ++updateCnt_;
+    {
+        std::lock_guard<std::mutex> lock(stateMutex_);
+        result_ = getResult();
+    }
     if (config_.ratingInterval > 0 && raitingTrigger_ >= config_.ratingInterval) {
         raitingTrigger_ = 0;
         auto result = getResult();
@@ -186,23 +190,25 @@ void Tournament::onGameFinished([[maybe_unused]] PairTournament*) {
     }
 }
 
-void Tournament::scheduleAll(uint32_t concurrency) {
+void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) {
 	GameManagerPool::getInstance().setConcurrency(concurrency, true);
-    tournamentCallback_ = InputHandler::getInstance().registerCommandCallback(
-        { 
-            InputHandler::ImmediateCommand::Info,
-			InputHandler::ImmediateCommand::Outcome
-        },
-        [this](InputHandler::ImmediateCommand cmd, InputHandler::CommandValue) {
-            auto result = getResult();
-            if (cmd == InputHandler::ImmediateCommand::Info) {
-                result.printRatingTableUciStyle(std::cout, config_.averageElo);
-                AdjudicationManager::instance().printTestResult(std::cout);
-            }
-            else if (cmd == InputHandler::ImmediateCommand::Outcome) {
-                result.printOutcome(std::cout);
-			}
-        });
+    if (registerToInputhandler) {
+        tournamentCallback_ = InputHandler::getInstance().registerCommandCallback(
+            {
+                InputHandler::ImmediateCommand::Info,
+                InputHandler::ImmediateCommand::Outcome
+            },
+            [this](InputHandler::ImmediateCommand cmd, InputHandler::CommandValue) {
+                auto result = getResult();
+                if (cmd == InputHandler::ImmediateCommand::Info) {
+                    result.printRatingTableUciStyle(std::cout, config_.averageElo);
+                    AdjudicationManager::instance().printTestResult(std::cout);
+                }
+                else if (cmd == InputHandler::ImmediateCommand::Outcome) {
+                    result.printOutcome(std::cout);
+                }
+            });
+    }
 	for (const auto& pairing : pairings_) {
 		pairing->schedule(pairing);
 	}

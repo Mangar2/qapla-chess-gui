@@ -209,7 +209,9 @@ public:
      */
     std::optional<EngineResult> forEngine(const std::string &name) const;
 
+    std::vector<std::vector<std::string>> getSummary() const;
     void printSummary(std::ostream &os) const;
+    
 
     /**
      * @brief Prints the outcome (result causes) of the tournament, including all engines and their results.

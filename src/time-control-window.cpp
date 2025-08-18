@@ -19,6 +19,7 @@
 
 #include "time-control-window.h"
 #include "configuration.h"
+#include "imgui-controls.h"
 #include "imgui.h"
 
 #include "qapla-tester/time-control.h"
@@ -40,7 +41,7 @@ void TimeControlWindow::draw() {
     case QaplaConfiguration::selectedTimeControl::Blitz:
         activeButtonId = "##blitz";
         break;
-    case QaplaConfiguration::selectedTimeControl::Tournament:
+    case QaplaConfiguration::selectedTimeControl::tcTournament:
         activeButtonId = "##tournament";
         break;
     case QaplaConfiguration::selectedTimeControl::TimePerMove:
@@ -66,7 +67,7 @@ void TimeControlWindow::draw() {
                 timeControls.selected = QaplaConfiguration::selectedTimeControl::Blitz;
             }
             else if (std::string(radioButtonId) == "##tournament") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::Tournament;
+                timeControls.selected = QaplaConfiguration::selectedTimeControl::tcTournament;
             }
             else if (std::string(radioButtonId) == "##timePerMove") {
                 timeControls.selected = QaplaConfiguration::selectedTimeControl::TimePerMove;
@@ -111,74 +112,11 @@ void TimeControlWindow::draw() {
 }
 
 TimeSegment TimeControlWindow::editTimeSegment(const TimeSegment& segment, bool blitz) {
-    TimeSegment updatedSegment = segment;
-
-    // Extract base time and increment from the segment
-    uint64_t baseTimeMs = segment.baseTimeMs;
-    uint64_t incrementMs = segment.incrementMs;
-
-    // Convert base time to hours, minutes, and seconds
-    int hours = static_cast<int>(baseTimeMs / 3600000);
-    int minutes = static_cast<int>((baseTimeMs % 3600000) / 60000);
-    int seconds = static_cast<int>((baseTimeMs % 60000) / 1000);
-
-    // Convert increment to minutes, seconds, and milliseconds
-    int incrementMinutes = static_cast<int>(incrementMs / 60000);
-    int incrementSeconds = static_cast<int>((incrementMs % 60000) / 1000);
-    int incrementMilliseconds = static_cast<int>(incrementMs % 1000);
-
-    // Input fields for base time
-    if (!blitz) {
-        if (ImGui::InputInt("Hours", &hours, 1, 10)) {
-            if (hours < 0) hours = 0;
-        }
+    std::string timeStr = to_string(segment);
+    if (ImGuiControls::timeControlInput(timeStr, blitz)) {
+        return TimeSegment::fromString(timeStr);
     }
-    if (ImGui::InputInt("Minutes", &minutes, 1, 10)) {
-        if (minutes < 0) minutes = 0;
-        if (minutes > 59) minutes = 59;
-    }
-    if (ImGui::InputInt("Seconds", &seconds, 1, 10)) {
-        if (seconds < 0) seconds = 0;
-        if (seconds > 59) seconds = 59;
-    }
-
-    // Input fields for increment
-    if (!blitz) {
-        if (ImGui::InputInt("Increment Minutes", &incrementMinutes, 1, 10)) {
-            if (incrementMinutes < 0) incrementMinutes = 0;
-        }
-    }
-    if (ImGui::InputInt("Increment Seconds", &incrementSeconds, 1, 10)) {
-        if (incrementSeconds < 0) incrementSeconds = 0;
-        if (incrementSeconds > 59) incrementSeconds = 59;
-    }
-    if (ImGui::InputInt("Increment Milliseconds", &incrementMilliseconds, 1, 100)) {
-        if (incrementMilliseconds < 0) incrementMilliseconds = 0;
-        if (incrementMilliseconds > 999) incrementMilliseconds = 999;
-    }
-
-	// Input fields for moves to play
-    if (!blitz) {
-        if (ImGui::InputInt("Moves to Play", &updatedSegment.movesToPlay, 1, 10)) {
-            if (updatedSegment.movesToPlay < 0) updatedSegment.movesToPlay = 0;
-        }
-    } else {
-        updatedSegment.movesToPlay = 0; // Blitz mode does not use moves to play
-	}
-
-    // Recalculate base time and increment in milliseconds
-    baseTimeMs = static_cast<uint64_t>(hours) * 3600000 +
-        static_cast<uint64_t>(minutes) * 60000 +
-        static_cast<uint64_t>(seconds) * 1000;
-    incrementMs = static_cast<uint64_t>(incrementMinutes) * 60000 +
-        static_cast<uint64_t>(incrementSeconds) * 1000 +
-        static_cast<uint64_t>(incrementMilliseconds);
-
-    // Update the segment
-    updatedSegment.baseTimeMs = baseTimeMs;
-    updatedSegment.incrementMs = incrementMs;
-
-    return updatedSegment;
+    return segment;
 }
 
 TimeSegment TimeControlWindow::selectPredefinedValues(
@@ -296,14 +234,8 @@ TimeControl TimeControlWindow::drawTimePerMove(const TimeControl& currentTimeCon
     int seconds = static_cast<int>(moveTimeMs / 1000);
     int milliseconds = static_cast<int>(moveTimeMs % 1000);
 
-    if (ImGui::InputInt("Seconds", &seconds, 1, 10)) {
-        if (seconds < 0) seconds = 0;
-    }
-
-    if (ImGui::InputInt("Milliseconds", &milliseconds, 1, 100)) {
-        if (milliseconds < 0) milliseconds = 0;
-        if (milliseconds > 999) milliseconds = 999;
-    }
+	ImGuiControls::inputInt<int>("Seconds", seconds, 0, 1000000, 1, 10);
+	ImGuiControls::inputInt<int>("Milliseconds", milliseconds, 0, 999, 1, 10);
 
     moveTimeMs = static_cast<uint64_t>(seconds) * 1000 + static_cast<uint64_t>(milliseconds);
     updatedTimeControl.setMoveTime(moveTimeMs);

@@ -79,8 +79,8 @@ void WinboardAdapter::startProtocol() {
 }
 
 void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) {
-	sendPosition(gameRecord);
-    gameRecord_ = gameRecord;
+    gameStruct_ = gameRecord.createGameStruct();
+    sendPosition(gameStruct_);
 	sendTimeControl(gameRecord, engineIsWhite);
 }
 
@@ -97,69 +97,72 @@ void WinboardAdapter::ticker() {
 }
 
 uint64_t WinboardAdapter::allowPonder(
-    [[maybe_unused]] const GameRecord & game, 
+    [[maybe_unused]] const GameStruct & game, 
     [[maybe_unused]] const GoLimits & limits, 
     [[maybe_unused]] std::string ponderMove) {
     return 0;
 }
 
-uint64_t WinboardAdapter::catchupMovesAndGo(const GameRecord& game) {
-    const auto& newMoves = game.history();
-    auto& oldMoves = gameRecord_.history();
+uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
 
-    if (game.getStartPos() != gameRecord_.getStartPos() ||
-        game.getStartFen() != gameRecord_.getStartFen() ||
-		oldMoves.size() > newMoves.size()) {
+	auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
+	auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
+    if (game.fen != gameStruct_.fen ||
+		newMoves.rfind(oldMoves, 0) == 0) {
 		throw std::runtime_error("Different start position or FEN detected in sendMissingMoves");
     }
+	std::string additionalMoves = newMoves.substr(oldMoves.size());
 
-    for (size_t ply = 0; ply < oldMoves.size(); ply++) {
-        if (!oldMoves[ply].lan.empty() &&
-            oldMoves[ply].lan != newMoves[ply].lan) {
-            throw std::runtime_error("Different move history detected in sendMissingMoves");
-		}
-        else if (oldMoves[ply].original == newMoves[ply].original) {
-            oldMoves[ply] = newMoves[ply];
-        } else {
-            throw std::runtime_error("Different move history detected in sendMissingMoves");
-		}
-	}
     // We need either a move command or a go command to tell the engine to play a move
-    if (newMoves.size() == oldMoves.size()) {
+    if (newMoves.empty()) {
         forceMode_ = false;
-        size_t size = newMoves.size();
-        if (size > 0) oldMoves[size - 1] = newMoves[size - 1];
         return writeCommand("go");
     }
 
-    if (newMoves.size() - oldMoves.size() > 1) {
-        writeCommand("force");
-        forceMode_ = true;
-    }
-    uint64_t lastTimestamp = 0;
-    for (size_t ply = oldMoves.size(); ply < newMoves.size(); ++ply) {
-        std::string move = isEnabled("san") ? newMoves[ply].san : newMoves[ply].lan;
-        if (!move.empty()) {
-            gameRecord_.addMove(newMoves[ply]);
-            lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + newMoves[ply].lan);
-        }
-        else {
-            throw std::runtime_error("Empty LAN or SAN string in move history in sendMissingMoves");
-        }
+    std::istringstream lanStream(newMoves);
+    std::string move;
+
+    bool myMoveWasLast = gameStruct_.originalMove == game.originalMove;
+    if (myMoveWasLast) {
+		// Winboard remembers the last move played by the engine, so we skip it
+        // We need an extra check to detect this, because the engines-move notation 
+		// could be different from LAN or SAN.
+        lanStream >> move;
 	}
+
+    std::string firstMove;
+    lanStream >> firstMove;
+    uint64_t lastTimestamp = 0;
+
+	while (lanStream >> move) {
+        if (!firstMove.empty()) {
+			// If we have more than one move, we need to set winboard to force mode to prevent the engine
+			// from playing its own move immediately.
+            writeCommand("force");
+            lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
+			firstMove.clear();
+            forceMode_ = true;
+        }
+        lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + move);
+	}
+    if (!firstMove.empty()) {
+		lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
+    }
+
     if (forceMode_) {
         forceMode_ = false;
         lastTimestamp = writeCommand("go");
     }
+    gameStruct_ = game;
     return lastTimestamp;
 }
 
-uint64_t WinboardAdapter::computeMove(const GameRecord& game,
+uint64_t WinboardAdapter::computeMove(const GameStruct& game,
     const GoLimits& limits,
     [[maybe_unused]] bool ponderHit) {
     if (isEnabled("time")) {
-        uint64_t time = game.isWhiteToMove() ? limits.wtimeMs : limits.btimeMs;
-        uint64_t otim = game.isWhiteToMove() ? limits.btimeMs : limits.wtimeMs;
+        uint64_t time = game.isWhiteToMove ? limits.wtimeMs : limits.btimeMs;
+        uint64_t otim = game.isWhiteToMove ? limits.btimeMs : limits.wtimeMs;
         writeCommand("time " + std::to_string(time / 10));
         writeCommand("otim " + std::to_string(otim / 10));
     }
@@ -206,19 +209,23 @@ void WinboardAdapter::sendTimeControl(const GameRecord& gameRecord, bool engineI
     }
 }
 
-void WinboardAdapter::sendPosition(const GameRecord& game) {
+void WinboardAdapter::sendPosition(const GameStruct& game) {
     writeCommand("new");
     writeCommand("easy");
     writeCommand("force");
 	forceMode_ = true;
 
-    if (!game.getStartPos()) {
-        writeCommand("setboard " + game.getStartFen());
+    if (!game.fen.empty()) {
+        writeCommand("setboard " + game.fen);
     }
 
-    for (uint32_t ply = 0; ply < game.nextMoveIndex(); ++ply) {
-        writeCommand((isEnabled("usermove") ? "usermove " : "") + game.history()[ply].lan);
+    std::istringstream lanStream(game.lanMoves);
+    std::string move;
+
+    while (lanStream >> move) {
+        writeCommand((isEnabled("usermove") ? "usermove " : "") + move);
     }
+
 }
 
 void WinboardAdapter::setTestOption(
@@ -691,9 +698,7 @@ EngineEvent WinboardAdapter::readEvent() {
         logFromEngine(line, TraceLevel::command);
         std::string move;
 		iss >> move;
-		MoveRecord engineMove;
-		engineMove.original = move;
-        gameRecord_.addMove(engineMove);
+        gameStruct_.originalMove = move;
 		return EngineEvent::createBestMove(identifier_, engineLine.timestampMs, line, move, "");
     }
 

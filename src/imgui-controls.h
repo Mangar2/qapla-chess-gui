@@ -22,9 +22,12 @@
 #include "os-dialogs.h"
 #include "snackbar.h"
 
+#include "qapla-tester/time-control.h"
+
 #include "imgui.h"
 #include <string>
 #include <optional>
+#include <functional>
 
 namespace QaplaWindows::ImGuiControls {
 
@@ -152,6 +155,9 @@ namespace QaplaWindows::ImGuiControls {
 
     /**
      * @brief Selection box for choosing a string from a list of options.
+     * 
+	 * If currentItem is out of bounds, it displays "Custom".
+     * 
      * @param label Label to display next to the selection box.
      * @param currentItem Reference to the currently selected item (index in the options vector).
      * @param options Vector of strings representing the selectable options.
@@ -160,23 +166,20 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool selectionBox(const char* label, int& currentItem, const std::vector<std::string>& options) {
         bool modified = false;
-
-        // Ensure the current item index is valid
-        if (currentItem < 0 || currentItem >= static_cast<int>(options.size())) {
-            currentItem = 0; // Default to the first item if out of range
-			modified = true;
-        }
-
-        // Convert options to a format suitable for ImGui
-        std::vector<const char*> cStrings;
-        cStrings.reserve(options.size());
-        for (const auto& option : options) {
-            cStrings.push_back(option.c_str());
-        }
-
-        // Render the combo box
-        if (ImGui::Combo(label, &currentItem, cStrings.data(), static_cast<int>(cStrings.size()))) {
-            modified = true;
+        if (ImGui::BeginCombo(label, 
+            currentItem >= 0 && currentItem < options.size() ? options[currentItem].c_str() : "Custom"
+        )) {
+            for (size_t i = 0; i < options.size(); ++i) {
+                bool isSelected = (currentItem == static_cast<int>(i));
+                if (ImGui::Selectable(options[i].c_str(), isSelected)) {
+                    currentItem = static_cast<int>(i);
+					modified = true;
+                }
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
         }
 
         return modified;
@@ -192,15 +195,11 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool selectionBox(const char* label, std::string& currentItem, const std::vector<std::string>& options) {
 
-        int currentIndex = 0;
-        currentIndex = std::find(options.begin(), options.end(), currentItem) - options.begin();
+        int currentIndex = static_cast<int>(std::find(options.begin(), options.end(), currentItem) - options.begin());
         auto modified = selectionBox(label, currentIndex, options);
         if (modified) {
             if (currentIndex >= 0 && currentIndex < static_cast<int>(options.size())) {
                 currentItem = options[currentIndex];
-            }
-            else {
-                currentItem = ""; // Reset to empty if index is out of bounds
             }
         }
         return modified;
@@ -302,6 +301,109 @@ namespace QaplaWindows::ImGuiControls {
 
         return modified;
     }
+
+    /**
+     * @brief Control für optionale Eingaben mit einer Checkbox und einer benutzerdefinierten Eingabebox.
+     * @tparam T Der Typ des optionalen Werts.
+     * @param label Label für die Checkbox und Eingabebox.
+     * @param value Referenz auf den optionalen Wert.
+     * @param inputCallback Callback-Funktion, die die Eingabebox rendert.
+     * @return True, wenn der Wert geändert wurde, sonst false.
+     */
+    template <typename T>
+    inline bool optionalInput(const char* label, std::optional<T>& value, const std::function<bool(T&)>& inputCallback) {
+        bool modified = false;
+
+        // Checkbox für "optional vorhanden"
+        bool hasValue = value.has_value();
+        if (ImGui::Checkbox(label, &hasValue)) {
+            if (hasValue) {
+                value = T{}; // Initialisiere mit Standardwert
+            }
+            else {
+                value.reset(); // Entferne den Wert
+            }
+            modified = true;
+        }
+
+        // Wenn der Wert vorhanden ist, rendere die Eingabebox
+        if (hasValue && value.has_value()) {
+            ImGui::SameLine();
+            T tempValue = *value;
+            if (inputCallback(tempValue)) {
+                value = tempValue;
+                modified = true;
+            }
+        }
+
+        return modified;
+    }
+
+    /**
+     * @brief Input control for time control settings.
+     * @param timeControl format: moves/time+inc.
+     * @return True if the time control was modified, false otherwise.
+	 */
+    inline bool timeControlInput(std::string& timeControl, bool blitz = false, float inputWidth = 0.0) {
+
+        // Extract time from timeControl string
+		uint64_t baseTimeMs = 0;
+		uint64_t incrementMs = 0;
+		uint32_t movesToPlay = 0;
+        try {
+            // Parse the time control string
+			TimeSegment ts = TimeSegment::fromString(timeControl);
+            baseTimeMs = ts.baseTimeMs;
+            incrementMs = ts.incrementMs;
+            movesToPlay = ts.movesToPlay;
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showError(e.what());
+            return false; // Invalid time control format
+		}
+
+        // Convert base time to hours, minutes, and seconds
+        uint32_t hours = static_cast<int>(baseTimeMs / 3600000);
+        uint32_t minutes = static_cast<int>((baseTimeMs % 3600000) / 60000);
+        uint32_t seconds = static_cast<int>((baseTimeMs % 60000) / 1000);
+
+        // Convert increment to minutes, seconds, and milliseconds
+        uint32_t incrementMinutes = static_cast<int>(incrementMs / 60000);
+        uint32_t incrementSeconds = static_cast<int>((incrementMs % 60000) / 1000);
+        uint32_t incrementMilliseconds = static_cast<int>(incrementMs % 1000);
+
+        // Input fields for base time
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (!blitz) inputInt<uint32_t>("Hours", hours, 0, 10000);
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        inputInt<uint32_t>("Minutes", minutes, 0, 59);
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+		inputInt<uint32_t>("Seconds", seconds, 0, 59);
+
+        // Input fields for increment
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+		if (!blitz) inputInt<uint32_t>("Increment Minutes", incrementMinutes, 0, 59);
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+		inputInt<uint32_t>("Increment Seconds", incrementSeconds, 0, 59);
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+		inputInt<uint32_t>("Increment Milliseconds", incrementMilliseconds, 0, 999, 10, 100);
+
+        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+		if (!blitz) inputInt<uint32_t>("Moves to Play", movesToPlay, 0, 1000);
+        TimeSegment res;
+		res.movesToPlay = movesToPlay;
+        res.baseTimeMs = static_cast<uint64_t>(hours) * 3600000 +
+            static_cast<uint64_t>(minutes) * 60000 +
+			static_cast<uint64_t>(seconds) * 1000;
+        res.incrementMs = static_cast<uint64_t>(incrementMinutes) * 60000 +
+            static_cast<uint64_t>(incrementSeconds) * 1000 +
+			static_cast<uint64_t>(incrementMilliseconds);
+
+        std::string resStr = to_string(res);
+		bool result = resStr != timeControl;
+		timeControl = resStr;
+		return result;
+	}
 
     inline void drawBoxWithShadow(ImVec2 topLeft, ImVec2 bottomRight)
     {

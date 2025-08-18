@@ -122,10 +122,10 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
     auto& table = tables_[index];
 	auto& searchInfos = moveRecord.info;
 	auto& moveNo = moveRecord.halfmoveNo_;
-    if (searchInfos.size() == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
+    if (moveRecord.infoUpdateCount == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
         return; 
     }
-	infoCnt_[index] = searchInfos.size();
+	infoCnt_[index] = moveRecord.infoUpdateCount;
 
 	displayedMoveNo_[index] = moveNo;
     table->clear();

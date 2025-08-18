@@ -401,13 +401,12 @@ void TournamentResult::printOutcome(std::ostream &os) const
     os << std::endl;
 }
 
-void TournamentResult::printSummary(std::ostream &os) const
+std::vector<std::vector<std::string>> TournamentResult::getSummary() const
 {
-    os << "\nTournament result:\n";
+    std::vector<std::vector<std::string>> lines;
+    lines.reserve(engineNames().size());
 
-    std::vector<std::pair<double, std::string>> lines;
-
-    for (const auto &name : engineNames())
+    for (const auto& name : engineNames())
     {
         auto optResult = forEngine(name);
         if (!optResult)
@@ -420,24 +419,40 @@ void TournamentResult::printSummary(std::ostream &os) const
         int total = wins + losses + draws;
 
         double score = total > 0 ? (wins + 0.5 * draws) / total : 0.0;
+        std::vector<std::string> row;
+        
+        row.push_back(name); 
+        row.push_back(std::format("{:.1f}%", score * 100));
+        row.push_back(std::to_string(wins)); 
+        row.push_back(std::to_string(draws));
+        row.push_back(std::to_string(losses));
 
-        std::ostringstream line;
-        line << std::fixed << std::setprecision(2)
-             << std::setw(30) << std::left << name
-             << " " << score
-             << "  W:" << wins << " D:" << draws << " L:" << losses;
-
-        lines.emplace_back(score, line.str());
+        lines.emplace_back(row);
     }
 
-    std::sort(lines.begin(), lines.end(), [](const auto &a, const auto &b)
-              {
-                  return b.first < a.first; // descending
-              });
+    std::sort(lines.begin(), lines.end(), [](const auto& a, const auto& b)
+        {
+            return b[1] < a[1]; // descending
+        });
 
-    for (const auto &entry : lines)
+    return lines;
+
+}
+
+void TournamentResult::printSummary(std::ostream &os) const
+{
+    os << "\nTournament result:\n";
+
+    auto lines = getSummary();
+    for (const auto& entry : lines)
     {
-        os << entry.second << "\n";
+        os << std::left << std::fixed << std::setprecision(2)
+            << std::setw(30) << entry[0] // Name
+            << " " << entry[1]           // Score
+            << "  W:" << entry[2]        // Wins
+            << " D:" << entry[3]         // Draws
+            << " L:" << entry[4]         // Losses
+            << "\n";
     }
     os << std::endl;
 }

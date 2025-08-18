@@ -201,7 +201,8 @@ bool EngineWorker::setOptionValues(const OptionValues& optionValues) {
 }
 
 void EngineWorker::computeMove(const GameRecord& gameRecord, const GoLimits& limits, bool ponderHit) {
-    post([this, gameRecord, limits, ponderHit](EngineAdapter& adapter) {
+    GameStruct game = gameRecord.createGameStruct();
+    post([this, game = std::move(game), limits, ponderHit](EngineAdapter& adapter) {
         try {
             if (eventSink_) {
                 // This ensures that all remaining info packets from pondering arrive before this marker,
@@ -209,7 +210,7 @@ void EngineWorker::computeMove(const GameRecord& gameRecord, const GoLimits& lim
                 eventSink_(EngineEvent::create(EngineEvent::Type::SendingComputeMove, identifier_, 
                     Timer::getCurrentTimeMs()));
             }
-            uint64_t sendTimestamp = adapter.computeMove(gameRecord, limits, ponderHit);
+            uint64_t sendTimestamp = adapter.computeMove(game, limits, ponderHit);
             if (eventSink_) {
 				eventSink_(EngineEvent::create(EngineEvent::Type::ComputeMoveSent, identifier_, sendTimestamp));
             }
@@ -242,9 +243,10 @@ void EngineWorker::computeMove(const GameRecord& gameRecord, const GoLimits& lim
 }
 
 void EngineWorker::allowPonder(const GameRecord& gameRecord, const GoLimits& limits, std::string ponderMove) {
-    post([this, gameRecord, limits, ponderMove](EngineAdapter& adapter) {
+    GameStruct game = gameRecord.createGameStruct();
+    post([this, game, limits, ponderMove](EngineAdapter& adapter) {
         try {
-			uint64_t sendTimestamp = adapter.allowPonder(gameRecord, limits, ponderMove);
+			uint64_t sendTimestamp = adapter.allowPonder(game, limits, ponderMove);
             if (eventSink_) {
                 eventSink_(EngineEvent::create(EngineEvent::Type::PonderMoveSent, identifier_, sendTimestamp));
             }

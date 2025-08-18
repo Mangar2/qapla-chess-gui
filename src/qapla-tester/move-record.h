@@ -44,6 +44,7 @@ struct MoveRecord {
     uint64_t nodes = 0;
     std::string pv{};
 	std::vector<SearchInfo> info; 
+    uint32_t infoUpdateCount = 0;
 
     uint32_t halfmoveNo_ = 0;
     std::string engineId_{};
@@ -121,7 +122,44 @@ struct MoveRecord {
                 pv += info.pv[i];
             }
         }
-        this->info.push_back(info);
+		infoUpdateCount++;
+		// We keep the pv history, but everything else is overwritten
+        if (!this->info.empty() && this->info.back().pv.empty()) {
+            this->info.back().depth = depth;
+            this->info.back().selDepth = seldepth;
+            this->info.back().multipv = multipv;
+			this->info.back().nodes = nodes;
+			this->info.back().scoreCp = scoreCp;
+			this->info.back().scoreMate = scoreMate;
+            this->info.back().pv = info.pv;
+            if (info.timeMs) {
+                this->info.back().timeMs = info.timeMs;
+            }
+            if (info.hashFull) {
+                this->info.back().hashFull = info.hashFull;
+            }
+            if (info.tbhits) {
+                this->info.back().tbhits = info.tbhits;
+            }
+            if (info.cpuload) {
+                this->info.back().cpuload = info.cpuload;
+            }
+            if (info.currMove) {
+                this->info.back().currMove = info.currMove;
+            }
+            if (info.currMoveNumber) {
+                this->info.back().currMoveNumber = info.currMoveNumber;
+            }
+            if (info.refutationIndex) {
+                this->info.back().refutationIndex = info.refutationIndex;
+            }
+            if (!info.refutation.empty()) {
+                this->info.back().refutation = info.refutation;
+            }
+        }
+        else {
+			this->info.push_back(info);
+        }
     }
 
 	/**
