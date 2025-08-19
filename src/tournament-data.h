@@ -32,11 +32,11 @@
 #include <ostream>
 
 class Tournament;
-class TournamentResult;
 struct TournamentConfig;
 
 namespace QaplaWindows {
 
+    class TournamentResultIncremental;
 
 	class TournamentData {
     public: 
@@ -69,11 +69,6 @@ namespace QaplaWindows {
          * @brief Stops all ongoing tasks in the pool.
          */
         void stopPool();
-
-        /**
-         * @brief Stops all ongoing tasks and clears all task providers in the pool.
-         */
-        void clearPool();
 
         /**
          * @brief Sets the pool concurrency level.
@@ -180,12 +175,11 @@ namespace QaplaWindows {
          */
         void saveEachEngineConfig(std::ostream& out, const std::string& header) const;
 
-        uint64_t updateCnt_ = 0;
         void populateTable();
 
 		std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;
-        std::unique_ptr<TournamentResult> result_;
+        std::unique_ptr<TournamentResultIncremental> result_;
 
         PgnIO::Options pgnConfig_;
 		EachEngineConfig eachEngineConfig_;
@@ -194,7 +188,7 @@ namespace QaplaWindows {
         std::vector<EngineConfig> engineConfig_{};
         uint32_t concurrency_ = 1;
 
-        ImGuiTable table_;
+        ImGuiTable eloTable_;
 
     };
 

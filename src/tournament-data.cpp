@@ -17,7 +17,9 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+
 #include "tournament-data.h"
+#include "tournament-result-incremental.h"
 #include "snackbar.h"
 
 #include "qapla-tester/string-helper.h"
@@ -38,20 +40,20 @@ namespace QaplaWindows {
     TournamentData::TournamentData() : 
         tournament_(std::make_unique<Tournament>()),
 		config_(std::make_unique<TournamentConfig>()),
-        result_(std::make_unique<TournamentResult>()),
-        table_(
+        result_(std::make_unique<TournamentResultIncremental>()),
+        eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
                 { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "Ratio", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Wins", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Draws", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Losses", ImGuiTableColumnFlags_WidthFixed, 50.0f, true }
+                { "Elo", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Error", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Score", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Total", ImGuiTableColumnFlags_WidthFixed, 50.0f, true }
             }
         )
     { 
-        table_.setClickable(true);
+        eloTable_.setClickable(true);
         init();
     }
 
@@ -88,7 +90,7 @@ namespace QaplaWindows {
         if (tournament_) {
 			tournament_->createTournament(engineConfig_, *config_);
             tournament_->scheduleAll(concurrency_, false);
-            table_.clear();
+            eloTable_.clear();
             populateTable();
         } else {
             SnackbarManager::instance().showError("Internal error, tournamen not initialized");
@@ -102,29 +104,38 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::populateTable() {
-        table_.clear();
-        auto summary = result_->getSummary();
-        for (auto& row : result_->getSummary()) {
-            table_.push(row);
-        }
+        eloTable_.clear();
+
+        struct Scored
+        {
+            std::string engineName; ///< The name of the engine
+            EngineResult result;    ///< The duel result
+            double score;           ///< Normalized score (0.0 to 1.0)
+            double elo;             ///< Computed Elo rating
+            double total;           ///< Total number of games played
+            int error;              ///< Error margin for the Elo rating
+        };
+        for (auto scored : result_->getScoredEngines()) {
+            std::vector<std::string> row;
+            row.push_back(scored.engineName);
+            row.push_back(std::format("{:.1f}", scored.elo));
+            row.push_back("+/- " + std::to_string(scored.error));
+            row.push_back(std::format("{:.1f}%", scored.score * 100.0));
+            row.push_back(std::format("{:.0f}", scored.total));
+            eloTable_.push(row);
+		}
     }
 
     void TournamentData::pollData() {
         if (tournament_) {
-            auto [cnt, result] = tournament_->pollResult(updateCnt_);
-			updateCnt_ = cnt;
-            if (result) {
-                *result_ = std::move(*result);
+            if (result_->poll(*tournament_, config_->averageElo)) {
                 populateTable();
             }
         } 
     }
 
-    void TournamentData::clear() {
-	}
-
     std::optional<size_t> TournamentData::drawTable(const ImVec2& size) const {
-        return table_.draw(size);
+        return eloTable_.draw(size);
     }
 
     void TournamentData::stopPool() {
@@ -132,9 +143,10 @@ namespace QaplaWindows {
         SnackbarManager::instance().showSuccess("Tournament stopped");
     }
 
-    void TournamentData::clearPool() {
+    void TournamentData::clear() {
         GameManagerPool::getInstance().clearAll();
         tournament_ = std::make_unique<Tournament>();
+        result_ = std::make_unique<TournamentResultIncremental>();
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool start) {

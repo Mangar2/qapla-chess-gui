@@ -245,7 +245,7 @@ public:
      * @param os Output stream to write to
      * @param averageElo Average Elo level for scaling ratings (e.g. 2600)
      */
-    void printRatingTableUciStyle(std::ostream &os, int averageElo) const;
+    void printRatingTableUciStyle(std::ostream &os, int averageElo);
 
     /**
      * @brief Computes iterative Elo ratings and error estimates for all engines.
@@ -255,9 +255,10 @@ public:
      *
      * @param baseElo Starting Elo value (e.g. 2600)
      * @param passes Number of update iterations (e.g. 10)
+	 * @param update If true, updates elo and error instead of computing it from the scratch.
      * @return Vector of scored engines sorted by descending Elo
      */
-    std::vector<Scored> computeAllElos(int baseElo = 2600, int passes = 50) const;
+    std::vector<Scored> computeAllElos(int baseElo = 2600, int passes = 50, bool update = false);
 
     /**
      * @brief Clears all stored results and resets the internal state.
@@ -269,15 +270,24 @@ public:
         results_.clear();
 	}
 
+    /**
+	 * @brief Returns the engines with their scores and Elo ratings.
+	 * @return Vector of Scored entries with aggregated results and normalized scores.
+	 */
+    const std::vector<Scored>& scoredEngines() const
+    {
+        return scoredEngines_;
+	}
+
 private:
     /**
      * @brief Initializes scored engine data with aggregated results and normalized score.
-     *
-     * Elo and error remain unset (0) and must be computed separately.
+	 * @param update If true, updates the existing scored engines but keep the current Elo values.
+	 * @param baseElo The starting Elo value for all engines (e.g. 2600).
      *
      * @return Vector of Scored entries for all engines with valid game data
      */
-    std::vector<Scored> initializeScoredEngines() const;
+    void initializeScoredEngines(bool update, double baseElo);
 
     /**
      * @brief Computes the average opponent Elo weighted by number of games.
@@ -289,4 +299,5 @@ private:
     double averageOpponentElo(const Scored &s, const std::unordered_map<std::string, double>& currentElo) const; 
 
     std::vector<EngineDuelResult> results_;
+	std::vector<Scored> scoredEngines_;
 };

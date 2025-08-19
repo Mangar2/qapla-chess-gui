@@ -263,11 +263,18 @@ std::optional<EngineResult> TournamentResult::forEngine(const std::string &name)
     return result;
 }
 
-std::vector<TournamentResult::Scored> TournamentResult::initializeScoredEngines() const
+void TournamentResult::initializeScoredEngines(bool update, double baseElo)
 {
-    std::vector<Scored> result;
+    if (!update) {
+        scoredEngines_.clear();
+    }
 
-    for (const auto &name : engineNames())
+    std::unordered_map<std::string, Scored*> scoredMap;
+    for (auto& scored : scoredEngines_) {
+        scoredMap[scored.engineName] = &scored;
+    }
+
+    for (const auto& name : engineNames())
     {
         auto opt = forEngine(name);
         if (!opt)
@@ -280,16 +287,26 @@ std::vector<TournamentResult::Scored> TournamentResult::initializeScoredEngines(
 
         double score = (agg.winsEngineA + 0.5 * agg.draws) / total;
 
-        result.push_back(Scored{
-            .engineName = name,
-            .result = std::move(*opt),
-            .score = score,
-            .elo = 0,
-            .total = static_cast<double>(total),
-            .error = 0});
+        auto it = scoredMap.find(name);
+        if (it != scoredMap.end()) {
+            // Update existing element
+            Scored* existing = it->second;
+            existing->result = std::move(*opt);
+            existing->score = score;
+            existing->total = static_cast<double>(total);
+        }
+        else {
+            // Add new element
+            scoredEngines_.push_back(Scored{
+                .engineName = name,
+                .result = std::move(*opt),
+                .score = score,
+                .elo = baseElo,
+                .total = static_cast<double>(total),
+                .error = 0
+                });
+        }
     }
-
-    return result;
 }
 
 double TournamentResult::averageOpponentElo(const Scored &s,
@@ -315,20 +332,21 @@ double TournamentResult::averageOpponentElo(const Scored &s,
     return totalGames > 0 ? weightedSum / totalGames : 0.0;
 }
 
-std::vector<TournamentResult::Scored> TournamentResult::computeAllElos(int baseElo, int passes) const {
+std::vector<TournamentResult::Scored> TournamentResult::computeAllElos(
+    int baseElo, int passes, bool update) 
+{
     constexpr double convergenceFactor = 0.5;
     constexpr double weightConstant = 200.0;
 
-    std::vector<Scored> scored = initializeScoredEngines();
+    initializeScoredEngines(update, baseElo);
     std::unordered_map<std::string, Scored*> scoredMap;
-    for (auto& s : scored) {
+    for (auto& s : scoredEngines_) {
         scoredMap[s.engineName] = &s;
-        s.elo = baseElo;
     }
 
     for (int pass = 0; pass < passes; ++pass) {
 
-        for (auto& s : scored) {
+        for (auto& s : scoredEngines_) {
             const std::string& name = s.engineName;
 
             for (const auto& duel : s.result.duels) {
@@ -355,20 +373,20 @@ std::vector<TournamentResult::Scored> TournamentResult::computeAllElos(int baseE
         }
     }
 
-    for (auto& s : scored) {
+    for (auto& s : scoredEngines_) {
         const auto& agg = s.result.aggregate(s.engineName);
         s.error = computeEloWithError(agg.winsEngineA, agg.winsEngineB, agg.draws).second;
     }
 
-    std::sort(scored.begin(), scored.end(), [](const Scored& a, const Scored& b) {
+    std::sort(scoredEngines_.begin(), scoredEngines_.end(), [](const Scored& a, const Scored& b) {
         return a.elo > b.elo;
     });
 
-    return scored;
+    return scoredEngines_;
 }
 
 
-void TournamentResult::printRatingTableUciStyle(std::ostream &os, int averageElo) const
+void TournamentResult::printRatingTableUciStyle(std::ostream &os, int averageElo) 
 {
     os << "\nTournament result:\n";
 

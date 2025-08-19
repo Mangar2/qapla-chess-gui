@@ -24,9 +24,9 @@
 
 using namespace QaplaWindows;
 
-void TournamentResultIncremental::poll(const Tournament& tournament) {
+bool TournamentResultIncremental::poll(const Tournament& tournament, double baseElo) {
 	if (tournament.getUpdateCount() == tournamentUpdateCount_) {
-		return;
+		return false;
 	}
 	constexpr size_t extraChecks = 10; // Number of extra results to fetch
 	tournamentUpdateCount_ = tournament.getUpdateCount();
@@ -56,5 +56,8 @@ void TournamentResultIncremental::poll(const Tournament& tournament) {
 		engineNames_.insert(resultToAdd.getEngineA());
 		engineNames_.insert(resultToAdd.getEngineB());
 	}
+
+	totalResult_.computeAllElos(baseElo, 1, true);
+	return true;
 }
 

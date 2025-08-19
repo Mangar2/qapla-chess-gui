@@ -80,7 +80,7 @@ void TournamentWindow::drawButtons() {
                     TournamentData::instance().stopPool();
 			    } 
                 else if (button == "Clear") {
-                    TournamentData::instance().clearPool();
+                    TournamentData::instance().clear();
                 }
             } 
             catch (const std::exception& e) {
