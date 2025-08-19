@@ -98,32 +98,6 @@ void GameManagerPool::printRunningGames(std::ostream& out) const {
     std::cout << std::endl;
 }
 
-std::vector<GameManagerPool::GameInfo> GameManagerPool::getRunningGamesInfo() const {
-    std::vector<GameInfo> gamesInfo;
-    for (const auto& managerPtr : managers_) {
-        GameManager* manager = managerPtr.get();
-        if (!manager->getTaskProvider()) {
-            continue;
-        }
-		auto names = manager->getEngineNames();
-        GameInfo info;
-		info.white = names.first.empty() ? "-" : names.first;
-		info.black = names.second.empty() ? "-" : names.second;
-
-        if (manager->isPaused()) {
-			info.status = "paused";
-        } 
-        else if (info.white == "-" || info.black == "-") {
-            info.status = "starting";
-        }
-        else {
-			info.status = "running";
-        }
-        gamesInfo.push_back(info);
-    }
-	return gamesInfo;
-}
-
 size_t GameManagerPool::runningGameCount() const {
     size_t count = 0;
     for (const auto& managerPtr : managers_) {

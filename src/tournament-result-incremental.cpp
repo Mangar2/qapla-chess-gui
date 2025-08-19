@@ -48,6 +48,7 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 	size_t extra = extraChecks;
 	for (size_t i = currentIndex_; auto pairTournament = tournament.getPairTournament(i); ++i) {
 		auto resultToAdd = (*pairTournament)->getResult();
+		gamesLeft_ = true;
 		if (resultToAdd.total() == 0) {
 			extra--;
 			if (extra == 0) break; 
@@ -56,7 +57,6 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 		totalResult_.add(resultToAdd);
 		engineNames_.insert(resultToAdd.getEngineA());
 		engineNames_.insert(resultToAdd.getEngineB());
-		gamesLeft_ = true;
 	}
 
 	totalResult_.computeAllElos(baseElo, 10, true);

@@ -129,12 +129,6 @@ public:
 	bool maybeDeactivateManager(std::shared_ptr<GameTaskProvider>& taskProvider);
 
     /**
-	 * @brief Returns an information about all running games.
-	 * @return A vector of GameInfo structs containing names of the engine and running state.
-     */
-    std::vector<GameInfo> getRunningGamesInfo() const;
-
-    /**
      * @brief Returns the number of currently running games.
      *
      * @return The count of active GameManager instances.

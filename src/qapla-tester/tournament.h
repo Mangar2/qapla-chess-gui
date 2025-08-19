@@ -149,7 +149,7 @@ public:
 
 private:
     TournamentResult result_;
-    uint64_t updateCnt_ = 0;
+    uint64_t updateCnt_ = 1;
 
     /**
     * @brief Called after a game finishes in any PairTournament.

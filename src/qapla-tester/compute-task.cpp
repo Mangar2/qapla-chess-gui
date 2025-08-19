@@ -18,8 +18,11 @@
  */
 
 #include "compute-task.h"
+#include "board-exchange.h"
 
-ComputeTask::ComputeTask() {
+ComputeTask::ComputeTask()
+    : gameContext_(QaplaTester::ProviderType::ComputeTask)
+{
     finishedFuture_ = finishedPromise_.get_future();
     finishedPromiseValid_ = true;
     eventThread_ = std::thread(&ComputeTask::processQueue, this);

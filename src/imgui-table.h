@@ -123,10 +123,18 @@ namespace QaplaWindows {
 			}
 		}
 
+        /**
+		 * @brief Returns the currently selected row index.
+         */
+        uint32_t getSelectedRow() {
+            return selectedRow_;
+        }
+
     private:
         bool clickable_ = false;
         void tableHeadersRow() const;
 		bool isRowClicked(size_t index) const;
+        uint32_t selectedRow_ = 0;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;

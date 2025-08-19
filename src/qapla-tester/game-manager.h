@@ -125,15 +125,6 @@ public:
 	}
 
     /**
-	 * @brief Returns the names of the engines currently playing.
-     *
-	 * @return A pair containing the names of the white and black engines.
-	 */
-    std::pair<std::string, std::string> getEngineNames() const {
-        return gameContext_.getEngineNames();
-	}
-
-    /**
      * @brief stops the engine if it is running.
      */
     void stop();

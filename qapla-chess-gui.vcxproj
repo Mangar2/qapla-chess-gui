@@ -190,6 +190,7 @@
     <ClCompile Include="src\qapla-engine\piecesignature.cpp" />
     <ClCompile Include="src\qapla-engine\pst.cpp" />
     <ClCompile Include="src\qapla-tester\adjucation-manager.cpp" />
+    <ClCompile Include="src\qapla-tester\board-exchange.cpp" />
     <ClCompile Include="src\qapla-tester\cli-settings-manager.cpp" />
     <ClCompile Include="src\qapla-tester\compute-task.cpp" />
     <ClCompile Include="src\qapla-tester\engine-adapter.cpp" />
@@ -263,6 +264,7 @@
     <ClInclude Include="src\qapla-engine\types.h" />
     <ClInclude Include="src\qapla-tester\adjucation-manager.h" />
     <ClInclude Include="src\qapla-tester\app-error.h" />
+    <ClInclude Include="src\qapla-tester\board-exchange.h" />
     <ClInclude Include="src\qapla-tester\cli-settings-manager.h" />
     <ClInclude Include="src\qapla-tester\compute-task.h" />
     <ClInclude Include="src\qapla-tester\elo-helper.h" />

@@ -31,6 +31,7 @@
 #include "qapla-tester/tournament-result.h"
 
 #include "qapla-tester/game-manager-pool.h"
+#include "qapla-tester/board-exchange.h"
 #include "imgui-table.h"
 
 #include "imgui.h"
@@ -62,7 +63,7 @@ namespace QaplaWindows {
             }
 		)
     { 
-        eloTable_.setClickable(true);
+        runningTable_.setClickable(true);
         init();
     }
 
@@ -141,12 +142,20 @@ namespace QaplaWindows {
     void TournamentData::populateRunningTable() {
         runningTable_.clear();
         if (tournament_) {
-            for (const auto& game : GameManagerPool::getInstance().getRunningGamesInfo()) {
+            auto ids = QaplaTester::BoardExchange::instance().
+                getIdsByProviderType(QaplaTester::ProviderType::GameManager);
+            auto games = QaplaTester::BoardExchange::instance().getTrackedEngineDataLists(ids);
+            runningCount_ = 0;
+            for (const auto& game : games) {
+                if (game.value().size() == 0) continue;
                 std::vector<std::string> row;
-                row.push_back(game.white);
-                row.push_back(game.black);
-                row.push_back(game.status);
-                runningTable_.push(row);
+                row.resize(3);
+                for (const auto& player : game.value()) {
+					row[player.white ? 0 : 1] = player.name;
+				}
+                row[2] = "running";
+				runningTable_.push(row);
+                runningCount_++;
             }
         }
 	}
@@ -160,7 +169,6 @@ namespace QaplaWindows {
             else {
                 auto runningCount = GameManagerPool::getInstance().runningGameCount();
                 if (runningCount != runningCount_) {
-                    runningCount_ = runningCount;
                     populateRunningTable();
 				}
             }

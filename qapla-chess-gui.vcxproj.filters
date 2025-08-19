@@ -285,6 +285,9 @@
     <ClCompile Include="src\tournament-result-incremental.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="src\qapla-tester\board-exchange.cpp">
+      <Filter>Quelldateien\qapla-tester</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\font.h">
@@ -547,6 +550,9 @@
     </ClInclude>
     <ClInclude Include="src\tournament-result-incremental.h">
       <Filter>Quelldateien</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qapla-tester\board-exchange.h">
+      <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

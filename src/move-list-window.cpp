@@ -116,7 +116,9 @@ void MoveListWindow::draw() {
             }
             wtm = !wtm;
             if (i + 1 == boardData_->nextMoveIndex()) {
-                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, IM_COL32(64, 96, 160, 160));
+                auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
+                auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
                 if (i + 1 != currentPly_) {
                     ImGui::SetScrollHereY(0.5f);
                     currentPly_ = i + 1;

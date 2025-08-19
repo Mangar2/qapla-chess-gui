@@ -18,8 +18,15 @@
  */
 #include "game-context.h"
 #include "engine-worker-factory.h"
+#include "board-exchange.h"
 
-GameContext::GameContext() = default;
+GameContext::GameContext(QaplaTester::ProviderType type) {
+    id_ = QaplaTester::BoardExchange::instance().registerProvider(type);
+};
+
+GameContext::~GameContext() {
+    QaplaTester::BoardExchange::instance().unregisterProvider(id_);
+}
 
 void GameContext::updateEngineNames() {
     auto* white = getWhite();
@@ -28,6 +35,23 @@ void GameContext::updateEngineNames() {
     const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
     gameRecord_.setWhiteEngineName(whiteName);
     gameRecord_.setBlackEngineName(blackName);
+    
+    QaplaTester::EngineExchangeDataList list;
+    for (auto& player : players_) {
+        list.push_back({
+            player->getEngine()->getConfig().getName(),
+            player->getIdentifier(),
+            "Running",
+            player->getEngine()->getEngineMemoryUsage(),
+			white == player.get()
+			});
+	}
+    QaplaTester::BoardExchange::instance().setEngineDataList(id_, list);
+}
+
+void GameContext::tearDown() {
+    players_.clear();
+    QaplaTester::BoardExchange::instance().setEngineDataList(id_, {});
 }
 
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines) {

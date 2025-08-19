@@ -24,6 +24,7 @@
 #include "game-record.h"
 #include "engine-event.h"
 #include "engine-record.h"
+#include "board-exchange.h"
 
 #include <memory>
 #include <vector>
@@ -36,8 +37,8 @@
   */
 class GameContext {
 public:
-    GameContext();
-    ~GameContext() = default;
+    GameContext(QaplaTester::ProviderType type);
+    ~GameContext();
 
     /**
      * @brief Initializes all players using the provided engine list.
@@ -100,9 +101,7 @@ public:
     /**
      * @brief Stops all engines and their processes.
 	 */
-    void tearDown() {
-        players_.clear();
-	}
+    void tearDown();
 
     /**
      * @brief Informs all players that a new game has started.
@@ -209,10 +208,6 @@ public:
      */
     void withGameRecord(std::function<void(const GameRecord&)> accessFn) const;
 
-    void updatePositionIfDifferent(const GameRecord& record) {
-
-    }
-
     /**
 	 * @brief Returns the result of the game.
      */
@@ -280,6 +275,7 @@ public:
 private:
 
     void updateEngineNames();
+    QaplaTester::ProviderId_t id_;
     
     mutable std::mutex engineMutex_;
     std::vector<std::unique_ptr<PlayerContext>> players_;

@@ -38,8 +38,11 @@
 #include "game-manager-pool.h"
 #include "input-handler.h"
 #include "adjucation-manager.h"
+#include "board-exchange.h"
 
-GameManager::GameManager(): taskProvider_(nullptr) {
+GameManager::GameManager()
+    : taskProvider_(nullptr), gameContext_(QaplaTester::ProviderType::GameManager)
+{
     eventThread_ = std::thread(&GameManager::processQueue, this);
     gameContext_.setEventCallback([this](EngineEvent&& event) {
         enqueueEvent(std::move(event));
