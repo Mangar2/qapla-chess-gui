@@ -68,7 +68,23 @@ namespace QaplaWindows {
             return totalResult_.scoredEngines();
         }
 
-        private:
+        /**
+         * @brief True, if the tournament has games left to play
+         */
+        bool gamesLeft() const {
+            return gamesLeft_;
+		}
+
+        /**
+		 * @brief Sets the gamesLeft flag to true, indicating that there are now games to be played.
+         * 
+		 */
+        void setGamesLeft() {
+            gamesLeft_ = true;
+        }
+			
+
+    private:
 
         TournamentResult finishedResultsAggregate_;
 		TournamentResult totalResult_; ///< total sum of finalized and non finalized results
@@ -77,6 +93,7 @@ namespace QaplaWindows {
 		uint64_t updateCount_ = 0; ///< Number of updates 
 		size_t currentIndex_ = 0; 
 		size_t tournamentUpdateCount_ = 0; ///< Tournament update count, used to track changes
+		bool gamesLeft_ = false; ///< Flag to indicate if the tournament is currently running
     };
 
 }

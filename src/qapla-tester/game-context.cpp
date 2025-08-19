@@ -31,15 +31,18 @@ void GameContext::updateEngineNames() {
 }
 
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines) {
-    players_.clear();
-    for (auto& engine : engines) {
-        if (eventCallback_) {
-            engine->setEventSink(eventCallback_);
+    {
+        std::lock_guard lock(engineMutex_);
+        players_.clear();
+        for (auto& engine : engines) {
+            if (eventCallback_) {
+                engine->setEventSink(eventCallback_);
+            }
+            auto player = std::make_unique<PlayerContext>();
+            player->setEngine(std::move(engine));
+            player->setStartPosition(gameRecord_);
+            players_.emplace_back(std::move(player));
         }
-        auto player = std::make_unique<PlayerContext>();
-        player->setEngine(std::move(engine));
-        player->setStartPosition(gameRecord_);
-        players_.emplace_back(std::move(player));
     }
 	updateEngineNames();
     setTimeControl(gameRecord_.getWhiteTimeControl());
@@ -166,10 +169,21 @@ PlayerContext* GameContext::getWhite() {
     return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
 }
 
+const PlayerContext* GameContext::getWhite() const {
+    if (players_.empty()) return nullptr;
+    return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
+}
+
 PlayerContext* GameContext::getBlack() {
     if (players_.size() < 2) return getWhite();
     return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
 }
+
+const PlayerContext* GameContext::getBlack() const {
+    if (players_.empty()) return nullptr;
+    return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
+}
+
 
 void GameContext::setSideSwitched(bool switched) {
     switchedSide_ = switched;
@@ -262,6 +276,7 @@ MoveInfos GameContext::getMoveInfos() const {
 }
 
 EngineRecords GameContext::getEngineRecords() const {
+	std::lock_guard lock(engineMutex_);
     EngineRecords records;
     for (const auto& player : players_) {
         if (!player->getEngine()) {

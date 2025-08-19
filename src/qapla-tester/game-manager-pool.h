@@ -18,14 +18,16 @@
  */
 #pragma once
 
+#include "engine-config.h"
+#include "game-manager.h"
+#include "input-handler.h"
+
 #include <memory>
 #include <string>
 #include <vector>
 #include <mutex>
+#include <ostream>
 
-#include "engine-config.h"
-#include "game-manager.h"
-#include "input-handler.h"
 
 class GameTaskProvider;
 
@@ -34,6 +36,11 @@ class GameTaskProvider;
  */
 class GameManagerPool {
 public:
+    struct GameInfo {
+        std::string white;
+        std::string black;
+        std::string status;
+    };
     GameManagerPool();
 
     /**
@@ -121,10 +128,23 @@ public:
 	 */
 	bool maybeDeactivateManager(std::shared_ptr<GameTaskProvider>& taskProvider);
 
+    /**
+	 * @brief Returns an information about all running games.
+	 * @return A vector of GameInfo structs containing names of the engine and running state.
+     */
+    std::vector<GameInfo> getRunningGamesInfo() const;
+
+    /**
+     * @brief Returns the number of currently running games.
+     *
+     * @return The count of active GameManager instances.
+	 */
+    size_t runningGameCount() const;
+
 private:
     
 
-    void printRunningGames() const;
+    void printRunningGames(std::ostream& out) const;
     void viewEngineTrace(int gameManagerIndex) const;
 
     /**

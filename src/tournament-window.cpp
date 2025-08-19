@@ -105,8 +105,15 @@ void TournamentWindow::drawInput() {
         tournamentData.concurrency(), 1, maxConcurrency)) {
         tournamentData.setPoolConcurrency(tournamentData.concurrency(), true, true);
     }
-    ImGui::Unindent(10.0f);
     ImGui::Spacing();
+    ImGui::Unindent(10.0f);
+    if (tournamentData.isRunning()) {
+		ImGui::Indent(10.0f);
+        ImGui::Text("Tournament is running");
+        ImGui::Unindent(10.0f);
+        return;
+    }
+
     ImGuiControls::fileInput("Tournament file", tournamentData.config().tournamentFilename, 2 * inputWidth);
     ImGui::Spacing();
 
@@ -238,6 +245,9 @@ void TournamentWindow::draw() {
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
-    /* auto clickedRow = */TournamentData::instance().drawTable(size);
+	constexpr float heightRatio = 0.4f;
+    /* auto clickedRow = */TournamentData::instance().drawEloTable(
+        ImVec2(size.x, size.y * heightRatio));
+    TournamentData::instance().drawRunningTable(ImGui::GetContentRegionAvail());
 }
 

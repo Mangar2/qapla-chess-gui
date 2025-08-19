@@ -58,7 +58,7 @@ GameManagerPool::GameManagerPool() {
 				}
 			}
             else if (cmd == InputHandler::ImmediateCommand::Running) {
-                this->printRunningGames();
+                this->printRunningGames(std::cout);
             }
             else if (cmd == InputHandler::ImmediateCommand::ViewGame) {
                 this->viewEngineTrace(value ? std::stoi(*value) : 0);
@@ -75,17 +75,19 @@ GameManagerPool::GameManagerPool() {
         });
 }
 
-void GameManagerPool::printRunningGames() const {
-    std::cout << "\n\nCurrently running games:\n";
+void GameManagerPool::printRunningGames(std::ostream& out) const {
+    out << "\n\nCurrently running games:\n";
     int pos = 1;
     for (const auto& managerPtr : managers_) {
         GameManager* manager = managerPtr.get();
         if (!manager->getTaskProvider()) {
             continue;
         }
-		auto& whiteName = manager->getEngine(true)->getConfig().getName();
-        auto& blackName = manager->getEngine(false)->getConfig().getName();
-        std::cout << std::setw(2) << pos << ". "
+        auto whiteEngine = manager->getEngine(true);
+		auto whiteName = whiteEngine ? whiteEngine->getConfig().getName() : "";
+		auto blackEngine = manager->getEngine(false);
+		auto blackName = blackEngine ? blackEngine->getConfig().getName() : "";
+        out << std::setw(2) << pos << ". "
               << std::left << std::setw(30) << whiteName
               << " vs "
               << std::left << std::setw(30) << blackName
@@ -94,6 +96,43 @@ void GameManagerPool::printRunningGames() const {
         ++pos;
     }
     std::cout << std::endl;
+}
+
+std::vector<GameManagerPool::GameInfo> GameManagerPool::getRunningGamesInfo() const {
+    std::vector<GameInfo> gamesInfo;
+    for (const auto& managerPtr : managers_) {
+        GameManager* manager = managerPtr.get();
+        if (!manager->getTaskProvider()) {
+            continue;
+        }
+		auto names = manager->getEngineNames();
+        GameInfo info;
+		info.white = names.first.empty() ? "-" : names.first;
+		info.black = names.second.empty() ? "-" : names.second;
+
+        if (manager->isPaused()) {
+			info.status = "paused";
+        } 
+        else if (info.white == "-" || info.black == "-") {
+            info.status = "starting";
+        }
+        else {
+			info.status = "running";
+        }
+        gamesInfo.push_back(info);
+    }
+	return gamesInfo;
+}
+
+size_t GameManagerPool::runningGameCount() const {
+    size_t count = 0;
+    for (const auto& managerPtr : managers_) {
+        GameManager* manager = managerPtr.get();
+        if (manager->getTaskProvider() != nullptr) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 void GameManagerPool::viewEngineTrace(int gameManagerIndex) const {

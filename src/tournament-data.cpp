@@ -51,7 +51,16 @@ namespace QaplaWindows {
                 { "Score", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
                 { "Total", ImGuiTableColumnFlags_WidthFixed, 50.0f, true }
             }
-        )
+        ),
+        runningTable_(
+            "Running",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { "White", ImGuiTableColumnFlags_WidthFixed, 150.0f },
+                { "Black", ImGuiTableColumnFlags_WidthFixed, 150.0f },
+                { "Status", ImGuiTableColumnFlags_WidthFixed, 50.0f }
+            }
+		)
     { 
         eloTable_.setClickable(true);
         init();
@@ -88,10 +97,13 @@ namespace QaplaWindows {
         if (!validateOpenings()) return;
 
         if (tournament_) {
+            result_->setGamesLeft();
 			tournament_->createTournament(engineConfig_, *config_);
             tournament_->scheduleAll(concurrency_, false);
             eloTable_.clear();
-            populateTable();
+            populateEloTable();
+			runningTable_.clear();
+			populateRunningTable();
         } else {
             SnackbarManager::instance().showError("Internal error, tournamen not initialized");
             return;
@@ -103,7 +115,7 @@ namespace QaplaWindows {
         return *config_;
 	}
 
-    void TournamentData::populateTable() {
+    void TournamentData::populateEloTable() {
         eloTable_.clear();
 
         struct Scored
@@ -126,17 +138,46 @@ namespace QaplaWindows {
 		}
     }
 
+    void TournamentData::populateRunningTable() {
+        runningTable_.clear();
+        if (tournament_) {
+            for (const auto& game : GameManagerPool::getInstance().getRunningGamesInfo()) {
+                std::vector<std::string> row;
+                row.push_back(game.white);
+                row.push_back(game.black);
+                row.push_back(game.status);
+                runningTable_.push(row);
+            }
+        }
+	}
+
     void TournamentData::pollData() {
         if (tournament_) {
             if (result_->poll(*tournament_, config_->averageElo)) {
-                populateTable();
+                populateEloTable();
+				populateRunningTable();
+            }
+            else {
+                auto runningCount = GameManagerPool::getInstance().runningGameCount();
+                if (runningCount != runningCount_) {
+                    runningCount_ = runningCount;
+                    populateRunningTable();
+				}
             }
         } 
     }
 
-    std::optional<size_t> TournamentData::drawTable(const ImVec2& size) const {
+    bool TournamentData::isRunning() const {
+        return result_->gamesLeft();
+	}
+
+    std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
         return eloTable_.draw(size);
     }
+
+    std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) const {
+        return runningTable_.draw(size);
+	}
 
     void TournamentData::stopPool() {
         GameManagerPool::getInstance().stopAll();

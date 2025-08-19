@@ -88,6 +88,9 @@ public:
     EngineWorker* getEngine() {
         return engine_.get();
     }
+    const EngineWorker* getEngine() const {
+        return engine_.get();
+	}
 
 	/**
 	 * @brief Returns the identifier of the engine.

@@ -18,16 +18,17 @@
  */
 #pragma once
 
-#include <memory>
-#include <vector>
-#include <functional>
-
 #include "player-context.h"
 #include "time-control.h"
 #include "game-result.h"
 #include "game-record.h"
 #include "engine-event.h"
 #include "engine-record.h"
+
+#include <memory>
+#include <vector>
+#include <functional>
+#include <utility>
 
  /**
   * @brief Manages all player contexts and game configuration including time control,
@@ -142,11 +143,13 @@ public:
      * @brief Returns the player acting as white.
      */
     PlayerContext* getWhite();
+	const PlayerContext* getWhite() const;
 
     /**
      * @brief Returns the player acting as black.
      */
     PlayerContext* getBlack();
+	const PlayerContext* getBlack() const;
 
     /**
      * @brief Sets whether white/black are logically switched.
@@ -253,6 +256,17 @@ public:
 	 */ 
     EngineRecords getEngineRecords() const;
 
+    std::pair<std::string, std::string> getEngineNames() const {
+		std::lock_guard lock(engineMutex_);
+        if (!getWhite() || !getBlack()) {
+            return { "", "" };
+		}
+        return { 
+            getWhite()->getEngine()->getConfig().getName(), 
+            getBlack()->getEngine()->getConfig().getName()
+        };
+	}
+
     /**
      * @brief Returns the current move information for all players.
      * @return A vector of MoveInfos containing move information for each player.
@@ -266,10 +280,13 @@ public:
 private:
 
     void updateEngineNames();
-
+    
+    mutable std::mutex engineMutex_;
     std::vector<std::unique_ptr<PlayerContext>> players_;
-    GameRecord gameRecord_;
+
     mutable std::mutex gameRecordMutex_;
+    GameRecord gameRecord_;
+
     std::function<void(EngineEvent&&)> eventCallback_;
     bool switchedSide_ = false;
 };

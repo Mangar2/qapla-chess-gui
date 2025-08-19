@@ -83,7 +83,10 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
-        std::optional<size_t> drawTable(const ImVec2& size) const;
+        std::optional<size_t> drawEloTable(const ImVec2& size) const;
+
+        std::optional<size_t> drawRunningTable(const ImVec2& size) const;
+
         
         TournamentConfig& config();
 
@@ -163,6 +166,8 @@ namespace QaplaWindows {
             return instance;
 		}
 
+        bool isRunning() const;
+
 	private:
         bool validateOpenings();
         void saveOpeningConfig(std::ostream& out, const std::string& header) const;
@@ -175,7 +180,8 @@ namespace QaplaWindows {
          */
         void saveEachEngineConfig(std::ostream& out, const std::string& header) const;
 
-        void populateTable();
+        void populateEloTable();
+		void populateRunningTable();
 
 		std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;
@@ -187,8 +193,10 @@ namespace QaplaWindows {
 		AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::vector<EngineConfig> engineConfig_{};
         uint32_t concurrency_ = 1;
+		uint32_t runningCount_ = 0; ///< Number of currently running games
 
         ImGuiTable eloTable_;
+        ImGuiTable runningTable_;
 
     };
 

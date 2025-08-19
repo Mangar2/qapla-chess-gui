@@ -28,6 +28,7 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 	if (tournament.getUpdateCount() == tournamentUpdateCount_) {
 		return false;
 	}
+	gamesLeft_ = false;
 	constexpr size_t extraChecks = 10; // Number of extra results to fetch
 	tournamentUpdateCount_ = tournament.getUpdateCount();
 
@@ -55,9 +56,10 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 		totalResult_.add(resultToAdd);
 		engineNames_.insert(resultToAdd.getEngineA());
 		engineNames_.insert(resultToAdd.getEngineB());
+		gamesLeft_ = true;
 	}
 
-	totalResult_.computeAllElos(baseElo, 1, true);
+	totalResult_.computeAllElos(baseElo, 10, true);
 	return true;
 }
 

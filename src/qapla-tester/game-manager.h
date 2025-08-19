@@ -116,6 +116,23 @@ public:
     const std::shared_ptr<GameTaskProvider> getTaskProvider() {
 		return taskProvider_;
     }
+
+    /**
+	 * @brief Returns information about the engine players.
+     */
+    const EngineRecords getEngineRecords() const {
+        return gameContext_.getEngineRecords();
+	}
+
+    /**
+	 * @brief Returns the names of the engines currently playing.
+     *
+	 * @return A pair containing the names of the white and black engines.
+	 */
+    std::pair<std::string, std::string> getEngineNames() const {
+        return gameContext_.getEngineNames();
+	}
+
     /**
      * @brief stops the engine if it is running.
      */
@@ -281,13 +298,16 @@ private:
 	std::atomic<GameTask::Type> taskType_ = GameTask::Type::None;
     std::string taskId_;
 
-    // Queue management
     std::thread eventThread_;
     std::atomic<bool> stopThread_{ false };
+
+    // Pause Management
     std::mutex pauseMutex_;
 	std::atomic<bool> pauseRequested_{ false };
 	std::atomic<bool> paused_{ false };
     std::atomic<bool> debug_{ false };
+
+    // Queue management
     std::mutex queueMutex_;
     std::condition_variable queueCondition_;
     std::queue<EngineEvent> eventQueue_;
