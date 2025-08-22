@@ -180,6 +180,7 @@ void EngineProcess::start()
 #ifdef _WIN32
     startWin32Overlapped();
 #else
+    constexpr bool useStdErr = false;
     int inPipe[2], outPipe[2], errPipe[2], execStatusPipe[2];
     if (pipe(inPipe) || pipe(outPipe) || pipe(execStatusPipe))
     {
@@ -476,13 +477,14 @@ EngineProcess::ReadResult EngineProcess::readFromStdOutOverlapped() {
 
 void EngineProcess::readFromPipeBlocking()
 {
+
+    size_t bytesRead = 0;
+
+#ifdef _WIN32
     if (stdoutRead_ == nullptr)
     {
         return;
     }
-    size_t bytesRead = 0;
-
-#ifdef _WIN32
     // DWORD winBytesRead = 0;
     //if (!ReadFile(stdoutRead_, temp, sizeof(temp), &winBytesRead, nullptr) || winBytesRead == 0)
     auto result = readFromStdOutOverlapped();
@@ -513,6 +515,10 @@ void EngineProcess::readFromPipeBlocking()
     const char* temp = result.buffer.data();
     // std::cout << "[" << now << "] " << incoming << std::endl;
 #else
+    if (stdoutRead_ == 0)
+    {
+        return;
+    }
     char temp[1024];
 
     ssize_t linuxBytesRead = read(stdoutRead_, temp, sizeof(temp));

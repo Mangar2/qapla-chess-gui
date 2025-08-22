@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #include "os-dialogs.h"
@@ -61,28 +61,49 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
 }
 
 #elif defined(__APPLE__)
-
+#include <vector>
+#include <string>
 #include <objc/objc.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
 
+#if __LP64__
+using NSInteger  = long;
+using NSUInteger = unsigned long;
+#else
+using NSInteger  = int;
+using NSUInteger = unsigned int;
+#endif
+
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     std::vector<std::string> result;
 
-    @autoreleasepool{
-        id panel = ((id(*)(Class, SEL))objc_msgSend)(objc_getClass("NSOpenPanel"), sel_registerName("openPanel"));
-        ((void (*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setAllowsMultipleSelection:"), multiple ? YES : NO);
-        ((void (*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
+    // pool = [[NSAutoreleasePool alloc] init];
+    Class NSAutoreleasePool = (Class)objc_getClass("NSAutoreleasePool");
+    id pool = ((id(*)(Class, SEL))objc_msgSend)(NSAutoreleasePool, sel_registerName("alloc"));
+    pool = ((id(*)(id, SEL))objc_msgSend)(pool, sel_registerName("init"));
 
+    Class NSOpenPanel = (Class)objc_getClass("NSOpenPanel");
+    id panel = ((id(*)(Class, SEL))objc_msgSend)(NSOpenPanel, sel_registerName("openPanel"));
+
+    ((void(*)(id, SEL, BOOL))objc_msgSend)(
+        panel, sel_registerName("setAllowsMultipleSelection:"), multiple ? (BOOL)1 : (BOOL)0);
+
+    // NSModalResponseOK == 1
+    NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
+    if (r == 1) {
         id urls = ((id(*)(id, SEL))objc_msgSend)(panel, sel_registerName("URLs"));
         NSUInteger count = ((NSUInteger(*)(id, SEL))objc_msgSend)(urls, sel_registerName("count"));
         for (NSUInteger i = 0; i < count; ++i) {
-            id url = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), i);
+            id url  = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), i);
             id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
-            const char* cPath = ((const char* (*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-            result.emplace_back(cPath);
+            const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
+            if (cstr) result.emplace_back(cstr);
         }
     }
+
+    // [pool drain];  (alternativ: release)
+    ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
     return result;
 }
 

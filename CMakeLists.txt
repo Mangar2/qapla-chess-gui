@@ -4,15 +4,6 @@ project(QaplaChess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --------------------------------
-# GLAD
-# --------------------------------
-add_library(glad STATIC
-  extern/glad/src/glad.c
-)
-target_include_directories(glad PUBLIC
-  extern/glad/include
-)
 
 # --------------------------------
 # GLFW
@@ -38,12 +29,16 @@ add_library(imgui STATIC
 target_include_directories(imgui PUBLIC
   extern/imgui
   extern/imgui/backends
-)
+  extern/glfw/include
+  )
 
 # --------------------------------
 # Eigene Quelldateien
 # --------------------------------
-file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
+    src/*.cpp
+    src/*.c
+)
 
 # --------------------------------
 # Executable
@@ -53,8 +48,12 @@ add_executable(qapla ${PROJECT_SOURCES})
 # --------------------------------
 # Includes & Libs
 # --------------------------------
-target_include_directories(qapla PRIVATE src)
-target_link_libraries(qapla PRIVATE glad glfw imgui)
+target_include_directories(qapla PRIVATE
+  extern/glad/include
+  src
+)
+
+target_link_libraries(qapla PRIVATE glfw imgui)
 
 # --------------------------------
 # Plattformabhängige Links

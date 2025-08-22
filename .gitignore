@@ -6,6 +6,7 @@
 # Libraries used
 /imgui/
 /glfw/
+/build/
 
 
 # User-specific files
