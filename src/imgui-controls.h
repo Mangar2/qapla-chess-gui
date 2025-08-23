@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -303,18 +303,18 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
-     * @brief Control für optionale Eingaben mit einer Checkbox und einer benutzerdefinierten Eingabebox.
+     * @brief Control fï¿½r optionale Eingaben mit einer Checkbox und einer benutzerdefinierten Eingabebox.
      * @tparam T Der Typ des optionalen Werts.
-     * @param label Label für die Checkbox und Eingabebox.
+     * @param label Label fï¿½r die Checkbox und Eingabebox.
      * @param value Referenz auf den optionalen Wert.
      * @param inputCallback Callback-Funktion, die die Eingabebox rendert.
-     * @return True, wenn der Wert geändert wurde, sonst false.
+     * @return True, wenn der Wert geï¿½ndert wurde, sonst false.
      */
     template <typename T>
     inline bool optionalInput(const char* label, std::optional<T>& value, const std::function<bool(T&)>& inputCallback) {
         bool modified = false;
 
-        // Checkbox für "optional vorhanden"
+        // Checkbox fï¿½r "optional vorhanden"
         bool hasValue = value.has_value();
         if (ImGui::Checkbox(label, &hasValue)) {
             if (hasValue) {
