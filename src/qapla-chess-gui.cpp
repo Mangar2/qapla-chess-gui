@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #include "board-data.h"
@@ -211,7 +211,15 @@ int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #else
 int main() {
     try {
-        return runApp();
+        try {
+            auto code = runApp();
+            QaplaConfiguration::Configuration::instance().saveFile();
+            return code;
+        }
+        catch (...) {
+            QaplaConfiguration::Configuration::instance().saveFile();
+			throw; 
+        }
     }
     catch (const std::exception& e) {
         std::cerr << "Fatal error: " << e.what() << '\n';

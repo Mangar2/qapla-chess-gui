@@ -125,7 +125,9 @@ void GameManagerPool::viewEngineTrace(int gameManagerIndex) const {
     }
 }
 
-void GameManagerPool::addTaskProvider(std::shared_ptr<GameTaskProvider> taskProvider, const EngineConfig& engineName) {
+void GameManagerPool::addTaskProvider(std::shared_ptr<GameTaskProvider> taskProvider, 
+    const EngineConfig& engineName) 
+{
     TaskAssignment task;
     task.provider = taskProvider;
     task.engine1 = engineName;
@@ -283,7 +285,7 @@ void GameManagerPool::assignTaskToManagers() {
         return; 
 	}
 
-    for (size_t i = 0; i < availableManagers.size(); ++i) {
+    for (size_t i = 0; i < availableManagers.size() && i < maxConcurrency_; ++i) {
         GameManager* manager = availableManagers[i];
         if (!manager->start()) break;
 	}
