@@ -90,7 +90,7 @@ void PairTournament::schedule(const std::shared_ptr<PairTournament>& self) {
     }
 
     GameManagerPool::getInstance().addTaskProvider(self, engineA_, engineB_);
-    GameManagerPool::getInstance().assignTaskToManagers();
+    GameManagerPool::getInstance().startManagers();
 }
 
 uint32_t PairTournament::newOpeningIndex(size_t gameInEncounter) {

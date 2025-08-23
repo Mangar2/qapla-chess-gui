@@ -138,12 +138,20 @@ public:
 
     bool isPaused() const {
         return paused_;
-	}
+    }
+    
+    /**
+     * @brief Returns true, if the game manager is running. 
+     */
+    bool isRunning() {
+        return finishedPromiseValid_;
+    }
 
     /**
      * @brief Resumes task processing if previously paused.
      */
     void resume();
+
 private:
     /**
      * @brief Tells the engine to stop the current move calculation and sends the best move
@@ -226,9 +234,13 @@ private:
     std::tuple<GameEndCause, GameResult> getGameResult();
 
     /**
-     * @brief Signals that a computation has completed. Call once per compute cycle.
+     * @brief Signals that a computation has completed. 
      */
     void markFinished();
+
+    /**
+     * @brief Initializes the signal and sets the signal to valid
+     */
     void markRunning();
 
     /**

@@ -49,7 +49,7 @@ void EpdTest::initialize(const EpdTestResult& tests)
 
 void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine) {
     GameManagerPool::getInstance().addTaskProvider(self, engine);
-    GameManagerPool::getInstance().assignTaskToManagers();
+    GameManagerPool::getInstance().startManagers();
 }
 
 std::optional<GameTask> EpdTest::nextTask() {

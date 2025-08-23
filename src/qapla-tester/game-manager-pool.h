@@ -52,13 +52,6 @@ public:
     void addTaskProvider(std::shared_ptr<GameTaskProvider> taskProvider, const EngineConfig& engine);
 
     /**
-     * @brief Assigns tasks to available GameManagers.
-     *
-	 * This method assigns tasks to available GameManagers based on the current task providers.
-	 */
-    void assignTaskToManagers();
-
-    /**
      * @brief Adds a new task with two engines per manager.
      *
      * @param taskProvider Task source
@@ -69,6 +62,18 @@ public:
         const EngineConfig& blackEngine);
 
     /**
+     * @brief Starts additional game managers to reach the maximum concurrency.
+     *
+     * This method checks the number of currently active game managers and starts
+     * additional managers if the number is less than the `maxConcurrency_` value.
+     * It iterates through the pool of managers and starts inactive ones (those
+     * without a task provider) until the desired concurrency level is reached.
+     *
+     * @note This method does not create new managers; it only activates existing ones.
+     */
+    void startManagers();
+
+    /**
      * @brief Sets the global concurrency limit.
      *
      * @param count Maximum number of concurrent managers
@@ -76,6 +81,21 @@ public:
 	 * @param start If true, starts the managers immediately
      */
     void setConcurrency(uint32_t count, bool nice = true, bool start = false);
+
+    /**
+     * @brief Attempts to assign a new task to a game manager.
+     *
+     * This method iterates through the task assignments and tries to retrieve the next
+     * available task from a task provider. If a task is available, it creates the necessary
+     * engine workers (white and black) and returns the task along with its associated data.
+     *
+     * @return An optional `GameManager::ExtendedTask` containing the task and its associated
+     *         engines and provider, or `std::nullopt` if no task is available.
+     *
+     * @throws AppError If no engine configuration is provided for the task assignment.
+     * @throws std::runtime_error If engine creation fails for the task assignment.
+     */
+    std::optional<GameManager::ExtendedTask> tryAssignNewTask();
 
     /**
      * @brief Stops all managers and clears all resources.
@@ -107,17 +127,6 @@ public:
     static void resetInstance() {
         getInstanceUniquePtr().reset();
     }
-
-    /**
-     * @brief Attempts to assign a new task to a free GameManager.
-     *
-     * Iterates over all task assignments and requests a concrete GameTask.
-     * If a task is available, constructs the appropriate engines and returns an ExtendedTask.
-     *
-     * @return An optional ExtendedTask if a task was available, otherwise std::nullopt.
-     */
-    std::optional<GameManager::ExtendedTask> tryAssignNewTask();
-
 
 	/**
 	 * @brief Deactivates a GameManager if we have too many running managers.
@@ -169,8 +178,16 @@ private:
 	 */
     uint32_t countActiveManagers() const;
 
-    void tryReactivateManagers();
-    void ensureManagerCount(size_t count, bool start = false);
+    /**
+     * @brief Ensures that there are at least count managers.
+     *
+     * This function adjusts the pool of game managers to ensure that the total number
+     * of active managers is equal to the given `count`. If there are fewer managers
+     * than required, new ones are created. 
+     *
+     * @param count The desired number of game managers.
+     */
+    void ensureManagerCount(size_t count);
 
     std::vector<TaskAssignment> taskAssignments_;
     std::vector<std::unique_ptr<GameManager>> managers_;
