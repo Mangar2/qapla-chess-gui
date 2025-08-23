@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -23,116 +23,119 @@
 #include <unordered_map>
 #include "qapla-tester/engine-option.h"
 
- /**
-  * @class EngineCapability
-  * @brief Represents the capabilities of a chess engine, including its path, protocol, name, author, and supported options.
-  */
-class EngineCapability {
-public:
-    /**
-     * @brief Default constructor.
-     */
-    EngineCapability() = default;
+namespace QaplaConfiguration {
 
-    /**
-     * @brief Gets the path to the engine executable.
-     * @return The path as a string.
-     */
-    const std::string& getPath() const {
-		return path_;
+  /**
+    * @class EngineCapability
+    * @brief Represents the capabilities of a chess engine, including its path, protocol, name, author, and supported options.
+    */
+  class EngineCapability {
+  public:
+      /**
+       * @brief Default constructor.
+       */
+      EngineCapability() = default;
+
+      /**
+       * @brief Gets the path to the engine executable.
+       * @return The path as a string.
+       */
+      const std::string& getPath() const {
+      return path_;
+      }
+
+      /**
+       * @brief Sets the path to the engine executable.
+       * @param path The path as a string.
+       */
+      void setPath(const std::string& path) {
+          path_ = path;
     }
 
-    /**
-     * @brief Sets the path to the engine executable.
-     * @param path The path as a string.
-     */
-    void setPath(const std::string& path) {
-        path_ = path;
-	}
-
-    /**
-     * @brief Gets the protocol used by the engine.
-     * @return The protocol as an EngineProtocol enum.
-     */
-    EngineProtocol getProtocol() const {
-        return protocol_;
-	}
-
-    /**
-     * @brief Sets the protocol used by the engine.
-     * @param protocol The protocol as an EngineProtocol enum.
-     */
-    void setProtocol(EngineProtocol protocol) {
-		protocol_ = protocol;
-	}
-
-    /**
-     * @brief Gets the name of the engine.
-     * @return The name as a string.
-     */
-    const std::string& getName() const {
-		return name_;
+      /**
+       * @brief Gets the protocol used by the engine.
+       * @return The protocol as an EngineProtocol enum.
+       */
+      EngineProtocol getProtocol() const {
+          return protocol_;
     }
 
-    /**
-     * @brief Sets the name of the engine.
-     * @param name The name as a string.
-     */
-    void setName(const std::string& name) {
-		name_ = name;
-	}
-
-    /**
-     * @brief Gets the author of the engine.
-     * @return The author as a string.
-     */
-    const std::string& getAuthor() const {
-		return author_;
+      /**
+       * @brief Sets the protocol used by the engine.
+       * @param protocol The protocol as an EngineProtocol enum.
+       */
+      void setProtocol(EngineProtocol protocol) {
+      protocol_ = protocol;
     }
 
-    /**
-     * @brief Sets the author of the engine.
-     * @param author The author as a string.
-     */
-    void setAuthor(const std::string& author) {
-		author_ = author;
+      /**
+       * @brief Gets the name of the engine.
+       * @return The name as a string.
+       */
+      const std::string& getName() const {
+      return name_;
+      }
+
+      /**
+       * @brief Sets the name of the engine.
+       * @param name The name as a string.
+       */
+      void setName(const std::string& name) {
+      name_ = name;
     }
 
-    /**
-     * @brief Gets the supported options of the engine.
-     * @return A vector of EngineOption objects.
-     */
-    const EngineOptions& getSupportedOptions() const {
-        return supportedOptions_;
-	}
+      /**
+       * @brief Gets the author of the engine.
+       * @return The author as a string.
+       */
+      const std::string& getAuthor() const {
+      return author_;
+      }
 
-    /**
-     * @brief Sets the supported options of the engine.
-     * @param options A vector of EngineOption objects.
-     */
-    void setSupportedOptions(const EngineOptions& options) {
-		supportedOptions_ = options;
-	}
+      /**
+       * @brief Sets the author of the engine.
+       * @param author The author as a string.
+       */
+      void setAuthor(const std::string& author) {
+      author_ = author;
+      }
 
-    /**
-     * @brief Saves the engine capability data to a stream in INI format.
-     * @param out The output stream to write the data to.
-     */
-    void save(std::ostream& out) const;
+      /**
+       * @brief Gets the supported options of the engine.
+       * @return A vector of EngineOption objects.
+       */
+      const EngineOptions& getSupportedOptions() const {
+          return supportedOptions_;
+    }
 
-    /**
-     * @brief Creates an EngineCapability instance from a key-value map.
-     * @param keyValueMap An unordered map containing key-value pairs to initialize the properties.
-     * @return An EngineCapability instance initialized with the provided key-value pairs.
-     * @throws std::invalid_argument if the command line (path) or protocol is missing or invalid.
-     */
-    static EngineCapability createFromKeyValueMap (const std::unordered_map<std::string, std::string>& keyValueMap);
+      /**
+       * @brief Sets the supported options of the engine.
+       * @param options A vector of EngineOption objects.
+       */
+      void setSupportedOptions(const EngineOptions& options) {
+      supportedOptions_ = options;
+    }
 
-private:
-    std::string path_; ///< Path to the engine executable.
-    EngineProtocol protocol_ = EngineProtocol::Unknown; ///< Protocol used by the engine.
-    std::string name_;  ///< The name reported by the engine itself.
-	std::string author_; ///< The author reported by the engine itself.
-    EngineOptions supportedOptions_; ///< Supported options of the engine.
-};
+      /**
+       * @brief Saves the engine capability data to a stream in INI format.
+       * @param out The output stream to write the data to.
+       */
+      void save(std::ostream& out) const;
 
+      /**
+       * @brief Creates an EngineCapability instance from a key-value map.
+       * @param keyValueMap An unordered map containing key-value pairs to initialize the properties.
+       * @return An EngineCapability instance initialized with the provided key-value pairs.
+       * @throws std::invalid_argument if the command line (path) or protocol is missing or invalid.
+       */
+      static EngineCapability createFromKeyValueMap (const std::unordered_map<std::string, std::string>& keyValueMap);
+
+  private:
+      std::string path_; ///< Path to the engine executable.
+      EngineProtocol protocol_ = EngineProtocol::Unknown; ///< Protocol used by the engine.
+      std::string name_;  ///< The name reported by the engine itself.
+    std::string author_; ///< The author reported by the engine itself.
+      EngineOptions supportedOptions_; ///< Supported options of the engine.
+  };
+
+} // namespace QaplaConfiguration
