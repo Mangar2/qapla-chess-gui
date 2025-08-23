@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 
@@ -101,6 +101,7 @@ namespace QaplaWindows {
             result_->setGamesLeft();
 			tournament_->createTournament(engineConfig_, *config_);
             tournament_->scheduleAll(concurrency_, false);
+            running_ = true;
             eloTable_.clear();
             populateEloTable();
 			runningTable_.clear();
@@ -176,7 +177,7 @@ namespace QaplaWindows {
     }
 
     bool TournamentData::isRunning() const {
-        return result_->gamesLeft();
+        return running_ && result_->gamesLeft();
 	}
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
@@ -189,16 +190,19 @@ namespace QaplaWindows {
 
     void TournamentData::stopPool() {
         GameManagerPool::getInstance().stopAll();
+        running_ = false;
         SnackbarManager::instance().showSuccess("Tournament stopped");
     }
 
     void TournamentData::clear() {
         GameManagerPool::getInstance().clearAll();
+        running_ = false;
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
     }
 
-    void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool start) {
+    void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
+        bool start = isRunning();
         GameManagerPool::getInstance().setConcurrency(count, nice, start);
     }
 

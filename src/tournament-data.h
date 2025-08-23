@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -74,9 +74,8 @@ namespace QaplaWindows {
          * @brief Sets the pool concurrency level.
          * @param count The number of concurrent tasks to allow.
          * @param nice If true, reduces the number of active managers gradually.
-         * @param start If true, starts new tasks immediately.
          */
-        void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
+        void setPoolConcurrency(uint32_t count, bool nice = true);
 
         /**
          * @brief Draws the EPD test results table.
@@ -197,6 +196,8 @@ namespace QaplaWindows {
 
         ImGuiTable eloTable_;
         ImGuiTable runningTable_;
+
+        bool running_ = false;
 
     };
 
