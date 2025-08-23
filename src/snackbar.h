@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -25,7 +25,7 @@
 #include <chrono>
 #include <optional>
 #include <array>
-#include <deque> // Für den Stack von Snackbar-Einträgen
+#include <deque> // Fï¿½r den Stack von Snackbar-Eintrï¿½gen
 
 class SnackbarManager {
 public:
@@ -132,7 +132,7 @@ private:
 
     static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
         ImVec4(0.8f, 0.8f, 0.8f, 1.0f), // Note: Blass-Grau
-        ImVec4(0.7f, 0.8f, 0.7f, 1.0f), // Success: Blass-Grün
+        ImVec4(0.7f, 0.8f, 0.7f, 1.0f), // Success: Blass-Grï¿½n
         ImVec4(0.8f, 0.8f, 0.7f, 1.0f), // Warning: Blass-Gelb
         ImVec4(0.8f, 0.7f, 0.7f, 1.0f)  // Error: Blass-Rot
     };
@@ -155,7 +155,7 @@ private:
         auto drawList = ImGui::GetWindowDrawList();
 
         // Circle
-        drawList->AddCircleFilled(position, radius, ImColor(1.0f, 1.0f, 1.0f, 0.9f)); // Weißer Kreis
+        drawList->AddCircleFilled(position, radius, ImColor(1.0f, 1.0f, 1.0f, 0.9f)); // Weiï¿½er Kreis
         drawList->AddCircle(position, radius, ImColor(0.0f, 0.0f, 0.0f, 0.9f), 16, 1.5f); // Schwarzer Rand
 
         // "X" 
@@ -171,8 +171,8 @@ private:
 
         ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
         ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
-        return ImGui::IsItemClicked(); // Gibt true zurück, wenn der Button geklickt wurde
+        return ImGui::IsItemClicked(); // Gibt true zurï¿½ck, wenn der Button geklickt wurde
     }
 
-    std::deque<SnackbarEntry> snackbarStack_; // Stack für Snackbar-Einträge
+    std::deque<SnackbarEntry> snackbarStack_; // Stack fï¿½r Snackbar-Eintrï¿½ge
 };
