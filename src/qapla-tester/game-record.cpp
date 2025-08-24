@@ -151,3 +151,22 @@ GameStruct GameRecord::createGameStruct() const {
     return gs;
 }
 
+GameRecord GameRecord::createMinimalCopy() const {
+    GameRecord record;
+    record.startPos_ = startPos_;
+    record.startFen_ = startFen_;
+    record.currentPly_ = currentPly_;
+    record.gameEndCause_ = gameEndCause_;
+    record.gameResult_ = gameResult_;
+    record.whiteEngineName_ = whiteEngineName_;
+    record.blackEngineName_ = blackEngineName_;
+    record.isWhiteToMoveAtStart_ = isWhiteToMoveAtStart_;
+    record.round_ = round_;
+    record.moves_.reserve(moves_.size());
+    for (auto& move : moves_) {
+        record.moves_.emplace_back(move.createMinimalCopy());
+    }
+
+    return record;
+}
+

@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #include "board-exchange.h"
@@ -32,7 +32,8 @@ uint32_t BoardExchange::registerProvider(ProviderType type) {
     activeProviders_.emplace(newId, ProviderData{
         .uniqueId = newId,
         .type = type,
-        .engineDataList = Tracked<EngineExchangeDataList>(newId)
+        .engineDataList = Tracked<EngineExchangeDataList>(newId),
+        .gameRecord = Tracked<GameRecord>(newId)
         });
     return newId;
 }
@@ -76,3 +77,24 @@ std::vector<Tracked<EngineExchangeDataList>> BoardExchange::getTrackedEngineData
     return result;
 }
 
+void BoardExchange::setGameRecord(const GameRecord& record, ProviderId_t id) {
+    std::lock_guard<std::mutex> lock(exchangeMutex_);
+    auto it = activeProviders_.find(id);
+    if (it != activeProviders_.end()) {
+        it->second.gameRecord.set(record.createMinimalCopy());
+    }
+    else {
+        throw std::runtime_error("Provider ID not found in active providers.");
+    }
+}
+
+void BoardExchange::modifyGameRecordThreadSafe(ProviderId_t id, const std::function<void(GameRecord&)>& callback) {
+    std::lock_guard<std::mutex> lock(exchangeMutex_);
+    auto it = activeProviders_.find(id);
+    if (it != activeProviders_.end()) {
+        callback(it->second.gameRecord.value());
+    }
+    else {
+        throw std::runtime_error("Provider ID not found in active providers.");
+    }
+}

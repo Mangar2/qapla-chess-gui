@@ -47,6 +47,10 @@ void GameContext::updateEngineNames() {
 			});
 	}
     QaplaTester::BoardExchange::instance().setEngineDataList(id_, list);
+    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
+        record.setWhiteEngineName(whiteName);
+        record.setBlackEngineName(blackName);
+    });
 }
 
 void GameContext::tearDown() {
@@ -145,6 +149,7 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
                 gameRecord_.addMove(moveRecord);
             }
         }
+        QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
     }
 
     for (auto& player : players_) {
@@ -160,6 +165,8 @@ void GameContext::setPosition(const GameRecord& record) {
 		updateEngineNames();
     }
 
+    QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
+
     for (auto& player : players_) {
         player->setStartPosition(gameRecord_);
     }
@@ -172,6 +179,10 @@ void GameContext::setMove(const MoveRecord& move) {
         std::lock_guard lock(gameRecordMutex_);
 		gameRecord_.addMove(move);
     }
+
+    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
+        record.addMove(move.createMinimalCopy());
+    });
 
     for (auto& player : players_) {
         player->doMove(move);

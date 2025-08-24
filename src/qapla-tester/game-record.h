@@ -265,6 +265,8 @@ public:
 	void reserveMoves(size_t count) {
 		moves_.reserve(count);
 	}
+
+	GameRecord createMinimalCopy() const;
 	
 private:
 	

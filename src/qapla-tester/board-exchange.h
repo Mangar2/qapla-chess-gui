@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -33,6 +33,7 @@ namespace QaplaTester {
 		size_t memoryUsageB;
 		bool white;
 	};
+
 	using EngineExchangeDataList = std::vector<EngineExchangeData>;
 	using ProviderId_t = uint32_t;
 
@@ -68,6 +69,10 @@ namespace QaplaTester {
 			return data_;
 		}
 
+		T& value() {
+			return data_;
+		}
+
 		/**
 		 * @brief Gets the current change counter value.
 		 * @return The change counter.
@@ -90,6 +95,7 @@ namespace QaplaTester {
 		ProviderId_t uniqueId;
 		ProviderType type;
 		Tracked<EngineExchangeDataList> engineDataList;
+		Tracked<GameRecord> gameRecord;
 	};
 
 	class BoardExchange {
@@ -161,6 +167,25 @@ namespace QaplaTester {
 		 */
 		std::vector<Tracked<EngineExchangeDataList>> getTrackedEngineDataLists(
 			const std::vector<ProviderId_t>& ids) const;
+
+		/**
+		 * @brief Sets a game record
+		 * 
+		 * @param record The GameRecord to set.
+		 * @param id The unique identifier of the provider.
+		 */
+		void setGameRecord(const GameRecord& record, ProviderId_t id);
+
+		/**
+		 * @brief Thread-safe access to modify the GameRecord for a specific provider.
+		 *
+		 * This method allows a thread-safe modification of the GameRecord by passing
+		 * a callback function that operates on the GameRecord.
+		 *
+		 * @param id The unique identifier of the provider.
+		 * @param callback A function that takes a reference to the GameRecord and modifies it.
+		 */
+		void modifyGameRecordThreadSafe(ProviderId_t id, const std::function<void(GameRecord&)>& callback);
 
 	private:
 

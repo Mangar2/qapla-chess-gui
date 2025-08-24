@@ -18,15 +18,16 @@
  */
 #pragma once
 
+
+#include "engine-worker.h"
+#include "engine-event.h"
+#include "game-context.h"
+
 #include <memory>
 #include <string>
 #include <optional>
 #include <vector>
 #include <future>
-
-#include "engine-worker.h"
-#include "engine-event.h"
-#include "game-context.h"
 
  /**
   * @brief Executes a single computation task such as move calculation, game play, or position analysis.
