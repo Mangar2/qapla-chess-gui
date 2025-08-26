@@ -21,7 +21,7 @@
 #include "board-exchange.h"
 
 ComputeTask::ComputeTask()
-    : gameContext_(QaplaTester::ProviderType::ComputeTask)
+    : gameContext_()
 {
     finishedFuture_ = finishedPromise_.get_future();
     finishedPromiseValid_ = true;

@@ -37,7 +37,7 @@
   */
 class GameContext {
 public:
-    GameContext(QaplaTester::ProviderType type);
+    GameContext();
     ~GameContext();
 
     /**

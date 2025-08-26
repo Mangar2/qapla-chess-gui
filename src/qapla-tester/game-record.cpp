@@ -162,6 +162,9 @@ GameRecord GameRecord::createMinimalCopy() const {
     record.blackEngineName_ = blackEngineName_;
     record.isWhiteToMoveAtStart_ = isWhiteToMoveAtStart_;
     record.round_ = round_;
+    record.gameInRound_ = gameInRound_;
+    record.totalGameNo_ = totalGameNo_;
+    record.opening_ = opening_;
     record.moves_.reserve(moves_.size());
     for (auto& move : moves_) {
         record.moves_.emplace_back(move.createMinimalCopy());

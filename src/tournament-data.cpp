@@ -59,7 +59,9 @@ namespace QaplaWindows {
             std::vector<ImGuiTable::ColumnDef>{
                 { "White", ImGuiTableColumnFlags_WidthFixed, 150.0f },
                 { "Black", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "Status", ImGuiTableColumnFlags_WidthFixed, 50.0f }
+                { "Round", ImGuiTableColumnFlags_WidthFixed, 50.0f },
+                { "Game", ImGuiTableColumnFlags_WidthFixed, 50.0f },
+                { "Opening", ImGuiTableColumnFlags_WidthFixed, 50.0f }
             }
 		)
     { 
@@ -143,21 +145,16 @@ namespace QaplaWindows {
     void TournamentData::populateRunningTable() {
         runningTable_.clear();
         if (tournament_) {
-            auto ids = QaplaTester::BoardExchange::instance().
-                getIdsByProviderType(QaplaTester::ProviderType::GameManager);
-            auto games = QaplaTester::BoardExchange::instance().getTrackedEngineDataLists(ids);
-            runningCount_ = 0;
-            for (const auto& game : games) {
-                if (game.value().size() == 0) continue;
+            GameManagerPool::getInstance().withGameRecords([&](const GameRecord& game) {
                 std::vector<std::string> row;
-                row.resize(3);
-                for (const auto& player : game.value()) {
-					row[player.white ? 0 : 1] = player.name;
-				}
-                row[2] = "running";
-				runningTable_.push(row);
+                row.push_back(game.getWhiteEngineName());
+                row.push_back(game.getBlackEngineName());
+                row.push_back(std::to_string(game.getRound()));
+                row.push_back(std::to_string(game.getGameInRound()));
+                row.push_back(std::to_string(game.getOpeningNo()));
+                runningTable_.push(row);
                 runningCount_++;
-            }
+            });
         }
 	}
 

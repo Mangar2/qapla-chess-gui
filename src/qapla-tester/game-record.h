@@ -41,6 +41,14 @@ struct GameStruct {
 	bool isWhiteToMove;
 };
 
+enum class GameEvent {
+	None,
+	Tournament,
+	Epd,
+	Sprt,
+	ComputeTask
+};
+
 /**
  * Stores a list of moves and manages current game state pointer.
  * Supports forward/backward navigation and time control evaluation.
@@ -181,18 +189,68 @@ public:
 	}
 
 	/**
-	 * @brief Returns the round number of the game.
+	 * @brief Sets the round number of the game.
+	 * @param round The round number to set.
+	 * @param gameInRound The game number within the round.
+	 * @param opening The number of opening selected.
+	 */
+	void setTournamentInfo(uint32_t round, uint32_t gameInRound, uint32_t opening) {
+		updateCnt_++;
+		round_ = round;
+		gameInRound_ = gameInRound;
+		opening_ = opening;
+	}
+
+	/**
+	 * @brief Gets the round number of the game.
 	 */
 	uint32_t getRound() const {
 		return round_;
 	}
+
 	/**
-	 * @brief Sets the round number of the game.
-	 * @param r The round number to set.
+	 * @brief Gets the opening number used as start position for the game.
 	 */
-	void setRound(uint32_t r) {
-		updateCnt_++;
-		round_ = r;
+	uint32_t getOpeningNo() const {
+		return opening_;
+	}
+
+	/**
+	 * @brief Gets the game number of the current round
+	 * @return The game number within the current round.
+	 */
+	uint32_t getGameInRound() const {
+		return gameInRound_;
+	}
+
+	/**
+	 * @brief Sets the game numbver of the current round
+	 * @param gameInRound The game number within the current round.
+	 */
+	void setGameInRound(uint32_t gameInRound) {
+		gameInRound_ = gameInRound;
+	}
+
+	/**
+	 * @brief Sets the total game number from the start of the tournament.
+	 *
+	 * This method assigns a unique game number that represents the position of the
+	 * current game in the overall sequence of all games played in the tournament,
+	 * across all rounds. For example, in a tournament with 10 rounds and 10 games
+	 * per round, the 5th game in the 5th round would have a total game number of 45.
+	 *
+	 * @param totalGameNo The total game number to set.
+	 */
+	void setTotalGameNo(uint32_t totalGameNo) {
+		totalGameNo_ = totalGameNo;
+	}
+
+	/**
+	 * @brief Gets the total game number
+	 * @return The 1-indexed number of total games played in the tournament so far
+	 */
+	uint32_t getTotalGameNo() const {
+		return totalGameNo_;
 	}
 
 	/**
@@ -266,6 +324,25 @@ public:
 		moves_.reserve(count);
 	}
 
+	/**
+	 * @brief Creates a minimal copy of this GameRecord.
+	 *
+	 * This method generates a new `GameRecord` object that contains only the essential
+	 * information from the current record. The minimal copy includes:
+	 * - Start position (FEN and side to move)
+	 * - Move history with reduced data (excluding original and SAN moves, comments, NAGs, search info)
+	 * - Engine names
+	 * - Game end cause and result
+	 * - PGN tags
+	 * - Tournament information (round, game number, opening)
+	 *
+	 * Fields that are excluded in the minimal copy:
+	 * - Original and SAN moves in each `MoveRecord`
+	 * - Comments and NAGs in each `MoveRecord`
+	 * - Search info list and update count in each `MoveRecord`
+	 *
+	 * @return A new `GameRecord` object with reduced data.
+	 */
 	GameRecord createMinimalCopy() const;
 	
 private:
@@ -281,7 +358,12 @@ private:
     TimeControl blackTimeControl_;
     std::string whiteEngineName_;
     std::string blackEngineName_;
-	bool isWhiteToMoveAtStart_ = true; 
+	bool isWhiteToMoveAtStart_ = true;
+	uint32_t totalGameNo_ = 0;
+	uint32_t gameInRound_ = 0;
+	uint32_t opening_ = 0; 
     uint32_t round_ = 0;
+	uint32_t pgnRound_ = 0;
 	uint64_t updateCnt_ = 1; 
+	GameEvent gameEvent_ = GameEvent::None;
 };

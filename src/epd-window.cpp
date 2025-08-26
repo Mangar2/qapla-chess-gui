@@ -28,6 +28,7 @@
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
+#include "qapla-tester/board-exchange.h"
 
 #include "imgui.h"
 

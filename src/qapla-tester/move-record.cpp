@@ -17,8 +17,6 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#pragma once
-
 #include "move-record.h"
 
 #include "engine-event.h"

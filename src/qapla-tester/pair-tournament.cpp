@@ -129,6 +129,8 @@ std::optional<GameTask> PairTournament::nextTask() {
         Logger::testLogger().log(getTournamentInfo(), TraceLevel::result);
     } 
 
+    uint32_t openingIndex = 0;
+
     // Ensures robustness against unfinished games by scanning results_ instead of relying solely on nextIndex_.
     for (size_t i = nextIndex_; i < config_.games; ++i) {
         if (i >= results_.size()) {
@@ -136,8 +138,9 @@ std::optional<GameTask> PairTournament::nextTask() {
         }
         // Ensures consistent opening assignment for replayed games,  
         // avoiding mismatches due to skipped entries in rotating schemes.
-        if (config_.openings.policy == "default" && i % config_.repeat == 0) { 
-            updateOpening(newOpeningIndex(i));
+        if (config_.openings.policy == "default" && i % config_.repeat == 0) {
+            openingIndex = newOpeningIndex(i); 
+            updateOpening(openingIndex);
         }
         if (results_[i] != GameResult::Unterminated) {
             continue;
@@ -145,8 +148,12 @@ std::optional<GameTask> PairTournament::nextTask() {
         GameTask task;
         task.taskType = GameTask::Type::PlayGame;
 		task.gameRecord = curRecord_;
-		
-		task.gameRecord.setRound(static_cast<uint32_t>(i + 1));
+
+		task.gameRecord.setTournamentInfo(
+            static_cast<uint32_t>(config_.round + 1),
+            static_cast<uint32_t>(i + 1),
+            openingIndex
+        );
 		task.taskId = std::to_string(i);
         task.switchSide = config_.swapColors && (i % 2 == 1);
         auto& white = task.switchSide ? engineB_ : engineA_;
@@ -174,20 +181,20 @@ void PairTournament::setGameRecord([[maybe_unused]] const std::string& taskId, c
     std::lock_guard<std::mutex> lock(mutex_);
 
     auto [cause, result] = record.getGameResult();
-    uint32_t round = record.getRound();
+    uint32_t gameInRound = record.getGameInRound();
     
 
-    if (round == 0 || round > results_.size()) {
-		Logger::testLogger().log("Invalid round number in GameRecord: Round " + std::to_string(round) 
+    if (gameInRound == 0 || gameInRound > results_.size()) {
+		Logger::testLogger().log("Invalid round number in GameRecord: Round " + std::to_string(gameInRound) 
             + " but having " + std::to_string(results_.size()) + " games started ", TraceLevel::error);
         return;
     }
 
     // Result is stored as "white-view", thus not engine-view. To count how often the engines won,
     // we need to check the color of the engine in this round.
-    results_[round - 1] = result;
+    results_[gameInRound - 1] = result;
     GameRecord pgnRecord = record;
-    pgnRecord.setRound(round + config_.gameNumberOffset);
+    pgnRecord.setTotalGameNo(gameInRound + config_.gameNumberOffset);
     PgnIO::tournament().saveGame(pgnRecord);
 
 	duelResult_.addResult(record);
@@ -195,7 +202,7 @@ void PairTournament::setGameRecord([[maybe_unused]] const std::string& taskId, c
         std::ostringstream oss;
         oss << std::left
             << "  match round " << std::setw(3) << (config_.round + 1)
-            << " game " << std::setw(3) << round
+            << " game " << std::setw(3) << gameInRound
             << " result " << std::setw(7) << to_string(result)
             << " cause " << std::setw(21) << to_string(cause)
             << " engines " << record.getWhiteEngineName() << " vs " << record.getBlackEngineName();

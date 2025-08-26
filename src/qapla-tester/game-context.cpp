@@ -20,8 +20,8 @@
 #include "engine-worker-factory.h"
 #include "board-exchange.h"
 
-GameContext::GameContext(QaplaTester::ProviderType type) {
-    id_ = QaplaTester::BoardExchange::instance().registerProvider(type);
+GameContext::GameContext() {
+    id_ = QaplaTester::BoardExchange::instance().registerProvider();
 };
 
 GameContext::~GameContext() {
@@ -56,6 +56,7 @@ void GameContext::updateEngineNames() {
 void GameContext::tearDown() {
     players_.clear();
     QaplaTester::BoardExchange::instance().setEngineDataList(id_, {});
+
 }
 
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines) {
@@ -251,8 +252,14 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult() {
     for (auto& player : players_) {
         auto [pcause, presult] = player->getGameResult();
         if (presult != GameResult::Unterminated) {
-            std::lock_guard lock(gameRecordMutex_);
-            gameRecord_.setGameEnd(pcause, presult);
+            {
+                std::lock_guard lock(gameRecordMutex_);
+                gameRecord_.setGameEnd(pcause, presult);
+            }
+            QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
+                record.setGameEnd(pcause, presult);
+            });
+
             break;
         }
     }

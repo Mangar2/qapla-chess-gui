@@ -67,7 +67,7 @@ void PgnIO::saveTags(std::ostream& out, const GameRecord& game) {
             out << "[EventDate \"" << date << "\"]\n";
             out << "[Time \"" << time << "\"]\n";
         }
-		out << "[Round \"" + std::to_string(game.getRound()) + "\"]\n";
+		out << "[Round \"" + std::to_string(game.getTotalGameNo()) + "\"]\n";
         const auto [cause, result] = game.getGameResult();
         out << "[Result \"" << to_string(result) << "\"]\n";
 	    std::string termination = "normal";
@@ -128,7 +128,7 @@ void PgnIO::finalizeParsedTags(GameRecord& game) {
     }
     if (auto it = tags.find("Round"); it != tags.end()) {
         try {
-            game.setRound(static_cast<uint32_t>(std::stoi(it->second)));
+            game.setGameInRound(static_cast<uint32_t>(std::stoi(it->second)));
         }
         catch (...) {}
     }

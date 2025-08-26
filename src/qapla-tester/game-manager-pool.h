@@ -77,6 +77,7 @@ public:
      * @brief Sets the global concurrency limit.
      *
      * @param count Maximum number of concurrent managers
+     * @param providerType Type of game task provider
      * @param nice If true, idle managers are reduced gradually
 	 * @param start If true, starts the managers immediately
      */
@@ -144,9 +145,27 @@ public:
 	 */
     size_t runningGameCount() const;
 
+
+    /**
+     * @brief Executes a provided function on the GameRecord of all active GameManagers in a thread-safe manner.
+     *
+     * This method iterates over all active GameManagers in the pool and calls their
+     * `withGameRecord` method, passing the provided function. The entire iteration
+     * is protected by a mutex to ensure thread safety.
+     *
+     * @param accessFn A function to be executed on the GameRecord of each active GameManager.
+     */
+    void withGameRecords(const std::function<void(const GameRecord&)>& accessFn) {
+        std::lock_guard<std::mutex> lock(managerMutex_); 
+        for (auto& gameManager : managers_) {
+            if (gameManager && gameManager->isRunning()) {
+                gameManager->withGameRecord(accessFn);
+            }
+        }
+    }
+
 private:
     
-
     void printRunningGames(std::ostream& out) const;
     void viewEngineTrace(int gameManagerIndex) const;
 
@@ -195,7 +214,6 @@ private:
     bool niceMode_ = false;
     std::mutex taskMutex_;
     std::mutex managerMutex_;
-    std::mutex deactivateMutex_;
     bool paused_ = false;
 
 	// InputHandler

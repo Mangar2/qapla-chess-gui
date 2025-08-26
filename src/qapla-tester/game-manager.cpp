@@ -41,7 +41,7 @@
 #include "board-exchange.h"
 
 GameManager::GameManager()
-    : taskProvider_(nullptr), gameContext_(QaplaTester::ProviderType::GameManager)
+    : taskProvider_(nullptr), gameContext_()
 {
     eventThread_ = std::thread(&GameManager::processQueue, this);
     gameContext_.setEventCallback([this](EngineEvent&& event) {

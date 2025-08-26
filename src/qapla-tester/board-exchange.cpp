@@ -26,38 +26,34 @@ void BoardExchange::unregisterProvider(ProviderId_t id) {
     activeProviders_.erase(id);
 }
 
-uint32_t BoardExchange::registerProvider(ProviderType type) {
+uint32_t BoardExchange::registerProvider() {
     std::lock_guard<std::mutex> lock(exchangeMutex_);
     uint32_t newId = nextId_++;
     activeProviders_.emplace(newId, ProviderData{
         .uniqueId = newId,
-        .type = type,
         .engineDataList = Tracked<EngineExchangeDataList>(newId),
         .gameRecord = Tracked<GameRecord>(newId)
         });
     return newId;
 }
 
-void BoardExchange::setEngineDataList(ProviderId_t id, const EngineExchangeDataList& engineDataList) {
-    std::lock_guard<std::mutex> lock(exchangeMutex_);
+ProviderData* BoardExchange::getProviderData(ProviderId_t id) {
     auto it = activeProviders_.find(id);
     if (it != activeProviders_.end()) {
-        it->second.engineDataList = Tracked<EngineExchangeDataList>(engineDataList, id);
+        return &it->second;
     }
+    return nullptr;
+}
+
+void BoardExchange::setEngineDataList(ProviderId_t id, const EngineExchangeDataList& engineDataList) {
+    std::lock_guard<std::mutex> lock(exchangeMutex_);
+    auto providerData = getProviderData(id);
+    if (providerData) {
+        providerData->engineDataList = Tracked<EngineExchangeDataList>(engineDataList, id);
+    } 
     else {
         throw std::runtime_error("Provider ID not found in active providers.");
     }
-}
-
-std::vector<ProviderId_t> BoardExchange::getIdsByProviderType(ProviderType type) const {
-    std::lock_guard<std::mutex> lock(exchangeMutex_);
-    std::vector<ProviderId_t> ids;
-    for (const auto& [id, data] : activeProviders_) {
-        if (data.type == type) {
-            ids.push_back(id);
-        }
-    }
-    return ids;
 }
 
 std::vector<Tracked<EngineExchangeDataList>> BoardExchange::getTrackedEngineDataLists(
@@ -93,6 +89,17 @@ void BoardExchange::modifyGameRecordThreadSafe(ProviderId_t id, const std::funct
     auto it = activeProviders_.find(id);
     if (it != activeProviders_.end()) {
         callback(it->second.gameRecord.value());
+    }
+    else {
+        throw std::runtime_error("Provider ID not found in active providers.");
+    }
+}
+
+void BoardExchange::setComputationState(ProviderId_t id, ComputationStatus status) {
+    std::lock_guard<std::mutex> lock(exchangeMutex_);
+    auto* providerData = getProviderData(id);
+    if (providerData) {
+        providerData->status = status;
     }
     else {
         throw std::runtime_error("Provider ID not found in active providers.");

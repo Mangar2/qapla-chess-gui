@@ -37,10 +37,18 @@ namespace QaplaTester {
 	using EngineExchangeDataList = std::vector<EngineExchangeData>;
 	using ProviderId_t = uint32_t;
 
-	enum ProviderType {
+	enum class ProviderType {
 		None,
-		ComputeTask,
-		GameManager
+		EPD,
+		Tournament,
+		Sprt,
+		ComputeTask
+	};
+
+	enum class ComputationStatus {
+		Stopped,
+		Running,
+		Paused
 	};
 
 	template <typename T>
@@ -93,7 +101,7 @@ namespace QaplaTester {
 
 	struct ProviderData {
 		ProviderId_t uniqueId;
-		ProviderType type;
+		ComputationStatus status = ComputationStatus::Stopped;
 		Tracked<EngineExchangeDataList> engineDataList;
 		Tracked<GameRecord> gameRecord;
 	};
@@ -128,10 +136,9 @@ namespace QaplaTester {
 		 * a unique ID to it. The ID can be used to reference the provider in future
 		 * operations.
 		 *
-		 * @param type The type of the provider (e.g., ComputeTask, GameManager).
 		 * @return The unique ID assigned to the provider.
 		 */
-		ProviderId_t registerProvider(ProviderType type);
+		ProviderId_t registerProvider();
 
 		/**
 		 * @brief Sets a new EngineExchangeDataList for a specific provider.
@@ -143,17 +150,6 @@ namespace QaplaTester {
 		 * @param engineDataList The new engine data list to associate with the provider.
 		 */
 		void setEngineDataList(ProviderId_t id, const EngineExchangeDataList& engineDataList);
-
-		/**
-		 * @brief Retrieves all IDs associated with a specific ProviderType.
-		 *
-		 * This method iterates through all active providers and collects the IDs
-		 * of those matching the specified ProviderType.
-		 *
-		 * @param type The ProviderType to filter by (e.g., ComputeTask, GameManager).
-		 * @return A vector of ProviderId_t containing all matching IDs.
-		 */
-		std::vector<ProviderId_t> getIdsByProviderType(ProviderType type) const;
 
 		/**
 		 * @brief Retrieves a vector of Tracked<EngineExchangeDataList> for a given list of IDs.
@@ -187,8 +183,27 @@ namespace QaplaTester {
 		 */
 		void modifyGameRecordThreadSafe(ProviderId_t id, const std::function<void(GameRecord&)>& callback);
 
+		/**
+		 * @brief Updates the computation state for a specific provider.
+		 *
+		 * This method sets the computation status of a provider identified by its unique ID.
+		 * The status reflects the current state of computation for the provider.
+		 *
+		 * @param id The unique identifier of the provider.
+		 * @param status The new computation status to set.
+		 *
+		 * @throws std::runtime_error If the provider ID is not found in the active providers.
+		 */
+		void setComputationState(ProviderId_t id, ComputationStatus status);
+		
 	private:
 
+		/**
+		 * @brief Gets a pointer to the provider data
+		 * @return Pointer to the ProviderData associated with the given ID, or nullptr if not found.
+		 */
+	    ProviderData* getProviderData(ProviderId_t id);
+			
 		ProviderId_t nextId_ = 0; ///< Unique ID for the next provider
 		mutable std::mutex exchangeMutex_; ///< Mutex for thread-safe access to the exchange data
 		std::unordered_map<ProviderId_t, ProviderData> activeProviders_; ///< Map of active registrations

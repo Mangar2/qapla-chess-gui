@@ -152,6 +152,17 @@ public:
      */
     void resume();
 
+    /**
+     * Executes the given callable with thread-safe access to the game record.
+     * The callable receives a const reference to the game record.
+     *
+     * @param accessFn A callable that takes a const GameRecord&.
+     */
+    void withGameRecord(std::function<void(const GameRecord&)> accessFn) const {
+        gameContext_.withGameRecord(std::move(accessFn));
+    }
+
+
 private:
     /**
      * @brief Tells the engine to stop the current move calculation and sends the best move
