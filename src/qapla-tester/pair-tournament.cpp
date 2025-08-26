@@ -129,8 +129,6 @@ std::optional<GameTask> PairTournament::nextTask() {
         Logger::testLogger().log(getTournamentInfo(), TraceLevel::result);
     } 
 
-    uint32_t openingIndex = 0;
-
     // Ensures robustness against unfinished games by scanning results_ instead of relying solely on nextIndex_.
     for (size_t i = nextIndex_; i < config_.games; ++i) {
         if (i >= results_.size()) {
@@ -139,7 +137,7 @@ std::optional<GameTask> PairTournament::nextTask() {
         // Ensures consistent opening assignment for replayed games,  
         // avoiding mismatches due to skipped entries in rotating schemes.
         if (config_.openings.policy == "default" && i % config_.repeat == 0) {
-            openingIndex = newOpeningIndex(i); 
+            auto openingIndex = newOpeningIndex(i); 
             updateOpening(openingIndex);
         }
         if (results_[i] != GameResult::Unterminated) {
@@ -152,7 +150,7 @@ std::optional<GameTask> PairTournament::nextTask() {
 		task.gameRecord.setTournamentInfo(
             static_cast<uint32_t>(config_.round + 1),
             static_cast<uint32_t>(i + 1),
-            openingIndex
+            openingIndex_
         );
 		task.taskId = std::to_string(i);
         task.switchSide = config_.swapColors && (i % 2 == 1);
