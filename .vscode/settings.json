@@ -1,8 +1,26 @@
 {
+    "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
+    "C_Cpp.default.cppStandard": "c++20",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "C_Cpp.codeAnalysis.clangTidy.args": [
+        "--std=c++20"
+    ],
+    "cmake.configureOnOpen": true,
+    "cmake.generator": "Ninja",
+    "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/usr/local/include",
+        "/Library/Developer/CommandLineTools/usr/include/c++/v1"
+    ],
+    "C_Cpp.default.defines": [
+        "MACOS",
+        "ARM"
+    ],
     "files.associations": {
-        "unordered_map": "cpp",
-        "string": "cpp",
-        "ostream": "cpp",
-        "atomic": "cpp"
-    }
+        "*.h": "cpp"
+    },
+    "editor.formatOnSave": true
 }

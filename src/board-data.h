@@ -40,14 +40,24 @@ class ComputeTask;
 
 namespace QaplaWindows {
 
+	class ImGuiBoard;
+
 	class BoardData {
 	public:
 		/**
 		 * @brief Constructs a new BoardData object.
 		 */
 		BoardData();
-
 		~BoardData();
+
+		/**
+		 * @brief Returns a reference to the singleton instance of BoardData.
+		 * @return Reference to BoardData instance.
+		 */
+		static BoardData& instance() {
+			static BoardData instance;
+			return instance;
+		}
 
 		/**
 		 * @brief Returns a const reference to the current GameState.
@@ -207,6 +217,9 @@ namespace QaplaWindows {
 		EngineRecords engineRecords_;
 		MoveInfos moveInfos_;
 		TimeControl timeControl_;
+
+		std::unique_ptr<ImGuiBoard> imGuiBoard_;
+
 	};
 
 }

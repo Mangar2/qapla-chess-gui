@@ -34,8 +34,7 @@
 
 using namespace QaplaWindows;
 
-ClockWindow::ClockWindow(std::shared_ptr<BoardData> boardData)
-    : boardData_(std::move(boardData))
+ClockWindow::ClockWindow()
 {
 }
 
@@ -43,7 +42,8 @@ ClockWindow::~ClockWindow() = default;
 
 
 bool ClockWindow::setClockData() {
-    auto& gameRecord = boardData_->gameRecord();
+    auto& boardData = QaplaWindows::BoardData::instance();
+    auto& gameRecord = boardData.gameRecord();
     auto wtc = gameRecord.getWhiteTimeControl();
     auto btc = gameRecord.getBlackTimeControl();
     if (!wtc.isValid() || !btc.isValid()) return false;
@@ -60,14 +60,14 @@ bool ClockWindow::setClockData() {
     }
 
 	// We need to adjust the current time for the engines currently calculating a move,
-    if (boardData_->moveInfos().size() >= 1) {
-		auto halfmoveNo = boardData_->moveInfos()[0]->halfmoveNo_;
-		wCur = boardData_->moveInfos()[0]->timeMs;
+    if (boardData.moveInfos().size() >= 1) {
+		auto halfmoveNo = boardData.moveInfos()[0]->halfmoveNo_;
+		wCur = boardData.moveInfos()[0]->timeMs;
 		if (halfmoveNo > curHalfmoveNo) goLimits.wtimeMs -= std::min(goLimits.wtimeMs, wCur);
     }
-    if (boardData_->moveInfos().size() >= 2) {
-        auto halfmoveNo = boardData_->moveInfos()[1]->halfmoveNo_;
-        bCur = boardData_->moveInfos()[1]->timeMs;
+    if (boardData.moveInfos().size() >= 2) {
+        auto halfmoveNo = boardData.moveInfos()[1]->halfmoveNo_;
+        bCur = boardData.moveInfos()[1]->timeMs;
 		if (halfmoveNo > curHalfmoveNo) goLimits.btimeMs -= std::min(goLimits.btimeMs, bCur);
     }
 

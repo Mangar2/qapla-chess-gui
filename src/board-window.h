@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 #pragma once
 
@@ -32,7 +32,7 @@ namespace QaplaWindows {
 
     class BoardWindow : public EmbeddedWindow {
     public:
-        explicit BoardWindow(std::shared_ptr<BoardData> BoardData) : boardData_(std::move(BoardData)) {}
+        explicit BoardWindow() {}
 
         void draw() override;
 
@@ -55,7 +55,6 @@ namespace QaplaWindows {
         void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
 
         bool boardInverted_ = false;
-        std::shared_ptr<BoardData> boardData_;
 
         std::optional<QaplaBasics::Square> selectedFrom_;
         std::optional<QaplaBasics::Square> selectedTo_;

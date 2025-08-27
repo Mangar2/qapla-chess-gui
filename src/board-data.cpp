@@ -35,7 +35,8 @@ using namespace QaplaWindows;
 BoardData::BoardData() : 
 	gameState_(std::make_unique<GameState>()),
 	gameRecord_(std::make_unique<GameRecord>()),
-	computeTask_(std::make_unique<ComputeTask>())
+	computeTask_(std::make_unique<ComputeTask>()),
+	imGuiBoard_(std::make_unique<ImGuiBoard>())
 {
 	timeControl_ = QaplaConfiguration::Configuration::instance()
 		.getTimeControlSettings().getSelectedTimeControl();

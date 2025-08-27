@@ -23,11 +23,12 @@
 #include "imgui.h"
 
 #include <sstream>
+#include <format>
+#include <string>
 
 using namespace QaplaWindows;
 
-MoveListWindow::MoveListWindow(std::shared_ptr<BoardData> BoardData) 
-    : boardData_(std::move(BoardData))
+MoveListWindow::MoveListWindow() 
 {
 }
 
@@ -63,11 +64,8 @@ std::string causeToString(GameEndCause cause) {
 
 
 void MoveListWindow::draw() {
-    if (!boardData_) {
-        ImGui::TextUnformatted("Internal Error");
-        return;
-    }
-    auto& gameRecord = boardData_->gameRecord();
+    auto& boardData = QaplaWindows::BoardData::instance();
+    auto& gameRecord = boardData.gameRecord();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
     constexpr ImGuiTableFlags flags =
         ImGuiTableFlags_RowBg
@@ -115,7 +113,7 @@ void MoveListWindow::draw() {
                 moveNumber++;
             }
             wtm = !wtm;
-            if (i + 1 == boardData_->nextMoveIndex()) {
+            if (i + 1 == boardData.nextMoveIndex()) {
                 auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
                 auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
                 ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
@@ -125,8 +123,8 @@ void MoveListWindow::draw() {
                 }
             }
         }
-        if (boardData_->isGameOver()) {
-            auto [cause, _] = boardData_->gameRecord().getGameResult();
+        if (boardData.isGameOver()) {
+            auto [cause, _] = boardData.gameRecord().getGameResult();
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             ImGui::TextUnformatted(causeToString(cause).c_str());
@@ -138,17 +136,18 @@ void MoveListWindow::draw() {
 
 void MoveListWindow::checkKeyboard() {
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+        auto& boardData = QaplaWindows::BoardData::instance();
 		int currentFrame = ImGui::GetFrameCount();
         if (currentFrame == lastInputFrame_) {
             return; 
 		}
 		lastInputFrame_ = currentFrame;
-        uint32_t index = boardData_->nextMoveIndex();
+        uint32_t index = boardData.nextMoveIndex();
         if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 0) {
-            boardData_->setNextMoveIndex(index - 1);
+            boardData.setNextMoveIndex(index - 1);
         }
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            boardData_->setNextMoveIndex(index + 1);
+            boardData.setNextMoveIndex(index + 1);
         }
     }
 }
@@ -167,9 +166,10 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
     ImGui::TableNextRow();
     // Move + SAN
     ImGui::TableSetColumnIndex(0);
+    auto& boardData = QaplaWindows::BoardData::instance();
 
     if (isRowClicked(index)) {
-        boardData_->setNextMoveIndex(static_cast<uint32_t>(index + 1));
+        boardData.setNextMoveIndex(static_cast<uint32_t>(index + 1));
     }
 
     std::string moveLabel = label + move.san;

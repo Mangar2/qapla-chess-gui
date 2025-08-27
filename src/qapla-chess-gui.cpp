@@ -98,29 +98,31 @@ namespace {
         ImGui::DestroyContext();
     }
 
-    QaplaWindows::BoardWorkspace initWindows(std::shared_ptr<QaplaWindows::BoardData> boardData) {
+    QaplaWindows::BoardWorkspace initWindows() {
 
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
 
+        auto& boardData = QaplaWindows::BoardData::instance();
+
         auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         ClockMovesContainer->setFixedTopHeight(120.0f);
-        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>(boardData));
-        ClockMovesContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>(boardData));
+        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
+        ClockMovesContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>());
 
         auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
-        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>(boardData));
+        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
 
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
-        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>(boardData));
+        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
 
 		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
         tabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
 		tabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
-        tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>(boardData));
+        tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
 		mainContainer->setRight(std::move(BoardEngineContainer));
@@ -144,8 +146,7 @@ namespace {
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
 
-		auto boardData = std::make_shared<QaplaWindows::BoardData>();
-        auto workspace = initWindows(boardData);
+        auto workspace = initWindows();
 
         auto* window = initGlfwContext();
         initGlad();
@@ -168,7 +169,7 @@ namespace {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-  			boardData->pollData();
+  			QaplaWindows::BoardData::instance().pollData();
             QaplaWindows::TournamentData::instance().pollData();
 
             workspace.draw();

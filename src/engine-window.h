@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -41,7 +41,7 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        EngineWindow(std::shared_ptr<BoardData> boardData);
+        EngineWindow();
         ~EngineWindow();
 
         void draw() override;
@@ -71,7 +71,6 @@ namespace QaplaWindows {
 
         void drawButtons(size_t index);
 
-        std::shared_ptr<BoardData> boardData_;
     };
 
 } // namespace QaplaWindows

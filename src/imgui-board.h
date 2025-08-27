@@ -41,9 +41,9 @@ namespace QaplaWindows {
         std::optional<QaplaBasics::Piece> promotion;
     };
 
-    class ImguiBoard {
+    class ImGuiBoard {
     public:
-        explicit ImguiBoard();
+        ImGuiBoard();
 
         /**
          * Draw the chessboard and pieces.

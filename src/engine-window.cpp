@@ -86,10 +86,9 @@ static void drawEngineInfo(const EngineRecord& record, size_t index) {
 }
 
 
-EngineWindow::EngineWindow(std::shared_ptr<BoardData> boardData)
+EngineWindow::EngineWindow()
     : setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
-        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" })),
-    boardData_(std::move(boardData))
+        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" }))
 {
 }
 
@@ -175,23 +174,24 @@ void EngineWindow::setTable(size_t index, const MoveRecord& moveRecord) {
 }
 
 void EngineWindow::setTable(size_t index) {
-    if (boardData_->engineRecords().size() == 0) return;
-	addTables(boardData_->engineRecords().size());
+    auto& boardData = QaplaWindows::BoardData::instance();
+    if (boardData.engineRecords().size() == 0) return;
+	addTables(boardData.engineRecords().size());
 
     if (index >= tables_.size() || 
-        index >= boardData_->engineRecords().size() || 
-        index >= boardData_->moveInfos().size()) {
+        index >= boardData.engineRecords().size() || 
+        index >= boardData.moveInfos().size()) {
         return;
     }
 
-	auto& engineRecord = boardData_->engineRecords()[index];
+	auto& engineRecord = boardData.engineRecords()[index];
 
     std::vector<SearchInfo> searchInfos;
-    auto& history = boardData_->gameRecord().history();
+    auto& history = boardData.gameRecord().history();
 
 	// Only display search info with matching engine ID in range of nextMoveIndex
-    auto nextMoveIndex = boardData_->gameRecord().nextMoveIndex();
-    auto& curMoveRecord = boardData_->moveInfos()[index];
+    auto nextMoveIndex = boardData.gameRecord().nextMoveIndex();
+    auto& curMoveRecord = boardData.moveInfos()[index];
     for (int i = 0; i < 2; i++) {
         int curIndex = static_cast<int>(nextMoveIndex) - i - 1;
         if (curMoveRecord->halfmoveNo_ == nextMoveIndex + 1) {
@@ -224,7 +224,8 @@ void EngineWindow::drawButtons(size_t index) {
 
 
     constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
-    
+
+    auto& boardData = QaplaWindows::BoardData::instance();
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
 
     for (const auto& button : buttons) {
@@ -244,14 +245,14 @@ void EngineWindow::drawButtons(size_t index) {
         {
             try {
                 if (button == "Restart") {
-					boardData_->restartEngine(index);
+					boardData.restartEngine(index);
                 }
                 else if (button == "Stop") {
-                    boardData_->stopEngine(index);
+                    boardData.stopEngine(index);
                 }
                 else if (button == "Config") {
                     std::vector<EngineConfig> activeEngines;
-                    for (const auto& record : boardData_->engineRecords()) {
+                    for (const auto& record : boardData.engineRecords()) {
                         activeEngines.push_back(record.config);
                     }
 					setupWindow_->content().setMatchingActiveEngines(activeEngines);
@@ -270,10 +271,10 @@ void EngineWindow::drawButtons(size_t index) {
 
 void EngineWindow::drawEngineSelectionPopup() {
 	setupWindow_->draw("Use", "Cancel");
-
-   if (auto confirmed = setupWindow_->confirmed()) {
+    auto& boardData = QaplaWindows::BoardData::instance();
+    if (auto confirmed = setupWindow_->confirmed()) {
         if (*confirmed) {
-			boardData_->setEngines(setupWindow_->content().getActiveEngines());
+			boardData.setEngines(setupWindow_->content().getActiveEngines());
         }
         setupWindow_->resetConfirmation();
     }
@@ -287,7 +288,8 @@ void EngineWindow::drawEngineSpace(size_t index, ImVec2 size) {
     const ImU32 cEvenBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
     const ImU32 cOddBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
     const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
-    const auto engineRecords = boardData_->engineRecords();
+    auto& boardData = QaplaWindows::BoardData::instance();
+    const auto engineRecords = boardData.engineRecords();
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -335,7 +337,8 @@ void EngineWindow::draw() {
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
-    const auto engineRecords = boardData_->engineRecords();
+    auto& boardData = QaplaWindows::BoardData::instance();
+    const auto engineRecords = boardData.engineRecords();
 	const auto records = engineRecords.empty() ? 1 : engineRecords.size();
 
     ImVec2 avail = ImGui::GetContentRegionAvail();

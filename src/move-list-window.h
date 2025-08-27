@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -38,7 +38,7 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param BoardData full set of information about the current chess Game
          */
-        MoveListWindow(std::shared_ptr<BoardData> BoardData);
+        MoveListWindow();
 
         void draw() override;
 
@@ -50,7 +50,6 @@ namespace QaplaWindows {
          * Must be called during draw(), at the point where the row with this index is being rendered.
          */
         bool isRowClicked(size_t index);
-        std::shared_ptr<BoardData> boardData_;
 		size_t currentPly_ = 0;
         int lastInputFrame_ = -1;
     };

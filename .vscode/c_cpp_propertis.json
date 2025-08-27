@@ -3,9 +3,9 @@
     {
       "name": "Default",
       "cppStandard": "c++20",
-      "intelliSenseMode": "${default}",
+      "intelliSenseMode": "macos-clang-x64",
       "includePath": [
-        "${workspaceFolder}/**"
+          "${workspaceFolder}/**"
       ],
       "compilerPath": "/usr/bin/clang++"
     }

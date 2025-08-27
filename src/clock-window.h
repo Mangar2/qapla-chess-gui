@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #pragma once
@@ -35,7 +35,7 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        ClockWindow(std::shared_ptr<BoardData> boardData);
+        ClockWindow();
         ~ClockWindow();
 
         void draw() override;
@@ -52,7 +52,6 @@ namespace QaplaWindows {
 		};
         ClockData clockData_;
 		bool setClockData();
-        std::shared_ptr<const BoardData> boardData_;
     };
 
 } // namespace QaplaWindows

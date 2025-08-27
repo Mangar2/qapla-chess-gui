@@ -34,12 +34,12 @@
 
 namespace QaplaWindows {
 
-    ImguiBoard::ImguiBoard() 
+    ImGuiBoard::ImGuiBoard() 
         : position_(std::make_unique<QaplaMoveGenerator::MoveGenerator>())
     {
     }
 
-    std::pair<ImVec2, ImVec2> ImguiBoard::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
+    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
         QaplaBasics::File file, QaplaBasics::Rank rank) {
         float cellY = boardInverted_ ?
             static_cast<float>(rank) : static_cast<float>(QaplaBasics::Rank::R8 - rank);
@@ -52,7 +52,7 @@ namespace QaplaWindows {
         return { cellMin, cellMax };
     }
 
-    void ImguiBoard::drawPromotionPopup(float cellSize)
+    void ImGuiBoard::drawPromotionPopup(float cellSize)
     {
         using QaplaBasics::Piece;
         constexpr float SHRINK_CELL_SIZE = 0.8f;
@@ -108,7 +108,7 @@ namespace QaplaWindows {
     }
 
 
-    void ImguiBoard::drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, 
+    void ImGuiBoard::drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, 
         float cellSize, QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite)
     {
         using QaplaBasics::Square;
@@ -146,7 +146,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ImguiBoard::drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize)
+    void ImGuiBoard::drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize)
     {
         using QaplaBasics::Rank;
         using QaplaBasics::File;
@@ -161,7 +161,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ImguiBoard::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
+    void ImGuiBoard::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
     {
         using QaplaBasics::Rank;
         using QaplaBasics::File;
@@ -178,7 +178,7 @@ namespace QaplaWindows {
         }
     }
 
-    void ImguiBoard::drawBoardCoordinates(ImDrawList* drawList,
+    void ImGuiBoard::drawBoardCoordinates(ImDrawList* drawList,
         const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize)
     {
         const int gridSize = 8;
@@ -202,7 +202,7 @@ namespace QaplaWindows {
         }
     }
 
-    MoveInput ImguiBoard::draw()
+    MoveInput ImGuiBoard::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
