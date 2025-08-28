@@ -153,7 +153,7 @@ public:
         gameContext_.setPosition(game);
     }
 
-    void doMove(QaplaBasics::Move move)
+    void doMove(const MoveRecord& move)
     {
         gameContext_.doMove(move);
         if (taskType_ == ComputeTaskType::PlaySide)

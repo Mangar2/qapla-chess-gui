@@ -19,17 +19,21 @@
 
 #pragma once
 
+#include "engine-event.h"
+
+#include "qapla-engine/move.h"
+
 #include <string>
 #include <optional>
 #include <assert.h>
 #include <sstream>
 #include <iomanip>
-#include "engine-event.h"
 
 struct MoveRecord {
     std::string original{};
     std::string lan{};
     std::string san{};
+    QaplaBasics::Move move{};
     std::string comment{};
     std::string nag{};
     uint64_t timeMs = 0;

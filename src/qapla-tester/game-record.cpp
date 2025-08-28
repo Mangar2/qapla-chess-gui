@@ -71,13 +71,6 @@ void GameRecord::addMove(const MoveRecord &move)
     updateCnt_++;
 }
 
-void GameRecord::doMove(QaplaBasics::Move move)
-{
-    MoveRecord moveRecord;
-    moveRecord.lan = move.getLAN();
-    addMove(moveRecord);
-}
-
 uint32_t GameRecord::nextMoveIndex() const
 {
     return currentPly_;

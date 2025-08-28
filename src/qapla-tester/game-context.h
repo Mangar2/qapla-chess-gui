@@ -133,8 +133,9 @@ public:
 
     /**
      * @brief Executes a new move to the move record.
+     * @param move The move to execute. Note: move.move must be set.
      */
-    void doMove(QaplaBasics::Move move);
+    void doMove(const MoveRecord& move);
 
     /**
      * @brief Returns the number of players.

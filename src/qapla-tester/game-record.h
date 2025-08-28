@@ -76,7 +76,6 @@ public:
 
 	/** Adds a move at the current ply position, overwriting any future moves. */
 	void addMove(const MoveRecord &move);
-	void doMove(QaplaBasics::Move move);
 
 	/** Returns the current ply index. */
 	uint32_t nextMoveIndex() const;

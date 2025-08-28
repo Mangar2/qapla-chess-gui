@@ -22,6 +22,7 @@
 #include "imgui-button.h"
 
 #include "qapla-tester/game-state.h"
+#include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 
 #include "qapla-engine/types.h"
@@ -202,7 +203,7 @@ namespace QaplaWindows
         }
     }
 
-    QaplaBasics::Move ImGuiBoard::checkMove() {
+    std::optional<MoveRecord> ImGuiBoard::checkMove() {
         const auto [move, valid, promotion] = gameState_->resolveMove(
             std::nullopt, moveInput_.from, moveInput_.to, moveInput_.promotion);
 
@@ -213,12 +214,17 @@ namespace QaplaWindows
         else if (!moveInput_.to) {
             // Autocomplete is disabled if only the starting position is provided,
             // as this could confuse users.
-            return {};
+            return std::nullopt;
         }
         else if (!move.isEmpty()) {
             moveInput_ = {};
+            MoveRecord moveRecord;
+            moveRecord.lan = move.getLAN();
+            moveRecord.san = gameState_->moveToSan(move);
+            moveRecord.move = move;
+            return moveRecord;
         }
-        return move;
+        return std::nullopt;
     }
 
     void ImGuiBoard::setGameState(const GameRecord &gameRecord)
@@ -226,7 +232,7 @@ namespace QaplaWindows
         gameState_->setFromGameRecord(gameRecord, gameRecord.nextMoveIndex());
     }
 
-    QaplaBasics::Move ImGuiBoard::draw()
+    std::optional<MoveRecord> ImGuiBoard::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
@@ -275,8 +281,8 @@ namespace QaplaWindows
 
         ImGui::PopFont();
 
-        const auto move = checkMove();
-        return move;
+        const auto moveRecord = checkMove();
+        return moveRecord;
     }
 
 }

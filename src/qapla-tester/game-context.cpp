@@ -203,17 +203,18 @@ void GameContext::setPosition(const GameRecord &record)
     }
 }
 
-void GameContext::doMove(QaplaBasics::Move move)
+void GameContext::doMove(const MoveRecord& move)
 {
     cancelCompute();
+    assert (!move.move.isEmpty());
     {
         std::lock_guard lock(gameRecordMutex_);
-        gameRecord_.doMove(move);
+        gameRecord_.addMove(move);
     }
 
     for (auto &player : players_)
     {
-        player->doMove(move);
+        player->doMove(move.move);
     }
 }
 
@@ -298,13 +299,8 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult()
         auto [pcause, presult] = player->getGameResult();
         if (presult != GameResult::Unterminated)
         {
-            {
-                std::lock_guard lock(gameRecordMutex_);
-                gameRecord_.setGameEnd(pcause, presult);
-            }
-            QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord &record)
-                                                                              { record.setGameEnd(pcause, presult); });
-
+            std::lock_guard lock(gameRecordMutex_);
+            gameRecord_.setGameEnd(pcause, presult);
             break;
         }
     }

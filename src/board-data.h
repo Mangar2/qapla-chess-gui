@@ -36,6 +36,7 @@ namespace QaplaBasics
 }
 
 class GameState;
+class MoveRecord;
 class GameRecord;
 class ComputeTask;
 
@@ -94,7 +95,7 @@ namespace QaplaWindows
 		 * @brief Executes a move in the game.
 		 * @param move The move to execute.
 		 */
-		void doMove(QaplaBasics::Move move);
+		void doMove(const MoveRecord& move);
 
 		/**
 		 * @brief Sets the position of the game.

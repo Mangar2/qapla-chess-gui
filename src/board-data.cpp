@@ -48,12 +48,9 @@ BoardData::BoardData()
 
 BoardData::~BoardData() = default;
 
-void BoardData::doMove(QaplaBasics::Move move)
+void BoardData::doMove(const MoveRecord& move)
 {
-	if (!move.isEmpty())
-	{
-		computeTask_->doMove(move);
-	}
+	computeTask_->doMove(move);
 }
 
 void BoardData::setPosition(bool startPosition, const std::string &fen)

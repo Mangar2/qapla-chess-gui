@@ -36,6 +36,7 @@ namespace QaplaBasics
 }
 
 class GameRecord;
+class MoveRecord;
 class GameState;
 
 namespace QaplaWindows
@@ -55,8 +56,10 @@ namespace QaplaWindows
 
         /**
          * Draw the chessboard and pieces.
+         * @return The move record if a valid move was entered including LAN, SAN and 
+         * internal Move, otherwise an empty optional.
          */
-        QaplaBasics::Move draw();
+        std::optional<MoveRecord> draw();
 
         /**
          * Set the board orientation.
@@ -92,9 +95,9 @@ namespace QaplaWindows
          * Checks if the current move input is valid. Resets the move input if it is invalid
          * or if the move is already complete. Sets promotion pending, if a promotion is detected.
          *
-         * @return The corresponding move if valid, otherwise an empty move.
+         * @return The corresponding move if valid, with LAN, SAN and internal Move.
          */
-        QaplaBasics::Move checkMove();
+        std::optional<MoveRecord> checkMove();
 
         std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
                                                          QaplaBasics::File file, QaplaBasics::Rank rank);
