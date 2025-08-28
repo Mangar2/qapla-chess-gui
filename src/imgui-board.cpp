@@ -62,8 +62,6 @@ namespace QaplaWindows
         if (!moveInput_.to)
             return;
 
-        MoveInput moveInput;
-
         const bool whiteToMove = position.isWhiteToMove();
         const Piece pieces[4] = {
             whiteToMove ? Piece::WHITE_QUEEN : Piece::BLACK_QUEEN,
@@ -92,7 +90,7 @@ namespace QaplaWindows
 
             if (ImGui::IsItemClicked())
             {
-                moveInput.promotion = pieces[i];
+                moveInput_.promotion = pieces[i];
                 ImGui::CloseCurrentPopup();
             }
 
@@ -145,7 +143,7 @@ namespace QaplaWindows
         }
     }
 
-    void ImGuiBoard::drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize)
+    void ImGuiBoard::drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize) 
     {
         using QaplaBasics::File;
         using QaplaBasics::Rank;
@@ -162,8 +160,7 @@ namespace QaplaWindows
         }
     }
 
-    void ImGuiBoard::drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font)
-    {
+    void ImGuiBoard::drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font) {
         using QaplaBasics::File;
         using QaplaBasics::Piece;
         using QaplaBasics::Rank;
@@ -182,7 +179,7 @@ namespace QaplaWindows
     }
 
     void ImGuiBoard::drawBoardCoordinates(ImDrawList *drawList,
-                                          const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize)
+        const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize)
     {
         const int gridSize = 8;
 
@@ -205,14 +202,20 @@ namespace QaplaWindows
         }
     }
 
-    QaplaBasics::Move ImGuiBoard::checkMove()
-    {
+    QaplaBasics::Move ImGuiBoard::checkMove() {
         const auto [move, valid, promotion] = gameState_->resolveMove(
             std::nullopt, moveInput_.from, moveInput_.to, moveInput_.promotion);
 
         promotionPending_ = promotion;
-        if (!valid || !move.isEmpty())
-        {
+        if (!valid) {
+            moveInput_ = {};
+        }
+        else if (!moveInput_.to) {
+            // Autocomplete is disabled if only the starting position is provided,
+            // as this could confuse users.
+            return {};
+        }
+        else if (!move.isEmpty()) {
             moveInput_ = {};
         }
         return move;

@@ -95,7 +95,8 @@ namespace QaplaWindows
     void BoardWindow::draw()
     {
         drawButtons();
-        BoardData::instance().imGuiBoard().draw();
+        auto move = BoardData::instance().imGuiBoard().draw();
+        BoardData::instance().doMove(move);
     }
 
 }
