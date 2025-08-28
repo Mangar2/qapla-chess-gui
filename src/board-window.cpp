@@ -46,7 +46,7 @@ namespace QaplaWindows
         constexpr ImVec2 buttonSize = {25.0f, 25.0f};
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-        for (const std::string button : {"New", "Now", "Stop", "Play", "Analyze", "Auto", "Manual"})
+        for (const std::string button : {"New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
         {
             ImGui::SetCursorScreenPos(pos);
             bool active = BoardData::instance().isModeActive(button);
@@ -56,7 +56,7 @@ namespace QaplaWindows
                     {
                         if (button == "Stop")
                         {
-                            QaplaButton::drawStop(drawList, topLeft, size);
+                            QaplaButton::drawStop(drawList, topLeft, size, active);
                         }
                         else if (button == "Play")
                         {
@@ -74,7 +74,7 @@ namespace QaplaWindows
                         {
                             QaplaButton::drawAutoPlay(drawList, topLeft, size, active);
                         }
-                        else if (button == "Manual")
+                        else if (button == "Invert")
                         {
                             QaplaButton::drawManualPlay(drawList, topLeft, size, active);
                         }

@@ -81,9 +81,10 @@ namespace QaplaWindows {
         /**
          * @brief Renders the table with dynamic content.
          * @param size Size of the table in ImGui units.
+         * @param shrink If true, the table shrinks dynamically in height.
          * @return Number of row clicked, if any
          */
-        std::optional<size_t> draw(const ImVec2& size) const;
+        std::optional<size_t> draw(const ImVec2& size, bool shrink = false) const;
 
         std::string getField(size_t row, size_t column) const {
             if (row < rows_.size() && column < columns_.size()) {

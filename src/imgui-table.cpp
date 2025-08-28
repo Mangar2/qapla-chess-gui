@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #include "imgui-table.h"
@@ -86,9 +86,14 @@ namespace QaplaWindows {
         return clicked;
     }
 
-    std::optional<size_t> ImGuiTable::draw(const ImVec2& size) const {
+    std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) const {
         std::optional<size_t> clickedRowIndex;
-        if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, size)) {
+        ImVec2 tableSize = size;
+        if (shrink) {
+            float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+            tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
+        }
+        if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             ImGui::TableSetupScrollFreeze(0, 1);
             for (const auto& column : columns_) {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);

@@ -63,7 +63,8 @@ void TournamentWindow::drawButtons() {
         if (QaplaButton::drawIconButton(button, button, buttonSize, false,
             [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Run") {
-                    QaplaButton::drawPlay(drawList, topLeft, size);
+                    bool active = TournamentData::instance().isRunning();
+                    QaplaButton::drawPlay(drawList, topLeft, size, active);
                 }
                 if (button == "Stop") {
                     QaplaButton::drawStop(drawList, topLeft, size);
@@ -106,8 +107,9 @@ bool TournamentWindow::drawInput() {
         tournamentData.concurrency(), 1, maxConcurrency)) {
         tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
     }
-    ImGui::Spacing();
     ImGui::Unindent(10.0f);
+
+    ImGui::Spacing();
     if (tournamentData.isRunning()) {
 		ImGui::Indent(10.0f);
         ImGui::Text("Tournament is running");
@@ -116,6 +118,7 @@ bool TournamentWindow::drawInput() {
     }
 
     bool changed = false;
+    ImGui::Indent(10.0f);
 
     ImGuiControls::fileInput("Tournament file", tournamentData.config().tournamentFilename, 2 * inputWidth);
     ImGui::Spacing();
@@ -241,6 +244,8 @@ bool TournamentWindow::drawInput() {
 	}
 	
     ImGui::Spacing();
+    ImGui::Unindent(10.0f);
+
     return changed;
 }
 
@@ -251,8 +256,10 @@ void TournamentWindow::draw() {
     }
     ImVec2 size = ImGui::GetContentRegionAvail();
 	constexpr float heightRatio = 0.4f;
-    /* auto clickedRow = */TournamentData::instance().drawEloTable(
-        ImVec2(size.x, size.y * heightRatio));
+    /* auto clickedRow = */
+    ImGui::Indent(10.0f);
+    TournamentData::instance().drawEloTable(ImVec2(size.x, size.y * heightRatio));
     TournamentData::instance().drawRunningTable(ImGui::GetContentRegionAvail());
+    ImGui::Unindent(10.0f);
 }
 

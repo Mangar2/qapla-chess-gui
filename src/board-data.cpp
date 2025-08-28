@@ -211,7 +211,7 @@ bool BoardData::isModeActive(const std::string &mode) const
 	switch (status)
 	{
 	case ComputeTask::Status::Stopped:
-		return mode == "Manual";
+		return mode == "Stop";
 	case ComputeTask::Status::Play:
 		return mode == "Play";
 	case ComputeTask::Status::Autoplay:

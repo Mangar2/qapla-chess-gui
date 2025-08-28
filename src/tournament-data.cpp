@@ -178,11 +178,11 @@ namespace QaplaWindows {
 	}
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
-        return eloTable_.draw(size);
+        return eloTable_.draw(size, true);
     }
 
     std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) const {
-        return runningTable_.draw(size);
+        return runningTable_.draw(size, true);
 	}
 
     void TournamentData::stopPool() {

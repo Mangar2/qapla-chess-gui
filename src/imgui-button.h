@@ -31,7 +31,7 @@ namespace QaplaButton {
 
     void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
 
-    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
 
     void drawRestart(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
 

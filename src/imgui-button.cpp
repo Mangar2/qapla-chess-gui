@@ -89,10 +89,10 @@ namespace QaplaButton {
         }
     }
 
-    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
+    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active) {
         for (int i = 1; i <= 2; i++) {
             auto reduce = BORDER + static_cast<float>(i);
-            auto color = getFgColor();
+            auto color = getFgColor(active);
             list->AddRect(
                 ImVec2(topLeft.x + reduce, topLeft.y + reduce),
                 ImVec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
