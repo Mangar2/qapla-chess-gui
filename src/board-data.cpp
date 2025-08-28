@@ -17,7 +17,6 @@
  * @copyright Copyright (c) 2025 Volker B�hm
  */
 
-
 #include "board-data.h"
 #include "configuration.h"
 
@@ -30,16 +29,18 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/game-manager-pool.h"
 
+#include "imgui-board.h"
+
 using namespace QaplaWindows;
 
-BoardData::BoardData() : 
-	gameState_(std::make_unique<GameState>()),
-	gameRecord_(std::make_unique<GameRecord>()),
-	computeTask_(std::make_unique<ComputeTask>()),
-	imGuiBoard_(std::make_unique<ImGuiBoard>())
+BoardData::BoardData()
+	: gameRecord_(std::make_unique<GameRecord>()),
+	  computeTask_(std::make_unique<ComputeTask>()),
+	  imGuiBoard_(std::make_unique<ImGuiBoard>())
 {
 	timeControl_ = QaplaConfiguration::Configuration::instance()
-		.getTimeControlSettings().getSelectedTimeControl();
+					   .getTimeControlSettings()
+					   .getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
 	computeTask_->setPosition(true);
 	epdData_.init();
@@ -47,149 +48,159 @@ BoardData::BoardData() :
 
 BoardData::~BoardData() = default;
 
-void BoardData::checkForGameEnd() {
-	auto [cause, result] = gameState_->getGameResult();
-	if (result != GameResult::Unterminated) {
-		gameRecord_->setGameEnd(cause, result);
+void BoardData::doMove(QaplaBasics::Move move)
+{
+	if (!move.isEmpty())
+	{
+		computeTask_->doMove(move);
 	}
 }
 
-std::pair<bool, bool> BoardData::addMove(std::optional<QaplaBasics::Square> departure,
-		std::optional<QaplaBasics::Square> destination, QaplaBasics::Piece promote) 
+void BoardData::setPosition(bool startPosition, const std::string &fen)
 {
-    const auto [move, valid, promotion] = gameState_->resolveMove(
-        std::nullopt, departure, destination, promote);
-
-    if (!valid) {
-        return { false, false };
-    }
-    else if (!move.isEmpty()) {
-		MoveRecord moveRecord(gameRecord_->nextMoveIndex(), "#gui");
-		moveRecord.original = move.getLAN();
-		moveRecord.lan = moveRecord.original;
-		moveRecord.san = gameState_->moveToSan(move);
-		computeTask_->setMove(moveRecord);
-		return { false, false };
-    }
-    else if (promotion) {
-		return { true, true };
-    }
-	return { true, false };
-}
-
-void BoardData::setPosition(bool startPosition, const std::string& fen) {
 	computeTask_->setPosition(startPosition, fen);
 }
 
-void BoardData::execute(std::string command) {
-	if (command == "New" && gameRecord_ != nullptr) {
-		gameState_->setFen(true, "");
-		gameRecord_->setStartPosition(true, "", gameState_->isWhiteToMove());
-		computeTask_->setPosition(*gameRecord_);
+void BoardData::execute(std::string command)
+{
+	if (command == "New" && gameRecord_ != nullptr)
+	{
+		computeTask_->setPosition(true, "");
 	}
-	else if (command == "Stop") {
+	else if (command == "Stop")
+	{
 		computeTask_->stop();
 	}
-	else if (command == "Now") {
+	else if (command == "Now")
+	{
 		computeTask_->moveNow();
 	}
-	else if (command == "Newgame") {
+	else if (command == "Newgame")
+	{
 		computeTask_->newGame();
 	}
-	else if (command == "Play") {
+	else if (command == "Play")
+	{
 		computeTask_->playSide();
 	}
-	else if (command == "Analyze") {
+	else if (command == "Analyze")
+	{
 		computeTask_->analyze();
 	}
-	else if (command == "Auto") {
+	else if (command == "Auto")
+	{
 		computeTask_->autoPlay();
 	}
-	else if (command == "Manual") {
+	else if (command == "Manual")
+	{
 		computeTask_->stop();
 	}
-	else {
+	else
+	{
 		std::cerr << "Unknown command: " << command << '\n';
 	}
 }
 
-void BoardData::stopPool() {
+void BoardData::stopPool()
+{
 	GameManagerPool::getInstance().stopAll();
 }
 
-void BoardData::clearPool() {
+void BoardData::clearPool()
+{
 	GameManagerPool::getInstance().clearAll();
 }
 
-void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start) {
+void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start)
+{
 	GameManagerPool::getInstance().setConcurrency(count, nice, start);
 }
 
-void BoardData::pollData() {
-	try {
+void BoardData::pollData()
+{
+	try
+	{
 		setEngineRecords(computeTask_->getEngineRecords());
 		moveInfos_ = computeTask_->getMoveInfos();
 
-		computeTask_->getGameContext().withGameRecord([&](const GameRecord& g) {
+		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g)
+													  {
 			setGameIfDifferent(g);
-			timeControl_ = g.getWhiteTimeControl();
-			});
+			timeControl_ = g.getWhiteTimeControl(); });
 		epdData_.pollData();
 		auto timeControl = QaplaConfiguration::Configuration::instance()
-			.getTimeControlSettings().getSelectedTimeControl();
-		if (timeControl != timeControl_) {
+							   .getTimeControlSettings()
+							   .getSelectedTimeControl();
+		if (timeControl != timeControl_)
+		{
 			computeTask_->setTimeControl(timeControl);
 		}
 	}
-	catch (const std::exception& ex) {
+	catch (const std::exception &ex)
+	{
 		assert(false && "Error while polling data");
 	}
 }
 
-void BoardData::setGameIfDifferent(const GameRecord& record) {
-	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_)) {
+void BoardData::setGameIfDifferent(const GameRecord &record)
+{
+	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_))
+	{
 		*gameRecord_ = record;
-		gameState_->setFromGameRecord(*gameRecord_, gameRecord_->nextMoveIndex());
+		imGuiBoard_->setGameState(*gameRecord_);
+		auto [cause, result] = gameRecord_->getGameResult();
+		imGuiBoard_->setAllowMoveInput(result == GameResult::Unterminated);
 	}
 }
 
-uint32_t BoardData::nextMoveIndex() const {
+uint32_t BoardData::nextMoveIndex() const
+{
 	return gameRecord_->nextMoveIndex();
 }
 
-void BoardData::setNextMoveIndex(uint32_t moveIndex) {
-	if (!gameRecord_) {
-		return; 
+void BoardData::setNextMoveIndex(uint32_t moveIndex)
+{
+	if (!gameRecord_)
+	{
+		return;
 	}
-	if (moveIndex <= gameRecord_->history().size()) {
+	if (moveIndex <= gameRecord_->history().size())
+	{
 		gameRecord_->setNextMoveIndex(moveIndex);
-		gameState_->setFromGameRecord(*gameRecord_, moveIndex);
+		imGuiBoard_->setGameState(*gameRecord_);
 		computeTask_->setPosition(*gameRecord_);
 	}
 }
 
-bool BoardData::isGameOver() const {
+bool BoardData::isGameOver() const
+{
 	auto [cause, result] = gameRecord_->getGameResult();
-	return result != GameResult::Unterminated && 
-		gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
+	return result != GameResult::Unterminated &&
+		   gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
 }
 
-void BoardData::stopEngine(size_t index) {
-	if (index < engineRecords_.size()) {
+void BoardData::stopEngine(size_t index)
+{
+	if (index < engineRecords_.size())
+	{
 		auto id = engineRecords_[index].identifier;
 		computeTask_->stopEngine(id);
 	}
 }
 
-void BoardData::restartEngine(size_t index) {
-	if (index < engineRecords_.size()) {
+void BoardData::restartEngine(size_t index)
+{
+	if (index < engineRecords_.size())
+	{
 		auto id = engineRecords_[index].identifier;
 		computeTask_->restartEngine(id);
 	}
 }
 
-void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
-	if (engines.size() == 0) {
+void BoardData::setEngines(const std::vector<EngineConfig> &engines)
+{
+	if (engines.size() == 0)
+	{
 		computeTask_->initEngines(EngineList{});
 		return;
 	}
@@ -197,18 +208,20 @@ void BoardData::setEngines(const std::vector<EngineConfig>& engines) {
 	computeTask_->initEngines(std::move(created));
 }
 
-bool BoardData::isModeActive(const std::string& mode) const {
+bool BoardData::isModeActive(const std::string &mode) const
+{
 	auto status = computeTask_->getStatus();
-	switch (status) {
-		case ComputeTask::Status::Stopped:
-			return mode == "Manual";
-		case ComputeTask::Status::Play:
-			return mode == "Play";
-		case ComputeTask::Status::Autoplay:
-			return mode == "Auto";
-		case ComputeTask::Status::Analyze:
-			return mode == "Analyze";
-		default:
-			return false;
+	switch (status)
+	{
+	case ComputeTask::Status::Stopped:
+		return mode == "Manual";
+	case ComputeTask::Status::Play:
+		return mode == "Play";
+	case ComputeTask::Status::Autoplay:
+		return mode == "Auto";
+	case ComputeTask::Status::Analyze:
+		return mode == "Analyze";
+	default:
+		return false;
 	}
 }

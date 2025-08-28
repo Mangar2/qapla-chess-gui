@@ -23,21 +23,22 @@
 #include "board-data.h"
 #include <memory>
 
-
-namespace QaplaWindows {
+namespace QaplaWindows
+{
 
     class ImGuiTable;
 
     /**
      * @brief Displays the move list with associated search data for a game.
      */
-    class EpdWindow: public EmbeddedWindow {
+    class EpdWindow : public EmbeddedWindow
+    {
     public:
         /**
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        EpdWindow(std::shared_ptr<BoardData> boardData);
+        EpdWindow();
         ~EpdWindow();
 
         void draw() override;
@@ -45,7 +46,6 @@ namespace QaplaWindows {
     private:
         void drawButtons();
         void drawInput();
-        std::shared_ptr<BoardData> boardData_;
     };
 
 } // namespace QaplaWindows

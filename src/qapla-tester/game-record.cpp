@@ -17,10 +17,12 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-
 #include "game-record.h"
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove) {
+#include "qapla-engine/move.h"
+
+void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove)
+{
     moves_.clear();
     isWhiteToMoveAtStart_ = isWhiteToMove;
     currentPly_ = 0;
@@ -32,18 +34,19 @@ void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWh
 }
 
 void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
-    std::string whiteEngineName, std::string blackEngineName) {
-	setStartPosition(startPos, startFen, isWhiteToMove);
+                                  std::string whiteEngineName, std::string blackEngineName)
+{
+    setStartPosition(startPos, startFen, isWhiteToMove);
     whiteEngineName_ = whiteEngineName;
     blackEngineName_ = blackEngineName;
 }
 
-void GameRecord::setStartPosition(const GameRecord& source, uint32_t toPly, 
-    const std::string& whiteEngineName, const std::string& blackEngineName) {
+void GameRecord::setStartPosition(const GameRecord &source, uint32_t toPly,
+                                  const std::string &whiteEngineName, const std::string &blackEngineName)
+{
     moves_.clear();
-    const auto& sourceHistory = source.history();
-    moves_.insert(moves_.end(), sourceHistory.begin(), sourceHistory.begin() + 
-        std::min<uint32_t>(toPly, static_cast<uint32_t>(sourceHistory.size())));
+    const auto &sourceHistory = source.history();
+    moves_.insert(moves_.end(), sourceHistory.begin(), sourceHistory.begin() + std::min<uint32_t>(toPly, static_cast<uint32_t>(sourceHistory.size())));
     isWhiteToMoveAtStart_ = source.isWhiteToMoveAtStart_;
     currentPly_ = 0;
     startPos_ = source.startPos_;
@@ -57,8 +60,10 @@ void GameRecord::setStartPosition(const GameRecord& source, uint32_t toPly,
     updateCnt_++;
 }
 
-void GameRecord::addMove(const MoveRecord& move) {
-    if (currentPly_ < moves_.size()) {
+void GameRecord::addMove(const MoveRecord &move)
+{
+    if (currentPly_ < moves_.size())
+    {
         moves_.resize(currentPly_);
     }
     moves_.push_back(move);
@@ -66,79 +71,102 @@ void GameRecord::addMove(const MoveRecord& move) {
     updateCnt_++;
 }
 
-uint32_t GameRecord::nextMoveIndex() const {
+void GameRecord::doMove(QaplaBasics::Move move)
+{
+    MoveRecord moveRecord;
+    moveRecord.lan = move.getLAN();
+    addMove(moveRecord);
+}
+
+uint32_t GameRecord::nextMoveIndex() const
+{
     return currentPly_;
 }
 
-void GameRecord::setNextMoveIndex(uint32_t ply) {
-    if (ply <= moves_.size()) {
+void GameRecord::setNextMoveIndex(uint32_t ply)
+{
+    if (ply <= moves_.size())
+    {
         updateCnt_++;
         currentPly_ = ply;
     }
 }
 
-void GameRecord::advance() {
-    if (currentPly_ < moves_.size()) {
+void GameRecord::advance()
+{
+    if (currentPly_ < moves_.size())
+    {
         updateCnt_++;
         ++currentPly_;
     }
 }
 
-void GameRecord::rewind() {
-    if (currentPly_ > 0) {
-		updateCnt_++;
+void GameRecord::rewind()
+{
+    if (currentPly_ > 0)
+    {
+        updateCnt_++;
         --currentPly_;
     }
 }
 
-std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const {
+std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const
+{
     uint64_t whiteTime = 0;
     uint64_t blackTime = 0;
 
-    for (size_t i = 0; i < currentPly_ && i < moves_.size(); ++i) {
-        if (i % 2 == 0) {
+    for (size_t i = 0; i < currentPly_ && i < moves_.size(); ++i)
+    {
+        if (i % 2 == 0)
+        {
             whiteTime += moves_[i].timeMs;
         }
-        else {
+        else
+        {
             blackTime += moves_[i].timeMs;
         }
     }
 
-    return { whiteTime, blackTime };
+    return {whiteTime, blackTime};
 }
 
-bool GameRecord::isUpdate(const GameRecord& other) const {
+bool GameRecord::isUpdate(const GameRecord &other) const
+{
     return other.updateCnt_ != updateCnt_;
 }
 
-bool GameRecord::isDifferent(const GameRecord& other) const {
+bool GameRecord::isDifferent(const GameRecord &other) const
+{
     return startPos_ != other.startPos_ ||
-        startFen_ != other.startFen_ ||
-        isWhiteToMoveAtStart_ != other.isWhiteToMoveAtStart_ ||
-        whiteEngineName_ != other.whiteEngineName_ ||
-        blackEngineName_ != other.blackEngineName_ ||
-        round_ != other.round_ ||
-        tags_ != other.tags_ ||
-        moves_.size() != other.moves_.size() ||
-        currentPly_ != other.currentPly_ ||
-        whiteTimeControl_ != other.whiteTimeControl_ ||
-        blackTimeControl_ != other.blackTimeControl_ ||
-        gameEndCause_ != other.gameEndCause_ ||
-        gameResult_ != other.gameResult_;
+           startFen_ != other.startFen_ ||
+           isWhiteToMoveAtStart_ != other.isWhiteToMoveAtStart_ ||
+           whiteEngineName_ != other.whiteEngineName_ ||
+           blackEngineName_ != other.blackEngineName_ ||
+           round_ != other.round_ ||
+           tags_ != other.tags_ ||
+           moves_.size() != other.moves_.size() ||
+           currentPly_ != other.currentPly_ ||
+           whiteTimeControl_ != other.whiteTimeControl_ ||
+           blackTimeControl_ != other.blackTimeControl_ ||
+           gameEndCause_ != other.gameEndCause_ ||
+           gameResult_ != other.gameResult_;
 }
 
-GameStruct GameRecord::createGameStruct() const {
+GameStruct GameRecord::createGameStruct() const
+{
     GameStruct gs;
     gs.fen = getStartFen();
 
     size_t moveCount = moves_.size();
-    gs.lanMoves.reserve(moveCount * 6); 
-    gs.sanMoves.reserve(moveCount * 5); 
+    gs.lanMoves.reserve(moveCount * 6);
+    gs.sanMoves.reserve(moveCount * 5);
 
     std::string spacer{};
     uint32_t index = 0;
-    for (const auto& move : moves_) {
-        if (index >= currentPly_) break;
+    for (const auto &move : moves_)
+    {
+        if (index >= currentPly_)
+            break;
         index++;
 
         gs.lanMoves += spacer + move.lan;
@@ -146,12 +174,13 @@ GameStruct GameRecord::createGameStruct() const {
         spacer = " ";
     }
     gs.isWhiteToMove = isWhiteToMove();
-	gs.originalMove = currentPly_ == 0 ? "" : moves_[currentPly_ - 1].original;
+    gs.originalMove = currentPly_ == 0 ? "" : moves_[currentPly_ - 1].original;
 
     return gs;
 }
 
-GameRecord GameRecord::createMinimalCopy() const {
+GameRecord GameRecord::createMinimalCopy() const
+{
     GameRecord record;
     record.startPos_ = startPos_;
     record.startFen_ = startFen_;
@@ -166,10 +195,10 @@ GameRecord GameRecord::createMinimalCopy() const {
     record.totalGameNo_ = totalGameNo_;
     record.opening_ = opening_;
     record.moves_.reserve(moves_.size());
-    for (auto& move : moves_) {
+    for (auto &move : moves_)
+    {
         record.moves_.emplace_back(move.createMinimalCopy());
     }
 
     return record;
 }
-

@@ -25,30 +25,38 @@
 #include <utility>
 #include <imgui.h>
 
-namespace QaplaMoveGenerator {
+namespace QaplaMoveGenerator
+{
     class MoveGenerator;
 }
 
-namespace QaplaBasics {
+namespace QaplaBasics
+{
     class Move;
 }
 
-namespace QaplaWindows {
+class GameRecord;
+class GameState;
 
-    struct MoveInput {
+namespace QaplaWindows
+{
+
+    struct MoveInput
+    {
         std::optional<QaplaBasics::Square> from;
         std::optional<QaplaBasics::Square> to;
         std::optional<QaplaBasics::Piece> promotion;
     };
 
-    class ImGuiBoard {
+    class ImGuiBoard
+    {
     public:
         ImGuiBoard();
 
         /**
          * Draw the chessboard and pieces.
          */
-        MoveInput draw();
+        QaplaBasics::Move draw();
 
         /**
          * Set the board orientation.
@@ -63,18 +71,10 @@ namespace QaplaWindows {
         void setAllowMoveInput(bool moveInput) { allowMoveInput_ = moveInput; }
 
         /**
-         * Set whether a promotion is pending.
-         * @param promotionPending Whether a promotion is pending.
-         */
-        void setPromotionPending(bool promotionPending) { promotionPending_ = promotionPending; }
-
-        /**
          * Set the position.
-         * @param position The position to set.
+         * @param gameRecord Board to get the position from.
          */
-        void setPosition(std::unique_ptr<QaplaMoveGenerator::MoveGenerator> position) { 
-            position_ = std::move(position); 
-        }
+        void setGameState(const GameRecord &gameRecord);
 
         /**
          * Does a move.
@@ -82,36 +82,36 @@ namespace QaplaWindows {
          */
         void doMove(QaplaBasics::Move move);
 
-        /**
-         * @brief Resets the current move input.
-         */
-        void resetMoveInput() {
-            moveInput_ = {};
-        }
-
     private:
-
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
-  
-        std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
-            QaplaBasics::File file, QaplaBasics::Rank rank);
-        
-        void drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, float cellSize,
-            QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
-        void drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize);
-        
-        void drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font);
 
-        void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
+        /**
+         * @brief Check if the current move input is valid and return the corresponding move.
+         *
+         * Checks if the current move input is valid. Resets the move input if it is invalid
+         * or if the move is already complete. Sets promotion pending, if a promotion is detected.
+         *
+         * @return The corresponding move if valid, otherwise an empty move.
+         */
+        QaplaBasics::Move checkMove();
+
+        std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
+                                                         QaplaBasics::File file, QaplaBasics::Rank rank);
+
+        void drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize,
+                             QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
+        void drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize);
+
+        void drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
+
+        void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize);
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
-            
+
         MoveInput moveInput_;
-        std::unique_ptr<QaplaMoveGenerator::MoveGenerator> position_;
-
+        std::unique_ptr<GameState> gameState_;
     };
-
 
 }

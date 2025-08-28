@@ -28,9 +28,11 @@
 #include <string>
 #include <imgui.h>
 
-namespace QaplaWindows {
+namespace QaplaWindows
+{
 
-    class BoardWindow : public EmbeddedWindow {
+    class BoardWindow : public EmbeddedWindow
+    {
     public:
         explicit BoardWindow() {}
 
@@ -38,28 +40,6 @@ namespace QaplaWindows {
 
     private:
         void drawButtons();
-
-        void drawPromotionPopup(float cellSize);
-        bool promotionPending_ = false;
-        std::string id_ = "#0";
-
-        std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
-            QaplaBasics::File file, QaplaBasics::Rank rank);
-        
-        void drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, float cellSize,
-            QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
-        void drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize);
-        
-        void drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font);
-
-        void drawBoardCoordinates(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize);
-
-        bool boardInverted_ = false;
-
-        std::optional<QaplaBasics::Square> selectedFrom_;
-        std::optional<QaplaBasics::Square> selectedTo_;
-
     };
-
 
 }

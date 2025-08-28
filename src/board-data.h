@@ -30,7 +30,8 @@
 #include <optional>
 #include <functional>
 
-namespace QaplaBasics{
+namespace QaplaBasics
+{
 	class Move;
 }
 
@@ -38,11 +39,13 @@ class GameState;
 class GameRecord;
 class ComputeTask;
 
-namespace QaplaWindows {
+namespace QaplaWindows
+{
 
 	class ImGuiBoard;
 
-	class BoardData {
+	class BoardData
+	{
 	public:
 		/**
 		 * @brief Constructs a new BoardData object.
@@ -54,32 +57,27 @@ namespace QaplaWindows {
 		 * @brief Returns a reference to the singleton instance of BoardData.
 		 * @return Reference to BoardData instance.
 		 */
-		static BoardData& instance() {
+		static BoardData &instance()
+		{
 			static BoardData instance;
 			return instance;
 		}
 
 		/**
-		 * @brief Returns a const reference to the current GameState.
-		 * @return Const reference to GameState.
+		 * @brief Returns a reference to the ImGuiBoard.
+		 * @return Reference to ImGuiBoard.
 		 */
-		const GameState& gameState() const {
-			return *gameState_;
-		}
-
-		/**
-		 * @brief Returns a reference to the current GameState.
-		 * @return Reference to GameState.
-		 */
-		GameState& gameState() {
-			return *gameState_;
+		ImGuiBoard &imGuiBoard()
+		{
+			return *imGuiBoard_;
 		}
 
 		/**
 		 * @brief Returns a const reference to the current GameRecord.
 		 * @return Const reference to GameRecord.
 		 */
-		const GameRecord& gameRecord() const {
+		const GameRecord &gameRecord() const
+		{
 			return *gameRecord_;
 		}
 
@@ -87,27 +85,23 @@ namespace QaplaWindows {
 		 * @brief Returns a reference to the current GameRecord.
 		 * @return Reference to GameRecord.
 		 */
-		GameRecord& gameRecord() {
+		GameRecord &gameRecord()
+		{
 			return *gameRecord_;
 		}
 
 		/**
-		 * @brief Adds a move to the game.
-		 * @param departure Optional: departure square of the move.
-		 * @param destination Optional: destination square of the move.
-		 * @param promote Piece to promote to, if applicable.
-		 * @return first true, if different moves matches, second true, if promotion piece is required
+		 * @brief Executes a move in the game.
+		 * @param move The move to execute.
 		 */
-		std::pair<bool, bool> addMove(std::optional<QaplaBasics::Square> departure, 
-			std::optional<QaplaBasics::Square> destination, 
-			QaplaBasics::Piece promote);
+		void doMove(QaplaBasics::Move move);
 
 		/**
 		 * @brief Sets the position of the game.
 		 * @param startPosition If true, sets the position to the starting position.
 		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.
 		 */
-		void setPosition(bool startPosition, const std::string& fen = "");
+		void setPosition(bool startPosition, const std::string &fen = "");
 
 		/**
 		 * @brief Returns the current move index.
@@ -121,22 +115,27 @@ namespace QaplaWindows {
 		 */
 		void setNextMoveIndex(uint32_t moveIndex);
 
-		const EngineRecords& engineRecords() const {
+		const EngineRecords &engineRecords() const
+		{
 			return engineRecords_;
 		}
 
-		const MoveInfos& moveInfos() const {
+		const MoveInfos &moveInfos() const
+		{
 			return moveInfos_;
 		}
 
-		const EpdData& epdData() const {
+		const EpdData &epdData() const
+		{
 			return epdData_;
 		}
-		EpdData& epdData() {
+		EpdData &epdData()
+		{
 			return epdData_;
 		}
 
-		void setEngineRecords(const EngineRecords& records) {
+		void setEngineRecords(const EngineRecords &records)
+		{
 			engineRecords_ = records;
 		}
 
@@ -144,17 +143,17 @@ namespace QaplaWindows {
 		 * @brief Sets the game state from a GameRecord, if the new state extends the existing state.
 		 * @param record The GameRecord to set the game state from.
 		 */
-		void setGameIfDifferent(const GameRecord& record);
+		void setGameIfDifferent(const GameRecord &record);
 
 		/**
-		 * @brief Checks if the game is over. 
+		 * @brief Checks if the game is over.
 		 * 1. The game must have a result (not GameResult::Unterminated).
 		 * 2. The move index must be at the end of the game record.
 		 * @return true if the game is over, false otherwise.
 		 */
 		bool isGameOver() const;
 
-		void execute(std::string command); 
+		void execute(std::string command);
 
 		/**
 		 * @brief Polls data from several data provider (computeTask, edpData, ...) to provide them for imgui windows.
@@ -164,7 +163,7 @@ namespace QaplaWindows {
 
 		/**
 		 * @brief Stops all ongoing tasks in the pool.
-		 */ 
+		 */
 		void stopPool();
 
 		/**
@@ -184,7 +183,7 @@ namespace QaplaWindows {
 		 * @brief stops the engine located at an index
 		 * @param index index of the engine to stop
 		 */
-		void stopEngine(size_t index); 
+		void stopEngine(size_t index);
 
 		/**
 		 * @brief Restarts the engine located at an index.
@@ -196,21 +195,18 @@ namespace QaplaWindows {
 		 * @brief Sets the engines to use
 		 * @param engines Vector of EngineConfig objects representing the engines to set.
 		 */
-		void setEngines(const std::vector<EngineConfig>& engines);
+		void setEngines(const std::vector<EngineConfig> &engines);
 
 		/**
 		 * Returns true, if the given mode is active.
 		 * @param mode The mode to check (e.g., "autoplay", "analyze", "play", "manual").
 		 */
-		bool isModeActive(const std::string& mode) const;
-
+		bool isModeActive(const std::string &mode) const;
 
 	private:
-
 		EpdData epdData_;
 
 		void checkForGameEnd();
-		std::unique_ptr<GameState> gameState_;
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;
 		std::vector<size_t> searchInfoCnt_;
@@ -219,7 +215,6 @@ namespace QaplaWindows {
 		TimeControl timeControl_;
 
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
-
 	};
 
 }

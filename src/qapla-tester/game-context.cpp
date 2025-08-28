@@ -20,51 +20,56 @@
 #include "engine-worker-factory.h"
 #include "board-exchange.h"
 
-GameContext::GameContext() {
+GameContext::GameContext()
+{
     id_ = QaplaTester::BoardExchange::instance().registerProvider();
 };
 
-GameContext::~GameContext() {
+GameContext::~GameContext()
+{
     QaplaTester::BoardExchange::instance().unregisterProvider(id_);
 }
 
-void GameContext::updateEngineNames() {
-    auto* white = getWhite();
-    auto* black = getBlack();
+void GameContext::updateEngineNames()
+{
+    auto *white = getWhite();
+    auto *black = getBlack();
     const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
     const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
     gameRecord_.setWhiteEngineName(whiteName);
     gameRecord_.setBlackEngineName(blackName);
-    
+
     QaplaTester::EngineExchangeDataList list;
-    for (auto& player : players_) {
-        list.push_back({
-            player->getEngine()->getConfig().getName(),
-            player->getIdentifier(),
-            "Running",
-            player->getEngine()->getEngineMemoryUsage(),
-			white == player.get()
-			});
-	}
+    for (auto &player : players_)
+    {
+        list.push_back({player->getEngine()->getConfig().getName(),
+                        player->getIdentifier(),
+                        "Running",
+                        player->getEngine()->getEngineMemoryUsage(),
+                        white == player.get()});
+    }
     QaplaTester::BoardExchange::instance().setEngineDataList(id_, list);
-    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
+    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord &record)
+                                                                      {
         record.setWhiteEngineName(whiteName);
-        record.setBlackEngineName(blackName);
-    });
+        record.setBlackEngineName(blackName); });
 }
 
-void GameContext::tearDown() {
+void GameContext::tearDown()
+{
     players_.clear();
     QaplaTester::BoardExchange::instance().setEngineDataList(id_, {});
-
 }
 
-void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines) {
+void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines)
+{
     {
         std::lock_guard lock(engineMutex_);
         players_.clear();
-        for (auto& engine : engines) {
-            if (eventCallback_) {
+        for (auto &engine : engines)
+        {
+            if (eventCallback_)
+            {
                 engine->setEventSink(eventCallback_);
             }
             auto player = std::make_unique<PlayerContext>();
@@ -73,77 +78,99 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
             players_.emplace_back(std::move(player));
         }
     }
-	updateEngineNames();
+    updateEngineNames();
     setTimeControl(gameRecord_.getWhiteTimeControl());
-    if (getBlack() && getWhite() != getBlack()) {
+    if (getBlack() && getWhite() != getBlack())
+    {
         getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
     }
 }
 
-void GameContext::ensureStarted() {
-    for (auto& player : players_) {
-        if (player->getEngine()->isStopped()) {
+void GameContext::ensureStarted()
+{
+    for (auto &player : players_)
+    {
+        if (player->getEngine()->isStopped())
+        {
             player->restartEngine(true);
-            if (eventCallback_) {
-                player->getEngine()->setEventSink(eventCallback_);
-			}
-        }
-    }
-}
-
-void GameContext::restartPlayer(uint32_t index) {
-    if (index >= players_.size()) return;
-    players_[index]->restartEngine();
-    if (eventCallback_) {
-        players_[index]->getEngine()->setEventSink(eventCallback_);
-    }
-}
-
-void GameContext::restartPlayer(const std::string& id) {
-    for (auto& player : players_) {
-        if (player->getIdentifier() == id) {
-            player->restartEngine(true);
-            if (eventCallback_) {
+            if (eventCallback_)
+            {
                 player->getEngine()->setEventSink(eventCallback_);
             }
         }
     }
 }
 
-void GameContext::stopEngine(const std::string& id) {
-    for (auto& player : players_) {
-        if (player->getIdentifier() == id) {
+void GameContext::restartPlayer(uint32_t index)
+{
+    if (index >= players_.size())
+        return;
+    players_[index]->restartEngine();
+    if (eventCallback_)
+    {
+        players_[index]->getEngine()->setEventSink(eventCallback_);
+    }
+}
+
+void GameContext::restartPlayer(const std::string &id)
+{
+    for (auto &player : players_)
+    {
+        if (player->getIdentifier() == id)
+        {
+            player->restartEngine(true);
+            if (eventCallback_)
+            {
+                player->getEngine()->setEventSink(eventCallback_);
+            }
+        }
+    }
+}
+
+void GameContext::stopEngine(const std::string &id)
+{
+    for (auto &player : players_)
+    {
+        if (player->getIdentifier() == id)
+        {
             player->stopEngine();
         }
     }
 }
 
-void GameContext::setTimeControl(const TimeControl& timeControl) {
-    for (auto& player : players_) {
+void GameContext::setTimeControl(const TimeControl &timeControl)
+{
+    for (auto &player : players_)
+    {
         player->setTimeControl(timeControl);
     }
     std::lock_guard lock(gameRecordMutex_);
     gameRecord_.setTimeControl(timeControl, timeControl);
 }
 
-void GameContext::newGame() {
+void GameContext::newGame()
+{
     ensureStarted();
-    for (size_t i = 0; i < players_.size(); ++i) {
+    for (size_t i = 0; i < players_.size(); ++i)
+    {
         bool isWhite = (i == 0 && !switchedSide_) || (i == 1 && switchedSide_);
         players_[i]->newGame(gameRecord_, isWhite);
     }
 }
 
-void GameContext::setPosition(bool useStartPosition, const std::string& fen,
-    std::optional<std::vector<std::string>> playedMoves) {
+void GameContext::setPosition(bool useStartPosition, const std::string &fen,
+                              std::optional<std::vector<std::string>> playedMoves)
+{
     cancelCompute();
     {
         std::lock_guard lock(gameRecordMutex_);
         gameRecord_.setStartPosition(useStartPosition, fen, true);
         updateEngineNames();
 
-        if (playedMoves) {
-            for (const auto& move : *playedMoves) {
+        if (playedMoves)
+        {
+            for (const auto &move : *playedMoves)
+            {
                 MoveRecord moveRecord(gameRecord_.nextMoveIndex(), "#gui");
                 moveRecord.original = move;
                 moveRecord.lan = move;
@@ -153,112 +180,130 @@ void GameContext::setPosition(bool useStartPosition, const std::string& fen,
         QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
     }
 
-    for (auto& player : players_) {
+    for (auto &player : players_)
+    {
         player->setStartPosition(gameRecord_);
     }
 }
 
-void GameContext::setPosition(const GameRecord& record) {
+void GameContext::setPosition(const GameRecord &record)
+{
     cancelCompute();
     {
         std::lock_guard lock(gameRecordMutex_);
         gameRecord_ = record;
-		updateEngineNames();
+        updateEngineNames();
     }
 
     QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
 
-    for (auto& player : players_) {
+    for (auto &player : players_)
+    {
         player->setStartPosition(gameRecord_);
     }
-
 }
 
-void GameContext::setMove(const MoveRecord& move) {
+void GameContext::doMove(QaplaBasics::Move move)
+{
     cancelCompute();
     {
         std::lock_guard lock(gameRecordMutex_);
-		gameRecord_.addMove(move);
+        gameRecord_.doMove(move);
     }
 
-    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
-        record.addMove(move.createMinimalCopy());
-    });
-
-    for (auto& player : players_) {
+    for (auto &player : players_)
+    {
         player->doMove(move);
     }
-
 }
 
-size_t GameContext::getPlayerCount() const {
+size_t GameContext::getPlayerCount() const
+{
     return players_.size();
 }
 
-PlayerContext* GameContext::player(size_t index) {
-    if (index >= players_.size()) return nullptr;
+PlayerContext *GameContext::player(size_t index)
+{
+    if (index >= players_.size())
+        return nullptr;
     return players_[index].get();
 }
 
-PlayerContext* GameContext::getWhite() {
-    if (players_.empty()) return nullptr;
+PlayerContext *GameContext::getWhite()
+{
+    if (players_.empty())
+        return nullptr;
     return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
 }
 
-const PlayerContext* GameContext::getWhite() const {
-    if (players_.empty()) return nullptr;
+const PlayerContext *GameContext::getWhite() const
+{
+    if (players_.empty())
+        return nullptr;
     return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
 }
 
-PlayerContext* GameContext::getBlack() {
-    if (players_.size() < 2) return getWhite();
+PlayerContext *GameContext::getBlack()
+{
+    if (players_.size() < 2)
+        return getWhite();
     return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
 }
 
-const PlayerContext* GameContext::getBlack() const {
-    if (players_.empty()) return nullptr;
+const PlayerContext *GameContext::getBlack() const
+{
+    if (players_.empty())
+        return nullptr;
     return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
 }
 
-
-void GameContext::setSideSwitched(bool switched) {
+void GameContext::setSideSwitched(bool switched)
+{
     switchedSide_ = switched;
 }
 
-bool GameContext::isSideSwitched() const {
+bool GameContext::isSideSwitched() const
+{
     return switchedSide_;
 }
 
-void GameContext::setEventCallback(std::function<void(EngineEvent&&)> callback) {
+void GameContext::setEventCallback(std::function<void(EngineEvent &&)> callback)
+{
     eventCallback_ = std::move(callback);
-    for (auto& player : players_) {
-        if (player->getEngine()) {
+    for (auto &player : players_)
+    {
+        if (player->getEngine())
+        {
             player->getEngine()->setEventSink(eventCallback_);
         }
     }
 }
 
-const GameRecord& GameContext::gameRecord() const {
+const GameRecord &GameContext::gameRecord() const
+{
     return gameRecord_;
 }
 
-void GameContext::withGameRecord(std::function<void(const GameRecord&)> accessFn) const {
+void GameContext::withGameRecord(std::function<void(const GameRecord &)> accessFn) const
+{
     std::lock_guard lock(gameRecordMutex_);
     accessFn(gameRecord_);
 }
 
-std::tuple<GameEndCause, GameResult> GameContext::checkGameResult() {
+std::tuple<GameEndCause, GameResult> GameContext::checkGameResult()
+{
 
-    for (auto& player : players_) {
+    for (auto &player : players_)
+    {
         auto [pcause, presult] = player->getGameResult();
-        if (presult != GameResult::Unterminated) {
+        if (presult != GameResult::Unterminated)
+        {
             {
                 std::lock_guard lock(gameRecordMutex_);
                 gameRecord_.setGameEnd(pcause, presult);
             }
-            QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord& record) {
-                record.setGameEnd(pcause, presult);
-            });
+            QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord &record)
+                                                                              { record.setGameEnd(pcause, presult); });
 
             break;
         }
@@ -267,13 +312,16 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult() {
     return gameRecord_.getGameResult();
 }
 
-bool GameContext::checkForTimeoutsAndRestart() {
-    if (!eventCallback_) 
-		throw AppError::make("GameContext::checkForTimeoutsAndRestart; No event callback set.");
+bool GameContext::checkForTimeoutsAndRestart()
+{
+    if (!eventCallback_)
+        throw AppError::make("GameContext::checkForTimeoutsAndRestart; No event callback set.");
 
     bool restarted = false;
-    for (auto& player : players_) {
-        if (player->checkEngineTimeout()) {
+    for (auto &player : players_)
+    {
+        if (player->checkEngineTimeout())
+        {
             restarted = true;
             player->getEngine()->setEventSink(eventCallback_);
         }
@@ -281,73 +329,96 @@ bool GameContext::checkForTimeoutsAndRestart() {
     return restarted;
 }
 
-PlayerContext* GameContext::findPlayerByEngineId(const std::string& identifier) {
-    for (auto& player : players_) {
-        if (player->getEngine()->getIdentifier() == identifier) {
+PlayerContext *GameContext::findPlayerByEngineId(const std::string &identifier)
+{
+    for (auto &player : players_)
+    {
+        if (player->getEngine()->getIdentifier() == identifier)
+        {
             return player.get();
         }
     }
     return nullptr;
 }
 
-void GameContext::restartIfConfigured() {
-    for (auto& player : players_) {
-        if (!player->getEngine()) continue;
+void GameContext::restartIfConfigured()
+{
+    for (auto &player : players_)
+    {
+        if (!player->getEngine())
+            continue;
 
-        if (player->getEngine()->getConfig().getRestartOption() == RestartOption::Always) {
+        if (player->getEngine()->getConfig().getRestartOption() == RestartOption::Always)
+        {
             player->restartEngine();
-            if (eventCallback_) {
+            if (eventCallback_)
+            {
                 player->getEngine()->setEventSink(eventCallback_);
-			}
+            }
         }
     }
 }
 
-void GameContext::cancelCompute() {
-    for (auto& player : players_) {
+void GameContext::cancelCompute()
+{
+    for (auto &player : players_)
+    {
         player->cancelCompute();
     }
 }
 
-MoveInfos GameContext::getMoveInfos() const {
+MoveInfos GameContext::getMoveInfos() const
+{
     MoveInfos infos;
-    for (const auto& player : players_) {
+    for (const auto &player : players_)
+    {
         infos.emplace_back(player->getCurrentMoveCopy());
     }
     return infos;
 }
 
-EngineRecords GameContext::getEngineRecords() const {
-	std::lock_guard lock(engineMutex_);
+EngineRecords GameContext::getEngineRecords() const
+{
+    std::lock_guard lock(engineMutex_);
     EngineRecords records;
-    for (const auto& player : players_) {
-        if (!player->getEngine()) {
+    for (const auto &player : players_)
+    {
+        if (!player->getEngine())
+        {
             EngineRecord record = {
                 .identifier{},
                 .config{},
                 .supportedOptions{},
                 .status = EngineRecord::Status::NotStarted,
-                .memoryUsageB = 0
-            };
+                .memoryUsageB = 0};
             records.push_back(record);
             continue;
         }
-		auto engine = player->getEngine();
+        auto engine = player->getEngine();
         EngineRecord record = {
-			.identifier = engine->getIdentifier(),
+            .identifier = engine->getIdentifier(),
             .config = engine->getConfig(),
             .supportedOptions = engine->getSupportedOptions(),
-            .memoryUsageB = engine->getEngineMemoryUsage()
-        };
-        switch (engine->workerState()) {
-        case EngineWorker::WorkerState::notStarted: record.status = EngineRecord::Status::NotStarted; break;
-        case EngineWorker::WorkerState::starting: record.status = EngineRecord::Status::Starting; break;
-        case EngineWorker::WorkerState::running: record.status = EngineRecord::Status::Running; break;
-        case EngineWorker::WorkerState::stopped: record.status = EngineRecord::Status::NotStarted; break;
-        default: record.status = EngineRecord::Status::Error; break;
+            .memoryUsageB = engine->getEngineMemoryUsage()};
+        switch (engine->workerState())
+        {
+        case EngineWorker::WorkerState::notStarted:
+            record.status = EngineRecord::Status::NotStarted;
+            break;
+        case EngineWorker::WorkerState::starting:
+            record.status = EngineRecord::Status::Starting;
+            break;
+        case EngineWorker::WorkerState::running:
+            record.status = EngineRecord::Status::Running;
+            break;
+        case EngineWorker::WorkerState::stopped:
+            record.status = EngineRecord::Status::NotStarted;
+            break;
+        default:
+            record.status = EngineRecord::Status::Error;
+            break;
         }
         records.push_back(record);
     }
-	return records;
+    return records;
 }
-

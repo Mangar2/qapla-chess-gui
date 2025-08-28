@@ -39,54 +39,63 @@
 
 using namespace QaplaWindows;
 
-
-EpdWindow::EpdWindow(std::shared_ptr<BoardData> boardData)
-    : boardData_(std::move(boardData))
+EpdWindow::EpdWindow()
 {
 }
 
 EpdWindow::~EpdWindow() = default;
 
-void EpdWindow::drawButtons() {
+void EpdWindow::drawButtons()
+{
     constexpr float space = 3.0f;
     constexpr float topOffset = 5.0f;
     constexpr float bottomOffset = 8.0f;
     constexpr float leftOffset = 20.0f;
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    constexpr ImVec2 buttonSize = {25.0f, 25.0f};
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const std::string button : { "Run", "Stop", "Clear" }) {
+    for (const std::string button : {"Run", "Stop", "Clear"})
+    {
         ImGui::SetCursorScreenPos(pos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
-            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-                if (button == "Run") {
-                    QaplaButton::drawPlay(drawList, topLeft, size);
-                }
-                if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size);
-				}
-                if (button == "Clear") {
-                    QaplaButton::drawText("X", drawList, topLeft, size);
-                }
-            }))
+        if (QaplaButton::drawIconButton(
+                button, button, buttonSize, false, [&button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+                {
+            if (button == "Run")
+            {
+                QaplaButton::drawPlay(drawList, topLeft, size);
+            }
+            if (button == "Stop")
+            {
+                QaplaButton::drawStop(drawList, topLeft, size);
+            }
+            if (button == "Clear")
+            {
+                QaplaButton::drawText("X", drawList, topLeft, size);
+            } }))
         {
-            try {
-                if (button == "Run") {
-                    boardData_->clearPool();
-                    boardData_->epdData().analyse();
+            try
+            {
+                auto &boardData = BoardData::instance();
+                if (button == "Run")
+                {
+                    boardData.clearPool();
+                    boardData.epdData().analyse();
                     SnackbarManager::instance().showSuccess("Epd analysis started");
-                } 
-                else if (button == "Stop") {
-                    boardData_->stopPool();
-			    } 
-                else if (button == "Clear") {
-                    boardData_->clearPool();
-                    boardData_->epdData().clear();
                 }
-            } 
-            catch (const std::exception& e) {
+                else if (button == "Stop")
+                {
+                    boardData.stopPool();
+                }
+                else if (button == "Clear")
+                {
+                    boardData.clearPool();
+                    boardData.epdData().clear();
+                }
+            }
+            catch (const std::exception &e)
+            {
                 SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
             }
         }
@@ -96,52 +105,60 @@ void EpdWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
-void EpdWindow::drawInput() {
-    
-	constexpr float inputWidth = 200.0f;
+void EpdWindow::drawInput()
+{
+
+    constexpr float inputWidth = 200.0f;
     constexpr int maxConcurrency = 32;
-	constexpr int maxSeenPlies = 32;
-    
+    constexpr int maxSeenPlies = 32;
+
+    auto &boardData = BoardData::instance();
+
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
-        boardData_->epdData().config().concurrency, 1, maxConcurrency)) {
-        boardData_->setPoolConcurrency(boardData_->epdData().config().concurrency, true, true);
+                                           boardData.epdData().config().concurrency, 1, maxConcurrency))
+    {
+        boardData.setPoolConcurrency(boardData.epdData().config().concurrency, true, true);
     }
 
     ImGui::Spacing();
-    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected)) return;
+    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
+        return;
     ImGui::Indent(10.0f);
 
-    std::string filePath = boardData_->epdData().config().filepath;
+    std::string filePath = boardData.epdData().config().filepath;
     ImGui::SetNextItemWidth(inputWidth);
-	ImGuiControls::inputInt<uint32_t>("Seen plies", 
-        boardData_->epdData().config().seenPlies, 1, maxSeenPlies);
+    ImGuiControls::inputInt<uint32_t>("Seen plies",
+                                      boardData.epdData().config().seenPlies, 1, maxSeenPlies);
 
     ImGui::SetNextItemWidth(inputWidth);
-	ImGuiControls::inputInt<uint64_t>("Max time (s)", 
-        boardData_->epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+    ImGuiControls::inputInt<uint64_t>("Max time (s)",
+                                      boardData.epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
     ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint64_t>("Min time (s)", 
-        boardData_->epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+    ImGuiControls::inputInt<uint64_t>("Min time (s)",
+                                      boardData.epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
     ImGui::Spacing();
-    ImGuiControls::fileInput("Epd or RAW position file:", 
-        boardData_->epdData().config().filepath, inputWidth * 2.0f);
+    ImGuiControls::fileInput("Epd or RAW position file:",
+                             boardData.epdData().config().filepath, inputWidth * 2.0f);
     ImGui::Spacing();
     ImGui::Unindent(10.0f);
 }
 
-void EpdWindow::draw() {
+void EpdWindow::draw()
+{
+    auto &boardData = BoardData::instance();
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
-    auto clickedRow = boardData_->epdData().drawTable(size);
-    if (clickedRow) {
-        auto fen = boardData_->epdData().getFen(*clickedRow);
-        if (fen) {
-            boardData_->setPosition(false, *fen);
+    auto clickedRow = boardData.epdData().drawTable(size);
+    if (clickedRow)
+    {
+        auto fen = boardData.epdData().getFen(*clickedRow);
+        if (fen)
+        {
+            boardData.setPosition(false, *fen);
         }
     }
 }
-

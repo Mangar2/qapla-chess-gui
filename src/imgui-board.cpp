@@ -18,13 +18,14 @@
  */
 
 #include "imgui-board.h"
-#include "imgui.h"
-
-#include "qapla-engine/types.h"
-#include "qapla-engine/movegenerator.h"
-#include "qapla-engine/move.h"
 #include "font.h"
 #include "imgui-button.h"
+
+#include "qapla-tester/game-state.h"
+#include "qapla-tester/game-record.h"
+
+#include "qapla-engine/types.h"
+#include "qapla-engine/move.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -32,33 +33,34 @@
 #include <cmath>
 #include <string>
 
-namespace QaplaWindows {
+namespace QaplaWindows
+{
 
-    ImGuiBoard::ImGuiBoard() 
-        : position_(std::make_unique<QaplaMoveGenerator::MoveGenerator>())
+    ImGuiBoard::ImGuiBoard()
+        : gameState_(std::make_unique<GameState>())
     {
     }
 
-    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2& boardPos, float cellSize, 
-        QaplaBasics::File file, QaplaBasics::Rank rank) {
-        float cellY = boardInverted_ ?
-            static_cast<float>(rank) : static_cast<float>(QaplaBasics::Rank::R8 - rank);
+    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
+                                                                 QaplaBasics::File file, QaplaBasics::Rank rank)
+    {
+        float cellY = boardInverted_ ? static_cast<float>(rank) : static_cast<float>(QaplaBasics::Rank::R8 - rank);
 
         const ImVec2 cellMin = {
             boardPos.x + static_cast<float>(file) * cellSize,
-            boardPos.y + cellY * cellSize
-        };
-        const ImVec2 cellMax = { cellMin.x + cellSize, cellMin.y + cellSize };
-        return { cellMin, cellMax };
+            boardPos.y + cellY * cellSize};
+        const ImVec2 cellMax = {cellMin.x + cellSize, cellMin.y + cellSize};
+        return {cellMin, cellMax};
     }
 
     void ImGuiBoard::drawPromotionPopup(float cellSize)
     {
         using QaplaBasics::Piece;
         constexpr float SHRINK_CELL_SIZE = 0.8f;
-		auto& position = *position_;
+        auto &position = gameState_->position();
 
-        if (!moveInput_.to) return;
+        if (!moveInput_.to)
+            return;
 
         MoveInput moveInput;
 
@@ -67,35 +69,30 @@ namespace QaplaWindows {
             whiteToMove ? Piece::WHITE_QUEEN : Piece::BLACK_QUEEN,
             whiteToMove ? Piece::WHITE_ROOK : Piece::BLACK_ROOK,
             whiteToMove ? Piece::WHITE_BISHOP : Piece::BLACK_BISHOP,
-            whiteToMove ? Piece::WHITE_KNIGHT : Piece::BLACK_KNIGHT
-        };
+            whiteToMove ? Piece::WHITE_KNIGHT : Piece::BLACK_KNIGHT};
 
         cellSize = std::max(30.0f, cellSize * SHRINK_CELL_SIZE);
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        ImFont* font = ImGui::GetFont();
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        ImFont *font = ImGui::GetFont();
         ImGui::PushFont(font::chessFont);
 
         const ImVec2 startPos = ImGui::GetCursorScreenPos();
 
-        for (int i = 0; i < 4; ++i) {
+        for (int i = 0; i < 4; ++i)
+        {
             const ImVec2 cellMin = {
                 startPos.x + i * cellSize,
-                startPos.y
-            };
+                startPos.y};
             const ImVec2 cellMax = {
                 cellMin.x + cellSize,
-                cellMin.y + cellSize
-            };
+                cellMin.y + cellSize};
 
             ImGui::SetCursorScreenPos(cellMin);
             ImGui::InvisibleButton(("promo_" + std::to_string(i)).c_str(), ImVec2(cellSize, cellSize));
 
-            if (ImGui::IsItemClicked()) {
+            if (ImGui::IsItemClicked())
+            {
                 moveInput.promotion = pieces[i];
-
-                moveInput.from.reset();
-                moveInput.to.reset();
-                promotionPending_ = false;
                 ImGui::CloseCurrentPopup();
             }
 
@@ -107,53 +104,57 @@ namespace QaplaWindows {
         ImGui::PopFont();
     }
 
-
-    void ImGuiBoard::drawBoardSquare(ImDrawList* drawList, const ImVec2& boardPos, 
-        float cellSize, QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite)
+    void ImGuiBoard::drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos,
+                                     float cellSize, QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite)
     {
-        using QaplaBasics::Square;
         using QaplaBasics::Piece;
-		auto& position = *position_;
+        using QaplaBasics::Square;
+        auto &position = gameState_->position();
 
         const Square square = computeSquare(file, rank);
         const Piece piece = position[square];
 
-		const auto [cellMin, cellMax] = computeCellCoordinates(boardPos, cellSize, file, rank);
+        const auto [cellMin, cellMax] = computeCellCoordinates(boardPos, cellSize, file, rank);
 
-        const bool isSelected = (moveInput_.from && *moveInput_.from == square) 
-            || (moveInput_.to && *moveInput_.to == square);
+        const bool isSelected = (moveInput_.from && *moveInput_.from == square) || (moveInput_.to && *moveInput_.to == square);
         const ImU32 bgColor = isSelected
-            ? IM_COL32(100, 149, 237, 255)
-            : (isWhite ? IM_COL32(240, 217, 181, 255) : IM_COL32(181, 136, 99, 255));
+                                  ? IM_COL32(100, 149, 237, 255)
+                                  : (isWhite ? IM_COL32(240, 217, 181, 255) : IM_COL32(181, 136, 99, 255));
 
         drawList->AddRectFilled(cellMin, cellMax, bgColor);
 
         ImGui::SetCursorScreenPos(cellMin);
         ImGui::InvisibleButton(("cell_" + std::to_string(square)).c_str(), ImVec2(cellSize, cellSize));
 
-        if (ImGui::IsItemClicked() && allowMoveInput_) {
-			bool wtm = position.isWhiteToMove();
-            if (piece != Piece::NO_PIECE && getPieceColor(piece) == (wtm ? Piece::WHITE : Piece::BLACK)) {
+        if (ImGui::IsItemClicked() && allowMoveInput_)
+        {
+            bool wtm = position.isWhiteToMove();
+            if (piece != Piece::NO_PIECE && getPieceColor(piece) == (wtm ? Piece::WHITE : Piece::BLACK))
+            {
                 moveInput_.from = square;
             }
-            else {
+            else
+            {
                 moveInput_.to = square;
             }
 
-            if (promotionPending_) {
+            if (promotionPending_)
+            {
                 ImGui::OpenPopup("Promotion");
             }
         }
     }
 
-    void ImGuiBoard::drawBoardSquares(ImDrawList* drawList, const ImVec2& boardPos, float cellSize)
+    void ImGuiBoard::drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize)
     {
-        using QaplaBasics::Rank;
         using QaplaBasics::File;
+        using QaplaBasics::Rank;
 
         bool isWhite = false;
-        for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank) {
-            for (File file = File::A; file <= File::H; ++file) {
+        for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
+        {
+            for (File file = File::A; file <= File::H; ++file)
+            {
                 drawBoardSquare(drawList, boardPos, cellSize, file, rank, isWhite);
                 isWhite = !isWhite;
             }
@@ -161,15 +162,17 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiBoard::drawBoardPieces(ImDrawList* drawList, const ImVec2& boardPos, float cellSize, ImFont* font)
+    void ImGuiBoard::drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font)
     {
-        using QaplaBasics::Rank;
         using QaplaBasics::File;
-        using QaplaBasics::Square;
         using QaplaBasics::Piece;
-        auto& position = *position_;
-        for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank) {
-            for (File file = File::A; file <= File::H; ++file) {
+        using QaplaBasics::Rank;
+        using QaplaBasics::Square;
+        auto &position = gameState_->position();
+        for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
+        {
+            for (File file = File::A; file <= File::H; ++file)
+            {
                 Square sq = computeSquare(file, rank);
                 Piece piece = position[sq];
                 const auto [cellMin, _] = computeCellCoordinates(boardPos, cellSize, file, rank);
@@ -178,31 +181,49 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiBoard::drawBoardCoordinates(ImDrawList* drawList,
-        const ImVec2& boardPos, float cellSize, float boardSize, ImFont* font, float maxSize)
+    void ImGuiBoard::drawBoardCoordinates(ImDrawList *drawList,
+                                          const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize)
     {
         const int gridSize = 8;
 
-        for (int col = 0; col < gridSize; ++col) {
+        for (int col = 0; col < gridSize; ++col)
+        {
             std::string label(1, 'a' + col);
             ImVec2 pos = {
                 boardPos.x + col * cellSize + cellSize * 0.5f - ImGui::CalcTextSize(label.c_str()).x * 0.5f,
-                boardPos.y + boardSize
-            };
+                boardPos.y + boardSize};
             drawList->AddText(font, std::min(cellSize * 0.5f, maxSize), pos, IM_COL32_WHITE, label.c_str());
         }
 
-        for (int row = 0; row < gridSize; ++row) {
+        for (int row = 0; row < gridSize; ++row)
+        {
             std::string label(1, '8' - row);
             ImVec2 pos = {
                 boardPos.x + boardSize,
-                boardPos.y + row * cellSize + cellSize * 0.3f
-            };
+                boardPos.y + row * cellSize + cellSize * 0.3f};
             drawList->AddText(font, std::min(cellSize * 0.5f, maxSize), pos, IM_COL32_WHITE, label.c_str());
         }
     }
 
-    MoveInput ImGuiBoard::draw()
+    QaplaBasics::Move ImGuiBoard::checkMove()
+    {
+        const auto [move, valid, promotion] = gameState_->resolveMove(
+            std::nullopt, moveInput_.from, moveInput_.to, moveInput_.promotion);
+
+        promotionPending_ = promotion;
+        if (!valid || !move.isEmpty())
+        {
+            moveInput_ = {};
+        }
+        return move;
+    }
+
+    void ImGuiBoard::setGameState(const GameRecord &gameRecord)
+    {
+        gameState_->setFromGameRecord(gameRecord, gameRecord.nextMoveIndex());
+    }
+
+    QaplaBasics::Move ImGuiBoard::draw()
     {
         constexpr float maxBorderTextSize = 30.0f;
         constexpr int gridSize = 8;
@@ -210,20 +231,23 @@ namespace QaplaWindows {
         const auto screenPos = ImGui::GetCursorScreenPos();
         const auto region = ImGui::GetContentRegionAvail();
         const auto boardHeight = std::max(50.0f, region.y - 10.0f);
-		const auto boardWidth = std::max(50.0f, region.x - 10.0f);
+        const auto boardWidth = std::max(50.0f, region.x - 10.0f);
 
-        if (region.x <= 0.0f || boardHeight <= 0.0f) {
-            return moveInput_;
+        if (region.x <= 0.0f || boardHeight <= 0.0f)
+        {
+            return {};
         }
 
         ImGui::PushFont(font::chessFont);
 
         const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95f;
 
-        if (promotionPending_) {
+        if (promotionPending_)
+        {
             ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
-            if (ImGui::BeginPopup("Promotion")) {
+            if (ImGui::BeginPopup("Promotion"))
+            {
                 drawPromotionPopup(cellSize);
                 ImGui::EndPopup();
             }
@@ -233,11 +257,11 @@ namespace QaplaWindows {
 
         const float boardSize = cellSize * gridSize;
 
-		auto topLeft = ImVec2(screenPos.x + 3, screenPos.y + 3);
+        auto topLeft = ImVec2(screenPos.x + 3, screenPos.y + 3);
 
-        const ImVec2 boardEnd = { screenPos.x + boardSize, screenPos.y + boardSize };
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        ImFont* font = ImGui::GetFont();
+        const ImVec2 boardEnd = {screenPos.x + boardSize, screenPos.y + boardSize};
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        ImFont *font = ImGui::GetFont();
 
         drawBoardSquares(drawList, topLeft, cellSize);
         drawBoardPieces(drawList, topLeft, cellSize, font);
@@ -248,8 +272,8 @@ namespace QaplaWindows {
 
         ImGui::PopFont();
 
-        return moveInput_;
-
+        const auto move = checkMove();
+        return move;
     }
 
 }

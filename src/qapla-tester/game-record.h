@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
- // GameRecord.h
+// GameRecord.h
 #pragma once
 
 #include <vector>
@@ -32,7 +32,10 @@
 #include "time-control.h"
 #include "game-result.h"
 
-struct GameStruct {
+#include "qapla-engine/move.h"
+
+struct GameStruct
+{
 	std::string fen;
 	std::string lanMoves;
 	std::string sanMoves;
@@ -41,7 +44,8 @@ struct GameStruct {
 	bool isWhiteToMove;
 };
 
-enum class GameEvent {
+enum class GameEvent
+{
 	None,
 	Tournament,
 	Epd,
@@ -53,12 +57,12 @@ enum class GameEvent {
  * Stores a list of moves and manages current game state pointer.
  * Supports forward/backward navigation and time control evaluation.
  */
-class GameRecord {
+class GameRecord
+{
 public:
 	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove);
 	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
-		std::string whiteEngineName, std::string blackEngineName);
-
+						  std::string whiteEngineName, std::string blackEngineName);
 
 	/**
 	 * @brief Initializes this GameRecord using another GameRecord (for PGN-based start setup).
@@ -67,42 +71,45 @@ public:
 	 * @param whiteEngineName White engine name to override.
 	 * @param blackEngineName Black engine name to override.
 	 */
-	void setStartPosition(const GameRecord& source, uint32_t toPly,
-		const std::string& whiteEngineName, const std::string& blackEngineName);
+	void setStartPosition(const GameRecord &source, uint32_t toPly,
+						  const std::string &whiteEngineName, const std::string &blackEngineName);
 
-    /** Adds a move at the current ply position, overwriting any future moves. */
-    void addMove(const MoveRecord& move);
+	/** Adds a move at the current ply position, overwriting any future moves. */
+	void addMove(const MoveRecord &move);
+	void doMove(QaplaBasics::Move move);
 
-    /** Returns the current ply index. */
-    uint32_t nextMoveIndex() const;
+	/** Returns the current ply index. */
+	uint32_t nextMoveIndex() const;
 
-    /** Sets the current ply (0 = before first move). */
-    void setNextMoveIndex(uint32_t ply);
+	/** Sets the current ply (0 = before first move). */
+	void setNextMoveIndex(uint32_t ply);
 
-    /** Advances to the next ply if possible. */
-    void advance();
+	/** Advances to the next ply if possible. */
+	void advance();
 
-    /** Rewinds to the previous ply if possible. */
-    void rewind();
+	/** Rewinds to the previous ply if possible. */
+	void rewind();
 
-    /**
-     * Returns the total time used by each side up to the current ply.
-     *
-     * @return A pair of milliseconds used: {whiteTime, blackTime}
-     */
-    std::pair<uint64_t, uint64_t> timeUsed() const;
+	/**
+	 * Returns the total time used by each side up to the current ply.
+	 *
+	 * @return A pair of milliseconds used: {whiteTime, blackTime}
+	 */
+	std::pair<uint64_t, uint64_t> timeUsed() const;
 
-    /** Returns const reference to move history. */
-	const std::vector<MoveRecord>& history() const {
+	/** Returns const reference to move history. */
+	const std::vector<MoveRecord> &history() const
+	{
 		return moves_;
 	}
-	std::vector<MoveRecord>& history() {
+	std::vector<MoveRecord> &history()
+	{
 		return moves_;
 	}
 
-    /**
+	/**
 	 * @brief returns true if the game started with the standard starting position.
-     */
+	 */
 	bool getStartPos() const { return startPos_; }
 
 	/**
@@ -111,12 +118,13 @@ public:
 	 */
 	std::string getStartFen() const { return startFen_; }
 
-    /** 
+	/**
 	 * @brief Sets the game end cause and result.
 	 * @param cause The cause of the game end.
 	 * @param result The result of the game.
-     */
-	void setGameEnd(GameEndCause cause, GameResult result) {
+	 */
+	void setGameEnd(GameEndCause cause, GameResult result)
+	{
 		updateCnt_++;
 		gameEndCause_ = cause;
 		gameResult_ = result;
@@ -125,41 +133,48 @@ public:
 	 * @brief Returns the game end cause and result.
 	 * @return A pair of GameEndCause and GameResult.
 	 */
-	std::tuple<GameEndCause, GameResult> getGameResult() const {
-		return { gameEndCause_, gameResult_ };
+	std::tuple<GameEndCause, GameResult> getGameResult() const
+	{
+		return {gameEndCause_, gameResult_};
 	}
-    /**
+	/**
 	 * @brief Sets the time control for the game.
-     */
-    void setTimeControl(const TimeControl& whiteTimeControl, const TimeControl& blackTimeControl) {
+	 */
+	void setTimeControl(const TimeControl &whiteTimeControl, const TimeControl &blackTimeControl)
+	{
 		updateCnt_++;
-        whiteTimeControl_ = whiteTimeControl;
+		whiteTimeControl_ = whiteTimeControl;
 		blackTimeControl_ = blackTimeControl;
-    }
-    /**
-     * @brief Returns the white side's time control.
-     */
-    const TimeControl& getWhiteTimeControl() const {
-        return whiteTimeControl_;
-    }
-	TimeControl& getWhiteTimeControl() {
+	}
+	/**
+	 * @brief Returns the white side's time control.
+	 */
+	const TimeControl &getWhiteTimeControl() const
+	{
+		return whiteTimeControl_;
+	}
+	TimeControl &getWhiteTimeControl()
+	{
 		return whiteTimeControl_;
 	}
 
-    /**
-     * @brief Returns the black side's time control.
-     */
-    const TimeControl& getBlackTimeControl() const {
-        return blackTimeControl_;
-    }
-	TimeControl& getBlackTimeControl() {
+	/**
+	 * @brief Returns the black side's time control.
+	 */
+	const TimeControl &getBlackTimeControl() const
+	{
+		return blackTimeControl_;
+	}
+	TimeControl &getBlackTimeControl()
+	{
 		return blackTimeControl_;
 	}
 
 	/**
 	 * @brief Returns the current side to move.
 	 */
-	bool isWhiteToMove() const {
+	bool isWhiteToMove() const
+	{
 		return wtmAtPly(currentPly_);
 	}
 
@@ -168,22 +183,27 @@ public:
 	 * @param game The game record.
 	 * @return True if white was to move at ply 0, false if black.
 	 */
-	bool wtmAtPly(size_t ply) const {
+	bool wtmAtPly(size_t ply) const
+	{
 		return ply % 2 == 0 ? isWhiteToMoveAtStart_ : !isWhiteToMoveAtStart_;
 	}
 
-	const std::string& getWhiteEngineName() const {
+	const std::string &getWhiteEngineName() const
+	{
 		return whiteEngineName_;
 	}
-	void setWhiteEngineName(const std::string& name) {
+	void setWhiteEngineName(const std::string &name)
+	{
 		updateCnt_++;
 		whiteEngineName_ = name;
 	}
 
-    const std::string& getBlackEngineName() const {
+	const std::string &getBlackEngineName() const
+	{
 		return blackEngineName_;
-    }
-	void setBlackEngineName(const std::string& name) {
+	}
+	void setBlackEngineName(const std::string &name)
+	{
 		updateCnt_++;
 		blackEngineName_ = name;
 	}
@@ -194,7 +214,8 @@ public:
 	 * @param gameInRound The game number within the round.
 	 * @param opening The number of opening selected.
 	 */
-	void setTournamentInfo(uint32_t round, uint32_t gameInRound, uint32_t opening) {
+	void setTournamentInfo(uint32_t round, uint32_t gameInRound, uint32_t opening)
+	{
 		updateCnt_++;
 		round_ = round;
 		gameInRound_ = gameInRound;
@@ -204,14 +225,16 @@ public:
 	/**
 	 * @brief Gets the round number of the game.
 	 */
-	uint32_t getRound() const {
+	uint32_t getRound() const
+	{
 		return round_;
 	}
 
 	/**
 	 * @brief Gets the opening number used as start position for the game.
 	 */
-	uint32_t getOpeningNo() const {
+	uint32_t getOpeningNo() const
+	{
 		return opening_;
 	}
 
@@ -219,7 +242,8 @@ public:
 	 * @brief Gets the game number of the current round
 	 * @return The game number within the current round.
 	 */
-	uint32_t getGameInRound() const {
+	uint32_t getGameInRound() const
+	{
 		return gameInRound_;
 	}
 
@@ -227,7 +251,8 @@ public:
 	 * @brief Sets the game numbver of the current round
 	 * @param gameInRound The game number within the current round.
 	 */
-	void setGameInRound(uint32_t gameInRound) {
+	void setGameInRound(uint32_t gameInRound)
+	{
 		gameInRound_ = gameInRound;
 	}
 
@@ -241,7 +266,8 @@ public:
 	 *
 	 * @param totalGameNo The total game number to set.
 	 */
-	void setTotalGameNo(uint32_t totalGameNo) {
+	void setTotalGameNo(uint32_t totalGameNo)
+	{
 		totalGameNo_ = totalGameNo;
 	}
 
@@ -249,7 +275,8 @@ public:
 	 * @brief Gets the total game number
 	 * @return The 1-indexed number of total games played in the tournament so far
 	 */
-	uint32_t getTotalGameNo() const {
+	uint32_t getTotalGameNo() const
+	{
 		return totalGameNo_;
 	}
 
@@ -258,12 +285,15 @@ public:
 	 * @param key The tag name.
 	 * @param value The tag value.
 	 */
-	void setTag(const std::string& key, const std::string& value) {
+	void setTag(const std::string &key, const std::string &value)
+	{
 		updateCnt_++;
-		if (value.empty()) {
+		if (value.empty())
+		{
 			tags_.erase(key);
 		}
-		else {
+		else
+		{
 			tags_[key] = value;
 		}
 	}
@@ -273,7 +303,8 @@ public:
 	 * @param key The tag name.
 	 * @return Tag value or empty string if not found.
 	 */
-	std::string getTag(const std::string& key) const {
+	std::string getTag(const std::string &key) const
+	{
 		auto it = tags_.find(key);
 		return it != tags_.end() ? it->second : "";
 	}
@@ -281,7 +312,8 @@ public:
 	 * @brief Gets all stored PGN tags.
 	 * @return Map of all tag key-value pairs.
 	 */
-	const std::map<std::string, std::string>& getTags() const {
+	const std::map<std::string, std::string> &getTags() const
+	{
 		return tags_;
 	}
 
@@ -290,23 +322,23 @@ public:
 	 * @param other The other game record to compare with.
 	 * @return True if the records differ, false if they are the same.
 	 */
-	bool isUpdate(const GameRecord& other) const;
+	bool isUpdate(const GameRecord &other) const;
 
 	/**
 	 * @brief Checks if this game record is different from another.
 	 * @param other The other game record to compare with.
 	 * @return True if the records differ, false if they are the same.
 	 */
-	bool isDifferent(const GameRecord& other) const;
+	bool isDifferent(const GameRecord &other) const;
 
 	/**
 	 * @brief Creates a GameStruct containing the essential game data.
 	 *
 	 * This method generates a `GameStruct` object that includes the starting FEN
 	 * position and a concatenated list of moves in both LAN (long algebraic notation)
-	 * and SAN (short algebraic notation). 
+	 * and SAN (short algebraic notation).
 	 *
-	 * @return A `GameStruct` object 
+	 * @return A `GameStruct` object
 	 */
 	GameStruct createGameStruct() const;
 
@@ -320,7 +352,8 @@ public:
 	 *
 	 * @param count The number of moves to reserve space for.
 	 */
-	void reserveMoves(size_t count) {
+	void reserveMoves(size_t count)
+	{
 		moves_.reserve(count);
 	}
 
@@ -344,26 +377,25 @@ public:
 	 * @return A new `GameRecord` object with reduced data.
 	 */
 	GameRecord createMinimalCopy() const;
-	
+
 private:
-	
 	std::map<std::string, std::string> tags_;
-    bool startPos_ = true;
-    std::string startFen_;
-    std::vector<MoveRecord> moves_;
-    uint32_t currentPly_ = 0;
-    GameEndCause gameEndCause_ = GameEndCause::Ongoing;
+	bool startPos_ = true;
+	std::string startFen_;
+	std::vector<MoveRecord> moves_;
+	uint32_t currentPly_ = 0;
+	GameEndCause gameEndCause_ = GameEndCause::Ongoing;
 	GameResult gameResult_ = GameResult::Unterminated;
-    TimeControl whiteTimeControl_;
-    TimeControl blackTimeControl_;
-    std::string whiteEngineName_;
-    std::string blackEngineName_;
+	TimeControl whiteTimeControl_;
+	TimeControl blackTimeControl_;
+	std::string whiteEngineName_;
+	std::string blackEngineName_;
 	bool isWhiteToMoveAtStart_ = true;
 	uint32_t totalGameNo_ = 0;
 	uint32_t gameInRound_ = 0;
-	uint32_t opening_ = 0; 
-    uint32_t round_ = 0;
+	uint32_t opening_ = 0;
+	uint32_t round_ = 0;
 	uint32_t pgnRound_ = 0;
-	uint64_t updateCnt_ = 1; 
+	uint64_t updateCnt_ = 1;
 	GameEvent gameEvent_ = GameEvent::None;
 };
