@@ -9,11 +9,13 @@
     ],
     "cmake.configureOnOpen": true,
     "cmake.generator": "Ninja",
-    "C_Cpp.default.compilerPath": "/usr/bin/clang++",
+    "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
     "C_Cpp.default.includePath": [
         "${workspaceFolder}/**",
-        "/usr/local/include",
-        "/Library/Developer/CommandLineTools/usr/include/c++/v1"
+        "/opt/homebrew/Cellar/llvm/20.1.8/include/c++/v1",
+        "/opt/homebrew/Cellar/llvm/20.1.8/lib/clang/20/include",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/usr/include",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/System/Library/Frameworks"   
     ],
     "C_Cpp.default.defines": [
         "MACOS",
