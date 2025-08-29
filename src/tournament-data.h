@@ -55,8 +55,14 @@ namespace QaplaWindows {
         TournamentData();
         ~TournamentData();
 
+        /**
+         * @brief Initializes the tournament data.
+         */
         void init();
 
+        /**
+         * @brief Starts the tournament.
+         */
         void startTournament();
 
         /**
@@ -82,15 +88,28 @@ namespace QaplaWindows {
         void setPoolConcurrency(uint32_t count, bool nice = true);
 
         /**
-         * @brief Draws the EPD test results table.
+         * @brief Draws the tournament elo table.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
         std::optional<size_t> drawEloTable(const ImVec2& size) const;
 
+        /**
+         * @brief Draws the table displaying the running tournament pairings.
+         * @param size Size of the table to draw.
+         * @return The index of the selected row, or std::nullopt if no row was selected.
+         */
         std::optional<size_t> drawRunningTable(const ImVec2& size) const;
 
-        
+        /**
+         * @brief Draws the tournament tabs showing boards for all running games.
+         */
+        void drawTabs();
+
+        /**
+         * @brief Returns a reference to the tournament configuration.
+         * @return A reference to the tournament configuration.
+         */
         TournamentConfig& config();
 
         const std::vector<EngineConfig>& getEngineConfigs() const {

@@ -169,8 +169,12 @@ namespace QaplaWindows {
                     boardWindow_.push_back(std::move(window));
                 }
                 boardWindow_[index].setFromGameRecord(game);
+                boardWindow_[index].setRunning(true);
                 index++;
             });
+            for (; index < boardWindow_.size(); ++index) {
+                boardWindow_[index].setRunning(false);
+            }
         }
     }
 
@@ -195,6 +199,22 @@ namespace QaplaWindows {
     std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) const {
         return runningTable_.draw(size, true);
 	}
+
+    void TournamentData::drawTabs() {
+        uint32_t index = 1;
+        for (auto& window : boardWindow_) {
+            if (!window.isRunning()) continue;
+            std::string tabName = "Game " + std::to_string(index);
+            if (ImGui::BeginTabItem(tabName.c_str())) {
+                if (window.isActive()) window.draw();
+                window.setActive(true);
+                ImGui::EndTabItem();
+            } else {
+                window.setActive(false);
+            }
+            index++;
+        }
+    }
 
     void TournamentData::stopPool() {
         GameManagerPool::getInstance().stopAll();

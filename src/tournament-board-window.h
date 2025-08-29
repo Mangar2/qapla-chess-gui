@@ -55,9 +55,31 @@ namespace QaplaWindows
          * @param active True to activate the window, false to deactivate it.
          */
         void setActive(bool active) { active_ = active; }
+        bool isActive() const { return active_; }
+
+        /**
+         * @brief Set the running state of the window.
+         * @param running True if the game shown in the window is running, 
+         * false otherwise.
+         */
+        void setRunning(bool running) { running_ = running; }
+        bool isRunning() const { return running_; }
+
+        /**
+         * Get the unique identifier "round.game" for this board instance.
+         * @return The unique identifier as a string.
+         */
+        std::string id() const {
+            return std::to_string(round_) + "." + std::to_string(gameInRound_);
+        }
 
     private:
         bool active_ = false;
+        bool running_ = false;
+        
+        uint32_t round_ = 0;
+        uint32_t gameInRound_ = 0;
+
         ImGuiBoard imGuiBoard_;
     };
 

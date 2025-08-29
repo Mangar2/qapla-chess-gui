@@ -31,6 +31,8 @@ namespace QaplaWindows
 
     void TournamentBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
     {
+        round_ = gameRecord.getRound();
+        gameInRound_ = gameRecord.getGameInRound();
         if (!active_) return;
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setGameState(gameRecord);

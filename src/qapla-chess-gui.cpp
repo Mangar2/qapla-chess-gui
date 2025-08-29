@@ -119,7 +119,10 @@ namespace {
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        boardTabBar->addTab("Board", std::move(BoardEngineContainer));        
+        boardTabBar->addTab("Board", std::move(BoardEngineContainer));
+        boardTabBar->setDynamicTabsCallback([&]() {
+            QaplaWindows::TournamentData::instance().drawTabs();
+        });
 
 		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());

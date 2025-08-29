@@ -34,13 +34,24 @@ namespace QaplaWindows {
      */
     class ImGuiTabBar : public EmbeddedWindow {
     public:
-        struct Tab {
-            std::string name;
-            std::unique_ptr<EmbeddedWindow> window;
-        };
 
+
+        /**
+         * @brief Add a tab to the tab bar.
+         * @param name The name of the tab.
+         * @param window The window to display in the tab.
+         */
         void addTab(std::string name, std::unique_ptr<EmbeddedWindow> window) {
             tabs.emplace_back(Tab{ std::move(name), std::move(window) });
+        }
+
+        /**
+         * @brief Remove a tab by name.
+         * @param name The name of the tab to remove.
+         */
+        void removeTab(std::string name) {
+            tabs.erase(std::remove_if(tabs.begin(), tabs.end(),
+                [&name](const Tab& tab) { return tab.name == name; }), tabs.end());
         }
 
         void draw() override {
@@ -50,13 +61,30 @@ namespace QaplaWindows {
                         tab.window->draw();
                         ImGui::EndTabItem();
                     }
+                    if (dynamicTabsCallback) {
+                        dynamicTabsCallback();
+                    }
                 }
                 ImGui::EndTabBar();
             }
         }
 
+        /**
+         * @brief Sets a callback to draw additional dynamic tabs.
+         * @param callback The function to be called after drawing static tabs.
+         */
+        void setDynamicTabsCallback(std::function<void()> callback) {
+            dynamicTabsCallback = std::move(callback);
+        }
+
     private:
+        struct Tab {
+            std::string name;
+            std::unique_ptr<EmbeddedWindow> window;
+        };
         std::vector<Tab> tabs;
+        std::function<void()> dynamicTabsCallback;
+
     };
 
 } // namespace QaplaWindows
