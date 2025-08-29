@@ -20,6 +20,7 @@
 
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
+#include "tournament-board-window.h"
 #include "snackbar.h"
 
 #include "qapla-tester/string-helper.h"
@@ -158,18 +159,28 @@ namespace QaplaWindows {
         }
 	}
 
+    void TournamentData::populateViews() {
+        if (tournament_) {
+            uint32_t index = 0;
+            GameManagerPool::getInstance().withGameRecords([&](const GameRecord& game) {
+                if (index >= boardWindow_.size()) {
+                    TournamentBoardWindow window;
+                    window.setFromGameRecord(game);
+                    boardWindow_.push_back(std::move(window));
+                }
+                boardWindow_[index].setFromGameRecord(game);
+                index++;
+            });
+        }
+    }
+
     void TournamentData::pollData() {
         if (tournament_) {
             if (result_->poll(*tournament_, config_->averageElo)) {
                 populateEloTable();
-				populateRunningTable();
             }
-            else {
-                auto runningCount = GameManagerPool::getInstance().runningGameCount();
-                if (runningCount != runningCount_) {
-                    populateRunningTable();
-				}
-            }
+            populateRunningTable();
+            populateViews();
         } 
     }
 

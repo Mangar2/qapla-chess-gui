@@ -19,14 +19,18 @@
 
 #pragma once
 
+
+#include "tournament-board-window.h"
+#include "imgui-table.h"
+#include "configuration.h"
+
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/pgn-io.h"
 #include "qapla-tester/adjucation-manager.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/logger.h"
-#include "imgui-table.h"
-#include "configuration.h"
+
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -181,6 +185,10 @@ namespace QaplaWindows {
 
         void populateEloTable();
 		void populateRunningTable();
+
+        void populateViews();
+
+        std::vector<TournamentBoardWindow> boardWindow_;
 
 		std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;

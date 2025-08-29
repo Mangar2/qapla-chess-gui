@@ -54,6 +54,11 @@ namespace QaplaWindows
     public:
         ImGuiBoard();
 
+        ImGuiBoard(ImGuiBoard&&) = default;
+        ImGuiBoard& operator=(ImGuiBoard&&) = default;
+
+        ~ImGuiBoard();
+
         /**
          * Draw the chessboard and pieces.
          * @return The move record if a valid move was entered including LAN, SAN and 

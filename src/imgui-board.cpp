@@ -42,6 +42,10 @@ namespace QaplaWindows
     {
     }
 
+    ImGuiBoard::~ImGuiBoard()
+    {
+    }
+
     std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
                                                                  QaplaBasics::File file, QaplaBasics::Rank rank)
     {

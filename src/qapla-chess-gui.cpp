@@ -118,16 +118,18 @@ namespace {
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
 
-		auto tabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        tabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
-        tabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
-		tabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
-        tabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
+        auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
+        boardTabBar->addTab("Board", std::move(BoardEngineContainer));        
+
+		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
+        taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
+        taskTabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
+		taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
+        taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
-		mainContainer->setRight(std::move(BoardEngineContainer));
-		mainContainer->setLeft(std::move(tabBar));
-
+		mainContainer->setRight(std::move(boardTabBar));
+		mainContainer->setLeft(std::move(taskTabBar));
 
         workspace.setRootWindow(std::move(mainContainer));
         return workspace;
