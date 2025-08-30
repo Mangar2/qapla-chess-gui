@@ -54,8 +54,8 @@ namespace QaplaWindows
     public:
         ImGuiBoard();
 
-        ImGuiBoard(ImGuiBoard&&) = default;
-        ImGuiBoard& operator=(ImGuiBoard&&) = default;
+        ImGuiBoard(ImGuiBoard&&);
+        ImGuiBoard& operator=(ImGuiBoard&&);
 
         ~ImGuiBoard();
 

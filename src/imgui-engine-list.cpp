@@ -90,6 +90,9 @@ ImGuiEngineList::ImGuiEngineList()
 {
 }
 
+ImGuiEngineList::ImGuiEngineList(ImGuiEngineList&&) noexcept = default;
+ImGuiEngineList& ImGuiEngineList::operator=(ImGuiEngineList&&) noexcept = default;
+
 ImGuiEngineList::~ImGuiEngineList() = default;
 
 void ImGuiEngineList::addTables(size_t size) {
@@ -250,7 +253,7 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 	drawList->PushClipRect(topLeft, max);
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0f));
     ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
-    drawButtons(index);
+    if (allowInput_) drawButtons(index);
     ImGui::Indent(5.0f);
     if (index < engineRecords_.size()) {
         drawEngineInfo(engineRecords_[index], index);

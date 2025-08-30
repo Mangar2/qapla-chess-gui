@@ -19,15 +19,33 @@
 #include "tournament-board-window.h"
 #include "tournament-data.h"
 
+#include "imgui-engine-list.h"
+#include "imgui-board.h"
+
+#include "horizontal-split-container.h"
+#include "vertical-split-container.h"
+
 #include "qapla-engine/types.h"
 #include "qapla-tester/game-record.h"
 
 #include "imgui-board.h"
 
 #include <imgui.h>
+#include <memory>
+#include <vector>
 
 namespace QaplaWindows
 {
+
+    TournamentBoardWindow::TournamentBoardWindow() {
+        embeddedWindow_ = std::make_unique<VerticalSplitContainer>();
+        imGuiEngineList_.setAllowInput(false);
+    }
+
+    TournamentBoardWindow::TournamentBoardWindow(TournamentBoardWindow&&) noexcept = default;
+    TournamentBoardWindow& TournamentBoardWindow::operator=(TournamentBoardWindow&&) noexcept = default;
+
+    TournamentBoardWindow::~TournamentBoardWindow() = default;
 
     void TournamentBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
     {
@@ -40,7 +58,16 @@ namespace QaplaWindows
 
     void TournamentBoardWindow::draw()
     {
-        imGuiBoard_.draw();
+        embeddedWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+            imGuiBoard_.draw();
+        }));
+        
+        embeddedWindow_->setBottom(
+            std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+                imGuiEngineList_.draw();
+            })
+        );
+        embeddedWindow_->draw();
     }
 
 }

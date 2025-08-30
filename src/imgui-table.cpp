@@ -22,6 +22,12 @@
 
 namespace QaplaWindows {
 
+    ImGuiTable::ImGuiTable() = default;
+    ImGuiTable::ImGuiTable(ImGuiTable&&) noexcept = default;
+    ImGuiTable& ImGuiTable::operator=(ImGuiTable&&) noexcept = default;
+    ImGuiTable::~ImGuiTable() = default;
+
+
     static void alignRight(const std::string& content) {
         float colWidth = ImGui::GetColumnWidth();
         float textWidth = ImGui::CalcTextSize(content.c_str()).x;

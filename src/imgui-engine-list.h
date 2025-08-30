@@ -43,6 +43,8 @@ namespace QaplaWindows {
          * @param record Shared pointer to the constant game record.
          */
         ImGuiEngineList();
+        ImGuiEngineList(ImGuiEngineList&&) noexcept;
+        ImGuiEngineList& operator=(ImGuiEngineList&&) noexcept;
         ~ImGuiEngineList();
 
         void draw();
@@ -51,7 +53,7 @@ namespace QaplaWindows {
          * @brief Sets whether user input is allowed in the engine list.
          * @param allow True to allow input, false to disallow.
          */
-        void setAllowInput(bool allow) { allowInput = allow; }
+        void setAllowInput(bool allow) { allowInput_ = allow; }
 
 
     private:
@@ -76,7 +78,7 @@ namespace QaplaWindows {
         EngineRecords engineRecords_;
         MoveInfos moveInfos_;
 
-        bool allowInput = false;
+        bool allowInput_ = false;
     };
 
 } // namespace QaplaWindows

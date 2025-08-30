@@ -32,6 +32,11 @@ namespace QaplaWindows {
      */
     class ImGuiTable {
     public:
+        ImGuiTable();
+        ImGuiTable(ImGuiTable&&) noexcept;
+        ImGuiTable& operator=(ImGuiTable&&) noexcept;
+        ~ImGuiTable();
+
         struct ColumnDef {
 			std::string name; 
 			ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;

@@ -22,21 +22,24 @@
 #include "qapla-engine/types.h"
 #include "embedded-window.h"
 #include "imgui-board.h"
+#include "imgui-engine-list.h"
 
 class GameRecord;
 
 namespace QaplaWindows
 {
 
+    class VerticalSplitContainer;
+
     class TournamentBoardWindow : public EmbeddedWindow
     {
     public:
 
-        TournamentBoardWindow() = default;
-        TournamentBoardWindow(TournamentBoardWindow&&) noexcept = default;
-        TournamentBoardWindow& operator=(TournamentBoardWindow&&) noexcept = default;
+        TournamentBoardWindow();
+        TournamentBoardWindow(TournamentBoardWindow&&) noexcept;
+        TournamentBoardWindow& operator=(TournamentBoardWindow&&) noexcept;
 
-        virtual ~TournamentBoardWindow() = default;
+        virtual ~TournamentBoardWindow();
 
         /**
          * @brief Draw the window.
@@ -80,6 +83,8 @@ namespace QaplaWindows
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
 
+        std::unique_ptr<VerticalSplitContainer> embeddedWindow_;
+        ImGuiEngineList imGuiEngineList_;
         ImGuiBoard imGuiBoard_;
     };
 

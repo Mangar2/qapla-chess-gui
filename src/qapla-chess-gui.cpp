@@ -19,6 +19,7 @@
 
 #include "board-data.h"
 #include "qapla-tester/logger.h"
+#include "qapla-tester/game-manager-pool.h"
 
 #include "configuration.h"
 #include "time-control-window.h"
@@ -190,6 +191,8 @@ namespace {
         shutdownImGui();
         glfwDestroyWindow(window);
         glfwTerminate();
+        GameManagerPool::getInstance().stopAll();
+        GameManagerPool::getInstance().waitForTask();
         return 0;
     }
 

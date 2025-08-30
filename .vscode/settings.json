@@ -22,6 +22,7 @@
         "ARM"
     ],
     "files.associations": {
-        "*.h": "cpp"
+        "*.h": "cpp",
+        "string": "cpp"
     }
 }

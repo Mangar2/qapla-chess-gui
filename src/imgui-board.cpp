@@ -42,9 +42,9 @@ namespace QaplaWindows
     {
     }
 
-    ImGuiBoard::~ImGuiBoard()
-    {
-    }
+    ImGuiBoard::ImGuiBoard(ImGuiBoard&&) = default;
+    ImGuiBoard& ImGuiBoard::operator=(ImGuiBoard&&) = default;
+    ImGuiBoard::~ImGuiBoard() = default;
 
     std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
                                                                  QaplaBasics::File file, QaplaBasics::Rank rank)
