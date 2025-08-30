@@ -27,6 +27,7 @@
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/game-record.h"
+#include "qapla-tester/engine-record.h"
 
 #include "imgui-board.h"
 
@@ -54,6 +55,12 @@ namespace QaplaWindows
         if (!active_) return;
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setGameState(gameRecord);
+    }
+
+    void TournamentBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
+    {
+        if (!active_) return;
+        imGuiEngineList_.setEngineRecords(engineRecords);
     }
 
     void TournamentBoardWindow::draw()

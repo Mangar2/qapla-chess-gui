@@ -262,7 +262,20 @@ public:
      * @brief Returns list of information about all engines.
      * @return A vector of EngineRecords containing engine information for each player.
      */
-    EngineRecords getEngineRecords() const;
+    EngineRecords getEngineRecords() const {
+        std::lock_guard lock(engineMutex_);
+        return mkEngineRecords();
+    }
+
+    /**
+     * @brief Executes the given callable with thread-safe access to the engine records.
+     * @param accessFn A callable that takes a const EngineRecords&.
+     */
+    void withEngineRecords(std::function<void(const EngineRecords&)> accessFn) const
+    {
+        std::lock_guard lock(engineMutex_);
+        accessFn(mkEngineRecords());
+    }
 
     std::pair<std::string, std::string> getEngineNames() const
     {
@@ -283,6 +296,17 @@ public:
     MoveInfos getMoveInfos() const;
 
     /**
+     * @brief Executes the given callable with thread-safe access to the current move records of all players.
+     * @param accessFn A callable that takes a const MoveRecord&.
+     */
+    void withMoveRecords(std::function<void(const MoveRecord&)> accessFn) const {
+        for (const auto &player : players_)
+        {
+            player->withCurrentMove(accessFn);
+        }
+    }
+
+    /**
      * @brief Ensures all engines are started and ready for the next command.
      */
     void ensureStarted();
@@ -296,6 +320,12 @@ private:
 
     mutable std::mutex gameRecordMutex_;
     GameRecord gameRecord_;
+    /**
+     * @brief Returns list of information about all engines.
+     * @return A vector of EngineRecords containing engine information for each player.
+     */
+    EngineRecords mkEngineRecords() const;
+
 
     std::function<void(EngineEvent &&)> eventCallback_;
     bool switchedSide_ = false;

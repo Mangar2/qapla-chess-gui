@@ -20,10 +20,14 @@
 
 
 #include "qapla-engine/types.h"
+
+#include "qapla-tester/engine-record.h"
+
 #include "embedded-window.h"
 #include "imgui-board.h"
 #include "imgui-engine-list.h"
 
+class MoveRecord;
 class GameRecord;
 
 namespace QaplaWindows
@@ -51,6 +55,12 @@ namespace QaplaWindows
          * @param gameRecord The game record to display.
          */
         void setFromGameRecord(const GameRecord& gameRecord);
+
+        /**
+         * @brief Set data from engine records for the window.
+         * @param engineRecords The engine records to display.
+         */
+        void setFromEngineRecords(const EngineRecords& engineRecords);
 
         /**
          * @brief Set the active state of the window.

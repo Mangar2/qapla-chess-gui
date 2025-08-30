@@ -55,6 +55,13 @@ namespace QaplaWindows {
          */
         void setAllowInput(bool allow) { allowInput_ = allow; }
 
+        /**
+         * @brief Sets the engine records for the list.
+         * @param engineRecords The engine records to display.
+         */
+        void setEngineRecords(const EngineRecords& engineRecords) {
+            engineRecords_ = engineRecords;
+        }   
 
     private:
         void addTables(size_t size);

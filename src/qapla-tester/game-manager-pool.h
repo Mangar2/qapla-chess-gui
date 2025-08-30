@@ -164,6 +164,37 @@ public:
         }
     }
 
+    /**
+     * @brief Executes the given callable with thread-safe access to the engine records of all players.
+     * @param accessFn A callable that takes a const EngineRecords&.
+     */
+    void withEngineRecords(const std::function<bool(const EngineRecords&)>& accessFn) {
+        std::lock_guard<std::mutex> lock(managerMutex_);
+        for (auto& gameManager : managers_) {
+            if (gameManager && gameManager->isRunning()) {
+                // Check if the access function is interested before calculating EngineRecords
+                if (accessFn({})) {
+                    gameManager->getGameContext().withEngineRecords([&](const EngineRecords& records) {
+                        accessFn(records);
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief Executes the given callable with thread-safe access to the move records of all players.
+     * @param accessFn A callable that takes a const MoveRecord&.
+     */
+    void withMoveRecords(const std::function<void(const MoveRecord&)>& accessFn) {
+        std::lock_guard<std::mutex> lock(managerMutex_);
+        for (auto& gameManager : managers_) {
+            if (gameManager && gameManager->isRunning()) {
+                gameManager->getGameContext().withMoveRecords(accessFn);
+            }
+        }
+    }
+
 private:
     
     void printRunningGames(std::ostream& out) const;

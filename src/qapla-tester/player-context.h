@@ -179,6 +179,15 @@ public:
         return currentMove_;
 	}
 
+    /**
+     * @brief Executes the given callable with thread-safe access to the current move.
+     * @param accessFn A callable that takes a const MoveRecord&.
+     */
+    void withCurrentMove(std::function<void(const MoveRecord&)> accessFn) const {
+        std::lock_guard lock(currentMoveMutex_);
+        accessFn(currentMove_);
+    }
+
 	/**
 	 * @brief Returns the current game state.
      * @return The result of the game and the winner side.

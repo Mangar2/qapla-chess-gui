@@ -373,12 +373,19 @@ MoveInfos GameContext::getMoveInfos() const
     return infos;
 }
 
-EngineRecords GameContext::getEngineRecords() const
+EngineRecords GameContext::mkEngineRecords() const
 {
-    std::lock_guard lock(engineMutex_);
     EngineRecords records;
+    records.resize(players_.size());
+    uint32_t index = 0;
+
     for (const auto &player : players_)
     {
+        uint32_t adjustedIndex = index;
+        if (switchedSide_ && index == 0) adjustedIndex = 1;
+        if (switchedSide_ && index == 1) adjustedIndex = 0;
+        index++;
+
         if (!player->getEngine())
         {
             EngineRecord record = {
@@ -387,7 +394,7 @@ EngineRecords GameContext::getEngineRecords() const
                 .supportedOptions{},
                 .status = EngineRecord::Status::NotStarted,
                 .memoryUsageB = 0};
-            records.push_back(record);
+            records[adjustedIndex] = record;
             continue;
         }
         auto engine = player->getEngine();
@@ -414,7 +421,7 @@ EngineRecords GameContext::getEngineRecords() const
             record.status = EngineRecord::Status::Error;
             break;
         }
-        records.push_back(record);
+        records[adjustedIndex] = record;
     }
     return records;
 }

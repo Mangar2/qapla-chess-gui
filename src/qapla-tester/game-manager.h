@@ -108,6 +108,15 @@ public:
 		return white ? gameContext_.getWhite()->getEngine() : gameContext_.getBlack()->getEngine();
     }
 
+    /**
+     * @brief Returns a const reference to the GameContext instance.
+     *
+     * @return A const reference to the GameContext.
+     */
+    const GameContext& getGameContext() const {
+        return gameContext_;
+    }
+
 	/**
 	 * @brief Returns the task provider used by this GameManager.
 	 *

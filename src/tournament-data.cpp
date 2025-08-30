@@ -175,6 +175,21 @@ namespace QaplaWindows {
             for (; index < boardWindow_.size(); ++index) {
                 boardWindow_[index].setRunning(false);
             }
+            index = 0;
+            GameManagerPool::getInstance().withEngineRecords([&](const EngineRecords& records) -> bool {
+                if (index >= boardWindow_.size()) return false;
+                if (records.empty()) {
+                    if (!boardWindow_[index].isActive()) {
+                        index++;
+                        return false;
+                    }
+                    return true;
+                }
+                boardWindow_[index].setFromEngineRecords(records);
+                index++;
+                // Not used but required for the signature
+                return false;
+            });
         }
     }
 
