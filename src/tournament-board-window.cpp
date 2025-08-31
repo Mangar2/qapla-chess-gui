@@ -63,6 +63,12 @@ namespace QaplaWindows
         imGuiEngineList_.setEngineRecords(engineRecords);
     }
 
+    void TournamentBoardWindow::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex)
+    {
+        if (!active_) return;
+        imGuiEngineList_.setFromMoveRecord(moveRecord, playerIndex);
+    }
+
     void TournamentBoardWindow::draw()
     {
         embeddedWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {

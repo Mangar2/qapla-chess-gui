@@ -63,6 +63,16 @@ namespace QaplaWindows {
             engineRecords_ = engineRecords;
         }   
 
+        /**
+         * @brief Sets the move record for the list.
+         * @param moveRecord The move record to display.
+         * @param playerIndex The index of the player (0 or 1).
+         */
+        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
+            addTables(playerIndex + 1);
+            setTable(playerIndex, moveRecord);
+        }
+
     private:
         void addTables(size_t size);
 
@@ -72,9 +82,7 @@ namespace QaplaWindows {
 		 * @param size Size of the engine space.
 		 */ 
         void drawEngineSpace(size_t index, const ImVec2 size);
-
         
-        void setTable(size_t index);
         void setTable(size_t index, const MoveRecord& moveRecord);
         std::string drawButtons(size_t index);
         
@@ -83,7 +91,6 @@ namespace QaplaWindows {
         std::vector<uint32_t> infoCnt_;
    
         EngineRecords engineRecords_;
-        MoveInfos moveInfos_;
 
         bool allowInput_ = false;
     };

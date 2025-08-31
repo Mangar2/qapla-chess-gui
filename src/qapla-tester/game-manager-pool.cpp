@@ -75,6 +75,39 @@ GameManagerPool::GameManagerPool() {
         });
 }
 
+void GameManagerPool::withEngineRecords(
+    const std::function<void(const EngineRecords&, uint32_t)>& accessFn,
+    const std::function<bool(uint32_t)>& filterFn
+) {
+    std::lock_guard<std::mutex> lock(managerMutex_);
+    uint32_t gameIndex = 0;
+    for (auto& gameManager : managers_) {
+        if (filterFn(gameIndex) && gameManager->isRunning()) {
+            // Check if the access function is interested before calculating EngineRecords
+            gameManager->getGameContext().withEngineRecords([&](const EngineRecords& records) {
+                accessFn(records, gameIndex);
+            });
+        }
+        gameIndex++;
+    }
+}
+
+void GameManagerPool::withMoveRecord(
+    const std::function<void(const MoveRecord&, uint32_t, uint32_t)>& accessFn,
+    const std::function<bool(uint32_t)>& filterFn
+) {
+    std::lock_guard<std::mutex> lock(managerMutex_);
+    uint32_t gameIndex = 0;
+    for (auto& gameManager : managers_) {
+        if (filterFn(gameIndex) && gameManager && gameManager->isRunning()) {
+            gameManager->getGameContext().withMoveRecord([&](const MoveRecord& record, uint32_t playerIndex) {
+                accessFn(record, gameIndex, playerIndex);
+            });
+        }
+        gameIndex++;
+    }
+}
+
 void GameManagerPool::printRunningGames(std::ostream& out) const {
     out << "\n\nCurrently running games:\n";
     int pos = 1;

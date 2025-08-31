@@ -167,33 +167,22 @@ public:
     /**
      * @brief Executes the given callable with thread-safe access to the engine records of all players.
      * @param accessFn A callable that takes a const EngineRecords&.
+     * @param filterFn A callable that takes a uint32_t and returns a bool, used to filter currently viewed games.
      */
-    void withEngineRecords(const std::function<bool(const EngineRecords&)>& accessFn) {
-        std::lock_guard<std::mutex> lock(managerMutex_);
-        for (auto& gameManager : managers_) {
-            if (gameManager && gameManager->isRunning()) {
-                // Check if the access function is interested before calculating EngineRecords
-                if (accessFn({})) {
-                    gameManager->getGameContext().withEngineRecords([&](const EngineRecords& records) {
-                        accessFn(records);
-                    });
-                }
-            }
-        }
-    }
+    void withEngineRecords(
+        const std::function<void(const EngineRecords&, uint32_t)>& accessFn,
+        const std::function<bool(uint32_t)>& filterFn
+    );
 
     /**
      * @brief Executes the given callable with thread-safe access to the move records of all players.
      * @param accessFn A callable that takes a const MoveRecord&.
+     * @param filterFn A callable that takes a uint32_t and returns a bool, used to filter currently viewed games.
      */
-    void withMoveRecords(const std::function<void(const MoveRecord&)>& accessFn) {
-        std::lock_guard<std::mutex> lock(managerMutex_);
-        for (auto& gameManager : managers_) {
-            if (gameManager && gameManager->isRunning()) {
-                gameManager->getGameContext().withMoveRecords(accessFn);
-            }
-        }
-    }
+    void withMoveRecord(
+        const std::function<void(const MoveRecord&, uint32_t, uint32_t)>& accessFn,
+        const std::function<bool(uint32_t)>& filterFn
+    );
 
 private:
     

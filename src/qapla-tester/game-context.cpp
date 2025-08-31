@@ -373,6 +373,22 @@ MoveInfos GameContext::getMoveInfos() const
     return infos;
 }
 
+void GameContext::withMoveRecord(std::function<void(const MoveRecord&, uint32_t)> accessFn) const {
+    uint32_t index = 0;
+    for (const auto &player : players_)
+    {
+        uint32_t adjustedIndex = index;
+        if (isSideSwitched() && index < 2)
+        {
+            adjustedIndex = 1 - index;
+        }
+        index++;
+        player->withCurrentMove([&](const MoveRecord& record) {
+            accessFn(record, adjustedIndex);
+        });
+    }
+}
+
 EngineRecords GameContext::mkEngineRecords() const
 {
     EngineRecords records;

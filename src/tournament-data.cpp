@@ -175,21 +175,28 @@ namespace QaplaWindows {
             for (; index < boardWindow_.size(); ++index) {
                 boardWindow_[index].setRunning(false);
             }
-            index = 0;
-            GameManagerPool::getInstance().withEngineRecords([&](const EngineRecords& records) -> bool {
-                if (index >= boardWindow_.size()) return false;
-                if (records.empty()) {
-                    if (!boardWindow_[index].isActive()) {
-                        index++;
-                        return false;
-                    }
-                    return true;
+            GameManagerPool::getInstance().withEngineRecords(
+                [&](const EngineRecords& records, uint32_t gameIndex) {
+                    if (gameIndex >= boardWindow_.size()) return;
+                    boardWindow_[gameIndex].setFromEngineRecords(records);
+                },
+                [&](uint32_t gameIndex) -> bool {
+                    if (gameIndex >= boardWindow_.size()) return false;
+                    return boardWindow_[gameIndex].isActive();
                 }
-                boardWindow_[index].setFromEngineRecords(records);
-                index++;
-                // Not used but required for the signature
-                return false;
-            });
+            );
+            GameManagerPool::getInstance().withMoveRecord(
+                [&](const MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) 
+                {
+                    // Called for each player in the board, playerIndex == 0 indicates the next board.
+                    if (gameIndex >= boardWindow_.size()) return;
+                    boardWindow_[gameIndex].setFromMoveRecord(record, playerIndex);
+                },
+                [&](uint32_t gameIndex) -> bool {
+                    if (gameIndex >= boardWindow_.size()) return false;
+                    return boardWindow_[gameIndex].isActive();
+                }
+            );
         }
     }
 

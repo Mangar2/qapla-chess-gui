@@ -299,12 +299,7 @@ public:
      * @brief Executes the given callable with thread-safe access to the current move records of all players.
      * @param accessFn A callable that takes a const MoveRecord&.
      */
-    void withMoveRecords(std::function<void(const MoveRecord&)> accessFn) const {
-        for (const auto &player : players_)
-        {
-            player->withCurrentMove(accessFn);
-        }
-    }
+    void withMoveRecord(std::function<void(const MoveRecord&, uint32_t)> accessFn) const;
 
     /**
      * @brief Ensures all engines are started and ready for the next command.

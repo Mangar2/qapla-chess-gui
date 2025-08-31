@@ -174,22 +174,6 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
     }
 }
 
-void ImGuiEngineList::setTable(size_t index) {
-    if (engineRecords_.size() == 0) return;
-	addTables(engineRecords_.size());
-
-    if (index >= tables_.size() || 
-        index >= engineRecords_.size() || 
-        index >= moveInfos_.size()) {
-        return;
-    }
-
-    auto& curMoveRecord = moveInfos_[index];
-    if (curMoveRecord) {
-	    setTable(index, *curMoveRecord);
-    }
-}
-
 std::string ImGuiEngineList::drawButtons(size_t index) {
     constexpr float space = 3.0f;
     constexpr float topOffset = 5.0f;
@@ -269,7 +253,6 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
     ImGui::SetCursorScreenPos(tableMin);
     
-    setTable(index);
     if (index < tables_.size()) {
         tables_[index]->draw(ImVec2(max.x - tableMin.x, size.y));
     }
@@ -285,6 +268,7 @@ void ImGuiEngineList::draw() {
     constexpr float cSectionSpacing = 4.0f;
 
 	const auto records = engineRecords_.empty() ? 1 : engineRecords_.size();
+    addTables(records);
 
     ImVec2 avail = ImGui::GetContentRegionAvail();
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);

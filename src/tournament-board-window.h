@@ -63,6 +63,13 @@ namespace QaplaWindows
         void setFromEngineRecords(const EngineRecords& engineRecords);
 
         /**
+         * @brief Set data from move record for the window.
+         * @param moveRecord The move record to display.
+         * @param playerIndex The index of the player, 0 is always white, 1 always black.
+         */
+        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
+
+        /**
          * @brief Set the active state of the window.
          * If inactive, the window is not updated with new data
          * @param active True to activate the window, false to deactivate it.
