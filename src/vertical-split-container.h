@@ -46,15 +46,14 @@ namespace QaplaWindows {
             float width = region.x;
 
             float splitterHeight = 5.0f;
-            float minSize = 100.0f;
-            float availableHeight = std::max(region.y - splitterHeight, 2 * minSize);
+            float availableHeight = std::max(region.y - splitterHeight, minTopHeight + minBottomHeight);
             float adjustedHeight;
 
             if (fixedTopHeight) {
-                adjustedHeight = std::clamp(*fixedTopHeight, minSize, availableHeight - minSize);
+                adjustedHeight = *fixedTopHeight;
             }
             else {
-                adjustedHeight = std::clamp(topHeight, minSize, availableHeight - minSize);
+                adjustedHeight = std::clamp(topHeight, minTopHeight, availableHeight - minBottomHeight);
             }
             float bottomHeight = availableHeight - adjustedHeight;
 
@@ -93,8 +92,25 @@ namespace QaplaWindows {
             ImGui::EndChild();
         }
 
+        /**
+         * @brief Sets a fixed height for the top window. If set, the splitter cannot be moved.
+         */
         void setFixedTopHeight(float height) {
             fixedTopHeight = height;
+        }
+
+        /**
+         * @brief Sets the minimum height for the top window.
+         */
+        void setMinTopHeight(float height) {
+            minTopHeight = height;
+        }
+
+        /**
+         * @brief Sets the minimum height for the bottom window.
+         */
+        void setMinBottomHeight(float height) {
+            minBottomHeight = height;
         }
 
     private:
@@ -124,6 +140,8 @@ namespace QaplaWindows {
         std::unique_ptr<EmbeddedWindow> topWindow;
         std::unique_ptr<EmbeddedWindow> bottomWindow;
         std::optional<float> fixedTopHeight;
+        float minTopHeight = 100.0f;
+        float minBottomHeight = 100.0f;
 
         float topHeight = 500.0f;
     };

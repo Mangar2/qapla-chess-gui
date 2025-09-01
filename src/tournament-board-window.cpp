@@ -39,7 +39,10 @@ namespace QaplaWindows
 {
 
     TournamentBoardWindow::TournamentBoardWindow() {
-        embeddedWindow_ = std::make_unique<VerticalSplitContainer>();
+        auto engineListSplitter = std::make_unique<VerticalSplitContainer>();
+        engineListSplitter->setMinTopHeight(300.0f);
+        engineListSplitter->setMinBottomHeight(110.0f);
+        embeddedWindow_ = std::move(engineListSplitter);
         imGuiEngineList_.setAllowInput(false);
     }
 

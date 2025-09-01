@@ -100,7 +100,7 @@ void ImGuiEngineList::addTables(size_t size) {
 		displayedMoveNo_.push_back(0);
 		infoCnt_.push_back(0);
         tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
             std::vector<ImGuiTable::ColumnDef>{
                 {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
                 { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
@@ -108,7 +108,7 @@ void ImGuiEngineList::addTables(size_t size) {
                 { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0f, true },
                 { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
                 { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Primary variant", ImGuiTableColumnFlags_WidthFixed }
+                { "Primary variant", ImGuiTableColumnFlags_WidthFixed, 1660.0f }
         }));
 	}
 }
@@ -254,7 +254,13 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImGui::SetCursorScreenPos(tableMin);
     
     if (index < tables_.size()) {
-        tables_[index]->draw(ImVec2(max.x - tableMin.x, size.y));
+        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+
+        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX, 
+            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+            tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
+        }
+        ImGui::EndChild();
     }
     ImGui::SetCursorScreenPos(topLeft);
     ImGui::Dummy(ImVec2(size.x, size.y - 3.0f));
@@ -262,7 +268,7 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 }
 
 void ImGuiEngineList::draw() {
-    constexpr float cMinRowHeight = 80.0f;
+    const float cMinRowHeight = allowInput_ ? 80.0f : 40.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;

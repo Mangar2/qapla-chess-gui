@@ -22,6 +22,14 @@
 
 namespace QaplaWindows {
 
+    ImGuiTable::ImGuiTable(const std::string& tableId,
+        ImGuiTableFlags tableFlags,
+        const std::vector<ColumnDef>& columns)
+        : tableId_(tableId),
+        tableFlags_(tableFlags),
+        columns_(columns) {
+    }
+
     ImGuiTable::ImGuiTable() = default;
     ImGuiTable::ImGuiTable(ImGuiTable&&) noexcept = default;
     ImGuiTable& ImGuiTable::operator=(ImGuiTable&&) noexcept = default;
@@ -46,14 +54,6 @@ namespace QaplaWindows {
             alignRight(content);
         }
         ImGui::TableHeader(content.c_str());
-    }
-
-    ImGuiTable::ImGuiTable(const std::string& tableId,
-        ImGuiTableFlags tableFlags,
-        const std::vector<ColumnDef>& columns)
-        : tableId_(tableId),
-        tableFlags_(tableFlags),
-        columns_(columns) {
     }
 
     void ImGuiTable::push(const std::vector<std::string>& row) {
