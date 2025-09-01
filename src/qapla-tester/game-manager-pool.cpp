@@ -75,6 +75,22 @@ GameManagerPool::GameManagerPool() {
         });
 }
 
+void GameManagerPool::withGameRecords(
+    const std::function<void(const GameRecord&, uint32_t)>& accessFn,
+    const std::function<bool(uint32_t)>& filterFn
+) {
+    std::lock_guard<std::mutex> lock(managerMutex_); 
+    uint32_t gameIndex = 0;
+    for (auto& gameManager : managers_) {
+        if (filterFn(gameIndex) && gameManager->isRunning()) {
+            gameManager->withGameRecord([&](const GameRecord& record) {
+                accessFn(record, gameIndex);
+            });
+        }
+        gameIndex++;
+    }
+}
+
 void GameManagerPool::withEngineRecords(
     const std::function<void(const EngineRecords&, uint32_t)>& accessFn,
     const std::function<bool(uint32_t)>& filterFn

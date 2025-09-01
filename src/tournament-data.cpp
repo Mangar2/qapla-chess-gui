@@ -148,7 +148,12 @@ namespace QaplaWindows {
     void TournamentData::populateRunningTable() {
         runningTable_.clear();
         if (tournament_) {
-            GameManagerPool::getInstance().withGameRecords([&](const GameRecord& game) {
+            for (auto& window: boardWindow_) {
+                window.setRunning(false);
+            }
+            GameManagerPool::getInstance().withGameRecords(
+                [&](const GameRecord& game, uint32_t gameIndex
+            ) {
                 std::vector<std::string> row;
                 row.push_back(game.getWhiteEngineName());
                 row.push_back(game.getBlackEngineName());
@@ -157,26 +162,31 @@ namespace QaplaWindows {
                 row.push_back(std::to_string(game.getOpeningNo()));
                 runningTable_.push(row);
                 runningCount_++;
+                if (gameIndex < boardWindow_.size()) {
+                    boardWindow_[gameIndex].setRunning(true);
+                }
+            },
+            [&](uint32_t gameIndex) -> bool {
+                return true;
             });
         }
 	}
 
     void TournamentData::populateViews() {
         if (tournament_) {
-            uint32_t index = 0;
-            GameManagerPool::getInstance().withGameRecords([&](const GameRecord& game) {
-                if (index >= boardWindow_.size()) {
-                    TournamentBoardWindow window;
-                    window.setFromGameRecord(game);
-                    boardWindow_.push_back(std::move(window));
+            GameManagerPool::getInstance().withGameRecords(
+                [&](const GameRecord& game, uint32_t gameIndex) {
+                    if (gameIndex >= boardWindow_.size()) return;
+                    boardWindow_[gameIndex].setFromGameRecord(game);
+                },
+                [&](uint32_t gameIndex) -> bool {
+                    while (gameIndex >= boardWindow_.size()) {
+                        TournamentBoardWindow window;
+                        boardWindow_.push_back(std::move(window));
+                    }
+                    return true;
                 }
-                boardWindow_[index].setFromGameRecord(game);
-                boardWindow_[index].setRunning(true);
-                index++;
-            });
-            for (; index < boardWindow_.size(); ++index) {
-                boardWindow_[index].setRunning(false);
-            }
+            );
             GameManagerPool::getInstance().withEngineRecords(
                 [&](const EngineRecords& records, uint32_t gameIndex) {
                     if (gameIndex >= boardWindow_.size()) return;
@@ -225,18 +235,18 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::drawTabs() {
-        uint32_t index = 1;
+        uint32_t index = 0;
         for (auto& window : boardWindow_) {
+            index++;
             if (!window.isRunning()) continue;
-            std::string tabName = "Game " + std::to_string(index);
-            if (ImGui::BeginTabItem(tabName.c_str())) {
+            std::string tabName = "Game " + window.id();
+            if (ImGui::BeginTabItem((tabName + "###Game" + std::to_string(index)).c_str())) {
                 if (window.isActive()) window.draw();
                 window.setActive(true);
                 ImGui::EndTabItem();
             } else {
                 window.setActive(false);
             }
-            index++;
         }
     }
 

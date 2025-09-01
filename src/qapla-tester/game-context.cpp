@@ -22,12 +22,10 @@
 
 GameContext::GameContext()
 {
-    id_ = QaplaTester::BoardExchange::instance().registerProvider();
 };
 
 GameContext::~GameContext()
 {
-    QaplaTester::BoardExchange::instance().unregisterProvider(id_);
 }
 
 void GameContext::updateEngineNames()
@@ -48,17 +46,12 @@ void GameContext::updateEngineNames()
                         player->getEngine()->getEngineMemoryUsage(),
                         white == player.get()});
     }
-    QaplaTester::BoardExchange::instance().setEngineDataList(id_, list);
-    QaplaTester::BoardExchange::instance().modifyGameRecordThreadSafe(id_, [&](GameRecord &record)
-                                                                      {
-        record.setWhiteEngineName(whiteName);
-        record.setBlackEngineName(blackName); });
 }
 
 void GameContext::tearDown()
 {
+    std::lock_guard lock(engineMutex_);
     players_.clear();
-    QaplaTester::BoardExchange::instance().setEngineDataList(id_, {});
 }
 
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines)
@@ -177,7 +170,6 @@ void GameContext::setPosition(bool useStartPosition, const std::string &fen,
                 gameRecord_.addMove(moveRecord);
             }
         }
-        QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
     }
 
     for (auto &player : players_)
@@ -194,8 +186,6 @@ void GameContext::setPosition(const GameRecord &record)
         gameRecord_ = record;
         updateEngineNames();
     }
-
-    QaplaTester::BoardExchange::instance().setGameRecord(gameRecord_, id_);
 
     for (auto &player : players_)
     {

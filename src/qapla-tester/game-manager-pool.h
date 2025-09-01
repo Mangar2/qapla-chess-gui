@@ -154,15 +154,12 @@ public:
      * is protected by a mutex to ensure thread safety.
      *
      * @param accessFn A function to be executed on the GameRecord of each active GameManager.
+     * @param filterFn A function to filter the GameRecords based on their index.
      */
-    void withGameRecords(const std::function<void(const GameRecord&)>& accessFn) {
-        std::lock_guard<std::mutex> lock(managerMutex_); 
-        for (auto& gameManager : managers_) {
-            if (gameManager && gameManager->isRunning()) {
-                gameManager->withGameRecord(accessFn);
-            }
-        }
-    }
+    void withGameRecords(
+        const std::function<void(const GameRecord&, uint32_t)>& accessFn,
+        const std::function<bool(uint32_t)>& filterFn
+    );
 
     /**
      * @brief Executes the given callable with thread-safe access to the engine records of all players.
