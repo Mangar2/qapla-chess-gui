@@ -103,10 +103,8 @@ bool TournamentWindow::drawInput() {
     
     ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
-    if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
-        tournamentData.concurrency(), 1, maxConcurrency)) {
-        tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
-    }
+    ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
     ImGui::Unindent(10.0f);
 
     ImGui::Spacing();

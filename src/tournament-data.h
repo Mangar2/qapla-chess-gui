@@ -38,6 +38,8 @@
 class Tournament;
 struct TournamentConfig;
 
+class ImGuiConcurrency;
+
 namespace QaplaWindows {
 
     class TournamentResultIncremental;
@@ -212,6 +214,7 @@ namespace QaplaWindows {
 		std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;
         std::unique_ptr<TournamentResultIncremental> result_;
+        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
 
         PgnIO::Options pgnConfig_;
 		EachEngineConfig eachEngineConfig_;

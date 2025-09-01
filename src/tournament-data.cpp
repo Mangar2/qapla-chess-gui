@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 
@@ -22,6 +22,7 @@
 #include "tournament-result-incremental.h"
 #include "tournament-board-window.h"
 #include "snackbar.h"
+#include "imgui-concurrency.h"
 
 #include "qapla-tester/string-helper.h"
 
@@ -43,6 +44,7 @@ namespace QaplaWindows {
         tournament_(std::make_unique<Tournament>()),
 		config_(std::make_unique<TournamentConfig>()),
         result_(std::make_unique<TournamentResultIncremental>()),
+        imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -103,14 +105,14 @@ namespace QaplaWindows {
         if (tournament_) {
             result_->setGamesLeft();
 			tournament_->createTournament(engineConfig_, *config_);
-            tournament_->scheduleAll(concurrency_, false);
+            tournament_->scheduleAll(0, false);
             running_ = true;
             eloTable_.clear();
             populateEloTable();
 			runningTable_.clear();
 			populateRunningTable();
         } else {
-            SnackbarManager::instance().showError("Internal error, tournamen not initialized");
+            SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
         }
 		SnackbarManager::instance().showSuccess("Tournament started");
@@ -253,7 +255,9 @@ namespace QaplaWindows {
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
         bool start = isRunning();
-        GameManagerPool::getInstance().setConcurrency(count, nice, start);
+        if (!isRunning()) return;
+        imguiConcurrency_->setNiceStop(nice);
+        imguiConcurrency_->update(count);
     }
 
     void TournamentData::saveEachEngineConfig(std::ostream& out, const std::string& header) const {
@@ -384,8 +388,6 @@ namespace QaplaWindows {
             }
         }
     }
-
-
 
     bool TournamentData::validateOpenings() {
         bool valid = true;

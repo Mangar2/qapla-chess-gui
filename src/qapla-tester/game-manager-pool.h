@@ -234,6 +234,7 @@ private:
     bool niceMode_ = false;
     std::mutex taskMutex_;
     std::mutex managerMutex_;
+    std::mutex startManagerMutex_;
     bool paused_ = false;
 
 	// InputHandler

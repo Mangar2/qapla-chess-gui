@@ -261,13 +261,15 @@ void GameManagerPool::waitForTask() {
 }
 
 void GameManagerPool::startManagers() {
-    std::lock_guard<std::mutex> lock(managerMutex_);
-
-    auto runningCnt = countActiveManagers();
-    if (maxConcurrency_ <= runningCnt) return;
-
-    auto toStart = maxConcurrency_ - runningCnt;
-	for (size_t i = 0; i < managers_.size() && toStart > 0; ++i) {
+    auto toStart = maxConcurrency_;
+    std::lock_guard<std::mutex> lock(startManagerMutex_);
+    {
+        std::lock_guard<std::mutex> lock(managerMutex_);
+        auto runningCnt = countActiveManagers();
+        if (maxConcurrency_ <= runningCnt) return;
+        toStart -= runningCnt;
+    }
+    for (size_t i = 0; i < managers_.size() && toStart > 0; ++i) {
         GameManager* manager;
         {
             std::lock_guard<std::mutex> lock(taskMutex_);
