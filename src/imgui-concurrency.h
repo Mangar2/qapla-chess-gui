@@ -22,8 +22,7 @@
 #include "qapla-tester/game-manager-pool.h"
 
 #include <thread>
-#include <chrono>
-
+#include <atomic>
 
 /**
  * @class ImGuiConcurrency
@@ -38,10 +37,21 @@ public:
     ImGuiConcurrency() = default;
 
     /**
+     * @brief Initializes the ImGuiConcurrency object.
+     */
+    void init() {
+        currentConcurrency_ = 0;
+        targetConcurrency_ = 0;
+        debounceCounter_ = 0;
+    }
+
+    /**
      * @brief Updates the concurrency value based on user input.
      * @param newConcurrency The new concurrency value from the ImGui slider.
      */
     void update(uint32_t newConcurrency) {
+        if (!active_) return;
+
         if (newConcurrency != targetConcurrency_) {
             targetConcurrency_ = newConcurrency;
             debounceCounter_ = 10; // Reset debounce counter
@@ -64,10 +74,19 @@ public:
         niceStop_ = niceStop;
     }
 
+    /**
+     * @brief Sets the active flag.
+     * @param active The new value for the active flag.
+     */
+    void setActive(bool active) {
+        active_ = active;
+    }
+
 private:
+    std::atomic<bool> active_ = false;  ///< Whether the concurrency control is active.
     bool niceStop_ = true;  ///< Whether to finish games or abort them.
     uint32_t currentConcurrency_ = 0; ///< Tracks the current concurrency value.
-    uint32_t targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
+    std::atomic<uint32_t> targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
     int debounceCounter_;         ///< Counter for debouncing slider changes.
 
     /**
@@ -80,12 +99,12 @@ private:
         std::thread([this]() {
             auto& pool = GameManagerPool::getInstance();
 
-            while (currentConcurrency_ < targetConcurrency_) {
+            while (currentConcurrency_ < targetConcurrency_ && active_) {
                 ++currentConcurrency_;
                 pool.setConcurrency(currentConcurrency_, niceStop_, true);
             }
 
-            if (currentConcurrency_ > targetConcurrency_) {
+            if (currentConcurrency_ > targetConcurrency_ && active_) {
                 currentConcurrency_ = targetConcurrency_;
                 pool.setConcurrency(currentConcurrency_, niceStop_, true);
             }

@@ -106,6 +106,8 @@ namespace QaplaWindows {
             result_->setGamesLeft();
 			tournament_->createTournament(engineConfig_, *config_);
             tournament_->scheduleAll(0, false);
+            imguiConcurrency_->init();
+            imguiConcurrency_->setActive(true);
             running_ = true;
             eloTable_.clear();
             populateEloTable();
@@ -251,14 +253,16 @@ namespace QaplaWindows {
     }
 
     void TournamentData::stopPool() {
-        GameManagerPool::getInstance().stopAll();
+        imguiConcurrency_->setActive(false);
         running_ = false;
+        GameManagerPool::getInstance().stopAll();
         SnackbarManager::instance().showSuccess("Tournament stopped");
     }
 
     void TournamentData::clear() {
-        GameManagerPool::getInstance().clearAll();
+        imguiConcurrency_->setActive(false);
         running_ = false;
+        GameManagerPool::getInstance().clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
     }

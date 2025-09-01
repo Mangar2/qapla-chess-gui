@@ -211,7 +211,8 @@ void GameManagerPool::setConcurrency(uint32_t count, bool nice, bool start)
 }
 
 void GameManagerPool::stopAll() {
-    std::lock_guard<std::mutex> lock(taskMutex_);
+    std::lock_guard<std::mutex> lockManager(managerMutex_);
+    std::lock_guard<std::mutex> lockTask(taskMutex_);
     for (auto& manager : managers_) {
         manager->stop();
     }
@@ -219,6 +220,7 @@ void GameManagerPool::stopAll() {
 
 void GameManagerPool::clearAll() {
     stopAll();
+    std::lock_guard<std::mutex> lockManager(managerMutex_);
     for (auto& manager : managers_) {
         auto& future = manager->getFinishedFuture();
         if (future.valid()) {
