@@ -76,6 +76,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
 }
 
 static void drawEngineInfo(const EngineRecord& record, size_t index) {
+    ImGui::Indent(5.0f);
     ImGui::PushID("EngineInfo");
     std::string name = record.config.getName();
 	std::string status = EngineRecord::to_string(record.status);
@@ -83,6 +84,7 @@ static void drawEngineInfo(const EngineRecord& record, size_t index) {
         ", " + std::to_string(*record.memoryUsageB / (1024 * 1024)) + " MB" : "";
 	renderReadonlyTextBoxes({ name, status + memory }, index);
     ImGui::PopID();
+    ImGui::Unindent(5.0f);
 }
 
 
@@ -226,59 +228,73 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 
     std::string command;
     constexpr float cEngineInfoWidth = 160.0f;
-    constexpr float cCornerRounding = 0.0f;
     constexpr float cSectionSpacing = 4.0f;
-    const ImU32 cEvenBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
-    const ImU32 cOddBg = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    
+    const bool isSmall = size.y < 80.0f;
+    
+    const ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_TableRowBg);
     const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     ImGui::PushID(std::to_string(index).c_str());
-    const ImU32 bg = (index % 2 == 0) ? cEvenBg : cOddBg;
     ImVec2 max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
 
-    drawList->AddRectFilled(topLeft, max, bg, cCornerRounding);
+    drawList->AddRectFilled(topLeft, max, bgColor);
     drawList->AddLine(ImVec2(topLeft.x, max.y), ImVec2(max.x, max.y), cBorder, 2.0f);
 
-    ImGui::SetCursorScreenPos(topLeft);
-	drawList->PushClipRect(topLeft, max);
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0f));
-    ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
-    if (allowInput_) command = drawButtons(index);
-    ImGui::Indent(5.0f);
-    if (index < engineRecords_.size()) {
-        drawEngineInfo(engineRecords_[index], index);
-    }
-    ImGui::Unindent(5.0f);
-    ImGui::PopItemWidth();
-	drawList->PopClipRect();
+    command = drawEngineArea(topLeft, drawList, max, cEngineInfoWidth, index, isSmall);
+
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
     ImVec2 spacerMin = ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y);
     ImVec2 spacerMax = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y + size.y - 2.0f);
     drawList->AddRectFilled(spacerMin, spacerMax, IM_COL32(60, 60, 70, 120), 3.0f);
 
-    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
-    ImGui::SetCursorScreenPos(tableMin);
+    drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
     
-    if (index < tables_.size()) {
-        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
-
-        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX, 
-            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
-            tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
-        }
-        ImGui::EndChild();
-    }
     ImGui::SetCursorScreenPos(topLeft);
     ImGui::Dummy(ImVec2(size.x, size.y - 3.0f));
     ImGui::PopID();
     return command;
 }
 
+std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
+    const ImVec2 &max, float cEngineInfoWidth, size_t index, bool isSmall)
+{
+    std::string command;
+    ImGui::SetCursorScreenPos(topLeft);
+    drawList->PushClipRect(topLeft, max);
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0f));
+    ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
+    bool hasEngine = (index < engineRecords_.size());
+    if (allowInput_ && (!isSmall || !hasEngine)) command = drawButtons(index);
+    if (hasEngine) drawEngineInfo(engineRecords_[index], index);
+    ImGui::PopItemWidth();
+    drawList->PopClipRect();
+    return command;
+}
+
+void QaplaWindows::ImGuiEngineList::drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
+    size_t index, const ImVec2 &max, const ImVec2 &size)
+{
+    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    ImGui::SetCursorScreenPos(tableMin);
+    if (index < tables_.size())
+    {
+        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+
+        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
+            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
+        {
+            tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
+        }
+        ImGui::EndChild();
+    }
+}
+
 std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
-    const float cMinRowHeight = allowInput_ ? 80.0f : 40.0f;
+    const float cMinRowHeight = 50.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
@@ -293,9 +309,10 @@ std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
     uint32_t index = 0;
     std::string command;
     for (size_t i = 0; i < records; ++i) {
-		command = drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
-        if (!command.empty()) {
+		auto c = drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
+        if (!c.empty()) {
             index = i;
+            command = std::move(c); 
         }
     }
     return { index, command };

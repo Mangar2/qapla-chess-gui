@@ -20,9 +20,8 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "engine-setup-window.h"
 #include "imgui-popup.h"
-#include "board-data.h"
+#include "engine-setup-window.h"
 #include <memory>
 
 struct MoveRecord;
@@ -47,14 +46,6 @@ namespace QaplaWindows {
         void draw() override;
 
     private:
-        void addTables(size_t size);
-
-        /**
-         * @brief Draws the engine space for a given index.
-         * @param index Index of the engine to draw.
-		 * @param size Size of the engine space.
-		 */ 
-        void drawEngineSpace(size_t index, const ImVec2 size);
 
         /**
          * @brief Shows a popup window to select engines using EngineSetupWindow.
@@ -62,14 +53,6 @@ namespace QaplaWindows {
          */
         void drawEngineSelectionPopup();
         std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
-
-        std::vector<std::unique_ptr<ImGuiTable>> tables_;
-        std::vector<uint32_t> displayedMoveNo_;
-        std::vector<uint32_t> infoCnt_;
-        void setTable(size_t index);
-        void setTable(size_t index, const MoveRecord& moveRecord);
-
-        void drawButtons(size_t index);
 
     };
 

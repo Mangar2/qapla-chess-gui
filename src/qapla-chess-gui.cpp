@@ -118,6 +118,7 @@ namespace {
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
+        BoardEngineContainer->setMinBottomHeight(50.0f);
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         boardTabBar->addTab("Board", std::move(BoardEngineContainer));
