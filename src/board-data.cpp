@@ -30,13 +30,15 @@
 #include "qapla-tester/game-manager-pool.h"
 
 #include "imgui-board.h"
+#include "imgui-engine-list.h"
 
 using namespace QaplaWindows;
 
 BoardData::BoardData()
 	: gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
-	  imGuiBoard_(std::make_unique<ImGuiBoard>())
+	  imGuiBoard_(std::make_unique<ImGuiBoard>()),
+	  imGuiEngineList_(std::make_unique<ImGuiEngineList>())
 {
 	timeControl_ = QaplaConfiguration::Configuration::instance()
 					   .getTimeControlSettings()
@@ -120,10 +122,17 @@ void BoardData::pollData()
 		setEngineRecords(computeTask_->getEngineRecords());
 		moveInfos_ = computeTask_->getMoveInfos();
 
-		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g)
-													  {
+		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
 			setGameIfDifferent(g);
-			timeControl_ = g.getWhiteTimeControl(); });
+			timeControl_ = g.getWhiteTimeControl(); 
+		});
+		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &m, uint32_t idx) {
+			imGuiEngineList_->setFromMoveRecord(m, idx);
+			imGuiEngineList_->setAllowInput(true);
+		});
+		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
+			imGuiEngineList_->setEngineRecords(records);
+		});
 		epdData_.pollData();
 		auto timeControl = QaplaConfiguration::Configuration::instance()
 							   .getTimeControlSettings()

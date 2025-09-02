@@ -43,6 +43,7 @@ namespace QaplaWindows
 {
 
 	class ImGuiBoard;
+	class ImGuiEngineList;
 
 	class BoardData
 	{
@@ -215,6 +216,8 @@ namespace QaplaWindows
 		TimeControl timeControl_;
 
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
+		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
+
 	};
 
 }
