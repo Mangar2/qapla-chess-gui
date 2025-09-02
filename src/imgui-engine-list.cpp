@@ -113,27 +113,7 @@ void ImGuiEngineList::addTables(size_t size) {
 	}
 }
 
-void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
-    
-    if (index >= tables_.size()) {
-        return; 
-    }
-    
-    auto& table = tables_[index];
-	auto& searchInfos = moveRecord.info;
-	auto& moveNo = moveRecord.halfmoveNo_;
-    if (moveRecord.infoUpdateCount == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
-        return; 
-    }
-	infoCnt_[index] = moveRecord.infoUpdateCount;
-
-	displayedMoveNo_[index] = moveNo;
-    table->clear();
-    bool last = true;
-    for (size_t i = searchInfos.size(); i > 0; --i) {
-        auto& info = searchInfos[i - 1];
-        if (info.pv.empty() && !last) continue;
-        last = false;
+std::vector<std::string> ImGuiEngineList::mkTableLine(ImGuiTable* table, const SearchInfo& info) {
         std::string npsStr = "-";
         std::string score = "-";
         std::string pv = "";
@@ -170,6 +150,34 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
             score,
             pv
         };
+        return row;
+}
+
+void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
+    
+    if (index >= tables_.size()) {
+        return; 
+    }
+    
+    auto& table = tables_[index];
+	auto& searchInfos = moveRecord.info;
+	auto& moveNo = moveRecord.halfmoveNo_;
+    if (moveRecord.infoUpdateCount == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
+        return; 
+    }
+
+    table->clear();
+
+	infoCnt_[index] = moveRecord.infoUpdateCount;
+	displayedMoveNo_[index] = moveNo;
+
+    bool last = true;
+    for (size_t i = searchInfos.size(); i > 0; --i) {
+        if (table->size() >= searchInfos.size()) break;
+        auto& info = searchInfos[i - 1];
+        if (info.pv.empty() && !last) continue;
+        last = false;
+        auto row = mkTableLine(table.get(), info);
         table->push(row);
     }
 }

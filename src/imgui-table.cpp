@@ -68,6 +68,12 @@ namespace QaplaWindows {
         rows_.clear();
     }
 
+    void ImGuiTable::pop_back() {
+        if (!rows_.empty()) {
+            rows_.pop_back();
+        }
+    }
+
     void ImGuiTable::tableHeadersRow() const {
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 

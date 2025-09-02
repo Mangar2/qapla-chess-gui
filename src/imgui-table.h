@@ -71,17 +71,31 @@ namespace QaplaWindows {
         void push_front(const std::vector<std::string>& row);
 
         /**
+         * @brief Returns the number of rows in the table.
+         * @return Number of rows.
+         */
+        size_t size() const {
+            return rows_.size();
+        }
+
+        /**
          * @brief Clears all dynamic row content.
          */
         void clear();
 
         /**
-         * @brief Returns the number of rows in the table.
-         * @return Number of rows.
-		 */
-        size_t size() const {
-            return rows_.size();
-		}
+         * @brief Removes the last row from the table.
+         */
+        void pop_back();
+
+        /**
+         * @brief Removes the first row from the table.
+         */
+        void pop_front() {
+            if (!rows_.empty()) {
+                rows_.erase(rows_.begin());
+            }
+        }
 
         /**
          * @brief Renders the table with dynamic content.

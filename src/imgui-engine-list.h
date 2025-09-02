@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #pragma once
@@ -84,6 +84,9 @@ namespace QaplaWindows {
         void drawEngineSpace(size_t index, const ImVec2 size);
         
         void setTable(size_t index, const MoveRecord& moveRecord);
+
+        std::vector<std::string> mkTableLine(ImGuiTable* table, const SearchInfo& info);
+
         std::string drawButtons(size_t index);
         
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
