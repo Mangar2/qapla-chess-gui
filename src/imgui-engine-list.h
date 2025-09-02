@@ -47,13 +47,15 @@ namespace QaplaWindows {
         ImGuiEngineList& operator=(ImGuiEngineList&&) noexcept;
         ~ImGuiEngineList();
 
-        void draw();
+        std::pair<uint32_t, std::string> draw();
 
         /**
          * @brief Sets whether user input is allowed in the engine list.
          * @param allow True to allow input, false to disallow.
          */
-        void setAllowInput(bool allow) { allowInput_ = allow; }
+        void setAllowInput(bool allow) { 
+            allowInput_ = allow; 
+        }
 
         /**
          * @brief Sets the engine records for the list.
@@ -80,8 +82,9 @@ namespace QaplaWindows {
          * @brief Draws the engine space for a given index.
          * @param index Index of the engine to draw.
 		 * @param size Size of the engine space.
+         * @return String representing any action to perform (e.g., "stop", "restart") or empty if no action.
 		 */ 
-        void drawEngineSpace(size_t index, const ImVec2 size);
+        std::string drawEngineSpace(size_t index, const ImVec2 size);
         
         void setTable(size_t index, const MoveRecord& moveRecord);
 

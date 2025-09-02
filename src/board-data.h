@@ -74,6 +74,15 @@ namespace QaplaWindows
 		}
 
 		/**
+		 * @brief Returns a reference to the ImGuiEngineList.
+		 * @return Reference to ImGuiEngineList.
+		 */
+		ImGuiEngineList &imGuiEngineList()
+		{
+			return *imGuiEngineList_;
+		}
+
+		/**
 		 * @brief Returns a const reference to the current GameRecord.
 		 * @return Const reference to GameRecord.
 		 */

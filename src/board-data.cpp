@@ -126,9 +126,9 @@ void BoardData::pollData()
 			setGameIfDifferent(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
+		imGuiEngineList_->setAllowInput(true);
 		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &m, uint32_t idx) {
 			imGuiEngineList_->setFromMoveRecord(m, idx);
-			imGuiEngineList_->setAllowInput(true);
 		});
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			imGuiEngineList_->setEngineRecords(records);

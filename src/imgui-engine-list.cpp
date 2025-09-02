@@ -222,8 +222,9 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
     return command;
 }
 
-void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
+std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 
+    std::string command;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cCornerRounding = 0.0f;
     constexpr float cSectionSpacing = 4.0f;
@@ -245,7 +246,7 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 	drawList->PushClipRect(topLeft, max);
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0f));
     ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
-    if (allowInput_) drawButtons(index);
+    if (allowInput_) command = drawButtons(index);
     ImGui::Indent(5.0f);
     if (index < engineRecords_.size()) {
         drawEngineInfo(engineRecords_[index], index);
@@ -273,9 +274,10 @@ void ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImGui::SetCursorScreenPos(topLeft);
     ImGui::Dummy(ImVec2(size.x, size.y - 3.0f));
     ImGui::PopID();
+    return command;
 }
 
-void ImGuiEngineList::draw() {
+std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
     const float cMinRowHeight = allowInput_ ? 80.0f : 40.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
@@ -288,8 +290,14 @@ void ImGuiEngineList::draw() {
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
     const uint32_t rowHeight = static_cast<uint32_t>(
         std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
+    uint32_t index = 0;
+    std::string command;
     for (size_t i = 0; i < records; ++i) {
-		drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
+		command = drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
+        if (!command.empty()) {
+            index = i;
+        }
     }
+    return { index, command };
 }
 

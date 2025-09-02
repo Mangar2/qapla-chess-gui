@@ -18,10 +18,12 @@
  */
 
 #include "engine-window.h"
+#include "board-data.h"
 #include "font.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "imgui-popup.h"
+#include "imgui-engine-list.h"
 #include "engine-setup-window.h"
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
@@ -345,8 +347,27 @@ void EngineWindow::draw() {
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
     const uint32_t rowHeight = static_cast<uint32_t>(
         std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
-    for (size_t i = 0; i < records; ++i) {
-		drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
+
+    auto [index, command] = boardData.imGuiEngineList().draw();
+    try {
+        if (command == "Restart") {
+            boardData.restartEngine(index);
+        }
+        else if (command == "Stop") {
+            boardData.stopEngine(index);
+        }
+        else if (command == "Config") {
+            std::vector<EngineConfig> activeEngines;
+            for (const auto& record : boardData.engineRecords()) {
+                activeEngines.push_back(record.config);
+            }
+            setupWindow_->content().setMatchingActiveEngines(activeEngines);
+            setupWindow_->open();
+        }
     }
+    catch (...) {
+
+    }
+    drawEngineSelectionPopup();
 }
 
