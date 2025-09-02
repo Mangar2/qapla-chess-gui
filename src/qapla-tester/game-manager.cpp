@@ -38,7 +38,6 @@
 #include "game-manager-pool.h"
 #include "input-handler.h"
 #include "adjucation-manager.h"
-#include "board-exchange.h"
 
 GameManager::GameManager()
     : taskProvider_(nullptr), gameContext_()

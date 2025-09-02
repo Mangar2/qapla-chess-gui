@@ -33,7 +33,6 @@
 #include "qapla-tester/tournament-result.h"
 
 #include "qapla-tester/game-manager-pool.h"
-#include "qapla-tester/board-exchange.h"
 #include "imgui-table.h"
 
 #include "imgui.h"

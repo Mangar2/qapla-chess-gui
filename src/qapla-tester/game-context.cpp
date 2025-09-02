@@ -18,7 +18,6 @@
  */
 #include "game-context.h"
 #include "engine-worker-factory.h"
-#include "board-exchange.h"
 
 GameContext::GameContext()
 {
@@ -36,16 +35,6 @@ void GameContext::updateEngineNames()
     const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
     gameRecord_.setWhiteEngineName(whiteName);
     gameRecord_.setBlackEngineName(blackName);
-
-    QaplaTester::EngineExchangeDataList list;
-    for (auto &player : players_)
-    {
-        list.push_back({player->getEngine()->getConfig().getName(),
-                        player->getIdentifier(),
-                        "Running",
-                        player->getEngine()->getEngineMemoryUsage(),
-                        white == player.get()});
-    }
 }
 
 void GameContext::tearDown()

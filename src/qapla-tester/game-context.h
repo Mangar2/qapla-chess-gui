@@ -307,8 +307,6 @@ public:
 
 private:
     void updateEngineNames();
-    QaplaTester::ProviderId_t id_;
-
     mutable std::mutex engineMutex_;
     std::vector<std::unique_ptr<PlayerContext>> players_;
 

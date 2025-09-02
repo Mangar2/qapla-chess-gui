@@ -18,7 +18,6 @@
  */
 
 #include "compute-task.h"
-#include "board-exchange.h"
 
 ComputeTask::ComputeTask()
     : gameContext_()

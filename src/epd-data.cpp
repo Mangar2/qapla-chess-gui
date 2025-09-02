@@ -22,7 +22,6 @@
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/epd-manager.h"
 #include "qapla-tester/game-manager-pool.h"
-#include "qapla-tester/board-exchange.h"
 #include "imgui-table.h"
 
 #include "imgui.h"
