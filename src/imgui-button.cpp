@@ -121,7 +121,7 @@ namespace QaplaButton {
 
     void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active) {
         auto color = getFgColor(active);
-        constexpr float reduce = 5.0f;
+        constexpr float reduce = 4.0f;
         auto rectSize = ImVec2(size.x - BORDER * 2 - reduce, size.y - BORDER * 2 - reduce);
         int centeredX = static_cast<int>((size.x - rectSize.x) / 2);
         auto rectPosX = topLeft.x + static_cast<float>(centeredX);
@@ -134,7 +134,7 @@ namespace QaplaButton {
 
         // Referenzpunkt: linke untere Ecke des Symbols
         float startX = rectPosX + 1;
-        float startY = topLeft.y + size.y - BORDER - dotSize;
+        float startY = topLeft.y + size.y - BORDER - dotSize + 1.0f;
 
         for (int i = 0; i < count; ++i) {
             float x0 = startX + i*(dotSize + gap);
