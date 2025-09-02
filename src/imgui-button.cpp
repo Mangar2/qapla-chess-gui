@@ -38,14 +38,20 @@ namespace QaplaButton {
 		return ImGui::GetColorU32(ImGuiCol_Button);
     }
 
+    template<typename T>
+    inline T ImLerp(const T& a, const T& b, float t)
+    {
+        return a + (b - a) * t;
+    }
+
     static auto getFgColor(bool active = false) {
         bool hovered = ImGui::IsItemHovered();
         active = active || ImGui::IsItemActive();
 
         if (active) return ImGui::GetColorU32(ImGuiCol_Text);
         if (hovered) return ImGui::GetColorU32(ImGuiCol_Text);
-        return ImGui::GetColorU32(ImGuiCol_TextDisabled);
-
+        return ImLerp(ImGui::GetColorU32(ImGuiCol_Text), 
+            ImGui::GetColorU32(ImGuiCol_TextDisabled), 0.80f);
     }
 
     void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
@@ -101,6 +107,42 @@ namespace QaplaButton {
                 ImDrawFlags_None,
                 1.0f);
         }
+    }
+
+    void drawRect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active) {
+        auto color = getFgColor(active);
+        for (int i = 0; i <= 1; i++) {
+            list->AddRect(
+                ImVec2(topLeft.x + i, topLeft.y + i),
+                ImVec2(topLeft.x + size.x - i, topLeft.y + size.y - i),
+                color);
+        }
+    }
+
+    void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active) {
+        auto color = getFgColor(active);
+        constexpr float reduce = 5.0f;
+        auto rectSize = ImVec2(size.x - BORDER * 2 - reduce, size.y - BORDER * 2 - reduce);
+        int centeredX = static_cast<int>((size.x - rectSize.x) / 2);
+        auto rectPosX = topLeft.x + static_cast<float>(centeredX);
+        drawRect(list, ImVec2(rectPosX, topLeft.y + BORDER), rectSize, active);
+
+        // Parameter
+        const float dotSize = 2.0f;   // 2x2 Pixel
+        const float gap = 2.0f;       // Abstand zwischen Punkten
+        const int count = 3;
+
+        // Referenzpunkt: linke untere Ecke des Symbols
+        float startX = rectPosX + 1;
+        float startY = topLeft.y + size.y - BORDER - dotSize;
+
+        for (int i = 0; i < count; ++i) {
+            float x0 = startX + i*(dotSize + gap);
+            list->AddRectFilled(
+                ImVec2(x0, startY),
+                ImVec2(x0 + dotSize, startY + dotSize),
+                color);
+        }    
     }
 
     void drawAdd(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {

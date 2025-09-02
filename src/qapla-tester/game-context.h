@@ -24,7 +24,6 @@
 #include "game-record.h"
 #include "engine-event.h"
 #include "engine-record.h"
-#include "board-exchange.h"
 
 #include <memory>
 #include <vector>

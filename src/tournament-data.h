@@ -79,8 +79,9 @@ namespace QaplaWindows {
 
         /**
          * @brief Stops all ongoing tasks in the pool.
+         * @param graceful If true, stops tasks gracefully, allowing games to finish.
          */
-        void stopPool();
+        void stopPool(bool graceful = false);
 
         /**
          * @brief Sets the pool concurrency level.

@@ -20,27 +20,5 @@
     "C_Cpp.default.defines": [
         "MACOS",
         "ARM"
-    ],
-    "files.associations": {
-        "*.h": "cpp",
-        "string": "cpp",
-        "__assert": "cpp",
-        "__hash_table": "cpp",
-        "__split_buffer": "cpp",
-        "__tree": "cpp",
-        "atomic": "cpp",
-        "deque": "cpp",
-        "filesystem": "cpp",
-        "forward_list": "cpp",
-        "fstream": "cpp",
-        "iomanip": "cpp",
-        "ios": "cpp",
-        "istream": "cpp",
-        "locale": "cpp",
-        "map": "cpp",
-        "system_error": "cpp",
-        "unordered_map": "cpp",
-        "unordered_set": "cpp",
-        "vector": "cpp"
-    }
+    ]
 }

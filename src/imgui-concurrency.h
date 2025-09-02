@@ -57,10 +57,15 @@ public:
             debounceCounter_ = 10; // Reset debounce counter
         }
 
+        if (newConcurrency == 0) {
+            adjustConcurrency();
+            return;
+        }
+
         if (debounceCounter_ > 0) {
             --debounceCounter_;
             if (debounceCounter_ == 0) {
-                startThreadIfNeeded();
+                adjustConcurrency();
             }
         }
     }
@@ -92,9 +97,16 @@ private:
     /**
      * @brief Starts a thread to handle increasing concurrency if needed.
      */
-    void startThreadIfNeeded() {
+    void adjustConcurrency() {
+
         if (currentConcurrency_ == targetConcurrency_) {
             return; 
+        }
+        auto& pool = GameManagerPool::getInstance();
+        if (currentConcurrency_ > targetConcurrency_ && active_) {
+            currentConcurrency_ = targetConcurrency_;
+            pool.setConcurrency(currentConcurrency_, niceStop_, true);
+            return;
         }
         std::thread([this]() {
             auto& pool = GameManagerPool::getInstance();
@@ -104,10 +116,6 @@ private:
                 pool.setConcurrency(currentConcurrency_, niceStop_, true);
             }
 
-            if (currentConcurrency_ > targetConcurrency_ && active_) {
-                currentConcurrency_ = targetConcurrency_;
-                pool.setConcurrency(currentConcurrency_, niceStop_, true);
-            }
         }).detach();
     }
 };

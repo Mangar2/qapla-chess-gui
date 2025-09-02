@@ -16,11 +16,6 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2021 Volker Böhm
  * @Overview
- * Implements a list holding moves of a chess position
- * Moves are stored in one list - but different for "silent moves" and "non silent moves". Silent moves are moves 
- * not capturing and not promoting - non silent moves are captures and promotes.
- * Silent moves are pushed to the end and non silent moves are inserted to the front. As a result non silent moves
- * are always ordered first
  */
 
 #pragma once

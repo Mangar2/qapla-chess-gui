@@ -24,7 +24,6 @@
 #include "qapla-engine/types.h"
 #include "qapla-tester/engine-record.h"
 #include "qapla-tester/time-control.h"
-#include "qapla-tester/board-exchange.h"
 
 #include <memory>
 #include <optional>

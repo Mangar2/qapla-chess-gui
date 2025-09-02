@@ -252,10 +252,11 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::stopPool() {
+    void TournamentData::stopPool(bool graceful) {
+        imguiConcurrency_->update(0);
         imguiConcurrency_->setActive(false);
         running_ = false;
-        GameManagerPool::getInstance().stopAll();
+        if (!graceful) GameManagerPool::getInstance().stopAll();
         SnackbarManager::instance().showSuccess("Tournament stopped");
     }
 

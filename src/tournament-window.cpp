@@ -60,11 +60,16 @@ void TournamentWindow::drawButtons() {
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     for (const std::string button : { "Run", "Stop", "Clear" }) {
         ImGui::SetCursorScreenPos(pos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
-            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+        bool running = TournamentData::instance().isRunning();
+        auto label = button == "Run" && running ? "Grace" : button;
+        if (QaplaButton::drawIconButton(button, label, buttonSize, false,
+            [&button, running](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Run") {
-                    bool active = TournamentData::instance().isRunning();
-                    QaplaButton::drawPlay(drawList, topLeft, size, active);
+                    if (running) {
+                        QaplaButton::drawGrace(drawList, topLeft, size);
+                    } else {
+                        QaplaButton::drawPlay(drawList, topLeft, size);
+                    }
                 }
                 if (button == "Stop") {
                     QaplaButton::drawStop(drawList, topLeft, size);
@@ -76,7 +81,12 @@ void TournamentWindow::drawButtons() {
         {
             try {
                 if (button == "Run") {
-                    TournamentData::instance().startTournament();
+                    bool running = TournamentData::instance().isRunning();
+                    if (running) {
+                        TournamentData::instance().stopPool(true);
+                    } else {
+                        TournamentData::instance().startTournament();
+                    }
                 } 
                 else if (button == "Stop") {
                     TournamentData::instance().stopPool();
