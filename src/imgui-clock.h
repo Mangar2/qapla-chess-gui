@@ -13,33 +13,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
+
 
 #pragma once
 
-#include "embedded-window.h"
-#include "board-data.h"
+#include <imgui.h>
+
 #include <memory>
 #include <string>
 
+class GameRecord;
+class MoveRecord;
 
 namespace QaplaWindows {
 
     /**
      * @brief Displays the move list with associated search data for a game.
      */
-    class ClockWindow : public EmbeddedWindow {
+    class ImGuiClock {
     public:
         /**
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        ClockWindow();
-        ~ClockWindow();
+        ImGuiClock();
+        ~ImGuiClock();
 
-        void draw() override;
+        void draw();
+
+        /**
+         * @brief Sets the clock data from the game record.
+         * @param gameRecord The game record to extract data from.
+         */
+        void setFromGameRecord(const GameRecord& gameRecord);
+
+        /**
+         * @brief Sets the remaining clock data from the move record.
+         * @param moveRecord The move record to extract data from.
+         * @param playerIndex The index of the player (0 for white, 1 for black).
+         */
+        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
 
     private:
         struct ClockData {
@@ -52,7 +68,7 @@ namespace QaplaWindows {
 			bool wtm = true; 
 		};
         ClockData clockData_;
-		bool setClockData();
+        uint32_t curHalfmoveNo_ = 0;
     };
 
 } // namespace QaplaWindows

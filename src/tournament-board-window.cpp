@@ -39,10 +39,20 @@ namespace QaplaWindows
 {
 
     TournamentBoardWindow::TournamentBoardWindow() {
-        auto engineListSplitter = std::make_unique<VerticalSplitContainer>();
-        engineListSplitter->setMinTopHeight(300.0f);
-        engineListSplitter->setMinBottomHeight(110.0f);
-        embeddedWindow_ = std::move(engineListSplitter);
+        mainWindow_ = std::make_unique<VerticalSplitContainer>();
+        mainWindow_->setMinTopHeight(300.0f);
+        mainWindow_->setMinBottomHeight(110.0f);
+
+        auto topWindow = std::make_unique<HorizontalSplitContainer>();
+        topWindow_ = topWindow.get();
+        topWindow_->setRightWidth(400.0f);
+        mainWindow_->setTop(std::move(topWindow));
+
+        auto topRightWindow = std::make_unique<VerticalSplitContainer>();
+        topRightWindow_ = topRightWindow.get();
+        topRightWindow_->setFixedTopHeight(120.0f);
+        topWindow_->setRight(std::move(topRightWindow));
+
         imGuiEngineList_.setAllowInput(false);
     }
 
@@ -58,6 +68,7 @@ namespace QaplaWindows
         if (!active_) return;
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setGameState(gameRecord);
+        imGuiClock_.setFromGameRecord(gameRecord);
     }
 
     void TournamentBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
@@ -70,20 +81,25 @@ namespace QaplaWindows
     {
         if (!active_) return;
         imGuiEngineList_.setFromMoveRecord(moveRecord, playerIndex);
+        imGuiClock_.setFromMoveRecord(moveRecord, playerIndex);
     }
 
     void TournamentBoardWindow::draw()
     {
-        embeddedWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        topWindow_->setLeft(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiBoard_.draw();
         }));
-        
-        embeddedWindow_->setBottom(
+
+        topRightWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+            imGuiClock_.draw();
+        }));
+
+        mainWindow_->setBottom(
             std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
                 imGuiEngineList_.draw();
             })
         );
-        embeddedWindow_->draw();
+        mainWindow_->draw();
     }
 
 }

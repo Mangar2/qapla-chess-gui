@@ -26,6 +26,7 @@
 #include "embedded-window.h"
 #include "imgui-board.h"
 #include "imgui-engine-list.h"
+#include "imgui-clock.h"
 
 class MoveRecord;
 class GameRecord;
@@ -34,6 +35,7 @@ namespace QaplaWindows
 {
 
     class VerticalSplitContainer;
+    class HorizontalSplitContainer;
 
     class TournamentBoardWindow : public EmbeddedWindow
     {
@@ -100,9 +102,12 @@ namespace QaplaWindows
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
 
-        std::unique_ptr<VerticalSplitContainer> embeddedWindow_;
+        std::unique_ptr<VerticalSplitContainer> mainWindow_;
+        HorizontalSplitContainer* topWindow_;
+        VerticalSplitContainer* topRightWindow_;
         ImGuiEngineList imGuiEngineList_;
         ImGuiBoard imGuiBoard_;
+        ImGuiClock imGuiClock_;
     };
 
 }

@@ -40,6 +40,14 @@ namespace QaplaWindows {
             rightWindow_ = std::move(window);
         }
 
+        void setLeftWidth(float width) {
+            leftWidth_ = width;
+        }
+
+        void setRightWidth(float width) {
+            rightWidth_ = width;
+        }
+
         void draw() override {
             
             ImVec2 region = ImGui::GetContentRegionAvail();
@@ -48,9 +56,14 @@ namespace QaplaWindows {
             float splitterWidth = 5.0f;
             float minSize = 100.0f;
             float availableWidth = std::max(region.x - splitterWidth - 13, 2 * minSize);
-            float adjustedLeftWidth;
+            if (rightWidth_ > 0) {
+                // Initially adjust the left width, leave it to the user later
+                leftWidth_ = std::max(leftWidth_, availableWidth - rightWidth_);
+                rightWidth_ = 0;
+            }
+            float adjustedLeftWidth = std::min(leftWidth_, availableWidth - minSize);
+            adjustedLeftWidth = std::max(adjustedLeftWidth, minSize);
 
-            adjustedLeftWidth = std::clamp(leftWidth_, minSize, availableWidth - minSize);
             std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
             ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
@@ -112,6 +125,7 @@ namespace QaplaWindows {
         std::unique_ptr<EmbeddedWindow> leftWindow_;
         std::unique_ptr<EmbeddedWindow> rightWindow_;
         float leftWidth_ = 400.0f;
+        float rightWidth_ = 0.0f;
     };
 
 } // namespace QaplaWindows
