@@ -52,6 +52,12 @@ namespace QaplaWindows {
          * @return Optional list of selected EngineConfig objects if user confirmed.
          */
         void drawEngineSelectionPopup();
+
+        /**
+         * @brief Draws the configuration button area for all engines.
+         */
+        void drawConfigButtonArea();
+        
         std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
 
     };

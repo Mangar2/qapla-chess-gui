@@ -21,6 +21,7 @@
 #include "font.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
+#include "imgui-separator.h"
 #include "qapla-tester/engine-record.h"
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
@@ -189,7 +190,7 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
     constexpr float topOffset = 5.0f;
     constexpr float bottomOffset = 8.0f;
     constexpr float leftOffset = 20.0f;
-    std::vector<std::string> buttons{ "Restart", "Stop", "Config" };
+    std::vector<std::string> buttons{ "Restart", "Stop" };
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
 	topLeft.x = std::round(topLeft.x);
 	topLeft.y = std::round(topLeft.y);
@@ -210,9 +211,6 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
                 if (button == "Stop") {
                     QaplaButton::drawStop(drawList, topLeft, size);
                 }
-                if (button == "Config") {
-                    QaplaButton::drawConfig(drawList, topLeft, size);
-                }
             }))
         {
             command = button;
@@ -230,7 +228,7 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cSectionSpacing = 4.0f;
     
-    const bool isSmall = size.y < 80.0f;
+    const bool isSmall = size.y < 100.0f;
     
     const ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_TableRowBg);
     const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
@@ -242,14 +240,12 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImVec2 max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
 
     drawList->AddRectFilled(topLeft, max, bgColor);
-    drawList->AddLine(ImVec2(topLeft.x, max.y), ImVec2(max.x, max.y), cBorder, 2.0f);
+    ImGuiSeparator::Horizontal();
 
     command = drawEngineArea(topLeft, drawList, max, cEngineInfoWidth, index, isSmall);
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
-    ImVec2 spacerMin = ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y);
-    ImVec2 spacerMax = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y + size.y - 2.0f);
-    drawList->AddRectFilled(spacerMin, spacerMax, IM_COL32(60, 60, 70, 120), 3.0f);
+    ImGuiSeparator::Vertical();
 
     drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
     
@@ -299,7 +295,7 @@ std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
-	const auto records = engineRecords_.empty() ? 1 : engineRecords_.size();
+	const auto records = engineRecords_.size();
     addTables(records);
 
     ImVec2 avail = ImGui::GetContentRegionAvail();

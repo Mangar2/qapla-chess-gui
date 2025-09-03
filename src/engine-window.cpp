@@ -18,8 +18,10 @@
  */
 
 #include "engine-window.h"
+#include "imgui-separator.h"
 #include "imgui-popup.h"
 #include "imgui-engine-list.h"
+#include "imgui-button.h"
 #include "engine-setup-window.h"
 
 #include "imgui.h"
@@ -50,22 +52,53 @@ void EngineWindow::drawEngineSelectionPopup() {
     }
 }
 
+void EngineWindow::drawConfigButtonArea() {
+    constexpr float areaWidth = 80.0f;
+    constexpr auto button = "Config";
+    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    auto topLeft = ImGui::GetCursorScreenPos();
+
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + 20.0f, topLeft.y + 8.0f));
+    if (QaplaButton::drawIconButton(button, button, buttonSize, false,
+        [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            QaplaButton::drawConfig(drawList, topLeft, size);
+        }))
+    {
+        auto& boardData = QaplaWindows::BoardData::instance();
+        std::vector<EngineConfig> activeEngines;
+        for (const auto& record : boardData.engineRecords()) {
+            activeEngines.push_back(record.config);
+        }
+        setupWindow_->content().setMatchingActiveEngines(activeEngines);
+        setupWindow_->open();
+    }
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + 65.0f, topLeft.y));
+    ImGuiSeparator::Vertical();
+}
+
 void EngineWindow::draw() {
     constexpr float cMinRowHeight = 80.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
+    ImVec2 cursorBefore = ImGui::GetCursorScreenPos();
+    drawConfigButtonArea();
+    ImVec2 topleft = ImGui::GetCursorScreenPos();
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    float indent = topleft.x - cursorBefore.x;
+    ImGui::Indent(indent);
+
     auto& boardData = QaplaWindows::BoardData::instance();
     const auto engineRecords = boardData.engineRecords();
 	const auto records = engineRecords.empty() ? 1 : engineRecords.size();
 
-    ImVec2 avail = ImGui::GetContentRegionAvail();
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
     const uint32_t rowHeight = static_cast<uint32_t>(
         std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
 
     auto [index, command] = boardData.imGuiEngineList().draw();
+    ImGui::Unindent(indent);
     try {
         if (command == "Restart") {
             boardData.restartEngine(index);
