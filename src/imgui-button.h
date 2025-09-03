@@ -62,10 +62,12 @@ namespace QaplaButton {
      * @param label     Text label shown below the button.
      * @param size      Size of the clickable icon area (excluding label).
      * @param iconDraw  Optional callback to draw the icon content (may be nullptr).
+     * @param highlighted Whether the button is highlighted.
+     * @param disabled    Whether the button is disabled.
      * @return true if the button was clicked.
      */
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, bool active,
-        IconDrawCallback iconDraw = nullptr);
+        IconDrawCallback iconDraw = nullptr, bool highlighted = false, bool disabled = false );
 
     /**
      * @brief Calculates the total area needed to draw the icon button including its label.

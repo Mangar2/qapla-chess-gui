@@ -52,8 +52,8 @@ void EngineWindow::drawEngineSelectionPopup() {
     }
 }
 
-void EngineWindow::drawConfigButtonArea() {
-    constexpr float areaWidth = 80.0f;
+float EngineWindow::drawConfigButtonArea(bool noEngines) {
+    constexpr float areaWidth = 65.0f;
     constexpr auto button = "Config";
     constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
     auto topLeft = ImGui::GetCursorScreenPos();
@@ -62,7 +62,8 @@ void EngineWindow::drawConfigButtonArea() {
     if (QaplaButton::drawIconButton(button, button, buttonSize, false,
         [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             QaplaButton::drawConfig(drawList, topLeft, size);
-        }))
+        },
+        noEngines))
     {
         auto& boardData = QaplaWindows::BoardData::instance();
         std::vector<EngineConfig> activeEngines;
@@ -72,8 +73,9 @@ void EngineWindow::drawConfigButtonArea() {
         setupWindow_->content().setMatchingActiveEngines(activeEngines);
         setupWindow_->open();
     }
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + 65.0f, topLeft.y));
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + areaWidth, topLeft.y));
     ImGuiSeparator::Vertical();
+    return areaWidth;
 }
 
 void EngineWindow::draw() {
@@ -82,23 +84,14 @@ void EngineWindow::draw() {
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
-    ImVec2 cursorBefore = ImGui::GetCursorScreenPos();
-    drawConfigButtonArea();
-    ImVec2 topleft = ImGui::GetCursorScreenPos();
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-    float indent = topleft.x - cursorBefore.x;
-    ImGui::Indent(indent);
-
     auto& boardData = QaplaWindows::BoardData::instance();
     const auto engineRecords = boardData.engineRecords();
-	const auto records = engineRecords.empty() ? 1 : engineRecords.size();
 
-    const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
-    const uint32_t rowHeight = static_cast<uint32_t>(
-        std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
-
+    float indent = drawConfigButtonArea(engineRecords.empty());
+    ImGui::Indent(indent);
     auto [index, command] = boardData.imGuiEngineList().draw();
     ImGui::Unindent(indent);
+
     try {
         if (command == "Restart") {
             boardData.restartEngine(index);

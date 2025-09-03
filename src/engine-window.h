@@ -55,8 +55,10 @@ namespace QaplaWindows {
 
         /**
          * @brief Draws the configuration button area for all engines.
+         * @param noEngines Flag indicating if there are no engines available.
+         * @return The required indent for the button area.
          */
-        void drawConfigButtonArea();
+        float drawConfigButtonArea(bool noEngines);
         
         std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
 

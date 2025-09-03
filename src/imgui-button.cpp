@@ -371,17 +371,8 @@ namespace QaplaButton {
         }
     }
 
-    /**
-     * @brief Draws a clickable icon-style button with optional icon and label below.
-     *
-     * @param id        Unique ImGui ID.
-     * @param label     Text label shown below the button.
-     * @param size      Size of the clickable icon area (excluding label).
-     * @param iconDraw  Optional callback to draw the icon content (may be nullptr).
-     * @return true if the button was clicked.
-     */
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, bool active,
-        IconDrawCallback iconDraw) {
+        IconDrawCallback iconDraw, bool highlighted, bool disabled) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();
         bool clicked = ImGui::InvisibleButton(id.c_str(), size);
 
@@ -393,6 +384,14 @@ namespace QaplaButton {
 
         if (iconDraw) {
             iconDraw(drawList, topLeft, size);
+        }
+
+        if (highlighted) {
+            // draw red dot on top right position
+            constexpr float dotRadius = 6.0f;
+            constexpr float dotLocation = 2.0f;
+            ImVec2 dotPos = ImVec2(topLeft.x + size.x - dotLocation, topLeft.y + dotLocation);
+            drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
         }
 
         ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());
