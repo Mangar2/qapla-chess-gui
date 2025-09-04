@@ -68,9 +68,16 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
     auto halfmoveNo = moveRecord.halfmoveNo_;
     uint64_t cur = halfmoveNo > curHalfmoveNo_ ? moveRecord.timeMs : 0;
 
-    if (playerIndex == 0) {
+    if (playerIndex == 0 && clockData_.wTimeCurMove != cur) {
+        if (cur != 0) {
+            clockData_.wTimer.start();
+        }
         clockData_.wTimeCurMove = cur;
-    } else {
+    } 
+    else if (playerIndex == 1 && clockData_.bTimeCurMove != cur) {
+        if (cur != 0) {
+            clockData_.bTimer.start();
+        }
         clockData_.bTimeCurMove = cur;
     }
 }
@@ -248,12 +255,16 @@ void ImGuiClock::draw() {
     ImVec2 whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
+    auto wCur = clockData_.wTimeCurMove == 0 ? 0 : 
+        clockData_.wTimeCurMove + clockData_.wTimer.elapsedMs();
+    auto bCur = clockData_.bTimeCurMove == 0 ? 0 : 
+        clockData_.bTimeCurMove + clockData_.bTimer.elapsedMs();
     if (smallClock) {
-        drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, clockData_.wTimeCurMove,
+        drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
             clockData_.wEngineName, true, clockData_.wtm);
     }
     else {
-        drawClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, clockData_.wTimeCurMove,
+        drawClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
             clockData_.wEngineName, true, clockData_.wtm);
     }
 
@@ -264,11 +275,11 @@ void ImGuiClock::draw() {
     ImVec2 blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
 
     if (smallClock) {
-        drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, clockData_.bTimeCurMove,
+        drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
             clockData_.bEngineName, false, clockData_.wtm);
     }
     else {
-        drawClock(blackMin, blackMax, clockData_.bTimeLeftMs, clockData_.bTimeCurMove,
+        drawClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
             clockData_.bEngineName, false, clockData_.wtm);
     }
 

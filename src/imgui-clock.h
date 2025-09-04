@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "qapla-tester/timer.h"
+
 #include <imgui.h>
 
 #include <memory>
@@ -65,6 +67,8 @@ namespace QaplaWindows {
 			std::uint64_t bTimeLeftMs;
             std::uint64_t wTimeCurMove;
 			std::uint64_t bTimeCurMove;
+            Timer wTimer;
+			Timer bTimer;
 			bool wtm = true; 
 		};
         ClockData clockData_;
