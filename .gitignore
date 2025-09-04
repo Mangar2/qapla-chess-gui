@@ -8,7 +8,11 @@
 /glfw/
 /build/
 /engines/
-/.vscode/
+# VS Code user settings lokal
+.vscode/settings.json
+
+# Optional: weitere persönliche Dateien
+.vscode/c_cpp_properties.json
 
 
 # User-specific files

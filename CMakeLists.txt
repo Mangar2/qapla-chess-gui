@@ -3,7 +3,9 @@ project(QaplaChess)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+if(NOT WIN32)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif()
 
 # --------------------------------
 # GLFW
@@ -43,7 +45,7 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 # --------------------------------
 # Executable
 # --------------------------------
-add_executable(qapla ${PROJECT_SOURCES})
+add_executable(qapla WIN32 ${PROJECT_SOURCES})
 
 # --------------------------------
 # Includes & Libs

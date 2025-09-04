@@ -17,18 +17,29 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "epd-reader.h"
+
 #include <sstream>
 #include <stdexcept>
 #include <cctype>
 #include <fstream>
 #include <optional>
-#include "epd-reader.h"
+#include <string>
 
 EpdReader::EpdReader(const std::string& filePath): filePath_(filePath) {
     std::ifstream file(filePath);
     if (!file) {
         int err = errno;
-        std::string errMsg = std::strerror(err);
+
+        std::string errMsg;
+    #ifdef _WIN32
+        char buf[256]{};
+        strerror_s(buf, sizeof buf, err);
+        errMsg = buf;
+    #else
+        std::error_code ec(err, std::generic_category());
+        errMsg = ec.message();
+    #endif
         throw std::runtime_error(
             "Failed to open EPD file: " + filePath +
             " (errno: " + std::to_string(err) + ", " + errMsg + ")"

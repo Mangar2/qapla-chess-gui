@@ -41,9 +41,16 @@ Configuration::Configuration()
 static std::string getConfigDirectory() {
     namespace fs = std::filesystem;
 
-    // Fallback: Benutzerverzeichnis verwenden
 #ifdef _WIN32
-    return std::string(std::getenv("LOCALAPPDATA")) + "/qapla-chess-gui";
+    char* buf = nullptr;
+    size_t sz = 0;
+    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf) {
+        std::string path(buf);
+        free(buf);
+        return path + "/qapla-chess-gui";
+    }
+    // Fallback, falls LOCALAPPDATA nicht gesetzt ist
+    return std::string(".") + "/qapla-chess-gui";
 #else
     return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";
 #endif
