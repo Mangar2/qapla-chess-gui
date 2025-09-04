@@ -38,20 +38,26 @@ namespace QaplaButton {
 		return ImGui::GetColorU32(ImGuiCol_Button);
     }
 
-    template<typename T>
-    inline T ImLerp(const T& a, const T& b, float t)
-    {
-        return a + (b - a) * t;
+    static ImVec4 lerpVec4(const ImVec4& a, const ImVec4& b, float t) {
+        return ImVec4(
+            std::lerp(a.x, b.x, t),
+            std::lerp(a.y, b.y, t),
+            std::lerp(a.z, b.z, t),
+            std::lerp(a.w, b.w, t)
+        );
     }
 
     static auto getFgColor(bool active = false) {
         bool hovered = ImGui::IsItemHovered();
         active = active || ImGui::IsItemActive();
 
-        if (active) return ImGui::GetColorU32(ImGuiCol_Text);
-        if (hovered) return ImGui::GetColorU32(ImGuiCol_Text);
-        return ImLerp(ImGui::GetColorU32(ImGuiCol_Text), 
-            ImGui::GetColorU32(ImGuiCol_TextDisabled), 0.80f);
+        if (active || hovered)
+            return ImGui::GetColorU32(ImGuiCol_Text);
+
+        const ImVec4 a = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+        const ImVec4 b = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+        const ImVec4 m = lerpVec4(a, b, 0.80f);
+        return ImGui::GetColorU32(m);
     }
 
     void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size) {
