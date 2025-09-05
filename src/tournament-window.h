@@ -21,6 +21,8 @@
 
 #include "embedded-window.h"
 
+#include "qapla-tester/engine-config.h"
+
 #include <memory>
 
 namespace QaplaWindows {
@@ -42,8 +44,11 @@ namespace QaplaWindows {
         void draw() override;
 
     private:
+        bool drawEngineList();
         void drawButtons();
         bool drawInput();
+
+
     };
 
 } // namespace QaplaWindows

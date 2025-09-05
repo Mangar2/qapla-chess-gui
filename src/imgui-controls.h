@@ -231,6 +231,41 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
+     * @brief Checkbox input for a boolean value.
+     * @param label Label to display next to the checkbox.
+     * @param value Reference to the boolean value to modify.
+     * @return True if the value was modified, false otherwise.
+     */
+    inline bool checkbox(std::string label, bool& value) {
+        return ImGui::Checkbox(label.c_str(), &value);
+    }
+
+
+    /**
+     * @brief Collapsing header with a checkbox to select/deselect.
+     * @param label Label to display next to the checkbox and header.
+     * @param selected Reference to the boolean value indicating selection state.
+     * @param flags Optional ImGuiTreeNodeFlags for the collapsing header.
+     * @param contentCallback Optional callback function to render content when expanded.
+     * @return True if the selection state or content was modified, false otherwise.
+     */
+    inline bool collapsingSelection(std::string label, bool& selected, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None,
+        const std::function<bool()>& contentCallback = nullptr){
+        bool modified = false;
+        modified = ImGui::Checkbox("##select", &selected);
+        ImGui::SameLine(0.0f, 4.0f);
+        if (ImGui::CollapsingHeader(label.c_str(), flags)) {
+            ImGui::Indent(10.0f);
+            // call callback to draw content
+            if ((flags & ImGuiTreeNodeFlags_Leaf) == 0 && contentCallback) {
+                modified |= contentCallback();
+            }
+            ImGui::Unindent(10.0f);
+        }
+        return modified;
+    }
+
+    /**
     * @brief Creates an input control for an EngineOption.
     * @param option The EngineOption to create the input for.
     * @param value Reference to the current value of the option as a string.
@@ -287,7 +322,6 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         case EngineOption::Type::String: {
-            // Text input
             if (auto newValue = inputText(option.name.c_str(), value)) {
                 value = *newValue;
                 modified = true;
@@ -295,7 +329,6 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         default:
-            // Unsupported type
             ImGui::Text("Unsupported option type: %s", EngineOption::to_string(option.type).c_str());
             break;
         }
@@ -304,30 +337,31 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
-     * @brief Control f�r optionale Eingaben mit einer Checkbox und einer benutzerdefinierten Eingabebox.
-     * @tparam T Der Typ des optionalen Werts.
-     * @param label Label f�r die Checkbox und Eingabebox.
-     * @param value Referenz auf den optionalen Wert.
-     * @param inputCallback Callback-Funktion, die die Eingabebox rendert.
-     * @return True, wenn der Wert ge�ndert wurde, sonst false.
+     * @brief Input control for optional values.
+     * 
+     * Renders a checkbox to indicate if the value is present, and if so, renders the input control using the provided callback.
+     * 
+     * @tparam T Type of the optional value.
+     * @param label Label to display next to the checkbox and input box.
+     * @param value Reference to the std::optional value to modify.
+     * @param inputCallback Callback function that takes a reference to T and returns true if modified.
+     * @return True if the value was modified, false otherwise.
      */
     template <typename T>
     inline bool optionalInput(const char* label, std::optional<T>& value, const std::function<bool(T&)>& inputCallback) {
         bool modified = false;
 
-        // Checkbox f�r "optional vorhanden"
         bool hasValue = value.has_value();
         if (ImGui::Checkbox(label, &hasValue)) {
             if (hasValue) {
-                value = T{}; // Initialisiere mit Standardwert
+                value = T{}; 
             }
             else {
-                value.reset(); // Entferne den Wert
+                value.reset(); 
             }
             modified = true;
         }
 
-        // Wenn der Wert vorhanden ist, rendere die Eingabebox
         if (hasValue && value.has_value()) {
             ImGui::SameLine();
             T tempValue = *value;

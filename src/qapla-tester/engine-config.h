@@ -133,6 +133,7 @@ public:
 
 	void setGauntlet(bool enabled) { gauntlet_ = enabled; }
 	bool isGauntlet() const { return gauntlet_; }
+    bool& gauntlet() { return gauntlet_; }
 
     void setTimeControl(const std::string& tc);
 	const TimeControl& getTimeControl() const { return tc_; }

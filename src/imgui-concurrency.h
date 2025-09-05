@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "snackbar.h"
+
 #include "qapla-tester/game-manager-pool.h"
 
 #include <thread>
@@ -110,10 +112,15 @@ private:
         }
         std::thread([this]() {
             auto& pool = GameManagerPool::getInstance();
-
-            while (currentConcurrency_ < targetConcurrency_ && active_) {
-                ++currentConcurrency_;
-                pool.setConcurrency(currentConcurrency_, niceStop_, true);
+            try {
+                while (currentConcurrency_ < targetConcurrency_ && active_) {
+                    ++currentConcurrency_;
+                    pool.setConcurrency(currentConcurrency_, niceStop_, true);
+                }
+            }
+            catch (const std::exception& e) {
+                // Log the exception if needed
+                SnackbarManager::instance().showError(std::string(e.what()));
             }
 
         }).detach();

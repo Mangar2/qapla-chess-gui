@@ -31,6 +31,7 @@
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
 #include "qapla-tester/tournament.h"
+#include "qapla-tester/engine-worker-factory.h"
 
 #include "imgui.h"
 
@@ -105,6 +106,46 @@ void TournamentWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
+bool TournamentWindow::drawEngineList() {
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    bool modified = false;
+    int index = 0;
+    for (auto& config : configs) {
+        TournamentData::TournamentEngineConfig engine = {
+            .config = config,
+            .selected = false
+        };
+        auto& activeEngines = TournamentData::instance().getEngineConfigs();
+        auto it = std::find_if(activeEngines.begin(), activeEngines.end(),
+            [&config](const TournamentData::TournamentEngineConfig& engine) {
+                return engine.config == config;
+            });
+        if (it != activeEngines.end()) {
+            engine = *it;
+        }
+        auto& name = config.getName().empty() ? "(unnamed)" : config.getName();
+        ImGui::PushID(index);
+        ImGuiTreeNodeFlags flags = engine.selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_Leaf;
+        bool changed = ImGuiControls::collapsingSelection(name, engine.selected, flags, [&engine]() -> bool {
+            return ImGuiControls::checkbox("Gauntlet", engine.config.gauntlet());
+        });
+        if (changed) {
+            modified = true;
+            if (it == activeEngines.end()) {
+                activeEngines.push_back(engine);
+            } 
+            else {
+                it->selected = engine.selected;
+                it->config.setGauntlet(engine.config.isGauntlet());
+            }
+        }
+        ImGui::PopID();
+        index++;
+    }
+    return modified;
+}
+
 bool TournamentWindow::drawInput() {
     
 	constexpr float inputWidth = 300.0f;
@@ -131,6 +172,11 @@ bool TournamentWindow::drawInput() {
     ImGuiControls::fileInput("Tournament file", tournamentData.config().tournamentFilename, 2 * inputWidth);
     ImGui::Spacing();
 
+    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::Indent(10.0f);
+        changed |= drawEngineList();
+        ImGui::Unindent(10.0f);
+    }
     if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
         changed |= ImGuiControls::fileInput("Opening file", tournamentData.config().openings.file, 2 * inputWidth);
@@ -178,7 +224,7 @@ bool TournamentWindow::drawInput() {
         changed |= ImGuiControls::inputInt<uint32_t>("Save interval (s)", tournamentData.config().saveInterval, 0, 1000);
         ImGui::Unindent(10.0f);
     }
-    if (ImGui::CollapsingHeader("All Engines", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGui::CollapsingHeader("Time Control", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
 
         ImGuiControls::timeControlInput(tournamentData.eachEngineConfig().tc, false, inputWidth);
@@ -186,7 +232,10 @@ bool TournamentWindow::drawInput() {
         changed |= ImGuiControls::selectionBox("Predefined time control", tournamentData.eachEngineConfig().tc, {
             "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
             });
-        
+        ImGui::Unindent(10.0f);
+    }
+    if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", tournamentData.eachEngineConfig().hash, 1, 10000);
 		ImGui::SetNextItemWidth(inputWidth);

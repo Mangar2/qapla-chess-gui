@@ -74,36 +74,31 @@ namespace QaplaWindows {
     TournamentData::~TournamentData() = default;
 
     void TournamentData:: init() {
-        auto c1 = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-		auto c2 = EngineWorkerFactory::getConfigManager().getConfig("Spike 1.4.1");
-		if (c1) engineConfig_.push_back(*c1);
-        if (c2) engineConfig_.push_back(*c2);
     }
 
     void TournamentData::startTournament() {
-		engineConfig_.clear();
-        auto c1 = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-        auto c2 = EngineWorkerFactory::getConfigManager().getConfig("Spike 1.4.1");
-        if (c1) engineConfig_.push_back(*c1);
-        if (c2) engineConfig_.push_back(*c2);
         if (engineConfig_.empty()) {
             SnackbarManager::instance().showError("No engines configured for the tournament.");
             return;
 		}
-		engineConfig_[0].setGauntlet(true);
-        for (auto& engine : engineConfig_) {
-            engine.setPonder(eachEngineConfig_.ponder);
-			engine.setTimeControl(eachEngineConfig_.tc);
-			engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
-			engine.setTraceLevel(eachEngineConfig_.traceLevel);
-            engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
+		engineConfig_[0].config.setGauntlet(true);
+        std::vector<EngineConfig> selectedEngines;
+        for (auto& tournamentConfig : engineConfig_) {
+            if (!tournamentConfig.selected) continue;
+            EngineConfig config = tournamentConfig.config;
+            config.setPonder(eachEngineConfig_.ponder);
+			config.setTimeControl(eachEngineConfig_.tc);
+			config.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
+			config.setTraceLevel(eachEngineConfig_.traceLevel);
+            config.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
+            selectedEngines.push_back(config);
 		}
 
         if (!validateOpenings()) return;
 
         if (tournament_) {
             result_->setGamesLeft();
-			tournament_->createTournament(engineConfig_, *config_);
+			tournament_->createTournament(selectedEngines, *config_);
             tournament_->scheduleAll(0, false);
             imguiConcurrency_->init();
             imguiConcurrency_->setActive(true);

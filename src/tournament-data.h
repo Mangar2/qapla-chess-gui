@@ -54,6 +54,11 @@ namespace QaplaWindows {
             bool ponder;
 
 		};
+        struct TournamentEngineConfig {
+            EngineConfig config;
+            bool selected = false;
+        };
+
         TournamentData();
         ~TournamentData();
 
@@ -115,10 +120,10 @@ namespace QaplaWindows {
          */
         TournamentConfig& config();
 
-        const std::vector<EngineConfig>& getEngineConfigs() const {
+        const std::vector<TournamentEngineConfig>& getEngineConfigs() const {
             return engineConfig_;
 		}
-        std::vector<EngineConfig>& getEngineConfigs() {
+        std::vector<TournamentEngineConfig>& getEngineConfigs() {
             return engineConfig_;
         }
         uint32_t& concurrency() {
@@ -221,7 +226,8 @@ namespace QaplaWindows {
 		EachEngineConfig eachEngineConfig_;
 		AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		AdjudicationManager::ResignAdjudicationConfig resignConfig_;
-        std::vector<EngineConfig> engineConfig_{};
+        std::vector<TournamentEngineConfig> engineConfig_{};
+
         uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games
 
