@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #include "board-data.h"
@@ -25,6 +25,7 @@
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/compute-task.h"
+#include "qapla-tester/engine-config.h"
 #include "qapla-tester/engine-config-manager.h"
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/game-manager-pool.h"
@@ -49,6 +50,47 @@ BoardData::BoardData()
 }
 
 BoardData::~BoardData() = default;
+
+void BoardData::saveConfig(std::ostream &out) const
+{
+	uint32_t index = 0;
+	for (auto &engine: engineConfigs_) {
+		out << "[boardengine]\n";
+		out << "name=" << engine.getName() << '\n';
+		out << "index=" << index << '\n';
+		out << '\n';
+		++index;
+	}
+}
+
+void BoardData::loadBoardEngine(const QaplaConfiguration::ConfigMap &keyValueMap)
+{
+    std::optional<std::string> name;
+    std::optional<size_t> index;
+
+    for (const auto& [key, value] : keyValueMap) {
+        if (key == "name") {
+            name = value;
+        } else if (key == "index") {
+            try {
+                index = std::stoul(value);
+            } catch (const std::exception& e) {
+                index = std::nullopt; 
+            }
+        }
+    }
+
+    if (name && index) {
+        auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+        if (*index >= engineConfigs_.size()) {
+            engineConfigs_.resize(*index + 1);
+        }
+        engineConfigs_[*index] = *config;
+    } else if (name) {
+        auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+        engineConfigs_.push_back(*config);
+    }
+}
 
 void BoardData::doMove(const MoveRecord& move)
 {
@@ -205,6 +247,7 @@ void BoardData::restartEngine(size_t index)
 
 void BoardData::setEngines(const std::vector<EngineConfig> &engines)
 {
+	engineConfigs_ = engines;
 	if (engines.size() == 0)
 	{
 		computeTask_->initEngines(EngineList{});
@@ -231,3 +274,4 @@ bool BoardData::isModeActive(const std::string &mode) const
 		return false;
 	}
 }
+

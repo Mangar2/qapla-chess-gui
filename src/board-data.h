@@ -20,6 +20,7 @@
 #pragma once
 
 #include "epd-data.h"
+#include "configuration.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/engine-record.h"
@@ -28,12 +29,14 @@
 #include <memory>
 #include <optional>
 #include <functional>
+#include <string>
 
 namespace QaplaBasics
 {
 	class Move;
 }
 
+class EngineConfig;
 class GameState;
 class MoveRecord;
 class GameRecord;
@@ -202,6 +205,13 @@ namespace QaplaWindows
 		void restartEngine(size_t index);
 
 		/**
+		 * @brief Starts the engines configured in the board data.
+		 */
+		void setEngines() {
+			setEngines(engineConfigs_);
+		}
+
+		/**
 		 * @brief Sets the engines to use
 		 * @param engines Vector of EngineConfig objects representing the engines to set.
 		 */
@@ -212,6 +222,19 @@ namespace QaplaWindows
 		 * @param mode The mode to check (e.g., "autoplay", "analyze", "play", "manual").
 		 */
 		bool isModeActive(const std::string &mode) const;
+
+
+		/**
+		 * @brief Saves the board configuration to the specified output stream in ini file format.
+		 * @param out The output stream to write the configuration to.
+		 */
+		void saveConfig(std::ostream &out) const;
+
+		/**
+		 * @brief Loads a board engine configuration from a key-value map.
+		 * @param keyValueMap A map containing key-value pairs representing the engine configuration.
+		 */
+		void loadBoardEngine(const QaplaConfiguration::ConfigMap &keyValueMap);
 
 	private:
 		EpdData epdData_;
@@ -226,6 +249,8 @@ namespace QaplaWindows
 
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
 		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
+
+		std::vector<EngineConfig> engineConfigs_;
 
 	};
 

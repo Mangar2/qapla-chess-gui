@@ -97,7 +97,7 @@ public:
      */
     static AppError makeInvalidParameters(const std::string& externalText) {
         return AppError(0, AppReturnCode::InvalidParameters, externalText, 
-            "Use --help to display all supported parameters.", {});
+            defaultInvalidParameterUserHint_, {});
     }
 
     /**
@@ -131,6 +131,15 @@ public:
         throw makeInvalidParameters("\n" + contextText + ": '" + givenOption + "' " + hint);
     }
 
+    /** 
+     * @brief Sets the default user hint for AppError. 
+     * 
+     * @param hint The default user hint to set.
+     */
+    static void setDefaultInvalidParameterUserHint(const std::string& hint) {
+        defaultInvalidParameterUserHint_ = hint;
+    }
+
 
 private:
 
@@ -146,6 +155,5 @@ private:
     AppReturnCode returnCode_;
     std::string userHint_;
     std::string internalDetail_;
+    static inline std::string defaultInvalidParameterUserHint_ = "Use --help to display all supported parameters.";
 };
-
-

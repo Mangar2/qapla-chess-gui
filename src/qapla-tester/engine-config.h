@@ -222,8 +222,15 @@ public:
      */
     std::unordered_map<std::string, std::string> getOptions(const EngineOptions availableOptions) const;
 
+
     friend std::istream& operator>>(std::istream& in, EngineConfig& config);
 
+    /**
+     * @brief Saves the engine configuration to a stream (ini file format).
+     * @param out The output stream to write the configuration to.
+     * @param section The section name to use (default "engine").
+     */
+    void save(std::ostream& out, std::string section = "engine") const;
     friend std::ostream& operator<<(std::ostream& out, const EngineConfig& config);
 
     /**

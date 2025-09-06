@@ -207,25 +207,28 @@ std::istream& operator>>(std::istream& in, EngineConfig& config) {
     return in;
 }
 
-std::ostream& operator<<(std::ostream& out, const EngineConfig& config) {
-    if (!out) throw std::runtime_error("Invalid output stream");
+void EngineConfig::save(std::ostream& out, std::string section) const {
+     if (!out) throw std::runtime_error("Invalid output stream");
 
-    out << "[engine]\n";
-	out << "name=" << config.name_ << '\n';
-    out << "author=" << config.author_ << '\n';
-    out << "cmd=" << config.cmd_ << '\n';
-    out << "dir=" << config.dir_ << '\n';
-    out << "restart=" << to_string(config.restart_) << '\n';
-    out << "proto=" << to_string(config.protocol_) << '\n';
-	auto timeControl = config.tc_.toPgnTimeControlString();
+    if (!section.empty()) out << "[" << section << "]\n";
+	out << "name=" << name_ << '\n';
+    out << "author=" << author_ << '\n';
+    out << "cmd=" << cmd_ << '\n';
+    out << "dir=" << dir_ << '\n';
+    out << "restart=" << to_string(restart_) << '\n';
+    out << "proto=" << to_string(protocol_) << '\n';
+	auto timeControl = tc_.toPgnTimeControlString();
     if (!timeControl.empty()) {
-        out << "tc=" << config.tc_.toPgnTimeControlString() << '\n';
+        out << "tc=" << tc_.toPgnTimeControlString() << '\n';
     }
-	if (config.ponder_) out << "ponder=" << (config.ponder_ ? "true" : "false") << '\n';
-    for (const auto& [_, value] : config.optionValues_) {
+	if (ponder_) out << "ponder=" << (ponder_ ? "true" : "false") << '\n';
+    for (const auto& [_, value] : optionValues_) {
         out << value.originalName << "=" << value.value << '\n';
     }
+}
 
+std::ostream& operator<<(std::ostream& out, const EngineConfig& config) {
+    config.save(out);
     return out;
 }
 

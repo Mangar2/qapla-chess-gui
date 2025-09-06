@@ -81,7 +81,6 @@ namespace QaplaWindows {
             SnackbarManager::instance().showError("No engines configured for the tournament.");
             return;
 		}
-		engineConfig_[0].config.setGauntlet(true);
         std::vector<EngineConfig> selectedEngines;
         for (auto& tournamentConfig : engineConfig_) {
             if (!tournamentConfig.selected) continue;
@@ -267,10 +266,38 @@ namespace QaplaWindows {
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
-        bool start = isRunning();
         if (!isRunning()) return;
         imguiConcurrency_->setNiceStop(nice);
         imguiConcurrency_->update(count);
+    }
+
+    void TournamentData::saveTournamentEngines(std::ostream& out, const std::string& header) const {
+        for (const auto& engine : engineConfig_) {
+            out << "[" << header << "]\n";
+            out << "name" << "=" << engine.config.getName() << "\n";
+            out << "selected=" << (engine.selected ? "true" : "false") << "\n";
+            out << "gauntlet=" << (engine.config.isGauntlet() ? "true" : "false") << "\n";
+            out << "\n";
+        }
+    }
+
+    void TournamentData::loadTournamentEngine(const QaplaConfiguration::ConfigMap& keyValue) {
+        TournamentEngineConfig engine;
+        std::string name;
+        for (const auto& [key, value] : keyValue) {
+            if (key == "selected") {
+                engine.selected = (value == "true");
+            } else if (key == "name") {
+                name = value;
+                auto config = EngineWorkerFactory::getConfigManager().getConfig(name);
+                if (config) {
+                    engine.config = *config;
+                }
+            } else if (key == "gauntlet") {
+                engine.config.setGauntlet(value == "true");
+            }
+        }
+        engineConfig_.push_back(engine);
     }
 
     void TournamentData::saveEachEngineConfig(std::ostream& out, const std::string& header) const {

@@ -168,6 +168,7 @@ namespace QaplaWindows {
         void saveConfig(std::ostream& out) const {
             saveOpeningConfig(out, "tournamentopening");
 			saveTournamentConfig(out, "tournament");
+            saveTournamentEngines(out, "tournamentengine");
 			saveEachEngineConfig(out, "tournamenteachengine");
         }
 
@@ -191,6 +192,13 @@ namespace QaplaWindows {
          */
         void loadEachEngineConfig(const QaplaConfiguration::ConfigMap& keyValue);
 
+        /**
+         * @brief Loads a tournament engine from a vector of key-value mappings.
+         * @param keyValue A map containing engine configuration keys and their corresponding values.
+         * @details This method creates a TournamentEngineConfig instance from the provided key-value pairs
+         */
+        void loadTournamentEngine(const QaplaConfiguration::ConfigMap& keyValue);
+
         static TournamentData& instance() {
             static TournamentData instance;
             return instance;
@@ -209,6 +217,13 @@ namespace QaplaWindows {
          * @param header The header name for the configuration section.
          */
         void saveEachEngineConfig(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the list of tournament engines to a stream.
+         * @param out The output stream to write the engines to.
+         * @param header The header name for the engines section.
+         */
+        void saveTournamentEngines(std::ostream& out, const std::string& header) const;
 
         void populateEloTable();
 		void populateRunningTable();

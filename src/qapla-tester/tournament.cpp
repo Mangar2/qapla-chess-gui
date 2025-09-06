@@ -95,7 +95,7 @@ void Tournament::createGauntletPairings(const std::vector<EngineConfig>& engines
         std::string message = "Gauntlet tournament requires both gauntlet and opponent engines. ";
         message += "Found: " + std::to_string(gauntlets.size()) + " gauntlet(s), ";
         message += std::to_string(opponents.size()) + " opponent(s).";
-        throw AppError::makeInvalidParameters(message);
+        throw AppError::make(message);
     }
 
     createPairings(gauntlets, opponents, config, false);

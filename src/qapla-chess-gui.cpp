@@ -152,7 +152,7 @@ namespace {
     
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
-
+        QaplaWindows::BoardData::instance().setEngines();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();

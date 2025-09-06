@@ -19,6 +19,8 @@
 
 #include "configuration.h"
 #include "tournament-data.h"
+#include "board-data.h"
+
 #include "qapla-tester/logger.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/timer.h"
@@ -145,6 +147,7 @@ void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
+    QaplaWindows::BoardData::instance().saveConfig(out);
 	QaplaWindows::TournamentData::instance().saveConfig(out);
 }
 
@@ -219,6 +222,9 @@ void Configuration::processSection(const std::string& section, const ConfigMap& 
         else if (section == "board") {
             parseBoard(keyValueMap);
         }
+        else if (section == "boardengine") {
+            QaplaWindows::BoardData::instance().loadBoardEngine(keyValueMap);
+        }
         else if (section == "enginecapability") {
             engineCapabilities_.addOrReplace(keyValueMap);
         }
@@ -235,6 +241,9 @@ void Configuration::processSection(const std::string& section, const ConfigMap& 
 		}
         else if (section == "tournamenteachengine") {
             QaplaWindows::TournamentData::instance().loadEachEngineConfig(keyValueMap);
+        }
+        else if (section == "tournamentengine") {
+            QaplaWindows::TournamentData::instance().loadTournamentEngine(keyValueMap);
         }
         else if (section == "drawadjudication") {
             //QaplaWindows::TournamentData::instance().drawConfig().loadFromMap(keyValueMap);
