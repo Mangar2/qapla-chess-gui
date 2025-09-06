@@ -42,18 +42,7 @@ ImGuiMoveList::ImGuiMoveList()
     table_.setClickable(true);
 }
 
-static void alignRight(const std::string& content) {
-    float region = ImGui::GetContentRegionAvail().x;
-    float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + region - textWidth);
-}
-
-static void textAlignRight(const std::string& content) {
-    alignRight(content);
-    ImGui::TextUnformatted(content.c_str());
-}
-
-std::string causeToString(GameEndCause cause) {
+static std::string causeToString(GameEndCause cause) {
     switch (cause) {
     case GameEndCause::Checkmate: return "checkmate";
     case GameEndCause::Stalemate: return "stalemate";
@@ -83,14 +72,14 @@ void ImGuiMoveList::fromGameRecord(const GameRecord& gameRecord) {
     for (size_t i = 0; i < moves.size(); ++i) {
 
         if (wtm) {
-            renderMoveLine(std::to_string(moveNumber) + ".", moves[i], i);
+            table_.push(mkRow(std::to_string(moveNumber) + ".", moves[i], i));
         } 
         else {
-            renderMoveLine("...", moves[i], i);
+            table_.push(mkRow("...", moves[i], i));
             moveNumber++;
         }
         wtm = !wtm;
-        if (i + 1 == boardData.nextMoveIndex()) {
+        if (i + 1 == gameRecord.nextMoveIndex()) {
             auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
             auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
             ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
@@ -100,8 +89,8 @@ void ImGuiMoveList::fromGameRecord(const GameRecord& gameRecord) {
             }
         }
     }
-    if (boardData.isGameOver()) {
-        auto [cause, _] = boardData.gameRecord().getGameResult();
+    const auto [cause, result] = gameRecord.getGameResult();
+    if (result != GameResult::Unterminated) {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         ImGui::TextUnformatted(causeToString(cause).c_str());
@@ -110,29 +99,15 @@ void ImGuiMoveList::fromGameRecord(const GameRecord& gameRecord) {
 
 
 std::optional<size_t> ImGuiMoveList::draw() {
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
-
-    ImVec2 avail = ImGui::GetContentRegionAvail();
-
-        ImGui::TableHeader("Move");
-
-        uint32_t index = 1;
-        for (std::string text : { "Depth", "Time", "Score" }) {
-            ImGui::TableSetColumnIndex(index);
-			alignRight(text);
-			ImGui::TableHeader(text.c_str());   
-            index++;
-        }
-
-        ImGui::TableSetColumnIndex(4);
-        ImGui::TableHeader("PV");
-        
-        checkKeyboard();
-        int moveNumber = 1;
-        ImGui::EndTable();
+    auto size = ImGui::GetContentRegionAvail();
+    auto selectedRow = table_.draw(size);
+    if (selectedRow) {
+        currentPly_ = *selectedRow + 1;
     }
-
+    checkKeyboard();
+    return selectedRow;
 }
+
 
 void ImGuiMoveList::checkKeyboard() {
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
@@ -141,9 +116,13 @@ void ImGuiMoveList::checkKeyboard() {
             return; 
 		}
 		lastInputFrame_ = currentFrame;
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && index > 0) {
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && currentPly_ > 0) {
+            currentPly_--;
         }
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
+            if (currentPly_ + 1 < table_.size()) {
+                currentPly_++;
+            }
         }
     }
 }
@@ -158,40 +137,30 @@ bool ImGuiMoveList::isRowClicked(size_t index) {
     return clicked;
 }
 
-void ImGuiMoveList::renderMoveLine(const std::string& label, const MoveRecord& move, size_t index) {
-    ImGui::TableNextRow();
-    // Move + SAN
-    ImGui::TableSetColumnIndex(0);
-
-    if (isRowClicked(index)) {
-    }
-
-    std::string moveLabel = label + move.san;
+ std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
+    std::vector<std::string> row;
+    row.push_back(label + move.san);
     if (!label.empty() && label[0] == '.') {
-        alignRight(moveLabel);
     }
-    ImGui::TextUnformatted(moveLabel.c_str());
 
     // Depth
-    ImGui::TableSetColumnIndex(1);
-    textAlignRight(move.depth == 0 ? "-" : std::to_string(move.depth));
+    row.push_back(move.depth == 0 ? "-" : std::to_string(move.depth));
 
     // Time
-    ImGui::TableSetColumnIndex(2);
-	textAlignRight(formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
+    row.push_back(formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
 
     // Eval
     ImGui::TableSetColumnIndex(3);
     if (move.scoreMate) {
-        textAlignRight(std::format("{}M{}", *move.scoreMate < 0 ? "-" : "", std::abs(*move.scoreMate)));
+        row.push_back(std::format("{}M{}", *move.scoreMate < 0 ? "-" : "", std::abs(*move.scoreMate)));
     }
     else if (move.scoreCp) {
-        textAlignRight(std::format("{:.2f}", *move.scoreCp / 100.0f));
+        row.push_back(std::format("{:.2f}", *move.scoreCp / 100.0f));
     } else {
-        textAlignRight("-");
+        row.push_back("-");
 	}
 
     // PV
-    ImGui::TableSetColumnIndex(4);
-    ImGui::TextUnformatted(move.pv.c_str());
+    row.push_back(move.pv);
+    return row;
 }
