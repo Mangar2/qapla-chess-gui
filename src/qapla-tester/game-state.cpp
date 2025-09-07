@@ -243,7 +243,7 @@ std::tuple<QaplaBasics::Move, bool, bool> GameState::resolveMove(
 GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies) {
 	GameRecord copy;
 	setFen(game.getStartPos(), game.getStartFen());
-	copy.setStartPosition(game.getStartPos(), getFen(),
+	copy.setStartPosition(game.getStartPos(), getFen(), position_.getStartHalfmoves(),
 		isWhiteToMove(), game.getWhiteEngineName(), game.getBlackEngineName());
 	const auto& moves = game.history();
 	uint32_t maxPly = static_cast<uint32_t>(moves.size());

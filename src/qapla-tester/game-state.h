@@ -41,6 +41,8 @@ public:
 
 	std::string getFen() const { return position_.getFen(); }
 
+	uint32_t getStartHalfmoves() const { return position_.getStartHalfmoves(); }
+
 	/**
 	 * @brief Performs a move on the current position and updates the move list.
 	 * @param move The move to perform.

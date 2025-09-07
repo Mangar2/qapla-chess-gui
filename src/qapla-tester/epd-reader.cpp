@@ -18,6 +18,7 @@
  */
 
 #include "epd-reader.h"
+#include "string-helper.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -25,6 +26,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <algorithm>
 
 EpdReader::EpdReader(const std::string& filePath): filePath_(filePath) {
     std::ifstream file(filePath);
@@ -69,33 +71,42 @@ const std::vector<EpdEntry>& EpdReader::all() const {
     return entries_;
 }
 
-
 EpdEntry EpdReader::parseEpdLine(const std::string& line) {
     std::istringstream stream(line);
-    std::string resultLine;
-    std::getline(stream, resultLine);
     EpdEntry result;
 
-    std::string rest;
-    std::istringstream lineStream(resultLine);
-    result.fen = extractFen(lineStream);
-    std::getline(lineStream, rest);
+    auto [fen, rest] = extractFen(stream); // liefert FEN + Rest
+    result.fen = std::move(fen);
     parseOperations(rest, result);
 
     return result;
 }
 
-std::string EpdReader::extractFen(std::istringstream& stream) {
+std::pair<std::string, std::string>
+EpdReader::extractFen(std::istringstream& stream) {
     std::ostringstream fenStream;
     std::string token;
+
     for (int i = 0; i < 4; ++i) {
-        if (!(stream >> token)) {
-            throw std::runtime_error("Incomplete FEN in EPD line");
-        }
-        if (i > 0) fenStream << ' ';
+        if (!(stream >> token)) throw std::runtime_error("Incomplete FEN in EPD line");
+        if (i) fenStream << ' ';
         fenStream << token;
     }
-    return fenStream.str();
+
+    for (int i = 0; i < 2; ++i) {
+        int v;
+        bool isInt = (stream >> v) ? true : false;
+        if (isInt && v >= 0) {
+            fenStream << ' ' << v;
+        } else {
+            stream.clear();
+            break;
+        }
+    }
+
+    std::string rest;
+    std::getline(stream, rest);
+    return { fenStream.str(), rest };
 }
 
 void EpdReader::parseOperations(const std::string& input, EpdEntry& result) {

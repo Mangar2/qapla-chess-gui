@@ -146,7 +146,9 @@ void GameContext::setPosition(bool useStartPosition, const std::string &fen,
     cancelCompute();
     {
         std::lock_guard lock(gameRecordMutex_);
-        gameRecord_.setStartPosition(useStartPosition, fen, true);
+        GameState gameState;
+        gameState.setFen(useStartPosition, fen);
+        gameRecord_.setStartPosition(useStartPosition, fen, gameState.isWhiteToMove(), gameState.getStartHalfmoves());
         updateEngineNames();
 
         if (playedMoves)

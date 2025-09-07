@@ -60,8 +60,8 @@ enum class GameEvent
 class GameRecord
 {
 public:
-	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove);
-	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
+	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves);
+	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves,
 						  std::string whiteEngineName, std::string blackEngineName);
 
 	/**
@@ -125,6 +125,7 @@ public:
 	void setGameEnd(GameEndCause cause, GameResult result)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		gameEndCause_ = cause;
 		gameResult_ = result;
 	}
@@ -142,6 +143,7 @@ public:
 	void setTimeControl(const TimeControl &whiteTimeControl, const TimeControl &blackTimeControl)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		whiteTimeControl_ = whiteTimeControl;
 		blackTimeControl_ = blackTimeControl;
 	}
@@ -187,6 +189,17 @@ public:
 		return ply % 2 == 0 ? isWhiteToMoveAtStart_ : !isWhiteToMoveAtStart_;
 	}
 
+	/**
+	 * @brief Returns the halfmove number at a specific ply.
+	 *
+	 * @param ply The ply number to check.
+	 * @return uint32_t The halfmove number at the specified ply.
+	 */
+	uint32_t halfmoveNoAtPly(size_t ply) const
+	{
+		return startHalfmoves_ + ply;
+	}
+
 	const std::string &getWhiteEngineName() const
 	{
 		return whiteEngineName_;
@@ -194,6 +207,7 @@ public:
 	void setWhiteEngineName(const std::string &name)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		whiteEngineName_ = name;
 	}
 
@@ -204,6 +218,7 @@ public:
 	void setBlackEngineName(const std::string &name)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		blackEngineName_ = name;
 	}
 
@@ -216,6 +231,7 @@ public:
 	void setTournamentInfo(uint32_t round, uint32_t gameInRound, uint32_t opening)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		round_ = round;
 		gameInRound_ = gameInRound;
 		opening_ = opening;
@@ -287,6 +303,7 @@ public:
 	void setTag(const std::string &key, const std::string &value)
 	{
 		updateCnt_++;
+		modificationCnt_++;
 		if (value.empty())
 		{
 			tags_.erase(key);
@@ -377,6 +394,19 @@ public:
 	 */
 	GameRecord createMinimalCopy() const;
 
+	/** 
+	 * @brief Gets the current value of the update counter incrementing with each change.
+	 * @return The update count.
+	 */
+	uint64_t getUpdateCnt() const { return updateCnt_; }
+	
+	/** 
+	 * @brief Gets the current value of the modification counter incrementing with each modification, but not 
+	 * with additions of new moves and advancing or reducing the current ply by one.
+	 * @return The modification count.
+	 */
+	uint64_t getModificationCnt() const { return modificationCnt_; }
+
 private:
 	std::map<std::string, std::string> tags_;
 	bool startPos_ = true;
@@ -390,11 +420,13 @@ private:
 	std::string whiteEngineName_;
 	std::string blackEngineName_;
 	bool isWhiteToMoveAtStart_ = true;
+	uint32_t startHalfmoves_ = 0;
 	uint32_t totalGameNo_ = 0;
 	uint32_t gameInRound_ = 0;
 	uint32_t opening_ = 0;
 	uint32_t round_ = 0;
 	uint32_t pgnRound_ = 0;
-	uint64_t updateCnt_ = 1;
+	uint64_t updateCnt_ = 1; ///< Incremental counter: +1 for any kind of update
+	uint64_t modificationCnt_ = 1; ///< Incremental counter: +1 whenever an existing move is changed/replaced
 	GameEvent gameEvent_ = GameEvent::None;
 };

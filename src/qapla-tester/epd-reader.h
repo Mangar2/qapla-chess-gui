@@ -79,7 +79,7 @@ private:
      */
     EpdEntry parseEpdLine(const std::string& line);
 
-    std::string extractFen(std::istringstream& stream);
+    std::pair<std::string, std::string> extractFen(std::istringstream& stream);
 
     void parseOperations(const std::string& input, EpdEntry& result);
 

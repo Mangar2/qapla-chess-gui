@@ -59,6 +59,16 @@ inline bool isInteger(const std::string& s) {
     return ec == std::errc() && ptr == s.data() + s.size();
 }
 
+inline bool isUnsignedInteger(const std::string& s) {
+    auto trimmed = trim(s);
+    if (trimmed.empty()) return false;
+    if (trimmed[0] == '-') return false; 
+
+    int value;
+    auto [ptr, ec] = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), value);
+    return ec == std::errc() && ptr == trimmed.data() + trimmed.size();
+}
+
 inline std::optional<std::string> parseSection(const std::string& line) {
     if (line.size() > 2 && line.front() == '[' && line.back() == ']') {
         return trim(line.substr(1, line.size() - 2));

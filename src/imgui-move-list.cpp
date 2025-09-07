@@ -32,14 +32,19 @@ ImGuiMoveList::ImGuiMoveList()
 : table_("MoveListTable",
     ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
     std::vector<ImGuiTable::ColumnDef>{
-        {"Move", ImGuiTableColumnFlags_WidthFixed, 90.0f, false},
+        {"Move", ImGuiTableColumnFlags_WidthFixed, 90.0f, false, [](std::string& content, bool& alignRight) {
+            if (!content.empty() && content[0] == '.') {
+                alignRight = true;
+            } else {
+                alignRight = false;
+            }
+        }},
         {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
-        { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+        { "Time", ImGuiTableColumnFlags_WidthFixed, 80.0f, true },
         { "Eval", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
         { "PV", ImGuiTableColumnFlags_WidthStretch, 0.0f, false }
 })
 {
-    table_.setClickable(true);
 }
 
 static std::string causeToString(GameEndCause cause) {
@@ -61,40 +66,36 @@ static std::string causeToString(GameEndCause cause) {
     }
 }
 
-void ImGuiMoveList::fromGameRecord(const GameRecord& gameRecord) {
+void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
+    if (lastUpdateCnt_ == gameRecord.getUpdateCnt()) return;
+    lastUpdateCnt_ = gameRecord.getUpdateCnt();
+
+    bool isModification = lastModificationCnt_ != gameRecord.getModificationCnt();
+    lastModificationCnt_ = gameRecord.getModificationCnt();
+
     currentPly_ = 0;
-    table_.clear();
-    
-    const auto& moves = gameRecord.history();    
-    bool wtm = gameRecord.wtmAtPly(0);
-    uint32_t moveNumber = 1;
+    if (isModification) table_.clear();
 
-    for (size_t i = 0; i < moves.size(); ++i) {
+    const auto& moves = gameRecord.history();
+    bool wtm = gameRecord.wtmAtPly(table_.size());
+    uint32_t moveNumber = 1 + (gameRecord.halfmoveNoAtPly(table_.size()) / 2);
 
+    for (size_t i = table_.size(); i < moves.size(); ++i) {
         if (wtm) {
-            table_.push(mkRow(std::to_string(moveNumber) + ".", moves[i], i));
+            table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i], i));
         } 
         else {
             table_.push(mkRow("...", moves[i], i));
             moveNumber++;
         }
         wtm = !wtm;
-        if (i + 1 == gameRecord.nextMoveIndex()) {
-            auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
-            auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
-            ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
-            if (i + 1 != currentPly_) {
-                ImGui::SetScrollHereY(0.5f);
-                currentPly_ = i + 1;
-            }
-        }
     }
+
     const auto [cause, result] = gameRecord.getGameResult();
     if (result != GameResult::Unterminated) {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted(causeToString(cause).c_str());
+        table_.push(std::vector<std::string>{causeToString(cause)});
     }
+
 }
 
 

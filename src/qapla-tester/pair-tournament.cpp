@@ -113,8 +113,8 @@ void PairTournament::updateOpening(uint32_t openingIndex) {
     else {
         auto& fen = startPositions_->fens[openingIndex];
         gameState.setFen(false, fen);
-        curRecord_.setStartPosition(false, gameState.getFen(),
-            gameState.isWhiteToMove(), engineA_.getName(), engineB_.getName());
+        curRecord_.setStartPosition(false, gameState.getFen(), gameState.isWhiteToMove(), gameState.getStartHalfmoves(),
+            engineA_.getName(), engineB_.getName());
     }
 }
 

@@ -121,7 +121,14 @@ namespace QaplaWindows {
 				}
                 for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
                     ImGui::TableSetColumnIndex(static_cast<int>(col));
-					textAligned(row[col], columns_[col].alignRight);
+                    if (columns_[col].customRender) {
+                        bool alignRight = columns_[col].alignRight;
+                        std::string content = row[col];
+                        columns_[col].customRender(content, alignRight);
+                        textAligned(content, alignRight);
+                    } else {
+                        textAligned(row[col], columns_[col].alignRight);
+                    }
                 }
                 index++;
             }

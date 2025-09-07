@@ -27,6 +27,7 @@
 #include "imgui-board.h"
 #include "imgui-engine-list.h"
 #include "imgui-clock.h"
+#include "imgui-move-list.h"
 
 class MoveRecord;
 class GameRecord;
@@ -108,6 +109,7 @@ namespace QaplaWindows
         ImGuiEngineList imGuiEngineList_;
         ImGuiBoard imGuiBoard_;
         ImGuiClock imGuiClock_;
+        ImGuiMoveList imGuiMoveList_;
     };
 
 }

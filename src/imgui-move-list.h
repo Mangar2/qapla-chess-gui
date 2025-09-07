@@ -49,7 +49,19 @@ namespace QaplaWindows {
          */
         std::optional<size_t> draw();
 
-        void fromGameRecord(const GameRecord& gameRecord);
+        /**
+         * @brief sets the table content from a GameRecord.
+         * @param gameRecord the GameRecord to extract the move list from.
+         */
+        void setFromGameRecord(const GameRecord& gameRecord);
+
+        /**
+         * @brief Sets whether the table rows are clickable.
+         * @param clickable If true, rows can be clicked to select moves.
+         */
+        void setClickable(bool clickable) {
+            table_.setClickable(clickable);
+        }
 
     private:
         std::vector<std::string> mkRow(const std::string& label, const MoveRecord& move, size_t index);
@@ -61,6 +73,8 @@ namespace QaplaWindows {
         bool isRowClicked(size_t index);
 		size_t currentPly_ = 0;
         int lastInputFrame_ = -1;
+        uint64_t lastUpdateCnt_ = 0;
+        uint64_t lastModificationCnt_ = 0;
         ImGuiTable table_;
     };
 

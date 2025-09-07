@@ -69,6 +69,7 @@ namespace QaplaWindows
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setGameState(gameRecord);
         imGuiClock_.setFromGameRecord(gameRecord);
+        imGuiMoveList_.setFromGameRecord(gameRecord);
     }
 
     void TournamentBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
@@ -92,6 +93,10 @@ namespace QaplaWindows
 
         topRightWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiClock_.draw();
+        }));
+
+        topRightWindow_->setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+            imGuiMoveList_.draw();
         }));
 
         mainWindow_->setBottom(

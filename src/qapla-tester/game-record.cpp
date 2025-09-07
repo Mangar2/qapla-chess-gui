@@ -21,22 +21,24 @@
 
 #include "qapla-engine/move.h"
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove)
+void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves)
 {
     moves_.clear();
     isWhiteToMoveAtStart_ = isWhiteToMove;
     currentPly_ = 0;
+    startHalfmoves_ = startHalfmoves;
     startPos_ = startPos;
     startFen_ = startPos ? "" : startFen;
     gameEndCause_ = GameEndCause::Ongoing;
     gameResult_ = GameResult::Unterminated;
     updateCnt_++;
+    modificationCnt_++;
 }
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove,
+void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves,
                                   std::string whiteEngineName, std::string blackEngineName)
 {
-    setStartPosition(startPos, startFen, isWhiteToMove);
+    setStartPosition(startPos, startFen, isWhiteToMove, startHalfmoves);
     whiteEngineName_ = whiteEngineName;
     blackEngineName_ = blackEngineName;
 }
@@ -57,6 +59,7 @@ void GameRecord::setStartPosition(const GameRecord &source, uint32_t toPly,
     blackEngineName_ = blackEngineName;
     round_ = source.round_;
     tags_ = source.tags_;
+    modificationCnt_++;
     updateCnt_++;
 }
 
@@ -80,6 +83,7 @@ void GameRecord::setNextMoveIndex(uint32_t ply)
 {
     if (ply <= moves_.size())
     {
+        modificationCnt_++;
         updateCnt_++;
         currentPly_ = ply;
     }

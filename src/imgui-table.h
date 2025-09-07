@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <functional>
 
 namespace QaplaWindows {
 
@@ -42,11 +43,9 @@ namespace QaplaWindows {
 			ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
 			float width = 0.0f; 
 			bool alignRight = false; 
+            std::function<void(std::string&, bool&)> customRender = nullptr;
         };
 
-        void setClickable(bool clickable) {
-			clickable_ = clickable;
-		}
 
         /**
          * @brief Constructs an ImGuiTable with static table configuration.
@@ -57,6 +56,14 @@ namespace QaplaWindows {
         ImGuiTable(const std::string& tableId,
             ImGuiTableFlags tableFlags,
             const std::vector<ColumnDef>& columns);
+
+        /**
+         * @brief Sets whether the table rows are clickable.
+         * @param clickable If true, rows can be clicked to select a row.
+         */
+        void setClickable(bool clickable) {
+			clickable_ = clickable;
+		}
 
         /**
          * @brief Pushes a new row to the end of the table.

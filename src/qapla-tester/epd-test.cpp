@@ -65,7 +65,8 @@ std::optional<GameTask> EpdTest::nextTask() {
 	auto& test = result_.result[testIndex_];
     gameState.setFen(false, test.fen);
     auto correctedFen = gameState.getFen();
-    task.gameRecord.setStartPosition(false, correctedFen, gameState.isWhiteToMove(), "", "");
+    task.gameRecord.setStartPosition(false, correctedFen, gameState.isWhiteToMove(), 
+        gameState.getStartHalfmoves(), "", "");
     task.gameRecord.setTimeControl(result_.tc_, result_.tc_);
     task.taskId = std::to_string(testIndex_);
     testIndex_++;
