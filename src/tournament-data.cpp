@@ -33,6 +33,8 @@
 #include "qapla-tester/tournament-result.h"
 
 #include "qapla-tester/game-manager-pool.h"
+#include "qapla-tester/pgn-io.h"
+#include "qapla-tester/adjudication-manager.h"
 #include "imgui-table.h"
 
 #include "imgui.h"
@@ -96,16 +98,19 @@ namespace QaplaWindows {
         if (!validateOpenings()) return;
 
         if (tournament_) {
+            PgnIO::tournament().setOptions(pgnConfig_);
+            AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
+            AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
             result_->setGamesLeft();
 			tournament_->createTournament(selectedEngines, *config_);
             tournament_->scheduleAll(0, false);
-            imguiConcurrency_->init();
-            imguiConcurrency_->setActive(true);
-            running_ = true;
             eloTable_.clear();
             populateEloTable();
 			runningTable_.clear();
 			populateRunningTable();
+            imguiConcurrency_->init();
+            imguiConcurrency_->setActive(true);
+            running_ = true;
         } else {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;

@@ -27,7 +27,7 @@
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/pgn-io.h"
-#include "qapla-tester/adjucation-manager.h"
+#include "qapla-tester/adjudication-manager.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/logger.h"
 

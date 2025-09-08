@@ -491,7 +491,7 @@
     <ClInclude Include="src\qapla-tester\input-handler.h">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
-    <ClInclude Include="src\qapla-tester\adjucation-manager.h">
+    <ClInclude Include="src\qapla-tester\adjudication-manager.h">
       <Filter>Quelldateien\qapla-tester</Filter>
     </ClInclude>
     <ClInclude Include="src\epd-data.h">

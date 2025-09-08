@@ -262,7 +262,7 @@
     <ClInclude Include="src\qapla-engine\piecesignature.h" />
     <ClInclude Include="src\qapla-engine\pst.h" />
     <ClInclude Include="src\qapla-engine\types.h" />
-    <ClInclude Include="src\qapla-tester\adjucation-manager.h" />
+    <ClInclude Include="src\qapla-tester\adjudication-manager.h" />
     <ClInclude Include="src\qapla-tester\app-error.h" />
     <ClInclude Include="src\qapla-tester\board-exchange.h" />
     <ClInclude Include="src\qapla-tester\cli-settings-manager.h" />
