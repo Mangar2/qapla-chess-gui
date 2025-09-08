@@ -245,12 +245,15 @@ void Configuration::processSection(const std::string& section, const ConfigMap& 
         else if (section == "tournamentengine") {
             QaplaWindows::TournamentData::instance().loadTournamentEngine(keyValueMap);
         }
-        else if (section == "drawadjudication") {
-            //QaplaWindows::TournamentData::instance().drawConfig().loadFromMap(keyValueMap);
+        else if (section == "tournamentpgnoutput") {
+            QaplaWindows::TournamentData::instance().loadPgnConfig(keyValueMap);
         }
-        else if (section == "resignadjudication") {
-            //QaplaWindows::TournamentData::instance().resignConfig().loadFromMap(keyValueMap);
-		}
+        else if (section == "tournamentdrawadjudication") {
+            QaplaWindows::TournamentData::instance().loadDrawAdjudicationConfig(keyValueMap);
+        }
+        else if (section == "tournamentresignadjudication") {
+            QaplaWindows::TournamentData::instance().loadResignAdjudicationConfig(keyValueMap);
+        }
         else {
             Logger::testLogger().log("Unknown section: " + section, TraceLevel::warning);
         }

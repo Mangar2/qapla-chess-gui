@@ -429,6 +429,121 @@ namespace QaplaWindows {
         }
     }
 
+    void TournamentData::savePgnConfig(std::ostream& out, const std::string& header) const {
+        out << "[" << header << "]\n";
+        out << "file=" << pgnConfig_.file << "\n";
+        out << "append=" << (pgnConfig_.append ? "true" : "false") << "\n";
+        out << "onlyFinishedGames=" << (pgnConfig_.onlyFinishedGames ? "true" : "false") << "\n";
+        out << "minimalTags=" << (pgnConfig_.minimalTags ? "true" : "false") << "\n";
+        out << "saveAfterMove=" << (pgnConfig_.saveAfterMove ? "true" : "false") << "\n";
+        out << "includeClock=" << (pgnConfig_.includeClock ? "true" : "false") << "\n";
+        out << "includeEval=" << (pgnConfig_.includeEval ? "true" : "false") << "\n";
+        out << "includePv=" << (pgnConfig_.includePv ? "true" : "false") << "\n";
+        out << "includeDepth=" << (pgnConfig_.includeDepth ? "true" : "false") << "\n";
+        out << "\n";
+    }
+
+    void TournamentData::loadPgnConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+        for (const auto& [key, value] : keyValue) {
+            if (key == "file") {
+                pgnConfig_.file = value;
+            }
+            else if (key == "append") {
+                pgnConfig_.append = (value == "true");
+            }
+            else if (key == "onlyFinishedGames") {
+                pgnConfig_.onlyFinishedGames = (value == "true");
+            }
+            else if (key == "minimalTags") {
+                pgnConfig_.minimalTags = (value == "true");
+            }
+            else if (key == "saveAfterMove") {
+                pgnConfig_.saveAfterMove = (value == "true");
+            }
+            else if (key == "includeClock") {
+                pgnConfig_.includeClock = (value == "true");
+            }
+            else if (key == "includeEval") {
+                pgnConfig_.includeEval = (value == "true");
+            }
+            else if (key == "includePv") {
+                pgnConfig_.includePv = (value == "true");
+            }
+            else if (key == "includeDepth") {
+                pgnConfig_.includeDepth = (value == "true");
+            }
+        }
+    }
+
+        struct DrawAdjudicationConfig {
+        uint32_t minFullMoves = 0;
+        uint32_t requiredConsecutiveMoves = 0;
+        int centipawnThreshold = 0;
+        bool testOnly = false;
+    };
+
+    /**
+     * @brief Configuration for resign adjudication logic.
+     */
+    struct ResignAdjudicationConfig {
+        uint32_t requiredConsecutiveMoves = 0;
+        int centipawnThreshold = 0;
+        bool twoSided = false;
+        bool testOnly = false;
+    };
+
+    void TournamentData::saveDrawAdjudicationConfig(std::ostream& out, const std::string& header) const {
+        out << "[" << header << "]\n";
+        out << "minFullMoves=" << drawConfig_.minFullMoves << "\n";
+        out << "requiredConsecutiveMoves=" << drawConfig_.requiredConsecutiveMoves << "\n";
+        out << "centipawnThreshold=" << drawConfig_.centipawnThreshold << "\n";
+        out << "testOnly=" << (drawConfig_.testOnly ? "true" : "false") << "\n";
+        out << "\n";
+    }
+
+    void TournamentData::loadDrawAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+        for (const auto& [key, value] : keyValue) {
+            if (key == "minFullMoves") {
+                drawConfig_.minFullMoves = std::stoul(value);
+            }
+            else if (key == "requiredConsecutiveMoves") {
+                drawConfig_.requiredConsecutiveMoves = std::stoul(value);
+            }
+            else if (key == "centipawnThreshold") {
+                drawConfig_.centipawnThreshold = std::stoi(value);
+            }
+            else if (key == "testOnly") {
+                drawConfig_.testOnly = (value == "true");
+            }
+        }
+    }
+
+    void TournamentData::saveResignAdjudicationConfig(std::ostream& out, const std::string& header) const {
+        out << "[" << header << "]\n";
+        out << "requiredConsecutiveMoves=" << resignConfig_.requiredConsecutiveMoves << "\n";
+        out << "centipawnThreshold=" << resignConfig_.centipawnThreshold << "\n";
+        out << "twoSided=" << (resignConfig_.twoSided ? "true" : "false") << "\n";
+        out << "testOnly=" << (resignConfig_.testOnly ? "true" : "false") << "\n";
+        out << "\n";
+    }
+
+    void TournamentData::loadResignAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+        for (const auto& [key, value] : keyValue) {
+            if (key == "requiredConsecutiveMoves") {
+                resignConfig_.requiredConsecutiveMoves = std::stoul(value);
+            }
+            else if (key == "centipawnThreshold") {
+                resignConfig_.centipawnThreshold = std::stoi(value);
+            }
+            else if (key == "twoSided") {
+                resignConfig_.twoSided = (value == "true");
+            }
+            else if (key == "testOnly") {
+                resignConfig_.testOnly = (value == "true");
+            }
+        }
+    }
+
     bool TournamentData::validateOpenings() {
         bool valid = true;
         if (config_->openings.file.empty()) {

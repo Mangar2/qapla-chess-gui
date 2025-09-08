@@ -170,15 +170,19 @@ bool TournamentWindow::drawInput() {
     bool changed = false;
     ImGui::Indent(10.0f);
 
-    ImGuiControls::existingFileInput("Tournament file", tournamentData.config().tournamentFilename, fileInputWidth);
+    ImGuiControls::newFileInput("Tournament file", tournamentData.config().tournamentFilename, 
+        { {"Qapla Tournament Files", "*.qtour"} }, fileInputWidth);
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("engineSettings");
         ImGui::Indent(10.0f);
         changed |= drawEngineList();
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
     }
     if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("opening");
         ImGui::Indent(10.0f);
         changed |= ImGuiControls::existingFileInput("Opening file", tournamentData.config().openings.file, fileInputWidth);
         ImGui::SetNextItemWidth(inputWidth);
@@ -204,8 +208,10 @@ bool TournamentWindow::drawInput() {
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Switch policy", tournamentData.config().openings.policy, { "default", "encounter", "round" });
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
     }
     if (ImGui::CollapsingHeader("Tournament", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("tournament");
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputText("Event", tournamentData.config().event).has_value();
@@ -224,18 +230,21 @@ bool TournamentWindow::drawInput() {
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Save interval (s)", tournamentData.config().saveInterval, 0, 1000);
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
     }
     if (ImGui::CollapsingHeader("Time Control", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("timeControl");
         ImGui::Indent(10.0f);
-
         ImGuiControls::timeControlInput(tournamentData.eachEngineConfig().tc, false, inputWidth);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Predefined time control", tournamentData.eachEngineConfig().tc, {
             "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
             });
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
     }
     if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("engineSettings");
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", tournamentData.eachEngineConfig().hash, 1, 10000);
@@ -247,10 +256,11 @@ bool TournamentWindow::drawInput() {
             { "none", "all", "command" });
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::booleanInput("Ponder", tournamentData.eachEngineConfig().ponder);
-
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
 	}
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("pgn");
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::newFileInput("Pgn file", tournamentData.pgnConfig().file, 
@@ -275,10 +285,11 @@ bool TournamentWindow::drawInput() {
 		changed |= ImGuiControls::booleanInput("Include PV", tournamentData.pgnConfig().includePv);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::booleanInput("Include depth", tournamentData.pgnConfig().includeDepth);
-
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
 	}
     if (ImGui::CollapsingHeader("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("drawAdjudication");
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData.drawConfig().minFullMoves, 0, 1000);
@@ -289,8 +300,10 @@ bool TournamentWindow::drawInput() {
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::booleanInput("Only test adjucation", tournamentData.drawConfig().testOnly);
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
 	}
     if (ImGui::CollapsingHeader("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("resignAdjudication");
         ImGui::Indent(10.0f);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.resignConfig().requiredConsecutiveMoves, 0, 1000);
@@ -301,6 +314,7 @@ bool TournamentWindow::drawInput() {
 		ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Only test adjucation", tournamentData.resignConfig().testOnly);
         ImGui::Unindent(10.0f);
+        ImGui::PopID();
 	}
 	
     ImGui::Spacing();

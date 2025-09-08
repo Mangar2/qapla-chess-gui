@@ -170,6 +170,9 @@ namespace QaplaWindows {
 			saveTournamentConfig(out, "tournament");
             saveTournamentEngines(out, "tournamentengine");
 			saveEachEngineConfig(out, "tournamenteachengine");
+            savePgnConfig(out, "tournamentpgnoutput");
+            saveDrawAdjudicationConfig(out, "tournamentdrawadjudication");
+            saveResignAdjudicationConfig(out, "tournamentresignadjudication");
         }
 
         /**
@@ -199,6 +202,24 @@ namespace QaplaWindows {
          */
         void loadTournamentEngine(const QaplaConfiguration::ConfigMap& keyValue);
 
+        /**
+         * @brief Loads the PGN configuration from a key-value mapping.
+         * @param keyValue A map containing PGN configuration keys and their corresponding values.
+         */
+        void loadPgnConfig(const QaplaConfiguration::ConfigMap& keyValue);
+
+        /**
+         * @brief Loads the draw adjudication configuration from a key-value mapping.
+         * @param keyValue A map containing draw adjudication configuration keys and their corresponding values.
+         */
+        void loadDrawAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue);
+
+        /**
+         * @brief Loads the resign adjudication configuration from a key-value mapping.
+         * @param keyValue A map containing resign adjudication configuration keys and their corresponding values.
+         */
+        void loadResignAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue);
+
         static TournamentData& instance() {
             static TournamentData instance;
             return instance;
@@ -208,7 +229,19 @@ namespace QaplaWindows {
 
 	private:
         bool validateOpenings();
+
+        /**
+         * @brief Saves the tournament openings configuration to a stream.
+         * @param out The output stream to write the configuration to.
+         * @param header The header name for the configuration section.
+         */
         void saveOpeningConfig(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the tournament configuration to a stream.
+         * @param out The output stream to write the configuration to.
+         * @param header The header name for the configuration section.
+         */
         void saveTournamentConfig(std::ostream& out, const std::string& header) const;
         
         /**
@@ -224,6 +257,27 @@ namespace QaplaWindows {
          * @param header The header name for the engines section.
          */
         void saveTournamentEngines(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the PGN configuration to a stream.
+         * @param out The output stream to write the configuration to.
+         * @param header The header name for the configuration section.
+         */
+        void savePgnConfig(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the draw adjudication configuration to a stream.
+         * @param out The output stream to write the configuration to.
+         * @param header The header name for the configuration section.
+         */
+        void saveDrawAdjudicationConfig(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the resign adjudication configuration to a stream.
+         * @param out The output stream to write the configuration to.
+         * @param header The header name for the configuration section.
+         */
+        void saveResignAdjudicationConfig(std::ostream& out, const std::string& header) const;
 
         void populateEloTable();
 		void populateRunningTable();
