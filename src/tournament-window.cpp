@@ -148,7 +148,8 @@ bool TournamentWindow::drawEngineList() {
 
 bool TournamentWindow::drawInput() {
     
-	constexpr float inputWidth = 300.0f;
+	constexpr float inputWidth = 200.0f;
+    constexpr float fileInputWidth = inputWidth + 100.0f;
     constexpr int maxConcurrency = 32;
 	auto& tournamentData = TournamentData::instance();
     
@@ -169,7 +170,7 @@ bool TournamentWindow::drawInput() {
     bool changed = false;
     ImGui::Indent(10.0f);
 
-    ImGuiControls::fileInput("Tournament file", tournamentData.config().tournamentFilename, 2 * inputWidth);
+    ImGuiControls::existingFileInput("Tournament file", tournamentData.config().tournamentFilename, fileInputWidth);
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
@@ -179,7 +180,7 @@ bool TournamentWindow::drawInput() {
     }
     if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
-        changed |= ImGuiControls::fileInput("Opening file", tournamentData.config().openings.file, 2 * inputWidth);
+        changed |= ImGuiControls::existingFileInput("Opening file", tournamentData.config().openings.file, fileInputWidth);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("File format", tournamentData.config().openings.format, { "epd", "raw", "pgn" });
         ImGui::SetNextItemWidth(inputWidth);
@@ -251,7 +252,9 @@ bool TournamentWindow::drawInput() {
 	}
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(10.0f);
-        changed |= ImGuiControls::fileInput("Pgn file", tournamentData.pgnConfig().file, 2 * inputWidth);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::newFileInput("Pgn file", tournamentData.pgnConfig().file, 
+            {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
 
         ImGui::SetNextItemWidth(inputWidth);
 		std::string append = tournamentData.pgnConfig().append ? "Append" : "Overwrite";

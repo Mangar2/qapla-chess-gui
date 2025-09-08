@@ -36,4 +36,15 @@ public:
      * @return Vector of selected file paths, empty if cancelled.
      */
     static std::vector<std::string> openFileDialog(bool multiple = false);
+
+    /**
+     * Opens a native file dialog for saving a file.
+     *
+     * @param filters List of file type filters as pairs of (description, pattern).
+     *                Example: { {"Text Files", "*.txt"}, {"All Files", "*.*"} }
+     * @param defaultPath The default file path to show in the dialog.
+     * @return The selected file path, or an empty string if cancelled.
+     */
+    static std::string saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
+        const std::string& defaultPath = {});
 };

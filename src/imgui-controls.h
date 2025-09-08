@@ -122,7 +122,7 @@ namespace QaplaWindows::ImGuiControls {
      * @param buttonLabel Label for the file selection button.
      * @return True if the file path was modified, false otherwise.
      */
-    inline bool fileInput(const std::string& label, std::string& filePath, 
+    inline bool existingFileInput(const std::string& label, std::string& filePath, 
         float inputWidth = 200.0f, const char* buttonLabel = "Select") {
         bool modified = false;
 		ImGui::PushID(label.c_str()); 
@@ -153,6 +153,49 @@ namespace QaplaWindows::ImGuiControls {
 		ImGui::PopID(); 
         return modified;
     }
+
+    /**
+     * @brief File input control for specifying a new or existing file path (e.g. for saving).
+     * @param label Label to display next to the input box.
+     * @param filePath Reference to the file path string to modify.
+     * @param filters File extension filters to apply in the save dialog.
+     * @param inputWidth Width of the input box.
+     * @param buttonLabel Label for the file selection button.
+     * @return True if the file path was modified, false otherwise.
+     */
+    inline bool newFileInput(const std::string& label, std::string& filePath,
+        const std::vector<std::pair<std::string, std::string>>& filters = {},
+        float inputWidth = 200.0f, const char* buttonLabel = "Select") {
+        
+        bool modified = false;
+        ImGui::PushID(label.c_str());
+
+        ImGui::TextUnformatted(label.c_str());
+
+        if (ImGui::Button(buttonLabel)) {
+            try {
+                auto selectedPath = OsDialogs::saveFileDialog(filters, filePath);
+                if (!selectedPath.empty()) {
+                    filePath = selectedPath;
+                    modified = true;
+                }
+            }
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showError(e.what());
+            }
+        }
+
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::SameLine();
+        if (auto path = inputText("##filePath", filePath)) {
+            filePath = *path;
+            modified = true;
+        }
+
+        ImGui::PopID();
+        return modified;
+    }
+
 
     /**
      * @brief Selection box for choosing a string from a list of options.
@@ -278,7 +321,7 @@ namespace QaplaWindows::ImGuiControls {
         switch (option.type) {
         case EngineOption::Type::File: {
             // File input
-            modified = fileInput(option.name.c_str(), value, fileInputWidth);
+            modified = existingFileInput(option.name.c_str(), value, fileInputWidth);
             break;
         }
         case EngineOption::Type::Check: {

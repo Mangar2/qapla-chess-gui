@@ -139,7 +139,7 @@ void EpdWindow::drawInput()
                                       boardData.epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
     ImGui::Spacing();
-    ImGuiControls::fileInput("Epd or RAW position file:",
+    ImGuiControls::existingFileInput("Epd or RAW position file:",
                              boardData.epdData().config().filepath, inputWidth * 2.0f);
     ImGui::Spacing();
     ImGui::Unindent(10.0f);
