@@ -79,20 +79,24 @@ namespace QaplaWindows {
     }
 
     void TournamentData::startTournament() {
-        if (engineConfig_.empty()) {
+        if (engineConfigurations_.empty()) {
             SnackbarManager::instance().showError("No engines configured for the tournament.");
             return;
 		}
         std::vector<EngineConfig> selectedEngines;
-        for (auto& tournamentConfig : engineConfig_) {
+        config_->type = "round-robin";
+        for (auto& tournamentConfig : engineConfigurations_) {
             if (!tournamentConfig.selected) continue;
-            EngineConfig config = tournamentConfig.config;
-            config.setPonder(eachEngineConfig_.ponder);
-			config.setTimeControl(eachEngineConfig_.tc);
-			config.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
-			config.setTraceLevel(eachEngineConfig_.traceLevel);
-            config.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
-            selectedEngines.push_back(config);
+            EngineConfig engine = tournamentConfig.config;
+            engine.setPonder(eachEngineConfig_.ponder);
+			engine.setTimeControl(eachEngineConfig_.tc);
+			engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
+			engine.setTraceLevel(eachEngineConfig_.traceLevel);
+            engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
+            if (engine.gauntlet()) {
+                config_->type = "gauntlet";
+            }
+            selectedEngines.push_back(engine);
 		}
 
         if (!validateOpenings()) return;
@@ -277,7 +281,7 @@ namespace QaplaWindows {
     }
 
     void TournamentData::saveTournamentEngines(std::ostream& out, const std::string& header) const {
-        for (const auto& engine : engineConfig_) {
+        for (const auto& engine : engineConfigurations_) {
             out << "[" << header << "]\n";
             out << "name" << "=" << engine.config.getName() << "\n";
             out << "selected=" << (engine.selected ? "true" : "false") << "\n";
@@ -302,7 +306,7 @@ namespace QaplaWindows {
                 engine.config.setGauntlet(value == "true");
             }
         }
-        engineConfig_.push_back(engine);
+        engineConfigurations_.push_back(engine);
     }
 
     void TournamentData::saveEachEngineConfig(std::ostream& out, const std::string& header) const {
