@@ -35,7 +35,8 @@ TimeControlWindow::TimeControlWindow()
 
 void TimeControlWindow::draw() {
 	auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
-
+    ImGui::Spacing();
+    ImGui::Indent(10.0f);
     std::string activeButtonId;
     switch (timeControls.selected) {
     case QaplaConfiguration::selectedTimeControl::Blitz:
@@ -107,6 +108,7 @@ void TimeControlWindow::draw() {
         [&](const TimeControl& tc) { return drawNodesPerMove(tc); });
 
     ImGui::PopID();
+    ImGui::Unindent(10.0f);
 	QaplaConfiguration::Configuration::instance().setTimeControlSettings(timeControls);
 
 }

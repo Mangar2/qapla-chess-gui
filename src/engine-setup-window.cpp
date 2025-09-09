@@ -260,7 +260,9 @@ void EngineSetupWindow::draw() {
 	drawButtons();
     
     ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+    ImGui::Indent(10.0f);
     drawEngineList();
+    ImGui::Unindent(10.0f);
     ImGui::EndChild();
 }
 

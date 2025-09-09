@@ -158,7 +158,6 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
         const float nameX = xCenter - nameExtent.x * 0.5f;
         drawList->AddText(font, nameSize, ImVec2(nameX, y), textCol,
             engineName.data(), engineName.data() + engineName.size());
-        y += nameExtent.y + style.ItemSpacing.y;
     }
 }
 

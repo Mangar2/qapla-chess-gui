@@ -112,7 +112,7 @@ void EpdWindow::drawInput()
     constexpr int maxSeenPlies = 32;
 
     auto &boardData = BoardData::instance();
-
+    ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
                                            boardData.epdData().config().concurrency, 1, maxConcurrency))
@@ -121,27 +121,29 @@ void EpdWindow::drawInput()
     }
 
     ImGui::Spacing();
-    if (!ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
-        return;
-    ImGui::Indent(10.0f);
+    if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
+    {
+        ImGui::Indent(10.0f);
 
-    std::string filePath = boardData.epdData().config().filepath;
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint32_t>("Seen plies",
-                                      boardData.epdData().config().seenPlies, 1, maxSeenPlies);
+        std::string filePath = boardData.epdData().config().filepath;
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGuiControls::inputInt<uint32_t>("Seen plies",
+                                        boardData.epdData().config().seenPlies, 1, maxSeenPlies);
 
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint64_t>("Max time (s)",
-                                      boardData.epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGuiControls::inputInt<uint64_t>("Max time (s)",
+                                        boardData.epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint64_t>("Min time (s)",
-                                      boardData.epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGuiControls::inputInt<uint64_t>("Min time (s)",
+                                        boardData.epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
-    ImGui::Spacing();
-    ImGuiControls::existingFileInput("Epd or RAW position file:",
-                             boardData.epdData().config().filepath, inputWidth * 2.0f);
-    ImGui::Spacing();
+        ImGui::Spacing();
+        ImGuiControls::existingFileInput("Epd or RAW position file:",
+                                boardData.epdData().config().filepath, inputWidth * 2.0f);
+        ImGui::Spacing();
+        ImGui::Unindent(10.0f);
+    }
     ImGui::Unindent(10.0f);
 }
 
@@ -151,7 +153,9 @@ void EpdWindow::draw()
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
+    ImGui::Indent(10.0f);
     auto clickedRow = boardData.epdData().drawTable(size);
+    ImGui::Unindent(10.0f);
     if (clickedRow)
     {
         auto fen = boardData.epdData().getFen(*clickedRow);
