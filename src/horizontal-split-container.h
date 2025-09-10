@@ -32,6 +32,11 @@ namespace QaplaWindows {
      */
     class HorizontalSplitContainer : public EmbeddedWindow {
     public:
+
+        HorizontalSplitContainer() {
+            leftWidth_ = 400.0f;
+        }
+
         void setLeft(std::unique_ptr<EmbeddedWindow> window) {
             leftWindow_ = std::move(window);
         }
@@ -40,31 +45,41 @@ namespace QaplaWindows {
             rightWindow_ = std::move(window);
         }
 
-        void setLeftWidth(float width) {
-            leftWidth_ = width;
+        void setLeftPresetWidth(float width) {
+            leftPresetWidth_ = width;
+            rightPresetWidth_ = 0;
         }
 
-        void setRightWidth(float width) {
-            rightWidth_ = width;
+        void setRightPresetWidth(float width) {
+            rightPresetWidth_ = width;
+            leftPresetWidth_ = 0;
+        }
+
+        float computeLeftWidth(ImVec2 avail) {
+            ImGui::GetContentRegionAvail();
+            float availableWidth = std::max(avail.x - splitterWidth_ - 13, 2 * minSize_);
+
+            if (rightPresetWidth_ != 0) {
+                if (rightWidth_ == 0) {
+                    leftWidth_ = std::max(leftWidth_, availableWidth - rightPresetWidth_);
+                }
+                else {
+                    auto availDelta = avail.x - availX_;
+                    leftWidth_ += availDelta;
+                }
+            }
+            availX_ = avail.x;
+            auto adjustedLeftWidth = std::max(leftWidth_, minSize_);
+            return adjustedLeftWidth;
         }
 
         void draw() override {
             
-            ImVec2 region = ImGui::GetContentRegionAvail();
-            float height = region.y;
-
-            float splitterWidth = 5.0f;
-            float minSize = 100.0f;
-            float availableWidth = std::max(region.x - splitterWidth - 13, 2 * minSize);
-            if (rightWidth_ > 0) {
-                // Initially adjust the left width, leave it to the user later
-                leftWidth_ = std::max(leftWidth_, availableWidth - rightWidth_);
-                rightWidth_ = 0;
-            }
-            float adjustedLeftWidth = std::min(leftWidth_, availableWidth - minSize);
-            adjustedLeftWidth = std::max(adjustedLeftWidth, minSize);
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            float height = avail.y;
 
             std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
+            float adjustedLeftWidth = computeLeftWidth(avail);
 
             ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
                 ImGuiChildFlags_None,
@@ -82,12 +97,12 @@ namespace QaplaWindows {
             ImGui::EndChild();
             
             ImGui::SameLine(0, 0);
-            drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth, height));
+            drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth_, height));
             ImGui::SameLine(0, 0);
 
-            float rightWidth = region.x - ImGui::GetCursorPosX();
+            rightWidth_ = avail.x - ImGui::GetCursorPosX();
 
-            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth, height),
+            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth_, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             try {
@@ -122,10 +137,17 @@ namespace QaplaWindows {
 
             ImGui::PopStyleColor(3);
 		}
+        
+        const float splitterWidth_ = 5.0f;
+        const float minSize_ = 100.0f;
+
         std::unique_ptr<EmbeddedWindow> leftWindow_;
         std::unique_ptr<EmbeddedWindow> rightWindow_;
-        float leftWidth_ = 400.0f;
+        float leftWidth_ = 0.0f;
         float rightWidth_ = 0.0f;
+        float rightPresetWidth_ = 0.0f;
+        float leftPresetWidth_ = 0.0f;
+        float availX_ = 0.0f;
     };
 
 } // namespace QaplaWindows

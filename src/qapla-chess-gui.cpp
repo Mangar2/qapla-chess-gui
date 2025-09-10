@@ -114,7 +114,7 @@ namespace {
         auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
         BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
-        BoardMovesContainer->setRightWidth(400.0f);
+        BoardMovesContainer->setRightPresetWidth(400.0f);
 
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));

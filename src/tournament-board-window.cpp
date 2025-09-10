@@ -45,7 +45,7 @@ namespace QaplaWindows
 
         auto topWindow = std::make_unique<HorizontalSplitContainer>();
         topWindow_ = topWindow.get();
-        topWindow_->setRightWidth(400.0f);
+        topWindow_->setRightPresetWidth(400.0f);
         mainWindow_->setTop(std::move(topWindow));
 
         auto topRightWindow = std::make_unique<VerticalSplitContainer>();
