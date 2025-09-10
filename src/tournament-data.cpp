@@ -242,6 +242,10 @@ namespace QaplaWindows {
         return result_ && result_->hasGamesLeft();
     }
 
+    bool TournamentData::hasTasksScheduled() const {
+        return tournament_ && tournament_->hasTasksScheduled();
+    }
+
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
         return eloTable_.draw(size, true);
     }
@@ -269,8 +273,19 @@ namespace QaplaWindows {
     void TournamentData::stopPool(bool graceful) {
         imguiConcurrency_->update(0);
         imguiConcurrency_->setActive(false);
+        auto oldState = state_;
         state_ = graceful ? State::GracefulStopping : State::Stopped;
         if (!graceful) GameManagerPool::getInstance().stopAll();
+
+        if (oldState == State::Stopped) {
+            SnackbarManager::instance().showWarning("Tournament is not running.");
+            return;
+        }
+        if (oldState == State::GracefulStopping && graceful) {
+            SnackbarManager::instance().showWarning("Tournament is already stopping gracefully.");
+            return;
+        }
+       
         SnackbarManager::instance().showSuccess(
             graceful ? 
                 "Tournament stopped.\nFinishing ongoing games." : 
@@ -279,11 +294,16 @@ namespace QaplaWindows {
     }
 
     void TournamentData::clear() {
+        if (!hasTasksScheduled()) {
+            SnackbarManager::instance().showWarning("Nothing to clear.");
+            return;
+        }
         imguiConcurrency_->setActive(false);
         state_ = State::Stopped;
         GameManagerPool::getInstance().clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
+        SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {

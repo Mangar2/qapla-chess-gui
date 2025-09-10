@@ -74,6 +74,7 @@ public:
     void draw() {
         constexpr ImVec2 snackbarSize = ImVec2(450.0f, 120.0f); 
         constexpr float closeButtonRadius = 10.0f;
+        constexpr float borderThickness = 2.0f; // Dicke der Rahmenlinie
 
         while (!snackbarStack_.empty()) {
             auto& currentSnackbar = snackbarStack_.back();
@@ -85,7 +86,11 @@ public:
                 continue;
             }
 
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, colors[static_cast<int>(currentSnackbar.type)]);
+            ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
+            ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0f); // Rahmenfarbe etwas heller
+
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f); // Gerundete Ecken
 
             ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
             ImVec2 windowSize = ImGui::GetMainViewport()->Size;
@@ -95,6 +100,13 @@ public:
             ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
 
             ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
+
+            // Rahmen zeichnen
+            auto drawList = ImGui::GetWindowDrawList();
+            ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
+            ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
+            drawList->AddRect(p1, p2, ImColor(borderColor), 10.0f, 0, borderThickness);
+
             ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
             ImGui::SetWindowFontScale(1.1f);
@@ -116,6 +128,7 @@ public:
             }
 
             ImGui::End();
+            ImGui::PopStyleVar();
             ImGui::PopStyleColor();
 
             break; 

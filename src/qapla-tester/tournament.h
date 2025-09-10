@@ -147,6 +147,14 @@ public:
         return updateCnt_;
 	}
 
+    /**
+     * @brief Checks if the tournament has any tasks scheduled (i.e., has started).
+     * @return True if tasks are scheduled, false otherwise.
+     */
+    bool hasTasksScheduled() const {
+        return !pairings_.empty();
+    }
+
 private:
     TournamentResult result_;
     uint64_t updateCnt_ = 1;

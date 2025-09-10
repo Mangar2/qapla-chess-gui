@@ -52,6 +52,7 @@ namespace QaplaButton {
     }
 
     static auto getFgColor(ButtonState state) {
+        if (state == ButtonState::Disabled) return ImGui::GetColorU32(ImGuiCol_TextDisabled);
         bool hovered = ImGui::IsItemHovered();
         bool active = ImGui::IsItemActive() || state == ButtonState::Active;
 

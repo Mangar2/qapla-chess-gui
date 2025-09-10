@@ -62,7 +62,10 @@ void TournamentWindow::drawButtons() {
     for (const std::string button : { "Run", "Stop", "Clear" }) {
         ImGui::SetCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
-        auto label = button == "Run" && running ? "Grace" : button;
+        auto label = button;
+        
+        if (label == "Run" && running) label = "Grace";
+        if (label == "Run" && TournamentData::instance().hasTasksScheduled()) label = "Continue";
 
         auto state = QaplaButton::ButtonState::Normal;
         if (button == "Run" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {

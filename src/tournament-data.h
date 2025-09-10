@@ -251,6 +251,12 @@ namespace QaplaWindows {
          */
         bool isAvailable() const;
 
+        /**
+         * @brief Checks if the tournament has started (tasks have been scheduled) no matter if it is running.
+         * @return True if the tournament has started, false otherwise.
+         */
+        bool hasTasksScheduled() const;
+
 	private:
         bool validateOpenings();
 
