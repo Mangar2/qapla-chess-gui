@@ -314,7 +314,7 @@ bool TournamentWindow::drawInput() {
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.drawConfig().centipawnThreshold, -10000, 10000);
 		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Only test adjucation", tournamentData.drawConfig().testOnly);
+		changed |= ImGuiControls::booleanInput("Test adjudication only", tournamentData.drawConfig().testOnly);
         ImGui::Unindent(10.0f);
         ImGui::PopID();
 	}
@@ -328,7 +328,7 @@ bool TournamentWindow::drawInput() {
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::booleanInput("Both side decides", tournamentData.resignConfig().twoSided);
 		ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Only test adjucation", tournamentData.resignConfig().testOnly);
+        changed |= ImGuiControls::booleanInput("Test adjudication only", tournamentData.resignConfig().testOnly);
         ImGui::Unindent(10.0f);
         ImGui::PopID();
 	}

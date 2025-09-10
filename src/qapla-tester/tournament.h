@@ -187,6 +187,12 @@ private:
 	void createPairings(const std::vector<EngineConfig>& players, const std::vector<EngineConfig>& opponents,
 		const TournamentConfig& config, bool symmetric);
 
+    /**
+     * @brief Restores the results of pairings from a saved state.
+     * @param savedPairings The saved pairings to restore.
+     */
+    void restoreResults(const std::vector<std::shared_ptr<PairTournament>>& savedPairings);
+
     std::vector<EngineConfig> engineConfig_;
 	TournamentConfig config_;
 	std::shared_ptr<StartPositions> startPositions_;

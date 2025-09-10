@@ -278,11 +278,11 @@ namespace QaplaWindows {
         if (!graceful) GameManagerPool::getInstance().stopAll();
 
         if (oldState == State::Stopped) {
-            SnackbarManager::instance().showWarning("Tournament is not running.");
+            SnackbarManager::instance().showNote("Tournament is not running.");
             return;
         }
         if (oldState == State::GracefulStopping && graceful) {
-            SnackbarManager::instance().showWarning("Tournament is already stopping gracefully.");
+            SnackbarManager::instance().showNote("Tournament is already stopping gracefully.");
             return;
         }
        
@@ -295,7 +295,7 @@ namespace QaplaWindows {
 
     void TournamentData::clear() {
         if (!hasTasksScheduled()) {
-            SnackbarManager::instance().showWarning("Nothing to clear.");
+            SnackbarManager::instance().showNote("Nothing to clear.");
             return;
         }
         imguiConcurrency_->setActive(false);

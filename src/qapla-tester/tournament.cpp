@@ -72,13 +72,15 @@ void Tournament::createTournament(const std::vector<EngineConfig>& engines,
 
     PgnIO::tournament().initialize(config.event);
     AppError::throwOnInvalidOption({ "gauntlet", "round-robin" }, config.type, "Unsupported tournament type");
-
+    auto savedPairings = std::move(pairings_);
+    savedPairings.clear();
     if (config.type == "gauntlet") {
         createGauntletPairings(engines, config);
     }
     else {
         createRoundRobinPairings(engines, config);
     }
+    restoreResults(savedPairings);
 }
 
 
@@ -221,6 +223,18 @@ void Tournament::save(std::ostream& out) const {
 
     for (auto & pairing : pairings_) {
         pairing->trySaveIfNotEmpty(out);
+    }
+}
+
+void Tournament::restoreResults(const std::vector<std::shared_ptr<PairTournament>>& savedPairings) {
+    for (const auto& saved : savedPairings) {
+        for (const auto& pairing : pairings_) {
+            if (pairing->matches(*saved)) 
+            {
+                pairing->fromString(saved->toString());
+                break;
+            }
+        }
     }
 }
 

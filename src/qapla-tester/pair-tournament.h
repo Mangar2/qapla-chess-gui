@@ -203,7 +203,17 @@ public:
      * @return true if round and engine names match exactly.
      */
     bool matches(uint32_t round, const std::string& engineA, const std::string& engineB) const;
-    
+
+    /**
+     * @brief Compares this pairing with another to see if they involve the same engines and round.
+     *
+     * Ignores results and internal state.
+     *
+     * @param other Another PairTournament instance to compare against.
+     * @return true if both pairings have the same engines and round number.
+     */
+    bool matches(const PairTournament& other) const;
+
     /**
      * @brief Loads result block data from input stream (one round).
      *

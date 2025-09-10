@@ -70,6 +70,7 @@ namespace QaplaWindows {
             }
             availX_ = avail.x;
             auto adjustedLeftWidth = std::max(leftWidth_, minSize_);
+            adjustedLeftWidth = std::min(adjustedLeftWidth, availableWidth - minSize_);
             return adjustedLeftWidth;
         }
 

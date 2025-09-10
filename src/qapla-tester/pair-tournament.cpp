@@ -355,6 +355,10 @@ bool PairTournament::matches(uint32_t round, const std::string& engineA, const s
         getEngineB().getName() == engineB;
 }
 
+bool PairTournament::matches(const PairTournament& other) const {
+    return matches(other.config_.round, other.getEngineA().getName(), other.getEngineB().getName());
+}
+
 /**
  * @brief Parses a list of end causes in the format "cause1:count,cause2:count,..."
  *        and updates the specified field in each CauseStats entry.
