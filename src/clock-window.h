@@ -21,6 +21,7 @@
 
 #include "embedded-window.h"
 #include "board-data.h"
+#include "imgui-clock.h"
 #include <memory>
 #include <string>
 
@@ -36,23 +37,12 @@ namespace QaplaWindows {
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
-        ClockWindow();
-        ~ClockWindow();
+        ClockWindow() = default;
+        ~ClockWindow() = default;
 
-        void draw() override;
-
-    private:
-        struct ClockData {
-            std::string wEngineName;
-			std::string bEngineName;
-			std::uint64_t wTimeLeftMs;
-			std::uint64_t bTimeLeftMs;
-            std::uint64_t wTimeCurMove;
-			std::uint64_t bTimeCurMove;
-			bool wtm = true; 
-		};
-        ClockData clockData_;
-		bool setClockData();
+        void draw() override {
+            QaplaWindows::BoardData::instance().imGuiClock().draw();
+        };
     };
 
 } // namespace QaplaWindows

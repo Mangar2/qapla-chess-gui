@@ -32,6 +32,8 @@
 
 #include "imgui-board.h"
 #include "imgui-engine-list.h"
+#include "imgui-clock.h"
+#include "imgui-move-list.h"
 
 using namespace QaplaWindows;
 
@@ -39,7 +41,9 @@ BoardData::BoardData()
 	: gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  imGuiBoard_(std::make_unique<ImGuiBoard>()),
-	  imGuiEngineList_(std::make_unique<ImGuiEngineList>())
+	  imGuiEngineList_(std::make_unique<ImGuiEngineList>()),
+	  imGuiClock_(std::make_unique<ImGuiClock>()),
+	  imGuiMoveList_(std::make_unique<ImGuiMoveList>())
 {
 	timeControl_ = QaplaConfiguration::Configuration::instance()
 					   .getTimeControlSettings()
@@ -166,11 +170,14 @@ void BoardData::pollData()
 
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
 			setGameIfDifferent(g);
+			imGuiMoveList_->setFromGameRecord(g);
+			imGuiClock_->setFromGameRecord(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
 		imGuiEngineList_->setAllowInput(true);
 		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &m, uint32_t idx) {
 			imGuiEngineList_->setFromMoveRecord(m, idx);
+			imGuiClock_->setFromMoveRecord(m, idx);
 		});
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			imGuiEngineList_->setEngineRecords(records);

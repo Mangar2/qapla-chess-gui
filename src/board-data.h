@@ -47,6 +47,8 @@ namespace QaplaWindows
 
 	class ImGuiBoard;
 	class ImGuiEngineList;
+	class ImGuiClock;
+	class ImGuiMoveList;
 
 	class BoardData
 	{
@@ -83,6 +85,24 @@ namespace QaplaWindows
 		ImGuiEngineList &imGuiEngineList()
 		{
 			return *imGuiEngineList_;
+		}
+
+		/**
+		 * @brief Returns a reference to the ImGuiClock.
+		 * @return Reference to ImGuiClock.
+		 */
+		ImGuiClock &imGuiClock()
+		{
+			return *imGuiClock_;
+		}
+
+		/**
+		 * @brief Returns a reference to the ImGuiMoveList.
+		 * @return Reference to ImGuiMoveList.
+		 */
+		ImGuiMoveList &imGuiMoveList()
+		{
+			return *imGuiMoveList_;
 		}
 
 		/**
@@ -249,6 +269,8 @@ namespace QaplaWindows
 
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
 		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
+		std::unique_ptr<ImGuiClock> imGuiClock_;
+		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
 
 		std::vector<EngineConfig> engineConfigs_;
 
