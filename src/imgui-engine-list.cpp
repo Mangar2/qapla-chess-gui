@@ -203,7 +203,7 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
     std::string command;
     for (const auto& button : buttons) {
         ImGui::SetCursorScreenPos(curPos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
+        if (QaplaButton::drawIconButton(button, button, buttonSize, QaplaButton::ButtonState::Normal,
             [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Restart") {
                     QaplaButton::drawRestart(drawList, topLeft, size);

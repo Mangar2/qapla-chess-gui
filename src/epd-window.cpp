@@ -58,20 +58,21 @@ void EpdWindow::drawButtons()
     for (const std::string button : {"Run", "Stop", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
+        auto state = QaplaButton::ButtonState::Normal;
         if (QaplaButton::drawIconButton(
-                button, button, buttonSize, false, [&button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+                button, button, buttonSize, state, [&button, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
                 {
             if (button == "Run")
             {
-                QaplaButton::drawPlay(drawList, topLeft, size);
+                QaplaButton::drawPlay(drawList, topLeft, size, state);
             }
             if (button == "Stop")
             {
-                QaplaButton::drawStop(drawList, topLeft, size);
+                QaplaButton::drawStop(drawList, topLeft, size, state);
             }
             if (button == "Clear")
             {
-                QaplaButton::drawText("X", drawList, topLeft, size);
+                QaplaButton::drawClear(drawList, topLeft, size, state);
             } }))
         {
             try

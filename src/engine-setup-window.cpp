@@ -167,10 +167,17 @@ void EngineSetupWindow::drawButtons() {
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
 
+
+
     for (const auto& button : buttons) {
+        auto state = QaplaButton::ButtonState::Normal;
+        if (button == "Detect" && detecting) {
+            state = QaplaButton::ButtonState::Animated;
+        }
+        
         ImGui::SetCursorScreenPos(curPos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize, false,
-            [&button, &detecting](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+        if (QaplaButton::drawIconButton(button, button, buttonSize, state,
+            [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Add") {
                     QaplaButton::drawAdd(drawList, topLeft, size);
                 }
@@ -178,7 +185,7 @@ void EngineSetupWindow::drawButtons() {
                     QaplaButton::drawRemove(drawList, topLeft, size);
                 }
                 if (button == "Detect") {
-                    QaplaButton::drawAutoDetect(drawList, topLeft, size, detecting);
+                    QaplaButton::drawAutoDetect(drawList, topLeft, size, state);
                 }
             }))
         {

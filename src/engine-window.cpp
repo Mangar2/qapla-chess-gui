@@ -59,11 +59,13 @@ float EngineWindow::drawConfigButtonArea(bool noEngines) {
     auto topLeft = ImGui::GetCursorScreenPos();
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + 20.0f, topLeft.y + 8.0f));
-    if (QaplaButton::drawIconButton(button, button, buttonSize, false,
-        [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-            QaplaButton::drawConfig(drawList, topLeft, size);
-        },
-        noEngines))
+    auto state = QaplaButton::ButtonState::Normal;
+    if (noEngines)
+        state = QaplaButton::ButtonState::Highlighted;
+    if (QaplaButton::drawIconButton(button, button, buttonSize, state,
+        [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            QaplaButton::drawConfig(drawList, topLeft, size, state);
+        }))
     {
         auto& boardData = QaplaWindows::BoardData::instance();
         std::vector<EngineConfig> activeEngines;

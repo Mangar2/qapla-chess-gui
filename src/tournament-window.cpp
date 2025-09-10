@@ -63,26 +63,34 @@ void TournamentWindow::drawButtons() {
         ImGui::SetCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
         auto label = button == "Run" && running ? "Grace" : button;
-        if (QaplaButton::drawIconButton(button, label, buttonSize, false,
-            [&button, running](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+
+        auto state = QaplaButton::ButtonState::Normal;
+        if (button == "Run" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
+            state = QaplaButton::ButtonState::Active;
+        }
+        if (button == "Stop" && !TournamentData::instance().isRunning()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+        if (button == "Clear" && !TournamentData::instance().isAvailable()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+
+        if (QaplaButton::drawIconButton(button, label, buttonSize, state,
+            [&button, running, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Run") {
                     if (running) {
-                        QaplaButton::drawGrace(drawList, topLeft, size, 
-                            TournamentData::instance().state() == TournamentData::State::GracefulStopping);
+                        QaplaButton::drawGrace(drawList, topLeft, size, state);
                     } else {
-                        QaplaButton::drawPlay(drawList, topLeft, size);
+                        QaplaButton::drawPlay(drawList, topLeft, size, state);
                     }
                 }
                 if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size);
+                    QaplaButton::drawStop(drawList, topLeft, size, state);
 				}
                 if (button == "Clear") {
-                    QaplaButton::drawClear(drawList, topLeft, size);
+                    QaplaButton::drawClear(drawList, topLeft, size, state);
                 }
-            },
-            false,
-            (button == "Stop" && !TournamentData::instance().isRunning()) ? true : 
-            (button == "Clear" && !TournamentData::instance().isAvailable()) ? true : false
+            }
         ))
         {
             try {

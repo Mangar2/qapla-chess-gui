@@ -25,37 +25,45 @@
 
 namespace QaplaButton {
 
+    enum class ButtonState {
+        Normal,
+        Active,
+        Highlighted,
+        Disabled,
+        Animated
+    };
+
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
-    void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawRestart(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawRestart(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
     void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size);
 
-    void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active = false);
+    void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAdd(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawAdd(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawRemove(ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawRemove(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAutoDetect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool rotate = false);
+    void drawAutoDetect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
     /**
      * @brief Draws a clickable icon-style button with optional icon and label below.
@@ -68,8 +76,8 @@ namespace QaplaButton {
      * @param disabled    Whether the button is disabled.
      * @return true if the button was clicked.
      */
-    bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, bool active,
-        IconDrawCallback iconDraw = nullptr, bool highlighted = false, bool disabled = false );
+    bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
+        IconDrawCallback iconDraw = nullptr);
 
     /**
      * @brief Calculates the total area needed to draw the icon button including its label.

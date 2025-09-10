@@ -50,37 +50,41 @@ namespace QaplaWindows
         {
             ImGui::SetCursorScreenPos(pos);
             bool active = BoardData::instance().isModeActive(button);
+            auto state = QaplaButton::ButtonState::Normal;
+            if (BoardData::instance().isModeActive(button)) {
+                state = QaplaButton::ButtonState::Active;
+            }
             if (QaplaButton::drawIconButton(
-                    button, button, buttonSize, active,
-                    [&active, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+                    button, button, buttonSize, state,
+                    [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
                     {
                         if (button == "Stop")
                         {
-                            QaplaButton::drawStop(drawList, topLeft, size, active);
+                            QaplaButton::drawStop(drawList, topLeft, size, state);
                         }
                         else if (button == "Play")
                         {
-                            QaplaButton::drawPlay(drawList, topLeft, size, active);
+                            QaplaButton::drawPlay(drawList, topLeft, size, state);
                         }
                         else if (button == "Analyze")
                         {
-                            QaplaButton::drawAnalyze(drawList, topLeft, size, active);
+                            QaplaButton::drawAnalyze(drawList, topLeft, size, state);
                         }
                         else if (button == "New")
                         {
-                            QaplaButton::drawNew(drawList, topLeft, size);
+                            QaplaButton::drawNew(drawList, topLeft, size, state);
                         }
                         else if (button == "Auto")
                         {
-                            QaplaButton::drawAutoPlay(drawList, topLeft, size, active);
+                            QaplaButton::drawAutoPlay(drawList, topLeft, size, state);
                         }
                         else if (button == "Invert")
                         {
-                            QaplaButton::drawManualPlay(drawList, topLeft, size, active);
+                            QaplaButton::drawManualPlay(drawList, topLeft, size, state);
                         }
                         else if (button == "Now")
                         {
-                            QaplaButton::drawNow(drawList, topLeft, size);
+                            QaplaButton::drawNow(drawList, topLeft, size, state);
                         }
                     }))
             {
