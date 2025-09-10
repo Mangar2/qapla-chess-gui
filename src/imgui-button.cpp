@@ -29,13 +29,19 @@ namespace QaplaButton {
 
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
-    static auto getBgColor(bool active = false) {
+    static auto getBgColor(bool active = false, bool disabled = false) {
+        if (disabled) return ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
         bool hovered = ImGui::IsItemHovered();
 		active = active || ImGui::IsItemActive();
 
 		if (active) return ImGui::GetColorU32(ImGuiCol_ButtonActive);
 		if (hovered) return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		return ImGui::GetColorU32(ImGuiCol_Button);
+    }
+
+    static auto getTextColor(bool active = false, bool disabled = false) {
+        if (disabled) return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+		return ImGui::GetColorU32(ImGuiCol_Text);
     }
 
     static ImVec4 lerpVec4(const ImVec4& a, const ImVec4& b, float t) {
@@ -377,6 +383,24 @@ namespace QaplaButton {
         }
     }
 
+    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, bool active) {
+        constexpr int LINE_THICKNESS = 2; 
+        constexpr float BORDER = 6.0f;
+
+        auto color = getFgColor(active);
+
+        int lineSize = static_cast<int>(std::min(size.x, size.y)) + (LINE_THICKNESS % 2 == 0 ? 1 : 0) - 2 * BORDER;
+
+        float startX1 = topLeft.x + static_cast<float>((static_cast<int>(size.x) - lineSize) / 2);
+        float startY1 = topLeft.y + static_cast<float>((static_cast<int>(size.y) - lineSize) / 2);
+        float endX1 = startX1 + static_cast<float>(lineSize);
+        float endY1 = startY1 + static_cast<float>(lineSize);
+
+
+        list->AddLine(ImVec2(startX1, startY1), ImVec2(endX1 + 1.0f, endY1 + 1.0f), color, LINE_THICKNESS);
+        list->AddLine(ImVec2(startX1, endY1), ImVec2(endX1 + 1.0f, startY1 - 1.0f), color, LINE_THICKNESS);
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, bool active,
         IconDrawCallback iconDraw, bool highlighted, bool disabled) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();
@@ -384,7 +408,7 @@ namespace QaplaButton {
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-		ImU32 bgColor = getBgColor(active);
+		ImU32 bgColor = getBgColor(active, disabled);
 
         drawList->AddRectFilled(topLeft, ImVec2(topLeft.x + size.x, topLeft.y + size.y), bgColor, 3.0f);
 
@@ -402,7 +426,7 @@ namespace QaplaButton {
 
         ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());
         ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5f - labelSize.x * 0.5f, topLeft.y + size.y + 4.0f);
-        drawList->AddText(labelPos, IM_COL32(192, 192, 192, 255), label.c_str());
+        drawList->AddText(labelPos, getTextColor(active, disabled), label.c_str());
 
         return clicked;
     }

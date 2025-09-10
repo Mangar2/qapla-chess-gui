@@ -67,7 +67,8 @@ void TournamentWindow::drawButtons() {
             [&button, running](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Run") {
                     if (running) {
-                        QaplaButton::drawGrace(drawList, topLeft, size);
+                        QaplaButton::drawGrace(drawList, topLeft, size, 
+                            TournamentData::instance().state() == TournamentData::State::GracefulStopping);
                     } else {
                         QaplaButton::drawPlay(drawList, topLeft, size);
                     }
@@ -76,9 +77,13 @@ void TournamentWindow::drawButtons() {
                     QaplaButton::drawStop(drawList, topLeft, size);
 				}
                 if (button == "Clear") {
-                    QaplaButton::drawText("X", drawList, topLeft, size);
+                    QaplaButton::drawClear(drawList, topLeft, size);
                 }
-            }))
+            },
+            false,
+            (button == "Stop" && !TournamentData::instance().isRunning()) ? true : 
+            (button == "Clear" && !TournamentData::instance().isAvailable()) ? true : false
+        ))
         {
             try {
                 if (button == "Run") {

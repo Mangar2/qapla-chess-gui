@@ -114,7 +114,7 @@ namespace QaplaWindows {
 			populateRunningTable();
             imguiConcurrency_->init();
             imguiConcurrency_->setActive(true);
-            running_ = true;
+            state_ = State::Starting;
         } else {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
@@ -155,6 +155,7 @@ namespace QaplaWindows {
             for (auto& window: boardWindow_) {
                 window.setRunning(false);
             }
+            bool anyRunning = false;
             GameManagerPool::getInstance().withGameRecords(
                 [&](const GameRecord& game, uint32_t gameIndex
             ) {
@@ -168,11 +169,18 @@ namespace QaplaWindows {
                 runningCount_++;
                 if (gameIndex < boardWindow_.size()) {
                     boardWindow_[gameIndex].setRunning(true);
+                    anyRunning = true;
                 }
             },
             [&](uint32_t gameIndex) -> bool {
                 return true;
             });
+            if (state_ == State::Starting && anyRunning) {
+                state_ = State::Running;
+            }
+            if (state_ != State::Starting && !anyRunning) {
+                state_ = State::Stopped;
+            }
         }
 	}
 
@@ -227,8 +235,12 @@ namespace QaplaWindows {
     }
 
     bool TournamentData::isRunning() const {
-        return running_ && result_->gamesLeft();
+        return state_ != State::Stopped;
 	}
+
+    bool TournamentData::isAvailable() const {
+        return result_ && result_->hasGamesLeft();
+    }
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
         return eloTable_.draw(size, true);
@@ -257,7 +269,7 @@ namespace QaplaWindows {
     void TournamentData::stopPool(bool graceful) {
         imguiConcurrency_->update(0);
         imguiConcurrency_->setActive(false);
-        running_ = false;
+        state_ = graceful ? State::GracefulStopping : State::Stopped;
         if (!graceful) GameManagerPool::getInstance().stopAll();
         SnackbarManager::instance().showSuccess(
             graceful ? 
@@ -268,7 +280,7 @@ namespace QaplaWindows {
 
     void TournamentData::clear() {
         imguiConcurrency_->setActive(false);
-        running_ = false;
+        state_ = State::Stopped;
         GameManagerPool::getInstance().clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();

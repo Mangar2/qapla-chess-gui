@@ -58,6 +58,12 @@ namespace QaplaWindows {
             EngineConfig config;
             bool selected = false;
         };
+        enum class State {
+            Stopped,
+            Starting,
+            Running,
+            GracefulStopping
+        };
 
         TournamentData();
         ~TournamentData();
@@ -225,7 +231,25 @@ namespace QaplaWindows {
             return instance;
 		}
 
+        /**
+         * @brief Returns true if the tournament is currently running.
+         * @return True if the tournament is running, false otherwise.
+         */
         bool isRunning() const;
+
+        /**
+         * @brief Returns the current state of the tournament.
+         * @return The current state of the tournament.
+         */
+        State state() const {
+            return state_;
+        }
+
+        /**
+         * @brief Checks if the tournament data is available and has games left to play.
+         * @return True if the tournament data is available and has games left, false otherwise.
+         */
+        bool isAvailable() const;
 
 	private:
         bool validateOpenings();
@@ -303,7 +327,9 @@ namespace QaplaWindows {
         ImGuiTable eloTable_;
         ImGuiTable runningTable_;
 
-        bool running_ = false;
+
+
+        State state_ = State::Stopped;
 
     };
 

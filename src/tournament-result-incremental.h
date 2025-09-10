@@ -71,7 +71,7 @@ namespace QaplaWindows {
         /**
          * @brief True, if the tournament has games left to play
          */
-        bool gamesLeft() const {
+        bool hasGamesLeft() const {
             return gamesLeft_;
 		}
 
