@@ -21,6 +21,8 @@
 
 #include "imgui-table.h"
 
+#include "qapla-tester/change-tracker.h"
+
 #include <imgui.h>
 
 #include <memory>
@@ -75,8 +77,7 @@ namespace QaplaWindows {
         bool isRowClicked(size_t index);
 		size_t currentPly_ = 0;
         int lastInputFrame_ = -1;
-        uint64_t lastUpdateCnt_ = 0;
-        uint64_t lastModificationCnt_ = 0;
+        ChangeTracker referenceTracker_;
         ImGuiTable table_;
     };
 

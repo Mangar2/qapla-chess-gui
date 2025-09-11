@@ -56,7 +56,6 @@ namespace QaplaWindows {
         }
 
         float computeLeftWidth(ImVec2 avail) {
-            ImGui::GetContentRegionAvail();
             float availableWidth = std::max(avail.x - splitterWidth_ - 13, 2 * minSize_);
 
             if (rightPresetWidth_ != 0) {
@@ -82,6 +81,7 @@ namespace QaplaWindows {
             std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
             float adjustedLeftWidth = computeLeftWidth(avail);
 
+            
             ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
@@ -101,7 +101,7 @@ namespace QaplaWindows {
             drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth_, height));
             ImGui::SameLine(0, 0);
 
-            rightWidth_ = avail.x - ImGui::GetCursorPosX();
+            rightWidth_ = std::max(avail.x - ImGui::GetCursorPosX(), minSize_);
 
             ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth_, height),
                 ImGuiChildFlags_None,

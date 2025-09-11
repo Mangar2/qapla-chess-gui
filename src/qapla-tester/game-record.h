@@ -31,6 +31,7 @@
 #include "move-record.h"
 #include "time-control.h"
 #include "game-result.h"
+#include "change-tracker.h"
 
 #include "qapla-engine/move.h"
 
@@ -124,8 +125,7 @@ public:
 	 */
 	void setGameEnd(GameEndCause cause, GameResult result)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		gameEndCause_ = cause;
 		gameResult_ = result;
 	}
@@ -142,8 +142,7 @@ public:
 	 */
 	void setTimeControl(const TimeControl &whiteTimeControl, const TimeControl &blackTimeControl)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		whiteTimeControl_ = whiteTimeControl;
 		blackTimeControl_ = blackTimeControl;
 	}
@@ -206,8 +205,7 @@ public:
 	}
 	void setWhiteEngineName(const std::string &name)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		whiteEngineName_ = name;
 	}
 
@@ -217,8 +215,7 @@ public:
 	}
 	void setBlackEngineName(const std::string &name)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		blackEngineName_ = name;
 	}
 
@@ -230,8 +227,7 @@ public:
 	 */
 	void setTournamentInfo(uint32_t round, uint32_t gameInRound, uint32_t opening)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		round_ = round;
 		gameInRound_ = gameInRound;
 		opening_ = opening;
@@ -302,8 +298,7 @@ public:
 	 */
 	void setTag(const std::string &key, const std::string &value)
 	{
-		updateCnt_++;
-		modificationCnt_++;
+		changeTracker_.trackModification();
 		if (value.empty())
 		{
 			tags_.erase(key);
@@ -394,18 +389,13 @@ public:
 	 */
 	GameRecord createMinimalCopy() const;
 
-	/** 
-	 * @brief Gets the current value of the update counter incrementing with each change.
-	 * @return The update count.
+
+	/**
+	 * @brief Get the Change Tracker object
+	 * 
+	 * @return const ChangeTracker& 
 	 */
-	uint64_t getUpdateCnt() const { return updateCnt_; }
-	
-	/** 
-	 * @brief Gets the current value of the modification counter incrementing with each modification, but not 
-	 * with additions of new moves and advancing or reducing the current ply by one.
-	 * @return The modification count.
-	 */
-	uint64_t getModificationCnt() const { return modificationCnt_; }
+	const ChangeTracker& getChangeTracker() const { return changeTracker_; }
 
 private:
 	std::map<std::string, std::string> tags_;
@@ -426,7 +416,6 @@ private:
 	uint32_t opening_ = 0;
 	uint32_t round_ = 0;
 	uint32_t pgnRound_ = 0;
-	uint64_t updateCnt_ = 1; ///< Incremental counter: +1 for any kind of update
-	uint64_t modificationCnt_ = 1; ///< Incremental counter: +1 whenever an existing move is changed/replaced
+	ChangeTracker changeTracker_;
 	GameEvent gameEvent_ = GameEvent::None;
 };

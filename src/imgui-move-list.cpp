@@ -67,14 +67,15 @@ static std::string causeToString(GameEndCause cause) {
 }
 
 void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
-    if (lastUpdateCnt_ == gameRecord.getUpdateCnt()) return;
-    lastUpdateCnt_ = gameRecord.getUpdateCnt();
-
-    bool isModification = lastModificationCnt_ != gameRecord.getModificationCnt();
-    lastModificationCnt_ = gameRecord.getModificationCnt();
+    
+    auto [changed, updated] = gameRecord.getChangeTracker().checkModification(referenceTracker_);
+    referenceTracker_.updateFrom(gameRecord.getChangeTracker());
+    if (!updated) return;
 
     currentPly_ = 0;
-    if (isModification) table_.clear();
+    if (changed) {
+        table_.clear();
+    }
 
     const auto& moves = gameRecord.history();
     bool wtm = gameRecord.wtmAtPly(table_.size());

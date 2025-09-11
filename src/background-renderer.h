@@ -1,0 +1,15 @@
+#pragma once
+
+/**
+ * Initializes background image, quad, and shaders.
+ * Must be called after OpenGL context is active.
+ * 
+ * @param imagePath Path to background image (PNG or JPG).
+ */
+void initBackgroundImage(const char* imagePath);
+
+/**
+ * Draws the fullscreen background image.
+ * Call once per frame before ImGui::NewFrame().
+ */
+void drawBackgroundImage();

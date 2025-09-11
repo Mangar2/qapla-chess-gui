@@ -48,6 +48,7 @@ namespace QaplaWindows {
 
             ImGui::SetNextWindowPos(pos);
             ImGui::SetNextWindowSize(size);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -66,6 +67,7 @@ namespace QaplaWindows {
 
             ImGui::End();
             ImGui::PopStyleVar(3);
+            ImGui::PopStyleColor(1);
         }
         catch (...) {
             ImGui::TextUnformatted("Error rendering Board Workspace");

@@ -31,8 +31,7 @@ void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWh
     startFen_ = startPos ? "" : startFen;
     gameEndCause_ = GameEndCause::Ongoing;
     gameResult_ = GameResult::Unterminated;
-    updateCnt_++;
-    modificationCnt_++;
+    changeTracker_.trackModification();
 }
 
 void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves,
@@ -59,8 +58,7 @@ void GameRecord::setStartPosition(const GameRecord &source, uint32_t toPly,
     blackEngineName_ = blackEngineName;
     round_ = source.round_;
     tags_ = source.tags_;
-    modificationCnt_++;
-    updateCnt_++;
+    changeTracker_.trackModification();
 }
 
 void GameRecord::addMove(const MoveRecord &move)
@@ -71,7 +69,7 @@ void GameRecord::addMove(const MoveRecord &move)
     }
     moves_.push_back(move);
     ++currentPly_;
-    updateCnt_++;
+    changeTracker_.trackUpdate();
 }
 
 uint32_t GameRecord::nextMoveIndex() const
@@ -83,8 +81,7 @@ void GameRecord::setNextMoveIndex(uint32_t ply)
 {
     if (ply <= moves_.size())
     {
-        modificationCnt_++;
-        updateCnt_++;
+        changeTracker_.trackModification();
         currentPly_ = ply;
     }
 }
@@ -93,7 +90,7 @@ void GameRecord::advance()
 {
     if (currentPly_ < moves_.size())
     {
-        updateCnt_++;
+        changeTracker_.trackUpdate();
         ++currentPly_;
     }
 }
@@ -102,7 +99,7 @@ void GameRecord::rewind()
 {
     if (currentPly_ > 0)
     {
-        updateCnt_++;
+        changeTracker_.trackUpdate();
         --currentPly_;
     }
 }
@@ -129,7 +126,7 @@ std::pair<uint64_t, uint64_t> GameRecord::timeUsed() const
 
 bool GameRecord::isUpdate(const GameRecord &other) const
 {
-    return other.updateCnt_ != updateCnt_;
+    return other.changeTracker_.checkModification(changeTracker_).second;
 }
 
 bool GameRecord::isDifferent(const GameRecord &other) const

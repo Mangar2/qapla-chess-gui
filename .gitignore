@@ -4,10 +4,15 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # Libraries used
-/imgui/
-/glfw/
+extern/imgui/
+extern/glfw/
+extern/stb/
+
+# other folders
+/assets/
 /build/
 /engines/
+
 # VS Code user settings lokal
 .vscode/settings.json
 

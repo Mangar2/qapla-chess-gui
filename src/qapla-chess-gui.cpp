@@ -48,9 +48,13 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "font.h"
+#include "background-renderer.h"
+
 
 namespace {
 
+
+   
     void glfwErrorCallback(int error, const char* description) {
         std::cerr << "GLFW Error " << error << ": " << description << '\n';
     }
@@ -119,7 +123,8 @@ namespace {
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
-        BoardEngineContainer->setMinBottomHeight(50.0f);
+        BoardEngineContainer->setMinBottomHeight(55.0f);
+        BoardEngineContainer->setBottomPresetHeight(230.0f);
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         boardTabBar->addTab("Board", std::move(BoardEngineContainer));
@@ -150,7 +155,6 @@ namespace {
     }
 
     int runApp() {
-
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::BoardData::instance().setEngines();
@@ -159,6 +163,7 @@ namespace {
         auto* window = initGlfwContext();
         initGlad();
         initImGui(window);
+        initBackgroundImage("assets/dark_wood_diff_4k.jpg");
         font::loadFonts();
         while (!glfwWindowShouldClose(window)) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
@@ -172,6 +177,13 @@ namespace {
             glViewport(0, 0, width, height);
             glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
+            
+            drawBackgroundImage();
+            GLenum err = glGetError();
+            if (err != GL_NO_ERROR) {
+                std::cerr << "OpenGL ERROR: " << std::hex << err << "\n";
+            }
+
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();

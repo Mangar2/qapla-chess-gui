@@ -52,7 +52,8 @@ namespace QaplaWindows
         if (!mainWindow) {
             mainWindow = std::make_unique<VerticalSplitContainer>();
             mainWindow->setMinTopHeight(300.0f);
-            mainWindow->setMinBottomHeight(110.0f);
+            mainWindow->setMinBottomHeight(184.0f);
+            mainWindow->setBottomPresetHeight(110.0f);
         }
         return *mainWindow;
     }

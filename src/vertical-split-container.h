@@ -41,21 +41,36 @@ namespace QaplaWindows {
             bottomWindow = std::move(window);
         }
 
+        float computeTopHeight(ImVec2 avail) {
+
+            if (fixedTopHeight_) {
+                return *fixedTopHeight_;
+            }
+
+            float availableHeight = std::max(avail.y - splitterHeight_, minTopHeight_ + minBottomHeight_);
+
+            if (bottomPresetHeight_ != 0) {
+                if (bottomHeight_ == 0) {
+                    topHeight_ = std::max(topHeight_, availableHeight - bottomPresetHeight_);
+                }
+                else {
+                    auto availDelta = avail.y - availY_;
+                    topHeight_ += availDelta;
+                }
+            }
+            availY_ = avail.y;
+            auto adjustedTopHeight = std::max(topHeight_, minTopHeight_);
+            adjustedTopHeight = std::min(adjustedTopHeight, availableHeight - minBottomHeight_);
+            return adjustedTopHeight;
+        }
+
         void draw() override {
-            ImVec2 region = ImGui::GetContentRegionAvail();
-            float width = region.x;
+            ImVec2 avail = ImGui::GetContentRegionAvail();
+            float width = avail.x;
 
-            float splitterHeight = 5.0f;
-            float availableHeight = std::max(region.y - splitterHeight, minTopHeight + minBottomHeight);
-            float adjustedHeight;
-
-            if (fixedTopHeight) {
-                adjustedHeight = *fixedTopHeight;
-            }
-            else {
-                adjustedHeight = std::clamp(topHeight, minTopHeight, availableHeight - minBottomHeight);
-            }
-            float bottomHeight = availableHeight - adjustedHeight;
+            
+            float adjustedHeight = computeTopHeight(avail);
+            bottomHeight_ = std::max(avail.y - adjustedHeight - splitterHeight_, minBottomHeight_);
 
             std::string idPrefix = "##vsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
 
@@ -74,10 +89,10 @@ namespace QaplaWindows {
 			}
             ImGui::EndChild();
 
-			drawSplitter(idPrefix + "_splitter", ImVec2(width, splitterHeight));
+			drawSplitter(idPrefix + "_splitter", ImVec2(width, splitterHeight_));
 
             // Bottom window
-            ImGui::BeginChild((idPrefix + "_bottom").c_str(), ImVec2(width, bottomHeight), 
+            ImGui::BeginChild((idPrefix + "_bottom").c_str(), ImVec2(width, bottomHeight_), 
                 ImGuiChildFlags_None,
                 ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
             try {
@@ -96,21 +111,31 @@ namespace QaplaWindows {
          * @brief Sets a fixed height for the top window. If set, the splitter cannot be moved.
          */
         void setFixedTopHeight(float height) {
-            fixedTopHeight = height;
+            fixedTopHeight_ = height;
         }
 
         /**
          * @brief Sets the minimum height for the top window.
          */
         void setMinTopHeight(float height) {
-            minTopHeight = height;
+            minTopHeight_ = height;
         }
 
         /**
          * @brief Sets the minimum height for the bottom window.
          */
         void setMinBottomHeight(float height) {
-            minBottomHeight = height;
+            minBottomHeight_ = height;
+        }
+
+        void setTopPresetHeight(float height) {
+            topPresetHeight_ = height;
+            bottomPresetHeight_ = 0;
+        }
+
+        void setBottomPresetHeight(float height) {
+            bottomPresetHeight_ = height;
+            topPresetHeight_ = 0;
         }
 
     private:
@@ -125,9 +150,9 @@ namespace QaplaWindows {
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
             ImGui::Button(id.c_str(), size);
 
-            if (!fixedTopHeight) {
+            if (!fixedTopHeight_) {
                 if (ImGui::IsItemActive()) {
-                    topHeight += ImGui::GetIO().MouseDelta.y;
+                    topHeight_ += ImGui::GetIO().MouseDelta.y;
                 }
                 if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
                     ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
@@ -139,11 +164,18 @@ namespace QaplaWindows {
 		}
         std::unique_ptr<EmbeddedWindow> topWindow;
         std::unique_ptr<EmbeddedWindow> bottomWindow;
-        std::optional<float> fixedTopHeight;
-        float minTopHeight = 100.0f;
-        float minBottomHeight = 100.0f;
+        std::optional<float> fixedTopHeight_;
 
-        float topHeight = 500.0f;
+        const float splitterHeight_ = 5.0f;
+
+        float minTopHeight_ = 100.0f;
+        float minBottomHeight_ = 100.0f;
+
+        float topHeight_ = 500.0f;
+        float bottomHeight_ = 0.0f;
+        float topPresetHeight_ = 0.0f;
+        float bottomPresetHeight_ = 0.0f;
+        float availY_ = 0.0f;
     };
 
 } // namespace QaplaWindows
