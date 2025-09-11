@@ -74,7 +74,7 @@ void TournamentWindow::drawButtons() {
         if (button == "Stop" && !TournamentData::instance().isRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
-        if (button == "Clear" && !TournamentData::instance().isAvailable()) {
+        if (button == "Clear" && !TournamentData::instance().hasTasksScheduled()) {
             state = QaplaButton::ButtonState::Disabled;
         }
 

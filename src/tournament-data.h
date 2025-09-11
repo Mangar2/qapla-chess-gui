@@ -334,7 +334,7 @@ namespace QaplaWindows {
         ImGuiTable runningTable_;
 
 
-
+        std::string selectedTabId_;
         State state_ = State::Stopped;
 
     };

@@ -105,6 +105,9 @@ namespace QaplaWindows {
             PgnIO::tournament().setOptions(pgnConfig_);
             AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
             AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
+            state_ = State::Stopped;
+            // Ensure that the game manager pool dont keep old tasks
+            GameManagerPool::getInstance().clearAll();
             result_->setGamesLeft();
 			tournament_->createTournament(selectedEngines, *config_);
             tournament_->scheduleAll(0, false);
@@ -256,18 +259,22 @@ namespace QaplaWindows {
 
     void TournamentData::drawTabs() {
         uint32_t index = 0;
+        std::string newSelectedTabId{};
         for (auto& window : boardWindow_) {
             index++;
-            if (!window.isRunning()) continue;
             std::string tabName = "Game " + window.id();
-            if (ImGui::BeginTabItem((tabName + "###Game" + std::to_string(index)).c_str())) {
+            std::string tabId = "###Game" + std::to_string(index);
+            if (!window.isRunning() && tabId != selectedTabId_) continue;
+            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
                 if (window.isActive()) window.draw();
                 window.setActive(true);
+                newSelectedTabId = tabId;
                 ImGui::EndTabItem();
             } else {
                 window.setActive(false);
             }
         }
+        selectedTabId_ = newSelectedTabId;
     }
 
     void TournamentData::stopPool(bool graceful) {

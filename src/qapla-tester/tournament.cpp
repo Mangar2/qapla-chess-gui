@@ -73,7 +73,7 @@ void Tournament::createTournament(const std::vector<EngineConfig>& engines,
     PgnIO::tournament().initialize(config.event);
     AppError::throwOnInvalidOption({ "gauntlet", "round-robin" }, config.type, "Unsupported tournament type");
     auto savedPairings = std::move(pairings_);
-    savedPairings.clear();
+    pairings_.clear();
     if (config.type == "gauntlet") {
         createGauntletPairings(engines, config);
     }
