@@ -157,11 +157,23 @@ namespace QaplaWindows {
             return selectedRow_;
         }
 
+        /**
+         * @brief Sets the current row index. The current row is highlighted and kept in view.
+         * @param row The index of the row to set as current, or std::nullopt if the table will not show any current row.
+         */
+        void setCurrentRow(std::optional<uint32_t> row) {
+            currentRow_ = row;
+        }
+
     private:
+        void drawCurrentRow(size_t rowIndex) const;
+        void drawRow(size_t rowIndex) const;
+
         bool clickable_ = false;
         void tableHeadersRow() const;
 		bool isRowClicked(size_t index) const;
         uint32_t selectedRow_ = 0;
+        std::optional<uint32_t> currentRow_;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;

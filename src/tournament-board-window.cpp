@@ -39,20 +39,6 @@ namespace QaplaWindows
 {
 
     TournamentBoardWindow::TournamentBoardWindow() {
-        mainWindow_ = std::make_unique<VerticalSplitContainer>();
-        mainWindow_->setMinTopHeight(300.0f);
-        mainWindow_->setMinBottomHeight(110.0f);
-
-        auto topWindow = std::make_unique<HorizontalSplitContainer>();
-        topWindow_ = topWindow.get();
-        topWindow_->setRightPresetWidth(400.0f);
-        mainWindow_->setTop(std::move(topWindow));
-
-        auto topRightWindow = std::make_unique<VerticalSplitContainer>();
-        topRightWindow_ = topRightWindow.get();
-        topRightWindow_->setFixedTopHeight(120.0f);
-        topWindow_->setRight(std::move(topRightWindow));
-
         imGuiEngineList_.setAllowInput(false);
     }
 
@@ -60,6 +46,38 @@ namespace QaplaWindows
     TournamentBoardWindow& TournamentBoardWindow::operator=(TournamentBoardWindow&&) noexcept = default;
 
     TournamentBoardWindow::~TournamentBoardWindow() = default;
+
+    VerticalSplitContainer& TournamentBoardWindow::getMainWindow() {
+        static std::unique_ptr<VerticalSplitContainer> mainWindow;
+        if (!mainWindow) {
+            mainWindow = std::make_unique<VerticalSplitContainer>();
+            mainWindow->setMinTopHeight(300.0f);
+            mainWindow->setMinBottomHeight(110.0f);
+        }
+        return *mainWindow;
+    }
+
+    HorizontalSplitContainer& TournamentBoardWindow::getTopWindow() {
+        static HorizontalSplitContainer* topWindow;
+        if (!topWindow) {
+            auto window = std::make_unique<HorizontalSplitContainer>();
+            window->setRightPresetWidth(400.0f);
+            topWindow = window.get();
+            getMainWindow().setTop(std::move(window));
+        }
+        return *topWindow;
+    }
+
+    VerticalSplitContainer& TournamentBoardWindow::getTopRightWindow() {
+        static VerticalSplitContainer* topRightWindow;
+        if (!topRightWindow) {
+            auto window = std::make_unique<VerticalSplitContainer>();
+            window->setFixedTopHeight(120.0f);
+            topRightWindow = window.get();
+            getTopWindow().setRight(std::move(window));
+        }
+        return *topRightWindow;
+    }
 
     void TournamentBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
     {
@@ -87,24 +105,24 @@ namespace QaplaWindows
 
     void TournamentBoardWindow::draw()
     {
-        topWindow_->setLeft(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getTopWindow().setLeft(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiBoard_.draw();
         }));
 
-        topRightWindow_->setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getTopRightWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiClock_.draw();
         }));
 
-        topRightWindow_->setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getTopRightWindow().setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiMoveList_.draw();
         }));
 
-        mainWindow_->setBottom(
+        getMainWindow().setBottom(
             std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
                 imGuiEngineList_.draw();
             })
         );
-        mainWindow_->draw();
+        getMainWindow().draw();
     }
 
 }

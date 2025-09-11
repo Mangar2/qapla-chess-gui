@@ -11,6 +11,9 @@
 # VS Code user settings lokal
 .vscode/settings.json
 
+# ImGui settings file
+imgui.ini
+
 # Optional: weitere persönliche Dateien
 .vscode/c_cpp_properties.json
 .vscode/launch.json
@@ -376,3 +379,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+imgui.ini

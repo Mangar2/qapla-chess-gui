@@ -88,6 +88,7 @@ namespace QaplaWindows {
     }
 
     bool ImGuiTable::isRowClicked(size_t index) const {
+        if (!clickable_) return false;
         ImGui::TableSetColumnIndex(0);
         std::string id = "row" + std::to_string(index);
         ImGui::PushID(id.c_str());
@@ -96,6 +97,31 @@ namespace QaplaWindows {
         ImGui::PopID();
         ImGui::SameLine(0.0f, 0.0f);
         return clicked;
+    }
+
+    void ImGuiTable::drawCurrentRow(size_t rowIndex) const {
+        if (!currentRow_.has_value() || currentRow_.value() != rowIndex) {
+            return;
+        }
+        auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
+        auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
+        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
+        ImGui::SetScrollHereY(0.5f);
+    }
+
+    void ImGuiTable::drawRow(size_t rowIndex) const {
+        const auto& row = rows_[rowIndex];
+        for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
+            ImGui::TableSetColumnIndex(static_cast<int>(col));
+            if (columns_[col].customRender) {
+                bool alignRight = columns_[col].alignRight;
+                std::string content = row[col];
+                columns_[col].customRender(content, alignRight);
+                textAligned(content, alignRight);
+            } else {
+                textAligned(row[col], columns_[col].alignRight);
+            }
+        }
     }
 
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) const {
@@ -111,26 +137,13 @@ namespace QaplaWindows {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
             }
             tableHeadersRow();
-            size_t index = 0;
-            for (const auto& row : rows_) {
+            for (size_t index = 0; index < rows_.size(); ++index) {
                 ImGui::TableNextRow();
-                if (clickable_) {
-                    if (isRowClicked(index)) {
-                        clickedRowIndex = index;
-                    }
-				}
-                for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
-                    ImGui::TableSetColumnIndex(static_cast<int>(col));
-                    if (columns_[col].customRender) {
-                        bool alignRight = columns_[col].alignRight;
-                        std::string content = row[col];
-                        columns_[col].customRender(content, alignRight);
-                        textAligned(content, alignRight);
-                    } else {
-                        textAligned(row[col], columns_[col].alignRight);
-                    }
+                if (isRowClicked(index)) {
+                    clickedRowIndex = index;
                 }
-                index++;
+                drawCurrentRow(index);
+                drawRow(index);
             }
 
             ImGui::EndTable();

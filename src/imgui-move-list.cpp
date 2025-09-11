@@ -90,6 +90,11 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
         }
         wtm = !wtm;
     }
+    if (gameRecord.nextMoveIndex() > 0) {
+        table_.setCurrentRow(gameRecord.nextMoveIndex() - 1);
+    } else {
+        table_.setCurrentRow(std::nullopt);
+    }
 
     const auto [cause, result] = gameRecord.getGameResult();
     if (result != GameResult::Unterminated) {

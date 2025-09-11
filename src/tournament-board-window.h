@@ -103,9 +103,10 @@ namespace QaplaWindows
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
 
-        std::unique_ptr<VerticalSplitContainer> mainWindow_;
-        HorizontalSplitContainer* topWindow_;
-        VerticalSplitContainer* topRightWindow_;
+        static VerticalSplitContainer& getMainWindow();
+        static HorizontalSplitContainer& getTopWindow();
+        static VerticalSplitContainer& getTopRightWindow();
+
         ImGuiEngineList imGuiEngineList_;
         ImGuiBoard imGuiBoard_;
         ImGuiClock imGuiClock_;
