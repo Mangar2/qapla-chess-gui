@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <array>
 #include "evalvalue.h"
 #include "move.h"

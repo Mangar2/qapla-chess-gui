@@ -19,7 +19,7 @@
 
 #include "magics.h"
 #include "bitboardmasks.h"
-#include <assert.h>
+#include <cassert>
 
 using namespace QaplaMoveGenerator;
 using namespace QaplaBasics;

@@ -150,7 +150,9 @@ namespace {
     }
 
     int runApp() {
-    
+        //int* ptr = nullptr; // Nullpointer
+        //std::cout << *ptr << std::endl; // Dereferenzierung des Nullpointers (führt zum Absturz)
+        //assert(false);
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::BoardData::instance().setEngines();

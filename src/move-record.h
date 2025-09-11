@@ -21,7 +21,7 @@
 
 #include <string>
 #include <optional>
-#include <assert.h>
+#include <cassert>
 #include <sstream>
 #include <iomanip>
 #include "engine-event.h"

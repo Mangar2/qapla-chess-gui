@@ -25,7 +25,6 @@
 
 #include <string>
 #include <optional>
-#include <assert.h>
 #include <sstream>
 #include <iomanip>
 

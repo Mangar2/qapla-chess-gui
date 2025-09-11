@@ -308,7 +308,6 @@ void GameManagerPool::ensureManagerCount(size_t count) {
 
     for (size_t i = current; i < count; ++i) {
         auto newManager = std::make_unique<GameManager>();
-        GameManager* rawPtr = newManager.get();
         {
             std::lock_guard<std::mutex> lock(taskMutex_);
             managers_.push_back(std::move(newManager));

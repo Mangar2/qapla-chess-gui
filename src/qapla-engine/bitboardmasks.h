@@ -21,7 +21,6 @@
 
 #pragma once 
 
-#include <assert.h>
 #include "types.h"
 #include "evalvalue.h"
 #include "move.h"

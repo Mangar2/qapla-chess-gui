@@ -25,7 +25,7 @@
 #include <chrono>
 #include <thread>
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 #ifdef _WIN32
 #ifndef NOMINMAX

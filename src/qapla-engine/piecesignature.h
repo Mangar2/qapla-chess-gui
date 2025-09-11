@@ -22,7 +22,7 @@
 #pragma once
 
 #include <string.h>
-#include <assert.h>
+#include <cassert>
 #include <array>
 #include <vector>
 #include <tuple>
