@@ -258,23 +258,26 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::drawTabs() {
-        uint32_t index = 0;
-        std::string newSelectedTabId{};
-        for (auto& window : boardWindow_) {
-            index++;
+        int32_t newIndex = -1;
+        for (int32_t index = 0; index < boardWindow_.size(); index++) {
+            auto& window = boardWindow_[index];
             std::string tabName = "Game " + window.id();
             std::string tabId = "###Game" + std::to_string(index);
-            if (!window.isRunning() && tabId != selectedTabId_) continue;
+            if (!window.isRunning() && index != selectedIndex_) continue;
             if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
-                if (window.isActive()) window.draw();
+                if (window.isActive()) {
+                    window.draw();
+                } else if (selectedIndex_ >= 0 && selectedIndex_ < static_cast<int32_t>(boardWindow_.size())) {
+                    boardWindow_[selectedIndex_].draw();
+                }
                 window.setActive(true);
-                newSelectedTabId = tabId;
+                newIndex = index;
                 ImGui::EndTabItem();
             } else {
                 window.setActive(false);
             }
         }
-        selectedTabId_ = newSelectedTabId;
+        selectedIndex_ = newIndex;
     }
 
     void TournamentData::stopPool(bool graceful) {
