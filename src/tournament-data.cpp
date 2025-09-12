@@ -68,7 +68,17 @@ namespace QaplaWindows {
                 { "Game", ImGuiTableColumnFlags_WidthFixed, 50.0f },
                 { "Opening", ImGuiTableColumnFlags_WidthFixed, 50.0f }
             }
-		)
+		),
+        causeTable_(
+            "Causes",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0f },
+                { "WDL", ImGuiTableColumnFlags_WidthFixed, 50.0f },
+                { "Count", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
+                { "Cause", ImGuiTableColumnFlags_WidthFixed, 200.0f }
+            }
+        )
     { 
         runningTable_.setClickable(true);
         init();
@@ -144,15 +154,6 @@ namespace QaplaWindows {
     void TournamentData::populateEloTable() {
         eloTable_.clear();
 
-        struct Scored
-        {
-            std::string engineName; ///< The name of the engine
-            EngineResult result;    ///< The duel result
-            double score;           ///< Normalized score (0.0 to 1.0)
-            double elo;             ///< Computed Elo rating
-            double total;           ///< Total number of games played
-            int error;              ///< Error margin for the Elo rating
-        };
         for (auto scored : result_->getScoredEngines()) {
             std::vector<std::string> row;
             row.push_back(scored.engineName);
@@ -166,6 +167,34 @@ namespace QaplaWindows {
             row.push_back(std::format("{:.0f}", scored.total));
             eloTable_.push(row);
 		}
+    }
+
+    static void addRow(ImGuiTable& table, const std::string& name, const std::string& wdl, const std::string& cause, int count) {
+        if (count == 0) return;
+        std::vector<std::string> row;
+        row.push_back(name);
+        row.push_back(wdl);
+        row.push_back(std::to_string(count));
+        row.push_back(cause);
+        table.push(row);
+    }
+
+    void TournamentData::populateCauseTable() {
+        for (auto scored : result_->getScoredEngines()) {
+            auto aggregate = scored.result.aggregate(scored.engineName);
+            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
+                const auto& stat = aggregate.causeStats[index];
+                addRow(causeTable_, scored.engineName, "win", to_string(static_cast<GameEndCause>(index)), stat.win);
+            }
+            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
+                const auto& stat = aggregate.causeStats[index];
+                addRow(causeTable_, scored.engineName, "draw", to_string(static_cast<GameEndCause>(index)), stat.draw);
+            }
+            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
+                const auto& stat = aggregate.causeStats[index];
+                addRow(causeTable_, scored.engineName, "loss", to_string(static_cast<GameEndCause>(index)), stat.loss);
+            }
+        }
     }
 
     void TournamentData::populateRunningTable() {
@@ -202,6 +231,8 @@ namespace QaplaWindows {
             }
         }
 	}
+
+
 
     void TournamentData::populateViews() {
         if (tournament_) {
@@ -248,6 +279,7 @@ namespace QaplaWindows {
             if (result_->poll(*tournament_, config_->averageElo)) {
                 QaplaConfiguration::Configuration::instance().setModified();
                 populateEloTable();
+                populateCauseTable();
             }
             populateRunningTable();
             populateViews();
@@ -267,12 +299,19 @@ namespace QaplaWindows {
     }
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
+        if (eloTable_.size() == 0) return std::nullopt;
         return eloTable_.draw(size, true);
     }
 
     std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) const {
+        if (runningTable_.size() == 0) return std::nullopt;
         return runningTable_.draw(size, true);
 	}
+
+    void TournamentData::drawCauseTable(const ImVec2& size) const {
+        if (causeTable_.size() == 0) return;
+        causeTable_.draw(size, true);
+    }
 
     void TournamentData::drawTabs() {
         int32_t newIndex = -1;

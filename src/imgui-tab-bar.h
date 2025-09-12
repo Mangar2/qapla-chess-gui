@@ -55,20 +55,17 @@ namespace QaplaWindows {
         }
 
         void draw() override {
-            if (ImGui::BeginChild("##TabBarChild", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None)) {
-                if (ImGui::BeginTabBar("QaplaTabBar")) {
-                    for (auto& tab : tabs) {
-                        if (ImGui::BeginTabItem(tab.name.c_str())) {
-                            tab.window->draw();
-                            ImGui::EndTabItem();
-                        }
-                        if (dynamicTabsCallback) {
-                            dynamicTabsCallback();
-                        }
+            if (ImGui::BeginTabBar("QaplaTabBar")) {
+                for (auto& tab : tabs) {
+                    if (ImGui::BeginTabItem(tab.name.c_str())) {
+                        tab.window->draw();
+                        ImGui::EndTabItem();
                     }
-                    ImGui::EndTabBar();
+                    if (dynamicTabsCallback) {
+                        dynamicTabsCallback();
+                    }
                 }
-                ImGui::EndChild();
+                ImGui::EndTabBar();
             }
         }
 

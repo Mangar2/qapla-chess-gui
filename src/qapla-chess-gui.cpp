@@ -138,7 +138,7 @@ namespace {
 		taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
         taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
 
-        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(ImGuiWindowFlags_None);
 		mainContainer->setRight(std::move(boardTabBar));
 		mainContainer->setLeft(std::move(taskTabBar));
 

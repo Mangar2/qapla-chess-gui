@@ -33,7 +33,10 @@ namespace QaplaWindows {
     class HorizontalSplitContainer : public EmbeddedWindow {
     public:
 
-        HorizontalSplitContainer() {
+        HorizontalSplitContainer(ImGuiWindowFlags left = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
+            ImGuiWindowFlags right = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse) {
+            leftFlags_ = left;
+            rightFlags_ = right;
             leftWidth_ = 400.0f;
         }
 
@@ -83,8 +86,7 @@ namespace QaplaWindows {
 
             
             ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+                ImGuiChildFlags_None, leftFlags_);
             try {
                 if (leftWindow_) leftWindow_->draw();
 			}
@@ -104,8 +106,7 @@ namespace QaplaWindows {
             rightWidth_ = std::max(avail.x - ImGui::GetCursorPosX(), minSize_);
 
             ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth_, height),
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+                ImGuiChildFlags_None, rightFlags_);
             try {
                 if (rightWindow_) rightWindow_->draw();
             }
@@ -149,6 +150,9 @@ namespace QaplaWindows {
         float rightPresetWidth_ = 0.0f;
         float leftPresetWidth_ = 0.0f;
         float availX_ = 0.0f;
+
+        ImGuiWindowFlags leftFlags_ = ImGuiWindowFlags_None;
+        ImGuiWindowFlags rightFlags_ = ImGuiWindowFlags_None;
     };
 
 } // namespace QaplaWindows

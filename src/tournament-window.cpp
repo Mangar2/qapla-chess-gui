@@ -345,11 +345,11 @@ void TournamentWindow::draw() {
         QaplaConfiguration::Configuration::instance().setModified();
     }
     ImVec2 size = ImGui::GetContentRegionAvail();
-	constexpr float heightRatio = 0.4f;
     /* auto clickedRow = */
     ImGui::Indent(10.0f);
-    TournamentData::instance().drawEloTable(ImVec2(size.x, size.y * heightRatio));
-    TournamentData::instance().drawRunningTable(ImGui::GetContentRegionAvail());
+    TournamentData::instance().drawRunningTable(ImVec2(size.x, 600.0f));
+    TournamentData::instance().drawEloTable(ImVec2(size.x, 400.0f));
+    TournamentData::instance().drawCauseTable(ImVec2(size.x, 400.0f));
     ImGui::Unindent(10.0f);
 }
 

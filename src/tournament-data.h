@@ -116,6 +116,12 @@ namespace QaplaWindows {
         std::optional<size_t> drawRunningTable(const ImVec2& size) const;
 
         /**
+         * @brief Draws the table displaying the causes for game termination.
+         * @param size Size of the table to draw.
+         */
+        void drawCauseTable(const ImVec2& size) const;
+
+        /**
          * @brief Draws the tournament tabs showing boards for all running games.
          */
         void drawTabs();
@@ -330,6 +336,7 @@ namespace QaplaWindows {
 
         void populateEloTable();
 		void populateRunningTable();
+        void populateCauseTable();
 
         void populateViews();
 
@@ -351,6 +358,7 @@ namespace QaplaWindows {
 
         ImGuiTable eloTable_;
         ImGuiTable runningTable_;
+        ImGuiTable causeTable_;
 
 
         int32_t selectedIndex_ = 0;
