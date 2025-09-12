@@ -20,11 +20,11 @@
 #pragma once
 
 #include "epd-data.h"
-#include "configuration.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/engine-record.h"
 #include "qapla-tester/time-control.h"
+#include "qapla-tester/ini-file.h"
 
 #include <memory>
 #include <optional>
@@ -254,7 +254,7 @@ namespace QaplaWindows
 		 * @brief Loads a board engine configuration from a key-value map.
 		 * @param keyValueMap A map containing key-value pairs representing the engine configuration.
 		 */
-		void loadBoardEngine(const QaplaConfiguration::ConfigMap &keyValueMap);
+		void loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
 
 	private:
 		EpdData epdData_;

@@ -67,20 +67,17 @@ void BoardData::saveConfig(std::ostream &out) const
 	}
 }
 
-void BoardData::loadBoardEngine(const QaplaConfiguration::ConfigMap &keyValueMap)
+void BoardData::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
 {
-    std::optional<std::string> name;
+    std::optional<std::string> name = section.getValue("name");
+	std::optional<std::string> indexStr = section.getValue("index");
     std::optional<size_t> index;
 
-    for (const auto& [key, value] : keyValueMap) {
-        if (key == "name") {
-            name = value;
-        } else if (key == "index") {
-            try {
-                index = std::stoul(value);
-            } catch (const std::exception& e) {
-                index = std::nullopt; 
-            }
+    if (indexStr) {
+        try {
+            index = std::stoul(*indexStr);
+        } catch (const std::exception& e) {
+            index = std::nullopt; 
         }
     }
 

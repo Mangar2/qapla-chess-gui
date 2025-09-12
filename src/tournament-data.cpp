@@ -332,7 +332,7 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::loadTournamentEngine(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadTournamentEngine(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         TournamentEngineConfig engine;
         std::string name;
         for (const auto& [key, value] : keyValue) {
@@ -362,7 +362,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadEachEngineConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "tc") {
                 eachEngineConfig_.tc = value;
@@ -411,7 +411,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadTournamentConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "event") {
                 config_->event = value;
@@ -454,7 +454,7 @@ namespace QaplaWindows {
 		out << "\n";
 	}
 
-    void TournamentData::loadOpenings(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadOpenings(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (auto [key, value] : keyValue) {
             if (key == "file") {
                 config_->openings.file = value;
@@ -494,7 +494,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadPgnConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "file") {
                 pgnConfig_.file = value;
@@ -552,7 +552,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadDrawAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "minFullMoves") {
                 drawConfig_.minFullMoves = std::stoul(value);
@@ -578,7 +578,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadResignAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue) {
+    void TournamentData::loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "requiredConsecutiveMoves") {
                 resignConfig_.requiredConsecutiveMoves = std::stoul(value);
@@ -603,6 +603,12 @@ namespace QaplaWindows {
         }
         return valid;
 	}
+
+    void TournamentData::saveTournamentResults(std::ostream& out, const std::string& header) const {
+        if (tournament_) {
+            tournament_->save(out, header);
+        }
+    }
 
 }
 

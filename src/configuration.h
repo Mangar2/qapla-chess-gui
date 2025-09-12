@@ -19,8 +19,11 @@
 
 #pragma once
 
-#include "qapla-tester/time-control.h"
 #include "engine-capabilities.h"
+
+#include "qapla-tester/time-control.h"
+#include "qapla-tester/ini-file.h"
+
 #include <memory>
 #include <array>
 #include <unordered_map>
@@ -35,9 +38,7 @@ namespace QaplaConfiguration {
         NodesPerMove = 4
 	};
 
-	using ConfigMap = std::unordered_map<std::string, std::string>;
-
-    /**
+	/**
      * @brief Represents a collection of TimeControl settings for different types.
      */
     struct TimeControlSettings {
@@ -149,14 +150,6 @@ namespace QaplaConfiguration {
 		uint64_t lastSaveTimestamp_ = 0;
 
         /**
-         * @brief Writes a map in the format a=b\n to an existing ofstream.
-         * @param outFile The already opened ofstream to which the map will be written.
-         * @param map The map containing key-value pairs to be saved.
-         * @throws std::runtime_error If an error occurs during writing.
-         */
-        void saveMap(std::ofstream& outFile, const ConfigMap& map);
-
-        /**
          * @brief Placeholder for the actual save logic.
 		 * @param out The output stream to write the configuration data to.
          */
@@ -169,24 +162,23 @@ namespace QaplaConfiguration {
 
         /**
         * @brief Processes a specific section from the configuration file.
-        * @param section The name of the section being processed.
-        * @param keyValueMap A map containing key-value pairs for the section.
+        * @param section The section being processed.
         * @throws std::runtime_error If an error occurs while processing the section.
         */
-        void processSection(const std::string& section, const ConfigMap& keyValueMap);
+        void processSection(const QaplaHelpers::IniFile::Section& section);
 
         /**
          * @brief Parses the "timecontrol" section and updates the corresponding TimeControl settings.
-         * @param keyValueMap A map containing key-value pairs for the "timecontrol" section.
+         * @param section The section being processed.
          * @throws std::runtime_error If an error occurs while parsing the timecontrol section.
          */
-        void parseTimeControl(const ConfigMap& keyValueMap);
+        void parseTimeControl(const QaplaHelpers::IniFile::Section& section);
 
         /**
          * @brief Parses the "board" section and updates the time control settings.
          * @param keyValueMap A map containing key-value pairs for the "board" section.
 		 */
-        void parseBoard(const ConfigMap& keyValueMap);
+        void parseBoard(const QaplaHelpers::IniFile::Section& section);
 
         /**
          * @brief Speichert die TimeControl-Einstellungen in den Abschnitt [timecontrol] der Konfigurationsdatei.

@@ -17,12 +17,14 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include <random>
-#include <iomanip>
+#include "game-result.h"
 #include "pair-tournament.h"
 #include "game-manager-pool.h"
 #include "pgn-io.h"
 #include "string-helper.h"
+
+#include <random>
+#include <iomanip>
 
 void PairTournament::initialize(const EngineConfig& engineA, const EngineConfig& engineB,
 	const PairTournamentConfig& config, std::shared_ptr<StartPositions> startPositions) {
@@ -289,22 +291,21 @@ void PairTournament::fromString(const std::string& line) {
 
 void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& prefix) const {
     QaplaHelpers::IniFile::Section section;
+    if (results_.empty()) return;
+
     section.name = prefix + "round";
-    section.entries.push_back({ "round", std::to_string(config_.round + 1) });
-    section.entries.push_back({ "white", getEngineA().getName() });
-    section.entries.push_back({ "black", getEngineB().getName() });
-    section.entries.push_back({ "games", getResultSequenceEngineView() });
+    section.addEntry("round", std::to_string(config_.round + 1));
+    section.addEntry("engineA", getEngineA().getName());
+    section.addEntry("engineB", getEngineB().getName());
+
     const auto& stats = duelResult_.causeStats;
-    if (results_.empty()) {
-        QaplaHelpers::IniFile::saveSection(out, section);
-        return;
-    }
+    section.addEntry("games", getResultSequenceEngineView());
 
     auto addStats = [&](const std::string label, auto accessor) {
         for (size_t i = 0; i < stats.size(); ++i) {
             int value = accessor(stats[i]);
             if (value > 0) {
-                section.entries.push_back({ label + "." + to_string(static_cast<GameEndCause>(i)), std::to_string(value) });
+                section.addEntry(label + "." + to_string(static_cast<GameEndCause>(i)), std::to_string(value));
             }
         }
         };

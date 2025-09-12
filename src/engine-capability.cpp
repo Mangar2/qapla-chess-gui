@@ -21,6 +21,7 @@
 
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/string-helper.h"
+#include "qapla-tester/ini-file.h"
 
 #include <sstream>
 #include <stdexcept>
@@ -208,10 +209,10 @@ void EngineCapability::save(std::ostream& out) const {
     out << "\n";
 }
 
-EngineCapability EngineCapability::createFromKeyValueMap(const std::unordered_map<std::string, std::string>& keyValueMap) {
+EngineCapability EngineCapability::createFromSection(const QaplaHelpers::IniFile::Section& section) {
     EngineCapability capability;
 
-    for (const auto& [key, value] : keyValueMap) {
+    for (const auto& [key, value] : section.entries) {
         if (key == "path") {
             if (value.empty()) {
                 throw std::invalid_argument("The 'path' value cannot be empty.");

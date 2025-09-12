@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include "qapla-tester/engine-option.h"
+#include "qapla-tester/ini-file.h"
 
 namespace QaplaConfiguration {
 
@@ -123,12 +124,12 @@ namespace QaplaConfiguration {
       void save(std::ostream& out) const;
 
       /**
-       * @brief Creates an EngineCapability instance from a key-value map.
-       * @param keyValueMap An unordered map containing key-value pairs to initialize the properties.
-       * @return An EngineCapability instance initialized with the provided key-value pairs.
-       * @throws std::invalid_argument if the command line (path) or protocol is missing or invalid.
+       * @brief Create a From Section object
+       * 
+       * @param section 
+       * @return EngineCapability 
        */
-      static EngineCapability createFromKeyValueMap (const std::unordered_map<std::string, std::string>& keyValueMap);
+      static EngineCapability createFromSection(const QaplaHelpers::IniFile::Section& section);
 
   private:
       std::string path_; ///< Path to the engine executable.

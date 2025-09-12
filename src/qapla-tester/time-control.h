@@ -19,6 +19,7 @@
 #pragma once
 
 #include "string-helper.h"
+#include "ini-file.h"
 
 #include <optional>
 #include <vector>
@@ -215,31 +216,33 @@ public:
         setInfinite(false);
     }
 
-    std::unordered_map<std::string, std::string> toMap() const {
-		std::unordered_map<std::string, std::string> result;
+    QaplaHelpers::IniFile::Section toSection(const std::string& name) const {
+        QaplaHelpers::IniFile::Section section;
+        section.name = "timecontrol";
+        section.addEntry("name", name);
         if (movetimeMs_) {
-			result.emplace("movetime", std::to_string(*movetimeMs_));
+            section.addEntry("movetime", std::to_string(*movetimeMs_));
         }
         if (depth_) {
-			result.emplace("depth", std::to_string(*depth_));
+            section.addEntry("depth", std::to_string(*depth_));
         }
         if (nodes_) {
-			result.emplace("nodes", std::to_string(*nodes_));
+            section.addEntry("nodes", std::to_string(*nodes_));
         }
         if (mateIn_) {
-			result.emplace("matein", std::to_string(*mateIn_));
+            section.addEntry("matein", std::to_string(*mateIn_));
         }
         if (infinite_) {
-			result.emplace("infinite", (*infinite_ ? "true" : "false"));
+            section.addEntry("infinite", (*infinite_ ? "true" : "false"));
         }
         if (!timeSegments_.empty()) {
-			result.emplace("tc", toPgnTimeControlString());
-		}
-		return result;
+            section.addEntry("tc", toPgnTimeControlString());
+        }
+        return section;
     }
 
-    void fromMap(const std::unordered_map<std::string, std::string>& map) {
-        for (const auto& [key, value] : map) {
+    void fromSection(const QaplaHelpers::IniFile::Section& section) {
+        for (const auto& [key, value] : section.entries) {
             if (key == "movetime") {
                 movetimeMs_ = std::stoull(value);
             } else if (key == "depth") {

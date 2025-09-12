@@ -27,6 +27,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <variant>
+#include "ini-file.h"
 #include "string-helper.h"
 #include "time-control.h"
 #include "engine-option.h"
@@ -213,7 +214,6 @@ public:
      * @return Map of key-value string pairs relevant for ID disambiguation.
      */
     std::unordered_map<std::string, std::string> toDisambiguationMap() const;
-
 
     /**
 	 * @brief Filters the current options based on the available options.

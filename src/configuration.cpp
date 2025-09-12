@@ -23,6 +23,7 @@
 
 #include "qapla-tester/logger.h"
 #include "qapla-tester/string-helper.h"
+#include "qapla-tester/ini-file.h"
 #include "qapla-tester/timer.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/engine-worker-factory.h"
@@ -153,19 +154,11 @@ void Configuration::saveData(std::ofstream& out) {
 
 void Configuration::loadData(std::ifstream& in) {
     try {
+        auto sectionList = QaplaHelpers::IniFile::load(in);
         std::string line;
 
-        while (auto sectionHeader = QaplaHelpers::readSectionHeader(in)) {
-            ConfigMap keyValueMap;
-            while (in && in.peek() != '[' && std::getline(in, line)) {
-				line = QaplaHelpers::trim(line);
-                if (line.empty() || line[0] == '#' || line[0] == ';') continue;
-                auto keyValue = QaplaHelpers::parseKeyValue(line);
-                if (keyValue) {
-                    keyValueMap[keyValue->first] = keyValue->second;
-                }
-            }
-            processSection(*sectionHeader, keyValueMap);
+        for (const auto& section : sectionList) {
+            processSection(section);
         }
     }
     catch (const std::exception& e) {
@@ -181,112 +174,94 @@ void Configuration::saveTimeControls(std::ofstream& out) {
 		out << "[board]\n";
 		out << "timecontrol=" << timeControlSettings_.getSelectionString() << "\n";
         out << "\n";
-        out << "[timecontrol]\n";
-        out << "name=BlitzTime\n";
-        saveMap(out, timeControlSettings_.blitzTime.toMap());
-        out << "\n[timecontrol]\n";
-        out << "name=TournamentTime\n";
-		saveMap(out, timeControlSettings_.tournamentTime.toMap());
-        out << "\n[timecontrol]\n";
-        out << "name=TimePerMove\n";
-		saveMap(out, timeControlSettings_.timePerMove.toMap());
-        out << "\n[timecontrol]\n";
-        out << "name=FixedDepth\n";
-		saveMap(out, timeControlSettings_.fixedDepth.toMap());
-        out << "\n[timecontrol]\n";
-        out << "name=NodesPerMoves\n";
-		saveMap(out, timeControlSettings_.nodesPerMove.toMap());
-        out << "\n";
+
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.blitzTime.toSection("BlitzTime"));
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.tournamentTime.toSection("TournamentTime"));
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.timePerMove.toSection("TimePerMove"));
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.fixedDepth.toSection("FixedDepth"));
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.nodesPerMove.toSection("NodesPerMoves"));
+
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error in saveTimeControls: ") + e.what());
     }
 }
 
-void Configuration::saveMap(std::ofstream& outFile, const ConfigMap& map) {
+void Configuration::processSection(const QaplaHelpers::IniFile::Section& section) {
+    const auto& sectionName = section.name;
+    const auto& entries = section.entries;
     try {
-        for (const auto& [key, value] : map) {
-            outFile << key << "=" << value << "\n";
+        if (sectionName == "timecontrol") {
+            parseTimeControl(section);
         }
-    }
-    catch (const std::exception& e) {
-        throw std::runtime_error(std::string("Error in saveMap: ") + e.what());
-    }
-}
-
-void Configuration::processSection(const std::string& section, const ConfigMap& keyValueMap) {
-    try {
-        if (section == "timecontrol") {
-            parseTimeControl(keyValueMap);
+        else if (sectionName == "board") {
+            parseBoard(section);
         }
-        else if (section == "board") {
-            parseBoard(keyValueMap);
+        else if (sectionName == "boardengine") {
+            QaplaWindows::BoardData::instance().loadBoardEngine(section);
         }
-        else if (section == "boardengine") {
-            QaplaWindows::BoardData::instance().loadBoardEngine(keyValueMap);
+        else if (sectionName == "enginecapability") {
+            engineCapabilities_.addOrReplace(section);
         }
-        else if (section == "enginecapability") {
-            engineCapabilities_.addOrReplace(keyValueMap);
-        }
-        else if (section == "engine") {
+        else if (sectionName == "engine") {
             EngineConfig config;
-            config.setValues(keyValueMap);
+            config.setValues(section.getUnorderedMap());
             EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
         }
-        else if (section == "tournamentopening") {
-            QaplaWindows::TournamentData::instance().loadOpenings(keyValueMap);
-        } 
-        else if (section == "tournament") {
-			QaplaWindows::TournamentData::instance().loadTournamentConfig(keyValueMap);
-		}
-        else if (section == "tournamenteachengine") {
-            QaplaWindows::TournamentData::instance().loadEachEngineConfig(keyValueMap);
+        else if (sectionName == "tournamentopening") {
+            QaplaWindows::TournamentData::instance().loadOpenings(entries);
         }
-        else if (section == "tournamentengine") {
-            QaplaWindows::TournamentData::instance().loadTournamentEngine(keyValueMap);
+        else if (sectionName == "tournament") {
+            QaplaWindows::TournamentData::instance().loadTournamentConfig(entries);
         }
-        else if (section == "tournamentpgnoutput") {
-            QaplaWindows::TournamentData::instance().loadPgnConfig(keyValueMap);
+        else if (sectionName == "tournamenteachengine") {
+            QaplaWindows::TournamentData::instance().loadEachEngineConfig(entries);
         }
-        else if (section == "tournamentdrawadjudication") {
-            QaplaWindows::TournamentData::instance().loadDrawAdjudicationConfig(keyValueMap);
+        else if (sectionName == "tournamentengine") {
+            QaplaWindows::TournamentData::instance().loadTournamentEngine(entries);
         }
-        else if (section == "tournamentresignadjudication") {
-            QaplaWindows::TournamentData::instance().loadResignAdjudicationConfig(keyValueMap);
+        else if (sectionName == "tournamentpgnoutput") {
+            QaplaWindows::TournamentData::instance().loadPgnConfig(entries);
+        }
+        else if (sectionName == "tournamentdrawadjudication") {
+            QaplaWindows::TournamentData::instance().loadDrawAdjudicationConfig(entries);
+        }
+        else if (sectionName == "tournamentresignadjudication") {
+            QaplaWindows::TournamentData::instance().loadResignAdjudicationConfig(entries);
         }
         else {
-            Logger::testLogger().log("Unknown section: " + section, TraceLevel::warning);
+            Logger::testLogger().log("Unknown section: " + sectionName, TraceLevel::warning);
         }
     }
     catch (const std::exception& e) {
-        throw std::runtime_error("Error processing section [" + section + "]: " + e.what());
+        throw std::runtime_error("Error processing section [" + sectionName + "]: " + e.what());
     }
 }
 
-void Configuration::parseTimeControl(const ConfigMap& keyValueMap) {
+void Configuration::parseTimeControl(const QaplaHelpers::IniFile::Section& section) {
     try {
-        auto it = keyValueMap.find("name");
-        if (it == keyValueMap.end()) {
+        auto nameOpt = section.getValue("name");
+        if (!nameOpt) {
 			Logger::testLogger().log("Missing 'name' in timecontrol section", TraceLevel::error);
             return;
         }
 
-        const std::string& name = it->second;
+        const std::string& name = *nameOpt;
 
         if (name == "BlitzTime") {
-            timeControlSettings_.blitzTime.fromMap(keyValueMap);
+            timeControlSettings_.blitzTime.fromSection(section);
         }
         else if (name == "TournamentTime") {
-            timeControlSettings_.tournamentTime.fromMap(keyValueMap);
+            timeControlSettings_.tournamentTime.fromSection(section);
         }
         else if (name == "TimePerMove") {
-            timeControlSettings_.timePerMove.fromMap(keyValueMap);
+            timeControlSettings_.timePerMove.fromSection(section);
         }
         else if (name == "FixedDepth") {
-            timeControlSettings_.fixedDepth.fromMap(keyValueMap);
+            timeControlSettings_.fixedDepth.fromSection(section);
         }
         else if (name == "NodesPerMove") {
-            timeControlSettings_.nodesPerMove.fromMap(keyValueMap);
+            timeControlSettings_.nodesPerMove.fromSection(section);
         }
         else {
             Logger::testLogger().log("Unknown timecontrol name: " + name, TraceLevel::warning);
@@ -297,14 +272,13 @@ void Configuration::parseTimeControl(const ConfigMap& keyValueMap) {
     }
 }
 
-void Configuration::parseBoard(const ConfigMap& keyValueMap) {
+void Configuration::parseBoard(const QaplaHelpers::IniFile::Section& section) {
     try {
-        auto it = keyValueMap.find("timecontrol");
-        if (it == keyValueMap.end()) {
+        auto timeControlOpt = section.getValue("timecontrol");
+        if (!timeControlOpt) {
             return;
         }
-        const std::string& timeControl = it->second;
-        timeControlSettings_.setSelectionFromString(timeControl);
+        timeControlSettings_.setSelectionFromString(*timeControlOpt);
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error parsing board section: ") + e.what());

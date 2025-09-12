@@ -20,6 +20,8 @@
 #pragma once
 #include "engine-capability.h"
 
+#include "qapla-tester/ini-file.h"
+
 #include <unordered_map>
 #include <string>
 #include <ostream>
@@ -57,8 +59,8 @@ namespace QaplaConfiguration {
          * @param keyValueMap A map containing key-value pairs to initialize the EngineCapability.
          * @throws std::invalid_argument if the map is invalid or missing required keys.
          */
-        void addOrReplace(const std::unordered_map<std::string, std::string>& keyValueMap) {
-            EngineCapability capability = EngineCapability::createFromKeyValueMap(keyValueMap);
+        void addOrReplace(const QaplaHelpers::IniFile::Section& section) {
+            EngineCapability capability = EngineCapability::createFromSection(section);
             addOrReplace(capability);
         }
 

@@ -22,8 +22,8 @@
 
 #include "tournament-board-window.h"
 #include "imgui-table.h"
-#include "configuration.h"
 
+#include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/pgn-io.h"
@@ -179,6 +179,7 @@ namespace QaplaWindows {
             savePgnConfig(out, "tournamentpgnoutput");
             saveDrawAdjudicationConfig(out, "tournamentdrawadjudication");
             saveResignAdjudicationConfig(out, "tournamentresignadjudication");
+            saveTournamentResults(out, "tournament");
         }
 
         /**
@@ -186,45 +187,45 @@ namespace QaplaWindows {
          * @param keyValue A map containing opening keys and their corresponding values.
          * @details This method assigns the values from the map to the appropriate fields in the tournament openings.
 		 */
-        void loadOpenings(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadOpenings(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads the tournament configuration from a key-value mapping.
          * @param keyValue A map containing configuration keys and their corresponding values.
          * @details This method assigns the values from the map to the appropriate fields in the tournament configuration.
          */
-        void loadTournamentConfig(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads the configuration for each engine from a key-value mapping.
          * @param keyValue A map containing configuration keys and their corresponding values.
          */
-        void loadEachEngineConfig(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads a tournament engine from a vector of key-value mappings.
          * @param keyValue A map containing engine configuration keys and their corresponding values.
          * @details This method creates a TournamentEngineConfig instance from the provided key-value pairs
          */
-        void loadTournamentEngine(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadTournamentEngine(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads the PGN configuration from a key-value mapping.
          * @param keyValue A map containing PGN configuration keys and their corresponding values.
          */
-        void loadPgnConfig(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads the draw adjudication configuration from a key-value mapping.
          * @param keyValue A map containing draw adjudication configuration keys and their corresponding values.
          */
-        void loadDrawAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         /**
          * @brief Loads the resign adjudication configuration from a key-value mapping.
          * @param keyValue A map containing resign adjudication configuration keys and their corresponding values.
          */
-        void loadResignAdjudicationConfig(const QaplaConfiguration::ConfigMap& keyValue);
+        void loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
 
         static TournamentData& instance() {
             static TournamentData instance;
@@ -308,6 +309,13 @@ namespace QaplaWindows {
          * @param header The header name for the configuration section.
          */
         void saveResignAdjudicationConfig(std::ostream& out, const std::string& header) const;
+
+        /**
+         * @brief Saves the tournament results to a stream.
+         * @param out The output stream to write the results to.
+         * @param header The header name for the results section.
+         */
+        void saveTournamentResults(std::ostream& out, const std::string& header) const;
 
         void populateEloTable();
 		void populateRunningTable();

@@ -24,6 +24,7 @@
 #include <vector>
 #include <optional>
 #include <utility>
+#include <unordered_map>
 
 #include "string-helper.h"
 
@@ -31,13 +32,29 @@ namespace QaplaHelpers {
 
     class IniFile {
         public:
-            struct KeyValue {
-                std::string key;
-                std::string value;
-            };
+            using KeyValueMap = std::vector<std::pair<std::string, std::string>>;
             struct Section {
                 std::string name;
-                std::vector<KeyValue> entries;
+                KeyValueMap entries;
+                void addEntry(const std::string& key, const std::string& value) {
+                    entries.push_back({ key, value });
+                }   
+                void insertFirst(const std::string& key, const std::string& value) {
+                    entries.insert(entries.begin(), { key, value });
+                }
+                std::optional<std::string> getValue(const std::string& key) const {
+                    for (const auto& [k, v] : entries) {
+                        if (k == key) return v;
+                    }
+                    return std::nullopt;
+                }
+                std::unordered_map<std::string, std::string> getUnorderedMap() const {
+                    std::unordered_map<std::string, std::string> map;
+                    for (const auto& [k, v] : entries) {
+                        map[k] = v;
+                    }
+                    return map;
+                }
             };
             using SectionList = std::vector<Section>;
 
@@ -64,7 +81,7 @@ namespace QaplaHelpers {
                     } else {
                         auto keyValue = QaplaHelpers::parseKeyValue(line);
                         if (keyValue && currentSection) {
-                            currentSection->entries.push_back(KeyValue{ keyValue->first, keyValue->second });
+                            currentSection->addEntry(keyValue->first, keyValue->second);
                         }
                     }
                 }
@@ -82,8 +99,8 @@ namespace QaplaHelpers {
              */
             static void saveSection(std::ostream& out, const Section& section) {
                 out << "[" << section.name << "]\n";
-                for (const auto& entry : section.entries) {
-                    out << entry.key << " = " << entry.value << "\n";
+                for (const auto& [key, value] : section.entries) {
+                    out << key << " = " << value << "\n";
                 }
                 out << "\n";
             }
