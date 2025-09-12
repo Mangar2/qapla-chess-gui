@@ -23,6 +23,7 @@
 #include "engine-config.h"
 #include "time-control.h"
 #include "input-handler.h"
+#include "ini-file.h"
 #include <vector>
 #include <memory>
 #include <ostream>
@@ -82,27 +83,36 @@ public:
 
     /**
      * @brief Saves the state of all pairings to a stream.
+     * @param out Output stream to write to.
+     * @param prefix Optional prefix for section names (e.g., "tournament1.").
      */
-    void save(std::ostream& out) const;
-	void save(const std::string& filename) const {
+    void save(std::ostream& out, const std::string& prefix = "") const;
+
+    /**
+     * @brief Saves the state of all pairings to a file.
+     * @param filename Path to the output file.
+     * @param prefix Optional prefix for section names (e.g., "tournament1.").
+     */
+	void save(const std::string& filename, const std::string& prefix = "") const {
 		std::ofstream out(filename);
 		if (!out) {
 			throw std::runtime_error("Failed to open file for saving tournament results: " + filename);
 		}
-		save(out);
+		save(out, prefix);
 	}
 
     /**
      * @brief Loads the state of all pairings from a stream.
      */
-    void load(std::istream& in);
+    void load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix = "");
 	void load(const std::string& filename) {
 		std::ifstream in(filename);
 		if (!in) {
             // If the file doesn't exist, we simply return without loading anything.
 			return; 
 		}
-		load(in);
+        auto sections = QaplaHelpers::IniFile::load(in);
+		load(sections);
 	}
 
     /**
@@ -170,12 +180,11 @@ private:
 
     /**
      * @brief Parses a single round block from the input and updates results if engines are valid.
-     * @param in Stream positioned after the current round header.
-     * @param roundHeader The header line (e.g., "[round 1: EngineA vs EngineB]").
+     * @param section The INI file section representing the round.
      * @param validEngines Set of engine names that are part of this tournament.
      * @return The next round header line or empty if end of input is reached.
      */
-	std::string loadRound(std::istream& in, const std::string& roundHeader,
+	void loadRound(const QaplaHelpers::IniFile::Section& section,
 		const std::unordered_set<std::string>& validEngines);
 
     void createGauntletPairings(const std::vector<EngineConfig>& engines,

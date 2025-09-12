@@ -229,9 +229,9 @@ protected:
 		}
 	}
 	const std::optional<EngineOption> getSupportedOption(const std::string& name) const {
-        auto key = to_lowercase(name);
+        auto key = QaplaHelpers::to_lowercase(name);
 		for (auto& option : supportedOptions_) {
-			if (to_lowercase(option.name) == key) {
+			if (QaplaHelpers::to_lowercase(option.name) == key) {
 				return option;
 			}
 		}

@@ -146,7 +146,7 @@ std::vector<std::string> ImGuiEngineList::mkTableLine(ImGuiTable* table, const S
         } 
         std::vector<std::string> row = {
             info.depth ? std::to_string(*info.depth) : "-",
-            info.timeMs ? formatMs(*info.timeMs, 0) : "-",
+            info.timeMs ? QaplaHelpers::formatMs(*info.timeMs, 0) : "-",
             info.nodes ? std::format("{:L}", *info.nodes) : "-",
             npsStr,
             info.tbhits ? std::format("{:L}", *info.tbhits) : "-",

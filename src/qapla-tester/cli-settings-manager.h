@@ -85,7 +85,7 @@ namespace CliSettings {
          */
         template<typename T>
         T get(const std::string& name) const {
-            std::string key = to_lowercase(name);
+            std::string key = QaplaHelpers::to_lowercase(name);
             auto it = values_.find(key);
 			auto& keyDefs = definition_.keys;
             if (it == values_.end()) {
@@ -198,7 +198,7 @@ namespace CliSettings {
          */
         template<typename T>
         static T get(const std::string& name) {
-            std::string key = to_lowercase(name);
+            std::string key = QaplaHelpers::to_lowercase(name);
             auto it = values_.find(key);
             if (it == values_.end()) {
                 auto defIt = definitions_.find(key);

@@ -27,7 +27,7 @@
 std::unordered_map<std::string, std::string> EngineConfig::getOptions(const EngineOptions availableOptions) const {
     std::unordered_map<std::string, std::string> filteredOptions;
     for (const auto& option : availableOptions) {
-		auto it = optionValues_.find(to_lowercase(option.name));
+		auto it = optionValues_.find(QaplaHelpers::to_lowercase(option.name));
         if (it != optionValues_.end()) {
             filteredOptions[option.name] = it->second.value;
         }
@@ -64,7 +64,7 @@ void EngineConfig::setTimeControl(const std::string& tc) {
 
 void EngineConfig::setTraceLevel(const std::string& level) {
 
-    const auto lowercaseLevel = to_lowercase(level);
+    const auto lowercaseLevel = QaplaHelpers::to_lowercase(level);
 	if (lowercaseLevel == "none") {
 		traceLevel_ = TraceLevel::none;
 	}
@@ -118,8 +118,8 @@ void EngineConfig::setCommandLineOptions(const ValueMap& values, bool update) {
 }
 
 void EngineConfig::warnOnNameMismatch(const std::string& fileName, const std::string& engineName) const {
-    const std::string normName = to_lowercase(to_alphanum(engineName));
-    const std::string normFile = to_lowercase(to_alphanum(fileName));
+    const std::string normName = QaplaHelpers::to_lowercase(QaplaHelpers::to_alphanum(engineName));
+    const std::string normFile = QaplaHelpers::to_lowercase(QaplaHelpers::to_alphanum(fileName));
 
     const size_t len = std::min(normName.size(), normFile.size());
     if (len <= 2) return;
@@ -127,7 +127,7 @@ void EngineConfig::warnOnNameMismatch(const std::string& fileName, const std::st
     if (normName.find(normFile) != std::string::npos || normFile.find(normName) != std::string::npos)
         return;
 
-    const size_t dist = levenshteinDistance(normName, normFile);
+    const size_t dist = QaplaHelpers::levenshteinDistance(normName, normFile);
     
     if (dist > 0 && dist < 3) {
         std::cerr << "Warning: Engine name '" << getName()
@@ -180,7 +180,7 @@ std::istream& operator>>(std::istream& in, EngineConfig& config) {
     std::string line;
     std::unordered_set<std::string> seenKeys;
     
-	auto sectionHeader = readSectionHeader(in);
+	auto sectionHeader = QaplaHelpers::readSectionHeader(in);
     if (!sectionHeader) return in;
     if (*sectionHeader != "engine") {
 		throw AppError::makeInvalidParameters("Invalid section header, expected [engine], got: " + 
@@ -190,7 +190,7 @@ std::istream& operator>>(std::istream& in, EngineConfig& config) {
     while (in && in.peek() != '[' && std::getline(in, line)) {
         if (line.empty() || line[0] == '#' || line[0] == ';') continue;
 
-        auto kv = parseKeyValue(line);
+        auto kv = QaplaHelpers::parseKeyValue(line);
         if (!kv)
         {
             throw AppError::makeInvalidParameters("Invalid setting in line " + line 

@@ -184,7 +184,7 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
 
     // Time
     ImGui::TableSetColumnIndex(2);
-	textAlignRight(formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
+	textAlignRight(QaplaHelpers::formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
 
     // Eval
     ImGui::TableSetColumnIndex(3);

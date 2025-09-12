@@ -76,7 +76,7 @@ void EpdManager::printTestResultLine(const EpdTestCase& current) const {
 
 std::string EpdManager::formatInlineResult(const EpdTestCase& test) const {
     std::ostringstream out;
-    out << "|" << std::setw(8) << std::right << (test.correct ? formatMs(test.correctAtTimeInMs, 2) : "-")
+    out << "|" << std::setw(8) << std::right << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
         << ", D:" << std::setw(3) << std::right << (test.correct ? std::to_string(test.correctAtDepth) : "-")
         << ", M: " << std::setw(5) << std::left << test.playedMove;
     return out.str();
@@ -86,7 +86,7 @@ inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
 
     os << std::setw(20) << std::left << test.id
         << "|" << std::setw(8) << std::right
-        << (test.correct ? formatMs(test.correctAtTimeInMs, 2) : "-")
+        << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
         << ", D:" << std::setw(3) << std::right
         << (test.correct ? std::to_string(test.correctAtDepth) : "-")
         << ", M: " << std::setw(5) << std::left << test.playedMove

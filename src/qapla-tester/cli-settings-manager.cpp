@@ -73,18 +73,18 @@ namespace CliSettings
         while (std::getline(input, line))
         {
             ++lineNumber;
-            line = trim(line);
+            line = QaplaHelpers::trim(line);
             if (line.empty() || line[0] == '#')
                 continue;
 
-            if (auto maybeSection = parseSection(line))
+            if (auto maybeSection = QaplaHelpers::parseSection(line))
             {
                 section = *maybeSection;
                 args.push_back("--" + section);
                 continue;
             }
 
-            auto kv = parseKeyValue(line);
+            auto kv = QaplaHelpers::parseKeyValue(line);
             if (!kv)
             {
                 throw AppError::makeInvalidParameters("Invalid setting in line " + std::to_string(lineNumber) +
@@ -168,7 +168,7 @@ namespace CliSettings
             validateDefaultValue(name, *defaultValue, type);
         }
 
-        std::string key = to_lowercase(name);
+        std::string key = QaplaHelpers::to_lowercase(name);
         definitions_[key] = {description, isRequired, defaultValue, type};
     }
 
@@ -179,7 +179,7 @@ namespace CliSettings
     {
 
 
-        std::string key = to_lowercase(groupName);
+        std::string key = QaplaHelpers::to_lowercase(groupName);
         groupDefs_[key] = GroupDefinition{groupDescription, unique, keys};
 
         for (auto& [name, def] : groupDefs_[key].keys)
@@ -199,7 +199,7 @@ namespace CliSettings
 
     const GroupInstances Manager::getGroupInstances(const std::string &groupName)
     {
-        std::string key = to_lowercase(groupName);
+        std::string key = QaplaHelpers::to_lowercase(groupName);
         auto it = groupInstances_.find(key);
         if (it == groupInstances_.end() || it->second.empty())
         {
@@ -210,7 +210,7 @@ namespace CliSettings
 
     std::optional<GroupInstance> Manager::getGroupInstance(const std::string &groupName)
     {
-        std::string key = to_lowercase(groupName);
+        std::string key = QaplaHelpers::to_lowercase(groupName);
         auto it = groupInstances_.find(key);
         if (it == groupInstances_.end() || it->second.empty())
         {
@@ -239,12 +239,12 @@ namespace CliSettings
         auto eqPos = working.find('=');
         if (eqPos == std::string::npos)
         {
-            result.name = to_lowercase(working);
+            result.name = QaplaHelpers::to_lowercase(working);
             result.value = std::nullopt;
         }
         else
         {
-            result.name = to_lowercase(working.substr(0, eqPos));
+            result.name = QaplaHelpers::to_lowercase(working.substr(0, eqPos));
             result.value = working.substr(eqPos + 1);
         }
 
@@ -508,7 +508,7 @@ namespace CliSettings
 
     Value Manager::parseValue(const ParsedParameter &arg, const Definition &def)
     {
-        auto lowerValue = arg.value ? to_lowercase(*arg.value) : std::string();
+        auto lowerValue = arg.value ? QaplaHelpers::to_lowercase(*arg.value) : std::string();
         if (def.type == ValueType::Bool)
         {
             if (!arg.value)

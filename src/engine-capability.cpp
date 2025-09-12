@@ -93,7 +93,7 @@ static std::vector<std::string> tokenize(const std::string& str) {
         else if (!insideString && (c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',')) {
             // If we encounter a special character outside a string
             if (!currentToken.empty()) {
-                tokens.push_back(trim(currentToken));
+                tokens.push_back(QaplaHelpers::trim(currentToken));
                 currentToken.clear();
             }
             tokens.push_back(std::string(1, c)); // Add the special character as a token
@@ -107,7 +107,7 @@ static std::vector<std::string> tokenize(const std::string& str) {
 
     // Add the last token (if any)
     if (!currentToken.empty()) {
-        tokens.push_back(trim(currentToken));
+        tokens.push_back(QaplaHelpers::trim(currentToken));
     }
 
     return tokens;

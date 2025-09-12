@@ -112,8 +112,8 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
 
     totalMs -= std::min(totalMs, moveMs);
 
-    const std::string totalStr = formatMs(totalMs, 0);
-    const std::string moveStr = formatMs(moveMs, 0);
+    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
+    const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
         return font->CalcTextSizeA(size, FLT_MAX, 0.0f, begin, end);
@@ -193,8 +193,8 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
 
     totalMs -= std::min(totalMs, moveMs);
 
-    const std::string totalStr = formatMs(totalMs, 0);
-    const std::string moveStr = formatMs(moveMs, 0);
+    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
+    const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
         return font->CalcTextSizeA(size, FLT_MAX, 0.0f, begin, end);

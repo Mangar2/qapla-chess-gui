@@ -25,6 +25,8 @@
 #include "time-control.h"
 #include "openings.h"
 #include "tournament-result.h"
+#include "ini-file.h"
+
 #include <vector>
 #include <memory>
 #include <optional>
@@ -181,20 +183,9 @@ public:
 	 *
 	 * @param out Output stream to write the state to.
 	 */
-    void trySaveIfNotEmpty(std::ostream& out) const;
+    void trySaveIfNotEmpty(std::ostream& out, const std::string& prefix = "") const;
 
-    /**
-     * @brief Parses a round header line and extracts round number and engine names.
-     *
-     * Format must be: [round <N> engines <engineA> vs <engineB>]
-     *
-     * @param line Full line including brackets.
-     * @return Tuple with round, engineA, engineB
-     * @throws std::runtime_error if the line is malformed
-     */
-    static std::tuple<uint32_t, std::string, std::string> parseRoundHeader(const std::string& line);
-
-    /**
+     /**
      * @brief Checks if this pairing matches the given round and engine names.
      *
      * @param round Round number to match (0-based).
@@ -221,9 +212,8 @@ public:
      * Reads until next round header or EOF.
      *
      * @param in Input stream positioned after round header line.
-	 * @returns The next round header line or an empty string if EOF reached.
      */
-    std::string load(std::istream& in);
+    void fromSection(QaplaHelpers::IniFile::Section& section);
 
     /**
 	 * @brief Checks, if the tournament is finished.

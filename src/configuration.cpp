@@ -155,12 +155,12 @@ void Configuration::loadData(std::ifstream& in) {
     try {
         std::string line;
 
-        while (auto sectionHeader = readSectionHeader(in)) {
+        while (auto sectionHeader = QaplaHelpers::readSectionHeader(in)) {
             ConfigMap keyValueMap;
             while (in && in.peek() != '[' && std::getline(in, line)) {
-				line = trim(line);
+				line = QaplaHelpers::trim(line);
                 if (line.empty() || line[0] == '#' || line[0] == ';') continue;
-                auto keyValue = parseKeyValue(line);
+                auto keyValue = QaplaHelpers::parseKeyValue(line);
                 if (keyValue) {
                     keyValueMap[keyValue->first] = keyValue->second;
                 }

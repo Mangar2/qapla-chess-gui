@@ -226,8 +226,8 @@ void AdjudicationManager::printTestResult(std::ostream& out) const {
             << " total     " << std::setw(6) << stats.totalGames
             << " correct   " << std::setw(6) << stats.correctDecisions
             << " incorrect " << std::setw(6) << stats.incorrectDecisions
-            << " saved     " << std::setw(10) << formatMs(stats.savedTimeMs)
-            << " total     " << formatMs(stats.totalTimeMs)
+            << " saved     " << std::setw(10) << QaplaHelpers::formatMs(stats.savedTimeMs)
+            << " total     " << QaplaHelpers::formatMs(stats.totalTimeMs)
             << "\n";
     };
     

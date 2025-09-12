@@ -154,7 +154,7 @@ bool ImGuiMoveList::isRowClicked(size_t index) {
     row.push_back(move.depth == 0 ? "-" : std::to_string(move.depth));
 
     // Time
-    row.push_back(formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
+    row.push_back(QaplaHelpers::formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
 
     // Eval
     ImGui::TableSetColumnIndex(3);

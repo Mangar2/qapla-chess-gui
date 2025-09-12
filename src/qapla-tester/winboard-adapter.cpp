@@ -39,7 +39,7 @@ WinboardAdapter::WinboardAdapter(std::filesystem::path enginePath,
 }
 
 WinboardAdapter::~WinboardAdapter() {
-    terminateEngine();
+    WinboardAdapter::terminateEngine();
 }
 
 void WinboardAdapter::terminateEngine() {
@@ -139,7 +139,7 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
 			// If we have more than one move, we need to set winboard to force mode to prevent the engine
 			// from playing its own move immediately.
             writeCommand("force");
-            lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
+            writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
 			firstMove.clear();
             forceMode_ = true;
         }
@@ -370,6 +370,7 @@ static std::vector<std::string> parseOptionalIntegers(std::istringstream& iss, E
 		pv.push_back(token);
 		if (comesTab(iss)) {
             optionals = std::move(pv);
+            pv.clear();
 			pvStart = iss.tellg();
 		}
     }
@@ -447,7 +448,7 @@ void WinboardAdapter::parseOptionFeature(const std::string& optionStr, EngineEve
     if (name.find(' ') != std::string::npos) {
         event.errors.push_back({ "feature-report", "Option name '" + name + "' contains space" });
     }
-    trim(name);
+    QaplaHelpers::trim(name);
 
     std::string kind;
     iss >> kind;
@@ -485,7 +486,7 @@ void WinboardAdapter::parseOptionFeature(const std::string& optionStr, EngineEve
         opt.type == EngineOption::Type::File || opt.type == EngineOption::Type::Path) {
         std::string value;
         std::getline(iss, value);
-        trim(value);
+        QaplaHelpers::trim(value);
         opt.defaultValue = value;
     }
 
@@ -564,7 +565,7 @@ void WinboardAdapter::finalizeFeatures() {
 }
 
 EngineEvent WinboardAdapter::readFeatureSection(const EngineLine& engineLine) {
-    const std::string& line = trim(engineLine.content);
+    const std::string& line = QaplaHelpers::trim(engineLine.content);
 
     if (!line.starts_with("feature ")) {
         logFromEngine(line, TraceLevel::info);
@@ -612,7 +613,7 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
             "Expected closing '}' at the end of a result command in line: " + event.rawLine
             });
     }
-    text = trim(text);
+    text = QaplaHelpers::trim(text);
 
     if (command == "0-1") {
         event.gameResult = GameResult::BlackWins;
@@ -676,7 +677,7 @@ EngineEvent WinboardAdapter::readEvent() {
     std::string command;
     iss >> command;
 
-    if (isInteger(command)) {
+    if (QaplaHelpers::isInteger(command)) {
         if (suppressInfoLines_) {
             return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
         }

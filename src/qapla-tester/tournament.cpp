@@ -216,13 +216,13 @@ void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) 
 	}
 }
 
-void Tournament::save(std::ostream& out) const {
+void Tournament::save(std::ostream& out, const std::string& prefix) const {
     for (const auto& config : engineConfig_) {
         out << config << "\n";
     }
 
     for (auto & pairing : pairings_) {
-        pairing->trySaveIfNotEmpty(out);
+        pairing->trySaveIfNotEmpty(out, prefix);
     }
 }
 
@@ -238,38 +238,16 @@ void Tournament::restoreResults(const std::vector<std::shared_ptr<PairTournament
     }
 }
 
-std::string Tournament::loadRound(std::istream& in, const std::string& roundHeader,
+void Tournament::loadRound(const QaplaHelpers::IniFile::Section& section,
     const std::unordered_set<std::string>& validEngines) {
-    auto [round, engineA, engineB] = PairTournament::parseRoundHeader(roundHeader);
-
-    if (validEngines.contains(engineA) && validEngines.contains(engineB)) {
-        for (const auto& pairing : pairings_) {
-            if (pairing->matches(round - 1, engineA, engineB)) {
-                return pairing->load(in);
-            }
-        }
-    }
-
-    PairTournament tmp;
-    return tmp.load(in);
+    
 }
 
-void Tournament::load(std::istream& in) {
-    std::stringstream configStream;
-    std::string line;
+void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix) {
 
-    while (std::getline(in, line)) {
-        if (line.starts_with("[round ")) break;
-        configStream << line << "\n";
-    }
-
-    EngineConfigManager configLoader;
-    configLoader.loadFromStream(configStream);
-    const std::unordered_set<std::string> validEngines =
-        configLoader.findMatchingNames(engineConfig_);
-
-    while (!line.empty()) {
+    for (const auto& section : sections) {
         // Every loader ensures that we have a round header as next line
-        line = loadRound(in, line, validEngines);
+        if (section.name != prefix + "round") continue;
+        // loadRound(section, validEngines);
     }
 }

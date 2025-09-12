@@ -176,7 +176,7 @@ public:
      * @param value The value to assign.
      */
     void setOptionValue(const std::string& name, const std::string& value) {
-        std::string key = to_lowercase(name);
+        std::string key = QaplaHelpers::to_lowercase(name);
         optionValues_[key] = OptionValue{ name, value };
     }
 

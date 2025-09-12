@@ -53,14 +53,14 @@ std::vector<EngineConfig> EngineConfigManager::getAllConfigs() const {
 
 const EngineConfig* EngineConfigManager::getConfig(const std::string& name) const {
     for (auto& config : configs) {
-        if (to_lowercase(config.getName()) == to_lowercase(name)) return &config;
+        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) return &config;
     }
     return nullptr;
 }
 
 EngineConfig* EngineConfigManager::getConfigMutable(const std::string& name)  {
     for (auto& config : configs) {
-        if (to_lowercase(config.getName()) == to_lowercase(name)) return &config;
+        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) return &config;
     }
     return nullptr;
 }

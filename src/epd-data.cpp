@@ -96,7 +96,7 @@ namespace QaplaWindows {
                     .alignRight = true
 					});
                 if (test.correct) {
-                    table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + formatMs(test.correctAtTimeInMs, 2));
+                    table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
                 }
                 else if (test.searchDepth >= 0) {
                     table_.extend(row, "-");

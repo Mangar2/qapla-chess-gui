@@ -115,7 +115,7 @@ public:
         std::string suggestion;
         size_t minDistance = std::numeric_limits<int>::max();
         for (const auto& option : allowedOptions) {
-            size_t dist = levenshteinDistance(givenOption, option);
+            size_t dist = QaplaHelpers::levenshteinDistance(givenOption, option);
             if (dist < minDistance && dist <= 3) {
                 minDistance = dist;
                 suggestion = option;
