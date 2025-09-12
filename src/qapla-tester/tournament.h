@@ -104,6 +104,7 @@ public:
     /**
      * @brief Loads the state of all pairings from a stream.
      */
+    void load(const QaplaHelpers::IniFile::Section& section);
     void load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix = "");
 	void load(const std::string& filename) {
 		std::ifstream in(filename);

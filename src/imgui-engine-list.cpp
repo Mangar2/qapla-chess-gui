@@ -231,7 +231,6 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     const bool isSmall = size.y < 100.0f;
     
     const ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_TableRowBg);
-    const ImU32 cBorder = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
     ImDrawList* drawList = ImGui::GetWindowDrawList();

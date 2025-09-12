@@ -254,11 +254,13 @@ void PairTournament::fromString(const std::string& line) {
     // nextIndex_ is only used to avoid rechecking already completed games in nextTask().
     // Initializing it to 0 allows nextTask() to scan results_ for unfinished games and schedule them accordingly.
     nextIndex_ = 0; 
+    std::string resultString = line;
 
     auto pos = line.find(": ");
-    if (pos == std::string::npos) return;
+    if (pos != std::string::npos) {
+        resultString = line.substr(pos + 2);
+    }
 
-    std::string resultString = line.substr(pos + 2);
 	duelResult_.clear();
     results_.clear();
     results_.reserve(resultString.size());
@@ -305,7 +307,7 @@ void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& pre
         for (size_t i = 0; i < stats.size(); ++i) {
             int value = accessor(stats[i]);
             if (value > 0) {
-                section.addEntry(label + "." + to_string(static_cast<GameEndCause>(i)), std::to_string(value));
+                section.addEntry(label, to_string(static_cast<GameEndCause>(i)) + ":" + std::to_string(value));
             }
         }
         };
@@ -351,30 +353,20 @@ static void parseEndCauses(std::string_view text, EngineDuelResult& result, int 
     }
 }
 
-void PairTournament::fromSection(QaplaHelpers::IniFile::Section& section) {
+void PairTournament::fromSection(const QaplaHelpers::IniFile::Section& section) {
     std::string line;
-
     for (const auto& entry : section.entries) {
         auto [key, value] = entry;
-        if (key == "round") {
-            config_.round = std::stoi(value) - 1; // stored as 1-based
-        }
-        else if (key == "white") {
-            engineA_.setName(value);
-        }
-        else if (key == "black") {
-            engineB_.setName(value);
-        }
-        else if (key == "games") {
+        if (key == "games") {
             fromString(value);
         }
-        else if (key == "wincauses") {
+        else if (key.starts_with("wincauses")) {
             parseEndCauses(value, duelResult_, &CauseStats::win);
         }
-        else if (key == "drawcauses") {
+        else if (key.starts_with("drawcauses")) {
             parseEndCauses(value, duelResult_, &CauseStats::draw);
         }
-        else if (key == "losscauses") {
+        else if (key.starts_with("losscauses")) {
             parseEndCauses(value, duelResult_, &CauseStats::loss);
         }
     }

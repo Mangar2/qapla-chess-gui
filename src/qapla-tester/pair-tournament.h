@@ -153,10 +153,9 @@ public:
      *
      * Must be called only after initialize(). Does not validate engine names.
      *
-     * @param line A single line in the format: "games: <result-sequence>"
+     * @param line A single line in the format: "games: <result-sequence>" or "<result-sequence>"
      */
     void fromString(const std::string& line);
-
 
     /**
 	 * @brief Returns the result of the duel between the two engines.
@@ -213,7 +212,7 @@ public:
      *
      * @param in Input stream positioned after round header line.
      */
-    void fromSection(QaplaHelpers::IniFile::Section& section);
+    void fromSection(const QaplaHelpers::IniFile::Section& section);
 
     /**
 	 * @brief Checks, if the tournament is finished.

@@ -183,6 +183,51 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Loads the tournament configuration from a list of INI file sections.
+         * @param sections The list of INI file sections to load the configuration from.
+         * @details This method processes each section and loads the corresponding configuration data
+         *          into the tournament data structure.
+         */
+        void loadConfig(QaplaHelpers::IniFile::SectionList sections);
+
+       
+        static TournamentData& instance() {
+            static TournamentData instance;
+            return instance;
+		}
+
+        /**
+         * @brief Returns true if the tournament is currently running.
+         * @return True if the tournament is running, false otherwise.
+         */
+        bool isRunning() const;
+
+        /**
+         * @brief Returns the current state of the tournament.
+         * @return The current state of the tournament.
+         */
+        State state() const {
+            return state_;
+        }
+
+        /**
+         * @brief Checks if the tournament data is available and has games left to play.
+         * @return True if the tournament data is available and has games left, false otherwise.
+         */
+        bool isAvailable() const;
+
+        /**
+         * @brief Checks if the tournament has started (tasks have been scheduled) no matter if it is running.
+         * @return True if the tournament has started, false otherwise.
+         */
+        bool hasTasksScheduled() const;
+
+	private:
+        bool validateOpenings();
+
+        bool createTournament();
+
+         /**
          * @brief Loads the tournament openings from a key-value mapping.
          * @param keyValue A map containing opening keys and their corresponding values.
          * @details This method assigns the values from the map to the appropriate fields in the tournament openings.
@@ -226,40 +271,6 @@ namespace QaplaWindows {
          * @param keyValue A map containing resign adjudication configuration keys and their corresponding values.
          */
         void loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
-
-        static TournamentData& instance() {
-            static TournamentData instance;
-            return instance;
-		}
-
-        /**
-         * @brief Returns true if the tournament is currently running.
-         * @return True if the tournament is running, false otherwise.
-         */
-        bool isRunning() const;
-
-        /**
-         * @brief Returns the current state of the tournament.
-         * @return The current state of the tournament.
-         */
-        State state() const {
-            return state_;
-        }
-
-        /**
-         * @brief Checks if the tournament data is available and has games left to play.
-         * @return True if the tournament data is available and has games left, false otherwise.
-         */
-        bool isAvailable() const;
-
-        /**
-         * @brief Checks if the tournament has started (tasks have been scheduled) no matter if it is running.
-         * @return True if the tournament has started, false otherwise.
-         */
-        bool hasTasksScheduled() const;
-
-	private:
-        bool validateOpenings();
 
         /**
          * @brief Saves the tournament openings configuration to a stream.

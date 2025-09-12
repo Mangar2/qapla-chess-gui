@@ -160,6 +160,7 @@ void Configuration::loadData(std::ifstream& in) {
         for (const auto& section : sectionList) {
             processSection(section);
         }
+        QaplaWindows::TournamentData::instance().loadConfig(sectionList);
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error in loadData: ") + e.what());
@@ -207,30 +208,6 @@ void Configuration::processSection(const QaplaHelpers::IniFile::Section& section
             EngineConfig config;
             config.setValues(section.getUnorderedMap());
             EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
-        }
-        else if (sectionName == "tournamentopening") {
-            QaplaWindows::TournamentData::instance().loadOpenings(entries);
-        }
-        else if (sectionName == "tournament") {
-            QaplaWindows::TournamentData::instance().loadTournamentConfig(entries);
-        }
-        else if (sectionName == "tournamenteachengine") {
-            QaplaWindows::TournamentData::instance().loadEachEngineConfig(entries);
-        }
-        else if (sectionName == "tournamentengine") {
-            QaplaWindows::TournamentData::instance().loadTournamentEngine(entries);
-        }
-        else if (sectionName == "tournamentpgnoutput") {
-            QaplaWindows::TournamentData::instance().loadPgnConfig(entries);
-        }
-        else if (sectionName == "tournamentdrawadjudication") {
-            QaplaWindows::TournamentData::instance().loadDrawAdjudicationConfig(entries);
-        }
-        else if (sectionName == "tournamentresignadjudication") {
-            QaplaWindows::TournamentData::instance().loadResignAdjudicationConfig(entries);
-        }
-        else {
-            Logger::testLogger().log("Unknown section: " + sectionName, TraceLevel::warning);
         }
     }
     catch (const std::exception& e) {

@@ -23,6 +23,7 @@
 #include "tournament-board-window.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
+#include "configuration.h"
 
 #include "qapla-tester/string-helper.h"
 
@@ -78,10 +79,10 @@ namespace QaplaWindows {
     void TournamentData:: init() {
     }
 
-    void TournamentData::startTournament() {
+    bool TournamentData::createTournament() {
         if (engineConfigurations_.empty()) {
             SnackbarManager::instance().showError("No engines configured for the tournament.");
-            return;
+            return false;
 		}
         std::vector<EngineConfig> selectedEngines;
         config_->type = "round-robin";
@@ -99,29 +100,40 @@ namespace QaplaWindows {
             selectedEngines.push_back(engine);
 		}
 
-        if (!validateOpenings()) return;
+        if (!validateOpenings()) return false;
 
         if (tournament_) {
             PgnIO::tournament().setOptions(pgnConfig_);
             AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
             AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
-            state_ = State::Stopped;
-            // Ensure that the game manager pool dont keep old tasks
-            GameManagerPool::getInstance().clearAll();
-            result_->setGamesLeft();
 			tournament_->createTournament(selectedEngines, *config_);
-            tournament_->scheduleAll(0, false);
-            eloTable_.clear();
-            populateEloTable();
-			runningTable_.clear();
-			populateRunningTable();
-            imguiConcurrency_->init();
-            imguiConcurrency_->setActive(true);
-            state_ = State::Starting;
         } else {
+            SnackbarManager::instance().showError("Internal error, tournament not initialized");
+            return false;
+        }
+        return true;
+    }
+
+    void TournamentData::startTournament() {
+        if (!tournament_) {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
         }
+        if (!createTournament()) return;
+
+        state_ = State::Starting;
+
+        GameManagerPool::getInstance().clearAll();
+        result_->setGamesLeft();
+        state_ = State::Starting;
+        tournament_->scheduleAll(0, false);
+        eloTable_.clear();
+        populateEloTable();
+        runningTable_.clear();
+        populateRunningTable();
+        imguiConcurrency_->init();
+        imguiConcurrency_->setActive(true);
+        state_ = State::Starting;
 		SnackbarManager::instance().showSuccess("Tournament started");
 	}
 
@@ -145,7 +157,11 @@ namespace QaplaWindows {
             std::vector<std::string> row;
             row.push_back(scored.engineName);
             row.push_back(std::format("{:.1f}", scored.elo));
-            row.push_back("+/- " + std::to_string(scored.error));
+            if (scored.error <= 0) {
+                row.push_back("-");
+            } else {
+                row.push_back("+/- " + std::to_string(scored.error));
+            }
             row.push_back(std::format("{:.1f}%", scored.score * 100.0));
             row.push_back(std::format("{:.0f}", scored.total));
             eloTable_.push(row);
@@ -230,6 +246,7 @@ namespace QaplaWindows {
     void TournamentData::pollData() {
         if (tournament_) {
             if (result_->poll(*tournament_, config_->averageElo)) {
+                QaplaConfiguration::Configuration::instance().setModified();
                 populateEloTable();
             }
             populateRunningTable();
@@ -607,6 +624,35 @@ namespace QaplaWindows {
     void TournamentData::saveTournamentResults(std::ostream& out, const std::string& header) const {
         if (tournament_) {
             tournament_->save(out, header);
+        }
+    }
+
+    void TournamentData::loadConfig(QaplaHelpers::IniFile::SectionList sections) {
+        for (const auto& section : sections) {
+            const auto& sectionName = section.name;
+            if (sectionName == "tournamentengine") {
+                loadTournamentEngine(section.entries);
+            } else if (sectionName == "tournamenteachengine") {
+                loadEachEngineConfig(section.entries);
+            } else if (sectionName == "tournament") {
+                loadTournamentConfig(section.entries);
+            } else if (sectionName == "tournamentopening") {
+                loadOpenings(section.entries);
+            } else if (sectionName == "tournamentpgn") {
+                loadPgnConfig(section.entries);
+            } else if (sectionName == "tournamentdrawadjudication") {
+                loadDrawAdjudicationConfig(section.entries);
+            } else if (sectionName == "tournamentresignadjudication") {
+                loadResignAdjudicationConfig(section.entries);
+            } 
+        }
+        if (createTournament()) {
+            for (const auto& section : sections) {
+                const auto& sectionName = section.name;
+                if (sectionName == "tournamentround" && tournament_) {
+                    tournament_->load(section);
+                }
+            }
         }
     }
 

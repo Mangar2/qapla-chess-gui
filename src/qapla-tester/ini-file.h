@@ -100,7 +100,7 @@ namespace QaplaHelpers {
             static void saveSection(std::ostream& out, const Section& section) {
                 out << "[" << section.name << "]\n";
                 for (const auto& [key, value] : section.entries) {
-                    out << key << " = " << value << "\n";
+                    out << key << "=" << value << "\n";
                 }
                 out << "\n";
             }

@@ -240,7 +240,29 @@ void Tournament::restoreResults(const std::vector<std::shared_ptr<PairTournament
 
 void Tournament::loadRound(const QaplaHelpers::IniFile::Section& section,
     const std::unordered_set<std::string>& validEngines) {
-    
+}
+
+void Tournament::load(const QaplaHelpers::IniFile::Section& section) {
+    std::string engineA;
+    std::string engineB;
+    uint32_t round = 0;
+    std::string games;
+    try {
+        for (const auto& [key, value]: section.entries) {
+            if (key == "engineA") engineA = value;
+            else if (key == "engineB") engineB = value;
+            else if (key == "round") round = std::stoul(value) - 1;
+            else if (key == "games") games = value;
+        }
+        for (const auto& pairing : pairings_) {
+            if (!games.empty() && pairing->matches(round, engineA, engineB)) {
+                pairing->fromSection(section);
+                break;
+            }
+        }
+    } catch (const std::exception& ex) {
+        // Ignore invalid section
+    }
 }
 
 void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix) {
