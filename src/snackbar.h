@@ -19,14 +19,20 @@
 
 #pragma once
 
-#include "imgui.h"
+#include <imgui.h>
 
 #include <string>
 #include <chrono>
-#include <optional>
 #include <array>
-#include <deque> // F�r den Stack von Snackbar-Eintr�gen
+#include <deque> 
 
+/**
+ * @brief Manager for displaying temporary notification messages (snackbars) in the UI
+ * 
+ * The SnackbarManager provides a singleton pattern for displaying toast-like notifications
+ * with different severity levels. Messages are displayed at the bottom-left of the viewport
+ * and automatically disappear after a configured duration.
+ */
 class SnackbarManager {
 public:
     enum class SnackbarType {
@@ -37,117 +43,86 @@ public:
         Count
     };
 
+    /**
+     * @brief Displays an error message snackbar
+     * @param message The error message to display
+     */
     void showError(const std::string& message) {
         show(message, SnackbarType::Error);
     }
+    
+    /**
+     * @brief Displays a warning message snackbar
+     * @param message The warning message to display
+     */
     void showWarning(const std::string& message) {
         show(message, SnackbarType::Warning);
     }
+    
+    /**
+     * @brief Displays a success message snackbar
+     * @param message The success message to display
+     */
     void showSuccess(const std::string& message) {
         show(message, SnackbarType::Success);
     }
+    
+    /**
+     * @brief Displays an informational note snackbar
+     * @param message The note message to display
+     */
     void showNote(const std::string& message) {
         show(message, SnackbarType::Note);
     }
 
-    void show(const std::string& message, SnackbarType type) {
-        SnackbarEntry entry;
-        if (snackbarStack_.size() >0 && snackbarStack_.back().message == message && snackbarStack_.back().type == type) {
-            snackbarStack_.back().startTime = std::chrono::steady_clock::now();
-            return;
-		}
-        entry.message = message;
-        if (entry.message[0] == '\n') {
-            entry.message.erase(0, 1); 
-		}
-        entry.startTime = std::chrono::steady_clock::now();
-        entry.duration = durations[static_cast<int>(type)];
-		entry.type = type;
-        snackbarStack_.emplace_back(std::move(entry)); 
-    }
+    /**
+     * @brief Displays a snackbar with the specified message and type
+     * @param message The message text to display
+     * @param type The type/severity of the snackbar (Note, Success, Warning, Error)
+     * 
+     * If a snackbar with the same message and type is already displayed,
+     * the display duration will be reset instead of creating a duplicate.
+     */
+    void show(const std::string& message, SnackbarType type);
 
+    /**
+     * @brief Returns the singleton instance of the SnackbarManager
+     * @return Reference to the singleton SnackbarManager instance
+     */
     static SnackbarManager& instance() {
         static SnackbarManager instance;
         return instance;
     }
 
-    void draw() {
-        constexpr ImVec2 snackbarSize = ImVec2(450.0f, 120.0f); 
-        constexpr float closeButtonRadius = 10.0f;
-        constexpr float borderThickness = 2.0f; // Dicke der Rahmenlinie
-
-        while (!snackbarStack_.empty()) {
-            auto& currentSnackbar = snackbarStack_.back();
-            auto now = std::chrono::steady_clock::now();
-            float elapsed = std::chrono::duration<float>(now - currentSnackbar.startTime).count();
-
-            if (elapsed > currentSnackbar.duration) {
-                snackbarStack_.pop_back();
-                continue;
-            }
-
-            ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
-            ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0f); // Rahmenfarbe etwas heller
-
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f); // Gerundete Ecken
-
-            ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
-            ImVec2 windowSize = ImGui::GetMainViewport()->Size;
-            ImVec2 snackbarPos = ImVec2(windowPos.x + 20.0f, windowPos.y + windowSize.y - snackbarSize.y - 20.0f);
-
-            ImGui::SetNextWindowPos(snackbarPos, ImGuiCond_Always);
-            ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
-
-            ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
-
-            // Rahmen zeichnen
-            auto drawList = ImGui::GetWindowDrawList();
-            ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
-            ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
-            drawList->AddRect(p1, p2, ImColor(borderColor), 10.0f, 0, borderThickness);
-
-            ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-            ImGui::SetWindowFontScale(1.1f);
-			ImGui::SetCursorPos(ImVec2(0.0f, 20.0f)); // Position des Textes
-			ImGui::Indent(20.0f); 
-			ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
-            ImGui::Text("%s", currentSnackbar.message.c_str());
-			ImGui::Unindent(20.0f);
-            ImGui::SetWindowFontScale(1.0f);
-			ImGui::PopStyleColor();
-            ImGui::PopTextWrapPos(); 
-
-            ImVec2 closeButtonPos = ImVec2(
-                snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0f, 
-                snackbarPos.y + closeButtonRadius + 10.0f                  
-            );
-            if (drawCloseButton(closeButtonPos, closeButtonRadius)) {
-                snackbarStack_.pop_back(); 
-            }
-
-            ImGui::End();
-            ImGui::PopStyleVar();
-            ImGui::PopStyleColor();
-
-            break; 
-        }
-    }
+    /**
+     * @brief Renders and displays active snackbars in the UI
+     * 
+     * This method should be called once per frame in the main rendering loop.
+     * It handles the positioning, styling, and automatic removal of expired snackbars.
+     */
+    void draw();
 
 private:
     struct SnackbarEntry {
         std::string message;
         std::chrono::steady_clock::time_point startTime;
-		SnackbarType type;
+        SnackbarType type;
         float duration;
     };
 
+    /**
+     * @brief Draws a circular close button with an "X" mark
+     * @param position The center position of the button
+     * @param radius The radius of the button circle
+     * @return true if the button was clicked, false otherwise
+     */
+    bool drawCloseButton(const ImVec2& position, float radius);
+
     static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
-        ImVec4(0.8f, 0.8f, 0.8f, 1.0f), // Note: Blass-Grau
-        ImVec4(0.7f, 0.8f, 0.7f, 1.0f), // Success: Blass-Gr�n
-        ImVec4(0.8f, 0.8f, 0.7f, 1.0f), // Warning: Blass-Gelb
-        ImVec4(0.8f, 0.7f, 0.7f, 1.0f)  // Error: Blass-Rot
+        ImVec4(0.8f, 0.8f, 0.8f, 1.0f), // Note: Light Gray
+        ImVec4(0.7f, 0.8f, 0.7f, 1.0f), // Success: Light Green
+        ImVec4(0.8f, 0.8f, 0.7f, 1.0f), // Warning: Light Yellow
+        ImVec4(0.8f, 0.7f, 0.7f, 1.0f)  // Error: Light Red
     };
 
     static constexpr std::array<float, static_cast<size_t>(SnackbarType::Count)> durations = {
@@ -162,30 +137,7 @@ private:
         "Success", 
         "Warning", 
         "Error"    
-	};
+    };
 
-    bool drawCloseButton(const ImVec2& position, float radius) {
-        auto drawList = ImGui::GetWindowDrawList();
-
-        // Circle
-        drawList->AddCircleFilled(position, radius, ImColor(1.0f, 1.0f, 1.0f, 0.9f)); // Wei�er Kreis
-        drawList->AddCircle(position, radius, ImColor(0.0f, 0.0f, 0.0f, 0.9f), 16, 1.5f); // Schwarzer Rand
-
-        // "X" 
-        float lineThickness = 2.0f;
-        float crossSize = radius * 0.5f;
-        ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
-        ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
-        ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
-        ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
-
-        drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness); // Erste Linie des "X"
-        drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness); // Zweite Linie des "X"
-
-        ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
-        ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
-        return ImGui::IsItemClicked(); // Gibt true zur�ck, wenn der Button geklickt wurde
-    }
-
-    std::deque<SnackbarEntry> snackbarStack_; // Stack f�r Snackbar-Eintr�ge
+    std::deque<SnackbarEntry> snackbarStack_;
 };

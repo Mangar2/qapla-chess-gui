@@ -25,7 +25,7 @@
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/engine-option.h"
 
-#include "imgui.h"
+#include <imgui.h>
 #include <string>
 #include <optional>
 #include <functional>

@@ -20,7 +20,7 @@
 #include "move-list-window.h"
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
-#include "imgui.h"
+#include <imgui.h>
 
 #include <sstream>
 #include <format>

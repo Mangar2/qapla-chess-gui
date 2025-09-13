@@ -38,7 +38,7 @@
 #include "qapla-tester/adjudication-manager.h"
 #include "imgui-table.h"
 
-#include "imgui.h"
+#include <imgui.h>
 
 namespace QaplaWindows {
 

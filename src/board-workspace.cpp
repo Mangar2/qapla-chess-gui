@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 #include "board-workspace.h"
-#include "imgui.h"
+#include <imgui.h>
 
 namespace QaplaWindows {
 

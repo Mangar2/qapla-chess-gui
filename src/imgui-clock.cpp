@@ -26,7 +26,7 @@
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/time-control.h"
 
-#include "imgui.h"
+#include <imgui.h>
 
 #include <sstream>
 #include <string>
@@ -159,7 +159,6 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
         const float nameX = xCenter - nameExtent.x * 0.5f;
         drawList->AddText(font, nameSize, ImVec2(nameX, y), textCol,
             engineName.data(), engineName.data() + engineName.size());
-        y += nameExtent.y + style.ItemSpacing.y;
     }
 }
 
@@ -184,7 +183,6 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const ImGuiStyle& style = ImGui::GetStyle();
 
     const float baseSize = ImGui::GetFontSize();
-    const float nameSize = baseSize * 1.3f;
     const float totalSize = baseSize * 1.6f; 
     const float moveSize = baseSize * 1.0f;
 

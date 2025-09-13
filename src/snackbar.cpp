@@ -1,0 +1,137 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#include "snackbar.h"
+#include <imgui.h>
+
+void SnackbarManager::show(const std::string& message, SnackbarType type) {
+    SnackbarEntry entry;
+    
+    // Check if the same message with the same type is already at the top of the stack
+    if (!snackbarStack_.empty() && 
+        snackbarStack_.back().message == message && 
+        snackbarStack_.back().type == type) {
+        // Reset the start time to extend the display duration
+        snackbarStack_.back().startTime = std::chrono::steady_clock::now();
+        return;
+    }
+    
+    entry.message = message;
+    // Remove leading newline if present
+    if (!entry.message.empty() && entry.message[0] == '\n') {
+        entry.message.erase(0, 1); 
+    }
+    
+    entry.startTime = std::chrono::steady_clock::now();
+    entry.duration = durations[static_cast<int>(type)];
+    entry.type = type;
+    
+    snackbarStack_.emplace_back(std::move(entry)); 
+}
+
+void SnackbarManager::draw() {
+    constexpr ImVec2 snackbarSize = ImVec2(450.0f, 120.0f); 
+    constexpr float closeButtonRadius = 10.0f;
+    constexpr float borderThickness = 2.0f;
+
+    while (!snackbarStack_.empty()) {
+        auto& currentSnackbar = snackbarStack_.back();
+        auto now = std::chrono::steady_clock::now();
+        float elapsed = std::chrono::duration<float>(now - currentSnackbar.startTime).count();
+
+        // Remove expired snackbars
+        if (elapsed > currentSnackbar.duration) {
+            snackbarStack_.pop_back();
+            continue;
+        }
+
+        ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
+        ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0f);
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
+
+        ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
+        ImVec2 windowSize = ImGui::GetMainViewport()->Size;
+        ImVec2 snackbarPos = ImVec2(windowPos.x + 20.0f, windowPos.y + windowSize.y - snackbarSize.y - 20.0f);
+
+        ImGui::SetNextWindowPos(snackbarPos, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
+
+        ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
+
+        // Draw border
+        auto drawList = ImGui::GetWindowDrawList();
+        ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
+        ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
+        drawList->AddRect(p1, p2, ImColor(borderColor), 10.0f, 0, borderThickness);
+
+        ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::SetWindowFontScale(1.1f);
+        ImGui::SetCursorPos(ImVec2(0.0f, 20.0f));
+        ImGui::Indent(20.0f); 
+        ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
+        ImGui::Text("%s", currentSnackbar.message.c_str());
+        ImGui::Unindent(20.0f);
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::PopStyleColor();
+        ImGui::PopTextWrapPos(); 
+
+        ImVec2 closeButtonPos = ImVec2(
+            snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0f, 
+            snackbarPos.y + closeButtonRadius + 10.0f                  
+        );
+        
+        if (drawCloseButton(closeButtonPos, closeButtonRadius)) {
+            snackbarStack_.pop_back(); 
+        }
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        break; // Only show the most recent snackbar
+    }
+}
+
+bool SnackbarManager::drawCloseButton(const ImVec2& position, float radius) {
+    auto drawList = ImGui::GetWindowDrawList();
+
+    // Draw circle background
+    drawList->AddCircleFilled(position, radius, ImColor(1.0f, 1.0f, 1.0f, 0.9f));
+    drawList->AddCircle(position, radius, ImColor(0.0f, 0.0f, 0.0f, 0.9f), 16, 1.5f);
+
+    // Draw "X" mark 
+    float lineThickness = 2.0f;
+    float crossSize = radius * 0.5f;
+    ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
+    ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
+    ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
+    ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
+
+    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness);
+    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness);
+
+    // Create invisible button for interaction
+    ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
+    ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
+    
+    return ImGui::IsItemClicked();
+}

@@ -18,7 +18,7 @@
  */
 
 #include "imgui-table.h"
-#include "imgui.h"
+#include <imgui.h>
 
 namespace QaplaWindows {
 

@@ -33,7 +33,7 @@
 #include "qapla-tester/tournament.h"
 #include "qapla-tester/engine-worker-factory.h"
 
-#include "imgui.h"
+#include <imgui.h>
 
 #include <sstream>
 #include <string>

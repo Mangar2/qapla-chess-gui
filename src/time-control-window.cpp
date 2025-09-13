@@ -20,7 +20,7 @@
 #include "time-control-window.h"
 #include "configuration.h"
 #include "imgui-controls.h"
-#include "imgui.h"
+#include <imgui.h>
 
 #include "qapla-tester/time-control.h"
 
