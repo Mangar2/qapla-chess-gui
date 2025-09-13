@@ -23,10 +23,6 @@
 
 #include "configuration.h"
 #include "time-control-window.h"
-#include "board-window.h"
-#include "move-list-window.h"
-#include "engine-window.h"
-#include "clock-window.h"
 #include "epd-window.h"
 #include "tournament-data.h"
 #include "tournament-window.h"
@@ -108,24 +104,11 @@ namespace {
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
 
-        auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
-        ClockMovesContainer->setFixedHeight(120.0f, true);
-        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
-        ClockMovesContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>());
 
-        auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
-        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
-        BoardMovesContainer->setRight(std::move(ClockMovesContainer));
-        BoardMovesContainer->setPresetWidth(400.0f, false);
-
-        auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("board_engine");
-        BoardEngineContainer->setTop(std::move(BoardMovesContainer));
-        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
-        BoardEngineContainer->setMinBottomHeight(55.0f);
-        BoardEngineContainer->setPresetHeight(230.0f, false);
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        boardTabBar->addTab("Board", std::move(BoardEngineContainer));
+        boardTabBar->addTab("Board", 
+            std::move(QaplaWindows::InteractiveBoardWindow::instance().init()));
         boardTabBar->setDynamicTabsCallback([&]() {
             QaplaWindows::TournamentData::instance().drawTabs();
         });

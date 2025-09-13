@@ -35,11 +35,11 @@ void ImGuiBarChart::setFromGameRecord(const GameRecord& gameRecord) {
     for (uint32_t index = values_.size(); index < gameRecord.history().size(); ++index) {
         const auto& move = gameRecord.history()[index];
         int32_t score = move.scoreCp.value_or(0);
-        if (!gameRecord.wtmAtPly(index)) {
-            score = -score;
-        }
         if (move.scoreMate.has_value()) {
             score = (move.scoreMate.value() > 0) ? QaplaBasics::MAX_VALUE : -QaplaBasics::MAX_VALUE;
+        }
+        if (!gameRecord.wtmAtPly(index)) {
+            score = -score;
         }
         addValue(score);
     }
@@ -114,11 +114,11 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     int idealStep = std::max(1, totalValues / (maxLabels - 1));
     
     int stepSize;
-    if (idealStep <= 5) stepSize = 5;
-    else if (idealStep <= 10) stepSize = 10;
+    if (idealStep <= 10) stepSize = 10;
     else if (idealStep <= 20) stepSize = 20;
-    else if (idealStep <= 50) stepSize = 50;
-    else stepSize = 100;
+    else if (idealStep <= 40) stepSize = 40;
+    else if (idealStep <= 100) stepSize = 100;
+    else stepSize = 200;
     
     for (int step = 1; step * stepSize <= totalValues; ++step) {
         int moveNumber = step * stepSize;
@@ -133,7 +133,7 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             1.0f
         );
         
-        std::string label = std::to_string(moveNumber);
+        std::string label = std::to_string(moveNumber / 2);
         ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
         drawList->AddText(
             ImVec2(x - textSize.x * 0.5f, zeroY + 8),

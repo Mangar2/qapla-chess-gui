@@ -20,6 +20,7 @@
 #pragma once
 
 #include "epd-data.h"
+#include "embedded-window.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/time-control.h"
@@ -123,6 +124,8 @@ namespace QaplaWindows
 		{
 			return *gameRecord_;
 		}
+
+
 
 		/**
 		 * @brief Executes a move in the game.
@@ -242,10 +245,18 @@ namespace QaplaWindows
 		 */
 		void loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
 
+		/**
+		 * @brief Initializes the InteractiveBoardWindow instance.
+		 */
+		std::unique_ptr<EmbeddedWindow> init();
+
 	private:
+
+
 		EpdData epdData_;
 
 		void checkForGameEnd();
+
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;
 		TimeControl timeControl_;

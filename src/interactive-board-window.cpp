@@ -35,6 +35,12 @@
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
+#include "horizontal-split-container.h"
+#include "vertical-split-container.h"
+#include "board-window.h"
+#include "engine-window.h"
+#include "clock-window.h"
+#include "move-list-window.h"
 
 using namespace QaplaWindows;
 
@@ -56,6 +62,32 @@ InteractiveBoardWindow::InteractiveBoardWindow()
 }
 
 InteractiveBoardWindow::~InteractiveBoardWindow() = default;
+
+std::unique_ptr<EmbeddedWindow> InteractiveBoardWindow::init()
+{
+		auto MovesBarchartContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("moves_barchart");
+		MovesBarchartContainer->setTop(std::make_unique<QaplaWindows::MoveListWindow>());
+		MovesBarchartContainer->setBottom(
+			std::make_unique<EmbeddedWindowWrapper<QaplaWindows::ImGuiBarChart>>(*imGuiBarChart_));
+
+        auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
+        ClockMovesContainer->setFixedHeight(120.0f, true);
+        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
+        ClockMovesContainer->setBottom(std::move(MovesBarchartContainer));
+
+        auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
+        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
+        BoardMovesContainer->setRight(std::move(ClockMovesContainer));
+        BoardMovesContainer->setPresetWidth(400.0f, false);
+
+        auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("board_engine");
+        BoardEngineContainer->setTop(std::move(BoardMovesContainer));
+        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
+        BoardEngineContainer->setMinBottomHeight(55.0f);
+        BoardEngineContainer->setPresetHeight(230.0f, false);
+
+		return std::move(BoardEngineContainer);
+}
 
 void InteractiveBoardWindow::saveConfig(std::ostream &out) const
 {
@@ -168,6 +200,7 @@ void InteractiveBoardWindow::pollData()
 			setGameIfDifferent(g);
 			imGuiMoveList_->setFromGameRecord(g);
 			imGuiClock_->setFromGameRecord(g);
+			imGuiBarChart_->setFromGameRecord(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
 		imGuiEngineList_->setAllowInput(true);
