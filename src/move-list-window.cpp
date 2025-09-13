@@ -64,7 +64,7 @@ std::string causeToString(GameEndCause cause) {
 
 
 void MoveListWindow::draw() {
-    auto& boardData = QaplaWindows::BoardData::instance();
+    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
     auto& gameRecord = boardData.gameRecord();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 4.0f);
     constexpr ImGuiTableFlags flags =
@@ -136,7 +136,7 @@ void MoveListWindow::draw() {
 
 void MoveListWindow::checkKeyboard() {
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
-        auto& boardData = QaplaWindows::BoardData::instance();
+        auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
 		int currentFrame = ImGui::GetFrameCount();
         if (currentFrame == lastInputFrame_) {
             return; 
@@ -166,7 +166,7 @@ void MoveListWindow::renderMoveLine(const std::string& label, const MoveRecord& 
     ImGui::TableNextRow();
     // Move + SAN
     ImGui::TableSetColumnIndex(0);
-    auto& boardData = QaplaWindows::BoardData::instance();
+    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
 
     if (isRowClicked(index)) {
         boardData.setNextMoveIndex(static_cast<uint32_t>(index + 1));

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "board-data.h"
+#include "interactive-board-window.h"
 #include "imgui-clock.h"
 #include <memory>
 #include <string>
@@ -41,7 +41,7 @@ namespace QaplaWindows {
         ~ClockWindow() = default;
 
         void draw() override {
-            QaplaWindows::BoardData::instance().imGuiClock().draw();
+            QaplaWindows::InteractiveBoardWindow::instance().imGuiClock().draw();
         };
     };
 

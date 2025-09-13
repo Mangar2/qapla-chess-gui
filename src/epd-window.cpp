@@ -77,7 +77,7 @@ void EpdWindow::drawButtons()
         {
             try
             {
-                auto &boardData = BoardData::instance();
+                auto &boardData = InteractiveBoardWindow::instance();
                 if (button == "Run")
                 {
                     boardData.clearPool();
@@ -112,7 +112,7 @@ void EpdWindow::drawInput()
     constexpr int maxConcurrency = 32;
     constexpr int maxSeenPlies = 32;
 
-    auto &boardData = BoardData::instance();
+    auto &boardData = InteractiveBoardWindow::instance();
     ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
@@ -150,7 +150,7 @@ void EpdWindow::drawInput()
 
 void EpdWindow::draw()
 {
-    auto &boardData = BoardData::instance();
+    auto &boardData = InteractiveBoardWindow::instance();
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();

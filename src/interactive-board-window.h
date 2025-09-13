@@ -22,9 +22,9 @@
 #include "epd-data.h"
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/engine-record.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/ini-file.h"
+#include "qapla-tester/move-record.h"
 
 #include <memory>
 #include <optional>
@@ -49,23 +49,24 @@ namespace QaplaWindows
 	class ImGuiEngineList;
 	class ImGuiClock;
 	class ImGuiMoveList;
+	class ImGuiBarChart;
 
-	class BoardData
+	class InteractiveBoardWindow
 	{
 	public:
 		/**
 		 * @brief Constructs a new BoardData object.
 		 */
-		BoardData();
-		~BoardData();
+		InteractiveBoardWindow();
+		~InteractiveBoardWindow();
 
 		/**
 		 * @brief Returns a reference to the singleton instance of BoardData.
 		 * @return Reference to BoardData instance.
 		 */
-		static BoardData &instance()
+		static InteractiveBoardWindow &instance()
 		{
-			static BoardData instance;
+			static InteractiveBoardWindow instance;
 			return instance;
 		}
 
@@ -148,16 +149,6 @@ namespace QaplaWindows
 		 */
 		void setNextMoveIndex(uint32_t moveIndex);
 
-		const EngineRecords &engineRecords() const
-		{
-			return engineRecords_;
-		}
-
-		const MoveInfos &moveInfos() const
-		{
-			return moveInfos_;
-		}
-
 		const EpdData &epdData() const
 		{
 			return epdData_;
@@ -165,11 +156,6 @@ namespace QaplaWindows
 		EpdData &epdData()
 		{
 			return epdData_;
-		}
-
-		void setEngineRecords(const EngineRecords &records)
-		{
-			engineRecords_ = records;
 		}
 
 		/**
@@ -214,15 +200,15 @@ namespace QaplaWindows
 
 		/**
 		 * @brief stops the engine located at an index
-		 * @param index index of the engine to stop
+		 * @param id Identifier of the engine to stop.
 		 */
-		void stopEngine(size_t index);
+		void stopEngine(const std::string& id);
 
 		/**
 		 * @brief Restarts the engine located at an index.
-		 * @param index Index of the engine to restart.
+		 * @param id Identifier of the engine to restart.
 		 */
-		void restartEngine(size_t index);
+		void restartEngine(const std::string& id);
 
 		/**
 		 * @brief Starts the engines configured in the board data.
@@ -262,15 +248,13 @@ namespace QaplaWindows
 		void checkForGameEnd();
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;
-		std::vector<size_t> searchInfoCnt_;
-		EngineRecords engineRecords_;
-		MoveInfos moveInfos_;
 		TimeControl timeControl_;
 
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
 		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
 		std::unique_ptr<ImGuiClock> imGuiClock_;
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
+		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;
 
 		std::vector<EngineConfig> engineConfigs_;
 

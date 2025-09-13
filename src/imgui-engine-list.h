@@ -47,7 +47,7 @@ namespace QaplaWindows {
         ImGuiEngineList& operator=(ImGuiEngineList&&) noexcept;
         ~ImGuiEngineList();
 
-        std::pair<uint32_t, std::string> draw();
+        std::pair<std::string, std::string> draw();
 
         /**
          * @brief Sets whether user input is allowed in the engine list.
@@ -64,6 +64,14 @@ namespace QaplaWindows {
         void setEngineRecords(const EngineRecords& engineRecords) {
             engineRecords_ = engineRecords;
         }   
+
+        /**
+         * @brief Gets the current engine records.
+         * @return The current engine records.
+         */
+        const EngineRecords& getEngineRecords() const {
+            return engineRecords_;
+        }
 
         /**
          * @brief Sets the move record for the list.

@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "board-data.h"
+#include "interactive-board-window.h"
 #include "qapla-tester/logger.h"
 #include "qapla-tester/game-manager-pool.h"
 
@@ -108,8 +108,6 @@ namespace {
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
 
-        auto& boardData = QaplaWindows::BoardData::instance();
-
         auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
         ClockMovesContainer->setFixedHeight(120.0f, true);
         ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
@@ -158,7 +156,7 @@ namespace {
     int runApp() {
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
-        QaplaWindows::BoardData::instance().setEngines();
+        QaplaWindows::InteractiveBoardWindow::instance().setEngines();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();
@@ -190,7 +188,7 @@ namespace {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-  			QaplaWindows::BoardData::instance().pollData();
+  			QaplaWindows::InteractiveBoardWindow::instance().pollData();
             QaplaWindows::TournamentData::instance().pollData();
 
             workspace.draw();

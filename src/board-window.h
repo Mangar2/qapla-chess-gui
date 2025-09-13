@@ -19,7 +19,7 @@
 #pragma once
 
 #include "qapla-engine/types.h"
-#include "board-data.h"
+#include "interactive-board-window.h"
 #include "embedded-window.h"
 
 #include <optional>

@@ -344,9 +344,9 @@ void GameContext::cancelCompute()
     }
 }
 
-MoveInfos GameContext::getMoveInfos() const
+MoreRecords GameContext::getMoveInfos() const
 {
-    MoveInfos infos;
+    MoreRecords infos;
     for (const auto &player : players_)
     {
         infos.emplace_back(player->getCurrentMoveCopy());

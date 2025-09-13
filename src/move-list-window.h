@@ -20,7 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "board-data.h"
+#include "interactive-board-window.h"
 
 #include <memory>
 

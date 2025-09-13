@@ -43,7 +43,7 @@ EngineWindow::~EngineWindow() = default;
 
 void EngineWindow::drawEngineSelectionPopup() {
 	setupWindow_->draw("Use", "Cancel");
-    auto& boardData = QaplaWindows::BoardData::instance();
+    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
     if (auto confirmed = setupWindow_->confirmed()) {
         if (*confirmed) {
 			boardData.setEngines(setupWindow_->content().getActiveEngines());
@@ -67,9 +67,9 @@ float EngineWindow::drawConfigButtonArea(bool noEngines) {
             QaplaButton::drawConfig(drawList, topLeft, size, state);
         }))
     {
-        auto& boardData = QaplaWindows::BoardData::instance();
+        auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
         std::vector<EngineConfig> activeEngines;
-        for (const auto& record : boardData.engineRecords()) {
+        for (const auto& record : boardData.imGuiEngineList().getEngineRecords()) {
             activeEngines.push_back(record.config);
         }
         setupWindow_->content().setMatchingActiveEngines(activeEngines);
@@ -86,24 +86,24 @@ void EngineWindow::draw() {
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
-    auto& boardData = QaplaWindows::BoardData::instance();
-    const auto engineRecords = boardData.engineRecords();
+    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
+    const auto engineRecords = boardData.imGuiEngineList().getEngineRecords();
 
     float indent = drawConfigButtonArea(engineRecords.empty());
     ImGui::Indent(indent);
-    auto [index, command] = boardData.imGuiEngineList().draw();
+    auto [id, command] = boardData.imGuiEngineList().draw();
     ImGui::Unindent(indent);
 
     try {
         if (command == "Restart") {
-            boardData.restartEngine(index);
+            boardData.restartEngine(id);
         }
         else if (command == "Stop") {
-            boardData.stopEngine(index);
+            boardData.stopEngine(id);
         }
         else if (command == "Config") {
             std::vector<EngineConfig> activeEngines;
-            for (const auto& record : boardData.engineRecords()) {
+            for (const auto& record : boardData.imGuiEngineList().getEngineRecords()) {
                 activeEngines.push_back(record.config);
             }
             setupWindow_->content().setMatchingActiveEngines(activeEngines);

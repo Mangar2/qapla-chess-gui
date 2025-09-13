@@ -49,9 +49,8 @@ namespace QaplaWindows
         for (const std::string button : {"New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
         {
             ImGui::SetCursorScreenPos(pos);
-            bool active = BoardData::instance().isModeActive(button);
             auto state = QaplaButton::ButtonState::Normal;
-            if (BoardData::instance().isModeActive(button)) {
+            if (InteractiveBoardWindow::instance().isModeActive(button)) {
                 state = QaplaButton::ButtonState::Active;
             }
             if (QaplaButton::drawIconButton(
@@ -88,7 +87,7 @@ namespace QaplaWindows
                         }
                     }))
             {
-                BoardData::instance().execute(button);
+                InteractiveBoardWindow::instance().execute(button);
             }
             pos.x += totalSize.x + space;
         }
@@ -99,10 +98,10 @@ namespace QaplaWindows
     void BoardWindow::draw()
     {
         drawButtons();
-        auto move = BoardData::instance().imGuiBoard().draw();
+        auto move = InteractiveBoardWindow::instance().imGuiBoard().draw();
         if (move)
         {
-            BoardData::instance().doMove(*move);
+            InteractiveBoardWindow::instance().doMove(*move);
         }
     }
 

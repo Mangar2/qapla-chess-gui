@@ -19,7 +19,7 @@
 
 #include "configuration.h"
 #include "tournament-data.h"
-#include "board-data.h"
+#include "interactive-board-window.h"
 
 #include "qapla-tester/logger.h"
 #include "qapla-tester/string-helper.h"
@@ -148,7 +148,7 @@ void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
-    QaplaWindows::BoardData::instance().saveConfig(out);
+    QaplaWindows::InteractiveBoardWindow::instance().saveConfig(out);
 	QaplaWindows::TournamentData::instance().saveConfig(out);
 }
 
@@ -199,7 +199,7 @@ void Configuration::processSection(const QaplaHelpers::IniFile::Section& section
             parseBoard(section);
         }
         else if (sectionName == "boardengine") {
-            QaplaWindows::BoardData::instance().loadBoardEngine(section);
+            QaplaWindows::InteractiveBoardWindow::instance().loadBoardEngine(section);
         }
         else if (sectionName == "enginecapability") {
             engineCapabilities_.addOrReplace(section);

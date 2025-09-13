@@ -288,7 +288,7 @@ void QaplaWindows::ImGuiEngineList::drawEngineTable(const ImVec2 &topLeft, float
     }
 }
 
-std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
+std::pair<std::string, std::string> ImGuiEngineList::draw() {
     const float cMinRowHeight = 50.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
@@ -301,15 +301,14 @@ std::pair<uint32_t, std::string> ImGuiEngineList::draw() {
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
     const uint32_t rowHeight = static_cast<uint32_t>(
         std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
-    uint32_t index = 0;
+    std::string id;
     std::string command;
     for (size_t i = 0; i < records; ++i) {
 		auto c = drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
         if (!c.empty()) {
-            index = i;
+            id = engineRecords_[i].identifier;
             command = std::move(c); 
         }
     }
-    return { index, command };
+    return { id, command };
 }
-

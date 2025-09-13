@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "board-data.h"
+#include "interactive-board-window.h"
 #include "configuration.h"
 
 #include "qapla-engine/move.h"
@@ -34,16 +34,18 @@
 #include "imgui-engine-list.h"
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
+#include "imgui-barchart.h"
 
 using namespace QaplaWindows;
 
-BoardData::BoardData()
+InteractiveBoardWindow::InteractiveBoardWindow()
 	: gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  imGuiBoard_(std::make_unique<ImGuiBoard>()),
 	  imGuiEngineList_(std::make_unique<ImGuiEngineList>()),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
-	  imGuiMoveList_(std::make_unique<ImGuiMoveList>())
+	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
+	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
 {
 	timeControl_ = QaplaConfiguration::Configuration::instance()
 					   .getTimeControlSettings()
@@ -53,9 +55,9 @@ BoardData::BoardData()
 	epdData_.init();
 }
 
-BoardData::~BoardData() = default;
+InteractiveBoardWindow::~InteractiveBoardWindow() = default;
 
-void BoardData::saveConfig(std::ostream &out) const
+void InteractiveBoardWindow::saveConfig(std::ostream &out) const
 {
 	uint32_t index = 0;
 	for (auto &engine: engineConfigs_) {
@@ -67,7 +69,7 @@ void BoardData::saveConfig(std::ostream &out) const
 	}
 }
 
-void BoardData::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
+void InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
 {
     std::optional<std::string> name = section.getValue("name");
 	std::optional<std::string> indexStr = section.getValue("index");
@@ -93,17 +95,17 @@ void BoardData::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
     }
 }
 
-void BoardData::doMove(const MoveRecord& move)
+void InteractiveBoardWindow::doMove(const MoveRecord& move)
 {
 	computeTask_->doMove(move);
 }
 
-void BoardData::setPosition(bool startPosition, const std::string &fen)
+void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &fen)
 {
 	computeTask_->setPosition(startPosition, fen);
 }
 
-void BoardData::execute(std::string command)
+void InteractiveBoardWindow::execute(std::string command)
 {
 	if (command == "New" && gameRecord_ != nullptr)
 	{
@@ -143,28 +145,25 @@ void BoardData::execute(std::string command)
 	}
 }
 
-void BoardData::stopPool()
+void InteractiveBoardWindow::stopPool()
 {
 	GameManagerPool::getInstance().stopAll();
 }
 
-void BoardData::clearPool()
+void InteractiveBoardWindow::clearPool()
 {
 	GameManagerPool::getInstance().clearAll();
 }
 
-void BoardData::setPoolConcurrency(uint32_t count, bool nice, bool start)
+void InteractiveBoardWindow::setPoolConcurrency(uint32_t count, bool nice, bool start)
 {
 	GameManagerPool::getInstance().setConcurrency(count, nice, start);
 }
 
-void BoardData::pollData()
+void InteractiveBoardWindow::pollData()
 {
 	try
 	{
-		setEngineRecords(computeTask_->getEngineRecords());
-		moveInfos_ = computeTask_->getMoveInfos();
-
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
 			setGameIfDifferent(g);
 			imGuiMoveList_->setFromGameRecord(g);
@@ -194,7 +193,7 @@ void BoardData::pollData()
 	}
 }
 
-void BoardData::setGameIfDifferent(const GameRecord &record)
+void InteractiveBoardWindow::setGameIfDifferent(const GameRecord &record)
 {
 	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_))
 	{
@@ -205,12 +204,12 @@ void BoardData::setGameIfDifferent(const GameRecord &record)
 	}
 }
 
-uint32_t BoardData::nextMoveIndex() const
+uint32_t InteractiveBoardWindow::nextMoveIndex() const
 {
 	return gameRecord_->nextMoveIndex();
 }
 
-void BoardData::setNextMoveIndex(uint32_t moveIndex)
+void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
 {
 	if (!gameRecord_)
 	{
@@ -224,32 +223,24 @@ void BoardData::setNextMoveIndex(uint32_t moveIndex)
 	}
 }
 
-bool BoardData::isGameOver() const
+bool InteractiveBoardWindow::isGameOver() const
 {
 	auto [cause, result] = gameRecord_->getGameResult();
 	return result != GameResult::Unterminated &&
 		   gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
 }
 
-void BoardData::stopEngine(size_t index)
+void InteractiveBoardWindow::stopEngine(const std::string &id)
 {
-	if (index < engineRecords_.size())
-	{
-		auto id = engineRecords_[index].identifier;
-		computeTask_->stopEngine(id);
-	}
+	computeTask_->stopEngine(id);
 }
 
-void BoardData::restartEngine(size_t index)
+void InteractiveBoardWindow::restartEngine(const std::string &id)
 {
-	if (index < engineRecords_.size())
-	{
-		auto id = engineRecords_[index].identifier;
-		computeTask_->restartEngine(id);
-	}
+	computeTask_->restartEngine(id);
 }
 
-void BoardData::setEngines(const std::vector<EngineConfig> &engines)
+void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
 {
 	engineConfigs_ = engines;
 	if (engines.size() == 0)
@@ -261,7 +252,7 @@ void BoardData::setEngines(const std::vector<EngineConfig> &engines)
 	computeTask_->initEngines(std::move(created));
 }
 
-bool BoardData::isModeActive(const std::string &mode) const
+bool InteractiveBoardWindow::isModeActive(const std::string &mode) const
 {
 	auto status = computeTask_->getStatus();
 	switch (status)

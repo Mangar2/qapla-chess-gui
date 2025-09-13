@@ -25,6 +25,7 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 #include <sstream>
 #include <iomanip>
 
@@ -95,3 +96,5 @@ struct MoveRecord {
      */
     MoveRecord createMinimalCopy() const;
 };
+
+using MoreRecords = std::vector<std::optional<MoveRecord>>;

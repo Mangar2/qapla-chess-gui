@@ -47,4 +47,4 @@ struct EngineRecord {
 };
 
 using EngineRecords = std::vector<EngineRecord>;
-using MoveInfos = std::vector<std::optional<MoveRecord>>;
+

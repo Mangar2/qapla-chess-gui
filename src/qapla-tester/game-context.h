@@ -292,7 +292,7 @@ public:
      * @brief Returns the current move information for all players.
      * @return A vector of MoveInfos containing move information for each player.
      */
-    MoveInfos getMoveInfos() const;
+    MoreRecords getMoveInfos() const;
 
     /**
      * @brief Executes the given callable with thread-safe access to the current move records of all players.

@@ -212,7 +212,7 @@ public:
         return gameContext_.getEngineRecords();
     }
 
-    MoveInfos getMoveInfos() const
+    MoreRecords getMoveInfos() const
     {
         return gameContext_.getMoveInfos();
     }
