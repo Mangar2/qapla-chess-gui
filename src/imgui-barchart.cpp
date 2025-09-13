@@ -23,6 +23,19 @@
 
 namespace QaplaWindows {
 
+void ImGuiBarChart::setFromGameRecord(const GameRecord& gameRecord) {
+    auto [isModified, isUpdated] = changeTracker_.checkModification(gameRecord.getChangeTracker());
+    if (!isUpdated) return;
+    changeTracker_.updateFrom(gameRecord.getChangeTracker());
+    if (isModified) clearValues();
+
+    for (uint32_t index = values_.size(); index < gameRecord.history().size(); ++index) {
+        const auto& move = gameRecord.history()[index];
+        addValue(move.scoreCp.value_or(0));
+    }
+}
+
+
 void ImGuiBarChart::calculateScale(int32_t& minValue, int32_t& maxValue, int32_t& scale) const {
     if (values_.empty()) {
         minValue = -config_.minScaleCP;
@@ -31,22 +44,18 @@ void ImGuiBarChart::calculateScale(int32_t& minValue, int32_t& maxValue, int32_t
         return;
     }
     
-    // Finde Min/Max Werte
     auto minMaxPair = std::minmax_element(values_.begin(), values_.end());
     int32_t dataMin = *minMaxPair.first;
     int32_t dataMax = *minMaxPair.second;
     
-    // Berechne benötigte Skalierung
     int32_t maxAbsValue = std::max(std::abs(dataMin), std::abs(dataMax));
     
-    // Wende Min/Max Skalierungsgrenzen an
     if (maxAbsValue < config_.minScaleCP) {
         maxAbsValue = config_.minScaleCP;
     } else if (maxAbsValue > config_.maxScaleCP) {
         maxAbsValue = config_.maxScaleCP;
     }
     
-    // Runde auf schöne Werte (100er, 500er, 1000er Schritte)
     int32_t niceScale;
     if (maxAbsValue <= 500) {
         niceScale = ((maxAbsValue + 99) / 100) * 100;
@@ -66,7 +75,6 @@ void ImGuiBarChart::calculateScale(int32_t& minValue, int32_t& maxValue, int32_t
 ImVec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
     float x = chartMin.x + moveIndex * (config_.barWidth + config_.barSpacing);
     
-    // Y-Koordinate: 0 ist in der Mitte des Charts
     float yNormalized = static_cast<float>(value - minValue) / static_cast<float>(scale);
     float y = chartMax.y - yNormalized * (chartMax.y - chartMin.y);
     
@@ -74,21 +82,40 @@ ImVec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const ImVec2&
 }
 
 void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
-    // X-Achse in der Mitte des Charts zeichnen (bei Wert 0)
     float zeroY = chartMax.y - (static_cast<float>(0 - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
     
     drawList->AddLine(
-        ImVec2(chartMin.x - 5, zeroY),  // Beginne bei der Y-Achse, nicht 10 Pixel davor
+        ImVec2(chartMin.x - 5, zeroY),
         ImVec2(chartMax.x + 10, zeroY),
         config_.axisColor,
         2.0f
     );
     
-    // Halbzug-Markierungen und Labels
-    for (size_t i = 0; i < values_.size(); ++i) {
-        float x = chartMin.x + i * (config_.barWidth + config_.barSpacing) + config_.barWidth * 0.5f;
+    if (values_.empty()) return;
+    
+    float availableWidth = chartMax.x - chartMin.x;
+    float avgLabelWidth = ImGui::CalcTextSize("100").x;
+    float minLabelSpacing = avgLabelWidth * 1.5f;
+    
+    int maxLabels = static_cast<int>(availableWidth / minLabelSpacing);
+    maxLabels = std::max(2, std::min(maxLabels, static_cast<int>(values_.size())));
+    
+    int totalValues = static_cast<int>(values_.size());
+    int idealStep = std::max(1, totalValues / (maxLabels - 1));
+    
+    int stepSize;
+    if (idealStep <= 5) stepSize = 5;
+    else if (idealStep <= 10) stepSize = 10;
+    else if (idealStep <= 20) stepSize = 20;
+    else if (idealStep <= 50) stepSize = 50;
+    else stepSize = 100;
+    
+    for (int step = 1; step * stepSize <= totalValues; ++step) {
+        int moveNumber = step * stepSize;
+        int arrayIndex = moveNumber - 1;
         
-        // Kleine Markierung
+        float x = chartMin.x + arrayIndex * (config_.barWidth + config_.barSpacing) + config_.barWidth * 0.5f;
+        
         drawList->AddLine(
             ImVec2(x, zeroY - 3),
             ImVec2(x, zeroY + 3),
@@ -96,21 +123,18 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             1.0f
         );
         
-        // Label jeden 5. Halbzug
-        if (i % 5 == 0 || i == values_.size() - 1) {
-            std::string label = std::to_string(i + 1);
-            ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-            drawList->AddText(
-                ImVec2(x - textSize.x * 0.5f, zeroY + 8),
-                config_.textColor,
-                label.c_str()
-            );
-        }
+        std::string label = std::to_string(moveNumber);
+        ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
+        drawList->AddText(
+            ImVec2(x - textSize.x * 0.5f, zeroY + 8),
+            config_.textColor,
+            label.c_str()
+        );
     }
 }
 
+
 void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t maxValue, int32_t scale) const {
-    // Y-Achse ganz links zeichnen
     drawList->AddLine(
         ImVec2(chartMin.x, chartMin.y - 10),
         ImVec2(chartMin.x, chartMax.y + 10),
@@ -118,19 +142,15 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         2.0f
     );
     
-    // Berechne Anzahl der Unterteilungen basierend auf verfügbarem Platz
     float chartHeight = chartMax.y - chartMin.y;
     float textHeight = ImGui::GetTextLineHeight();
-    float minLabelSpacing = textHeight * 1.5f; // Mindestabstand zwischen Labels
+    float minLabelSpacing = textHeight * 1.5f;
     
-    // Maximale Anzahl Labels, die in den verfügbaren Platz passen
     int maxLabels = static_cast<int>(chartHeight / minLabelSpacing);
-    maxLabels = std::max(3, std::min(maxLabels, 15)); // Zwischen 3 und 15 Labels
+    maxLabels = std::max(3, std::min(maxLabels, 15));
     
-    // Berechne ideale Schrittgröße basierend auf der Anzahl der Labels
-    int32_t idealStepSize = scale / (maxLabels - 1); // -1 weil wir Min und Max einschließen
+    int32_t idealStepSize = scale / (maxLabels - 1);
     
-    // Runde auf "schöne" Werte
     int32_t stepSize;
     if (idealStepSize <= 25) stepSize = 25;
     else if (idealStepSize <= 50) stepSize = 50;
@@ -142,23 +162,13 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     else if (idealStepSize <= 5000) stepSize = 5000;
     else stepSize = 10000;
     
-    // Zeichne Gitterlinien und Labels symmetrisch um die Nulllinie
-    // Bei sehr kleinen Fenstern: Spezialbehandlung für Pixel-Abstand
     bool showZero = maxLabels > 3;
     
-    // Sonderfall: Fenster zu klein für 3 Labels
+    // Special case: window too small for 3 labels - adjust step size to fit
     if (!showZero) {
-        // Berechne welche Schrittgröße tatsächlich ins Fenster passt
-        // Wir wollen genau 2 Labels: einen positiven und einen negativen Wert
-        // Die müssen mindestens minLabelSpacing voneinander entfernt sein
-        
-        // Verfügbarer Platz für 2 Labels mit Abstand
-        float availableSpacingForTwo = chartHeight / 2.0f; // Hälfte für +, Hälfte für -
-        
-        // Berechne maximalen Wert, der bei availableSpacingForTwo Pixel von der Mitte liegt
+        float availableSpacingForTwo = chartHeight / 2.0f;
         int32_t maxValueThatFits = static_cast<int32_t>((availableSpacingForTwo / chartHeight) * scale);
         
-        // Finde eine "schöne" Schrittgröße, die kleiner oder gleich maxValueThatFits ist
         int32_t adjustedStepSize = stepSize;
         while (adjustedStepSize > maxValueThatFits && adjustedStepSize > 25) {
             if (adjustedStepSize >= 1000) adjustedStepSize /= 2;
@@ -171,11 +181,9 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     }
     
     if (showZero) {
-        // Zeige die Nulllinie (bei größeren Fenstern)
         int32_t value = 0;
         float y = chartMax.y - (static_cast<float>(value - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
         
-        // Markierung auf Y-Achse (keine Gitterlinie für 0, wird von X-Achse gemacht)
         drawList->AddLine(
             ImVec2(chartMin.x - 3, y),
             ImVec2(chartMin.x + 3, y),
@@ -183,7 +191,6 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             1.0f
         );
         
-        // Label
         std::string label = "0";
         ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
         drawList->AddText(
@@ -193,10 +200,8 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         );
     }
     
-    // Dann positive und negative Werte symmetrisch
     int32_t maxSteps = showZero ? (maxLabels - 1) / 2 : maxLabels / 2;
     
-    // Bei sehr kleinen Fenstern: mindestens einen Schritt zeigen
     if (!showZero && maxSteps == 0) {
         maxSteps = 1;
     }
@@ -205,12 +210,9 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         int32_t positiveValue = step * stepSize;
         int32_t negativeValue = -step * stepSize;
         
-        // Positive Werte (oberhalb der Nulllinie)
-        // Zeige auch Werte die größer als maxValue sind, aber innerhalb der Skalierung liegen
         if (positiveValue <= maxValue || (!showZero && step == 1)) {
             float y = chartMax.y - (static_cast<float>(positiveValue - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
             
-            // Gitterlinie
             drawList->AddLine(
                 ImVec2(chartMin.x, y),
                 ImVec2(chartMax.x, y),
@@ -218,7 +220,6 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            // Markierung auf Y-Achse
             drawList->AddLine(
                 ImVec2(chartMin.x - 3, y),
                 ImVec2(chartMin.x + 3, y),
@@ -226,7 +227,6 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            // Label
             std::string label = std::to_string(positiveValue);
             ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
             drawList->AddText(
@@ -236,12 +236,9 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             );
         }
         
-        // Negative Werte (unterhalb der Nulllinie)
-        // Zeige auch Werte die kleiner als minValue sind, aber innerhalb der Skalierung liegen
         if (negativeValue >= minValue || (!showZero && step == 1)) {
             float y = chartMax.y - (static_cast<float>(negativeValue - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
             
-            // Gitterlinie
             drawList->AddLine(
                 ImVec2(chartMin.x, y),
                 ImVec2(chartMax.x, y),
@@ -249,7 +246,6 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            // Markierung auf Y-Achse
             drawList->AddLine(
                 ImVec2(chartMin.x - 3, y),
                 ImVec2(chartMin.x + 3, y),
@@ -257,7 +253,6 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            // Label
             std::string label = std::to_string(negativeValue);
             ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
             drawList->AddText(
@@ -270,36 +265,29 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
 }
 
 void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
-    // Berechne Y-Position der Nulllinie
     float zeroY = chartMax.y - (static_cast<float>(0 - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
     
     for (size_t i = 0; i < values_.size(); ++i) {
         int32_t value = values_[i];
         
-        // Bestimme Farben (abwechselnd für Weiß/Schwarz)
         bool isWhiteMove = (i % 2 == 0);
         ImU32 fillColor = isWhiteMove ? config_.whiteBarFill : config_.blackBarFill;
         ImU32 borderColor = isWhiteMove ? config_.whiteBarBorder : config_.blackBarBorder;
         
-        // Berechne Bar-Position
         float barX = chartMin.x + i * (config_.barWidth + config_.barSpacing);
         ImVec2 valuePixel = valueToPixel(static_cast<float>(i), value, chartMin, chartMax, minValue, scale);
         
-        // Bestimme Bar-Rechteck
         ImVec2 barMin, barMax;
         if (value >= 0) {
-            // Positiver Wert: Bar von Nulllinie nach oben
             barMin = ImVec2(barX, std::min(valuePixel.y, zeroY));
             barMax = ImVec2(barX + config_.barWidth, std::max(valuePixel.y, zeroY));
         } else {
-            // Negativer Wert: Bar von Nulllinie nach unten
             barMin = ImVec2(barX, std::min(zeroY, valuePixel.y));
             barMax = ImVec2(barX + config_.barWidth, std::max(zeroY, valuePixel.y));
         }
         
-        // Stelle sicher, dass wir ein gültiges Rechteck haben
+        // Ensure minimum bar height for visibility
         if (std::abs(barMax.y - barMin.y) < 1.0f) {
-            // Mindesthöhe für sehr kleine Werte
             if (value >= 0) {
                 barMax.y = barMin.y + 1.0f;
             } else {
@@ -307,47 +295,53 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
             }
         }
         
-        // Zeichne gefüllte Bar
         drawList->AddRectFilled(barMin, barMax, fillColor);
-        
-        // Zeichne Rahmen
         drawList->AddRect(barMin, barMax, borderColor, 0.0f, 0, 1.0f);
     }
 }
 
 void ImGuiBarChart::draw() {
     
-    // Berechne Auto-Skalierung
     int32_t minValue, maxValue, scale;
     calculateScale(minValue, maxValue, scale);
     
-    // Bereite ImGui für Zeichnung vor
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
     
-    // Reserve Platz für Labels und zentriere den Chart
-    float verticalMargin = 20.0f;  // Gleicher Abstand oben und unten
-    float horizontalMargin = 50.0f; // Links für Y-Achsen-Labels, rechts minimal
+    float verticalMargin = 20.0f;
+    float horizontalMargin = 50.0f;
     
     ImVec2 chartMin = ImVec2(canvasPos.x + horizontalMargin, canvasPos.y + verticalMargin);
     ImVec2 chartMax = ImVec2(canvasPos.x + canvasSize.x - 10, canvasPos.y + canvasSize.y - verticalMargin);
     
-    // ImGui Bereich reservieren
+    float availableWidth = chartMax.x - chartMin.x;
+    float totalBarsNeeded = static_cast<float>(values_.size());
+    float dynamicBarWidth = config_.barWidth;
+    
+    if (totalBarsNeeded > 0) {
+        float spacePerBar = availableWidth / totalBarsNeeded;
+        float calculatedBarWidth = spacePerBar - config_.barSpacing;
+        dynamicBarWidth = std::max(config_.minBarWidth, std::min(calculatedBarWidth, config_.barWidth));
+    }
+    
+    BarChartConfig tempConfig = config_;
+    tempConfig.barWidth = dynamicBarWidth;
+    
+    BarChartConfig originalConfig = config_;
+    const_cast<ImGuiBarChart*>(this)->config_ = tempConfig;
+    
     ImGui::InvisibleButton("chart", canvasSize);
     
-    // Zeichne auf ImGui DrawList
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     
-    // Hintergrund
     drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), IM_COL32(40, 40, 40, 100));
-    drawList->AddRect(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), IM_COL32(100, 100, 100, 255));
     
-    // Zeichne Komponenten
     drawYAxis(drawList, chartMin, chartMax, minValue, maxValue, scale);
-    drawXAxis(drawList, chartMin, chartMax, minValue, scale);
     drawBars(drawList, chartMin, chartMax, minValue, scale);
+    drawXAxis(drawList, chartMin, chartMax, minValue, scale);
     
-    // Titel
+    const_cast<ImGuiBarChart*>(this)->config_ = originalConfig;
+    
     std::string title = "Bewertung (Centipawn)";
     ImVec2 titleSize = ImGui::CalcTextSize(title.c_str());
     drawList->AddText(
