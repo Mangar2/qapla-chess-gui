@@ -39,17 +39,25 @@ namespace QaplaWindows {
         float barWidth = 10.0f;
         float minBarWidth = 2.0f;
         float barSpacing = 0.0f;
+
+        float verticalMargin = 10.0f;
+        float leftMargin = 30.0f;
+        float rightMargin = 20.0f;
         
         // Colors for alternating bars (white/black moves)
         ImU32 whiteBarFill = IM_COL32(220, 220, 255, 180);    // Light fill for white
         ImU32 whiteBarBorder = IM_COL32(100, 100, 150, 255);  // Border for white
-        ImU32 blackBarFill = IM_COL32(180, 180, 200, 180);    // Darker fill for black
+        
+        ImU32 blackBarFill = IM_COL32(140, 140, 160, 180);    // Darker fill for black
         ImU32 blackBarBorder = IM_COL32(60, 60, 80, 255);     // Border for black
         
         // Axis colors
         ImU32 axisColor = IM_COL32(150, 150, 150, 255);
         ImU32 textColor = IM_COL32(200, 200, 200, 255);
         ImU32 gridColor = IM_COL32(100, 100, 100, 100);
+
+        // Title of the chart
+        std::string title = "Evaluation";
     };
     
     class ImGuiBarChart {

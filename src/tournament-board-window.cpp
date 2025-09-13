@@ -69,7 +69,7 @@ namespace QaplaWindows
         return *topWindow;
     }
 
-    VerticalSplitContainer& TournamentBoardWindow::getTopRightWindow() {
+    VerticalSplitContainer& TournamentBoardWindow::getClockMovesWindow() {
         static VerticalSplitContainer* topRightWindow;
         if (!topRightWindow) {
             auto window = std::make_unique<VerticalSplitContainer>();
@@ -78,6 +78,16 @@ namespace QaplaWindows
             getTopWindow().setRight(std::move(window));
         }
         return *topRightWindow;
+    }
+
+    VerticalSplitContainer& TournamentBoardWindow::getMovesChartWindow() {
+        static VerticalSplitContainer* movesChartWindow;
+        if (!movesChartWindow) {
+            auto window = std::make_unique<VerticalSplitContainer>();
+            movesChartWindow = window.get();
+            getClockMovesWindow().setBottom(std::move(window));
+        }
+        return *movesChartWindow;
     }
 
     void TournamentBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
@@ -111,15 +121,15 @@ namespace QaplaWindows
             imGuiBoard_.draw();
         }));
 
-        getTopRightWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
-            //imGuiClock_.draw();
-            imGuiBarChart_.draw();
+        getClockMovesWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+            imGuiClock_.draw();
         }));
 
-        getTopRightWindow().setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
-            //imGuiMoveList_.draw();
+        getMovesChartWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+            imGuiMoveList_.draw();
+        }));
+        getMovesChartWindow().setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
             imGuiBarChart_.draw();
-
         }));
 
         getMainWindow().setBottom(

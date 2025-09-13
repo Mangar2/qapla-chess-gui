@@ -180,6 +180,7 @@ namespace QaplaWindows {
     }
 
     void TournamentData::populateCauseTable() {
+        causeTable_.clear();
         for (auto scored : result_->getScoredEngines()) {
             auto aggregate = scored.result.aggregate(scored.engineName);
             for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {

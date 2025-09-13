@@ -106,7 +106,8 @@ namespace QaplaWindows
 
         static VerticalSplitContainer& getMainWindow();
         static HorizontalSplitContainer& getTopWindow();
-        static VerticalSplitContainer& getTopRightWindow();
+        static VerticalSplitContainer& getClockMovesWindow();
+        static VerticalSplitContainer& getMovesChartWindow();
 
         ImGuiEngineList imGuiEngineList_;
         ImGuiBoard imGuiBoard_;

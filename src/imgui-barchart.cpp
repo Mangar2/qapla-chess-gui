@@ -18,6 +18,9 @@
  */
 
 #include "imgui-barchart.h"
+
+#include "qapla-engine/evalvalue.h"
+
 #include <sstream>
 #include <iomanip>
 
@@ -31,7 +34,14 @@ void ImGuiBarChart::setFromGameRecord(const GameRecord& gameRecord) {
 
     for (uint32_t index = values_.size(); index < gameRecord.history().size(); ++index) {
         const auto& move = gameRecord.history()[index];
-        addValue(move.scoreCp.value_or(0));
+        int32_t score = move.scoreCp.value_or(0);
+        if (!gameRecord.wtmAtPly(index)) {
+            score = -score;
+        }
+        if (move.scoreMate.has_value()) {
+            score = (move.scoreMate.value() > 0) ? QaplaBasics::MAX_VALUE : -QaplaBasics::MAX_VALUE;
+        }
+        addValue(score);
     }
 }
 
@@ -227,7 +237,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            std::string label = std::to_string(positiveValue);
+            std::string label = std::to_string(positiveValue / 100);
             ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
             drawList->AddText(
                 ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5f),
@@ -253,7 +263,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 1.0f
             );
             
-            std::string label = std::to_string(negativeValue);
+            std::string label = std::to_string(negativeValue / 100);
             ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
             drawList->AddText(
                 ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5f),
@@ -307,13 +317,11 @@ void ImGuiBarChart::draw() {
     
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-    
-    float verticalMargin = 20.0f;
-    float horizontalMargin = 50.0f;
-    
-    ImVec2 chartMin = ImVec2(canvasPos.x + horizontalMargin, canvasPos.y + verticalMargin);
-    ImVec2 chartMax = ImVec2(canvasPos.x + canvasSize.x - 10, canvasPos.y + canvasSize.y - verticalMargin);
-    
+
+    ImVec2 chartMin = ImVec2(canvasPos.x + config_.leftMargin, canvasPos.y + config_.verticalMargin);
+    ImVec2 chartMax = ImVec2(canvasPos.x + canvasSize.x - config_.rightMargin, 
+        canvasPos.y + canvasSize.y - config_.verticalMargin);
+
     float availableWidth = chartMax.x - chartMin.x;
     float totalBarsNeeded = static_cast<float>(values_.size());
     float dynamicBarWidth = config_.barWidth;
@@ -334,15 +342,13 @@ void ImGuiBarChart::draw() {
     
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     
-    drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y), IM_COL32(40, 40, 40, 100));
-    
     drawYAxis(drawList, chartMin, chartMax, minValue, maxValue, scale);
     drawBars(drawList, chartMin, chartMax, minValue, scale);
     drawXAxis(drawList, chartMin, chartMax, minValue, scale);
     
     const_cast<ImGuiBarChart*>(this)->config_ = originalConfig;
     
-    std::string title = "Bewertung (Centipawn)";
+    std::string title = config_.title;
     ImVec2 titleSize = ImGui::CalcTextSize(title.c_str());
     drawList->AddText(
         ImVec2(canvasPos.x + (canvasSize.x - titleSize.x) * 0.5f, canvasPos.y + 5),
