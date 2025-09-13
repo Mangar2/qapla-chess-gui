@@ -20,6 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "snackbar.h"
 #include <memory>
 #include <algorithm>
 #include <string>
@@ -33,149 +34,121 @@ namespace QaplaWindows {
      */
     class VerticalSplitContainer : public EmbeddedWindow {
     public:
-        void setTop(std::unique_ptr<EmbeddedWindow> window) {
-            topWindow = std::move(window);
-        }
-
-        void setBottom(std::unique_ptr<EmbeddedWindow> window) {
-            bottomWindow = std::move(window);
-        }
-
-        float computeTopHeight(ImVec2 avail) {
-
-            if (fixedTopHeight_) {
-                return *fixedTopHeight_;
-            }
-
-            float availableHeight = std::max(avail.y - splitterHeight_, minTopHeight_ + minBottomHeight_);
-
-            if (bottomPresetHeight_ != 0) {
-                if (bottomHeight_ == 0) {
-                    topHeight_ = std::max(topHeight_, availableHeight - bottomPresetHeight_);
-                }
-                else {
-                    auto availDelta = avail.y - availY_;
-                    topHeight_ += availDelta;
-                }
-            }
-            availY_ = avail.y;
-            auto adjustedTopHeight = std::max(topHeight_, minTopHeight_);
-            adjustedTopHeight = std::min(adjustedTopHeight, availableHeight - minBottomHeight_);
-            return adjustedTopHeight;
-        }
-
-        void draw() override {
-            ImVec2 avail = ImGui::GetContentRegionAvail();
-            float width = avail.x;
-
-            
-            float adjustedHeight = computeTopHeight(avail);
-            bottomHeight_ = std::max(avail.y - adjustedHeight - splitterHeight_, minBottomHeight_);
-
-            std::string idPrefix = "##vsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
-
-            // Top window
-            ImGui::BeginChild((idPrefix + "_top").c_str(), ImVec2(width, adjustedHeight),
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            try {
-                if (topWindow) topWindow->draw();
-            }
-            catch (const std::exception& e) {
-                ImGui::Text("Error in top window: %s", e.what());
-			}
-            catch (...) {
-                ImGui::Text("Unknown error in top window.");
-			}
-            ImGui::EndChild();
-
-			drawSplitter(idPrefix + "_splitter", ImVec2(width, splitterHeight_));
-
-            // Bottom window
-            ImGui::BeginChild((idPrefix + "_bottom").c_str(), ImVec2(width, bottomHeight_), 
-                ImGuiChildFlags_None,
-                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-            try {
-                if (bottomWindow) bottomWindow->draw();
-			}
-            catch (const std::exception& e) {
-                ImGui::Text("Error in bottom window: %s", e.what());
-            }
-            catch (...) {
-                ImGui::Text("Unknown error in bottom window.");
-			}
-            ImGui::EndChild();
-        }
 
         /**
-         * @brief Sets a fixed height for the top window. If set, the splitter cannot be moved.
+         * @brief Constructs a vertical split container with specified window flags
+         * @param name The unique identifier for this split container
+         * @param top ImGui window flags for the top child window
+         * @param bottom ImGui window flags for the bottom child window
          */
-        void setFixedTopHeight(float height) {
-            fixedTopHeight_ = height;
-        }
+        VerticalSplitContainer(
+            const std::string& name,
+            ImGuiWindowFlags top = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
+            ImGuiWindowFlags bottom = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
         /**
-         * @brief Sets the minimum height for the top window.
+         * @brief Sets the embedded window for the top panel
+         * @param window Unique pointer to the window to be displayed in the top panel
          */
-        void setMinTopHeight(float height) {
-            minTopHeight_ = height;
-        }
+        void setTop(std::unique_ptr<EmbeddedWindow> window);
 
         /**
-         * @brief Sets the minimum height for the bottom window.
+         * @brief Sets the embedded window for the bottom panel
+         * @param window Unique pointer to the window to be displayed in the bottom panel
          */
-        void setMinBottomHeight(float height) {
-            minBottomHeight_ = height;
-        }
+        void setBottom(std::unique_ptr<EmbeddedWindow> window);
 
-        void setTopPresetHeight(float height) {
-            topPresetHeight_ = height;
-            bottomPresetHeight_ = 0;
-        }
+        /**
+         * @brief Sets a preset height for either the top or bottom panel
+         * @param height The height to set in pixels
+         * @param isTop If true, sets height for top panel; if false, sets height for bottom panel
+         */
+        void setPresetHeight(float height, bool isTop);
 
-        void setBottomPresetHeight(float height) {
-            bottomPresetHeight_ = height;
-            topPresetHeight_ = 0;
-        }
+        /**
+         * @brief Sets a fixed height for either the top or bottom panel
+         * @param height The fixed height in pixels
+         * @param isTop If true, fixes the top panel height; if false, fixes the bottom panel height
+         */
+        void setFixedHeight(float height, bool isTop);
+
+        /**
+         * @brief Sets the minimum height for the top window
+         * @param height The minimum height in pixels
+         */
+        void setMinTopHeight(float height);
+
+        /**
+         * @brief Sets the minimum height for the bottom window
+         * @param height The minimum height in pixels
+         */
+        void setMinBottomHeight(float height);
+
+        /**
+         * @brief Renders the split container with both panels and the splitter
+         * Overrides the base class draw method to render the vertical split layout
+         */
+        void draw() override;
 
     private:
-        void drawSplitter(const std::string& id, const ImVec2& size) {
+        /**
+         * @brief Computes the appropriate height for the top panel based on available space and constraints
+         * @param avail Available space vector (width and height)
+         * @return The computed height for the top panel
+         */
+        float computeTopHeight(ImVec2 avail);
 
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+        /**
+         * @brief Renders the draggable splitter between the top and bottom panels
+         * @param id Unique identifier for the splitter widget
+         * @param size Size vector for the splitter (width and height)
+         */
+        void drawSplitter(const std::string& id, const ImVec2& size);
 
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
-            ImGui::Button(id.c_str(), size);
+        /** @brief Embedded window displayed in the top panel */
+        std::unique_ptr<EmbeddedWindow> topWindow_;
+        
+        /** @brief Embedded window displayed in the bottom panel */
+        std::unique_ptr<EmbeddedWindow> bottomWindow_;
 
-            if (!fixedTopHeight_) {
-                if (ImGui::IsItemActive()) {
-                    topHeight_ += ImGui::GetIO().MouseDelta.y;
-                }
-                if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
-                    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-                }
-            }
+        /** @brief ImGui window flags for the top child window */
+        ImGuiWindowFlags topFlags_ = ImGuiWindowFlags_None;
+        
+        /** @brief ImGui window flags for the bottom child window */
+        ImGuiWindowFlags bottomFlags_ = ImGuiWindowFlags_None;
 
-            ImGui::PopStyleVar(2);
-            ImGui::PopStyleColor(3);
-		}
-        std::unique_ptr<EmbeddedWindow> topWindow;
-        std::unique_ptr<EmbeddedWindow> bottomWindow;
-        std::optional<float> fixedTopHeight_;
+        /** @brief Unique identifier for this split container */
+        std::string name_;
 
+        /** @brief Height of the splitter in pixels */
         const float splitterHeight_ = 5.0f;
 
+        /** @brief Minimum height for the top panel in pixels */
         float minTopHeight_ = 100.0f;
+        
+        /** @brief Minimum height for the bottom panel in pixels */
         float minBottomHeight_ = 100.0f;
 
+        /** @brief Current height of the top panel in pixels */
         float topHeight_ = 500.0f;
+        
+        /** @brief Current height of the bottom panel in pixels */
         float bottomHeight_ = 0.0f;
+        
+        /** @brief Preset height for the top panel (0 if not set) */
         float topPresetHeight_ = 0.0f;
+        
+        /** @brief Preset height for the bottom panel (0 if not set) */
         float bottomPresetHeight_ = 0.0f;
+        
+        /** @brief Previous available height for delta calculations */
         float availY_ = 0.0f;
+
+        /** @brief Whether the top panel has a fixed height */
+        bool topFixed_ = false;
+        
+        /** @brief Whether the bottom panel has a fixed height */
+        bool bottomFixed_ = false;
     };
 
 } // namespace QaplaWindows

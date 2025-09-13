@@ -50,10 +50,10 @@ namespace QaplaWindows
     VerticalSplitContainer& TournamentBoardWindow::getMainWindow() {
         static std::unique_ptr<VerticalSplitContainer> mainWindow;
         if (!mainWindow) {
-            mainWindow = std::make_unique<VerticalSplitContainer>();
+            mainWindow = std::make_unique<VerticalSplitContainer>("main_window");
             mainWindow->setMinTopHeight(300.0f);
             mainWindow->setMinBottomHeight(184.0f);
-            mainWindow->setBottomPresetHeight(110.0f);
+            mainWindow->setPresetHeight(110.0f, false);
         }
         return *mainWindow;
     }
@@ -61,8 +61,8 @@ namespace QaplaWindows
     HorizontalSplitContainer& TournamentBoardWindow::getTopWindow() {
         static HorizontalSplitContainer* topWindow;
         if (!topWindow) {
-            auto window = std::make_unique<HorizontalSplitContainer>();
-            window->setRightPresetWidth(400.0f);
+            auto window = std::make_unique<HorizontalSplitContainer>("tournament_top");
+            window->setPresetWidth(400.0f, true);
             topWindow = window.get();
             getMainWindow().setTop(std::move(window));
         }
@@ -70,20 +70,20 @@ namespace QaplaWindows
     }
 
     VerticalSplitContainer& TournamentBoardWindow::getClockMovesWindow() {
-        static VerticalSplitContainer* topRightWindow;
-        if (!topRightWindow) {
-            auto window = std::make_unique<VerticalSplitContainer>();
-            window->setFixedTopHeight(120.0f);
-            topRightWindow = window.get();
+        static VerticalSplitContainer* clockMovesWindow;
+        if (!clockMovesWindow) {
+            auto window = std::make_unique<VerticalSplitContainer>("top_right");
+            window->setFixedHeight(120.0f, true);
+            clockMovesWindow = window.get();
             getTopWindow().setRight(std::move(window));
         }
-        return *topRightWindow;
+        return *clockMovesWindow;
     }
 
     VerticalSplitContainer& TournamentBoardWindow::getMovesChartWindow() {
         static VerticalSplitContainer* movesChartWindow;
         if (!movesChartWindow) {
-            auto window = std::make_unique<VerticalSplitContainer>();
+            auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
             movesChartWindow = window.get();
             getClockMovesWindow().setBottom(std::move(window));
         }

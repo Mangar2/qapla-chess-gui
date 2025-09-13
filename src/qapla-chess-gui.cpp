@@ -110,21 +110,21 @@ namespace {
 
         auto& boardData = QaplaWindows::BoardData::instance();
 
-        auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
-        ClockMovesContainer->setFixedTopHeight(120.0f);
+        auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
+        ClockMovesContainer->setFixedHeight(120.0f, true);
         ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
         ClockMovesContainer->setBottom(std::make_unique<QaplaWindows::MoveListWindow>());
 
-        auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>();
+        auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
         BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
-        BoardMovesContainer->setRightPresetWidth(400.0f);
+        BoardMovesContainer->setPresetWidth(400.0f, false);
 
-        auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>();
+        auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("board_engine");
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
         BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
         BoardEngineContainer->setMinBottomHeight(55.0f);
-        BoardEngineContainer->setBottomPresetHeight(230.0f);
+        BoardEngineContainer->setPresetHeight(230.0f, false);
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         boardTabBar->addTab("Board", std::move(BoardEngineContainer));
@@ -138,7 +138,8 @@ namespace {
 		taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
         taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
 
-        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(ImGuiWindowFlags_None);
+        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
+            "main", ImGuiWindowFlags_None);
 		mainContainer->setRight(std::move(boardTabBar));
 		mainContainer->setLeft(std::move(taskTabBar));
 

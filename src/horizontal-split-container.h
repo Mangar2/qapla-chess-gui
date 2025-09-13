@@ -33,126 +33,105 @@ namespace QaplaWindows {
     class HorizontalSplitContainer : public EmbeddedWindow {
     public:
 
-        HorizontalSplitContainer(ImGuiWindowFlags left = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
-            ImGuiWindowFlags right = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse) {
-            leftFlags_ = left;
-            rightFlags_ = right;
-            leftWidth_ = 400.0f;
-        }
+        /**
+         * @brief Constructs a horizontal split container with specified window flags
+         * @param name The unique identifier for this split container
+         * @param left ImGui window flags for the left child window
+         * @param right ImGui window flags for the right child window
+         */
+        HorizontalSplitContainer(
+            const std::string& name,
+            ImGuiWindowFlags left = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
+            ImGuiWindowFlags right = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-        void setLeft(std::unique_ptr<EmbeddedWindow> window) {
-            leftWindow_ = std::move(window);
-        }
+        /**
+         * @brief Sets the embedded window for the left panel
+         * @param window Unique pointer to the window to be displayed in the left panel
+         */
+        void setLeft(std::unique_ptr<EmbeddedWindow> window);
 
-        void setRight(std::unique_ptr<EmbeddedWindow> window) {
-            rightWindow_ = std::move(window);
-        }
+        /**
+         * @brief Sets the embedded window for the right panel
+         * @param window Unique pointer to the window to be displayed in the right panel
+         */
+        void setRight(std::unique_ptr<EmbeddedWindow> window);
 
-        void setLeftPresetWidth(float width) {
-            leftPresetWidth_ = width;
-            rightPresetWidth_ = 0;
-        }
+        /**
+         * @brief Sets a preset width for either the left or right panel
+         * @param width The width to set in pixels
+         * @param isLeft If true, sets width for left panel; if false, sets width for right panel
+         */
+        void setPresetWidth(float width, bool isLeft);
 
-        void setRightPresetWidth(float width) {
-            rightPresetWidth_ = width;
-            leftPresetWidth_ = 0;
-        }
+        /**
+         * @brief Sets a fixed width for either the left or right panel
+         * @param width The fixed width in pixels
+         * @param isLeft If true, fixes the left panel width; if false, fixes the right panel width
+         */
+        void setFixedWidth(float width, bool isLeft);
 
-        float computeLeftWidth(ImVec2 avail) {
-            float availableWidth = std::max(avail.x - splitterWidth_ - 13, 2 * minSize_);
-
-            if (rightPresetWidth_ != 0) {
-                if (rightWidth_ == 0) {
-                    leftWidth_ = std::max(leftWidth_, availableWidth - rightPresetWidth_);
-                }
-                else {
-                    auto availDelta = avail.x - availX_;
-                    leftWidth_ += availDelta;
-                }
-            }
-            availX_ = avail.x;
-            auto adjustedLeftWidth = std::max(leftWidth_, minSize_);
-            adjustedLeftWidth = std::min(adjustedLeftWidth, availableWidth - minSize_);
-            return adjustedLeftWidth;
-        }
-
-        void draw() override {
-            
-            ImVec2 avail = ImGui::GetContentRegionAvail();
-            float height = avail.y;
-
-            std::string idPrefix = "hsplit_" + std::to_string(reinterpret_cast<uintptr_t>(this));
-            float adjustedLeftWidth = computeLeftWidth(avail);
-
-            
-            ImGui::BeginChild((idPrefix + "_left").c_str(), ImVec2(adjustedLeftWidth, height),
-                ImGuiChildFlags_None, leftFlags_);
-            try {
-                if (leftWindow_) leftWindow_->draw();
-			}
-            catch (const std::exception& e) {
-                SnackbarManager::instance().showError(
-					std::format("Error in left window: {}", e.what()));
-            }
-            catch (...) {
-				SnackbarManager::instance().showError("Unknown error in left window");
-			}
-            ImGui::EndChild();
-            
-            ImGui::SameLine(0, 0);
-            drawSplitter(idPrefix + "_splitter", ImVec2(splitterWidth_, height));
-            ImGui::SameLine(0, 0);
-
-            rightWidth_ = std::max(avail.x - ImGui::GetCursorPosX(), minSize_);
-
-            ImGui::BeginChild((idPrefix + "_right").c_str(), ImVec2(rightWidth_, height),
-                ImGuiChildFlags_None, rightFlags_);
-            try {
-                if (rightWindow_) rightWindow_->draw();
-            }
-            catch (const std::exception& e) {
-				SnackbarManager::instance().showError(
-					std::format("Error in right window: {}", e.what()));
-			}
-            catch (...) {
-				SnackbarManager::instance().showError("Unknown error in right window");
-			}
-            ImGui::EndChild();
-
-        }
+        /**
+         * @brief Renders the split container with both panels and the splitter
+         * Overrides the base class draw method to render the horizontal split layout
+         */
+        void draw() override;
 
     private:
-        void drawSplitter(const std::string& id, const ImVec2& vec) {
-            // Splitter
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
+        /**
+         * @brief Computes the appropriate width for the left panel based on available space and constraints
+         * @param avail Available space vector (width and height)
+         * @return The computed width for the left panel
+         */
+        float computeLeftWidth(ImVec2 avail);
 
-            ImGui::Button(id.c_str(), vec);
-            if (ImGui::IsItemActive()) {
-                leftWidth_ += ImGui::GetIO().MouseDelta.x;
-            }
-
-            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW); // oder ResizeNS
-            }
-
-            ImGui::PopStyleColor(3);
-		}
+        /**
+         * @brief Renders the draggable splitter between the left and right panels
+         * @param id Unique identifier for the splitter widget
+         * @param vec Size vector for the splitter (width and height)
+         */
+        void drawSplitter(const std::string& id, const ImVec2& vec);
         
+        /** @brief Width of the splitter in pixels */
         const float splitterWidth_ = 5.0f;
+        
+        /** @brief Minimum size for each panel in pixels */
         const float minSize_ = 100.0f;
 
+        /** @brief Embedded window displayed in the left panel */
         std::unique_ptr<EmbeddedWindow> leftWindow_;
+        
+        /** @brief Embedded window displayed in the right panel */
         std::unique_ptr<EmbeddedWindow> rightWindow_;
-        float leftWidth_ = 0.0f;
-        float rightWidth_ = 0.0f;
-        float rightPresetWidth_ = 0.0f;
-        float leftPresetWidth_ = 0.0f;
-        float availX_ = 0.0f;
-
+        
+        /** @brief ImGui window flags for the left child window */
         ImGuiWindowFlags leftFlags_ = ImGuiWindowFlags_None;
+        
+        /** @brief ImGui window flags for the right child window */
         ImGuiWindowFlags rightFlags_ = ImGuiWindowFlags_None;
+
+        /** @brief Unique identifier for this split container */
+        std::string name_;
+
+        /** @brief Current width of the left panel in pixels */
+        float leftWidth_ = 0.0f;
+        
+        /** @brief Current width of the right panel in pixels */
+        float rightWidth_ = 0.0f;
+        
+        /** @brief Preset width for the right panel (0 if not set) */
+        float rightPresetWidth_ = 0.0f;
+        
+        /** @brief Preset width for the left panel (0 if not set) */
+        float leftPresetWidth_ = 0.0f;
+        
+        /** @brief Previous available width for delta calculations */
+        float availX_ = 0.0f;
+        
+        /** @brief Whether the left panel has a fixed width */
+        bool leftFixed_ = false;
+        
+        /** @brief Whether the right panel has a fixed width */
+        bool rightFixed_ = false;
     };
 
 } // namespace QaplaWindows
