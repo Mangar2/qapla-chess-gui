@@ -158,6 +158,18 @@ public:
     void fromString(const std::string& line);
 
     /**
+     * @brief Copies results and duel statistics from another PairTournament instance.
+     *
+     * Both tournaments must have been initialized with the same engines and configuration.
+     *
+     * @param other Another PairTournament instance to copy results from.
+     */
+    void copyResultsFrom(const PairTournament& other) {
+       duelResult_ = other.duelResult_;
+       results_ = other.results_;
+    }
+
+    /**
 	 * @brief Returns the result of the duel between the two engines.
      */
     EngineDuelResult getResult() const {

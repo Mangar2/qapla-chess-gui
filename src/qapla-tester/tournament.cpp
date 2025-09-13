@@ -231,7 +231,7 @@ void Tournament::restoreResults(const std::vector<std::shared_ptr<PairTournament
         for (const auto& pairing : pairings_) {
             if (pairing->matches(*saved)) 
             {
-                pairing->fromString(saved->toString());
+                pairing->copyResultsFrom(*saved);
                 break;
             }
         }

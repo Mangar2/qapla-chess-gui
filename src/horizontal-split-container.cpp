@@ -108,8 +108,10 @@ namespace QaplaWindows {
             catch (...) {
                 SnackbarManager::instance().showError("Unknown error in left window");
             }
-            ImGui::EndChild();
         }
+        // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
+        // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
+        ImGui::EndChild();
         
         ImGui::SameLine(0, 0);
         drawSplitter("hsplit." + name_ + ".splitter", ImVec2(splitterWidth_, height));
@@ -129,8 +131,10 @@ namespace QaplaWindows {
             catch (...) {
                 SnackbarManager::instance().showError("Unknown error in right window");
             }
-            ImGui::EndChild();
         }
+        // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
+        // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
+        ImGui::EndChild();
     }
 
     void HorizontalSplitContainer::drawSplitter(const std::string& id, const ImVec2& vec) {
