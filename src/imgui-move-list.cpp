@@ -112,52 +112,23 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
 
 }
 
-
 std::optional<size_t> ImGuiMoveList::draw() {
     auto size = ImGui::GetContentRegionAvail();
-    auto selectedRow = table_.draw(size);
-    if (selectedRow) {
-        // Convert table row index to move index (move index = row index + 1)
-        // Don't change currentPly_ here - let GameRecord confirm the change
-        return *selectedRow + 1; 
-    }
+    auto result = table_.draw(size);
     
-    // Check for keyboard navigation in clickable mode
-    if (clickable_) {
-        auto keyboardIntent = checkKeyboard();
-        if (keyboardIntent) {
-            // Scroll to the intended row for visual feedback
-            if (*keyboardIntent > 0) {
-                table_.scrollToRow(*keyboardIntent - 1); 
-            }
-            return *keyboardIntent; 
+    if (result) {
+        if (*result == SIZE_MAX) {
+            // Special case: navigated to "zero" position (start position)
+            return 0;
+        } else {
+            // Convert table row index to move index (move index = row index + 1)
+            return *result + 1;
         }
     }
     
     return std::nullopt;
 }
 
-
-std::optional<size_t> ImGuiMoveList::checkKeyboard() {
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
-		int currentFrame = ImGui::GetFrameCount();
-        if (currentFrame == lastInputFrame_) {
-            return std::nullopt; 
-		}
-		lastInputFrame_ = currentFrame;
-        
-        // Use currentPly_ as base (which represents the current GameRecord position)
-        size_t desiredPly = currentPly_;
-        
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && desiredPly > 0) {
-            return desiredPly - 1;
-        }
-        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            return desiredPly + 1; // Let GameRecord decide if this is valid
-        }
-    }
-    return std::nullopt;
-}
 
 std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
     std::vector<std::string> row;

@@ -108,6 +108,8 @@ namespace QaplaWindows {
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
         if (autoScroll_) {
             ImGui::SetScrollHereY(0.5f);
+            // Auto-scroll should only happen once, then be disabled to allow manual scrolling
+            const_cast<ImGuiTable*>(this)->autoScroll_ = false;
         }
     }
 
@@ -155,7 +157,56 @@ namespace QaplaWindows {
 
             ImGui::EndTable();
         }
+        
+        // Handle keyboard navigation if clickable
+        if (clickable_) {
+            auto keyboardResult = checkKeyboard();
+            if (keyboardResult) {
+                if (*keyboardResult == SIZE_MAX) {
+                    // Special case: navigate to "zero" position (before first row)
+                    return SIZE_MAX;
+                } else {
+                    // Normal row navigation - scroll to the row and return it
+                    scrollToRow(*keyboardResult);
+                    return *keyboardResult;
+                }
+            }
+        }
+        
 		return clickedRowIndex;
+    }
+
+    std::optional<size_t> ImGuiTable::checkKeyboard() const {
+        if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+            return std::nullopt;
+        }
+        
+        int currentFrame = ImGui::GetFrameCount();
+        if (currentFrame == lastInputFrame_) {
+            return std::nullopt;
+        }
+        lastInputFrame_ = currentFrame;
+        
+        // Get current position (based on currentRow_)
+        int currentPos = currentRow_.has_value() ? static_cast<int>(currentRow_.value()) : -1;
+        
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
+            if (currentPos > 0) {
+                return currentPos - 1;  // Navigate to previous row
+            } else if (allowNavigateToZero_ && currentPos == 0) {
+                return SIZE_MAX;  // Special value indicating "navigate to zero"
+            }
+        }
+        
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
+            if (currentPos < 0) {
+                return 0;  // Navigate to first row from "zero" position
+            } else if (currentPos + 1 < static_cast<int>(rows_.size())) {
+                return currentPos + 1;  // Navigate to next row
+            }
+        }
+        
+        return std::nullopt;
     }
 
 }

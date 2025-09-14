@@ -66,14 +66,13 @@ namespace QaplaWindows {
         void setClickable(bool clickable) {
             clickable_ = clickable;
             table_.setClickable(clickable);
+            table_.setAllowNavigateToZero(true);  // Chess-specific: allow navigate to start position
             // Auto-scroll behavior will be managed dynamically in setFromGameRecord
         }
 
     private:
         std::vector<std::string> mkRow(const std::string& label, const MoveRecord& move, size_t index);
-        std::optional<size_t> checkKeyboard();
 		size_t currentPly_ = 0;
-        int lastInputFrame_ = -1;
         bool clickable_ = false;
         ChangeTracker referenceTracker_;
         ImGuiTable table_;

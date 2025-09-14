@@ -74,6 +74,14 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Sets whether keyboard navigation can navigate to "row -1" (representing index 0).
+         * @param allow If true, Up arrow from first row will return index 0 instead of staying at row 0.
+         */
+        void setAllowNavigateToZero(bool allow) {
+            allowNavigateToZero_ = allow;
+        }
+
+        /**
          * @brief Pushes a new row to the end of the table.
          * @param row List of strings representing cell content.
          */
@@ -189,17 +197,20 @@ namespace QaplaWindows {
          * @brief Scrolls to a specific row immediately (for keyboard navigation).
          * @param row The index of the row to scroll to.
          */
-        void scrollToRow(uint32_t row) {
+        void scrollToRow(uint32_t row) const {
             scrollToRow_ = row;
         }
 
     private:
         void drawCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
+        std::optional<size_t> checkKeyboard() const;
 
         bool clickable_ = false;
         bool autoScroll_ = true;
+        bool allowNavigateToZero_ = false;
         mutable std::optional<uint32_t> scrollToRow_;
+        mutable int lastInputFrame_ = -1;
         void tableHeadersRow() const;
 		bool isRowClicked(size_t index) const;
         uint32_t selectedRow_ = 0;
