@@ -181,7 +181,7 @@ namespace QaplaWindows {
         /**
 		 * @brief Returns the currently selected row index.
          */
-        uint32_t getSelectedRow() {
+        size_t getSelectedRow() {
             return selectedRow_;
         }
 
@@ -189,7 +189,10 @@ namespace QaplaWindows {
          * @brief Sets the current row index. The current row is highlighted and kept in view.
          * @param row The index of the row to set as current, or std::nullopt if the table will not show any current row.
          */
-        void setCurrentRow(std::optional<uint32_t> row) {
+        void setCurrentRow(std::optional<size_t> row) {
+            if (autoScroll_ && row.has_value()) {
+                scrollToRow_ = row; 
+            }
             currentRow_ = row;
         }
 
@@ -197,24 +200,24 @@ namespace QaplaWindows {
          * @brief Scrolls to a specific row immediately (for keyboard navigation).
          * @param row The index of the row to scroll to.
          */
-        void scrollToRow(uint32_t row) const {
+        void scrollToRow(size_t row) const {
             scrollToRow_ = row;
         }
 
     private:
-        void drawCurrentRow(size_t rowIndex) const;
+        void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
         std::optional<size_t> checkKeyboard() const;
 
         bool clickable_ = false;
-        bool autoScroll_ = true;
+        bool autoScroll_ = false;
         bool allowNavigateToZero_ = false;
-        mutable std::optional<uint32_t> scrollToRow_;
+        mutable std::optional<size_t> scrollToRow_;
         mutable int lastInputFrame_ = -1;
         void tableHeadersRow() const;
 		bool isRowClicked(size_t index) const;
-        uint32_t selectedRow_ = 0;
-        std::optional<uint32_t> currentRow_;
+        size_t selectedRow_ = 0;
+        std::optional<size_t> currentRow_;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;

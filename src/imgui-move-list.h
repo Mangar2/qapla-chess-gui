@@ -67,7 +67,6 @@ namespace QaplaWindows {
             clickable_ = clickable;
             table_.setClickable(clickable);
             table_.setAllowNavigateToZero(true);  // Chess-specific: allow navigate to start position
-            // Auto-scroll behavior will be managed dynamically in setFromGameRecord
         }
 
     private:

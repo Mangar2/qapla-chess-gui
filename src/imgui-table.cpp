@@ -99,18 +99,13 @@ namespace QaplaWindows {
         return clicked;
     }
 
-    void ImGuiTable::drawCurrentRow(size_t rowIndex) const {
+    void ImGuiTable::accentuateCurrentRow(size_t rowIndex) const {
         if (!currentRow_.has_value() || currentRow_.value() != rowIndex) {
             return;
         }
         auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
         auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
-        if (autoScroll_) {
-            ImGui::SetScrollHereY(0.5f);
-            // Auto-scroll should only happen once, then be disabled to allow manual scrolling
-            const_cast<ImGuiTable*>(this)->autoScroll_ = false;
-        }
     }
 
     void ImGuiTable::drawRow(size_t rowIndex) const {
@@ -128,8 +123,32 @@ namespace QaplaWindows {
         }
     }
 
+    static std::optional<float> calculateOptimalScrollPosition(size_t rowIndex) {
+        float scrollY = ImGui::GetScrollY();
+        float windowHeight = ImGui::GetWindowHeight();
+        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+        
+        float rowTop = (rowIndex + 1) * rowHeight; // +1 for header row
+        float rowBottom = rowTop + rowHeight;
+        float visibleTop = scrollY + rowHeight; // +rowHeight to account for header
+        float visibleBottom = scrollY + windowHeight;
+        
+        // Row visible, no scroll needed
+        if (rowTop >= visibleTop && rowBottom <= visibleBottom) {
+            return std::nullopt;  
+        }
+
+        // Row far away → no scroll
+        if (rowBottom + 1.0f < visibleTop || rowTop - 1.0f > visibleBottom) {
+            return 0.5f;  
+        }
+        
+        // Row, too far up (but close) → scroll to top
+        return (rowBottom < visibleBottom) ? 0.0f : 1.0f;
+    }
+
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) const {
-        std::optional<size_t> clickedRowIndex;
+        std::optional<size_t> clickedRow;
         ImVec2 tableSize = size;
         if (shrink) {
             float rowHeight = ImGui::GetTextLineHeightWithSpacing();
@@ -141,18 +160,21 @@ namespace QaplaWindows {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
             }
             tableHeadersRow();
-            for (size_t index = 0; index < rows_.size(); ++index) {
+            for (size_t rowIndex = 0; rowIndex < rows_.size(); ++rowIndex) {
                 ImGui::TableNextRow();
-                if (isRowClicked(index)) {
-                    clickedRowIndex = index;
+                if (isRowClicked(rowIndex)) {
+                    clickedRow = rowIndex;
                 }
-                drawCurrentRow(index);
-                // Handle explicit scroll to row (for keyboard navigation)
-                if (scrollToRow_.has_value() && scrollToRow_.value() == index) {
-                    ImGui::SetScrollHereY(0.5f);
-                    scrollToRow_.reset(); // Clear after scrolling
+                accentuateCurrentRow(rowIndex);
+                // Auto-scroll to row if requested
+                if (scrollToRow_ && *scrollToRow_ == rowIndex) {
+                    auto scrollPos = calculateOptimalScrollPosition(rowIndex);
+                    if (scrollPos) {
+                        ImGui::SetScrollHereY(*scrollPos);
+                    }
+                    scrollToRow_.reset(); 
                 }
-                drawRow(index);
+                drawRow(rowIndex);
             }
 
             ImGui::EndTable();
@@ -160,20 +182,18 @@ namespace QaplaWindows {
         
         // Handle keyboard navigation if clickable
         if (clickable_) {
-            auto keyboardResult = checkKeyboard();
-            if (keyboardResult) {
-                if (*keyboardResult == SIZE_MAX) {
+            auto keyboardRow = checkKeyboard();
+            if (keyboardRow) {
+                if (*keyboardRow == SIZE_MAX) {
                     // Special case: navigate to "zero" position (before first row)
                     return SIZE_MAX;
                 } else {
-                    // Normal row navigation - scroll to the row and return it
-                    scrollToRow(*keyboardResult);
-                    return *keyboardResult;
+                    return *keyboardRow;
                 }
             }
         }
         
-		return clickedRowIndex;
+		return clickedRow;
     }
 
     std::optional<size_t> ImGuiTable::checkKeyboard() const {
@@ -186,23 +206,20 @@ namespace QaplaWindows {
             return std::nullopt;
         }
         lastInputFrame_ = currentFrame;
-        
-        // Get current position (based on currentRow_)
-        int currentPos = currentRow_.has_value() ? static_cast<int>(currentRow_.value()) : -1;
-        
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
-            if (currentPos > 0) {
-                return currentPos - 1;  // Navigate to previous row
-            } else if (allowNavigateToZero_ && currentPos == 0) {
+       
+        if (currentRow_ && ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
+            if (*currentRow_ > 0) {
+                return *currentRow_ - 1;  // Navigate to previous row
+            } else if (allowNavigateToZero_) {
                 return SIZE_MAX;  // Special value indicating "navigate to zero"
             }
         }
         
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            if (currentPos < 0) {
+            if (!currentRow_) {
                 return 0;  // Navigate to first row from "zero" position
-            } else if (currentPos + 1 < static_cast<int>(rows_.size())) {
-                return currentPos + 1;  // Navigate to next row
+            } else if (*currentRow_ + 1 < rows_.size()) {
+                return *currentRow_ + 1;  // Navigate to next row
             }
         }
         

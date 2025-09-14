@@ -45,6 +45,7 @@ ImGuiMoveList::ImGuiMoveList()
         { "PV", ImGuiTableColumnFlags_WidthStretch, 0.0f, false }
 })
 {
+    table_.setAutoScroll(true);  
 }
 
 static std::string causeToString(GameEndCause cause) {
@@ -92,14 +93,8 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     }
     if (gameRecord.nextMoveIndex() > 0) {
         table_.setCurrentRow(gameRecord.nextMoveIndex() - 1);
-        // Enable auto-scroll only if there was an actual change and we're at the latest move
-        // or if we're not in clickable mode
-        bool isAtLatestMove = (gameRecord.nextMoveIndex() == moves.size());
-        bool enableAutoScroll = !clickable_ || (updated && isAtLatestMove);
-        table_.setAutoScroll(enableAutoScroll);
     } else {
         table_.setCurrentRow(std::nullopt);
-        table_.setAutoScroll(!clickable_);
     }
     
     // Synchronize currentPly_ with the game state
