@@ -137,6 +137,15 @@ public:
 	{
 		return {gameEndCause_, gameResult_};
 	}
+
+	/**
+	 * @brief Returns true if the game has ended (not unterminated).
+	 */
+	bool isGameOver() const
+	{
+		return gameResult_ != GameResult::Unterminated && currentPly_ == moves_.size();
+	}
+
 	/**
 	 * @brief Sets the time control for the game.
 	 */

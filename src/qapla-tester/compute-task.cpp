@@ -286,11 +286,8 @@ void ComputeTask::nextMove(const EngineEvent& event) {
 
 
 bool ComputeTask::checkGameOver(bool verbose) {
-    auto [cause, result] = gameContext_.checkGameResult();
 
-    if (result == GameResult::Unterminated) {
-        return false;
-    }
+    auto [cause, result] = gameContext_.checkGameResult();
 
     if (verbose) {
         if (logMoves_) std::cout << "\n";
@@ -298,7 +295,7 @@ bool ComputeTask::checkGameOver(bool verbose) {
         Logger::testLogger().log("[Termination: " + gameEndCauseToPgnTermination(cause) + "]", TraceLevel::info);
     }
 
-    return true;
+    return gameContext_.gameRecord().isGameOver();
 }
 
 void ComputeTask::markFinished() {

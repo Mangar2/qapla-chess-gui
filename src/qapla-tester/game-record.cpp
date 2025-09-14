@@ -66,6 +66,9 @@ void GameRecord::addMove(const MoveRecord &move)
     if (currentPly_ < moves_.size())
     {
         moves_.resize(currentPly_);
+        gameEndCause_ = GameEndCause::Ongoing;
+        gameResult_ = GameResult::Unterminated;
+        changeTracker_.trackModification();
     }
     moves_.push_back(move);
     ++currentPly_;

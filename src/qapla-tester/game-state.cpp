@@ -186,7 +186,7 @@ QaplaBasics::Move GameState::stringToMove(std::string moveStr, bool requireLan)
 		if ((movingPiece == NO_PIECE || move.getMovingPiece() == movingPiece) &&
 			(departureFile == -1 || getFile(move.getDeparture()) == File(departureFile)) &&
 			(departureRank == -1 || getRank(move.getDeparture()) == Rank(departureRank)) &&
-			(getFile(move.getDestination()) == File(destinationFile)) &&
+			(destinationFile == -1 || getFile(move.getDestination()) == File(destinationFile)) &&
 			(destinationRank == -1 || getRank(move.getDestination()) == Rank(destinationRank)) &&
 			(move.getPromotion() == promotePiece))
 		{
@@ -297,13 +297,12 @@ void GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t
 		}
 		doMove(parsed);
 	}
-	uint32_t nextMoveIndex = game.nextMoveIndex();
 	auto [gameCause, gameResult] = game.getGameResult();
 	auto [myCause, myResult] = getGameResult();
 
 	// Only set the game result if we are at the end of the game record
-	if ((!plies || nextMoveIndex == *plies) && myResult == GameResult::Unterminated) {
+	if (game.isGameOver() && myResult == GameResult::Unterminated) {
 		setGameResult(gameCause, gameResult);
-	}
+	} 
 }
 	
