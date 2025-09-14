@@ -162,10 +162,8 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     int32_t idealStepSize = scale / (maxLabels - 1);
     
     int32_t stepSize;
-    if (idealStepSize <= 25) stepSize = 25;
-    else if (idealStepSize <= 50) stepSize = 50;
-    else if (idealStepSize <= 100) stepSize = 100;
-    else if (idealStepSize <= 250) stepSize = 250;
+    if (idealStepSize <= 100) stepSize = 100;
+    else if (idealStepSize <= 250) stepSize = 200;
     else if (idealStepSize <= 500) stepSize = 500;
     else if (idealStepSize <= 1000) stepSize = 1000;
     else if (idealStepSize <= 2500) stepSize = 2500;
@@ -182,10 +180,8 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         int32_t adjustedStepSize = stepSize;
         while (adjustedStepSize > maxValueThatFits && adjustedStepSize > 25) {
             if (adjustedStepSize >= 1000) adjustedStepSize /= 2;
-            else if (adjustedStepSize >= 500) adjustedStepSize = 250;
-            else if (adjustedStepSize >= 250) adjustedStepSize = 100;
-            else if (adjustedStepSize >= 100) adjustedStepSize = 50;
-            else adjustedStepSize = 25;
+            else if (adjustedStepSize >= 500) adjustedStepSize = 200;
+            else adjustedStepSize = 100;
         }
         stepSize = adjustedStepSize;
     }

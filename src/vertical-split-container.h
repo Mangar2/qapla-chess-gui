@@ -23,6 +23,7 @@
 #include "snackbar.h"
 #include <memory>
 #include <algorithm>
+#include <functional>
 #include <string>
 
 #include <imgui.h>
@@ -57,6 +58,18 @@ namespace QaplaWindows {
          * @param window Unique pointer to the window to be displayed in the bottom panel
          */
         void setBottom(std::unique_ptr<EmbeddedWindow> window);
+
+        /**
+         * @brief Sets a callback function for drawing the top panel
+         * @param callback Function to be called when drawing the top panel
+         */
+        void setTopCallback(std::function<void()> callback);
+
+        /**
+         * @brief Sets a callback function for drawing the bottom panel
+         * @param callback Function to be called when drawing the bottom panel
+         */
+        void setBottomCallback(std::function<void()> callback);
 
         /**
          * @brief Sets a preset height for either the top or bottom panel
@@ -110,6 +123,12 @@ namespace QaplaWindows {
         
         /** @brief Embedded window displayed in the bottom panel */
         std::unique_ptr<EmbeddedWindow> bottomWindow_;
+
+        /** @brief Callback function for drawing the top panel */
+        std::function<void()> topCallback_;
+        
+        /** @brief Callback function for drawing the bottom panel */
+        std::function<void()> bottomCallback_;
 
         /** @brief ImGui window flags for the top child window */
         ImGuiWindowFlags topFlags_ = ImGuiWindowFlags_None;

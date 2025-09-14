@@ -34,10 +34,34 @@ namespace QaplaWindows {
 
     void HorizontalSplitContainer::setLeft(std::unique_ptr<EmbeddedWindow> window) {
         leftWindow_ = std::move(window);
+        // Create a callback that calls the embedded window's draw method
+        if (leftWindow_) {
+            leftCallback_ = [this]() { leftWindow_->draw(); };
+        } else {
+            leftCallback_ = nullptr;
+        }
     }
 
     void HorizontalSplitContainer::setRight(std::unique_ptr<EmbeddedWindow> window) {
         rightWindow_ = std::move(window);
+        // Create a callback that calls the embedded window's draw method
+        if (rightWindow_) {
+            rightCallback_ = [this]() { rightWindow_->draw(); };
+        } else {
+            rightCallback_ = nullptr;
+        }
+    }
+
+    void HorizontalSplitContainer::setLeftCallback(std::function<void()> callback) {
+        leftCallback_ = std::move(callback);
+        // Clear the embedded window since we're using a callback
+        leftWindow_.reset();
+    }
+
+    void HorizontalSplitContainer::setRightCallback(std::function<void()> callback) {
+        rightCallback_ = std::move(callback);
+        // Clear the embedded window since we're using a callback
+        rightWindow_.reset();
     }
 
     void HorizontalSplitContainer::setPresetWidth(float width, bool isLeft) {
@@ -99,7 +123,7 @@ namespace QaplaWindows {
         if (ImGui::BeginChild(("hsplit." + name_ + ".left").c_str(), ImVec2(leftWidth_, height),
             ImGuiChildFlags_None, leftFlags_)) {
             try {
-                if (leftWindow_) leftWindow_->draw();
+                if (leftCallback_) leftCallback_();
             }
             catch (const std::exception& e) {
                 SnackbarManager::instance().showError(
@@ -122,7 +146,7 @@ namespace QaplaWindows {
         if (ImGui::BeginChild(("hsplit." + name_ + ".right").c_str(), ImVec2(rightWidth_, height),
             ImGuiChildFlags_None, rightFlags_)) {
             try {
-                if (rightWindow_) rightWindow_->draw();
+                if (rightCallback_) rightCallback_();
             }
             catch (const std::exception& e) {
                 SnackbarManager::instance().showError(

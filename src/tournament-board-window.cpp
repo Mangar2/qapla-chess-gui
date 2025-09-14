@@ -62,7 +62,7 @@ namespace QaplaWindows
         static HorizontalSplitContainer* topWindow;
         if (!topWindow) {
             auto window = std::make_unique<HorizontalSplitContainer>("tournament_top");
-            window->setPresetWidth(400.0f, true);
+            window->setPresetWidth(400.0f, false);
             topWindow = window.get();
             getMainWindow().setTop(std::move(window));
         }
@@ -84,6 +84,7 @@ namespace QaplaWindows
         static VerticalSplitContainer* movesChartWindow;
         if (!movesChartWindow) {
             auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
+            window->setPresetHeight(200.0f, false);
             movesChartWindow = window.get();
             getClockMovesWindow().setBottom(std::move(window));
         }
@@ -117,26 +118,25 @@ namespace QaplaWindows
 
     void TournamentBoardWindow::draw()
     {
-        getTopWindow().setLeft(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getTopWindow().setLeftCallback([&]() {
             imGuiBoard_.draw();
-        }));
+        });
 
-        getClockMovesWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getClockMovesWindow().setTopCallback([&]() {
             imGuiClock_.draw();
-        }));
+        });
 
-        getMovesChartWindow().setTop(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        getMovesChartWindow().setTopCallback([&]() {
             imGuiMoveList_.draw();
-        }));
-        getMovesChartWindow().setBottom(std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
+        });
+        getMovesChartWindow().setBottomCallback([&]() {
             imGuiBarChart_.draw();
-        }));
+        });
 
-        getMainWindow().setBottom(
-            std::make_unique<LambdaEmbeddedWindowWrapper>([&]() {
-                imGuiEngineList_.draw();
-            })
-        );
+        getMainWindow().setBottomCallback([&]() {
+            imGuiEngineList_.draw();
+        });
+        
         getMainWindow().draw();
     }
 

@@ -23,6 +23,7 @@
 #include "snackbar.h"
 #include <memory>
 #include <algorithm>
+#include <functional>
 #include <imgui.h>
 
 namespace QaplaWindows {
@@ -55,6 +56,18 @@ namespace QaplaWindows {
          * @param window Unique pointer to the window to be displayed in the right panel
          */
         void setRight(std::unique_ptr<EmbeddedWindow> window);
+
+        /**
+         * @brief Sets a callback function for drawing the left panel
+         * @param callback Function to be called when drawing the left panel
+         */
+        void setLeftCallback(std::function<void()> callback);
+
+        /**
+         * @brief Sets a callback function for drawing the right panel
+         * @param callback Function to be called when drawing the right panel
+         */
+        void setRightCallback(std::function<void()> callback);
 
         /**
          * @brief Sets a preset width for either the left or right panel
@@ -102,6 +115,12 @@ namespace QaplaWindows {
         
         /** @brief Embedded window displayed in the right panel */
         std::unique_ptr<EmbeddedWindow> rightWindow_;
+
+        /** @brief Callback function for drawing the left panel */
+        std::function<void()> leftCallback_;
+        
+        /** @brief Callback function for drawing the right panel */
+        std::function<void()> rightCallback_;
         
         /** @brief ImGui window flags for the left child window */
         ImGuiWindowFlags leftFlags_ = ImGuiWindowFlags_None;

@@ -34,10 +34,34 @@ namespace QaplaWindows {
 
     void VerticalSplitContainer::setTop(std::unique_ptr<EmbeddedWindow> window) {
         topWindow_ = std::move(window);
+        // Create a callback that calls the embedded window's draw method
+        if (topWindow_) {
+            topCallback_ = [this]() { topWindow_->draw(); };
+        } else {
+            topCallback_ = nullptr;
+        }
     }
 
     void VerticalSplitContainer::setBottom(std::unique_ptr<EmbeddedWindow> window) {
         bottomWindow_ = std::move(window);
+        // Create a callback that calls the embedded window's draw method
+        if (bottomWindow_) {
+            bottomCallback_ = [this]() { bottomWindow_->draw(); };
+        } else {
+            bottomCallback_ = nullptr;
+        }
+    }
+
+    void VerticalSplitContainer::setTopCallback(std::function<void()> callback) {
+        topCallback_ = std::move(callback);
+        // Clear the embedded window since we're using a callback
+        topWindow_.reset();
+    }
+
+    void VerticalSplitContainer::setBottomCallback(std::function<void()> callback) {
+        bottomCallback_ = std::move(callback);
+        // Clear the embedded window since we're using a callback
+        bottomWindow_.reset();
     }
 
     void VerticalSplitContainer::setPresetHeight(float height, bool isTop) {
@@ -101,14 +125,14 @@ namespace QaplaWindows {
         ImVec2 avail = ImGui::GetContentRegionAvail();
         float width = avail.x;
 
-        float adjustedHeight = computeTopHeight(avail);
-        bottomHeight_ = std::max(avail.y - adjustedHeight - splitterHeight_, minBottomHeight_);
+        topHeight_ = computeTopHeight(avail);
+        bottomHeight_ = std::max(avail.y - topHeight_ - splitterHeight_, minBottomHeight_);
 
         // Top window
-        if (ImGui::BeginChild(("vsplit." + name_ + ".top").c_str(), ImVec2(width, adjustedHeight),
+        if (ImGui::BeginChild(("vsplit." + name_ + ".top").c_str(), ImVec2(width, topHeight_),
             ImGuiChildFlags_None, topFlags_)) {
             try {
-                if (topWindow_) topWindow_->draw();
+                if (topCallback_) topCallback_();
             }
             catch (const std::exception& e) {
                 SnackbarManager::instance().showError(
@@ -128,7 +152,7 @@ namespace QaplaWindows {
         if (ImGui::BeginChild(("vsplit." + name_ + ".bottom").c_str(), ImVec2(width, bottomHeight_), 
             ImGuiChildFlags_None, bottomFlags_)) {
             try {
-                if (bottomWindow_) bottomWindow_->draw();
+                if (bottomCallback_) bottomCallback_();
             }
             catch (const std::exception& e) {
                 SnackbarManager::instance().showError(
