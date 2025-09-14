@@ -72,7 +72,6 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     referenceTracker_.updateFrom(gameRecord.getChangeTracker());
     if (!updated) return;
 
-    currentPly_ = 0;
     if (changed) {
         table_.clear();
     }
@@ -93,9 +92,18 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     }
     if (gameRecord.nextMoveIndex() > 0) {
         table_.setCurrentRow(gameRecord.nextMoveIndex() - 1);
+        // Enable auto-scroll only if there was an actual change and we're at the latest move
+        // or if we're not in clickable mode
+        bool isAtLatestMove = (gameRecord.nextMoveIndex() == moves.size());
+        bool enableAutoScroll = !clickable_ || (updated && isAtLatestMove);
+        table_.setAutoScroll(enableAutoScroll);
     } else {
         table_.setCurrentRow(std::nullopt);
+        table_.setAutoScroll(!clickable_);
     }
+    
+    // Synchronize currentPly_ with the game state
+    currentPly_ = gameRecord.nextMoveIndex();
 
     const auto [cause, result] = gameRecord.getGameResult();
     if (result != GameResult::Unterminated) {
@@ -109,42 +117,49 @@ std::optional<size_t> ImGuiMoveList::draw() {
     auto size = ImGui::GetContentRegionAvail();
     auto selectedRow = table_.draw(size);
     if (selectedRow) {
-        currentPly_ = *selectedRow + 1;
+        // Convert table row index to move index (move index = row index + 1)
+        // Don't change currentPly_ here - let GameRecord confirm the change
+        return *selectedRow + 1; 
     }
-    checkKeyboard();
-    return selectedRow;
+    
+    // Check for keyboard navigation in clickable mode
+    if (clickable_) {
+        auto keyboardIntent = checkKeyboard();
+        if (keyboardIntent) {
+            // Scroll to the intended row for visual feedback
+            if (*keyboardIntent > 0) {
+                table_.scrollToRow(*keyboardIntent - 1); 
+            }
+            return *keyboardIntent; 
+        }
+    }
+    
+    return std::nullopt;
 }
 
 
-void ImGuiMoveList::checkKeyboard() {
+std::optional<size_t> ImGuiMoveList::checkKeyboard() {
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
 		int currentFrame = ImGui::GetFrameCount();
         if (currentFrame == lastInputFrame_) {
-            return; 
+            return std::nullopt; 
 		}
 		lastInputFrame_ = currentFrame;
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && currentPly_ > 0) {
-            currentPly_--;
+        
+        // Use currentPly_ as base (which represents the current GameRecord position)
+        size_t desiredPly = currentPly_;
+        
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true) && desiredPly > 0) {
+            return desiredPly - 1;
         }
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            if (currentPly_ + 1 < table_.size()) {
-                currentPly_++;
-            }
+            return desiredPly + 1; // Let GameRecord decide if this is valid
         }
     }
+    return std::nullopt;
 }
 
-bool ImGuiMoveList::isRowClicked(size_t index) {
-    std::string id =  "/MoveListTable/row/" + std::to_string(index);
-    ImGui::PushID(id.c_str());
-    bool clicked = ImGui::Selectable("##row", false,
-        ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
-    ImGui::PopID();
-    ImGui::SameLine(0.0f, 0.0f);
-    return clicked;
-}
-
- std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
+std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
     std::vector<std::string> row;
     row.push_back(label + move.san);
     if (!label.empty() && label[0] == '.') {

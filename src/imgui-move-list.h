@@ -64,19 +64,17 @@ namespace QaplaWindows {
          * @param clickable If true, rows can be clicked to select moves.
          */
         void setClickable(bool clickable) {
+            clickable_ = clickable;
             table_.setClickable(clickable);
+            // Auto-scroll behavior will be managed dynamically in setFromGameRecord
         }
 
     private:
         std::vector<std::string> mkRow(const std::string& label, const MoveRecord& move, size_t index);
-        void checkKeyboard();
-        /**
-         * Returns true if the table row with the given index is currently clicked.
-         * Must be called during draw(), at the point where the row with this index is being rendered.
-         */
-        bool isRowClicked(size_t index);
+        std::optional<size_t> checkKeyboard();
 		size_t currentPly_ = 0;
         int lastInputFrame_ = -1;
+        bool clickable_ = false;
         ChangeTracker referenceTracker_;
         ImGuiTable table_;
     };

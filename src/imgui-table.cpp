@@ -106,7 +106,9 @@ namespace QaplaWindows {
         auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
         auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
         ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
-        ImGui::SetScrollHereY(0.5f);
+        if (autoScroll_) {
+            ImGui::SetScrollHereY(0.5f);
+        }
     }
 
     void ImGuiTable::drawRow(size_t rowIndex) const {
@@ -143,6 +145,11 @@ namespace QaplaWindows {
                     clickedRowIndex = index;
                 }
                 drawCurrentRow(index);
+                // Handle explicit scroll to row (for keyboard navigation)
+                if (scrollToRow_.has_value() && scrollToRow_.value() == index) {
+                    ImGui::SetScrollHereY(0.5f);
+                    scrollToRow_.reset(); // Clear after scrolling
+                }
                 drawRow(index);
             }
 

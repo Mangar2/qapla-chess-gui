@@ -66,6 +66,14 @@ namespace QaplaWindows {
 		}
 
         /**
+         * @brief Sets whether the table should auto-scroll to the current row.
+         * @param autoScroll If true, table will scroll to current row automatically.
+         */
+        void setAutoScroll(bool autoScroll) {
+            autoScroll_ = autoScroll;
+        }
+
+        /**
          * @brief Pushes a new row to the end of the table.
          * @param row List of strings representing cell content.
          */
@@ -112,6 +120,12 @@ namespace QaplaWindows {
          */
         std::optional<size_t> draw(const ImVec2& size, bool shrink = false) const;
 
+        /**
+         * @brief Returns the content of a specific cell.
+         * @param row Row index.
+         * @param column Column index.
+         * @return Cell content string, or empty string if out of bounds.
+         */
         std::string getField(size_t row, size_t column) const {
             if (row < rows_.size() && column < columns_.size()) {
                 return rows_[row][column];
@@ -119,6 +133,12 @@ namespace QaplaWindows {
             return "";
 		}
 
+        /**
+         * @brief Sets the content of a specific cell.
+         * @param row Row index.
+         * @param column Column index.
+         * @param value New cell content string.
+         */
         void setField(size_t row, size_t column, const std::string& value) {
             if (row < rows_.size() && column < columns_.size()) {
                 rows_[row][column] = value;
@@ -165,11 +185,21 @@ namespace QaplaWindows {
             currentRow_ = row;
         }
 
+        /**
+         * @brief Scrolls to a specific row immediately (for keyboard navigation).
+         * @param row The index of the row to scroll to.
+         */
+        void scrollToRow(uint32_t row) {
+            scrollToRow_ = row;
+        }
+
     private:
         void drawCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
 
         bool clickable_ = false;
+        bool autoScroll_ = true;
+        mutable std::optional<uint32_t> scrollToRow_;
         void tableHeadersRow() const;
 		bool isRowClicked(size_t index) const;
         uint32_t selectedRow_ = 0;

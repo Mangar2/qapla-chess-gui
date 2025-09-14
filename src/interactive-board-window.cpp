@@ -39,8 +39,6 @@
 #include "vertical-split-container.h"
 #include "board-window.h"
 #include "engine-window.h"
-#include "clock-window.h"
-#include "move-list-window.h"
 
 using namespace QaplaWindows;
 
@@ -67,12 +65,20 @@ InteractiveBoardWindow::~InteractiveBoardWindow() = default;
 void InteractiveBoardWindow::initSplitterWindows()
 {
 		auto MovesBarchartContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("moves_barchart");
-		MovesBarchartContainer->setTop(std::make_unique<QaplaWindows::MoveListWindow>());
+		imGuiMoveList_->setClickable(true);
+		MovesBarchartContainer->setTop(
+			[this]() {
+				auto selected = imGuiMoveList_->draw();
+				if (selected) {
+					setNextMoveIndex(static_cast<uint32_t>(*selected));
+				}
+			}
+		);
 		MovesBarchartContainer->setBottom(
 			[this]() {
 				auto clicked = imGuiBarChart_->draw();
 				if (clicked) {
-					setNextMoveIndex(*clicked);
+					setNextMoveIndex(static_cast<uint32_t>(*clicked));
 				}
 			}
 		);
@@ -80,7 +86,11 @@ void InteractiveBoardWindow::initSplitterWindows()
 
         auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
         ClockMovesContainer->setFixedHeight(120.0f, true);
-        ClockMovesContainer->setTop(std::make_unique<QaplaWindows::ClockWindow>());
+        ClockMovesContainer->setTop(
+			[this]() {
+				imGuiClock_->draw();
+			}
+		);
         ClockMovesContainer->setBottom(std::move(MovesBarchartContainer));
 
         auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
