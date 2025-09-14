@@ -84,7 +84,7 @@ namespace QaplaWindows
         static VerticalSplitContainer* movesChartWindow;
         if (!movesChartWindow) {
             auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
-            window->setPresetHeight(200.0f, false);
+            window->setPresetHeight(180.0f, false);
             movesChartWindow = window.get();
             getClockMovesWindow().setBottom(std::move(window));
         }
@@ -122,18 +122,18 @@ namespace QaplaWindows
             imGuiBoard_.draw();
         });
 
-        getClockMovesWindow().setTopCallback([&]() {
+        getClockMovesWindow().setTop([&]() {
             imGuiClock_.draw();
         });
 
-        getMovesChartWindow().setTopCallback([&]() {
+        getMovesChartWindow().setTop([&]() {
             imGuiMoveList_.draw();
         });
-        getMovesChartWindow().setBottomCallback([&]() {
+        getMovesChartWindow().setBottom([&]() {
             imGuiBarChart_.draw();
         });
 
-        getMainWindow().setBottomCallback([&]() {
+        getMainWindow().setBottom([&]() {
             imGuiEngineList_.draw();
         });
         

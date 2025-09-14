@@ -246,12 +246,16 @@ namespace QaplaWindows
 		void loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
 
 		/**
-		 * @brief Initializes the InteractiveBoardWindow instance.
+		 * @brief Renders the interactive board window and its components.
+		 * This method should be called within the main GUI rendering loop.
 		 */
-		std::unique_ptr<EmbeddedWindow> init();
+		void draw();
 
 	private:
-
+		/**
+		 * @brief Initializes the InteractiveBoardWindow instance.
+		 */
+		void initSplitterWindows();
 
 		EpdData epdData_;
 
@@ -261,6 +265,7 @@ namespace QaplaWindows
 		std::unique_ptr<ComputeTask> computeTask_;
 		TimeControl timeControl_;
 
+		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
 		std::unique_ptr<ImGuiBoard> imGuiBoard_;
 		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
 		std::unique_ptr<ImGuiClock> imGuiClock_;
@@ -268,6 +273,7 @@ namespace QaplaWindows
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;
 
 		std::vector<EngineConfig> engineConfigs_;
+
 
 	};
 

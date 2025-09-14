@@ -52,13 +52,13 @@ namespace QaplaWindows {
         }
     }
 
-    void VerticalSplitContainer::setTopCallback(std::function<void()> callback) {
+    void VerticalSplitContainer::setTop(std::function<void()> callback) {
         topCallback_ = std::move(callback);
         // Clear the embedded window since we're using a callback
         topWindow_.reset();
     }
 
-    void VerticalSplitContainer::setBottomCallback(std::function<void()> callback) {
+    void VerticalSplitContainer::setBottom(std::function<void()> callback) {
         bottomCallback_ = std::move(callback);
         // Clear the embedded window since we're using a callback
         bottomWindow_.reset();
@@ -108,7 +108,7 @@ namespace QaplaWindows {
             height = availableHeight - bottomPresetHeight_;
         } else if (bottomPresetHeight_ != 0) {
             if (bottomHeight_ == 0) {
-                height = std::max(height, availableHeight - bottomPresetHeight_);
+                height = availableHeight - bottomPresetHeight_;
             } else {
                 auto availDelta = avail.y - availY_;
                 height += availDelta;

@@ -101,7 +101,7 @@ namespace QaplaWindows {
             width = availableWidth - rightPresetWidth_;
         } else if (rightPresetWidth_ != 0) {
             if (rightWidth_ == 0) {
-                width = std::max(width, availableWidth - rightPresetWidth_);
+                width = availableWidth - rightPresetWidth_;
             } else {
                 auto availDelta = avail.x - availX_;
                 width += availDelta;

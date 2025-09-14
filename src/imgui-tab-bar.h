@@ -20,12 +20,12 @@
 #pragma once
 
 #include "embedded-window.h"
-#pragma once
-
 #include <imgui.h>
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
+#include <algorithm>
 
 namespace QaplaWindows {
 
@@ -35,14 +35,26 @@ namespace QaplaWindows {
     class ImGuiTabBar : public EmbeddedWindow {
     public:
 
-
         /**
          * @brief Add a tab to the tab bar.
          * @param name The name of the tab.
          * @param window The window to display in the tab.
          */
         void addTab(std::string name, std::unique_ptr<EmbeddedWindow> window) {
-            tabs.emplace_back(Tab{ std::move(name), std::move(window) });
+            // Create a callback that calls the embedded window's draw method
+            auto callback = window ? std::function<void()>(
+                [window = window.get()]() { window->draw(); }
+            ) : nullptr;
+            tabs.emplace_back(Tab{ std::move(name), std::move(window), std::move(callback) });
+        }
+
+        /**
+         * @brief Add a tab to the tab bar with a callback function.
+         * @param name The name of the tab.
+         * @param callback The callback function to call when drawing the tab content.
+         */
+        void addTab(std::string name, std::function<void()> callback) {
+            tabs.emplace_back(Tab{ std::move(name), nullptr, std::move(callback) });
         }
 
         /**
@@ -58,7 +70,10 @@ namespace QaplaWindows {
             if (ImGui::BeginTabBar("QaplaTabBar")) {
                 for (auto& tab : tabs) {
                     if (ImGui::BeginTabItem(tab.name.c_str())) {
-                        tab.window->draw();
+                        // Always use callback (which is created for EmbeddedWindows too)
+                        if (tab.callback) {
+                            tab.callback();
+                        }
                         ImGui::EndTabItem();
                     }
                     if (dynamicTabsCallback) {
@@ -80,7 +95,9 @@ namespace QaplaWindows {
     private:
         struct Tab {
             std::string name;
+            // We keep the window here to manage its lifetime
             std::unique_ptr<EmbeddedWindow> window;
+            std::function<void()> callback;
         };
         std::vector<Tab> tabs;
         std::function<void()> dynamicTabsCallback;

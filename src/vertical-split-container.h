@@ -63,13 +63,13 @@ namespace QaplaWindows {
          * @brief Sets a callback function for drawing the top panel
          * @param callback Function to be called when drawing the top panel
          */
-        void setTopCallback(std::function<void()> callback);
+        void setTop(std::function<void()> callback);
 
         /**
          * @brief Sets a callback function for drawing the bottom panel
          * @param callback Function to be called when drawing the bottom panel
          */
-        void setBottomCallback(std::function<void()> callback);
+        void setBottom(std::function<void()> callback);
 
         /**
          * @brief Sets a preset height for either the top or bottom panel

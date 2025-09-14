@@ -58,17 +58,25 @@ InteractiveBoardWindow::InteractiveBoardWindow()
 					   .getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
 	computeTask_->setPosition(true);
+	initSplitterWindows();
 	epdData_.init();
 }
 
 InteractiveBoardWindow::~InteractiveBoardWindow() = default;
 
-std::unique_ptr<EmbeddedWindow> InteractiveBoardWindow::init()
+void InteractiveBoardWindow::initSplitterWindows()
 {
 		auto MovesBarchartContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("moves_barchart");
 		MovesBarchartContainer->setTop(std::make_unique<QaplaWindows::MoveListWindow>());
 		MovesBarchartContainer->setBottom(
-			std::make_unique<EmbeddedWindowWrapper<QaplaWindows::ImGuiBarChart>>(*imGuiBarChart_));
+			[this]() {
+				auto clicked = imGuiBarChart_->draw();
+				if (clicked) {
+					setNextMoveIndex(*clicked);
+				}
+			}
+		);
+		MovesBarchartContainer->setPresetHeight(180.0f, false);
 
         auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
         ClockMovesContainer->setFixedHeight(120.0f, true);
@@ -86,7 +94,13 @@ std::unique_ptr<EmbeddedWindow> InteractiveBoardWindow::init()
         BoardEngineContainer->setMinBottomHeight(55.0f);
         BoardEngineContainer->setPresetHeight(230.0f, false);
 
-		return std::move(BoardEngineContainer);
+		mainWindow_ = std::move(BoardEngineContainer);
+}
+
+void InteractiveBoardWindow::draw() {
+	if (mainWindow_) {
+		mainWindow_->draw();
+	}
 }
 
 void InteractiveBoardWindow::saveConfig(std::ostream &out) const
