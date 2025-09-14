@@ -64,15 +64,13 @@ namespace QaplaWindows {
          * @param clickable If true, rows can be clicked to select moves.
          */
         void setClickable(bool clickable) {
-            clickable_ = clickable;
             table_.setClickable(clickable);
-            table_.setAllowNavigateToZero(true);  // Chess-specific: allow navigate to start position
+            table_.setAllowNavigateToZero(clickable);  // Chess-specific: allow navigate to start position
         }
 
     private:
         std::vector<std::string> mkRow(const std::string& label, const MoveRecord& move, size_t index);
 		size_t currentPly_ = 0;
-        bool clickable_ = false;
         ChangeTracker referenceTracker_;
         ImGuiTable table_;
     };

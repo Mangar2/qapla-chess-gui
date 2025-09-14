@@ -127,6 +127,7 @@ namespace QaplaWindows
         });
 
         getMovesChartWindow().setTop([&]() {
+            imGuiMoveList_.setClickable(true);
             imGuiMoveList_.draw();
         });
         getMovesChartWindow().setBottom([&]() {

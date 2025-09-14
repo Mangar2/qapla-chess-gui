@@ -19,6 +19,7 @@
 
 #include "imgui-table.h"
 #include <imgui.h>
+#include <iostream>
 
 namespace QaplaWindows {
 
@@ -75,6 +76,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTable::tableHeadersRow() const {
+        ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
         for (int columnN = 0; columnN < columns_.size(); columnN++) {
@@ -89,7 +91,6 @@ namespace QaplaWindows {
 
     bool ImGuiTable::isRowClicked(size_t index) const {
         if (!clickable_) return false;
-        ImGui::TableSetColumnIndex(0);
         std::string id = "row" + std::to_string(index);
         ImGui::PushID(id.c_str());
         bool clicked = ImGui::Selectable("##row", false,
@@ -155,13 +156,13 @@ namespace QaplaWindows {
             tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
         }
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
-            ImGui::TableSetupScrollFreeze(0, 1);
             for (const auto& column : columns_) {
                 ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
             }
             tableHeadersRow();
             for (size_t rowIndex = 0; rowIndex < rows_.size(); ++rowIndex) {
                 ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
                 if (isRowClicked(rowIndex)) {
                     clickedRow = rowIndex;
                 }
@@ -170,6 +171,7 @@ namespace QaplaWindows {
                 if (scrollToRow_ && *scrollToRow_ == rowIndex) {
                     auto scrollPos = calculateOptimalScrollPosition(rowIndex);
                     if (scrollPos) {
+                        std::cout << "Scrolling to row " << rowIndex << " pos=" << *scrollPos << std::endl;
                         ImGui::SetScrollHereY(*scrollPos);
                     }
                     scrollToRow_.reset(); 
@@ -180,20 +182,10 @@ namespace QaplaWindows {
             ImGui::EndTable();
         }
         
-        // Handle keyboard navigation if clickable
-        if (clickable_) {
-            auto keyboardRow = checkKeyboard();
-            if (keyboardRow) {
-                if (*keyboardRow == SIZE_MAX) {
-                    // Special case: navigate to "zero" position (before first row)
-                    return SIZE_MAX;
-                } else {
-                    return *keyboardRow;
-                }
-            }
-        }
-        
-		return clickedRow;
+        // Handle keyboard navigation 
+        auto keyboardRow = checkKeyboard();
+
+        return (keyboardRow) ? *keyboardRow : clickedRow;
     }
 
     std::optional<size_t> ImGuiTable::checkKeyboard() const {
