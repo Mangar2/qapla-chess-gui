@@ -310,7 +310,7 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
     }
 }
 
-void ImGuiBarChart::draw() {
+std::optional<uint32_t> ImGuiBarChart::draw() {
     
     int32_t minValue, maxValue, scale;
     calculateScale(minValue, maxValue, scale);
@@ -338,7 +338,30 @@ void ImGuiBarChart::draw() {
     BarChartConfig originalConfig = config_;
     const_cast<ImGuiBarChart*>(this)->config_ = tempConfig;
     
-    ImGui::InvisibleButton("chart", canvasSize);
+    bool clicked = ImGui::InvisibleButton("chart", canvasSize);
+    std::optional<uint32_t> clickedHalfMove = std::nullopt;
+    
+    // Check for click detection
+    if (clicked && !values_.empty()) {
+        ImVec2 mousePos = ImGui::GetMousePos();
+        // Check if click is within chart area
+        if (mousePos.x >= chartMin.x && mousePos.x <= chartMax.x &&
+            mousePos.y >= chartMin.y && mousePos.y <= chartMax.y) {
+            
+            // Calculate which bar was clicked based on x position
+            float relativeX = mousePos.x - chartMin.x;
+            uint32_t barIndex = static_cast<uint32_t>(relativeX / (dynamicBarWidth + config_.barSpacing));
+            
+            // Ensure the bar index is valid and the click is actually on a bar
+            if (barIndex < values_.size()) {
+                float barX = barIndex * (dynamicBarWidth + config_.barSpacing);
+                if (relativeX >= barX && relativeX <= barX + dynamicBarWidth) {
+                    // Half-move number is bar index + 1 (since chess moves are 1-indexed)
+                    clickedHalfMove = barIndex + 1;
+                }
+            }
+        }
+    }
     
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     
@@ -355,6 +378,8 @@ void ImGuiBarChart::draw() {
         config_.textColor,
         title.c_str()
     );
+    
+    return clickedHalfMove;
 }
 
 } // namespace QaplaWindows

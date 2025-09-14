@@ -27,6 +27,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <optional>
 
 namespace QaplaWindows {
 
@@ -107,8 +108,9 @@ namespace QaplaWindows {
         /**
          * Main drawing function that renders the complete bar chart
          * Handles dynamic bar width calculation, component rendering order, and layout
+         * @return std::optional<uint32_t> containing the half-move number (x-value) if a bar was clicked, std::nullopt otherwise
          */
-        void draw();
+        std::optional<uint32_t> draw();
 
     private:
         std::vector<int32_t> values_;
