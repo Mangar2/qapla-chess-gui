@@ -171,7 +171,6 @@ namespace QaplaWindows {
                 if (scrollToRow_ && *scrollToRow_ == rowIndex) {
                     auto scrollPos = calculateOptimalScrollPosition(rowIndex);
                     if (scrollPos) {
-                        std::cout << "Scrolling to row " << rowIndex << " pos=" << *scrollPos << std::endl;
                         ImGui::SetScrollHereY(*scrollPos);
                     }
                     scrollToRow_.reset(); 

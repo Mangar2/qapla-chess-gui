@@ -98,18 +98,18 @@ ImGuiEngineList& ImGuiEngineList::operator=(ImGuiEngineList&&) noexcept = defaul
 
 ImGuiEngineList::~ImGuiEngineList() = default;
 
-
 void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
     auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
     if (!update) return;
     gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
-    nextMoveIndex_ = gameRecord.nextMoveIndex();
+    auto nextMoveIndex = gameRecord.nextMoveIndex();
+    nextHalfmoveNo_ = gameRecord.halfmoveNoAtPly(nextMoveIndex) + 1;
     auto& history = gameRecord.history();
 
     // Set the first two engines (white/black) based on the game record
     // Set table checks, if the table index exists
     for (int i = 0; i < 2; i++) {
-        int moveIndex = static_cast<int>(*nextMoveIndex_) - i - 1;
+        int moveIndex = static_cast<int>(nextMoveIndex) - i - 1;
         size_t tableIndex = static_cast<size_t>(i);
         if (tableIndex >= engineRecords_.size()) break;
         // If isWhiteToMove, last move is a black move (tableIndex == 1), so swap table index
@@ -119,8 +119,6 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
         if (moveIndex < 0 || moveIndex >= history.size()) {
 			if (tables_.size() > tableIndex) {
                 tables_[tableIndex]->clear();
-                displayedMoveNo_[tableIndex] = 0;
-                infoCnt_[tableIndex] = 0;
             }
             continue;
         }
@@ -130,6 +128,19 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
             setTable(tableIndex, moveRecord);
         }
     }
+}
+
+void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
+    auto moveNo = moveRecord.halfmoveNo_;
+    addTables(playerIndex + 1);
+
+    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && moveNo == displayedMoveNo_[playerIndex]) {
+        return; 
+    }
+    infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
+    displayedMoveNo_[playerIndex] = moveNo;
+
+    setTable(playerIndex, moveRecord);
 }
 
 void ImGuiEngineList::addTables(size_t size) {
@@ -198,15 +209,8 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
     
     auto& table = tables_[index];
 	auto& searchInfos = moveRecord.info;
-	auto& moveNo = moveRecord.halfmoveNo_;
-    if (moveRecord.infoUpdateCount == infoCnt_[index] && moveNo == displayedMoveNo_[index]) {
-        return; 
-    }
 
     table->clear();
-
-	infoCnt_[index] = moveRecord.infoUpdateCount;
-	displayedMoveNo_[index] = moveNo;
 
     bool last = true;
     for (size_t i = searchInfos.size(); i > 0; --i) {

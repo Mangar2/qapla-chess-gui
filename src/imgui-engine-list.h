@@ -85,12 +85,12 @@ namespace QaplaWindows {
          * @param moveRecord The move record to display.
          * @param playerIndex The index of the player (0 or 1).
          */
-        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
-            if (nextMoveIndex_ && *nextMoveIndex_ + 1 != moveRecord.halfmoveNo_) return;
-            addTables(playerIndex + 1);
-            setTable(playerIndex, moveRecord);
-        }
+        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
 
+        /**
+         * @brief Sets the data from a GameRecord.
+         * @param gameRecord The game record to extract data from.
+         */
         void setFromGameRecord(const GameRecord& gameRecord);
 
     private:
@@ -119,7 +119,7 @@ namespace QaplaWindows {
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
         std::vector<uint32_t> displayedMoveNo_;
         std::vector<uint32_t> infoCnt_;
-        std::optional<size_t> nextMoveIndex_;
+        std::optional<size_t> nextHalfmoveNo_;
    
         EngineRecords engineRecords_;
         ChangeTracker gameRecordTracker_;
