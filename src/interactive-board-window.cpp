@@ -243,6 +243,7 @@ void InteractiveBoardWindow::pollData()
 			imGuiClock_->setFromGameRecord(g);
 			imGuiBarChart_->setFromGameRecord(g);
 			boardWindow_->setFromGameRecord(g);
+			engineWindow_->setFromGameRecord(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
 		engineWindow_->setAllowInput(true);

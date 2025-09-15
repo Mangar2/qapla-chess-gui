@@ -20,12 +20,14 @@
 #pragma once
 
 #include "qapla-tester/engine-record.h"
+#include "qapla-tester/change-tracker.h"
 
 #include <imgui.h>
 #include <memory>
 #include <vector>
 #include <string>
 
+struct GameRecord;
 struct MoveRecord;
 struct SearchInfo;
 
@@ -84,9 +86,12 @@ namespace QaplaWindows {
          * @param playerIndex The index of the player (0 or 1).
          */
         void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
+            if (nextMoveIndex_ && *nextMoveIndex_ + 1 != moveRecord.halfmoveNo_) return;
             addTables(playerIndex + 1);
             setTable(playerIndex, moveRecord);
         }
+
+        void setFromGameRecord(const GameRecord& gameRecord);
 
     private:
         void addTables(size_t size);
@@ -114,8 +119,10 @@ namespace QaplaWindows {
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
         std::vector<uint32_t> displayedMoveNo_;
         std::vector<uint32_t> infoCnt_;
+        std::optional<size_t> nextMoveIndex_;
    
         EngineRecords engineRecords_;
+        ChangeTracker gameRecordTracker_;
 
         bool allowInput_ = false;
     };

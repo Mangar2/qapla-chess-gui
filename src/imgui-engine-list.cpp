@@ -98,6 +98,40 @@ ImGuiEngineList& ImGuiEngineList::operator=(ImGuiEngineList&&) noexcept = defaul
 
 ImGuiEngineList::~ImGuiEngineList() = default;
 
+
+void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
+    auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
+    if (!update) return;
+    gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
+    nextMoveIndex_ = gameRecord.nextMoveIndex();
+    auto& history = gameRecord.history();
+
+    // Set the first two engines (white/black) based on the game record
+    // Set table checks, if the table index exists
+    for (int i = 0; i < 2; i++) {
+        int moveIndex = static_cast<int>(*nextMoveIndex_) - i - 1;
+        size_t tableIndex = static_cast<size_t>(i);
+        if (tableIndex >= engineRecords_.size()) break;
+        // If isWhiteToMove, last move is a black move (tableIndex == 1), so swap table index
+        if (engineRecords_.size() >= 2) {
+            if (gameRecord.isWhiteToMove()) tableIndex = 1 - tableIndex;
+        }
+        if (moveIndex < 0 || moveIndex >= history.size()) {
+			if (tables_.size() > tableIndex) {
+                tables_[tableIndex]->clear();
+                displayedMoveNo_[tableIndex] = 0;
+                infoCnt_[tableIndex] = 0;
+            }
+            continue;
+        }
+        auto& moveRecord = history[static_cast<size_t>(moveIndex)];
+        auto& engineRecord = engineRecords_[tableIndex];
+        if (moveRecord.engineId_ == engineRecord.identifier) {
+            setTable(tableIndex, moveRecord);
+        }
+    }
+}
+
 void ImGuiEngineList::addTables(size_t size) {
     for (size_t i = tables_.size(); i < size; ++i) {
 		displayedMoveNo_.push_back(0);
