@@ -274,6 +274,8 @@ namespace QaplaWindows
 
 		std::vector<EngineConfig> engineConfigs_;
 
+		bool boardInverted_ = false;
+
 
 	};
 

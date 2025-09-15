@@ -49,11 +49,21 @@ namespace QaplaWindows
     std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
                                                                  QaplaBasics::File file, QaplaBasics::Rank rank)
     {
-        float cellY = boardInverted_ ? static_cast<float>(rank) : static_cast<float>(QaplaBasics::Rank::R8 - rank);
+        float cellX, cellY;
+        
+        if (boardInverted_) {
+            // When inverted: a1 should be at top-right, h8 at bottom-left
+            cellX = static_cast<float>(QaplaBasics::File::H - file) * cellSize;
+            cellY = static_cast<float>(rank) * cellSize;
+        } else {
+            // Normal: a1 should be at bottom-left, h8 at top-right  
+            cellX = static_cast<float>(file) * cellSize;
+            cellY = static_cast<float>(QaplaBasics::Rank::R8 - rank) * cellSize;
+        }
 
         const ImVec2 cellMin = {
-            boardPos.x + static_cast<float>(file) * cellSize,
-            boardPos.y + cellY * cellSize};
+            boardPos.x + cellX,
+            boardPos.y + cellY};
         const ImVec2 cellMax = {cellMin.x + cellSize, cellMin.y + cellSize};
         return {cellMin, cellMax};
     }
@@ -153,15 +163,16 @@ namespace QaplaWindows
         using QaplaBasics::File;
         using QaplaBasics::Rank;
 
-        bool isWhite = false;
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
         {
             for (File file = File::A; file <= File::H; ++file)
             {
+                // Calculate if square should be white based on board coordinates
+                // a1 (File::A=0, Rank::R1=0) should be black (false)
+                // Standard chess: (file + rank) % 2 == 0 means black square
+                bool isWhite = (static_cast<int>(file) + static_cast<int>(rank)) % 2 != 0;
                 drawBoardSquare(drawList, boardPos, cellSize, file, rank, isWhite);
-                isWhite = !isWhite;
             }
-            isWhite = !isWhite;
         }
     }
 
@@ -188,18 +199,26 @@ namespace QaplaWindows
     {
         const int gridSize = 8;
 
+        // Draw file labels (a-h)
         for (int col = 0; col < gridSize; ++col)
         {
-            std::string label(1, 'a' + col);
+            // When inverted: visual col 0 should show 'h', visual col 7 should show 'a'
+            // When normal: visual col 0 should show 'a', visual col 7 should show 'h'
+            char fileChar = boardInverted_ ? ('h' - col) : ('a' + col);
+            std::string label(1, fileChar);
             ImVec2 pos = {
                 boardPos.x + col * cellSize + cellSize * 0.5f - ImGui::CalcTextSize(label.c_str()).x * 0.5f,
                 boardPos.y + boardSize};
             drawList->AddText(font, std::min(cellSize * 0.5f, maxSize), pos, IM_COL32_WHITE, label.c_str());
         }
 
+        // Draw rank labels (1-8)
         for (int row = 0; row < gridSize; ++row)
         {
-            std::string label(1, '8' - row);
+            // When inverted: visual row 0 should show '1', visual row 7 should show '8'
+            // When normal: visual row 0 should show '8', visual row 7 should show '1'
+            int rankNumber = boardInverted_ ? (row + 1) : (8 - row);
+            std::string label = std::to_string(rankNumber);
             ImVec2 pos = {
                 boardPos.x + boardSize,
                 boardPos.y + row * cellSize + cellSize * 0.3f};
