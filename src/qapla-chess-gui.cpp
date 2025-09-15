@@ -138,6 +138,7 @@ namespace {
     }
 
     int runApp() {
+        
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::InteractiveBoardWindow::instance().setEngines();
@@ -197,11 +198,41 @@ namespace {
 
 #ifdef _WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+
+bool attachToParentConsole() {
+    // Versuche, sich an die Console des Elternprozesses anzuhängen
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        // Umleitung von stdout, stdin, stderr zur bestehenden Console
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+        freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+        
+        // Synchronisiere C++ streams mit C streams
+        std::ios::sync_with_stdio(true);
+        std::wcout.clear();
+        std::cout.clear();
+        std::wcerr.clear();
+        std::cerr.clear();
+        std::wcin.clear();
+        std::cin.clear();
+        
+        return true;
+    }
+    return false;
+}
+
 int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+    bool hasConsole = attachToParentConsole();
+    
     try {
         try {
             auto code = runApp();
             QaplaConfiguration::Configuration::instance().saveFile();
+            if (hasConsole) {
+                FreeConsole();
+            }
             return code;
         }
         catch (...) {
@@ -210,7 +241,13 @@ int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         }
     }
     catch (const std::exception& e) {
+        if (hasConsole) {
+            std::cerr << "Fatal error: " << e.what() << '\n';
+        }
         MessageBoxA(nullptr, e.what(), "Fatal Error", MB_ICONERROR | MB_OK);
+        if (hasConsole) {
+            FreeConsole();
+        }
         return 1;
     }
 }
