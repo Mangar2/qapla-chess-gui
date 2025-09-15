@@ -43,6 +43,10 @@ ImGuiClock::~ImGuiClock() = default;
 
 
 void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
+    bool update = gameRecordTracker_.checkModification(gameRecord.getChangeTracker()).second;
+    if (!update) return;
+    gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
+
     auto wtc = gameRecord.getWhiteTimeControl();
     auto btc = gameRecord.getBlackTimeControl();
     if (!wtc.isValid() || !btc.isValid()) return;
@@ -54,7 +58,11 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     clockData_.bEngineName = gameRecord.getBlackEngineName();
     clockData_.wTimeLeftMs = goLimits.wtimeMs;
     clockData_.bTimeLeftMs = goLimits.btimeMs;
+    clockData_.wTimeCurMove = 0;
+    clockData_.bTimeCurMove = 0;
     clockData_.wtm = gameRecord.isWhiteToMove();
+    clockData_.wTimer.start();
+    clockData_.bTimer.start();
 
 	auto nextMoveIndex = gameRecord.nextMoveIndex();
     curHalfmoveNo_ = 0;
@@ -65,19 +73,15 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
 
 void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
 	// We need to adjust the current time for the engines currently calculating a move,
-    auto halfmoveNo = moveRecord.halfmoveNo_;
-    uint64_t cur = halfmoveNo > curHalfmoveNo_ ? moveRecord.timeMs : 0;
+    bool isPlaying = moveRecord.halfmoveNo_ > curHalfmoveNo_;
+    if (!isPlaying) return;
 
-    if (playerIndex == 0 && clockData_.wTimeCurMove != cur) {
-        if (cur != 0) {
-            clockData_.wTimer.start();
-        }
+    uint64_t cur = moveRecord.timeMs;
+
+    if (clockData_.wtm) {
         clockData_.wTimeCurMove = cur;
     } 
-    else if (playerIndex == 1 && clockData_.bTimeCurMove != cur) {
-        if (cur != 0) {
-            clockData_.bTimer.start();
-        }
+    else {
         clockData_.bTimeCurMove = cur;
     }
 }
@@ -112,7 +116,8 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
 
     totalMs -= std::min(totalMs, moveMs);
 
-    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
+    // Add 999ms to compensate for formatMs truncating to full seconds
+    const std::string totalStr = QaplaHelpers::formatMs(totalMs + 999, 0);
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
@@ -253,10 +258,13 @@ void ImGuiClock::draw() {
     ImVec2 whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
-    auto wCur = clockData_.wTimeCurMove == 0 ? 0 : 
-        clockData_.wTimeCurMove + clockData_.wTimer.elapsedMs();
-    auto bCur = clockData_.bTimeCurMove == 0 ? 0 : 
-        clockData_.bTimeCurMove + clockData_.bTimer.elapsedMs();
+    auto wCur = clockData_.wTimeCurMove == 0 ? 0 : clockData_.wTimer.elapsedMs();
+    std::cout 
+        << "wTimeCurMove: " << clockData_.wTimeCurMove 
+        << " elapsed: " << clockData_.wTimer.elapsedMs() 
+        << " total: " << wCur << std::endl;
+
+    auto bCur = clockData_.bTimeCurMove == 0 ? 0 : clockData_.bTimer.elapsedMs();
     if (smallClock) {
         drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
             clockData_.wEngineName, true, clockData_.wtm);

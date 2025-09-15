@@ -111,9 +111,13 @@ namespace QaplaHelpers {
         }
         oss << std::right 
             << std::setfill('0') << std::setw(2) << (minutes % 60) << ":"
-            << std::fixed << std::setprecision(mdigits)
-            << std::setw(mdigits == 0 ? 2 : mdigits + 3) << std::setfill('0')
-            << dSeconds;
+            << std::fixed << std::setprecision(mdigits);
+        if (mdigits == 0) {
+            oss << std::setw(2) << std::setfill('0') << seconds % 60;
+        } else {
+            oss << std::setw(mdigits + 3) << std::setfill('0')
+                << dSeconds;
+        }
         return oss.str();
     }
 

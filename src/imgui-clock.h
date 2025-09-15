@@ -21,6 +21,7 @@
 #pragma once
 
 #include "qapla-tester/timer.h"
+#include "qapla-tester/change-tracker.h"
 
 #include <imgui.h>
 
@@ -63,16 +64,17 @@ namespace QaplaWindows {
         struct ClockData {
             std::string wEngineName;
 			std::string bEngineName;
-			std::uint64_t wTimeLeftMs;
-			std::uint64_t bTimeLeftMs;
-            std::uint64_t wTimeCurMove;
-			std::uint64_t bTimeCurMove;
+			std::uint64_t wTimeLeftMs = 0;
+			std::uint64_t bTimeLeftMs = 0;
+            std::uint64_t wTimeCurMove = 0;
+			std::uint64_t bTimeCurMove = 0;
             Timer wTimer;
 			Timer bTimer;
 			bool wtm = true; 
 		};
         ClockData clockData_;
         uint32_t curHalfmoveNo_ = 0;
+        ChangeTracker gameRecordTracker_;
     };
 
 } // namespace QaplaWindows
