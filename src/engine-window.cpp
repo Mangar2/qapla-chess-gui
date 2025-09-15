@@ -67,9 +67,8 @@ float EngineWindow::drawConfigButtonArea(bool noEngines) {
             QaplaButton::drawConfig(drawList, topLeft, size, state);
         }))
     {
-        auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
         std::vector<EngineConfig> activeEngines;
-        for (const auto& record : boardData.imGuiEngineList().getEngineRecords()) {
+        for (const auto& record : getEngineRecords()) {
             activeEngines.push_back(record.config);
         }
         setupWindow_->content().setMatchingActiveEngines(activeEngines);
@@ -80,30 +79,23 @@ float EngineWindow::drawConfigButtonArea(bool noEngines) {
     return areaWidth;
 }
 
-void EngineWindow::draw() {
+std::pair<std::string, std::string> EngineWindow::draw() {
     constexpr float cMinRowHeight = 80.0f;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cMinTableWidth = 200.0f;
     constexpr float cSectionSpacing = 4.0f;
 
-    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
-    const auto engineRecords = boardData.imGuiEngineList().getEngineRecords();
+    const auto engineRecords = getEngineRecords();
 
     float indent = drawConfigButtonArea(engineRecords.empty());
     ImGui::Indent(indent);
-    auto [id, command] = boardData.imGuiEngineList().draw();
+    auto [id, command] = ImGuiEngineList::draw();
     ImGui::Unindent(indent);
-
+    drawEngineSelectionPopup();
     try {
-        if (command == "Restart") {
-            boardData.restartEngine(id);
-        }
-        else if (command == "Stop") {
-            boardData.stopEngine(id);
-        }
-        else if (command == "Config") {
+        if (command == "Config") {
             std::vector<EngineConfig> activeEngines;
-            for (const auto& record : boardData.imGuiEngineList().getEngineRecords()) {
+            for (const auto& record : getEngineRecords()) {
                 activeEngines.push_back(record.config);
             }
             setupWindow_->content().setMatchingActiveEngines(activeEngines);
@@ -113,6 +105,6 @@ void EngineWindow::draw() {
     catch (...) {
 
     }
-    drawEngineSelectionPopup();
+    return { id, command };
 }
 

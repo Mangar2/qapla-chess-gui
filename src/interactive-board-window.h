@@ -46,8 +46,8 @@ class ComputeTask;
 namespace QaplaWindows
 {
 
-	class ImGuiBoard;
-	class ImGuiEngineList;
+	class BoardWindow;
+	class EngineWindow;
 	class ImGuiClock;
 	class ImGuiMoveList;
 	class ImGuiBarChart;
@@ -59,7 +59,7 @@ namespace QaplaWindows
 		 * @brief Constructs a new BoardData object.
 		 */
 		InteractiveBoardWindow();
-		~InteractiveBoardWindow();
+		virtual ~InteractiveBoardWindow();
 
 		/**
 		 * @brief Returns a reference to the singleton instance of BoardData.
@@ -74,60 +74,7 @@ namespace QaplaWindows
 		/**
 		 * @brief Returns a reference to the ImGuiBoard.
 		 * @return Reference to ImGuiBoard.
-		 */
-		ImGuiBoard &imGuiBoard()
-		{
-			return *imGuiBoard_;
-		}
-
-		/**
-		 * @brief Returns a reference to the ImGuiEngineList.
-		 * @return Reference to ImGuiEngineList.
-		 */
-		ImGuiEngineList &imGuiEngineList()
-		{
-			return *imGuiEngineList_;
-		}
-
-		/**
-		 * @brief Returns a reference to the ImGuiClock.
-		 * @return Reference to ImGuiClock.
-		 */
-		ImGuiClock &imGuiClock()
-		{
-			return *imGuiClock_;
-		}
-
-		/**
-		 * @brief Returns a reference to the ImGuiMoveList.
-		 * @return Reference to ImGuiMoveList.
-		 */
-		ImGuiMoveList &imGuiMoveList()
-		{
-			return *imGuiMoveList_;
-		}
-
-		/**
-		 * @brief Returns a const reference to the current GameRecord.
-		 * @return Const reference to GameRecord.
-		 */
-		const GameRecord &gameRecord() const
-		{
-			return *gameRecord_;
-		}
-
-		/**
-		 * @brief Returns a reference to the current GameRecord.
-		 * @return Reference to GameRecord.
-		 */
-		GameRecord &gameRecord()
-		{
-			return *gameRecord_;
-		}
-
-
-
-		/**
+		 */		/**
 		 * @brief Executes a move in the game.
 		 * @param move The move to execute.
 		 */
@@ -139,12 +86,6 @@ namespace QaplaWindows
 		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.
 		 */
 		void setPosition(bool startPosition, const std::string &fen = "");
-
-		/**
-		 * @brief Returns the current move index.
-		 * @return Current move index (uint32_t).
-		 */
-		uint32_t nextMoveIndex() const;
 
 		/**
 		 * @brief Sets the current move index.
@@ -168,13 +109,16 @@ namespace QaplaWindows
 		void setGameIfDifferent(const GameRecord &record);
 
 		/**
-		 * @brief Checks if the game is over.
-		 * 1. The game must have a result (not GameResult::Unterminated).
-		 * 2. The move index must be at the end of the game record.
-		 * @return true if the game is over, false otherwise.
+		 * @brief Executes a command on the board window.
+		 * Supported commands:
+		 * - "New": Starts a new game with the initial position.
+		 * - "Invert": Inverts the board orientation.
+		 * - "Manual": Sets the mode to manual (user input only).
+		 * - "Play": Sets the mode to play (user vs engine).
+		 * - "Autoplay": Sets the mode to autoplay (engine vs engine).
+		 * - "Analyze": Sets the mode to analyze (engine analysis only).
+		 * @param command The command to execute.
 		 */
-		bool isGameOver() const;
-
 		void execute(std::string command);
 
 		/**
@@ -227,13 +171,6 @@ namespace QaplaWindows
 		void setEngines(const std::vector<EngineConfig> &engines);
 
 		/**
-		 * Returns true, if the given mode is active.
-		 * @param mode The mode to check (e.g., "autoplay", "analyze", "play", "manual").
-		 */
-		bool isModeActive(const std::string &mode) const;
-
-
-		/**
 		 * @brief Saves the board configuration to the specified output stream in ini file format.
 		 * @param out The output stream to write the configuration to.
 		 */
@@ -249,7 +186,7 @@ namespace QaplaWindows
 		 * @brief Renders the interactive board window and its components.
 		 * This method should be called within the main GUI rendering loop.
 		 */
-		void draw();
+		virtual void draw();
 
 	private:
 		/**
@@ -266,8 +203,8 @@ namespace QaplaWindows
 		TimeControl timeControl_;
 
 		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
-		std::unique_ptr<ImGuiBoard> imGuiBoard_;
-		std::unique_ptr<ImGuiEngineList> imGuiEngineList_;
+		std::unique_ptr<BoardWindow> boardWindow_;
+		std::unique_ptr<EngineWindow> engineWindow_;
 		std::unique_ptr<ImGuiClock> imGuiClock_;
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;

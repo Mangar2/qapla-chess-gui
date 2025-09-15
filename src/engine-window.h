@@ -21,11 +21,9 @@
 
 #include "embedded-window.h"
 #include "imgui-popup.h"
+#include "imgui-engine-list.h"
 #include "engine-setup-window.h"
 #include <memory>
-
-struct MoveRecord;
-struct SearchInfo;
 
 namespace QaplaWindows {
 
@@ -34,16 +32,21 @@ namespace QaplaWindows {
     /**
      * @brief Displays the move list with associated search data for a game.
      */
-    class EngineWindow : public EmbeddedWindow {
+    class EngineWindow : public ImGuiEngineList {
     public:
         /**
          * @brief Sets the data source for this window.
          * @param record Shared pointer to the constant game record.
          */
         EngineWindow();
-        ~EngineWindow();
+        virtual ~EngineWindow() override;
 
-        void draw() override;
+        /**
+         * @brief Renders the engine window and its components.
+         * This method should be called within the main GUI rendering loop.
+         * @return A pair containing the engine ID and command string if an action was triggered, otherwise empty strings.
+         */
+        std::pair<std::string, std::string> draw() override;
 
     private:
 

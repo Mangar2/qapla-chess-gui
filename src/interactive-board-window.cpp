@@ -30,8 +30,6 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/game-manager-pool.h"
 
-#include "imgui-board.h"
-#include "imgui-engine-list.h"
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
@@ -45,8 +43,8 @@ using namespace QaplaWindows;
 InteractiveBoardWindow::InteractiveBoardWindow()
 	: gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
-	  imGuiBoard_(std::make_unique<ImGuiBoard>()),
-	  imGuiEngineList_(std::make_unique<ImGuiEngineList>()),
+	  boardWindow_(std::make_unique<BoardWindow>()),
+	  engineWindow_(std::make_unique<EngineWindow>()),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
 	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
@@ -94,13 +92,26 @@ void InteractiveBoardWindow::initSplitterWindows()
         ClockMovesContainer->setBottom(std::move(MovesBarchartContainer));
 
         auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
-        BoardMovesContainer->setLeft(std::make_unique<QaplaWindows::BoardWindow>());
+        BoardMovesContainer->setLeft(
+			[this]() {
+				auto command = boardWindow_->drawButtons(computeTask_->getStatus());
+				execute(command);
+				const auto move = boardWindow_->draw();
+				if (move) doMove(*move);
+			}
+		);
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
         BoardMovesContainer->setPresetWidth(400.0f, false);
 
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("board_engine");
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
-        BoardEngineContainer->setBottom(std::make_unique<QaplaWindows::EngineWindow>());
+        BoardEngineContainer->setBottom(
+			[this]() {
+				auto [id, command] = engineWindow_->draw();
+				if (command == "Restart") restartEngine(id);
+        		else if (command == "Stop") stopEngine(id);
+			}
+		);
         BoardEngineContainer->setMinBottomHeight(55.0f);
         BoardEngineContainer->setPresetHeight(230.0f, false);
 
@@ -163,6 +174,8 @@ void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &
 
 void InteractiveBoardWindow::execute(std::string command)
 {
+	if (command == "") return;
+
 	if (command == "New" && gameRecord_ != nullptr)
 	{
 		computeTask_->setPosition(true, "");
@@ -193,7 +206,7 @@ void InteractiveBoardWindow::execute(std::string command)
 	}
 	else if (command == "Invert")
 	{
-		imGuiBoard_->setInverted(!imGuiBoard_->isInverted());
+		boardWindow_->setInverted(!boardWindow_->isInverted());
 	}
 	else if (command == "Manual")
 	{
@@ -231,13 +244,13 @@ void InteractiveBoardWindow::pollData()
 			imGuiBarChart_->setFromGameRecord(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
-		imGuiEngineList_->setAllowInput(true);
+		engineWindow_->setAllowInput(true);
 		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &m, uint32_t idx) {
-			imGuiEngineList_->setFromMoveRecord(m, idx);
+			engineWindow_->setFromMoveRecord(m, idx);
 			imGuiClock_->setFromMoveRecord(m, idx);
 		});
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
-			imGuiEngineList_->setEngineRecords(records);
+			engineWindow_->setEngineRecords(records);
 		});
 		epdData_.pollData();
 		auto timeControl = QaplaConfiguration::Configuration::instance()
@@ -259,15 +272,10 @@ void InteractiveBoardWindow::setGameIfDifferent(const GameRecord &record)
 	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_))
 	{
 		*gameRecord_ = record;
-		imGuiBoard_->setGameState(*gameRecord_);
+		boardWindow_->setGameState(*gameRecord_);
 		auto [cause, result] = gameRecord_->getGameResult();
-		imGuiBoard_->setAllowMoveInput(result == GameResult::Unterminated);
+		boardWindow_->setAllowMoveInput(result == GameResult::Unterminated);
 	}
-}
-
-uint32_t InteractiveBoardWindow::nextMoveIndex() const
-{
-	return gameRecord_->nextMoveIndex();
 }
 
 void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
@@ -279,16 +287,9 @@ void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
 	if (moveIndex <= gameRecord_->history().size())
 	{
 		gameRecord_->setNextMoveIndex(moveIndex);
-		imGuiBoard_->setGameState(*gameRecord_);
+		boardWindow_->setGameState(*gameRecord_);
 		computeTask_->setPosition(*gameRecord_);
 	}
-}
-
-bool InteractiveBoardWindow::isGameOver() const
-{
-	auto [cause, result] = gameRecord_->getGameResult();
-	return result != GameResult::Unterminated &&
-		   gameRecord_->nextMoveIndex() >= gameRecord_->history().size();
 }
 
 void InteractiveBoardWindow::stopEngine(const std::string &id)
@@ -313,26 +314,5 @@ void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines
 	computeTask_->initEngines(std::move(created));
 }
 
-bool InteractiveBoardWindow::isModeActive(const std::string &mode) const
-{
-	if (mode == "Invert")
-	{
-		return imGuiBoard_->isInverted();
-	}
-	
-	auto status = computeTask_->getStatus();
-	switch (status)
-	{
-	case ComputeTask::Status::Stopped:
-		return mode == "Stop";
-	case ComputeTask::Status::Play:
-		return mode == "Play";
-	case ComputeTask::Status::Autoplay:
-		return mode == "Auto";
-	case ComputeTask::Status::Analyze:
-		return mode == "Analyze";
-	default:
-		return false;
-	}
-}
+
 

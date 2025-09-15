@@ -61,13 +61,13 @@ namespace QaplaWindows {
          * @brief Sets a callback function for drawing the left panel
          * @param callback Function to be called when drawing the left panel
          */
-        void setLeftCallback(std::function<void()> callback);
+        void setLeft(std::function<void()> callback);
 
         /**
          * @brief Sets a callback function for drawing the right panel
          * @param callback Function to be called when drawing the right panel
          */
-        void setRightCallback(std::function<void()> callback);
+        void setRight(std::function<void()> callback);
 
         /**
          * @brief Sets a preset width for either the left or right panel

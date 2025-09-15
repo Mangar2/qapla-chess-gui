@@ -19,8 +19,9 @@
 #pragma once
 
 #include "qapla-engine/types.h"
-#include "interactive-board-window.h"
-#include "embedded-window.h"
+#include "qapla-tester/move-record.h"
+
+#include "imgui-board.h"
 
 #include <optional>
 #include <unordered_set>
@@ -31,15 +32,14 @@
 namespace QaplaWindows
 {
 
-    class BoardWindow : public EmbeddedWindow
+    class BoardWindow : public ImGuiBoard
     {
     public:
         explicit BoardWindow() {}
-
-        void draw() override;
-
-    private:
-        void drawButtons();
+        ~BoardWindow() override = default;
+        
+        std::string drawButtons(const std::string& status);
+        
     };
 
 }

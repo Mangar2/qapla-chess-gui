@@ -52,13 +52,13 @@ namespace QaplaWindows {
         }
     }
 
-    void HorizontalSplitContainer::setLeftCallback(std::function<void()> callback) {
+    void HorizontalSplitContainer::setLeft(std::function<void()> callback) {
         leftCallback_ = std::move(callback);
         // Clear the embedded window since we're using a callback
         leftWindow_.reset();
     }
 
-    void HorizontalSplitContainer::setRightCallback(std::function<void()> callback) {
+    void HorizontalSplitContainer::setRight(std::function<void()> callback) {
         rightCallback_ = std::move(callback);
         // Clear the embedded window since we're using a callback
         rightWindow_.reset();

@@ -57,7 +57,7 @@ namespace QaplaWindows
         ImGuiBoard(ImGuiBoard&&);
         ImGuiBoard& operator=(ImGuiBoard&&);
 
-        ~ImGuiBoard();
+        virtual ~ImGuiBoard();
 
         /**
          * Draw the chessboard and pieces.

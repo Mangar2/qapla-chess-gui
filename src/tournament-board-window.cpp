@@ -118,7 +118,7 @@ namespace QaplaWindows
 
     void TournamentBoardWindow::draw()
     {
-        getTopWindow().setLeftCallback([&]() {
+        getTopWindow().setLeft([&]() {
             imGuiBoard_.draw();
         });
 

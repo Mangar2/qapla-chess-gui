@@ -45,9 +45,14 @@ namespace QaplaWindows {
         ImGuiEngineList();
         ImGuiEngineList(ImGuiEngineList&&) noexcept;
         ImGuiEngineList& operator=(ImGuiEngineList&&) noexcept;
-        ~ImGuiEngineList();
+        virtual ~ImGuiEngineList();
 
-        std::pair<std::string, std::string> draw();
+        /**
+         * @brief Renders the engine window and its components.
+         * This method should be called within the main GUI rendering loop.
+         * @return A pair containing the engine ID and command string if an action was triggered, otherwise empty strings.
+         */
+        virtual std::pair<std::string, std::string> draw();
 
         /**
          * @brief Sets whether user input is allowed in the engine list.

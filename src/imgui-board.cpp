@@ -44,6 +44,8 @@ namespace QaplaWindows
 
     ImGuiBoard::ImGuiBoard(ImGuiBoard&&) = default;
     ImGuiBoard& ImGuiBoard::operator=(ImGuiBoard&&) = default;
+
+    // Must be defined in the .cpp file to ensure that the destructor of unique_ptr<GameState> is known here.
     ImGuiBoard::~ImGuiBoard() = default;
 
     std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,

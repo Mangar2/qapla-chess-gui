@@ -230,21 +230,21 @@ public:
     /**
      * @brief Returns the current status of the task.
      */
-    Status getStatus() const
+    std::string getStatus() const
     {
         if (taskType_ == ComputeTaskType::Autoplay)
         {
-            return Status::Autoplay;
+            return "Autoplay";
         }
         else if (taskType_ == ComputeTaskType::Analyze)
         {
-            return Status::Analyze;
+            return "Analyze";
         }
         else if (taskType_ == ComputeTaskType::PlaySide)
         {
-            return Status::Play;
+            return "Play";
         }
-        return Status::Stopped;
+        return "Stopped";
     }
 
 private:

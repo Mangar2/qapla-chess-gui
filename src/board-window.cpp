@@ -35,7 +35,7 @@
 namespace QaplaWindows
 {
 
-    void BoardWindow::drawButtons()
+    std::string BoardWindow::drawButtons(const std::string& status)
     {
         constexpr float space = 3.0f;
         constexpr float topOffset = 5.0f;
@@ -46,11 +46,13 @@ namespace QaplaWindows
         constexpr ImVec2 buttonSize = {25.0f, 25.0f};
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        std::string clickedButton;
+
         for (const std::string button : {"New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
         {
             ImGui::SetCursorScreenPos(pos);
             auto state = QaplaButton::ButtonState::Normal;
-            if (InteractiveBoardWindow::instance().isModeActive(button)) {
+            if (button == status || (button == "Invert" && isInverted())) {
                 state = QaplaButton::ButtonState::Active;
             }
             if (QaplaButton::drawIconButton(
@@ -87,22 +89,12 @@ namespace QaplaWindows
                         }
                     }))
             {
-                InteractiveBoardWindow::instance().execute(button);
+               clickedButton = button;
             }
             pos.x += totalSize.x + space;
         }
 
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+        return clickedButton;
     }
-
-    void BoardWindow::draw()
-    {
-        drawButtons();
-        auto move = InteractiveBoardWindow::instance().imGuiBoard().draw();
-        if (move)
-        {
-            InteractiveBoardWindow::instance().doMove(*move);
-        }
-    }
-
 }
