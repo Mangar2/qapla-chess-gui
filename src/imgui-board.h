@@ -73,6 +73,12 @@ namespace QaplaWindows
         void setInverted(bool inverted) { boardInverted_ = inverted; }
 
         /**
+         * Get whether the board is inverted.
+         * @return True if the board is inverted, false otherwise.
+         */
+        bool isInverted() const { return boardInverted_; }
+
+        /**
          * Set whether to allow move input.
          * @param moveInput Whether to allow move input.
          */

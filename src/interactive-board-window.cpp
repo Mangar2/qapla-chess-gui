@@ -193,8 +193,7 @@ void InteractiveBoardWindow::execute(std::string command)
 	}
 	else if (command == "Invert")
 	{
-		boardInverted_ = !boardInverted_;
-		imGuiBoard_->setInverted(boardInverted_);
+		imGuiBoard_->setInverted(!imGuiBoard_->isInverted());
 	}
 	else if (command == "Manual")
 	{
@@ -318,7 +317,7 @@ bool InteractiveBoardWindow::isModeActive(const std::string &mode) const
 {
 	if (mode == "Invert")
 	{
-		return boardInverted_;
+		return imGuiBoard_->isInverted();
 	}
 	
 	auto status = computeTask_->getStatus();
