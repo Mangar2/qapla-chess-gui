@@ -97,7 +97,7 @@ namespace QaplaWindows
         gameInRound_ = gameRecord.getGameInRound();
         if (!active_) return;
         imGuiBoard_.setAllowMoveInput(false);
-        imGuiBoard_.setGameState(gameRecord);
+        imGuiBoard_.setFromGameRecord(gameRecord);
         imGuiClock_.setFromGameRecord(gameRecord);
         imGuiMoveList_.setFromGameRecord(gameRecord);
         imGuiBarChart_.setFromGameRecord(gameRecord);

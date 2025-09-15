@@ -72,26 +72,13 @@ namespace QaplaWindows
 		}
 
 		/**
-		 * @brief Returns a reference to the ImGuiBoard.
-		 * @return Reference to ImGuiBoard.
-		 */		/**
-		 * @brief Executes a move in the game.
-		 * @param move The move to execute.
-		 */
-		void doMove(const MoveRecord& move);
-
-		/**
 		 * @brief Sets the position of the game.
 		 * @param startPosition If true, sets the position to the starting position.
 		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.
 		 */
 		void setPosition(bool startPosition, const std::string &fen = "");
 
-		/**
-		 * @brief Sets the current move index.
-		 * @param moveIndex The move index to set.
-		 */
-		void setNextMoveIndex(uint32_t moveIndex);
+
 
 		const EpdData &epdData() const
 		{
@@ -102,24 +89,6 @@ namespace QaplaWindows
 			return epdData_;
 		}
 
-		/**
-		 * @brief Sets the game state from a GameRecord, if the new state extends the existing state.
-		 * @param record The GameRecord to set the game state from.
-		 */
-		void setGameIfDifferent(const GameRecord &record);
-
-		/**
-		 * @brief Executes a command on the board window.
-		 * Supported commands:
-		 * - "New": Starts a new game with the initial position.
-		 * - "Invert": Inverts the board orientation.
-		 * - "Manual": Sets the mode to manual (user input only).
-		 * - "Play": Sets the mode to play (user vs engine).
-		 * - "Autoplay": Sets the mode to autoplay (engine vs engine).
-		 * - "Analyze": Sets the mode to analyze (engine analysis only).
-		 * @param command The command to execute.
-		 */
-		void execute(std::string command);
 
 		/**
 		 * @brief Polls data from several data provider (computeTask, edpData, ...) to provide them for imgui windows.
@@ -145,17 +114,7 @@ namespace QaplaWindows
 		 */
 		void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
 
-		/**
-		 * @brief stops the engine located at an index
-		 * @param id Identifier of the engine to stop.
-		 */
-		void stopEngine(const std::string& id);
 
-		/**
-		 * @brief Restarts the engine located at an index.
-		 * @param id Identifier of the engine to restart.
-		 */
-		void restartEngine(const std::string& id);
 
 		/**
 		 * @brief Starts the engines configured in the board data.
@@ -186,9 +145,50 @@ namespace QaplaWindows
 		 * @brief Renders the interactive board window and its components.
 		 * This method should be called within the main GUI rendering loop.
 		 */
-		virtual void draw();
+		void draw();
 
 	private:
+
+		/**
+		 * @brief Returns a reference to the ImGuiBoard.
+		 * @return Reference to ImGuiBoard.
+		 */		/**
+		 * @brief Executes a move in the game.
+		 * @param move The move to execute.
+		 */
+		void doMove(const MoveRecord& move);
+
+		/**
+		 * @brief Sets the current move index.
+		 * @param moveIndex The move index to set.
+		 */
+		void setNextMoveIndex(uint32_t moveIndex);
+
+		/**
+		 * @brief stops the engine located at an index
+		 * @param id Identifier of the engine to stop.
+		 */
+		void stopEngine(const std::string& id);
+
+		/**
+		 * @brief Restarts the engine located at an index.
+		 * @param id Identifier of the engine to restart.
+		 */
+		void restartEngine(const std::string& id);
+	
+		/**
+		 * @brief Executes a command on the board window.
+		 * Supported commands:
+		 * - "New": Starts a new game with the initial position.
+		 * - "Invert": Inverts the board orientation.
+		 * - "Manual": Sets the mode to manual (user input only).
+		 * - "Play": Sets the mode to play (user vs engine).
+		 * - "Autoplay": Sets the mode to autoplay (engine vs engine).
+		 * - "Analyze": Sets the mode to analyze (engine analysis only).
+		 * @param command The command to execute.
+		 */
+		void execute(std::string command);
+
 		/**
 		 * @brief Initializes the InteractiveBoardWindow instance.
 		 */

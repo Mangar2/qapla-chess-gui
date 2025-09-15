@@ -20,6 +20,8 @@
 
 #include "qapla-engine/types.h"
 
+#include "qapla-tester/change-tracker.h"
+
 #include <optional>
 #include <memory>
 #include <utility>
@@ -88,7 +90,7 @@ namespace QaplaWindows
          * Set the position.
          * @param gameRecord Board to get the position from.
          */
-        void setGameState(const GameRecord &gameRecord);
+        void setFromGameRecord(const GameRecord &gameRecord);
 
         /**
          * Does a move.
@@ -123,6 +125,9 @@ namespace QaplaWindows
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
+        bool gameOver_ = false;
+
+        ChangeTracker gameRecordTracker_;
 
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;

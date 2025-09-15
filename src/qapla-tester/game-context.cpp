@@ -184,6 +184,27 @@ void GameContext::setPosition(const GameRecord &record)
     }
 }
 
+void GameContext::setNextMoveIndex(uint32_t moveIndex)
+{
+    cancelCompute();
+    {
+        std::lock_guard lock(gameRecordMutex_);
+        if (moveIndex <= gameRecord_.history().size())
+        {
+            gameRecord_.setNextMoveIndex(moveIndex);
+        }
+        else
+        {
+            throw AppError::make("GameContext::setMoveIndex: moveIndex out of range");
+        }
+    }
+
+    for (auto &player : players_)
+    {
+        player->setStartPosition(gameRecord_);
+    }
+}
+
 void GameContext::doMove(const MoveRecord& move)
 {
     cancelCompute();

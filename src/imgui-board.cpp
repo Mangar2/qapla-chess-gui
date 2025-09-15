@@ -141,7 +141,7 @@ namespace QaplaWindows
         ImGui::SetCursorScreenPos(cellMin);
         ImGui::InvisibleButton(("cell_" + std::to_string(square)).c_str(), ImVec2(cellSize, cellSize));
 
-        if (ImGui::IsItemClicked() && allowMoveInput_)
+        if (ImGui::IsItemClicked() && allowMoveInput_ && !gameOver_)
         {
             bool wtm = position.isWhiteToMove();
             if (piece != Piece::NO_PIECE && getPieceColor(piece) == (wtm ? Piece::WHITE : Piece::BLACK))
@@ -252,9 +252,14 @@ namespace QaplaWindows
         return std::nullopt;
     }
 
-    void ImGuiBoard::setGameState(const GameRecord &gameRecord)
+    void ImGuiBoard::setFromGameRecord(const GameRecord &gameRecord)
     {
-        gameState_->setFromGameRecord(gameRecord, gameRecord.nextMoveIndex());
+        auto updated = gameRecordTracker_.checkModification(gameRecord.getChangeTracker()).second;
+        gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
+        if (updated) {
+            gameState_->setFromGameRecord(gameRecord, gameRecord.nextMoveIndex());
+            gameOver_ = gameRecord.isGameOver();
+        }
     }
 
     std::optional<MoveRecord> ImGuiBoard::draw()

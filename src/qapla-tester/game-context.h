@@ -131,6 +131,12 @@ public:
     void setPosition(const GameRecord &game);
 
     /**
+     * @brief Sets the current move index in the game.
+     * @param moveIndex The move index to set (0 = before first move).
+     */
+    void setNextMoveIndex(uint32_t moveIndex);
+
+    /**
      * @brief Executes a new move to the move record.
      * @param move The move to execute. Note: move.move must be set.
      */

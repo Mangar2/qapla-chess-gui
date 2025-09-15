@@ -153,6 +153,20 @@ public:
         gameContext_.setPosition(game);
     }
 
+    /**
+     * @brief Sets the current move index in the game.
+     * @param moveIndex The move index to set (0 = before first move).
+     */
+    void setNextMoveIndex(uint32_t moveIndex)
+    {
+        stop();
+        gameContext_.setNextMoveIndex(moveIndex);
+    }
+
+    /**
+     * @brief Executes a move in the current game position.
+     * @param move The move to execute. Note: move.move must be set.
+     */
     void doMove(const MoveRecord& move)
     {
         gameContext_.doMove(move);

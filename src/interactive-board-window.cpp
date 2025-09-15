@@ -92,6 +92,7 @@ void InteractiveBoardWindow::initSplitterWindows()
         ClockMovesContainer->setBottom(std::move(MovesBarchartContainer));
 
         auto BoardMovesContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>("board_moves");
+		boardWindow_->setAllowMoveInput(true);
         BoardMovesContainer->setLeft(
 			[this]() {
 				auto command = boardWindow_->drawButtons(computeTask_->getStatus());
@@ -176,7 +177,7 @@ void InteractiveBoardWindow::execute(std::string command)
 {
 	if (command == "") return;
 
-	if (command == "New" && gameRecord_ != nullptr)
+	if (command == "New")
 	{
 		computeTask_->setPosition(true, "");
 	}
@@ -238,10 +239,10 @@ void InteractiveBoardWindow::pollData()
 	try
 	{
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
-			setGameIfDifferent(g);
 			imGuiMoveList_->setFromGameRecord(g);
 			imGuiClock_->setFromGameRecord(g);
 			imGuiBarChart_->setFromGameRecord(g);
+			boardWindow_->setFromGameRecord(g);
 			timeControl_ = g.getWhiteTimeControl(); 
 		});
 		engineWindow_->setAllowInput(true);
@@ -267,29 +268,9 @@ void InteractiveBoardWindow::pollData()
 	}
 }
 
-void InteractiveBoardWindow::setGameIfDifferent(const GameRecord &record)
-{
-	if (gameRecord_ == nullptr || record.isUpdate(*gameRecord_))
-	{
-		*gameRecord_ = record;
-		boardWindow_->setGameState(*gameRecord_);
-		auto [cause, result] = gameRecord_->getGameResult();
-		boardWindow_->setAllowMoveInput(result == GameResult::Unterminated);
-	}
-}
-
 void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
 {
-	if (!gameRecord_)
-	{
-		return;
-	}
-	if (moveIndex <= gameRecord_->history().size())
-	{
-		gameRecord_->setNextMoveIndex(moveIndex);
-		boardWindow_->setGameState(*gameRecord_);
-		computeTask_->setPosition(*gameRecord_);
-	}
+	computeTask_->setNextMoveIndex(moveIndex);
 }
 
 void InteractiveBoardWindow::stopEngine(const std::string &id)
