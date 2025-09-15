@@ -37,6 +37,10 @@
 #include "vertical-split-container.h"
 #include "board-window.h"
 #include "engine-window.h"
+#include "imgui-cut-paste.h"
+#include "game-parser.h"
+
+#include "GLFW/glfw3.h"
 
 using namespace QaplaWindows;
 
@@ -262,6 +266,18 @@ void InteractiveBoardWindow::pollData()
 		{
 			computeTask_->setTimeControl(timeControl);
 		}
+
+		GLFWwindow* window = glfwGetCurrentContext();
+		if (window) {
+			auto pasted = ImGuiCutPaste::checkForPaste(window);
+			if (pasted) {
+				auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
+				if (gameRecord) {
+					computeTask_->setPosition(*gameRecord);
+				}
+			}
+		}
+
 	}
 	catch (const std::exception &ex)
 	{
