@@ -48,8 +48,9 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param window Unique pointer to the EmbeddedWindow to display (ownership transferred)
+         * @param closable Whether the tab can be closed by the user (default: false)
          */
-        void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window);
+        void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, bool closable = false);
 
         /**
          * @brief Add a tab with a custom callback function.
@@ -59,8 +60,9 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param callback Function to call when drawing the tab content
+         * @param closable Whether the tab can be closed by the user (default: false)
          */
-        void addTab(const std::string& name, std::function<void()> callback);
+        void addTab(const std::string& name, std::function<void()> callback, bool closable = false);
 
         /**
          * @brief Remove a tab by name.
@@ -93,6 +95,18 @@ namespace QaplaWindows {
         void setDynamicTabsCallback(std::function<void()> callback);
 
         /**
+         * @brief Set a callback for adding new tabs via the + button.
+         * 
+         * This callback is executed when the user clicks the + button in the tab bar.
+         * The callback receives a reference to the TabBar itself, allowing safe access
+         * to add new tabs without ownership concerns.
+         * 
+         * @param callback Function to call when adding a new tab, receives TabBar reference,
+         *                 or nullptr to disable the + button
+         */
+        void setAddTabCallback(std::function<void(ImGuiTabBar&)> callback);
+
+        /**
          * @brief Get the number of tabs in the tab bar.
          * 
          * @return The current number of tabs
@@ -114,9 +128,11 @@ namespace QaplaWindows {
             // Using shared_ptr allows the callback to safely reference the window
             std::shared_ptr<EmbeddedWindow> window;
             std::function<void()> callback;
+            bool closable; // Whether this tab can be closed by the user
         };
         std::vector<Tab> tabs;
         std::function<void()> dynamicTabsCallback;
+        std::function<void(ImGuiTabBar&)> addTabCallback; // Callback for adding new tabs via + button
 
     };
 

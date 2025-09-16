@@ -107,7 +107,11 @@ namespace {
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         boardTabBar->addTab("Board", QaplaWindows::InteractiveBoardWindow::createInstance());
-        boardTabBar->addTab("Board2", QaplaWindows::InteractiveBoardWindow::createInstance());
+        boardTabBar->setAddTabCallback([&](QaplaWindows::ImGuiTabBar& tb) {
+            static int newTabIndex = 1;
+            std::string tabName = "Board " + std::to_string(newTabIndex++);
+            tb.addTab(tabName, QaplaWindows::InteractiveBoardWindow::createInstance(), true);
+        });
         boardTabBar->setDynamicTabsCallback([&]() {
             QaplaWindows::TournamentData::instance().drawTabs();
         });

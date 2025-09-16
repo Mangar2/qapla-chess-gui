@@ -22,7 +22,7 @@
 
 namespace QaplaWindows {
 
-    void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window) {
+    void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, bool closable) {
         // Create a callback that calls the embedded window's draw method
         // The shared_ptr ensures the window stays alive as long as the callback exists
         auto windowPtr = std::shared_ptr<EmbeddedWindow>(window.release());
@@ -30,11 +30,11 @@ namespace QaplaWindows {
             [windowPtr]() { windowPtr->draw(); }
         ) : nullptr;
         
-        tabs.emplace_back(Tab{ name, windowPtr, std::move(callback) });
+        tabs.emplace_back(Tab{ name, windowPtr, std::move(callback), closable });
     }
 
-    void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback) {
-        tabs.emplace_back(Tab{ name, nullptr, std::move(callback) });
+    void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback, bool closable) {
+        tabs.emplace_back(Tab{ name, nullptr, std::move(callback), closable });
     }
 
     bool ImGuiTabBar::removeTab(const std::string& name) {
@@ -49,14 +49,37 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::draw() {
-        if (ImGui::BeginTabBar("QaplaTabBar")) {
-            for (auto& tab : tabs) {
-                if (ImGui::BeginTabItem(tab.name.c_str())) {
+        if (ImGui::BeginTabBar("QaplaTabBar", ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable)) {
+            // Draw all tabs
+            for (auto it = tabs.begin(); it != tabs.end(); ) {
+                bool open = true;
+                
+                // Set flags based on whether tab is closable
+                ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
+                if (it->closable) {
+                    flags |= ImGuiTabItemFlags_UnsavedDocument;
+                }
+                
+                if (ImGui::BeginTabItem(it->name.c_str(), it->closable ? &open : nullptr, flags)) {
                     // Always use callback (which is created for EmbeddedWindows too)
-                    if (tab.callback) {
-                        tab.callback();
+                    if (it->callback) {
+                        it->callback();
                     }
                     ImGui::EndTabItem();
+                }
+                
+                // Remove tab if it was closed
+                if (it->closable && !open) {
+                    it = tabs.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+            
+            // Add + button if callback is set
+            if (addTabCallback) {
+                if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) {
+                    addTabCallback(*this);
                 }
             }
             
@@ -71,6 +94,10 @@ namespace QaplaWindows {
 
     void ImGuiTabBar::setDynamicTabsCallback(std::function<void()> callback) {
         dynamicTabsCallback = std::move(callback);
+    }
+
+    void ImGuiTabBar::setAddTabCallback(std::function<void(ImGuiTabBar&)> callback) {
+        addTabCallback = std::move(callback);
     }
 
     size_t ImGuiTabBar::getTabCount() const noexcept {
