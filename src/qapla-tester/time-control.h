@@ -45,6 +45,7 @@ struct GoLimits {
     std::optional<uint64_t> nodes;
     std::optional<uint32_t> mateIn;
     std::optional<uint64_t> movetimeMs;
+    // List of moves to limit the search to (if supported by engine)
     std::optional<std::vector<std::string>> limitMoves;
     bool infinite = false;
 };
@@ -354,11 +355,13 @@ inline GoLimits createGoLimits(
         timeLeftMs = timeLeftMs < timeUsedMs ? 0 : timeLeftMs - timeUsedMs;
         };
 
-    compute(white, wMovesPlayed, whiteTimeUsedMs, limits.wtimeMs, limits.wincMs, limits.movesToGo);
-    compute(black, bMovesPlayed, blackTimeUsedMs, limits.btimeMs, limits.bincMs, limits.movesToGo);
+    uint32_t wMovesToGo = 0;
+    uint32_t bMovesToGo = 0;
+    compute(white, wMovesPlayed, whiteTimeUsedMs, limits.wtimeMs, limits.wincMs, wMovesToGo);
+    compute(black, bMovesPlayed, blackTimeUsedMs, limits.btimeMs, limits.bincMs, bMovesToGo);
 
     // Set correct movesToGo based on side to move
-    limits.movesToGo = whiteToMove ? limits.movesToGo : limits.movesToGo;
+    limits.movesToGo = whiteToMove ? wMovesToGo : bMovesToGo;
 
     return limits;
 }

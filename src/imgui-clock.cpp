@@ -51,8 +51,9 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     auto btc = gameRecord.getBlackTimeControl();
     if (!wtc.isValid() || !btc.isValid()) return;
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
+    auto curMoveIndex = gameRecord.nextMoveIndex() == 0 ? 0 : gameRecord.nextMoveIndex() - 1;
     GoLimits goLimits = createGoLimits(wtc, btc,
-        gameRecord.nextMoveIndex(), whiteTime, blackTime, gameRecord.isWhiteToMove());
+        curMoveIndex, whiteTime, blackTime, gameRecord.isWhiteToMove());
 
     clockData_.wEngineName = gameRecord.getWhiteEngineName();
     clockData_.bEngineName = gameRecord.getBlackEngineName();
@@ -66,15 +67,25 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
 
 	auto nextMoveIndex = gameRecord.nextMoveIndex();
     curHalfmoveNo_ = 0;
-    if (nextMoveIndex > 0 && nextMoveIndex <= gameRecord.history().size()) {
-        auto curMove = gameRecord.history()[nextMoveIndex - 1];
+    if (nextMoveIndex > 0 && curMoveIndex < gameRecord.history().size()) {
+        auto curMove = gameRecord.history()[curMoveIndex];
         curHalfmoveNo_ = curMove.halfmoveNo_;
         // if wtm, then black just moved (currMove is black's move)
         if (clockData_.wtm) {
             if (!stopped_) clockData_.wTimer.start();
+            else {
+                clockData_.bTimeCurMove = curMove.timeMs;
+                // bTimeLeftMs has the time after current move.
+                clockData_.bTimeLeftMs += curMove.timeMs;
+            }
         }
         else {
             if (!stopped_) clockData_.bTimer.start();
+            else {
+                clockData_.wTimeCurMove = curMove.timeMs;
+                // wTimeLeftMs has the time after current move.
+                clockData_.wTimeLeftMs += curMove.timeMs;
+            }
         }
     }
 }
@@ -86,8 +97,8 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
         infoCnt_.resize(playerIndex + 1, 0);
         displayedMoveNo_.resize(playerIndex + 1, 0);
     }
-    if (halfmoveNo <= curHalfmoveNo_) {
-        // We ignore all moverecords that are not ahead of the current halfmoveNo
+    if (halfmoveNo != curHalfmoveNo_ + 1) {
+        // We ignore all moverecords that are not related to the halfmove no to be played
         return; 
     }
     if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && halfmoveNo == displayedMoveNo_[playerIndex]) {
