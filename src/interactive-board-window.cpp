@@ -108,6 +108,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 				auto move = boardWindow_->draw();
 				if (move) {
 					move->timeMs = imGuiClock_->getCurrentTimerMs();
+					move->engineName_ = "Human";
 					doMove(*move);
 				}
 			}
@@ -125,6 +126,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 				if (command == "Restart") restartEngine(id);
         		else if (command == "Stop") stopEngine(id);
 				else if (command == "Config") openEngineSelectionPopup();
+				else if (command == "Swap") swapEngines();
 			}
 		);
         BoardEngineContainer->setMinBottomHeight(55.0f);
@@ -137,6 +139,12 @@ void InteractiveBoardWindow::draw() {
 	if (mainWindow_) {
 		mainWindow_->draw();
 	}
+}
+
+void InteractiveBoardWindow::swapEngines() {
+	if (engineConfigs_.size() < 2) return;
+	bool isSwitched = computeTask_->getGameContext().isSideSwitched();
+	computeTask_->getGameContext().setSideSwitched(!isSwitched);
 }
 
 void InteractiveBoardWindow::openEngineSelectionPopup() {

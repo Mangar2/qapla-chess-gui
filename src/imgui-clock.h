@@ -22,6 +22,7 @@
 
 #include "qapla-tester/timer.h"
 #include "qapla-tester/change-tracker.h"
+#include "qapla-tester/engine-record.h"
 
 #include <imgui.h>
 
@@ -51,7 +52,8 @@ namespace QaplaWindows {
          * @brief Sets the clock data from the game record.
          * @param gameRecord The game record to extract data from.
          */
-        void setFromGameRecord(const GameRecord& gameRecord);
+        void setFromGameRecord(const GameRecord &gameRecord);
+
 
         /**
          * @brief Sets the remaining clock data from the move record.
@@ -82,6 +84,22 @@ namespace QaplaWindows {
         }
 
     private:
+
+        /** 
+         * @brief Updates the clock display state from a historical move record.
+         * 
+         * This private method is called internally to synchronize the clock display
+         * with a specific move from the game history. It extracts timing information
+         * from the specified move record and updates the internal clock state accordingly.
+         * 
+         * @param gameRecord The game record containing the complete move history
+         *                   and game state information.
+         * @param curMoveIndex The zero-based index of the move in the game history
+         *                     to extract timing information from. Must be less than
+         *                     the size of the history vector.
+         */
+        void setFromHistoryMoveRecord(const GameRecord &gameRecord, unsigned int curMoveIndex);
+
         struct ClockData {
             std::string wEngineName;
 			std::string bEngineName;

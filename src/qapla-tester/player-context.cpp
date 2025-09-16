@@ -323,6 +323,7 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
         std::lock_guard lock(currentMoveMutex_);
         currentMove_.clear();
         currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
+        currentMove_.engineName_ = engine_->getEngineName();
 		isAnalyzing_ = analyze;
     }
     goLimits_ = goLimits;

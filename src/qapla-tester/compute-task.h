@@ -241,6 +241,11 @@ public:
         return gameContext_;
     }
 
+    GameContext& getGameContext()
+    {
+        return gameContext_;
+    }
+
     /**
      * @brief Returns the current status of the task.
      */

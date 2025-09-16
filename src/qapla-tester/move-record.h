@@ -52,6 +52,7 @@ struct MoveRecord {
 
     uint32_t halfmoveNo_ = 0;
     std::string engineId_{};
+    std::string engineName_{}; ///> Name of the engine computing this move
 
 	MoveRecord() = default;
     MoveRecord(uint32_t halfmoveNo, const std::string& id = "")

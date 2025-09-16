@@ -39,7 +39,7 @@ UciAdapter::UciAdapter(std::filesystem::path enginePath,
 }
 
 UciAdapter::~UciAdapter() {
-    terminateEngine();
+    UciAdapter::terminateEngine();
 }
 
 void UciAdapter::terminateEngine() {

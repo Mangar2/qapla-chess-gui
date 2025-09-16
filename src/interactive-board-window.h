@@ -158,7 +158,18 @@ namespace QaplaWindows
 		 */
 		void drawEngineSelectionPopup();
 
+		/**
+		 * @brief Opens the engine selection popup window.
+		 * This sets the flag to open the popup, which will be drawn in the next calls.
+		 */
 		void openEngineSelectionPopup();
+
+		/**
+		 * @brief Swaps the engines assigned to white and black.
+		 * It uses the GameContext swapPlayers method to perform the swap. It only sets a switched flag
+		 * and will not restart the engines.
+		 */
+		void swapEngines();
 
 		/**
 		 * @brief Executes a move in the game.
