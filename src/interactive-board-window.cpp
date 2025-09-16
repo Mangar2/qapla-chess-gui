@@ -101,8 +101,11 @@ void InteractiveBoardWindow::initSplitterWindows()
 			[this]() {
 				auto command = boardWindow_->drawButtons(computeTask_->getStatus());
 				execute(command);
-				const auto move = boardWindow_->draw();
-				if (move) doMove(*move);
+				auto move = boardWindow_->draw();
+				if (move) {
+					move->timeMs = imGuiClock_->getCurrentTimerMs();
+					doMove(*move);
+				}
 			}
 		);
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
@@ -177,50 +180,49 @@ void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &
 	computeTask_->setPosition(startPosition, fen);
 }
 
+void InteractiveBoardWindow::stop()
+{
+	computeTask_->stop();
+	//imGuiClock_->setStopped(true);
+}
+
+void InteractiveBoardWindow::playSide()
+{
+	computeTask_->playSide();
+	//imGuiClock_->setStopped(false);
+}
+
+void InteractiveBoardWindow::analyze()
+{
+	computeTask_->analyze();
+	//imGuiClock_->setStopped(false);
+}
+
+void InteractiveBoardWindow::autoPlay()
+{
+	computeTask_->autoPlay();
+	//imGuiClock_->setStopped(false);
+}
+
+void InteractiveBoardWindow::setStartPosition()
+{
+	//imGuiClock_->setStopped(true);
+	computeTask_->setPosition(true, "");
+}
+
 void InteractiveBoardWindow::execute(std::string command)
 {
 	if (command == "") return;
 
-	if (command == "New")
-	{
-		computeTask_->setPosition(true, "");
-	}
-	else if (command == "Stop")
-	{
-		computeTask_->stop();
-	}
-	else if (command == "Now")
-	{
-		computeTask_->moveNow();
-	}
-	else if (command == "Newgame")
-	{
-		computeTask_->newGame();
-	}
-	else if (command == "Play")
-	{
-		computeTask_->playSide();
-	}
-	else if (command == "Analyze")
-	{
-		computeTask_->analyze();
-	}
-	else if (command == "Auto")
-	{
-		computeTask_->autoPlay();
-	}
-	else if (command == "Invert")
-	{
-		boardWindow_->setInverted(!boardWindow_->isInverted());
-	}
-	else if (command == "Manual")
-	{
-		computeTask_->stop();
-	}
-	else
-	{
-		std::cerr << "Unknown command: " << command << '\n';
-	}
+	if (command == "New") setStartPosition();
+	else if (command == "Stop") stop();
+	else if (command == "Now") computeTask_->moveNow();
+	else if (command == "Newgame") computeTask_->newGame();
+	else if (command == "Play") playSide();
+	else if (command == "Analyze") analyze();
+	else if (command == "Auto") autoPlay();
+	else if (command == "Invert") boardWindow_->setInverted(!boardWindow_->isInverted());
+	else std::cerr << "Unknown command: " << command << '\n';
 }
 
 void InteractiveBoardWindow::stopPool()
@@ -242,6 +244,12 @@ void InteractiveBoardWindow::pollData()
 {
 	try
 	{
+		if (computeTask_->isStopped()) {
+			imGuiClock_->setStopped(true);
+		}
+		else {
+			imGuiClock_->setStopped(false);
+		}
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
 			imGuiMoveList_->setFromGameRecord(g);
 			imGuiClock_->setFromGameRecord(g);

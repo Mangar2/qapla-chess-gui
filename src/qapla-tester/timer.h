@@ -46,14 +46,22 @@ public:
     }
 
     void stop() {
+        if (!started_) return;
         started_ = false;
+        end_ = getCurrentTimeMs();
+    }
+
+    void reset() {
+        started_ = false;
+        start_ = 0;
+        end_ = 0;
     }
 
 	uint64_t elapsedMs(uint64_t end) const {
 		return end - start_;
 	}
     uint64_t elapsedMs() const {
-        return started_ ? getCurrentTimeMs() - start_ : 0;
+        return started_ ? getCurrentTimeMs() - start_ : end_ - start_;
     }
 
     void printElapsed(const char* label) {
@@ -70,5 +78,6 @@ public:
 private:
     bool started_ = false;
     uint64_t start_{};
+    uint64_t end_{};
 };
 

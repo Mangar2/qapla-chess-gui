@@ -68,6 +68,9 @@ void PlayerContext::handleInfo(const EngineEvent& event) {
         currentMove_.updateFromSearchInfo(searchInfo);
     }
 
+    uint64_t moveElapsedMs = Timer::getCurrentTimeMs() - computeMoveStartTimestamp_;
+    currentMove_.timeMs = moveElapsedMs;
+
     if (searchInfo.currMove) {
         auto& state = computeState_ == ComputeState::ComputingMove ? gameState_ : ponderState_;
         const auto move = state.stringToMove(*searchInfo.currMove, requireLan_);
@@ -207,8 +210,8 @@ bool PlayerContext::checkEngineTimeout() {
     const uint64_t OVERRUN_TIMEOUT = 5000;
 
     uint64_t moveElapsedMs = Timer::getCurrentTimeMs() - computeMoveStartTimestamp_;
-    moveElapsedMs = moveElapsedMs < GRACE_MS ? 0 : moveElapsedMs - GRACE_MS;
     currentMove_.timeMs = moveElapsedMs;
+    moveElapsedMs = moveElapsedMs < GRACE_MS ? 0 : moveElapsedMs - GRACE_MS;
 
     const bool white = gameState_.isWhiteToMove();
     bool restarted = false;

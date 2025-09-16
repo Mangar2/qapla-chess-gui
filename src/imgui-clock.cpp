@@ -61,27 +61,55 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     clockData_.wTimeCurMove = 0;
     clockData_.bTimeCurMove = 0;
     clockData_.wtm = gameRecord.isWhiteToMove();
-    clockData_.wTimer.start();
-    clockData_.bTimer.start();
+    clockData_.wTimer.reset();
+    clockData_.bTimer.reset();
 
 	auto nextMoveIndex = gameRecord.nextMoveIndex();
     curHalfmoveNo_ = 0;
     if (nextMoveIndex > 0 && nextMoveIndex <= gameRecord.history().size()) {
-        curHalfmoveNo_ = gameRecord.history()[nextMoveIndex - 1].halfmoveNo_;
+        auto curMove = gameRecord.history()[nextMoveIndex - 1];
+        curHalfmoveNo_ = curMove.halfmoveNo_;
+        // if wtm, then black just moved (currMove is black's move)
+        if (clockData_.wtm) {
+            if (!stopped_) clockData_.wTimer.start();
+        }
+        else {
+            if (!stopped_) clockData_.bTimer.start();
+        }
     }
 }
 
 void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
-	// We need to adjust the current time for the engines currently calculating a move,
-    bool isPlaying = moveRecord.halfmoveNo_ > curHalfmoveNo_;
-    if (!isPlaying) return;
+    if (stopped_) return;
+    auto halfmoveNo = moveRecord.halfmoveNo_;
+    if (infoCnt_.size() <= playerIndex) {
+        infoCnt_.resize(playerIndex + 1, 0);
+        displayedMoveNo_.resize(playerIndex + 1, 0);
+    }
+    if (halfmoveNo <= curHalfmoveNo_) {
+        // We ignore all moverecords that are not ahead of the current halfmoveNo
+        return; 
+    }
+    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && halfmoveNo == displayedMoveNo_[playerIndex]) {
+        return; 
+    }
+    infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
+    displayedMoveNo_[playerIndex] = halfmoveNo;
 
     uint64_t cur = moveRecord.timeMs;
 
     if (clockData_.wtm) {
+        if (cur > clockData_.wTimeCurMove) {
+            if (stopped_) clockData_.wTimer.reset(); 
+            else clockData_.wTimer.start();
+        }
         clockData_.wTimeCurMove = cur;
     } 
     else {
+        if (cur > clockData_.bTimeCurMove) {
+            if (stopped_) clockData_.bTimer.reset(); 
+            else clockData_.bTimer.start();
+        }
         clockData_.bTimeCurMove = cur;
     }
 }
@@ -258,13 +286,9 @@ void ImGuiClock::draw() {
     ImVec2 whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
-    auto wCur = clockData_.wTimeCurMove == 0 ? 0 : clockData_.wTimer.elapsedMs();
-    std::cout 
-        << "wTimeCurMove: " << clockData_.wTimeCurMove 
-        << " elapsed: " << clockData_.wTimer.elapsedMs() 
-        << " total: " << wCur << std::endl;
+    auto wCur = clockData_.wTimeCurMove + clockData_.wTimer.elapsedMs();
+    auto bCur = clockData_.bTimeCurMove + clockData_.bTimer.elapsedMs();
 
-    auto bCur = clockData_.bTimeCurMove == 0 ? 0 : clockData_.bTimer.elapsedMs();
     if (smallClock) {
         drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
             clockData_.wEngineName, true, clockData_.wtm);

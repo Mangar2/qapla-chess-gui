@@ -261,6 +261,11 @@ public:
         return "Stopped";
     }
 
+    bool isStopped() const
+    {
+        return taskType_ == ComputeTaskType::None;
+    }
+
 private:
     GameContext gameContext_;
 

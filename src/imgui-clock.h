@@ -60,6 +60,27 @@ namespace QaplaWindows {
          */
         void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
 
+        /**
+         * @brief Stops the clock timers.
+         */
+        void setStopped(bool stopped) {
+            if (stopped && !stopped_) {
+                clockData_.wTimer.stop();
+                clockData_.bTimer.stop();
+            }
+            stopped_ = stopped; 
+        }
+
+        /**
+         * @brief Returns the current timer in milliseconds for the side to move.
+         * @return Current timer in milliseconds.
+         */
+        uint64_t getCurrentTimerMs() const {
+            return clockData_.wtm ? 
+                clockData_.wTimer.elapsedMs() :
+                clockData_.bTimer.elapsedMs();
+        }
+
     private:
         struct ClockData {
             std::string wEngineName;
@@ -75,6 +96,11 @@ namespace QaplaWindows {
         ClockData clockData_;
         uint32_t curHalfmoveNo_ = 0;
         ChangeTracker gameRecordTracker_;
+
+        std::vector<uint32_t> infoCnt_{};
+        std::vector<uint32_t> displayedMoveNo_{};
+
+        bool stopped_ = false;
     };
 
 } // namespace QaplaWindows

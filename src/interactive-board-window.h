@@ -194,6 +194,28 @@ namespace QaplaWindows
 		 */
 		void initSplitterWindows();
 
+		/**
+		 * @brief Stops all ongoing tasks.
+		 */
+		void stop();
+		/**
+		 * @brief Notifies task processor to play the side to move.
+		 */
+		void playSide();
+		/**
+		 * @brief Notifies task processor to analyze the current position.
+		 */
+		void analyze();
+		/**
+		 * @brief Notifies task processor to autoplay the game (both sides).
+		 */
+		void autoPlay();
+		/**
+		 * @brief Notifies task processor to set the start position.
+		 * This will stop ongoing computations, reset all game state and sets the start position on the board.
+		 */
+		void setStartPosition();
+
 		EpdData epdData_;
 
 		void checkForGameEnd();
