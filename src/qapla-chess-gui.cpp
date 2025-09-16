@@ -32,6 +32,7 @@
 #include "board-workspace.h"
 #include "engine-setup-window.h"
 #include "snackbar.h"
+#include "callback-manager.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -104,12 +105,9 @@ namespace {
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
 
-
-
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        boardTabBar->addTab("Board", [](){
-            QaplaWindows::InteractiveBoardWindow::instance().draw();
-        });
+        boardTabBar->addTab("Board", QaplaWindows::InteractiveBoardWindow::createInstance());
+        boardTabBar->addTab("Board2", QaplaWindows::InteractiveBoardWindow::createInstance());
         boardTabBar->setDynamicTabsCallback([&]() {
             QaplaWindows::TournamentData::instance().drawTabs();
         });
@@ -175,6 +173,7 @@ namespace {
 
   			QaplaWindows::InteractiveBoardWindow::instance().pollData();
             QaplaWindows::TournamentData::instance().pollData();
+            QaplaWindows::CallbackManager::instance().invokeAll();
 
             workspace.draw();
 			SnackbarManager::instance().draw();

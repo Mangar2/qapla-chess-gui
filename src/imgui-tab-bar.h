@@ -30,73 +30,89 @@
 namespace QaplaWindows {
 
     /**
-     * ImGuiTabBar manages multiple EmbeddedWindows inside a tab bar.
+     * @brief ImGuiTabBar manages multiple EmbeddedWindows or callbacks inside a tab bar.
+     * 
+     * This class provides a tabbed interface for displaying multiple windows or content areas.
+     * Tabs can contain either EmbeddedWindow instances or custom callback functions.
+     * The tab bar automatically manages the lifetime of embedded windows.
      */
     class ImGuiTabBar : public EmbeddedWindow {
     public:
 
         /**
-         * @brief Add a tab to the tab bar.
-         * @param name The name of the tab.
-         * @param window The window to display in the tab.
+         * @brief Add a tab with an EmbeddedWindow.
+         * 
+         * Creates a tab that displays the content of the provided EmbeddedWindow.
+         * The window's lifetime is managed by the tab bar - it will be destroyed
+         * when the tab is removed or the tab bar is destroyed.
+         * 
+         * @param name The display name of the tab
+         * @param window Unique pointer to the EmbeddedWindow to display (ownership transferred)
          */
-        void addTab(std::string name, std::unique_ptr<EmbeddedWindow> window) {
-            // Create a callback that calls the embedded window's draw method
-            auto callback = window ? std::function<void()>(
-                [window = window.get()]() { window->draw(); }
-            ) : nullptr;
-            tabs.emplace_back(Tab{ std::move(name), std::move(window), std::move(callback) });
-        }
+        void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window);
 
         /**
-         * @brief Add a tab to the tab bar with a callback function.
-         * @param name The name of the tab.
-         * @param callback The callback function to call when drawing the tab content.
+         * @brief Add a tab with a custom callback function.
+         * 
+         * Creates a tab that executes the provided callback function when drawn.
+         * The callback is responsible for rendering the tab's content.
+         * 
+         * @param name The display name of the tab
+         * @param callback Function to call when drawing the tab content
          */
-        void addTab(std::string name, std::function<void()> callback) {
-            tabs.emplace_back(Tab{ std::move(name), nullptr, std::move(callback) });
-        }
+        void addTab(const std::string& name, std::function<void()> callback);
 
         /**
          * @brief Remove a tab by name.
-         * @param name The name of the tab to remove.
+         * 
+         * Removes the first tab found with the specified name. If the tab contained
+         * an EmbeddedWindow, it will be destroyed automatically.
+         * 
+         * @param name The name of the tab to remove
+         * @return true if a tab was removed, false if no tab with that name was found
          */
-        void removeTab(std::string name) {
-            tabs.erase(std::remove_if(tabs.begin(), tabs.end(),
-                [&name](const Tab& tab) { return tab.name == name; }), tabs.end());
-        }
-
-        void draw() override {
-            if (ImGui::BeginTabBar("QaplaTabBar")) {
-                for (auto& tab : tabs) {
-                    if (ImGui::BeginTabItem(tab.name.c_str())) {
-                        // Always use callback (which is created for EmbeddedWindows too)
-                        if (tab.callback) {
-                            tab.callback();
-                        }
-                        ImGui::EndTabItem();
-                    }
-                    if (dynamicTabsCallback) {
-                        dynamicTabsCallback();
-                    }
-                }
-                ImGui::EndTabBar();
-            }
-        }
+        bool removeTab(const std::string& name);
 
         /**
-         * @brief Sets a callback to draw additional dynamic tabs.
-         * @param callback The function to be called after drawing static tabs.
+         * @brief Render the tab bar and its contents.
+         * 
+         * Draws the ImGui tab bar with all registered tabs. For each visible tab,
+         * executes its associated callback or draws its EmbeddedWindow.
+         * Also calls the dynamic tabs callback if set.
          */
-        void setDynamicTabsCallback(std::function<void()> callback) {
-            dynamicTabsCallback = std::move(callback);
-        }
+        void draw() override;
+
+        /**
+         * @brief Set a callback for drawing additional dynamic tabs.
+         * 
+         * This callback is executed after all static tabs are processed.
+         * It can be used to add tabs that are created dynamically at runtime.
+         * 
+         * @param callback Function to call for drawing dynamic tabs, or nullptr to disable
+         */
+        void setDynamicTabsCallback(std::function<void()> callback);
+
+        /**
+         * @brief Get the number of tabs in the tab bar.
+         * 
+         * @return The current number of tabs
+         */
+        size_t getTabCount() const noexcept;
+
+        /**
+         * @brief Check if a tab with the given name exists.
+         * 
+         * @param name The name to search for
+         * @return true if a tab with this name exists, false otherwise
+         */
+        bool hasTab(const std::string& name) const;
 
     private:
         struct Tab {
             std::string name;
             // We keep the window here to manage its lifetime
-            std::unique_ptr<EmbeddedWindow> window;
+            // Using shared_ptr allows the callback to safely reference the window
+            std::shared_ptr<EmbeddedWindow> window;
             std::function<void()> callback;
         };
         std::vector<Tab> tabs;

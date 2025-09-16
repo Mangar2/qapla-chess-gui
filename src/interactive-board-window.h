@@ -24,6 +24,8 @@
 
 #include "imgui-popup.h"
 #include "engine-setup-window.h"
+#include "embedded-window.h"
+#include "callback-manager.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/time-control.h"
@@ -56,14 +58,14 @@ namespace QaplaWindows
 	class ImGuiMoveList;
 	class ImGuiBarChart;
 
-	class InteractiveBoardWindow
+	class InteractiveBoardWindow : public EmbeddedWindow
 	{
 	public:
 		/**
 		 * @brief Constructs a new BoardData object.
 		 */
 		InteractiveBoardWindow();
-		virtual ~InteractiveBoardWindow();
+		~InteractiveBoardWindow() override;
 
 		/**
 		 * @brief Returns a reference to the singleton instance of BoardData.
@@ -72,6 +74,21 @@ namespace QaplaWindows
 		static InteractiveBoardWindow &instance()
 		{
 			static InteractiveBoardWindow instance;
+			return instance;
+		}
+
+		/**
+		 * @brief Creates and returns a unique pointer to a new InteractiveBoardWindow instance.
+		 * Registeres a callback to poll data in a static instance of the CallbackManager.
+		 * @return Unique pointer to a new InteractiveBoardWindow instance.
+		 */
+		static std::unique_ptr<InteractiveBoardWindow> createInstance() {
+			auto instance = std::make_unique<InteractiveBoardWindow>();
+
+			QaplaWindows::CallbackManager::instance().registerCallback([instance = instance.get()]() {
+				instance->pollData();
+			});
+
 			return instance;
 		}
 
@@ -149,7 +166,7 @@ namespace QaplaWindows
 		 * @brief Renders the interactive board window and its components.
 		 * This method should be called within the main GUI rendering loop.
 		 */
-		void draw();
+		void draw() override;
 
 	private:
 
