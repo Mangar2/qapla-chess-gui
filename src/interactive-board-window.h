@@ -22,6 +22,9 @@
 #include "epd-data.h"
 #include "embedded-window.h"
 
+#include "imgui-popup.h"
+#include "engine-setup-window.h"
+
 #include "qapla-engine/types.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/ini-file.h"
@@ -48,6 +51,7 @@ namespace QaplaWindows
 
 	class BoardWindow;
 	class EngineWindow;
+	class EngineSetupWindow;
 	class ImGuiClock;
 	class ImGuiMoveList;
 	class ImGuiBarChart;
@@ -150,9 +154,13 @@ namespace QaplaWindows
 	private:
 
 		/**
-		 * @brief Returns a reference to the ImGuiBoard.
-		 * @return Reference to ImGuiBoard.
-		 */		/**
+		 * @brief Draws a popup window to select engines using EngineSetupWindow.
+		 */
+		void drawEngineSelectionPopup();
+
+		void openEngineSelectionPopup();
+
+		/**
 		 * @brief Executes a move in the game.
 		 * @param move The move to execute.
 		 */
@@ -227,6 +235,8 @@ namespace QaplaWindows
 		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
 		std::unique_ptr<BoardWindow> boardWindow_;
 		std::unique_ptr<EngineWindow> engineWindow_;
+		std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
+
 		std::unique_ptr<ImGuiClock> imGuiClock_;
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;

@@ -382,6 +382,40 @@ namespace QaplaButton {
         }
     }
 
+    void drawSwapEngines(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto xReduce = BORDER + 2.0f;
+        auto thickness = 5.0f;
+        auto arrowInset = 3.0f;
+        auto yPos = topLeft.y + BORDER;
+        auto y2Pos = topLeft.y + size.y - BORDER;
+        auto xPos = topLeft.x + xReduce;
+        auto x2Pos = topLeft.x + xReduce + thickness + 3.0f;
+        
+        // Colors: white for up arrow, black for down arrow
+        auto whiteColor = getFgColor(state);
+        auto blackColor = IM_COL32(0, 0, 0, 255);
+        
+        auto add = 11.0f;
+
+        // Draw white arrow pointing up 
+        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + thickness, yPos + add), whiteColor);
+        yPos += add;
+        for (int i = 0; i < 6; i++) {
+            list->AddLine(ImVec2(xPos - arrowInset + i, yPos + i),
+                ImVec2(xPos + thickness + arrowInset - i, yPos + i),
+                whiteColor);
+        }
+        
+        // Draw black arrow pointing down (right side)
+        list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos + thickness, y2Pos - add), blackColor);
+        y2Pos -= add;
+        for (int i = 0; i < 6; i++) {
+            list->AddLine(ImVec2(x2Pos - arrowInset + i, y2Pos - i),
+                ImVec2(x2Pos + thickness + arrowInset - i, y2Pos - i),
+                blackColor);
+        }
+    }
+
     void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         constexpr int LINE_THICKNESS = 2; 
         constexpr float BORDER = 6.0f;

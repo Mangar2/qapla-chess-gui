@@ -33,10 +33,12 @@
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
+#include "imgui-popup.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-window.h"
 #include "engine-window.h"
+#include "engine-setup-window.h"
 #include "imgui-cut-paste.h"
 #include "game-parser.h"
 
@@ -49,6 +51,8 @@ InteractiveBoardWindow::InteractiveBoardWindow()
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
+	  setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
+        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" })),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
 	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
@@ -116,8 +120,11 @@ void InteractiveBoardWindow::initSplitterWindows()
         BoardEngineContainer->setBottom(
 			[this]() {
 				auto [id, command] = engineWindow_->draw();
+				drawEngineSelectionPopup();
+				if (command == "") return;
 				if (command == "Restart") restartEngine(id);
         		else if (command == "Stop") stopEngine(id);
+				else if (command == "Config") openEngineSelectionPopup();
 			}
 		);
         BoardEngineContainer->setMinBottomHeight(55.0f);
@@ -130,6 +137,27 @@ void InteractiveBoardWindow::draw() {
 	if (mainWindow_) {
 		mainWindow_->draw();
 	}
+}
+
+void InteractiveBoardWindow::openEngineSelectionPopup() {
+	// Open engine setup window
+	std::vector<EngineConfig> activeEngines;
+	for (const auto& record : engineWindow_->getEngineRecords()) {
+		activeEngines.push_back(record.config);
+	}
+	setupWindow_->content().setMatchingActiveEngines(activeEngines);
+    setupWindow_->open();
+}
+
+void InteractiveBoardWindow::drawEngineSelectionPopup() {
+	if (!setupWindow_) return;
+	setupWindow_->draw("Use", "Cancel");
+    if (auto confirmed = setupWindow_->confirmed()) {
+        if (*confirmed) {
+			setEngines(setupWindow_->content().getActiveEngines());
+        }
+        setupWindow_->resetConfirmation();
+    }
 }
 
 void InteractiveBoardWindow::saveConfig(std::ostream &out) const

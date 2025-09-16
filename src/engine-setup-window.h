@@ -21,7 +21,6 @@
 
 #include "qapla-tester/engine-config.h"
 #include "embedded-window.h"
-#include "interactive-board-window.h"
 #include <memory>
 
 namespace QaplaWindows {

@@ -19,10 +19,8 @@
 
 #include "engine-window.h"
 #include "imgui-separator.h"
-#include "imgui-popup.h"
 #include "imgui-engine-list.h"
 #include "imgui-button.h"
-#include "engine-setup-window.h"
 
 #include <imgui.h>
 
@@ -34,49 +32,46 @@
 using namespace QaplaWindows;
 
 EngineWindow::EngineWindow()
-    : setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
-        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" }))
 {
 }
 
 EngineWindow::~EngineWindow() = default;
 
-void EngineWindow::drawEngineSelectionPopup() {
-	setupWindow_->draw("Use", "Cancel");
-    auto& boardData = QaplaWindows::InteractiveBoardWindow::instance();
-    if (auto confirmed = setupWindow_->confirmed()) {
-        if (*confirmed) {
-			boardData.setEngines(setupWindow_->content().getActiveEngines());
-        }
-        setupWindow_->resetConfirmation();
-    }
-}
+std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
+    constexpr float borderX = 20.0f;
+    constexpr float borderY = 8.0f;
+    constexpr float spacingY = 30.0f;
 
-float EngineWindow::drawConfigButtonArea(bool noEngines) {
-    constexpr float areaWidth = 65.0f;
-    constexpr auto button = "Config";
     constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
     auto topLeft = ImGui::GetCursorScreenPos();
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + 20.0f, topLeft.y + 8.0f));
+    std::string command;
+
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY));
     auto state = QaplaButton::ButtonState::Normal;
     if (noEngines)
         state = QaplaButton::ButtonState::Highlighted;
-    if (QaplaButton::drawIconButton(button, button, buttonSize, state,
-        [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+    if (QaplaButton::drawIconButton("Config", "Config", buttonSize, state,
+        [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             QaplaButton::drawConfig(drawList, topLeft, size, state);
         }))
     {
-        std::vector<EngineConfig> activeEngines;
-        for (const auto& record : getEngineRecords()) {
-            activeEngines.push_back(record.config);
-        }
-        setupWindow_->content().setMatchingActiveEngines(activeEngines);
-        setupWindow_->open();
+        command = "Config";
     }
+
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY + buttonSize.y + spacingY));
+    if (QaplaButton::drawIconButton("SwapButton", "Swap", buttonSize, 
+        noEngines ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal,
+        [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
+        }))
+    {
+        command = "Swap";
+    }
+
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + areaWidth, topLeft.y));
     ImGuiSeparator::Vertical();
-    return areaWidth;
+    return command;
 }
 
 std::pair<std::string, std::string> EngineWindow::draw() {
@@ -87,24 +82,11 @@ std::pair<std::string, std::string> EngineWindow::draw() {
 
     const auto engineRecords = getEngineRecords();
 
-    float indent = drawConfigButtonArea(engineRecords.empty());
-    ImGui::Indent(indent);
-    auto [id, command] = ImGuiEngineList::draw();
-    ImGui::Unindent(indent);
-    drawEngineSelectionPopup();
-    try {
-        if (command == "Config") {
-            std::vector<EngineConfig> activeEngines;
-            for (const auto& record : getEngineRecords()) {
-                activeEngines.push_back(record.config);
-            }
-            setupWindow_->content().setMatchingActiveEngines(activeEngines);
-            setupWindow_->open();
-        }
-    }
-    catch (...) {
-
-    }
-    return { id, command };
+    auto command = drawConfigButtonArea(engineRecords.empty());
+    ImGui::Indent(areaWidth);
+    auto [id2, command2] = ImGuiEngineList::draw();
+    ImGui::Unindent(areaWidth);
+    if (!command.empty()) return { "", command };
+    return { id2, command2 };
 }
 

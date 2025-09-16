@@ -20,9 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "imgui-popup.h"
 #include "imgui-engine-list.h"
-#include "engine-setup-window.h"
 #include <memory>
 
 namespace QaplaWindows {
@@ -50,20 +48,14 @@ namespace QaplaWindows {
 
     private:
 
-        /**
-         * @brief Shows a popup window to select engines using EngineSetupWindow.
-         * @return Optional list of selected EngineConfig objects if user confirmed.
-         */
-        void drawEngineSelectionPopup();
+        static constexpr float areaWidth = 65.0f;
 
         /**
          * @brief Draws the configuration button area for all engines.
          * @param noEngines Flag indicating if there are no engines available.
          * @return The required indent for the button area.
          */
-        float drawConfigButtonArea(bool noEngines);
-        
-        std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
+        std::string drawConfigButtonArea(bool noEngines);
 
     };
 
