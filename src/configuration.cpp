@@ -20,6 +20,7 @@
 #include "configuration.h"
 #include "tournament-data.h"
 #include "interactive-board-window.h"
+#include "callback-manager.h"
 
 #include "qapla-tester/logger.h"
 #include "qapla-tester/string-helper.h"
@@ -150,6 +151,7 @@ void Configuration::saveData(std::ofstream& out) {
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
     QaplaWindows::InteractiveBoardWindow::instance().saveConfig(out);
 	QaplaWindows::TournamentData::instance().saveConfig(out);
+    QaplaWindows::StaticCallbacks::save().invokeAll(out); // Call save callbacks
 }
 
 void Configuration::loadData(std::ifstream& in) {

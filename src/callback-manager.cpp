@@ -59,6 +59,7 @@ void UnregisterHandle::unregister() {
 
 // Manager implementation
 Manager::Manager() : nextId_(1) {
+    
 }
 
 std::unique_ptr<UnregisterHandle> Manager::registerCallback(Callback callback) {

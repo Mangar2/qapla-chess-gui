@@ -175,6 +175,6 @@ public:
         static Callback::Manager instance;
         return instance;
     }
-};  
+};
 
 } // namespace QaplaWindows
