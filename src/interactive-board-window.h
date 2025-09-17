@@ -82,15 +82,7 @@ namespace QaplaWindows
 		 * Registeres a callback to poll data in a static instance of the CallbackManager.
 		 * @return Unique pointer to a new InteractiveBoardWindow instance.
 		 */
-		static std::unique_ptr<InteractiveBoardWindow> createInstance() {
-			auto instance = std::make_unique<InteractiveBoardWindow>();
-
-			QaplaWindows::CallbackManager::instance().registerCallback([instance = instance.get()]() {
-				instance->pollData();
-			});
-
-			return instance;
-		}
+		static std::unique_ptr<InteractiveBoardWindow> createInstance();
 
 		/**
 		 * @brief Sets the position of the game.
@@ -268,6 +260,8 @@ namespace QaplaWindows
 		std::unique_ptr<ImGuiClock> imGuiClock_;
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;
+
+		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
 		std::vector<EngineConfig> engineConfigs_;
 

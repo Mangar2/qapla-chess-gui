@@ -22,70 +22,109 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <unordered_map>
+#include <atomic>
+#include <mutex>
+#include <iostream>
 
 /**
- * @brief Header-only class for managing parameterless callbacks in a list.
+ * @brief Class for managing parameterless callbacks with automatic unregistration.
  * 
- * This class provides a simple callback management system where callbacks
- * can be added to a list and all callbacks can be invoked at once.
+ * This class provides a comprehensive callback management system where callbacks
+ * can be added to a list with automatic cleanup capabilities. Each callback
+ * receives a unique ID and returns an UnregisterHandle for RAII-style cleanup.
  * Access is provided through a static instance for global usage.
  * 
  * Features:
- * - Header-only implementation
+ * - Unique ID assignment to each callback
+ * - RAII-style automatic unregistration via UnregisterHandle
+ * - Manual unregistration by callback ID
  * - Static instance access via instance() method
- * - Register callbacks to the list
- * - Invoke all registered callbacks
- * - Thread-safe operations (if needed, can be extended)
+ * - Thread-safe operations with atomic ID generation
+ * - Exception-safe callback invocation
  * 
  * Usage example:
  * @code
- * // Register a callback
- * CallbackManager::instance().registerCallback([]() {
+ * // Register a callback with automatic cleanup
+ * auto handle = Manager::instance().registerCallback([]() {
  *     std::cout << "Callback executed!" << std::endl;
  * });
  * 
  * // Execute all callbacks
- * CallbackManager::instance().invokeAll();
+ * Manager::instance().invokeAll();
+ * 
+ * // Callback will be automatically unregistered when handle goes out of scope
+ * // Or manually: handle->unregister();
  * @endcode
  */
 
 namespace QaplaWindows {
 
-class CallbackManager {
+namespace Callback {
+
+// Forward declaration
+class Manager;
+
+/**
+ * @brief RAII handle for automatically unregistering callbacks.
+ * 
+ * This class provides automatic unregistration of callbacks when the
+ * handle goes out of scope or is explicitly destroyed.
+ */
+class UnregisterHandle {
+public:
+    UnregisterHandle(Manager* manager, size_t callbackId);
+    ~UnregisterHandle();
+    
+    // Move constructor and assignment
+    UnregisterHandle(UnregisterHandle&& other) noexcept;
+    UnregisterHandle& operator=(UnregisterHandle&& other) noexcept;
+    
+    // Delete copy constructor and assignment
+    UnregisterHandle(const UnregisterHandle&) = delete;
+    UnregisterHandle& operator=(const UnregisterHandle&) = delete;
+    
+private:
+    /**
+     * @brief Manually unregister the callback.
+     * After calling this, the handle becomes invalid.
+     */
+    void unregister();
+
+    Manager* manager_;
+    size_t callbackId_;
+};
+
+class Manager { 
 public:
     using Callback = std::function<void()>;
+    using CallbackId = size_t;
 
 private:
-    std::vector<Callback> callbacks_;
-
-    // Private constructor for singleton pattern
-    CallbackManager() = default;
+    std::unordered_map<CallbackId, Callback> callbacks_;
+    std::atomic<CallbackId> nextId_;
+    mutable std::mutex callbacks_mutex_;
 
 public:
-    // Delete copy constructor and assignment operator to ensure singleton
-    CallbackManager(const CallbackManager&) = delete;
-    CallbackManager& operator=(const CallbackManager&) = delete;
-    CallbackManager(CallbackManager&&) = delete;
-    CallbackManager& operator=(CallbackManager&&) = delete;
 
     /**
-     * @brief Get the static instance of CallbackManager.
-     * @return Reference to the singleton instance
+     * @brief Construct a new Callback Manager object   
      */
-    static CallbackManager& instance() {
-        static CallbackManager instance;
-        return instance;
-    }
+    Manager();
 
     /**
      * @brief Register a callback to the list.
      * @param callback The parameterless function/lambda to be registered
+     * @return A unique_ptr to an UnregisterHandle for automatic cleanup
      */
-    void registerCallback(Callback callback) {
-        if (callback) {
-            callbacks_.push_back(std::move(callback));
-        }
-    }
+    std::unique_ptr<UnregisterHandle> registerCallback(Callback callback);
+
+    /**
+     * @brief Manually unregister a callback by its ID.
+     * @param id The ID of the callback to unregister
+     * @return true if the callback was found and removed, false otherwise
+     */
+    bool unregisterCallback(CallbackId id);
 
     /**
      * @brief Invoke all registered callbacks.
@@ -94,36 +133,19 @@ public:
      * If a callback throws an exception, it will be caught and
      * the remaining callbacks will still be executed.
      */
-    void invokeAll() {
-        for (const auto& callback : callbacks_) {
-            try {
-                if (callback) {
-                    callback();
-                }
-            }
-            catch (...) {
-                // Catch any exceptions to ensure all callbacks are called
-                // In a production environment, you might want to log this
-                // or handle it differently based on your needs
-            }
-        }
-    }
+    void invokeAll();
 
     /**
      * @brief Get the number of registered callbacks.
      * @return Number of callbacks in the list
      */
-    size_t size() const {
-        return callbacks_.size();
-    }
+    size_t size() const;
 
     /**
      * @brief Check if there are any registered callbacks.
      * @return true if no callbacks are registered, false otherwise
      */
-    bool empty() const {
-        return callbacks_.empty();
-    }
+    bool empty() const;
 
     /**
      * @brief Clear all registered callbacks (optional utility method).
@@ -132,9 +154,27 @@ public:
      * specified that deletion is not needed. This can be useful for
      * cleanup or testing scenarios.
      */
-    void clear() {
-        callbacks_.clear();
-    }
+    void clear();
 };
+
+} // namespace Callback
+
+class StaticCallbacks {
+public:
+    static Callback::Manager& poll() {
+        static Callback::Manager instance;
+        return instance;
+    }    
+
+    static Callback::Manager& save() {
+        static Callback::Manager instance;
+        return instance;
+    }
+
+    static Callback::Manager& read() {
+        static Callback::Manager instance;
+        return instance;
+    }
+};  
 
 } // namespace QaplaWindows

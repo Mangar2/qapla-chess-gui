@@ -68,6 +68,18 @@ InteractiveBoardWindow::InteractiveBoardWindow()
 
 InteractiveBoardWindow::~InteractiveBoardWindow() = default;
 
+std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance() {
+	auto instance = std::make_unique<InteractiveBoardWindow>();
+
+	instance->pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+		[instance = instance.get()]() {
+			instance->pollData();
+		}
+	));
+
+	return instance;
+}
+
 void InteractiveBoardWindow::initSplitterWindows()
 {
 		auto MovesBarchartContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("moves_barchart");

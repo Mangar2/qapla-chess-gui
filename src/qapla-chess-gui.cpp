@@ -175,9 +175,8 @@ namespace {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-  			QaplaWindows::InteractiveBoardWindow::instance().pollData();
             QaplaWindows::TournamentData::instance().pollData();
-            QaplaWindows::CallbackManager::instance().invokeAll();
+            QaplaWindows::StaticCallbacks::poll().invokeAll();
 
             workspace.draw();
 			SnackbarManager::instance().draw();
