@@ -46,8 +46,9 @@
 
 using namespace QaplaWindows;
 
-InteractiveBoardWindow::InteractiveBoardWindow()
-	: gameRecord_(std::make_unique<GameRecord>()),
+InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
+	: id_(id),
+	  gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
@@ -69,7 +70,9 @@ InteractiveBoardWindow::InteractiveBoardWindow()
 InteractiveBoardWindow::~InteractiveBoardWindow() = default;
 
 std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance() {
-	auto instance = std::make_unique<InteractiveBoardWindow>();
+	static uint32_t id = 1;
+	auto instance = std::make_unique<InteractiveBoardWindow>(id);
+	++id;
 
 	instance->pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
 		[instance = instance.get()]() {
@@ -180,15 +183,26 @@ void InteractiveBoardWindow::drawEngineSelectionPopup() {
     }
 }
 
+QaplaHelpers::IniFile::SectionList InteractiveBoardWindow::getIniSections() const {
+	QaplaHelpers::IniFile::SectionList sections;
+	uint32_t index = 0;
+	for (const auto& engine : engineConfigs_) {
+		QaplaHelpers::IniFile::Section section;
+		section.name = "engineselection";
+		section.addEntry("id", "board" + std::to_string(id_));
+		section.addEntry("name", engine.getName());
+		section.addEntry("index", std::to_string(index));
+		sections.push_back(section);
+		++index;
+	}
+	return sections;
+}
+
 void InteractiveBoardWindow::saveConfig(std::ostream &out) const
 {
-	uint32_t index = 0;
-	for (auto &engine: engineConfigs_) {
-		out << "[boardengine]\n";
-		out << "name=" << engine.getName() << '\n';
-		out << "index=" << index << '\n';
-		out << '\n';
-		++index;
+	auto sections = getIniSections();
+	for (const auto& section : sections) {
+		QaplaHelpers::IniFile::saveSection(out, section);
 	}
 }
 
@@ -359,6 +373,12 @@ void InteractiveBoardWindow::restartEngine(const std::string &id)
 void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
 {
 	engineConfigs_ = engines;
+	// Inform global configuration about the change
+	QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+		"engineselection",
+		"board" + std::to_string(id_),
+		getIniSections()
+	);
 	if (engines.size() == 0)
 	{
 		computeTask_->initEngines(EngineList{});

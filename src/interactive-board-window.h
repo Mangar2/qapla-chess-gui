@@ -64,7 +64,7 @@ namespace QaplaWindows
 		/**
 		 * @brief Constructs a new BoardData object.
 		 */
-		InteractiveBoardWindow();
+		explicit InteractiveBoardWindow(uint32_t id);
 		~InteractiveBoardWindow() override;
 
 		/**
@@ -73,7 +73,7 @@ namespace QaplaWindows
 		 */
 		static InteractiveBoardWindow &instance()
 		{
-			static InteractiveBoardWindow instance;
+			static InteractiveBoardWindow instance(0);
 			return instance;
 		}
 
@@ -161,6 +161,12 @@ namespace QaplaWindows
 		void draw() override;
 
 	private:
+
+		/**
+		 * @brief Retrieves the current configuration as a list of INI file sections.
+		 * @return A list of INI file sections representing the current configuration.
+		 */
+		QaplaHelpers::IniFile::SectionList getIniSections() const;
 
 		/**
 		 * @brief Draws a popup window to select engines using EngineSetupWindow.
@@ -264,6 +270,8 @@ namespace QaplaWindows
 		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
 		std::vector<EngineConfig> engineConfigs_;
+
+		uint32_t id_;
 
 	};
 

@@ -149,9 +149,8 @@ void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
-    QaplaWindows::InteractiveBoardWindow::instance().saveConfig(out);
 	QaplaWindows::TournamentData::instance().saveConfig(out);
-    QaplaWindows::StaticCallbacks::save().invokeAll(out); // Call save callbacks
+    getConfigData().save(out);
 }
 
 void Configuration::loadData(std::ifstream& in) {

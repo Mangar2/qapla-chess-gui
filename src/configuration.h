@@ -145,6 +145,18 @@ namespace QaplaConfiguration {
             return engineCapabilities_;
 		}
 
+        /**
+         * @brief Gets the configuration data manager.
+         * @return Reference to the configuration data manager.
+         */
+        const QaplaHelpers::ConfigData& getConfigData() const {
+            return configData_;
+        }
+        
+        QaplaHelpers::ConfigData& getConfigData() {
+            return configData_;
+        }
+
     private:
         bool changed_ = false;
 		uint64_t lastSaveTimestamp_ = 0;
@@ -188,13 +200,13 @@ namespace QaplaConfiguration {
         EngineCapabilities engineCapabilities_;
         TimeControlSettings timeControlSettings_;
 
-
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";
         static constexpr const char* BACKUP_FILE = "qapla-chess-gui.ini.bak";
 
         std::string configFilePath_;
 		std::string backupFilePath_;
-		
+
+        QaplaHelpers::ConfigData configData_;
 
     };
 

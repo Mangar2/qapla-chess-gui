@@ -105,6 +105,91 @@ namespace QaplaHelpers {
                 out << "\n";
             }
 
+            /**
+             * @brief Saves multiple INI file sections to the output stream.
+             *
+             * @param out The output stream to write to.
+             * @param sections The list of sections to save.
+             */
+            static void saveSections(std::ostream& out, const SectionList& sections) {
+                for (const auto& section : sections) {
+                    saveSection(out, section);
+                }
+            }
+
+    };
+
+    class ConfigData {
+        public:
+            ConfigData() = default;
+            ~ConfigData() = default;
+
+            /**
+             * @brief Saves the configuration data to the output stream in INI file format.
+             * @param out The output stream to write the configuration data to.
+             */
+            void save(std::ostream& out) {
+                for (const auto& [id, idSectionLists] : sections_) {
+                    for (const auto& [sectionId, sectionList] : idSectionLists) {
+                        IniFile::saveSections(out, sectionList);
+                    }
+                }
+            }
+
+            /**
+             * @brief Loads the configuration data from a list of INI file sections.
+             * @param sections The list of sections to load the configuration data from.
+             */
+            void load(std::istream& in) {
+                sections_.clear();
+                auto iniSections = IniFile::load(in);
+                for (const auto& section : iniSections) {
+                    auto name = section.name;
+                    auto idOpt = section.getValue("id");
+                    auto id = idOpt ? *idOpt : "default";
+                    // is a list, make sure it has entries
+                    if (sections_[name].find(id) == sections_[name].end()) {
+                        sections_[name][id] = IniFile::SectionList{};
+                    }
+                    sections_[name][id].push_back(section);
+                }
+            }
+
+            /**
+             * @brief Sets a specific section in the configuration data.
+             * If a section with the same name and id already exists, it will be replaced.
+             * @param section The section to set.
+             */
+            void setSectionList(const std::string& name, const std::string& id, 
+                const IniFile::SectionList& sectionList) {
+                if (!id.empty()) {
+                    sections_[name][id] = sectionList;
+                } else {
+                    sections_[name]["default"] = sectionList;
+                }
+            }
+
+            /**
+             * @brief Retrieves a specific section from the configuration data.
+             * @param name The name of the section to retrieve.
+             * @param id The identifier of the section to retrieve (default is "default").
+             * @return An optional containing the section if found, or std::nullopt if not found.
+             */
+            std::optional<IniFile::SectionList> getSectionList(const std::string& name, const std::string& id = "default") const {
+                auto it = sections_.find(name);
+                if (it != sections_.end()) {
+                    auto idIt = it->second.find(id);
+                    if (idIt != it->second.end()) {
+                        return idIt->second;
+                    }
+                }
+                return std::nullopt;
+            }
+
+        private:
+            using IdSections = std::unordered_map<std::string, IniFile::SectionList>;
+            using SectionList = std::unordered_map<std::string, IdSections>;
+            SectionList sections_;
     };
 
 } // namespace QaplaHelpers
