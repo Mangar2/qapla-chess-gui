@@ -499,4 +499,35 @@ namespace QaplaWindows::ImGuiControls {
         drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0f);
     }
 
+    inline void drawDot(float offsetX = 3.0f, float offsetY = 3.0f) {
+        if (ImGui::IsItemVisible()) {
+            ImVec2 tabMin = ImGui::GetItemRectMin();
+            ImVec2 tabMax = ImGui::GetItemRectMax();
+
+            constexpr float dotRadius = 6.0f;
+            ImVec2 dotPos = ImVec2(tabMax.x - offsetX, tabMin.y + offsetY);
+
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+            drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
+        }   
+    }
+
+    /**
+     * @brief Custom TabItem that can display a red dot in the upper right corner.
+     * @param label Label of the tab item.
+     * @param p_open Optional pointer to a boolean that indicates if the tab is open.
+     * @param flags Optional ImGuiTabItemFlags.
+     * @param showDot If true, a red dot is displayed in the upper right corner of the tab.
+     * @return True if the tab is selected, false otherwise.
+     */
+    inline bool TabItemWithDot(const char* label, bool* p_open = nullptr, ImGuiTabItemFlags flags = 0,  bool showDot = false) {
+        bool result = ImGui::BeginTabItem(label, p_open, flags);
+        
+        if (showDot) {
+            drawDot();
+        }
+        
+        return result;
+    }
+
 }

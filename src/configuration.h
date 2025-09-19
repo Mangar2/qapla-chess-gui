@@ -42,6 +42,13 @@ namespace QaplaConfiguration {
      * @brief Represents a collection of TimeControl settings for different types.
      */
     struct TimeControlSettings {
+        TimeControlSettings() {
+            blitzTime.addTimeSegment({0, 1 * 60 * 1000, 0}); // Default Blitz: 1 min + 0 sec increment
+            tournamentTime.addTimeSegment({10 * 60 * 1000, 0, 40}); // Default Tournament: 10 min + 0 sec increment + 40 moves
+            timePerMove.setMoveTime(10 * 1000); // Default Time per Move: 10 sec per move
+            fixedDepth.setDepth(10); // Default Fixed Depth: 10 plies
+            nodesPerMove.setNodes(100000); // Default Nodes per Move: 100,000 nodes
+        }
 		bool operator==(const TimeControlSettings& other) const = default;
         const TimeControl& getSelectedTimeControl() const {
             switch (selected) {
@@ -66,14 +73,14 @@ namespace QaplaConfiguration {
             "Blitz", "Tournament", "TimePerMove", "FixedDepth", "NodesPerMove"
         };
 
-        inline std::string getSelectionString() {
+        std::string getSelectionString() {
             if (static_cast<size_t>(selected) >= timeControlStrings.size()) {
                 throw std::out_of_range("Invalid selectedTimeControl value");
             }
             return timeControlStrings[static_cast<size_t>(selected)];
         }
 
-        inline void setSelectionFromString(const std::string& selection) {
+        void setSelectionFromString(const std::string& selection) {
             for (size_t i = 0; i < timeControlStrings.size(); ++i) {
                 if (selection == timeControlStrings[i]) {
                     selected = static_cast<selectedTimeControl>(i);
@@ -82,6 +89,14 @@ namespace QaplaConfiguration {
             }
             throw std::invalid_argument("Invalid time control selection: " + selection);
 		}
+
+        /**
+         * @brief Checks if the current time control settings are valid.
+         * @return True if the selected time control is valid, false otherwise.
+         */
+        bool isValid() const {
+            return getSelectedTimeControl().isValid();
+        }
     };
 
     class Configuration {
@@ -175,9 +190,10 @@ namespace QaplaConfiguration {
         /**
         * @brief Processes a specific section from the configuration file.
         * @param section The section being processed.
+        * @return True if the section was processed successfully, false otherwise.
         * @throws std::runtime_error If an error occurs while processing the section.
         */
-        void processSection(const QaplaHelpers::IniFile::Section& section);
+        bool processSection(const QaplaHelpers::IniFile::Section& section);
 
         /**
          * @brief Parses the "timecontrol" section and updates the corresponding TimeControl settings.

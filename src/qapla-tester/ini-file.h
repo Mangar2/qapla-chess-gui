@@ -25,6 +25,7 @@
 #include <optional>
 #include <utility>
 #include <unordered_map>
+#include <map>
 
 #include "string-helper.h"
 
@@ -121,6 +122,9 @@ namespace QaplaHelpers {
 
     class ConfigData {
         public:
+            using SectionMap = std::map<std::string, IniFile::SectionList>; 
+        public:
+
             ConfigData() = default;
             ~ConfigData() = default;
 
@@ -129,7 +133,7 @@ namespace QaplaHelpers {
              * @param out The output stream to write the configuration data to.
              */
             void save(std::ostream& out) {
-                for (const auto& [id, idSectionLists] : sections_) {
+                for (const auto& [id, idSectionLists] : sectionTree_) {
                     for (const auto& [sectionId, sectionList] : idSectionLists) {
                         IniFile::saveSections(out, sectionList);
                     }
@@ -141,18 +145,26 @@ namespace QaplaHelpers {
              * @param sections The list of sections to load the configuration data from.
              */
             void load(std::istream& in) {
-                sections_.clear();
+                sectionTree_.clear();
                 auto iniSections = IniFile::load(in);
                 for (const auto& section : iniSections) {
-                    auto name = section.name;
-                    auto idOpt = section.getValue("id");
-                    auto id = idOpt ? *idOpt : "default";
-                    // is a list, make sure it has entries
-                    if (sections_[name].find(id) == sections_[name].end()) {
-                        sections_[name][id] = IniFile::SectionList{};
-                    }
-                    sections_[name][id].push_back(section);
+                    addSection(section);
                 }
+            }
+
+            /**
+             * @brief Adds a section to the configuration data.
+             * If a section with the same name and id already exists, it will be appended to the list.
+             * @param section The section to add.
+             */
+            void addSection(const IniFile::Section& section) {
+                auto name = section.name;
+                auto idOpt = section.getValue("id");
+                auto id = idOpt ? *idOpt : "default";
+                if (sectionTree_[name].find(id) == sectionTree_[name].end()) {
+                    sectionTree_[name][id] = IniFile::SectionList{};
+                }
+                sectionTree_[name][id].push_back(section);
             }
 
             /**
@@ -163,10 +175,24 @@ namespace QaplaHelpers {
             void setSectionList(const std::string& name, const std::string& id, 
                 const IniFile::SectionList& sectionList) {
                 if (!id.empty()) {
-                    sections_[name][id] = sectionList;
+                    sectionTree_[name][id] = sectionList;
                 } else {
-                    sections_[name]["default"] = sectionList;
+                    sectionTree_[name]["default"] = sectionList;
                 }
+            }
+
+            /**
+             * @brief Retrieves all sections with the given name.
+             * @param name The name of the sections to retrieve.
+             * @return An optional containing a map of section ids to their corresponding section lists,
+             *         or std::nullopt if no sections with the given name exist.
+             */
+            std::optional<SectionMap> getSectionMap(const std::string& name) const {
+                auto it = sectionTree_.find(name);
+                if (it != sectionTree_.end()) {
+                    return it->second;
+                }
+                return std::nullopt;    
             }
 
             /**
@@ -176,20 +202,19 @@ namespace QaplaHelpers {
              * @return An optional containing the section if found, or std::nullopt if not found.
              */
             std::optional<IniFile::SectionList> getSectionList(const std::string& name, const std::string& id = "default") const {
-                auto it = sections_.find(name);
-                if (it != sections_.end()) {
-                    auto idIt = it->second.find(id);
-                    if (idIt != it->second.end()) {
-                        return idIt->second;
-                    }
+                auto sectionMapOpt = getSectionMap(name);
+                if (!sectionMapOpt) return std::nullopt;
+                auto it = sectionMapOpt->find(id);
+                if (it != sectionMapOpt->end()) {
+                    return it->second;
                 }
                 return std::nullopt;
             }
 
         private:
-            using IdSections = std::unordered_map<std::string, IniFile::SectionList>;
-            using SectionList = std::unordered_map<std::string, IdSections>;
-            SectionList sections_;
+
+            using SectionTree = std::unordered_map<std::string, SectionMap>;
+            SectionTree sectionTree_;
     };
 
 } // namespace QaplaHelpers

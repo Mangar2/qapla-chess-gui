@@ -264,6 +264,12 @@ void EngineSetupWindow::drawEngineList() {
 }
 
 void EngineSetupWindow::draw() {
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+
+    if (configs.empty()) {
+        QaplaWindows::ImGuiControls::drawDot(6.0f, 10.0f);
+    }
 	drawButtons();
     
     ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);

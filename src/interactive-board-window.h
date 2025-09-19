@@ -85,6 +85,21 @@ namespace QaplaWindows
 		static std::unique_ptr<InteractiveBoardWindow> createInstance();
 
 		/**
+		 * @brief Loads previously saved InteractiveBoardWindow instances from the configuration file.
+		 * The instances are created based on the saved configuration data.
+		 * @return A vector of unique pointers to the loaded InteractiveBoardWindow instances.
+		 */
+		static std::vector<std::unique_ptr<InteractiveBoardWindow>> loadInstances();
+
+		/**
+		 * @brief Returns the title of the board window.
+		 * @return The title string, e.g., "Board 1".
+		 */
+		std::string getTitle() const {
+			return "Board " + std::to_string(id_);
+		}
+
+		/**
 		 * @brief Sets the position of the game.
 		 * @param startPosition If true, sets the position to the starting position.
 		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.
@@ -152,7 +167,7 @@ namespace QaplaWindows
 		 * @brief Loads a board engine configuration from a key-value map.
 		 * @param keyValueMap A map containing key-value pairs representing the engine configuration.
 		 */
-		void loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
+		bool loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
 
 		/**
 		 * @brief Renders the interactive board window and its components.

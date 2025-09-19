@@ -140,7 +140,7 @@ void Configuration::loadFile() {
         changed_ = false;
     }
     catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Error loading configuration: ") + e.what(), 
+        Logger::testLogger().log(std::string("Cannot load configuration: ") + e.what(),
             TraceLevel::error);
     }
 }
@@ -159,7 +159,9 @@ void Configuration::loadData(std::ifstream& in) {
         std::string line;
 
         for (const auto& section : sectionList) {
-            processSection(section);
+            if (!processSection(section) && !section.name.starts_with("tournament")) {
+                configData_.addSection(section);
+            }
         }
         QaplaWindows::TournamentData::instance().loadConfig(sectionList);
     }
@@ -189,7 +191,7 @@ void Configuration::saveTimeControls(std::ofstream& out) {
     }
 }
 
-void Configuration::processSection(const QaplaHelpers::IniFile::Section& section) {
+bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section) {
     const auto& sectionName = section.name;
     const auto& entries = section.entries;
     try {
@@ -210,10 +212,14 @@ void Configuration::processSection(const QaplaHelpers::IniFile::Section& section
             config.setValues(section.getUnorderedMap());
             EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
         }
+        else {
+            return false;
+        }
     }
     catch (const std::exception& e) {
         throw std::runtime_error("Error processing section [" + sectionName + "]: " + e.what());
     }
+    return true;
 }
 
 void Configuration::parseTimeControl(const QaplaHelpers::IniFile::Section& section) {

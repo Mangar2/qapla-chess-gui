@@ -89,9 +89,11 @@ namespace QaplaWindows {
     void TournamentData:: init() {
     }
 
-    bool TournamentData::createTournament() {
+    bool TournamentData::createTournament(bool verbose) {
         if (engineConfigurations_.empty()) {
-            SnackbarManager::instance().showError("No engines configured for the tournament.");
+            if (verbose) {
+                SnackbarManager::instance().showError("No engines configured for the tournament.");
+            }
             return false;
 		}
         std::vector<EngineConfig> selectedEngines;
@@ -129,7 +131,9 @@ namespace QaplaWindows {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
         }
-        if (!createTournament()) return;
+        if (!createTournament(true)) {
+            return;
+        }
 
         state_ = State::Starting;
 
@@ -516,10 +520,10 @@ namespace QaplaWindows {
             if (key == "file") {
                 config_->openings.file = value;
             }
-            else if (key == "format") {
+            else if (key == "format" && (value == "pgn" || value == "epd" || value == "raw")) {
                 config_->openings.format = value;
             }
-            else if (key == "order") {
+            else if (key == "order" && (value == "sequential" || value == "random")) {
                 config_->openings.order = value;
             }
             else if (key == "seed") {
@@ -531,7 +535,7 @@ namespace QaplaWindows {
             else if (key == "start") {
                 config_->openings.start = std::stoul(value);
             }
-            else if (key == "policy") {
+            else if (key == "policy" && (value == "default" || value == "encounter" || value == "round")) {
                 config_->openings.policy = value;
             }
         }
@@ -686,7 +690,7 @@ namespace QaplaWindows {
                 loadResignAdjudicationConfig(section.entries);
             } 
         }
-        if (createTournament()) {
+        if (createTournament(false)) {
             for (const auto& section : sections) {
                 const auto& sectionName = section.name;
                 if (sectionName == "tournamentround" && tournament_) {

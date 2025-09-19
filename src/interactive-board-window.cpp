@@ -30,6 +30,7 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/game-manager-pool.h"
 
+#include "snackbar.h"
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
@@ -67,7 +68,13 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	epdData_.init();
 }
 
-InteractiveBoardWindow::~InteractiveBoardWindow() = default;
+InteractiveBoardWindow::~InteractiveBoardWindow() {
+	QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+		"engineselection",
+		"board" + std::to_string(id_),
+		{}
+	);
+};
 
 std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance() {
 	static uint32_t id = 1;
@@ -81,6 +88,30 @@ std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance()
 	));
 
 	return instance;
+}
+
+std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
+	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
+	auto sectionMap = config.getSectionMap("engineselection");
+	if (!sectionMap) return {};
+	std::vector<std::unique_ptr<InteractiveBoardWindow>> instances;
+	for (const auto& [idStr, sectionList] : *sectionMap) {
+		try {
+			if (idStr == "board0") continue; // Skip static instance
+			auto instance = createInstance();
+			for (const auto& section : sectionList) {
+				instance->loadBoardEngine(section);
+			}
+			instance->setEngines();
+			instances.push_back(std::move(instance));
+		} catch (const std::exception& e) {
+			// Ignore invalid entries
+		}
+	}
+	if (instances.empty()) {
+		instances.push_back(createInstance());
+	}
+	return instances;
 }
 
 void InteractiveBoardWindow::initSplitterWindows()
@@ -206,7 +237,7 @@ void InteractiveBoardWindow::saveConfig(std::ostream &out) const
 	}
 }
 
-void InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
+bool InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
 {
     std::optional<std::string> name = section.getValue("name");
 	std::optional<std::string> indexStr = section.getValue("index");
@@ -222,14 +253,19 @@ void InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Sectio
 
     if (name && index) {
         auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+		if (!config) return false;
         if (*index >= engineConfigs_.size()) {
             engineConfigs_.resize(*index + 1);
         }
         engineConfigs_[*index] = *config;
     } else if (name) {
         auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+		if (!config) return false;
         engineConfigs_.push_back(*config);
-    }
+    } else {
+		return false;
+	}
+	return true;
 }
 
 void InteractiveBoardWindow::doMove(const MoveRecord& move)
@@ -250,20 +286,35 @@ void InteractiveBoardWindow::stop()
 
 void InteractiveBoardWindow::playSide()
 {
-	computeTask_->playSide();
-	//imGuiClock_->setStopped(false);
+	try {
+		computeTask_->playSide();
+		//imGuiClock_->setStopped(false);
+	}
+	catch (const std::exception& e) {
+		SnackbarManager::instance().showError(std::string("Failed to compute a move:\n") + e.what());
+	}	
 }
 
 void InteractiveBoardWindow::analyze()
 {
-	computeTask_->analyze();
-	//imGuiClock_->setStopped(false);
+	try {
+		computeTask_->analyze();
+		//imGuiClock_->setStopped(false);
+	}
+	catch (const std::exception& e) {
+		SnackbarManager::instance().showError(std::string("Failed to analyze:\n") + e.what());
+	}
 }
 
 void InteractiveBoardWindow::autoPlay()
 {
-	computeTask_->autoPlay();
-	//imGuiClock_->setStopped(false);
+	try {
+		computeTask_->autoPlay();
+		//imGuiClock_->setStopped(false);
+	}
+	catch (const std::exception& e) {
+		SnackbarManager::instance().showError(std::string("Failed to compute moves:\n") + e.what());
+	}
 }
 
 void InteractiveBoardWindow::setStartPosition()

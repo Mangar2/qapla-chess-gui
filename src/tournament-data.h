@@ -231,7 +231,12 @@ namespace QaplaWindows {
 	private:
         bool validateOpenings();
 
-        bool createTournament();
+        /**
+         * @brief Creates the tournament.
+         * @param verbose If true, verbose error messages will be shown.
+         * @return True if the tournament was created successfully, false otherwise.
+         */
+        bool createTournament(bool verbose);
 
          /**
          * @brief Loads the tournament openings from a key-value mapping.

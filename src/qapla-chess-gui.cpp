@@ -106,11 +106,15 @@ namespace {
         workspace.maximize(true);
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        boardTabBar->addTab("Board", QaplaWindows::InteractiveBoardWindow::createInstance());
+        auto instances = QaplaWindows::InteractiveBoardWindow::loadInstances();
+        for (auto& instance : instances) {
+            auto title = instance->getTitle();
+            boardTabBar->addTab(title, std::move(instance), true);
+        }
         boardTabBar->setAddTabCallback([&](QaplaWindows::ImGuiTabBar& tb) {
-            static int newTabIndex = 1;
-            std::string tabName = "Board " + std::to_string(newTabIndex++);
-            tb.addTab(tabName, QaplaWindows::InteractiveBoardWindow::createInstance(), true);
+            auto instance = QaplaWindows::InteractiveBoardWindow::createInstance();
+            auto tabName = instance->getTitle();
+            tb.addTab(tabName, std::move(instance), true);
         });
         boardTabBar->setDynamicTabsCallback([&]() {
             QaplaWindows::TournamentData::instance().drawTabs();
@@ -193,6 +197,7 @@ namespace {
         glfwTerminate();
         GameManagerPool::getInstance().stopAll();
         GameManagerPool::getInstance().waitForTask();
+        QaplaConfiguration::Configuration::instance().saveFile();
         return 0;
     }
 
@@ -229,18 +234,11 @@ int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     bool hasConsole = attachToParentConsole();
     
     try {
-        try {
-            auto code = runApp();
-            QaplaConfiguration::Configuration::instance().saveFile();
-            if (hasConsole) {
-                FreeConsole();
-            }
-            return code;
+        auto code = runApp();
+        if (hasConsole) {
+            FreeConsole();
         }
-        catch (...) {
-            QaplaConfiguration::Configuration::instance().saveFile();
-			throw; 
-        }
+        return code;
     }
     catch (const std::exception& e) {
         if (hasConsole) {
@@ -256,15 +254,8 @@ int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #else
 int main() {
     try {
-        try {
-            auto code = runApp();
-            QaplaConfiguration::Configuration::instance().saveFile();
-            return code;
-        }
-        catch (...) {
-            QaplaConfiguration::Configuration::instance().saveFile();
-			throw; 
-        }
+        auto code = runApp();
+        return code;
     }
     catch (const std::exception& e) {
         std::cerr << "Fatal error: " << e.what() << '\n';
