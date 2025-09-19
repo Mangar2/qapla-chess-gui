@@ -130,7 +130,7 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
             else clockData_.wTimer.start();
         }
         clockData_.wTimeCurMove = cur;
-        clockData_.wEngineName = moveRecord.engineName_;
+        clockData_.wEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
     } 
     else {
         if (cur > clockData_.bTimeCurMove) {
@@ -138,7 +138,7 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
             else clockData_.bTimer.start();
         }
         clockData_.bTimeCurMove = cur;
-        clockData_.bEngineName = moveRecord.engineName_;
+        clockData_.bEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
     }
 }
 
@@ -155,7 +155,7 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
  * @param wtm       True if it is white's turn to move, false for black.
  */
 static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight, 
-    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm)
+    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
@@ -171,9 +171,10 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
     float y = topLeft.y + 7.0f;
 
     totalMs -= std::min(totalMs, moveMs);
+    totalMs += 999; // Add 999ms to compensate for formatMs truncating to full seconds
+    if (analyze) totalMs = moveMs;
 
-    // Add 999ms to compensate for formatMs truncating to full seconds
-    const std::string totalStr = QaplaHelpers::formatMs(totalMs + 999, 0);
+    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
@@ -236,7 +237,7 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
  * @param wtm       True if it is white's turn to move, false for black.
  */
 static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight, 
-    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm)
+    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
@@ -251,6 +252,7 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
     float y = topLeft.y + 7.0f;
 
     totalMs -= std::min(totalMs, moveMs);
+    if (analyze) totalMs = moveMs;
 
     const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
@@ -319,11 +321,11 @@ void ImGuiClock::draw() {
 
     if (smallClock) {
         drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
-            clockData_.wEngineName, true, clockData_.wtm);
+            clockData_.wEngineName, true, clockData_.wtm, analyze_);
     }
     else {
         drawClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
-            clockData_.wEngineName, true, clockData_.wtm);
+            clockData_.wEngineName, true, clockData_.wtm, analyze_);
     }
 
     // Black Clock
@@ -334,11 +336,11 @@ void ImGuiClock::draw() {
 
     if (smallClock) {
         drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
-            clockData_.bEngineName, false, clockData_.wtm);
+            clockData_.bEngineName, false, clockData_.wtm, analyze_);
     }
     else {
         drawClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
-            clockData_.bEngineName, false, clockData_.wtm);
+            clockData_.bEngineName, false, clockData_.wtm, analyze_);
     }
 
     ImGui::Dummy(ImVec2(0.0f, 0.0f));

@@ -73,6 +73,10 @@ namespace QaplaWindows {
             stopped_ = stopped; 
         }
 
+        void setAnalyze(bool analyze) {
+            analyze_ = analyze;
+        }
+
         /**
          * @brief Returns the current timer in milliseconds for the side to move.
          * @return Current timer in milliseconds.
@@ -119,6 +123,7 @@ namespace QaplaWindows {
         std::vector<uint32_t> displayedMoveNo_{};
 
         bool stopped_ = false;
+        bool analyze_ = false;
     };
 
 } // namespace QaplaWindows

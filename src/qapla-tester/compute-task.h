@@ -253,7 +253,7 @@ public:
     {
         if (taskType_ == ComputeTaskType::Autoplay)
         {
-            return "Autoplay";
+            return "Auto";
         }
         else if (taskType_ == ComputeTaskType::Analyze)
         {

@@ -246,6 +246,7 @@ namespace QaplaWindows
             MoveRecord moveRecord;
             moveRecord.lan = move.getLAN();
             moveRecord.san = gameState_->moveToSan(move);
+            moveRecord.halfmoveNo_ = gameState_->getHalfmovePlayed() + 1;
             moveRecord.move = move;
             return moveRecord;
         }

@@ -363,6 +363,7 @@ void InteractiveBoardWindow::pollData()
 		else {
 			imGuiClock_->setStopped(false);
 		}
+		imGuiClock_->setAnalyze(computeTask_->getStatus() == "Analyze");
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
 			imGuiMoveList_->setFromGameRecord(g);
 			imGuiClock_->setFromGameRecord(g);

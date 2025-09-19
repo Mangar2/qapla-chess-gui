@@ -232,7 +232,7 @@ namespace QaplaWindows
 		 * - "Invert": Inverts the board orientation.
 		 * - "Manual": Sets the mode to manual (user input only).
 		 * - "Play": Sets the mode to play (user vs engine).
-		 * - "Autoplay": Sets the mode to autoplay (engine vs engine).
+		 * - "Auto": Sets the mode to autoplay (engine vs engine).
 		 * - "Analyze": Sets the mode to analyze (engine analysis only).
 		 * @param command The command to execute.
 		 */
