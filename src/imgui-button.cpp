@@ -30,8 +30,10 @@ namespace QaplaButton {
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
     static auto getBgColor(ButtonState state) {
-        if (state == ButtonState::Disabled) return ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
-		if (ImGui::IsItemActive() || state == ButtonState::Active) return ImGui::GetColorU32(ImGuiCol_ButtonActive);
+        if (state == ButtonState::Disabled) 
+            return ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
+		if (ImGui::IsItemActive() || state == ButtonState::Active) 
+            return ImGui::GetColorU32(ImGuiCol_ButtonActive);
 
 		if (ImGui::IsItemHovered()) return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
 		return ImGui::GetColorU32(ImGuiCol_Button);
@@ -413,6 +415,37 @@ namespace QaplaButton {
             list->AddLine(ImVec2(x2Pos - arrowInset + i, y2Pos - i),
                 ImVec2(x2Pos + thickness + arrowInset - i, y2Pos - i),
                 blackColor);
+        }
+    }
+
+    void drawSetup(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        
+        // Links unten: Quadrat (8x8 Pixel)
+        float squareSize = 7.0f;
+        float squareX = topLeft.x + 4.0f;
+        float squareY = topLeft.y + size.y - 11.0f;
+        list->AddRectFilled(ImVec2(squareX, squareY), ImVec2(squareX + squareSize, squareY + squareSize), fgColor);
+        
+        // Rechts unten: Kreis (Radius 4)
+        float circleCenterX = topLeft.x + size.x - 7.0f;
+        float circleCenterY = topLeft.y + size.y - 8.0f;
+        float circleRadius = 4.0f;
+        list->AddCircleFilled(ImVec2(circleCenterX, circleCenterY), circleRadius, fgColor);
+        
+        // Oben Mitte: Dreieck (Höhe 6, Basis 10)
+        float triangleBaseX = topLeft.x + size.x / 2.0f - 5.0f;
+        float triangleTopY = topLeft.y + 4.0f;
+        float triangleHeight = 6.0f;
+        float triangleBaseWidth = 10.0f;
+        
+        // Zeichne das Dreieck mit horizontalen Linien (pixelgenau)
+        for (int i = 0; i < static_cast<int>(triangleHeight); ++i) {
+            float y = triangleTopY + i;
+            float width = triangleBaseWidth * (1.0f - static_cast<float>(i) / triangleHeight);
+            float leftX = triangleBaseX + (triangleBaseWidth - width) / 2.0f;
+            float rightX = leftX + width;
+            list->AddLine(ImVec2(leftX, y), ImVec2(rightX, y), fgColor, 1.0f);
         }
     }
 

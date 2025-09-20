@@ -48,7 +48,7 @@ namespace QaplaWindows
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
+        for (const std::string button : {"Setup", "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
         {
             ImGui::SetCursorScreenPos(pos);
             auto state = QaplaButton::ButtonState::Normal;
@@ -86,6 +86,10 @@ namespace QaplaWindows
                         else if (button == "Now")
                         {
                             QaplaButton::drawNow(drawList, topLeft, size, state);
+                        }
+                        else if (button == "Setup")
+                        {
+                            QaplaButton::drawSetup(drawList, topLeft, size, state);
                         }
                     }))
             {
