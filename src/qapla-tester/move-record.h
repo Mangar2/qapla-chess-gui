@@ -30,6 +30,14 @@
 #include <iomanip>
 
 struct MoveRecord {
+
+    struct toStringOptions {
+        bool includeClock = false;
+        bool includeEval = false;
+        bool includePv = false;
+        bool includeDepth = false;
+    };
+    
     std::string original{};
     std::string lan{};
     std::string san{};
@@ -96,6 +104,13 @@ struct MoveRecord {
      * @return A `MoveRecord` object with reduced data.
      */
     MoveRecord createMinimalCopy() const;
+
+    /**
+     * Convert this MoveRecord into a string containing the move (SAN) and
+     * an optional comment constructed from the provided options. Does NOT
+     * include the move number.
+     */
+    std::string toString(const toStringOptions& opts = {false, false, false, false}) const;
 };
 
 using MoreRecords = std::vector<std::optional<MoveRecord>>;

@@ -195,6 +195,13 @@ namespace QaplaWindows
 		void openEngineSelectionPopup();
 
 		/**
+		 * @brief Copies the given PV (principal variation) to the clipboard.
+		 * @param id The ID of the engine.
+		 * @param pv The PV string to copy.
+		 */
+		void copyPv(const std::string& id, const std::string& pv);
+
+		/**
 		 * @brief Swaps the engines assigned to white and black.
 		 * It uses the GameContext swapPlayers method to perform the swap. It only sets a switched flag
 		 * and will not restart the engines.

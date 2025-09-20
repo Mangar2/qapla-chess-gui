@@ -308,6 +308,12 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     return command;
 }
 
+// Encode a PV string in a compact, easy-to-parse format.
+// Format: "pv|<halfmoveNo>|<pv>"
+static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
+    return std::string("pv|") + std::to_string(halfmoveNo) + '|' + pv;
+}
+
  std::string QaplaWindows::ImGuiEngineList::drawEngineTable(
     const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
     size_t index, const ImVec2 &max, const ImVec2 &size)
@@ -323,7 +329,7 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
         {
             auto clicked = tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
             if (clicked) {
-                pv = "pv" + tables_[index]->getField(*clicked, 6);
+                pv = encodePV(displayedMoveNo_[index], tables_[index]->getField(*clicked, 6));
             }
         }
         ImGui::EndChild();

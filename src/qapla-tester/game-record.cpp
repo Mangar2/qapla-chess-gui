@@ -199,3 +199,36 @@ GameRecord GameRecord::createMinimalCopy() const
 
     return record;
 }
+
+std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts) const {
+		std::ostringstream out;
+		if (moves_.empty()) return "";
+
+		uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
+
+		// If the game started with Black to move, PGN may print an initial "N... " prefix
+		// where N is the fullmove number of the first printed halfmove when that halfmove is Black.
+		// Compute the absolute halfmove number of the first printed ply and decide.
+		uint32_t firstHalfmove = halfmoveNoAtPly(0);
+		bool wtm = isWhiteToMoveAtStart_;
+		uint32_t moveNumber = (firstHalfmove + 1) / 2;
+		std::string spacer = "";
+		if (!wtm) {
+			out << moveNumber << "...";
+			spacer = " ";
+		}
+
+		for (uint32_t i = 0; i <= maxIndex; ++i) {
+
+			if (wtm) {
+				out << spacer << moveNumber << ".";
+				moveNumber++;
+			}
+			spacer = " ";
+			// append the move string (SAN + optional comment)
+			out << " " << moves_[i].toString(opts);
+			wtm = !wtm;
+		}
+
+		return out.str();
+	}

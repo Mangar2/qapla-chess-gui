@@ -173,6 +173,7 @@ void InteractiveBoardWindow::initSplitterWindows()
         		else if (command == "Stop") stopEngine(id);
 				else if (command == "Config") openEngineSelectionPopup();
 				else if (command == "Swap") swapEngines();
+				else if (command.starts_with("pv|")) copyPv(id, command);
 			}
 		);
         BoardEngineContainer->setMinBottomHeight(55.0f);
@@ -184,6 +185,51 @@ void InteractiveBoardWindow::initSplitterWindows()
 void InteractiveBoardWindow::draw() {
 	if (mainWindow_) {
 		mainWindow_->draw();
+	}
+}
+
+void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv) {
+	// Expected format produced by encodePV: "pv|<halfmoveNo>|<pv...>"
+
+	std::string_view sv(pv);
+	constexpr std::string_view prefix = "pv|";
+	if (!sv.starts_with(prefix)) return;
+
+	// skip prefix
+	sv.remove_prefix(prefix.size());
+
+	// find separator between number and pv text
+	size_t sep = sv.find('|');
+	if (sep == std::string_view::npos) return;
+
+	std::string_view numPart = sv.substr(0, sep);
+	std::string_view pvPart = sv.substr(sep + 1);
+
+	// parse unsigned integer without exceptions
+	uint32_t halfmove = 0;
+	if (!numPart.empty()) {
+		// use from_chars for fast, no-throw parsing
+		auto [ptr, ec] = std::from_chars(numPart.data(), numPart.data() + numPart.size(), halfmove);
+		if (ec != std::errc()) return; // parse failed
+	} else {
+		return; // no number
+	}
+
+	std::string pvString;
+	computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
+		if (halfmove == 0) return;
+		auto ply = g.getHalfmoveIndex(halfmove - 1);
+		if (!ply) return;
+		pvString = g.movesToStringUpToPly(*ply) + " ";
+	});
+
+	// convert pvPart to std::string for clipboard
+	pvString += std::string(pvPart);
+
+	GLFWwindow* window = glfwGetCurrentContext();
+	if (window) {
+		ImGuiCutPaste::setClipboardString(window, pvString);
+		SnackbarManager::instance().showNote("Copied PV to clipboard:\n" + pvString);
 	}
 }
 

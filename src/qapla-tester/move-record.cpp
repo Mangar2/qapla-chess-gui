@@ -170,3 +170,42 @@ MoveRecord MoveRecord::createMinimalCopy() const {
     result.engineId_ = engineId_;
     return result;
 }
+
+std::string MoveRecord::toString(const toStringOptions& opts) const {
+    std::ostringstream out;
+    out << (san.empty() ? lan : san);
+
+    bool hasComment = (opts.includeEval && (scoreCp || scoreMate))
+        || (opts.includeDepth && depth > 0)
+        || (opts.includeClock && timeMs > 0)
+        || (opts.includePv && !pv.empty());
+
+    if (hasComment) {
+        out << " {";
+        std::string sep = "";
+
+        if (opts.includeEval && (scoreCp || scoreMate)) {
+            out << evalString();
+            sep = " ";
+        }
+
+        if (opts.includeDepth && depth > 0) {
+            out << "/" << depth;
+            sep = " ";
+        }
+
+        if (opts.includeClock && timeMs > 0) {
+            out << sep << std::fixed << std::setprecision(2)
+                << (static_cast<double>(timeMs) / 1000.0) << "s";
+            sep = " ";
+        }
+
+        if (opts.includePv && !pv.empty()) {
+            out << sep << pv;
+        }
+
+        out << "}";
+    }
+
+    return out.str();
+}

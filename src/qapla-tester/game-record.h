@@ -108,6 +108,20 @@ public:
 	}
 
 	/**
+	 * @brief Returns the move record at a specific halfmove number.
+	 * @param halfmoveNo The halfmove number to retrieve (starting from 1).
+	 * @return Pointer to the MoveRecord if found, nullptr otherwise.
+	 */
+	std::optional<uint32_t> getHalfmoveIndex(uint32_t halfmoveNo) const {
+		if (halfmoveNo <= startHalfmoves_) return std::nullopt;
+		auto index = halfmoveNo - startHalfmoves_ - 1;
+		if (index < moves_.size()) {
+			return index;
+		}
+		return std::nullopt;
+	}
+
+	/**
 	 * @brief returns true if the game started with the standard starting position.
 	 */
 	bool getStartPos() const { return startPos_; }
@@ -205,7 +219,7 @@ public:
 	 */
 	uint32_t halfmoveNoAtPly(size_t ply) const
 	{
-		return startHalfmoves_ + ply;
+		return startHalfmoves_ + ply + 1;
 	}
 
 	const std::string &getWhiteEngineName() const
@@ -361,6 +375,18 @@ public:
 	 * @return A `GameStruct` object
 	 */
 	GameStruct createGameStruct() const;
+
+	/**
+	 * Render all moves up to and including the given ply index into a single
+	 * PGN-compatible string. The numbering is based on halfmove numbers
+	 * (uses halfmoveNoAtPly) and the provided MoveRecord::toString options
+	 * are forwarded for move annotations.
+	 *
+	 * @param lastPly inclusive ply index (0 = first ply)
+	 * @param opts formatting options forwarded to MoveRecord::toString
+	 * @return concatenated move string (SANs with optional comments)
+	 */
+	std::string movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts = {}) const;
 
 	/**
 	 * @brief Reserves memory for the move history to avoid repeated reallocations.

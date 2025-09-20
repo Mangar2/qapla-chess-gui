@@ -37,6 +37,30 @@ std::optional<std::string> getClipboardString(GLFWwindow* window) {
     return std::string(text);
 }
 
+bool setClipboardString(GLFWwindow* window, const std::string& text) {
+    if (!window) {
+        return false;
+    }
+
+    glfwSetClipboardString(window, text.c_str());
+    return true;
+}
+
+bool checkForCopy(GLFWwindow* window) {
+    if (!window) {
+        return false;
+    }
+
+    // Check for platform-specific copy shortcuts
+    // Windows/Linux: Ctrl+C, macOS: Cmd+C (Super key)
+    bool ctrlOrCmd = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || 
+                     ImGui::IsKeyDown(ImGuiKey_RightCtrl) ||
+                     ImGui::IsKeyDown(ImGuiKey_LeftSuper) || 
+                     ImGui::IsKeyDown(ImGuiKey_RightSuper);
+
+    return ctrlOrCmd && ImGui::IsKeyPressed(ImGuiKey_C);
+}
+
 std::optional<std::string> checkForPaste(GLFWwindow* window) {
     if (!window) {
         return std::nullopt;

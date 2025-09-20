@@ -81,7 +81,7 @@ namespace QaplaWindows
                         }
                         else if (button == "Invert")
                         {
-                            QaplaButton::drawManualPlay(drawList, topLeft, size, state);
+                            QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
                         }
                         else if (button == "Now")
                         {

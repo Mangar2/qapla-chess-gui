@@ -44,6 +44,28 @@ namespace ImGuiCutPaste {
     std::optional<std::string> getClipboardString(GLFWwindow* window);
 
     /**
+     * @brief Sets text content to the system clipboard
+     * 
+     * @param window GLFW window handle
+     * @param text The text to copy to clipboard
+     * @return bool true if the operation was successful, false otherwise
+     */
+    bool setClipboardString(GLFWwindow* window, const std::string& text);
+
+    /**
+     * @brief Checks for copy keyboard shortcut
+     * 
+     * This function should be called regularly in the GUI loop to detect copy shortcuts.
+     * It handles platform-specific shortcuts:
+     * - Windows/Linux: Ctrl+C
+     * - macOS: Cmd+C
+     * 
+     * @param window GLFW window handle
+     * @return bool true if copy shortcut was pressed, false otherwise
+     */
+    bool checkForCopy(GLFWwindow* window);
+
+    /**
      * @brief Checks for paste keyboard shortcut and returns clipboard content if triggered
      * 
      * This function should be called regularly in the GUI loop to detect paste shortcuts.
