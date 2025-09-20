@@ -186,6 +186,18 @@ void InteractiveBoardWindow::draw() {
 	if (mainWindow_) {
 		mainWindow_->draw();
 	}
+
+	// Handle paste only for the active tab
+	GLFWwindow* window = glfwGetCurrentContext();
+	if (window) {
+		auto pasted = ImGuiCutPaste::checkForPaste(window);
+		if (pasted) {
+			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
+			if (gameRecord) {
+				computeTask_->setPosition(*gameRecord);
+			}
+		}
+	}
 }
 
 void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv) {
@@ -220,7 +232,7 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 		if (halfmove == 0) return;
 		auto ply = g.getHalfmoveIndex(halfmove - 1);
 		if (!ply) return;
-		pvString = g.movesToStringUpToPly(*ply) + " ";
+		pvString = g.movesToStringUpToPly(*ply, {true, true, true, true}) + " ";
 	});
 
 	// convert pvPart to std::string for clipboard
@@ -433,17 +445,6 @@ void InteractiveBoardWindow::pollData()
 		if (timeControl != timeControl_)
 		{
 			computeTask_->setTimeControl(timeControl);
-		}
-
-		GLFWwindow* window = glfwGetCurrentContext();
-		if (window) {
-			auto pasted = ImGuiCutPaste::checkForPaste(window);
-			if (pasted) {
-				auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
-				if (gameRecord) {
-					computeTask_->setPosition(*gameRecord);
-				}
-			}
 		}
 
 	}

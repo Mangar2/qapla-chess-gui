@@ -36,13 +36,14 @@ GameState::GameState() {
 	setFen(true);
 };
 
-void GameState::setFen(bool startPos, const std::string fen) {
+bool GameState::setFen(bool startPos, const std::string fen) {
+	bool isValid = true;
 	QaplaInterface::FenScanner scanner;
 	if (startPos) {
-		scanner.setBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", position_);
+		isValid = scanner.setBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", position_);
 	}
 	else {
-		scanner.setBoard(fen, position_);
+		isValid = scanner.setBoard(fen, position_);
 	}
 	moveList_.clear();
 	boardState_.clear();
@@ -51,6 +52,11 @@ void GameState::setFen(bool startPos, const std::string fen) {
 	gameEndCause_ = GameEndCause::Ongoing;
 	gameResult_ = GameResult::Unterminated;
 	moveListOutdated = true; 
+	if (!isValid) {
+		Logger::testLogger().log("GameState::setFen: Invalid FEN string: " + fen, TraceLevel::error);
+		position_.clear();
+	}
+	return isValid;
 }
 
 std::tuple<GameEndCause, GameResult> GameState::computeGameResult() {
@@ -242,7 +248,9 @@ std::tuple<QaplaBasics::Move, bool, bool> GameState::resolveMove(
 
 GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies) {
 	GameRecord copy;
-	setFen(game.getStartPos(), game.getStartFen());
+	if (!setFen(game.getStartPos(), game.getStartFen())) {
+		return copy;
+	}
 	copy.setStartPosition(game.getStartPos(), getFen(), position_.getStartHalfmoves(),
 		isWhiteToMove(), game.getWhiteEngineName(), game.getBlackEngineName());
 	const auto& moves = game.history();
@@ -253,7 +261,7 @@ GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::opti
 	copy.reserveMoves(maxPly);
 	for (uint32_t i = 0; i < maxPly; ++i) {
 		MoveRecord move = moves[i];
-		auto& moveStr = move.original;
+		auto& moveStr = move.original.empty() ? move.san : move.original;
 		auto parsed = stringToMove(moveStr, false);
 		if (parsed.isEmpty()) {
 			Logger::testLogger().log("Illegal move in game record: " + moveStr + " pos: " + getFen(),

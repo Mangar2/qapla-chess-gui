@@ -21,6 +21,7 @@
 #include "qapla-engine/fenscanner.h"
 #include "qapla-engine/movegenerator.h"
 #include "qapla-tester/game-state.h"
+#include "qapla-tester/pgn-io.h"
 
 #include <algorithm>
 
@@ -71,15 +72,42 @@ std::optional<GameRecord> parseFen(const std::string& input) {
 }
 
 // ================================================================================================
+// PGN Parser Function
+// ================================================================================================
+
+std::optional<GameRecord> parsePGN(const std::string& input) {
+    if (input.empty()) {
+        return std::nullopt;
+    }
+
+    // Parse the PGN string using PgnIO
+    GameRecord record = PgnIO::parseGame(input);
+
+    // Create a clean copy using GameState
+    GameState gameState;
+    GameRecord cleanRecord = gameState.setFromGameRecordAndCopy(record);
+
+    // Check if either FEN is set or at least one move is present
+    bool hasFen = !cleanRecord.getStartFen().empty() && cleanRecord.getStartFen() != "startpos";
+    bool hasMoves = !cleanRecord.history().empty();
+
+    if (!hasFen && !hasMoves) {
+        return std::nullopt;
+    }
+
+    return cleanRecord;
+}
+
+// ================================================================================================
 // GameParser Implementation
 // ================================================================================================
 
 GameParser::GameParser() {
     // Register default parsers
+    addParser("PGN", parsePGN);
     addParser("FEN", parseFen);
     
     // Future parsers can be added here:
-    // addParser("PGN", parsePgn);
     // addParser("UCI", parseUci);
 }
 

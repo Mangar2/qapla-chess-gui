@@ -487,7 +487,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName) {
         if (tokens.size() == 0) continue;
 
         if (tokens[0] == "[") {
-            // Wenn vorher Z�ge verarbeitet wurden, beginnt jetzt ein neues Spiel
+            // If we were in a move section, finalize the previous game
             if (inMoveSection) {
                 finalizeParsedTags(currentGame);
                 games.push_back(std::move(currentGame));
@@ -516,5 +516,42 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName) {
     }
 
     return games;
+}
+
+GameRecord PgnIO::parseGame(const std::string& pgnString) {
+    GameRecord game;
+    auto tokens = tokenize(pgnString);
+    size_t pos = 0;
+
+    while (pos < tokens.size()) {
+        if (tokens[pos] == "[") {
+            // Parse tag (assumes 4 tokens: [, key, value, ])
+            if (pos + 3 < tokens.size()) {
+                std::vector<std::string> tagTokens(tokens.begin() + pos, tokens.begin() + pos + 4);
+                auto [key, value] = parseTag(tagTokens);
+                if (!key.empty()) game.setTag(key, value);
+                pos += 4;
+            } else {
+                pos++; // Skip invalid
+            }
+        } else {
+            // Parse moves from current position to end
+            std::vector<std::string> moveTokens(tokens.begin() + pos, tokens.end());
+            auto [moves, result] = parseMoveLine(moveTokens);
+            for (const auto& move : moves) {
+                game.addMove(move);
+            }
+            if (result) {
+                auto [cause, curResult] = game.getGameResult();
+                game.setGameEnd(curResult == *result ? cause : GameEndCause::Ongoing, *result);
+            }
+            pos = tokens.size(); // All remaining tokens processed
+            // Prevent overly long games
+            if (game.nextMoveIndex() > 2000) break;
+        }
+    }
+
+    finalizeParsedTags(game);
+    return game;
 }
 

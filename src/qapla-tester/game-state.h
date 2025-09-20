@@ -53,8 +53,9 @@ public:
 	 * @brief Sets the game position to a specific FEN string.
 	 * @param startPos If true, sets the position to the starting position.
 	 * @param fen The FEN string to set, if startPos = false. 
+	 * @return True if the FEN string was valid and the position was set, false otherwise.
 	 */
-	void setFen(bool startPos, const std::string fen = "");
+	bool setFen(bool startPos, const std::string fen = "");
 
 	/**
 	 * @brief Undo the last move and restore the previous position.

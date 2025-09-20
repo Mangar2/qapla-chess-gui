@@ -68,6 +68,13 @@ public:
      */
     std::vector<GameRecord> loadGames(const std::string& fileName);
 
+    /**
+     * @brief Parses a single game from a PGN string.
+     * @param pgnString The PGN formatted string containing a single game.
+     * @return Parsed GameRecord instance.
+     */
+    static GameRecord parseGame(const std::string& pgnString);
+
 	/**
 	 * @brief Sets the options for PGN output.
 	 * @param options New options to apply.
@@ -107,28 +114,28 @@ private:
      * @param start Position to begin parsing from.
      * @return Pair {MoveRecord, next position}. If no valid move, next == start.
      */
-    std::pair<MoveRecord, size_t> parseMove(const std::vector<std::string>& tokens, size_t start);
+    static std::pair<MoveRecord, size_t> parseMove(const std::vector<std::string>& tokens, size_t start);
 
     /**
      * @brief Parses a PGN tag line.
 	 * @param tokens Tokenized line from PGN input.
      * @return Pair of tag key and value. Returns {"", ""} if invalid.
      */
-    std::pair<std::string, std::string> parseTag(const std::vector<std::string>& tokens);
+    static std::pair<std::string, std::string> parseTag(const std::vector<std::string>& tokens);
     
     /**
      * @brief Parses a PGN move line from tokens.
      * @param tokens Tokenized line from PGN input.
      * @return Pair of move list and optional game result (1-0, 0-1, 1/2-1/2, *).
      */
-    std::pair<std::vector<MoveRecord>, std::optional<GameResult>> parseMoveLine(const std::vector<std::string>& tokens);
+    static std::pair<std::vector<MoveRecord>, std::optional<GameResult>> parseMoveLine(const std::vector<std::string>& tokens);
 
     /**
      * @brief Tokenizes a single PGN line into semantic PGN tokens.
      * @param line A trimmed line of PGN input.
      * @return List of tokens according to PGN token rules.
      */
-    std::vector<std::string> tokenize(const std::string& line);
+    static std::vector<std::string> tokenize(const std::string& line);
 
     /**
      * @brief Skips a move-number indication like 12. or 23... starting at position.
@@ -136,7 +143,7 @@ private:
      * @param start Position to begin checking.
      * @return Next token position after move-number sequence.
      */
-    size_t skipMoveNumber(const std::vector<std::string>& tokens, size_t start);
+    static size_t skipMoveNumber(const std::vector<std::string>& tokens, size_t start);
 
     
     /**
@@ -147,7 +154,7 @@ private:
     * @return Next token position after the recursive variation.
     *         If no valid variation is found, returns the start position.
     */
-    size_t skipRecursiveVariation(const std::vector<std::string>& tokens, size_t start);
+    static size_t skipRecursiveVariation(const std::vector<std::string>& tokens, size_t start);
 
     /**
      * @brief Parses a comment block following a SAN move and extracts metadata.
@@ -156,13 +163,13 @@ private:
      * @param move MoveRecord to populate.
      * @return Position after closing "}" or unchanged on error.
      */
-    size_t parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move);
+    static size_t parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move);
 
     /**
      * @brief Interprets known PGN tags and sets corresponding GameRecord fields.
      * @param game The GameRecord whose tags will be finalized.
      */
-    void finalizeParsedTags(GameRecord& game);
+    static void finalizeParsedTags(GameRecord& game);
 
     Options options_;
     std::mutex fileMutex_;
