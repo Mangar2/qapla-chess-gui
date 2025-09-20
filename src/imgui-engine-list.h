@@ -107,7 +107,7 @@ namespace QaplaWindows {
         std::string drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
             const ImVec2 &max, float cEngineInfoWidth, size_t index, bool isSmall);
 
-        void drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, 
+        std::string drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, 
             float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);
 
         void setTable(size_t index, const MoveRecord& moveRecord);

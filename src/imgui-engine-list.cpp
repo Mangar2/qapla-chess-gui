@@ -158,6 +158,7 @@ void ImGuiEngineList::addTables(size_t size) {
                 { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
                 { "Primary variant", ImGuiTableColumnFlags_WidthFixed, 1660.0f }
         }));
+        tables_[i]->setClickable(true);
 	}
 }
 
@@ -262,7 +263,6 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
 
 std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 
-    std::string command;
     constexpr float cEngineInfoWidth = 160.0f;
     constexpr float cSectionSpacing = 4.0f;
     
@@ -279,17 +279,17 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     drawList->AddRectFilled(topLeft, max, bgColor);
     ImGuiSeparator::Horizontal();
 
-    command = drawEngineArea(topLeft, drawList, max, cEngineInfoWidth, index, isSmall);
+    std::string command = drawEngineArea(topLeft, drawList, max, cEngineInfoWidth, index, isSmall);
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
     ImGuiSeparator::Vertical();
 
-    drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
+    std::string pv = drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
     
     ImGui::SetCursorScreenPos(topLeft);
     ImGui::Dummy(ImVec2(size.x, size.y - 3.0f));
     ImGui::PopID();
-    return command;
+    return command.empty() ? pv : command;
 }
 
 std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
@@ -308,22 +308,27 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     return command;
 }
 
-void QaplaWindows::ImGuiEngineList::drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
+ std::string QaplaWindows::ImGuiEngineList::drawEngineTable(
+    const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
     size_t index, const ImVec2 &max, const ImVec2 &size)
 {
     ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
     ImGui::SetCursorScreenPos(tableMin);
+    std::string pv;
     if (index < tables_.size())
     {
         auto tableSize = ImVec2(max.x - tableMin.x, size.y);
-
         if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
             ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
         {
-            tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
+            auto clicked = tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
+            if (clicked) {
+                pv = "pv" + tables_[index]->getField(*clicked, 6);
+            }
         }
         ImGui::EndChild();
     }
+    return pv;
 }
 
 std::pair<std::string, std::string> ImGuiEngineList::draw() {
