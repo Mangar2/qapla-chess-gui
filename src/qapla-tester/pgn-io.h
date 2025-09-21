@@ -23,12 +23,13 @@
 #include <vector>
 #include <mutex>
 #include <fstream>
+#include <optional>
 #include "move-record.h"
-#include "game-record.h" 
+#include "game-record.h"
 
- /**
-  * @brief Thread-safe PGN input/output handler.
-  */
+/**
+ * @brief Thread-safe PGN input/output handler.
+ */
 class PgnIO {
 public:
     /**
@@ -61,12 +62,39 @@ public:
     void saveGame(const GameRecord& game);
 
     /**
-     * @brief Loads all games from the PGN file.
-     * 
-	 * @param fileName Name of the PGN file to load.
+     * @brief Saves the given game record to the specified PGN file.
+     * @param fileName Name of the PGN file to save to.
+     * @param game Game record to be saved.
+     */
+    void saveGame(const std::string& fileName, const GameRecord& game);
+
+    /**
+     * @brief Saves the given game record to the provided output stream.
+     * @param out Output stream to write to.
+     * @param game Game record to be saved.
+     */
+    void saveGameToStream(std::ostream& out, const GameRecord& game);
+
+    /**
+     * @brief Loads all games from a PGN file.
+     * @param fileName Name of the PGN file to load from.
+     * @param loadComments Whether to parse move comments or skip them for performance.
      * @return Vector of parsed GameRecord instances.
      */
-    std::vector<GameRecord> loadGames(const std::string& fileName);
+    std::vector<GameRecord> loadGames(const std::string& fileName, bool loadComments = true);
+
+    /**
+     * @brief Gets the positions of games in the last loaded file.
+     * @return Vector of stream positions for each game.
+     */
+    const std::vector<std::streampos>& getGamePositions() const { return gamePositions_; }
+
+    /**
+     * @brief Loads a specific game from the previously loaded file by index.
+     * @param index Index of the game to load.
+     * @return Optional cleaned GameRecord if successful.
+     */
+    std::optional<GameRecord> loadGameAtIndex(size_t index);
 
     /**
      * @brief Parses a single game from a PGN string.
@@ -105,16 +133,17 @@ private:
      * @param plyIndex Zero-based ply index to determine move number and side.
      * @param isWhiteStart Whether white starts (relevant for proper numbering if not).
      */
-    void saveMove(std::ostream& out, const std::string& san, const MoveRecord& move, 
+    void saveMove(std::ostream& out, const std::string& san, const MoveRecord& move,
         uint32_t plyIndex, bool isWhiteStart) const;
 
     /**
      * @brief Parses a SAN move and attached annotations starting at a position.
      * @param tokens Token list from PGN input.
      * @param start Position to begin parsing from.
+     * @param loadComments Whether to parse move comments or skip them.
      * @return Pair {MoveRecord, next position}. If no valid move, next == start.
      */
-    static std::pair<MoveRecord, size_t> parseMove(const std::vector<std::string>& tokens, size_t start);
+    static std::pair<MoveRecord, size_t> parseMove(const std::vector<std::string>& tokens, size_t start, bool loadComments = true);
 
     /**
      * @brief Parses a PGN tag line.
@@ -122,13 +151,14 @@ private:
      * @return Pair of tag key and value. Returns {"", ""} if invalid.
      */
     static std::pair<std::string, std::string> parseTag(const std::vector<std::string>& tokens);
-    
+
     /**
      * @brief Parses a PGN move line from tokens.
      * @param tokens Tokenized line from PGN input.
+     * @param loadComments Whether to parse move comments or skip them.
      * @return Pair of move list and optional game result (1-0, 0-1, 1/2-1/2, *).
      */
-    static std::pair<std::vector<MoveRecord>, std::optional<GameResult>> parseMoveLine(const std::vector<std::string>& tokens);
+    static std::pair<std::vector<MoveRecord>, std::optional<GameResult>> parseMoveLine(const std::vector<std::string>& tokens, bool loadComments = true);
 
     /**
      * @brief Tokenizes a single PGN line into semantic PGN tokens.
@@ -145,7 +175,7 @@ private:
      */
     static size_t skipMoveNumber(const std::vector<std::string>& tokens, size_t start);
 
-    
+
     /**
     * @brief Skips a recursive variation in PGN notation starting at a given position.
     *        Recursive variations are enclosed in parentheses and can contain nested variations.
@@ -166,12 +196,23 @@ private:
     static size_t parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move);
 
     /**
+     * @brief Skips a comment block following a SAN move without parsing.
+     * @param tokens Token list from PGN input.
+     * @param start Position of the opening "{" token.
+     * @return Position after closing "}" or unchanged on error.
+     */
+    static size_t skipMoveComment(const std::vector<std::string>& tokens, size_t start);
+
+    /**
      * @brief Interprets known PGN tags and sets corresponding GameRecord fields.
      * @param game The GameRecord whose tags will be finalized.
      */
     static void finalizeParsedTags(GameRecord& game);
 
     Options options_;
+    std::vector<std::streampos> gamePositions_;  // Positions of games in the last loaded file
+    std::string currentFileName_;  // Name of the last loaded file
+    std::mutex mutex_;  // For thread safety
     std::mutex fileMutex_;
     std::string event_ = "";
 };

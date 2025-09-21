@@ -30,7 +30,6 @@ void PgnIO::initialize(const std::string& event) {
     if (!options_.append) {
         std::lock_guard<std::mutex> lock(fileMutex_);
         std::ofstream out(options_.file, std::ios::trunc);
-        // Leert die Datei � kein weiterer Inhalt n�tig
     }
 }
 
@@ -198,13 +197,7 @@ void PgnIO::saveMove(std::ostream& out, const std::string& san,
     out << " ";
 }
 
-void PgnIO::saveGame(const GameRecord& game) {
-	if (options_.file.empty()) {
-        return;
-	}
-    if (options_.saveAfterMove) {
-        throw std::runtime_error("saveAfterMove not yet supported");
-    }
+void PgnIO::saveGameToStream(std::ostream& out, const GameRecord& game) {
     const auto [cause, result] = game.getGameResult();
 
     if (options_.onlyFinishedGames) {
@@ -213,32 +206,90 @@ void PgnIO::saveGame(const GameRecord& game) {
         }
     }
 
+    saveTags(out, game);
+
+    const auto& history = game.history();
+    if (!history.empty()) {
+        MoveRecord::toStringOptions opts {
+            .includeClock = options_.includeClock,
+            .includeEval = options_.includeEval,
+            .includePv = options_.includePv,
+            .includeDepth = options_.includeDepth
+        };
+        std::string movesStr = game.movesToStringUpToPly(history.size(), opts);
+        out << movesStr;
+    }
+
+    out << to_string(std::get<1>(game.getGameResult())) << "\n\n";
+}
+
+std::optional<GameRecord> PgnIO::loadGameAtIndex(size_t index) {
+    if (index >= gamePositions_.size() || currentFileName_.empty()) {
+        return std::nullopt;
+    }
+
+    std::ifstream inFile(currentFileName_);
+    if (!inFile) return std::nullopt;
+
+    inFile.seekg(gamePositions_[index]);
+
+    std::string gameString;
+    std::string line;
+
+    while (std::getline(inFile, line)) {
+        auto tokens = tokenize(line);
+        if (!tokens.empty() && tokens[0] == "[") {
+            if (!gameString.empty()) {
+                break;
+            }
+        }
+        gameString += line + "\n";
+    }
+
+    if (gameString.empty()) return std::nullopt;
+
+    // Parse the game
+    GameRecord record = parseGame(gameString);
+
+    // Clean the record
+    GameState gameState;
+    GameRecord cleanRecord = gameState.setFromGameRecordAndCopy(record);
+
+    // Check validity
+    bool hasFen = !cleanRecord.getStartFen().empty() && cleanRecord.getStartFen() != "startpos";
+    bool hasMoves = !cleanRecord.history().empty();
+
+    if (!hasFen && !hasMoves) {
+        return std::nullopt;
+    }
+
+    return cleanRecord;
+}
+
+void PgnIO::saveGame(const GameRecord& game) {
+	if (options_.file.empty()) {
+        return;
+	}
+    if (options_.saveAfterMove) {
+        throw std::runtime_error("saveAfterMove not yet supported");
+    }
+
     std::lock_guard<std::mutex> lock(fileMutex_);
     std::ofstream out(options_.file, std::ios::app);
     if (!out) {
         throw std::runtime_error("Failed to open PGN file: " + options_.file);
     }
 
-    GameState state;
-	state.setFen(game.getStartPos(), game.getStartFen());
+    saveGameToStream(out, game);
+}
 
-    saveTags(out, game);
-
-    const auto& history = game.history();
-    bool isWhiteStart = (game.history().size() % 2 == 0) ? game.isWhiteToMove() : !game.isWhiteToMove();
-    if (!isWhiteStart) {
-        out << "1... ";
-    }
-    for (size_t i = 0; i < history.size(); ++i) {
-        const auto& moveRecord = history[i];
-        const auto& lan = moveRecord.lan;
-		const auto& move = state.stringToMove(lan, true);
-        const auto& san = state.moveToSan(move);
-		state.doMove(move);
-        saveMove(out, san, history[i], static_cast<uint32_t>(i), isWhiteStart);
+void PgnIO::saveGame(const std::string& fileName, const GameRecord& game) {
+    std::ofstream out(fileName, std::ios::app);
+    if (!out) {
+        throw std::runtime_error("Failed to open PGN file: " + fileName);
     }
 
-    out << to_string(std::get<1>(game.getGameResult())) << "\n\n";
+    saveGameToStream(out, game);
 }
 
 std::vector<std::string> PgnIO::tokenize(const std::string& line) {
@@ -356,7 +407,7 @@ size_t PgnIO::skipRecursiveVariation(const std::vector<std::string>& tokens, siz
 	return pos; 
 }
 
-std::pair<MoveRecord, size_t> PgnIO::parseMove(const std::vector<std::string>& tokens, size_t start) {
+std::pair<MoveRecord, size_t> PgnIO::parseMove(const std::vector<std::string>& tokens, size_t start, bool loadComments) {
     
     size_t pos = skipMoveNumber(tokens, start);
     if (pos >= tokens.size()) return { {}, pos };
@@ -373,7 +424,11 @@ std::pair<MoveRecord, size_t> PgnIO::parseMove(const std::vector<std::string>& t
             ++pos;
         }
         else if (tok == "{") {
-            pos = parseMoveComment(tokens, pos, move);
+            if (loadComments) {
+                pos = parseMoveComment(tokens, pos, move);
+            } else {
+                pos = skipMoveComment(tokens, pos);
+            }
         }
         else if (tok == "(") {
             pos = skipRecursiveVariation(tokens, pos);
@@ -449,8 +504,19 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
     return pos;
 }
 
+size_t PgnIO::skipMoveComment(const std::vector<std::string>& tokens, size_t start) {
+    if (tokens[start] != "{") return start;
 
-std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLine(const std::vector<std::string>& tokens) {
+    size_t pos = start + 1;
+    while (pos < tokens.size() && tokens[pos] != "}") {
+        ++pos;
+    }
+    if (pos < tokens.size() && tokens[pos] == "}") ++pos;
+    return pos;
+}
+
+
+std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLine(const std::vector<std::string>& tokens, bool loadComments) {
     std::vector<MoveRecord> moves;
     std::optional<GameResult> result;
     size_t pos = 0;
@@ -462,7 +528,7 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
         if (tok == "1/2-1/2") return { moves, GameResult::Draw };
         if (tok == "*") return { moves, GameResult::Unterminated };
 
-        auto [move, nextPos] = parseMove(tokens, pos);
+        auto [move, nextPos] = parseMove(tokens, pos, loadComments);
         if (!move.san.empty()) {
             moves.push_back(move);
         }
@@ -473,16 +539,19 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
     return { moves, result };
 }
 
-std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName) {
+std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadComments) {
     std::vector<GameRecord> games;
     std::ifstream inFile(fileName);
     if (!inFile) return games;
 
+    currentFileName_ = fileName;
+    gamePositions_.clear();
     GameRecord currentGame;
     std::string line;
     bool inMoveSection = false;
+    std::streampos currentPos;
 
-    while (std::getline(inFile, line)) {
+    while ((currentPos = inFile.tellg()), std::getline(inFile, line)) {
         auto tokens = tokenize(line);
         if (tokens.size() == 0) continue;
 
@@ -494,12 +563,13 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName) {
                 currentGame = GameRecord();
                 inMoveSection = false;
             }
+            gamePositions_.push_back(currentPos);
             auto [key, value] = parseTag(tokens);
             if (!key.empty()) currentGame.setTag(key, value);
             continue;
         }
 
-        auto [moves, result] = parseMoveLine(tokens);
+        auto [moves, result] = parseMoveLine(tokens, loadComments);
         for (const auto& move : moves) {
             currentGame.addMove(move);
         }
@@ -537,7 +607,7 @@ GameRecord PgnIO::parseGame(const std::string& pgnString) {
         } else {
             // Parse moves from current position to end
             std::vector<std::string> moveTokens(tokens.begin() + pos, tokens.end());
-            auto [moves, result] = parseMoveLine(moveTokens);
+            auto [moves, result] = parseMoveLine(moveTokens, true);
             for (const auto& move : moves) {
                 game.addMove(move);
             }
