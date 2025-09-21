@@ -18,11 +18,55 @@
  */
 
 #include "imgui-game-list.h"
+#include "imgui-button.h"
+#include "snackbar.h"
+
+using namespace QaplaWindows;
 
 void ImGuiGameList::draw() {
     drawButtons();
 }
 
 void ImGuiGameList::drawButtons() {
-    // TODO: Implement button drawing
+    constexpr float space = 3.0f;
+    constexpr float topOffset = 5.0f;
+    constexpr float bottomOffset = 8.0f;
+    constexpr float leftOffset = 20.0f;
+    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+
+    constexpr ImVec2 buttonSize = {25.0f, 25.0f};
+
+    const std::vector<std::string> buttons = {"Open", "Save", "Save As", "Filter"};
+    const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
+    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    
+    for (const std::string& button : buttons) {
+        ImGui::SetCursorScreenPos(pos);
+        auto state = QaplaButton::ButtonState::Normal;
+        
+        if (QaplaButton::drawIconButton(
+                button, button, buttonSize, state, 
+                [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            if (button == "Save") {
+                QaplaButton::drawSave(drawList, topLeft, size, state);
+            } else if (button == "Open") {
+                QaplaButton::drawOpen(drawList, topLeft, size, state);
+            }
+            // TODO: Implement icons for Save As, Load, Filter
+        })) {
+            // Handle button clicks
+            if (button == "Save") {
+                SnackbarManager::instance().showNote("Save button clicked - functionality not yet implemented");
+            } else if (button == "Save As") {
+                // TODO: Implement save as functionality
+            } else if (button == "Open") {
+                // TODO: Implement open functionality
+            } else if (button == "Filter") {
+                // TODO: Implement filter functionality
+            }
+        }
+        pos.x += totalSize.x + space;
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }

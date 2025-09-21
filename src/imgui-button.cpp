@@ -421,25 +421,25 @@ namespace QaplaButton {
     void drawSetup(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
-        // Links unten: Quadrat (8x8 Pixel)
+        // Left bottom: Square (7x7)
         float squareSize = 7.0f;
         float squareX = topLeft.x + 4.0f;
         float squareY = topLeft.y + size.y - 11.0f;
         list->AddRectFilled(ImVec2(squareX, squareY), ImVec2(squareX + squareSize, squareY + squareSize), fgColor);
         
-        // Rechts unten: Kreis (Radius 4)
+        // Right bottom: Circle (Radius 4)
         float circleCenterX = topLeft.x + size.x - 7.0f;
         float circleCenterY = topLeft.y + size.y - 8.0f;
         float circleRadius = 4.0f;
         list->AddCircleFilled(ImVec2(circleCenterX, circleCenterY), circleRadius, fgColor);
         
-        // Oben Mitte: Dreieck (Höhe 6, Basis 10)
+        // Top middle: Triangle (Height 6, Base 10)
         float triangleBaseX = topLeft.x + size.x / 2.0f - 5.0f;
         float triangleTopY = topLeft.y + 4.0f;
         float triangleHeight = 6.0f;
         float triangleBaseWidth = 10.0f;
         
-        // Zeichne das Dreieck mit horizontalen Linien (pixelgenau)
+        // Draw filled triangle using horizontal lines
         for (int i = 0; i < static_cast<int>(triangleHeight); ++i) {
             float y = triangleTopY + i;
             float width = triangleBaseWidth * (1.0f - static_cast<float>(i) / triangleHeight);
@@ -465,6 +465,59 @@ namespace QaplaButton {
 
         list->AddLine(ImVec2(startX1, startY1), ImVec2(endX1 + 1.0f, endY1 + 1.0f), color, LINE_THICKNESS);
         list->AddLine(ImVec2(startX1, endY1), ImVec2(endX1 + 1.0f, startY1 - 1.0f), color, LINE_THICKNESS);
+    }
+
+    void drawSave(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        
+        constexpr float borderThickness = 2.0f;
+        constexpr float rounding = 1.0f;
+        ImVec2 outerRectTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER);
+        ImVec2 outerRectBottomRight = ImVec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
+        
+        // Draw outer rounded rectangle
+        list->AddRect(outerRectTopLeft, outerRectBottomRight, fgColor, rounding, ImDrawFlags_None, borderThickness);
+        
+        // In the rectangle: A smaller filled rectangle
+        constexpr float innerRectWidth = 6.0f;
+        constexpr float innerRectHeight = 3.0f;
+        ImVec2 innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0f, outerRectTopLeft.y + 4.0f);
+        ImVec2 innerRectBottomRight = ImVec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
+        list->AddRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
+        
+        // In the rectangle: A small filled circle at the bottom center
+        constexpr float circleRadius = 2.5f;
+        ImVec2 circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0f,
+                                     outerRectBottomRight.y - 5.0f);
+        list->AddCircleFilled(circleCenter, circleRadius, fgColor);
+    }
+
+    void drawOpen(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        
+        // Document rectangle with 2px thick border
+        constexpr float borderThickness = 2.0f;
+        constexpr float rectReduce = 2.0f;
+        constexpr float fold = 7.0f;
+
+        ImVec2 docTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
+        ImVec2 docBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
+
+        // Top side
+        list->AddLine(ImVec2(docTopLeft.x, docTopLeft.y), ImVec2(docBottomRight.x  - fold + 1, docTopLeft.y), fgColor, borderThickness);
+        // Left side
+        list->AddLine(ImVec2(docTopLeft.x, docTopLeft.y), ImVec2(docTopLeft.x, docBottomRight.y), fgColor, borderThickness);
+        // Bottom side  
+        list->AddLine(ImVec2(docTopLeft.x, docBottomRight.y), ImVec2(docBottomRight.x, docBottomRight.y), fgColor, borderThickness);
+        // Right side (stop before the fold area)
+        list->AddLine(ImVec2(docBottomRight.x, docBottomRight.y), ImVec2(docBottomRight.x, docTopLeft.y + fold), fgColor, borderThickness);
+        
+        // Triangle sides
+        for (int i = 0; i <= static_cast<int>(fold); i++) {
+            list->AddLine(
+                ImVec2(docBottomRight.x - fold + 1, docTopLeft.y + i - 1), 
+                ImVec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0f);
+        }
     }
 
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,

@@ -21,6 +21,8 @@
 
 #include "embedded-window.h"
 
+namespace QaplaWindows {
+
 /**
  * @brief ImGui window for displaying PGN game lists.
  */
@@ -39,3 +41,5 @@ private:
      */
     void drawButtons();
 };
+
+} // namespace QaplaWindows

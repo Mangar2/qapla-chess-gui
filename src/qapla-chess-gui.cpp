@@ -27,6 +27,7 @@
 #include "tournament-data.h"
 #include "tournament-window.h"
 #include "imgui-tab-bar.h"
+#include "imgui-game-list.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-workspace.h"
@@ -124,6 +125,7 @@ namespace {
         taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
         taskTabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
 		taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
+        taskTabBar->addTab("Pgn", std::make_unique<QaplaWindows::ImGuiGameList>());
         taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
