@@ -20,6 +20,7 @@
 #include "imgui-table.h"
 #include <imgui.h>
 #include <iostream>
+#include <algorithm>
 
 namespace QaplaWindows {
 
@@ -59,24 +60,34 @@ namespace QaplaWindows {
 
     void ImGuiTable::push(const std::vector<std::string>& row) {
         rows_.push_back(row);
+        needsSort_ = true;
     }
 
     void ImGuiTable::push_front(const std::vector<std::string>& row) {
         rows_.insert(rows_.begin(), row);
+        needsSort_ = true;
     }
 
     void ImGuiTable::clear() {
         rows_.clear();
+        needsSort_ = true;
     }
 
     void ImGuiTable::pop_back() {
         if (!rows_.empty()) {
             rows_.pop_back();
+            needsSort_ = true;
+        }
+    }
+
+    void ImGuiTable::setupTable() const {
+        ImGui::TableSetupScrollFreeze(0, 1);
+        for (size_t i = 0; i < columns_.size(); ++i) {
+            ImGui::TableSetupColumn(columns_[i].name.c_str(), columns_[i].flags, columns_[i].width, i);
         }
     }
 
     void ImGuiTable::tableHeadersRow() const {
-        ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
         for (int columnN = 0; columnN < columns_.size(); columnN++) {
@@ -87,6 +98,58 @@ namespace QaplaWindows {
             headerAligned(columns_[columnN].name, columns_[columnN].alignRight);
             ImGui::PopID();
         }
+    }
+
+    void ImGuiTable::handleSorting() const {
+        ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
+        if (needsSort_ || sortedIndices_.size() != rows_.size()) {
+            sortedIndices_.resize(rows_.size());
+            for (size_t i = 0; i < rows_.size(); ++i) sortedIndices_[i] = i;
+            needsSort_ = false;
+        }
+        if (specs && specs->SpecsDirty) {
+            if (specs->SpecsCount > 0) {
+                auto spec = specs->Specs[0];
+                int column = spec.ColumnUserID;
+                bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
+                std::sort(sortedIndices_.begin(), sortedIndices_.end(), [&](size_t a, size_t b) {
+                    if (column >= static_cast<int>(columns_.size())) return false;
+                    std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
+                    std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
+                    if (ascending) return valA < valB;
+                    else return valA > valB;
+                });
+            }
+            specs->SpecsDirty = false;
+        }
+    }
+
+    static std::optional<float> calculateOptimalScrollPosition(size_t rowIndex) {
+        float scrollY = ImGui::GetScrollY();
+        float windowHeight = ImGui::GetWindowHeight();
+        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+        
+        float rowTop = (rowIndex + 1) * rowHeight; // +1 for header row
+        float rowBottom = rowTop + rowHeight;
+        float visibleTop = scrollY + rowHeight; // +rowHeight to account for header
+        float visibleBottom = scrollY + windowHeight;
+        
+        // Row visible, no scroll needed
+        if (rowTop >= visibleTop && rowBottom <= visibleBottom) {
+            return std::nullopt;  
+        }
+
+        // Row far away → scroll to center
+        if (rowBottom + 1.0f < visibleTop || rowTop - 1.0f > visibleBottom) {
+            return rowTop - (windowHeight * 0.5f) + (rowHeight * 0.5f);
+        }
+        
+        // Row too far up (but close) → scroll to top
+        if (rowBottom < visibleBottom) {
+            return rowTop - rowHeight;
+        }
+        // Row too far down → scroll to bottom
+        return rowBottom - windowHeight;
     }
 
     bool ImGuiTable::isRowClicked(size_t index) const {
@@ -124,30 +187,6 @@ namespace QaplaWindows {
         }
     }
 
-    static std::optional<float> calculateOptimalScrollPosition(size_t rowIndex) {
-        float scrollY = ImGui::GetScrollY();
-        float windowHeight = ImGui::GetWindowHeight();
-        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-        
-        float rowTop = (rowIndex + 1) * rowHeight; // +1 for header row
-        float rowBottom = rowTop + rowHeight;
-        float visibleTop = scrollY + rowHeight; // +rowHeight to account for header
-        float visibleBottom = scrollY + windowHeight;
-        
-        // Row visible, no scroll needed
-        if (rowTop >= visibleTop && rowBottom <= visibleBottom) {
-            return std::nullopt;  
-        }
-
-        // Row far away → no scroll
-        if (rowBottom + 1.0f < visibleTop || rowTop - 1.0f > visibleBottom) {
-            return 0.5f;  
-        }
-        
-        // Row, too far up (but close) → scroll to top
-        return (rowBottom < visibleBottom) ? 0.0f : 1.0f;
-    }
-
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) const {
         std::optional<size_t> clickedRow;
         ImVec2 tableSize = size;
@@ -156,28 +195,35 @@ namespace QaplaWindows {
             tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
         }
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
-            for (const auto& column : columns_) {
-                ImGui::TableSetupColumn(column.name.c_str(), column.flags, column.width);
-            }
+            setupTable();
+            handleSorting();
             tableHeadersRow();
-            for (size_t rowIndex = 0; rowIndex < rows_.size(); ++rowIndex) {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                if (isRowClicked(rowIndex)) {
-                    clickedRow = rowIndex;
+            if (scrollToRow_) {
+                // Find the sorted index for the row to scroll to
+                size_t sortedIndex = 0;
+                for (; sortedIndex < sortedIndices_.size(); ++sortedIndex) {
+                    if (sortedIndices_[sortedIndex] == *scrollToRow_) break;
                 }
-                accentuateCurrentRow(rowIndex);
-                // Auto-scroll to row if requested
-                if (scrollToRow_ && *scrollToRow_ == rowIndex) {
-                    auto scrollPos = calculateOptimalScrollPosition(rowIndex);
-                    if (scrollPos) {
-                        ImGui::SetScrollHereY(*scrollPos);
-                    }
-                    scrollToRow_.reset(); 
+                auto scrollPos = calculateOptimalScrollPosition(sortedIndex);
+                if (scrollPos) {
+                    ImGui::SetScrollY(*scrollPos);
                 }
-                drawRow(rowIndex);
+                scrollToRow_.reset();
             }
-
+            ImGuiListClipper clipper;
+            clipper.Begin(static_cast<int>(rows_.size()));
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
+                    size_t actualRow = sortedIndices_[i];
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    if (isRowClicked(actualRow)) {
+                        clickedRow = actualRow;
+                    }
+                    accentuateCurrentRow(actualRow);
+                    drawRow(actualRow);
+                }
+            }
             ImGui::EndTable();
         }
         

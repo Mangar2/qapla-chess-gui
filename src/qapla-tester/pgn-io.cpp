@@ -118,7 +118,7 @@ void PgnIO::finalizeParsedTags(GameRecord& game) {
         game.setBlackEngineName(it->second);
     }
     if (auto it = tags.find("FEN"); it != tags.end()) {
-        game.setStartPosition(false, it->second, game.isWhiteToMove(), 0, game.getWhiteEngineName(), game.getBlackEngineName());
+        game.setFen(it->second);
     }
     if (auto it = tags.find("SetUp"); it != tags.end()) {
         if (it->second == "0") {

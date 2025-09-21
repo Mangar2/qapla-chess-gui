@@ -75,6 +75,16 @@ public:
 	void setStartPosition(const GameRecord &source, uint32_t toPly,
 						  const std::string &whiteEngineName, const std::string &blackEngineName);
 
+	/** 
+	 * @brief Sets the starting position in FEN format.
+	 * Only sets the FEN string, does not alter the move list or any other state.
+	 * @param fen The starting position as a FEN string.
+	 */
+	void setFen(const std::string &fen) {
+		changeTracker_.trackModification();
+		startFen_ = fen;
+	}
+
 	/** Adds a move at the current ply position, overwriting any future moves. */
 	void addMove(const MoveRecord &move);
 

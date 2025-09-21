@@ -117,6 +117,7 @@ namespace QaplaWindows {
         void pop_front() {
             if (!rows_.empty()) {
                 rows_.erase(rows_.begin());
+                needsSort_ = true;
             }
         }
 
@@ -150,10 +151,9 @@ namespace QaplaWindows {
         void setField(size_t row, size_t column, const std::string& value) {
             if (row < rows_.size() && column < columns_.size()) {
                 rows_[row][column] = value;
+                needsSort_ = true;
             }
-		}
-
-        /**
+        }        /**
 		 * @brief Adds a new column to a specific row.
 		 * @param row Index of the row to extend.
 		 * @param col New column content to add.
@@ -161,6 +161,7 @@ namespace QaplaWindows {
         void extend(size_t row, const std::string& col) {
             if (row < rows_.size()) {
                 rows_[row].push_back(col);
+                needsSort_ = true;
             }
         }
 
@@ -208,19 +209,24 @@ namespace QaplaWindows {
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
         std::optional<size_t> checkKeyboard() const;
+        void setupTable() const;
+        void handleSorting() const;
+        void tableHeadersRow() const;
 
         bool clickable_ = false;
         bool autoScroll_ = false;
         bool allowNavigateToZero_ = false;
         mutable std::optional<size_t> scrollToRow_;
         mutable int lastInputFrame_ = -1;
-        void tableHeadersRow() const;
-		bool isRowClicked(size_t index) const;
+        bool isRowClicked(size_t index) const;
         size_t selectedRow_ = 0;
         std::optional<size_t> currentRow_;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;
         std::vector<std::vector<std::string>> rows_;
+        mutable std::vector<size_t> sortedIndices_;
+        mutable bool needsSort_ = true;
+        mutable ImGuiTableSortSpecs* sortSpecs_ = nullptr;
     };
 }
