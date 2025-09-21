@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "GameRecordManager.h"
+#include "game-record-manager.h"
 
 void GameRecordManager::load(const std::string& fileName) {
     games_ = pgnIO_.loadGames(fileName, false);  // Load without comments

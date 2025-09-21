@@ -21,7 +21,7 @@
 
 #include "engine-event.h"
 
-#include "qapla-engine/move.h"
+#include "../qapla-engine/move.h"
 
 #include <string>
 #include <optional>

@@ -20,6 +20,10 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "game-record-manager.h"
+#include <thread>
+#include <atomic>
+#include <string>
 
 namespace QaplaWindows {
 
@@ -29,6 +33,7 @@ namespace QaplaWindows {
 class ImGuiGameList : public EmbeddedWindow {
 public:
     ImGuiGameList() = default;
+    ~ImGuiGameList();
 
     /**
      * @brief Draws the game list window.
@@ -40,6 +45,46 @@ private:
      * @brief Draws the buttons for the game list.
      */
     void drawButtons();
+
+    /**
+     * @brief Draws the loading status below the buttons.
+     */
+    void drawLoadingStatus();
+
+    /**
+     * @brief Opens a file dialog and loads the selected PGN file in a background thread.
+     */
+    void openFile();
+
+    /**
+     * @brief Background loading function.
+     */
+    void loadFileInBackground(const std::string& fileName);
+
+    /**
+     * @brief Manager for loaded game records.
+     */
+    GameRecordManager gameRecordManager_;
+
+    /**
+     * @brief Loading state.
+     */
+    std::atomic<bool> isLoading_{false};
+
+    /**
+     * @brief Number of games loaded so far.
+     */
+    std::atomic<size_t> gamesLoaded_{0};
+
+    /**
+     * @brief Loading thread.
+     */
+    std::thread loadingThread_;
+
+    /**
+     * @brief Name of the file being loaded.
+     */
+    std::string loadingFileName_;
 };
 
 } // namespace QaplaWindows

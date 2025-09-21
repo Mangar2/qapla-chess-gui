@@ -20,11 +20,21 @@
 #include "imgui-game-list.h"
 #include "imgui-button.h"
 #include "snackbar.h"
+#include "os-dialogs.h"
+#include <fstream>
+#include <sstream>
 
 using namespace QaplaWindows;
 
+ImGuiGameList::~ImGuiGameList() {
+    if (loadingThread_.joinable()) {
+        loadingThread_.join();
+    }
+}
+
 void ImGuiGameList::draw() {
     drawButtons();
+    drawLoadingStatus();
 }
 
 void ImGuiGameList::drawButtons() {
@@ -42,7 +52,7 @@ void ImGuiGameList::drawButtons() {
     
     for (const std::string& button : buttons) {
         ImGui::SetCursorScreenPos(pos);
-        auto state = QaplaButton::ButtonState::Normal;
+        auto state = isLoading_ ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
         
         if (QaplaButton::drawIconButton(
                 button, button, buttonSize, state, 
@@ -52,21 +62,64 @@ void ImGuiGameList::drawButtons() {
             } else if (button == "Open") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
             }
-            // TODO: Implement icons for Save As, Load, Filter
+            // TODO: Implement icons for Save As, Filter
         })) {
-            // Handle button clicks
-            if (button == "Save") {
-                SnackbarManager::instance().showNote("Save button clicked - functionality not yet implemented");
-            } else if (button == "Save As") {
-                // TODO: Implement save as functionality
-            } else if (button == "Open") {
-                // TODO: Implement open functionality
-            } else if (button == "Filter") {
-                // TODO: Implement filter functionality
+            // Handle button clicks - only if not loading
+            if (!isLoading_) {
+                if (button == "Save") {
+                    SnackbarManager::instance().showNote("Save button clicked - functionality not yet implemented");
+                } else if (button == "Save As") {
+                    // TODO: Implement save as functionality
+                } else if (button == "Open") {
+                    openFile();
+                } else if (button == "Filter") {
+                    // TODO: Implement filter functionality
+                }
             }
         }
         pos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+}
+
+void ImGuiGameList::drawLoadingStatus() {
+    if (!isLoading_) return;
+    ImGui::Indent(10.0f);
+    ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
+    ImGui::Text("Games loaded: %zu", gamesLoaded_.load());
+    ImGui::Unindent(10.0f);
+}
+
+void ImGuiGameList::openFile() {
+    auto selectedFiles = OsDialogs::openFileDialog(false);
+    if (!selectedFiles.empty()) {
+        // Start loading in background thread
+        isLoading_ = true;
+        gamesLoaded_ = 0;
+        loadingFileName_ = selectedFiles[0];
+        
+        loadingThread_ = std::thread(&ImGuiGameList::loadFileInBackground, this, selectedFiles[0]);
+    }
+}
+
+void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
+    try {
+        // Clear existing games
+        gameRecordManager_.load(fileName);
+        
+        // For progress indication, we'll simulate loading by counting games
+        const auto& games = gameRecordManager_.getGames();
+        gamesLoaded_ = games.size();
+        
+        // Reset loading state
+        isLoading_ = false;
+        
+        // Show success message
+        SnackbarManager::instance().showSuccess(
+            "Loaded " + std::to_string(games.size()) + " games from " + fileName);
+    } catch (const std::exception& e) {
+        isLoading_ = false;
+        SnackbarManager::instance().showError("Failed to load file: " + std::string(e.what()));
+    }
 }
