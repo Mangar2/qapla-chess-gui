@@ -19,10 +19,13 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/pgn-io.h"
+
+#include <string>
+#include <vector>
+#include <functional>
+
 
 /**
  * @brief Manages a collection of GameRecords loaded from PGN files.
@@ -34,8 +37,9 @@ public:
     /**
      * @brief Loads games from a PGN file using PgnIO.
      * @param fileName Name of the PGN file to load.
+     * @param gameCallback Optional callback function called for each loaded game.
      */
-    void load(const std::string& fileName);
+    void load(const std::string& fileName, std::function<bool(const GameRecord&)> gameCallback = nullptr);
 
     /**
      * @brief Gets the loaded games.
@@ -48,6 +52,13 @@ public:
      * @return Const reference to the vector of stream positions.
      */
     const std::vector<std::streampos>& getGamePositions() const { return pgnIO_.getGamePositions(); }
+
+    /**
+     * @brief Gets the most common PGN header tag names present in all loaded games.
+     * @param topN Number of top tags to return (default: 10).
+     * @return Vector of pairs containing tag name and occurrence count, sorted by count descending.
+     */
+    std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
 
 private:
     std::vector<GameRecord> games_;  // Loaded game records

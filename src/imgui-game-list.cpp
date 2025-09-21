@@ -21,12 +21,25 @@
 #include "imgui-button.h"
 #include "snackbar.h"
 #include "os-dialogs.h"
+#include "qapla-tester/game-result.h"
+
 #include <fstream>
 #include <sstream>
+#include <set>
 
 using namespace QaplaWindows;
 
+ImGuiGameList::ImGuiGameList()
+{
+}
+
 ImGuiGameList::~ImGuiGameList() {
+    // Cancel any ongoing operation before joining
+    OperationState currentState = operationState_.load();
+    if (currentState == OperationState::Loading) {
+        operationState_.store(OperationState::Cancelling);
+    }
+    
     if (loadingThread_.joinable()) {
         loadingThread_.join();
     }
@@ -35,6 +48,7 @@ ImGuiGameList::~ImGuiGameList() {
 void ImGuiGameList::draw() {
     drawButtons();
     drawLoadingStatus();
+    drawGameTable();
 }
 
 void ImGuiGameList::drawButtons() {
@@ -51,11 +65,20 @@ void ImGuiGameList::drawButtons() {
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
     for (const std::string& button : buttons) {
+        auto state = QaplaButton::ButtonState::Normal;
+        std::string text = button;
         ImGui::SetCursorScreenPos(pos);
-        auto state = isLoading_ ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
+        if (button == "Open") {
+            bool isLoading = operationState_.load() == OperationState::Loading;
+            state = isLoading ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal;
+            text = isLoading ? "Stop" : "Open";
+        } else {
+            bool isLoading = operationState_.load() == OperationState::Loading;
+            state = isLoading ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
+        }
         
         if (QaplaButton::drawIconButton(
-                button, button, buttonSize, state, 
+                button, text, buttonSize, state,
                 [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             if (button == "Save") {
                 QaplaButton::drawSave(drawList, topLeft, size, state);
@@ -64,14 +87,20 @@ void ImGuiGameList::drawButtons() {
             }
             // TODO: Implement icons for Save As, Filter
         })) {
-            // Handle button clicks - only if not loading
-            if (!isLoading_) {
+            // Handle button clicks
+            bool isLoading = operationState_.load() == OperationState::Loading;
+            if (button == "Open") {
+                if (isLoading) {
+                    // Stop loading
+                    operationState_.store(OperationState::Cancelling);
+                } else {
+                    openFile();
+                }
+            } else if (!isLoading) {
                 if (button == "Save") {
                     SnackbarManager::instance().showNote("Save button clicked - functionality not yet implemented");
                 } else if (button == "Save As") {
                     // TODO: Implement save as functionality
-                } else if (button == "Open") {
-                    openFile();
                 } else if (button == "Filter") {
                     // TODO: Implement filter functionality
                 }
@@ -84,18 +113,103 @@ void ImGuiGameList::drawButtons() {
 }
 
 void ImGuiGameList::drawLoadingStatus() {
-    if (!isLoading_) return;
+    OperationState state = operationState_.load();
+    if (state == OperationState::Idle) return;
+    
     ImGui::Indent(10.0f);
-    ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
+    if (state == OperationState::Cancelling) {
+        ImGui::Text("Cancelling loading from %s...", loadingFileName_.c_str());
+    } else {
+        ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
+    }
     ImGui::Text("Games loaded: %zu", gamesLoaded_.load());
     ImGui::Unindent(10.0f);
+}
+
+void ImGuiGameList::createTable() {
+    const auto& games = gameRecordManager_.getGames();
+    if (games.empty()) return;
+
+    std::lock_guard<std::mutex> lock(gameTableMutex_);
+
+    auto commonTagPairs = gameRecordManager_.getMostCommonTags(10); 
+    std::vector<std::string> commonTags;
+    for (const auto& pair : commonTagPairs) {
+        commonTags.push_back(pair.first);
+    }
+
+    // Define fixed columns
+    std::vector<ImGuiTable::ColumnDef> columns = {
+        {"White", ImGuiTableColumnFlags_WidthFixed, 120.0f},
+        {"Black", ImGuiTableColumnFlags_WidthFixed, 120.0f},
+        {"Result", ImGuiTableColumnFlags_WidthFixed, 80.0f},
+        {"PlyCount", ImGuiTableColumnFlags_WidthFixed, 65.0f, true}
+    };
+
+    auto knownTags = std::set<std::string>{"White", "Black", "Result", "PlyCount"};
+
+    // Add common tag columns
+    for (const auto& tag : commonTags) {
+        if (knownTags.find(tag) == knownTags.end()) { // Skip already included columns
+            columns.push_back({tag, ImGuiTableColumnFlags_WidthFixed, 100.0f});
+        }
+    }
+
+    // Initialize table with columns
+    gameTable_ = ImGuiTable("GameListTable",
+        ImGuiTableFlags_Borders | 
+        ImGuiTableFlags_RowBg | 
+        ImGuiTableFlags_ScrollY | 
+        ImGuiTableFlags_ScrollX |
+        ImGuiTableFlags_Sortable,
+        columns);
+    gameTable_.setClickable(true);
+
+    // Fill table with game data
+    for (const auto& game : games) {
+        const std::map<std::string, std::string>& tags = game.getTags();
+        
+        // Get fixed column data
+        std::string white = tags.count("White") ? tags.at("White") : "";
+        std::string black = tags.count("Black") ? tags.at("Black") : "";
+        
+        auto [cause, result] = game.getGameResult();
+        std::string resultStr;
+        switch (result) {
+            case GameResult::WhiteWins: resultStr = "1-0"; break;
+            case GameResult::BlackWins: resultStr = "0-1"; break;
+            case GameResult::Draw: resultStr = "1/2-1/2"; break;
+            case GameResult::Unterminated: resultStr = "*"; break;
+        }
+        
+        std::string moves = std::to_string(game.history().size());
+        
+        // Start building row data
+        std::vector<std::string> rowData = {white, black, resultStr, moves};
+        
+        for (const std::string& tag : commonTags) {
+            // Only add if not already included
+            if (knownTags.find(tag) == knownTags.end()) { 
+                auto it = tags.find(tag);
+                std::string tagValue = (it != tags.end()) ? it->second : "";
+                rowData.push_back(tagValue);
+            }
+        }
+        
+        gameTable_.push(rowData);
+    }
 }
 
 void ImGuiGameList::openFile() {
     auto selectedFiles = OsDialogs::openFileDialog(false);
     if (!selectedFiles.empty()) {
+        // Wait for any previous thread to finish
+        if (loadingThread_.joinable()) {
+            loadingThread_.join();
+        }
+        
         // Start loading in background thread
-        isLoading_ = true;
+        operationState_.store(OperationState::Loading);
         gamesLoaded_ = 0;
         loadingFileName_ = selectedFiles[0];
         
@@ -105,21 +219,45 @@ void ImGuiGameList::openFile() {
 
 void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
     try {
-        // Clear existing games
-        gameRecordManager_.load(fileName);
+        gamesLoaded_ = 0;
+
+        gameRecordManager_.load(fileName, [&](const GameRecord&) {
+            gamesLoaded_++;
+            return operationState_.load() != OperationState::Cancelling; 
+        });
         
-        // For progress indication, we'll simulate loading by counting games
+        if (operationState_.load() == OperationState::Cancelling) {
+            operationState_.store(OperationState::Idle);
+            SnackbarManager::instance().showNote("Loading cancelled for " + fileName);
+            return;
+        }
+        
         const auto& games = gameRecordManager_.getGames();
         gamesLoaded_ = games.size();
         
-        // Reset loading state
-        isLoading_ = false;
+        // Create table with loaded data
+        createTable();
         
-        // Show success message
+        operationState_.store(OperationState::Idle);
+        
         SnackbarManager::instance().showSuccess(
             "Loaded " + std::to_string(games.size()) + " games from " + fileName);
     } catch (const std::exception& e) {
-        isLoading_ = false;
+        operationState_.store(OperationState::Idle);
         SnackbarManager::instance().showError("Failed to load file: " + std::string(e.what()));
+    }
+}
+
+void ImGuiGameList::drawGameTable() {
+    const auto& games = gameRecordManager_.getGames();
+    if (games.empty()) return;
+
+    auto size = ImGui::GetContentRegionAvail();
+
+    // Only draw if we can acquire the lock without blocking
+    if (gameTableMutex_.try_lock()) {
+        std::lock_guard<std::mutex> lock(gameTableMutex_, std::adopt_lock);
+        
+        gameTable_.draw(ImVec2(0, size.y)); 
     }
 }

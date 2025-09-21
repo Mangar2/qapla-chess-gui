@@ -19,13 +19,15 @@
 
 #pragma once
 
+#include "move-record.h"
+#include "game-record.h"
+
 #include <string>
 #include <vector>
 #include <mutex>
 #include <fstream>
 #include <optional>
-#include "move-record.h"
-#include "game-record.h"
+#include <functional>
 
 /**
  * @brief Thread-safe PGN input/output handler.
@@ -76,12 +78,16 @@ public:
     void saveGameToStream(std::ostream& out, const GameRecord& game);
 
     /**
-     * @brief Loads all games from a PGN file.
+     * @brief Loads games from a PGN file.
      * @param fileName Name of the PGN file to load from.
      * @param loadComments Whether to parse move comments or skip them for performance.
+     * @param gameCallback Optional callback function called for each loaded game. 
+     *                     Receives the GameRecord and returns true to continue loading, false to stop.
+     *                     If nullptr, no callback is called.
      * @return Vector of parsed GameRecord instances.
      */
-    std::vector<GameRecord> loadGames(const std::string& fileName, bool loadComments = true);
+    std::vector<GameRecord> loadGames(const std::string& fileName, bool loadComments = true,
+                                     std::function<bool(const GameRecord&)> gameCallback = nullptr);
 
     /**
      * @brief Gets the positions of games in the last loaded file.

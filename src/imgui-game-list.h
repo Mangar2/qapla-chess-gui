@@ -21,18 +21,31 @@
 
 #include "embedded-window.h"
 #include "game-record-manager.h"
+#include "imgui-table.h"
 #include <thread>
 #include <atomic>
 #include <string>
+#include <mutex>
 
 namespace QaplaWindows {
+
+/**
+ * @brief State for background operations.
+ */
+enum class OperationState {
+    Idle,       ///< No operation in progress
+    Loading,    ///< Currently loading
+    Cancelling, ///< Operation is being cancelled
+    Saving,     ///< Currently saving (future use)
+    Filtering   ///< Currently filtering (future use)
+};
 
 /**
  * @brief ImGui window for displaying PGN game lists.
  */
 class ImGuiGameList : public EmbeddedWindow {
 public:
-    ImGuiGameList() = default;
+    ImGuiGameList();
     ~ImGuiGameList();
 
     /**
@@ -52,6 +65,16 @@ private:
     void drawLoadingStatus();
 
     /**
+     * @brief Creates and fills the game table with loaded data.
+     */
+    void createTable();
+
+    /**
+     * @brief Draws the game table if games are loaded.
+     */
+    void drawGameTable();
+
+    /**
      * @brief Opens a file dialog and loads the selected PGN file in a background thread.
      */
     void openFile();
@@ -67,9 +90,9 @@ private:
     GameRecordManager gameRecordManager_;
 
     /**
-     * @brief Loading state.
+     * @brief Current operation state.
      */
-    std::atomic<bool> isLoading_{false};
+    std::atomic<OperationState> operationState_{OperationState::Idle};
 
     /**
      * @brief Number of games loaded so far.
@@ -85,6 +108,16 @@ private:
      * @brief Name of the file being loaded.
      */
     std::string loadingFileName_;
+
+    /**
+     * @brief Table for displaying game data.
+     */
+    ImGuiTable gameTable_;
+
+    /**
+     * @brief Mutex for synchronizing access to the game table.
+     */
+    std::mutex gameTableMutex_;
 };
 
 } // namespace QaplaWindows

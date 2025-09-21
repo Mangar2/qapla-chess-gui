@@ -18,7 +18,32 @@
  */
 
 #include "game-record-manager.h"
+#include <algorithm>
 
-void GameRecordManager::load(const std::string& fileName) {
-    games_ = pgnIO_.loadGames(fileName, false);  // Load without comments
+void GameRecordManager::load(const std::string& fileName, std::function<bool(const GameRecord&)> gameCallback) {
+    games_ = pgnIO_.loadGames(fileName, false, gameCallback);  // Load without comments
+}
+
+std::vector<std::pair<std::string, size_t>> GameRecordManager::getMostCommonTags(size_t topN) const {
+    std::map<std::string, size_t> tagCounts;
+    
+    // Count occurrences of each tag across all games
+    for (const auto& game : games_) {
+        const auto& tags = game.getTags();
+        for (const auto& tag : tags) {
+            tagCounts[tag.first]++;
+        }
+    }
+    
+    // Convert to vector of pairs and sort by count descending
+    std::vector<std::pair<std::string, size_t>> result(tagCounts.begin(), tagCounts.end());
+    std::sort(result.begin(), result.end(), 
+              [](const auto& a, const auto& b) { return a.second > b.second; });
+    
+    // Return top N
+    if (result.size() > topN) {
+        result.resize(topN);
+    }
+    
+    return result;
 }

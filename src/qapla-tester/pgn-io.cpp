@@ -539,7 +539,8 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
     return { moves, result };
 }
 
-std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadComments) {
+std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadComments,
+                                         std::function<bool(const GameRecord&)> gameCallback) {
     std::vector<GameRecord> games;
     std::ifstream inFile(fileName);
     if (!inFile) return games;
@@ -560,6 +561,9 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
             if (inMoveSection) {
                 finalizeParsedTags(currentGame);
                 games.push_back(std::move(currentGame));
+                if (gameCallback && !gameCallback(games.back())) {
+                    return games; // Stop loading if callback returns false
+                }
                 currentGame = GameRecord();
                 inMoveSection = false;
             }
@@ -583,6 +587,9 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
     if (inMoveSection || !currentGame.getTags().empty()) {
         finalizeParsedTags(currentGame);
         games.push_back(std::move(currentGame));
+        if (gameCallback) {
+            gameCallback(games.back()); // Don't stop at the end
+        }
     }
 
     return games;
