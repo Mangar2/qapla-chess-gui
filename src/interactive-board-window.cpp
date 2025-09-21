@@ -35,6 +35,7 @@
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
 #include "imgui-popup.h"
+#include "imgui-game-list.h"
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 #include "board-window.h"
@@ -420,6 +421,9 @@ void InteractiveBoardWindow::pollData()
 {
 	try
 	{
+		if (ImGuiGameList::getSelectedGame()) {
+			setPosition(*ImGuiGameList::getSelectedGame());
+		}
 		if (computeTask_->isStopped()) {
 			imGuiClock_->setStopped(true);
 		}

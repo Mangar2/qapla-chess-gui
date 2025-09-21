@@ -21,6 +21,7 @@
 #include "imgui-button.h"
 #include "snackbar.h"
 #include "os-dialogs.h"
+#include "callback-manager.h"
 #include "qapla-tester/game-result.h"
 
 #include <fstream>
@@ -260,7 +261,9 @@ void ImGuiGameList::drawGameTable() {
         
         auto clickedIndex = gameTable_.draw(ImVec2(0, size.y)); 
         if (clickedIndex) {
-            const auto& game = gameRecordManager_.getGame(*clickedIndex);
+            selectedGame_ = gameRecordManager_.getGame(*clickedIndex);
+        } else {
+            selectedGame_ = std::nullopt;
         }
     }
 }

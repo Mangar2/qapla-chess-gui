@@ -294,6 +294,7 @@ namespace QaplaWindows
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;
 
 		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+		std::unique_ptr<Callback::UnregisterHandle> gameUpdateHandle_;
 
 		std::vector<EngineConfig> engineConfigs_;
 

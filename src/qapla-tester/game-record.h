@@ -83,6 +83,7 @@ public:
 	void setFen(const std::string &fen) {
 		changeTracker_.trackModification();
 		startFen_ = fen;
+		startPos_ = false;
 	}
 
 	/** Adds a move at the current ply position, overwriting any future moves. */

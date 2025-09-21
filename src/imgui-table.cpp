@@ -194,6 +194,7 @@ namespace QaplaWindows {
             float rowHeight = ImGui::GetTextLineHeightWithSpacing();
             tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
         }
+        std::optional<size_t> keyboardRow;
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();
@@ -224,17 +225,15 @@ namespace QaplaWindows {
                     drawRow(actualRow);
                 }
             }
+            keyboardRow = checkKeyboard();
             ImGui::EndTable();
         }
         
-        // Handle keyboard navigation 
-        auto keyboardRow = checkKeyboard();
-
         return (keyboardRow) ? *keyboardRow : clickedRow;
     }
 
     std::optional<size_t> ImGuiTable::checkKeyboard() const {
-        if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+        if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_None)) {
             return std::nullopt;
         }
         

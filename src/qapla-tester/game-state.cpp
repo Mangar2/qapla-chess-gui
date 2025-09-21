@@ -297,9 +297,10 @@ void GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t
 		maxPly = std::min(maxPly, *plies);
 	}
 	for (uint32_t i = 0; i < maxPly; ++i) {
-		auto parsed = stringToMove(moves[i].lan, false);
+		std::string moveStr = moves[i].lan.empty() ? moves[i].san : moves[i].lan;
+		auto parsed = stringToMove(moveStr, false);
 		if (parsed.isEmpty()) {
-			Logger::testLogger().log("Illegal move in game record: " + moves[i].lan + " pos: " + getFen(),
+			Logger::testLogger().log("Illegal move in game record: " + moveStr + " pos: " + getFen(),
 				TraceLevel::error);
 			return;
 		}

@@ -570,6 +570,9 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
             gamePositions_.push_back(currentPos);
             auto [key, value] = parseTag(tokens);
             if (!key.empty()) currentGame.setTag(key, value);
+            if (QaplaHelpers::to_lowercase(key) == "fen") {
+                currentGame.setFen(value);
+            }
             continue;
         }
 

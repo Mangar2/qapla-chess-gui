@@ -53,6 +53,15 @@ public:
      */
     void draw() override;
 
+    /**
+     * @brief Get the Selected Game object
+     * 
+     * @return std::optional<GameRecord> 
+     */
+    static std::optional<GameRecord> getSelectedGame() {
+        return selectedGame_;
+    }
+
 private:
     /**
      * @brief Draws the buttons for the game list.
@@ -118,6 +127,8 @@ private:
      * @brief Mutex for synchronizing access to the game table.
      */
     std::mutex gameTableMutex_;
+
+    inline static std::optional<GameRecord> selectedGame_;
 };
 
 } // namespace QaplaWindows
