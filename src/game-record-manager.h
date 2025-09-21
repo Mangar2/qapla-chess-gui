@@ -60,6 +60,14 @@ public:
      */
     std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
 
+    /**
+     * @brief Gets a specific game by index.
+     * @param index Index of the game to retrieve.
+     * @return Const reference to the GameRecord at the specified index.
+     * @throws std::out_of_range if index is invalid.
+     */
+    const GameRecord& getGame(size_t index) const { return games_.at(index); }
+
 private:
     std::vector<GameRecord> games_;  // Loaded game records
     PgnIO pgnIO_;  // PGN I/O handler

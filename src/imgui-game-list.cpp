@@ -258,6 +258,9 @@ void ImGuiGameList::drawGameTable() {
     if (gameTableMutex_.try_lock()) {
         std::lock_guard<std::mutex> lock(gameTableMutex_, std::adopt_lock);
         
-        gameTable_.draw(ImVec2(0, size.y)); 
+        auto clickedIndex = gameTable_.draw(ImVec2(0, size.y)); 
+        if (clickedIndex) {
+            const auto& game = gameRecordManager_.getGame(*clickedIndex);
+        }
     }
 }

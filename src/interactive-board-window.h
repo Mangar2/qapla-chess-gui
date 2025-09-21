@@ -106,7 +106,11 @@ namespace QaplaWindows
 		 */
 		void setPosition(bool startPosition, const std::string &fen = "");
 
-
+		/**
+		 * @brief Sets the position of the game from a GameRecord.
+		 * @param gameRecord The GameRecord containing the position to set.
+		 */
+		void setPosition(const GameRecord &gameRecord);
 
 		const EpdData &epdData() const
 		{

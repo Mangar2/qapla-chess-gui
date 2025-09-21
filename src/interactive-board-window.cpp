@@ -194,7 +194,7 @@ void InteractiveBoardWindow::draw() {
 		if (pasted) {
 			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
 			if (gameRecord) {
-				computeTask_->setPosition(*gameRecord);
+				setPosition(*gameRecord);
 			}
 		}
 	}
@@ -334,6 +334,11 @@ void InteractiveBoardWindow::doMove(const MoveRecord& move)
 void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &fen)
 {
 	computeTask_->setPosition(startPosition, fen);
+}
+
+void InteractiveBoardWindow::setPosition(const GameRecord &gameRecord)
+{
+	computeTask_->setPosition(gameRecord);
 }
 
 void InteractiveBoardWindow::stop()

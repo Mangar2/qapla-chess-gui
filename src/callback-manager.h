@@ -27,43 +27,19 @@
 #include <mutex>
 #include <iostream>
 
-/**
- * @brief Class for managing parameterless callbacks with automatic unregistration.
- * 
- * This class provides a comprehensive callback management system where callbacks
- * can be added to a list with automatic cleanup capabilities. Each callback
- * receives a unique ID and returns an UnregisterHandle for RAII-style cleanup.
- * Access is provided through a static instance for global usage.
- * 
- * Features:
- * - Unique ID assignment to each callback
- * - RAII-style automatic unregistration via UnregisterHandle
- * - Manual unregistration by callback ID
- * - Static instance access via instance() method
- * - Thread-safe operations with atomic ID generation
- * - Exception-safe callback invocation
- * 
- * Usage example:
- * @code
- * // Register a callback with automatic cleanup
- * auto handle = Manager::instance().registerCallback([]() {
- *     std::cout << "Callback executed!" << std::endl;
- * });
- * 
- * // Execute all callbacks
- * Manager::instance().invokeAll();
- * 
- * // Callback will be automatically unregistered when handle goes out of scope
- * // Or manually: handle->unregister();
- * @endcode
- */
+#include "qapla-tester/game-record.h"
 
 namespace QaplaWindows {
 
 namespace Callback {
 
-// Forward declaration
-class Manager;
+class Unregistration {
+public:
+    using CallbackId = size_t;
+
+    virtual ~Unregistration() = default;
+    virtual bool unregister(CallbackId id) = 0;
+};
 
 /**
  * @brief RAII handle for automatically unregistering callbacks.
@@ -73,7 +49,7 @@ class Manager;
  */
 class UnregisterHandle {
 public:
-    UnregisterHandle(Manager* manager, size_t callbackId);
+    UnregisterHandle(Unregistration* unregistration, Unregistration::CallbackId callbackId);
     ~UnregisterHandle();
     
     // Move constructor and assignment
@@ -91,14 +67,24 @@ private:
      */
     void unregister();
 
-    Manager* manager_;
-    size_t callbackId_;
+    Unregistration* unregisterable_;
+    Unregistration::CallbackId callbackId_;
 };
 
-class Manager { 
+/**
+ * @brief Manager class for handling callbacks with parameters.
+ * 
+ * This class manages a list of callbacks that can take parameters.
+ * Callbacks can be registered and unregistered, and all registered
+ * callbacks can be invoked with the provided arguments.
+ * 
+ * @tparam Args The types of the arguments that the callbacks will accept.
+ */
+
+template <typename... Args>
+class Manager : public Unregistration {
 public:
-    using Callback = std::function<void()>;
-    using CallbackId = size_t;
+    using Callback = std::function<void(Args...)>;
 
 private:
     std::unordered_map<CallbackId, Callback> callbacks_;
@@ -110,21 +96,45 @@ public:
     /**
      * @brief Construct a new Callback Manager object   
      */
-    Manager();
+    Manager() : nextId_(1) {
+    };
+
+    ~Manager() override = default;
 
     /**
      * @brief Register a callback to the list.
      * @param callback The parameterless function/lambda to be registered
      * @return A unique_ptr to an UnregisterHandle for automatic cleanup
      */
-    std::unique_ptr<UnregisterHandle> registerCallback(Callback callback);
+    std::unique_ptr<UnregisterHandle> registerCallback(Callback callback) {
+        if (!callback) {
+            return nullptr;
+        }
+
+        CallbackId id = nextId_.fetch_add(1);
+
+        {
+            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            callbacks_[id] = std::move(callback);
+        }
+
+        return std::make_unique<UnregisterHandle>(this, id);
+    }
 
     /**
      * @brief Manually unregister a callback by its ID.
      * @param id The ID of the callback to unregister
      * @return true if the callback was found and removed, false otherwise
      */
-    bool unregisterCallback(CallbackId id);
+    bool unregister(CallbackId id) override {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        auto it = callbacks_.find(id);
+        if (it != callbacks_.end()) {
+            callbacks_.erase(it);
+            return true;
+        }
+        return false;
+    }
 
     /**
      * @brief Invoke all registered callbacks.
@@ -133,19 +143,52 @@ public:
      * If a callback throws an exception, it will be caught and
      * the remaining callbacks will still be executed.
      */
-    void invokeAll();
+    void invokeAll(Args... args) {
+        // Create a copy of the callbacks to avoid issues with callbacks that
+        // might modify the callbacks map during execution
+        std::vector<Callback> callbacksCopy;
+
+        {
+            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            callbacksCopy.reserve(callbacks_.size());
+
+            for (const auto& pair : callbacks_) {
+                if (pair.second) {
+                    callbacksCopy.push_back(pair.second);
+                }
+            }
+        }
+
+        // Execute all callbacks without holding the lock
+        for (const auto& callback : callbacksCopy) {
+            try {
+                callback(args...);
+            }
+            catch (...) {
+                // Catch any exceptions to ensure all callbacks are called
+                // In a production environment, you might want to log this
+                // or handle it differently based on your needs
+            }
+        }
+    }
 
     /**
      * @brief Get the number of registered callbacks.
      * @return Number of callbacks in the list
      */
-    size_t size() const;
+    size_t size() const {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        return callbacks_.size();
+    }
 
     /**
      * @brief Check if there are any registered callbacks.
      * @return true if no callbacks are registered, false otherwise
      */
-    bool empty() const;
+    bool empty() const {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        return callbacks_.empty();
+    }
 
     /**
      * @brief Clear all registered callbacks (optional utility method).
@@ -154,27 +197,26 @@ public:
      * specified that deletion is not needed. This can be useful for
      * cleanup or testing scenarios.
      */
-    void clear();
+    void clear() {
+        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        callbacks_.clear();
+    }
 };
 
 } // namespace Callback
 
 class StaticCallbacks {
 public:
-    static Callback::Manager& poll() {
-        static Callback::Manager instance;
+    static Callback::Manager<>& poll() {
+        static Callback::Manager<> instance;
         return instance;
     }    
 
-    static Callback::Manager& save() {
-        static Callback::Manager instance;
+    static Callback::Manager<const GameRecord&>& gameUpdated() {
+        static Callback::Manager<const GameRecord&> instance;
         return instance;
     }
-
-    static Callback::Manager& read() {
-        static Callback::Manager instance;
-        return instance;
-    }
+  
 };
 
 } // namespace QaplaWindows
