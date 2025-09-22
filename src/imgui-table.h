@@ -210,6 +210,17 @@ namespace QaplaWindows {
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
+
+        /**
+         * @brief Checks for keyboard input and returns the index of the row to focus.
+         * 
+         * Note it is important that this function returns std::nullopt if no key was pressed.
+         * Returning an index causes the selection of a table row, and thus maybe loading a
+         * new Game.
+         * 
+         * @param visibleRows 
+         * @return std::optional<size_t> index to focus IF a key was pressed
+         */
         std::optional<size_t> checkKeyboard(size_t visibleRows) const;
         void setupTable() const;
         void handleSorting() const;

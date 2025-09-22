@@ -144,7 +144,7 @@ namespace QaplaWindows {
         }
 
         // Row far away → scroll to center
-        if (rowBottom + 1.0f < visibleTop || rowTop - 1.0f > visibleBottom) {
+        if (rowBottom + windowHeight < visibleTop || rowTop - windowHeight > visibleBottom) {
             return rowTop - (windowHeight * 0.5f) + (rowHeight * 0.5f);
         }
         
@@ -266,6 +266,8 @@ namespace QaplaWindows {
             indexManager_.navigateHome();
         } else if (ImGui::IsKeyPressed(ImGuiKey_End, true)) {
             indexManager_.navigateEnd();
+        } else {
+            return std::nullopt;
         }
         
         return indexManager_.getCurrentRow();
