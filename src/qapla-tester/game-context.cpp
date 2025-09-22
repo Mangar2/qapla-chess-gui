@@ -193,9 +193,10 @@ void GameContext::setNextMoveIndex(uint32_t moveIndex)
         {
             gameRecord_.setNextMoveIndex(moveIndex);
         }
-        else
-        {
-            throw AppError::make("GameContext::setMoveIndex: moveIndex out of range");
+        else {
+            // We ignore moveIndex out of bounds as this may happen e.g. when selecting the game result
+            // in the move list view.
+            return;
         }
     }
 

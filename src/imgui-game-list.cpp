@@ -199,6 +199,8 @@ void ImGuiGameList::createTable() {
         
         gameTable_.push(rowData);
     }
+    gameTable_.setAutoScroll(true);
+
 }
 
 void ImGuiGameList::openFile() {
@@ -261,6 +263,7 @@ void ImGuiGameList::drawGameTable() {
         
         auto clickedIndex = gameTable_.draw(ImVec2(0, size.y)); 
         if (clickedIndex) {
+            gameTable_.setCurrentRow(*clickedIndex);
             selectedGame_ = gameRecordManager_.getGame(*clickedIndex);
         } else {
             selectedGame_ = std::nullopt;

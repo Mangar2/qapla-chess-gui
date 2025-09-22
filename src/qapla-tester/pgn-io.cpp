@@ -306,7 +306,7 @@ std::vector<std::string> PgnIO::tokenize(const std::string& line) {
         }
 
         // Single-character self-delimiting tokens
-        if (std::string{ "{}[]().*<>" }.find(c) != std::string::npos) {
+        if (std::string{ "/{}[]().*<>" }.find(c) != std::string::npos) {
             tokens.emplace_back(1, c);
             ++i;
             continue; 
@@ -527,6 +527,17 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
         if (tok == "0-1") return { moves, GameResult::BlackWins };
         if (tok == "1/2-1/2") return { moves, GameResult::Draw };
         if (tok == "*") return { moves, GameResult::Unterminated };
+        // Check for spaced-out results
+
+        if (tok == "1") {
+            auto test = 0;
+        }
+        if (pos + 2 < tokens.size()) {
+            if (tok == "1" && tokens[pos+1] == "-" && tokens[pos+2] == "0") return { moves, GameResult::WhiteWins };
+            if (tok == "0" && tokens[pos+1] == "-" && tokens[pos+2] == "1") return { moves, GameResult::BlackWins };
+            if (tok == "1" && tokens[pos+1] == "/" && (tokens[pos+2] == "2-1" || tokens[pos+2] == "2")) 
+                return { moves, GameResult::Draw };
+        }
 
         auto [move, nextPos] = parseMove(tokens, pos, loadComments);
         if (!move.san.empty()) {

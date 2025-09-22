@@ -127,11 +127,14 @@ namespace QaplaWindows {
     static std::optional<float> calculateOptimalScrollPosition(size_t rowIndex) {
         float scrollY = ImGui::GetScrollY();
         float windowHeight = ImGui::GetWindowHeight();
+        if (ImGui::GetScrollMaxX() > 0) {
+            windowHeight -= ImGui::GetStyle().ScrollbarSize;
+        }
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
         
         float rowTop = (rowIndex + 1) * rowHeight; // +1 for header row
         float rowBottom = rowTop + rowHeight;
-        float visibleTop = scrollY + rowHeight; // +rowHeight to account for header
+        float visibleTop = scrollY + rowHeight; 
         float visibleBottom = scrollY + windowHeight;
         
         // Row visible, no scroll needed
@@ -148,6 +151,7 @@ namespace QaplaWindows {
         if (rowBottom < visibleBottom) {
             return rowTop - rowHeight;
         }
+
         // Row too far down → scroll to bottom
         return rowBottom - windowHeight;
     }
@@ -244,8 +248,13 @@ namespace QaplaWindows {
         lastInputFrame_ = currentFrame;
        
         if (currentRow_ && ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
-            if (*currentRow_ > 0) {
-                return *currentRow_ - 1;  // Navigate to previous row
+            // Find the current sorted index
+            size_t currentSortedIndex = 0;
+            for (; currentSortedIndex < sortedIndices_.size(); ++currentSortedIndex) {
+                if (sortedIndices_[currentSortedIndex] == *currentRow_) break;
+            }
+            if (currentSortedIndex > 0) {
+                return sortedIndices_[currentSortedIndex - 1];  // Navigate to previous in sorted order
             } else if (allowNavigateToZero_) {
                 return SIZE_MAX;  // Special value indicating "navigate to zero"
             }
@@ -253,9 +262,16 @@ namespace QaplaWindows {
         
         if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
             if (!currentRow_) {
-                return 0;  // Navigate to first row from "zero" position
-            } else if (*currentRow_ + 1 < rows_.size()) {
-                return *currentRow_ + 1;  // Navigate to next row
+                return sortedIndices_.empty() ? 0 : sortedIndices_[0];  // Navigate to first in sorted order
+            } else {
+                // Find the current sorted index
+                size_t currentSortedIndex = 0;
+                for (; currentSortedIndex < sortedIndices_.size(); ++currentSortedIndex) {
+                    if (sortedIndices_[currentSortedIndex] == *currentRow_) break;
+                }
+                if (currentSortedIndex + 1 < sortedIndices_.size()) {
+                    return sortedIndices_[currentSortedIndex + 1];  // Navigate to next in sorted order
+                }
             }
         }
         
