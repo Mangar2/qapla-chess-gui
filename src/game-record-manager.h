@@ -61,12 +61,19 @@ public:
     std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
 
     /**
-     * @brief Gets a specific game by index.
-     * @param index Index of the game to retrieve.
-     * @return Const reference to the GameRecord at the specified index.
-     * @throws std::out_of_range if index is invalid.
+     * @brief Loads game positions from a PGN file without parsing the games.
+     * @param fileName Name of the PGN file to load positions from.
+     * @return Number of games found in the file.
      */
-    const GameRecord& getGame(size_t index) const { return games_.at(index); }
+    size_t loadPositions(const std::string& fileName);
+
+    /**
+     * @brief Loads a specific game by index from the previously loaded file.
+     * @param index Index of the game to load.
+     * @param loadComments Whether to parse move comments.
+     * @return Optional GameRecord if successful.
+     */
+    std::optional<GameRecord> loadGameByIndex(size_t index, bool loadComments = true);
 
 private:
     std::vector<GameRecord> games_;  // Loaded game records

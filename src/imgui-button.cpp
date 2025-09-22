@@ -22,6 +22,7 @@
 #include <functional>
 #include <string>
 #include <imgui.h>
+#include <math.h>
 
 namespace QaplaButton {
 
@@ -518,6 +519,31 @@ namespace QaplaButton {
                 ImVec2(docBottomRight.x - fold + 1, docTopLeft.y + i - 1), 
                 ImVec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0f);
         }
+    }
+
+    void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        constexpr float borderThickness = 2.0f;
+        constexpr float triangleHeight = 10.0f;
+        constexpr float triangleBaseWidth = 21.0f;
+        constexpr float spoutThickness = 4.0f;
+        
+        // Draw funnel shape
+        ImVec2 triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0f);
+        ImVec2 triangleTopRight = ImVec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
+        ImVec2 triangleMiddle = ImVec2(
+            (triangleTopLeft.x + triangleTopRight.x) / 2.0f, 
+            triangleTopLeft.y + triangleHeight);
+
+        list->AddLine(triangleTopLeft, triangleTopRight, fgColor, borderThickness);
+        list->AddLine(triangleTopLeft, triangleMiddle, fgColor, borderThickness);
+        list->AddLine(triangleTopRight, triangleMiddle, fgColor, borderThickness);
+        float rectLeft = std::trunc(triangleMiddle.x - spoutThickness / 2) + 1.0f;
+        list->AddRectFilled(
+            ImVec2(rectLeft, triangleMiddle.y), 
+            ImVec2(rectLeft + spoutThickness, topLeft.y + size.y - BORDER), 
+            fgColor);
+
     }
 
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,

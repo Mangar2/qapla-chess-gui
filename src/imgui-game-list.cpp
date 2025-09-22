@@ -61,7 +61,7 @@ void ImGuiGameList::drawButtons() {
 
     constexpr ImVec2 buttonSize = {25.0f, 25.0f};
 
-    const std::vector<std::string> buttons = {"Open", "Save", "Save As", "Filter"};
+    const std::vector<std::string> buttons = {"Open", "Save As", "Filter"};
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
@@ -81,12 +81,13 @@ void ImGuiGameList::drawButtons() {
         if (QaplaButton::drawIconButton(
                 button, text, buttonSize, state,
                 [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-            if (button == "Save") {
-                QaplaButton::drawSave(drawList, topLeft, size, state);
-            } else if (button == "Open") {
+            if (button == "Open") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
+            } else if (button == "Filter") {
+                QaplaButton::drawFilter(drawList, topLeft, size, state);
+            } else if (button == "Save As") {
+                QaplaButton::drawSave(drawList, topLeft, size, state);
             }
-            // TODO: Implement icons for Save As, Filter
         })) {
             // Handle button clicks
             bool isLoading = operationState_.load() == OperationState::Loading;
@@ -98,12 +99,10 @@ void ImGuiGameList::drawButtons() {
                     openFile();
                 }
             } else if (!isLoading) {
-                if (button == "Save") {
-                    SnackbarManager::instance().showNote("Save button clicked - functionality not yet implemented");
-                } else if (button == "Save As") {
-                    // TODO: Implement save as functionality
+                if (button == "Save As") {
+                    SnackbarManager::instance().showNote("Save As button clicked - functionality not yet implemented");
                 } else if (button == "Filter") {
-                    // TODO: Implement filter functionality
+                    SnackbarManager::instance().showNote("Filter button clicked - functionality not yet implemented");
                 }
             }
         }
@@ -264,7 +263,7 @@ void ImGuiGameList::drawGameTable() {
         auto clickedIndex = gameTable_.draw(ImVec2(0, size.y)); 
         if (clickedIndex) {
             gameTable_.setCurrentRow(*clickedIndex);
-            selectedGame_ = gameRecordManager_.getGame(*clickedIndex);
+            selectedGame_ = gameRecordManager_.loadGameByIndex(*clickedIndex);
         } else {
             selectedGame_ = std::nullopt;
         }

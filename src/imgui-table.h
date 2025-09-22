@@ -26,6 +26,8 @@
 #include <optional>
 #include <functional>
 
+#include "table-index-manager.h"
+
 namespace QaplaWindows {
 
     /**
@@ -183,7 +185,7 @@ namespace QaplaWindows {
 		 * @brief Returns the currently selected row index.
          */
         size_t getSelectedRow() {
-            return selectedRow_;
+            return indexManager_.getCurrentRow().value_or(0);
         }
 
         /**
@@ -194,7 +196,7 @@ namespace QaplaWindows {
             if (autoScroll_ && row.has_value()) {
                 scrollToRow_ = row; 
             }
-            currentRow_ = row;
+            indexManager_.setCurrentRow(row.value_or(0));
         }
 
         /**
@@ -208,10 +210,11 @@ namespace QaplaWindows {
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
-        std::optional<size_t> checkKeyboard() const;
+        std::optional<size_t> checkKeyboard(size_t visibleRows) const;
         void setupTable() const;
         void handleSorting() const;
         void tableHeadersRow() const;
+        size_t getCurrentSortedIndex() const;
 
         bool clickable_ = false;
         bool autoScroll_ = false;
@@ -219,8 +222,6 @@ namespace QaplaWindows {
         mutable std::optional<size_t> scrollToRow_;
         mutable int lastInputFrame_ = -1;
         bool isRowClicked(size_t index) const;
-        size_t selectedRow_ = 0;
-        std::optional<size_t> currentRow_;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;
@@ -228,5 +229,6 @@ namespace QaplaWindows {
         mutable std::vector<size_t> sortedIndices_;
         mutable bool needsSort_ = true;
         mutable ImGuiTableSortSpecs* sortSpecs_ = nullptr;
+        mutable TableIndexManager indexManager_;
     };
 }

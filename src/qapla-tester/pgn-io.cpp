@@ -228,25 +228,28 @@ std::optional<GameRecord> PgnIO::loadGameAtIndex(size_t index) {
         return std::nullopt;
     }
 
-    std::ifstream inFile(currentFileName_);
+    std::ifstream inFile(currentFileName_, std::ios::binary);
     if (!inFile) return std::nullopt;
 
-    inFile.seekg(gamePositions_[index]);
+    std::streampos startPos = gamePositions_[index];
+    std::streampos endPos;
 
-    std::string gameString;
-    std::string line;
-
-    while (std::getline(inFile, line)) {
-        auto tokens = tokenize(line);
-        if (!tokens.empty() && tokens[0] == "[") {
-            if (!gameString.empty()) {
-                break;
-            }
-        }
-        gameString += line + "\n";
+    if (index + 1 < gamePositions_.size()) {
+        endPos = gamePositions_[index + 1];
+    } else {
+        // Last game, read to end of file
+        inFile.seekg(0, std::ios::end);
+        endPos = inFile.tellg();
     }
 
-    if (gameString.empty()) return std::nullopt;
+    std::streamsize length = endPos - startPos;
+    if (length <= 0) return std::nullopt;
+
+    inFile.seekg(startPos);
+    std::string gameString(length, '\0');
+    inFile.read(&gameString[0], length);
+
+    if (!inFile) return std::nullopt;
 
     // Parse the game
     GameRecord record = parseGame(gameString);
@@ -343,14 +346,14 @@ std::vector<std::string> PgnIO::tokenize(const std::string& line) {
         }
 
         // Integer or symbol (starts with digit or letter)
-        if (std::isalnum(c)) {
+        if (std::isalnum(c) || c == '_' || c == '+' || c == '-') {
             token.clear();
             token += c;
             ++i;
             while (i < line.size()) {
                 char ch = line[i];
                 if (std::isalnum(ch) || ch == '_' || ch == '+' || ch == '#' ||
-                    ch == '=' || ch == ':' || ch == '-') {
+                    ch == '=' || ch == ':' || ch == '-' || ch == '.') {
                     token += ch;
                     ++i;
                 }
@@ -379,10 +382,24 @@ size_t PgnIO::skipMoveNumber(const std::vector<std::string>& tokens, size_t star
     if (start >= tokens.size()) return start;
 
     const std::string& first = tokens[start];
-    if (!std::all_of(first.begin(), first.end(), ::isdigit)) return start;
+    if (first.empty()) return start;
 
+    // Check if it starts with digits
+    size_t i = 0;
+    while (i < first.size() && std::isdigit(first[i])) {
+        ++i;
+    }
+    if (i == 0) return start; // Doesn't start with digit
+
+    // Now check for dots
+    while (i < first.size() && first[i] == '.') {
+        ++i;
+    }
+    if (i < first.size()) return start; // Extra characters after dots
+
+    // Now skip additional dots in subsequent tokens
     size_t pos = start + 1;
-    while (pos < tokens.size() && tokens[pos] == "." && pos - start <= 3) {
+    while (pos < tokens.size() && tokens[pos] == ".") {
         ++pos;
     }
     return pos;
@@ -461,11 +478,13 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
     while (pos < tokens.size() && tokens[pos] != "}") {
         const std::string& tok = tokens[pos];
 
-        if (tok.size() > 1 && (tok[0] == '+' || tok[0] == '-')) {
-            if (tok[1] == '#') {
-                // Mate score, e.g. +#3 or -#4
+        if (tok.size() > 1 && (tok[0] == '+' || tok[0] == '-' || tok[0] == 'M' || tok[0] == '#')) {
+            if (tok[0] == 'M' || tok[1] == 'M' ||  tok[0] == '#' || tok[1] == '#') {
+                // SEARCH first digit after M or #
+                int i = 0;
+                for (; i < tok.size() && !std::isdigit(tok[i]); i++);
                 try {
-                    move.scoreMate = std::stoi(tok.substr(2)) * (tok[0] == '-' ? -1 : 1);
+                    move.scoreMate = std::stoi(tok.substr(i)) * (tok[0] == '-' ? -1 : 1);
                 }
                 catch (...) {}
             }
@@ -478,10 +497,13 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
                 catch (...) {}
             }
         }
-        else if (tok.size() > 1 && tok[0] == '/') {
+        else if (tok == "/") {
             try {
-                int depth = std::stoi(tok.substr(1));
-                move.depth = static_cast<uint32_t>(depth < 0 ? 0: depth);
+                if (pos + 1 < tokens.size()) {
+                    int depth = std::stoi(tokens[pos + 1]);
+                    move.depth = static_cast<uint32_t>(depth < 0 ? 0 : depth);
+                    ++pos;
+                }
             }
             catch (...) {}
         }
@@ -563,6 +585,8 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
     bool inMoveSection = false;
     std::streampos currentPos;
 
+    gamePositions_.push_back(inFile.tellg());
+
     while ((currentPos = inFile.tellg()), std::getline(inFile, line)) {
         auto tokens = tokenize(line);
         if (tokens.size() == 0) continue;
@@ -577,8 +601,8 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
                 }
                 currentGame = GameRecord();
                 inMoveSection = false;
-            }
-            gamePositions_.push_back(currentPos);
+                gamePositions_.push_back(currentPos);
+            } 
             auto [key, value] = parseTag(tokens);
             if (!key.empty()) currentGame.setTag(key, value);
             if (QaplaHelpers::to_lowercase(key) == "fen") {

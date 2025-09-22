@@ -29,7 +29,8 @@ namespace QaplaWindows {
         const std::vector<ColumnDef>& columns)
         : tableId_(tableId),
         tableFlags_(tableFlags),
-        columns_(columns) {
+        columns_(columns),
+        indexManager_(TableIndexManager::Sorted) {
     }
 
     ImGuiTable::ImGuiTable() = default;
@@ -168,7 +169,8 @@ namespace QaplaWindows {
     }
 
     void ImGuiTable::accentuateCurrentRow(size_t rowIndex) const {
-        if (!currentRow_.has_value() || currentRow_.value() != rowIndex) {
+        auto current = indexManager_.getCurrentRow();
+        if (!current || *current != rowIndex) {
             return;
         }
         auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
@@ -198,10 +200,15 @@ namespace QaplaWindows {
             float rowHeight = ImGui::GetTextLineHeightWithSpacing();
             tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
         }
+        // Calculate visible rows
+        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+        size_t visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
+        if (visibleRows == 0) visibleRows = 1; // Fallback
         std::optional<size_t> keyboardRow;
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();
+            indexManager_.setSortedIndices(sortedIndices_);
             tableHeadersRow();
             if (scrollToRow_) {
                 // Find the sorted index for the row to scroll to
@@ -229,14 +236,14 @@ namespace QaplaWindows {
                     drawRow(actualRow);
                 }
             }
-            keyboardRow = checkKeyboard();
+            keyboardRow = checkKeyboard(visibleRows);
             ImGui::EndTable();
         }
         
         return (keyboardRow) ? *keyboardRow : clickedRow;
     }
 
-    std::optional<size_t> ImGuiTable::checkKeyboard() const {
+    std::optional<size_t> ImGuiTable::checkKeyboard(size_t visibleRows) const {
         if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_None)) {
             return std::nullopt;
         }
@@ -246,36 +253,22 @@ namespace QaplaWindows {
             return std::nullopt;
         }
         lastInputFrame_ = currentFrame;
-       
-        if (currentRow_ && ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
-            // Find the current sorted index
-            size_t currentSortedIndex = 0;
-            for (; currentSortedIndex < sortedIndices_.size(); ++currentSortedIndex) {
-                if (sortedIndices_[currentSortedIndex] == *currentRow_) break;
-            }
-            if (currentSortedIndex > 0) {
-                return sortedIndices_[currentSortedIndex - 1];  // Navigate to previous in sorted order
-            } else if (allowNavigateToZero_) {
-                return SIZE_MAX;  // Special value indicating "navigate to zero"
-            }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
+            indexManager_.navigateUp();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
+            indexManager_.navigateDown();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_PageUp, true)) {
+            indexManager_.navigateUp(visibleRows);
+        } else if (ImGui::IsKeyPressed(ImGuiKey_PageDown, true)) {
+            indexManager_.navigateDown(visibleRows);
+        } else if (ImGui::IsKeyPressed(ImGuiKey_Home, true)) {
+            indexManager_.navigateHome();
+        } else if (ImGui::IsKeyPressed(ImGuiKey_End, true)) {
+            indexManager_.navigateEnd();
         }
         
-        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            if (!currentRow_) {
-                return sortedIndices_.empty() ? 0 : sortedIndices_[0];  // Navigate to first in sorted order
-            } else {
-                // Find the current sorted index
-                size_t currentSortedIndex = 0;
-                for (; currentSortedIndex < sortedIndices_.size(); ++currentSortedIndex) {
-                    if (sortedIndices_[currentSortedIndex] == *currentRow_) break;
-                }
-                if (currentSortedIndex + 1 < sortedIndices_.size()) {
-                    return sortedIndices_[currentSortedIndex + 1];  // Navigate to next in sorted order
-                }
-            }
-        }
-        
-        return std::nullopt;
+        return indexManager_.getCurrentRow();
     }
 
 }
