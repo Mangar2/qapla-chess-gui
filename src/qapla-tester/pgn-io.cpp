@@ -19,6 +19,9 @@
 
 #include <chrono>
 #include <ctime>
+
+#include "qapla-tester/game-result.h"
+
 #include "timer.h"
 #include "pgn-io.h"
 #include "time-control.h"
@@ -345,15 +348,35 @@ std::vector<std::string> PgnIO::tokenize(const std::string& line) {
             continue;
         }
 
-        // Integer or symbol (starts with digit or letter)
-        if (std::isalnum(c) || c == '_' || c == '+' || c == '-') {
+        // Numbers
+        if (std::isdigit(c)) {
             token.clear();
             token += c;
             ++i;
             while (i < line.size()) {
                 char ch = line[i];
-                if (std::isalnum(ch) || ch == '_' || ch == '+' || ch == '#' ||
-                    ch == '=' || ch == ':' || ch == '-' || ch == '.') {
+                if (std::isdigit(ch) || ch == '.') {
+                    token += ch;
+                    ++i;
+                }
+                else {
+                    break;
+                }
+            }
+            tokens.push_back(token);
+            continue;
+        }
+
+        // Integer or symbol (starts with digit or letter)
+        if (std::isalpha(c) || c == '_') {
+            token.clear();
+            token += c;
+            ++i;
+            while (i < line.size()) {
+                char ch = line[i];
+                // - needed for casteling (O-O).
+                if (std::isalnum(ch) || ch == '_' || ch == '#' ||
+                    ch == '=' || ch == ':' || ch == '-') {
                     token += ch;
                     ++i;
                 }
@@ -468,6 +491,42 @@ std::pair<std::string, std::string> PgnIO::parseTag(const std::vector<std::strin
     return { tagName, tagValue };
 }
 
+void PgnIO::parseMateScore(std::string token, int32_t factor, MoveRecord& move) {
+    // Mate score, e.g. M3 or #3
+    try {
+        int i = 0;
+        for (; i < token.size() && !std::isdigit(token[i]); i++);
+        move.scoreMate = std::stoi(token.substr(i)) * factor;
+    }
+    catch (...) {}
+}
+
+void PgnIO::parseCpScore(std::string token, int32_t factor, MoveRecord& move) {
+    // Centipawn score, e.g. +0.21 or -1.5
+    try {
+        double cp = std::stod(token);
+        move.scoreCp = static_cast<int>(cp * 100.0 * factor);
+    }
+    catch (...) {}
+}
+
+size_t PgnIO::parseCauseAnnotation(const std::vector<std::string>& tokens, size_t start, std::optional<GameEndCause>& cause) {
+    if (tokens[start] != "{") return start;
+    size_t pos = start + 1;
+    std::string causeStr;
+
+    for (int i = 0; i < 3 && pos < tokens.size(); i++, pos++) {
+        causeStr += tokens[pos];
+        pos++;
+        cause = tryParseGameEndCause(causeStr);
+        if (cause) { 
+            break;
+        }
+    }
+    if (cause && tokens[pos] == "}") return pos + 1;
+    return start;
+}
+
 size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move) {
     if (tokens[start] != "{") return start;
 
@@ -478,23 +537,19 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
     while (pos < tokens.size() && tokens[pos] != "}") {
         const std::string& tok = tokens[pos];
 
-        if (tok.size() > 1 && (tok[0] == '+' || tok[0] == '-' || tok[0] == 'M' || tok[0] == '#')) {
-            if (tok[0] == 'M' || tok[1] == 'M' ||  tok[0] == '#' || tok[1] == '#') {
-                // SEARCH first digit after M or #
-                int i = 0;
-                for (; i < tok.size() && !std::isdigit(tok[i]); i++);
-                try {
-                    move.scoreMate = std::stoi(tok.substr(i)) * (tok[0] == '-' ? -1 : 1);
-                }
-                catch (...) {}
+        if (tok[0] == 'M' || tok[0] == '#') {
+            parseMateScore(tok, 1, move);
+        }
+        else if (tok == "+" || tok == "-") {
+            // Could be part of a centipawn score
+            pos++;
+            if (pos >= tokens.size()) continue;
+            const std::string& cpTok = tokens[pos];
+            if (cpTok[0] == 'M' || cpTok[0] == '#') {
+                parseMateScore(cpTok, tok == "+" ? 1 : -1, move);
             }
             else {
-                // Centipawn score, e.g. +0.21
-                try {
-                    double cp = static_cast<double>(std::stof(tok));
-                    move.scoreCp = static_cast<int>(cp * 100.0);
-                }
-                catch (...) {}
+                parseCpScore(tok + cpTok, tok == "+" ? 1 : -1, move);
             }
         }
         else if (tok == "/") {
@@ -541,6 +596,7 @@ size_t PgnIO::skipMoveComment(const std::vector<std::string>& tokens, size_t sta
 std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLine(const std::vector<std::string>& tokens, bool loadComments) {
     std::vector<MoveRecord> moves;
     std::optional<GameResult> result;
+    std::optional<GameEndCause> cause;
     size_t pos = 0;
 
     while (pos < tokens.size()) {
@@ -561,6 +617,12 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
                 return { moves, GameResult::Draw };
         }
 
+        auto causePos = parseCauseAnnotation(tokens, pos, cause);
+        if (causePos != pos) {
+            pos = causePos;
+            continue;
+        }
+
         auto [move, nextPos] = parseMove(tokens, pos, loadComments);
         if (!move.san.empty()) {
             moves.push_back(move);
@@ -573,10 +635,15 @@ std::pair<std::vector<MoveRecord>, std::optional<GameResult>> PgnIO::parseMoveLi
 }
 
 std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadComments,
-                                         std::function<bool(const GameRecord&)> gameCallback) {
+                                         std::function<bool(const GameRecord&, float)> gameCallback) {
     std::vector<GameRecord> games;
     std::ifstream inFile(fileName);
     if (!inFile) return games;
+
+    // Get file size for progress calculation
+    inFile.seekg(0, std::ios::end);
+    std::streamsize fileSize = inFile.tellg();
+    inFile.seekg(0, std::ios::beg);
 
     currentFileName_ = fileName;
     gamePositions_.clear();
@@ -596,7 +663,8 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
             if (inMoveSection) {
                 finalizeParsedTags(currentGame);
                 games.push_back(std::move(currentGame));
-                if (gameCallback && !gameCallback(games.back())) {
+                float progress = fileSize > 0 ? static_cast<float>(currentPos) / fileSize : 0.0f;
+                if (gameCallback && !gameCallback(games.back(), progress)) {
                     return games; // Stop loading if callback returns false
                 }
                 currentGame = GameRecord();
@@ -626,7 +694,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
         finalizeParsedTags(currentGame);
         games.push_back(std::move(currentGame));
         if (gameCallback) {
-            gameCallback(games.back()); // Don't stop at the end
+            gameCallback(games.back(), 100.0f); // Don't stop at the end
         }
     }
 

@@ -109,6 +109,11 @@ private:
     std::atomic<size_t> gamesLoaded_{0};
 
     /**
+     * @brief Loading progress percentage (0-100).
+     */
+    std::atomic<float> loadingProgress_{0.0f};
+
+    /**
      * @brief Loading thread.
      */
     std::thread loadingThread_;

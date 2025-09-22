@@ -20,44 +20,81 @@
 #include "os-dialogs.h"
 #include <vector>
 #include <filesystem>
+#include <string>
 
 #ifdef _WIN32
 #include <windows.h>
-#include <commdlg.h>
+#include <shobjidl.h> 
+#include <comdef.h>   // Für _com_error (Fehlermeldungen)
 
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     std::vector<std::string> results;
-    char filename[32768] = { 0 };
 
-    OPENFILENAMEA ofn = { 0 };
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = nullptr;
-    ofn.lpstrFile = filename;
-    ofn.nMaxFile = sizeof(filename);
-    ofn.lpstrFilter = "All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-    if (multiple) {
-        ofn.Flags |= OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+    // COM initialisieren (Thread-sicher)
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) {
+        return results;
     }
 
-    if (GetOpenFileNameA(&ofn)) {
-        char* ptr = filename;
-        std::string first = ptr;
-        ptr += first.size() + 1;
+    IFileOpenDialog* pFileOpen = nullptr;
+    hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+                          IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
-        if (*ptr == 0) {
-            results.push_back(first); // Single file selected
+    if (SUCCEEDED(hr)) {
+        // Optionen holen und anpassen
+        DWORD dwOptions;
+        if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
+            dwOptions |= FOS_FORCEFILESYSTEM; // Nur echte Dateien/Ordner
+            if (multiple) {
+                dwOptions |= FOS_ALLOWMULTISELECT;
+            }
+            pFileOpen->SetOptions(dwOptions);
         }
-        else {
-            std::string folder = first;
-            while (*ptr) {
-                results.push_back(folder + "\\" + std::string(ptr));
-                ptr += strlen(ptr) + 1;
+
+        // Dialog anzeigen
+        hr = pFileOpen->Show(nullptr);
+        if (SUCCEEDED(hr)) {
+            IShellItemArray* pResults = nullptr;
+            if (multiple) {
+                hr = pFileOpen->GetResults(&pResults);
+                if (SUCCEEDED(hr)) {
+                    DWORD count = 0;
+                    pResults->GetCount(&count);
+                    for (DWORD i = 0; i < count; i++) {
+                        IShellItem* pItem = nullptr;
+                        if (SUCCEEDED(pResults->GetItemAt(i, &pItem))) {
+                            PWSTR pszFilePath = nullptr;
+                            if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
+                                // Konvertiere WideChar → std::string
+                                char buffer[MAX_PATH];
+                                WideCharToMultiByte(CP_UTF8, 0, pszFilePath, -1, buffer, MAX_PATH, nullptr, nullptr);
+                                results.push_back(buffer);
+                                CoTaskMemFree(pszFilePath);
+                            }
+                            pItem->Release();
+                        }
+                    }
+                    pResults->Release();
+                }
+            } else {
+                IShellItem* pItem = nullptr;
+                hr = pFileOpen->GetResult(&pItem);
+                if (SUCCEEDED(hr)) {
+                    PWSTR pszFilePath = nullptr;
+                    if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
+                        char buffer[MAX_PATH];
+                        WideCharToMultiByte(CP_UTF8, 0, pszFilePath, -1, buffer, MAX_PATH, nullptr, nullptr);
+                        results.push_back(buffer);
+                        CoTaskMemFree(pszFilePath);
+                    }
+                    pItem->Release();
+                }
             }
         }
+        pFileOpen->Release();
     }
 
+    CoUninitialize();
     return results;
 }
 

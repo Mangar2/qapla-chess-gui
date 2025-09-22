@@ -22,6 +22,8 @@
 #include "move-record.h"
 #include "game-record.h"
 
+#include "qapla-tester/game-result.h"
+
 #include <string>
 #include <vector>
 #include <mutex>
@@ -82,12 +84,12 @@ public:
      * @param fileName Name of the PGN file to load from.
      * @param loadComments Whether to parse move comments or skip them for performance.
      * @param gameCallback Optional callback function called for each loaded game. 
-     *                     Receives the GameRecord and returns true to continue loading, false to stop.
+     *                     Receives the GameRecord and progress percentage (0-100), returns true to continue loading, false to stop.
      *                     If nullptr, no callback is called.
      * @return Vector of parsed GameRecord instances.
      */
     std::vector<GameRecord> loadGames(const std::string& fileName, bool loadComments = true,
-                                     std::function<bool(const GameRecord&)> gameCallback = nullptr);
+                                     std::function<bool(const GameRecord&, float)> gameCallback = nullptr);
 
     /**
      * @brief Gets the positions of games in the last loaded file.
@@ -200,6 +202,35 @@ private:
      * @return Position after closing "}" or unchanged on error.
      */
     static size_t parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move);
+
+    /**
+     * @brief Parses a game end cause annotation from tokens and updates the GameRecord.
+     * 
+     * @param tokens Token list from PGN input.
+     * @param start Position to begin checking.
+     * @param cause Optional GameEndCause to populate if found.
+     * @return Next token position after processing the annotation.
+     */
+    static size_t parseCauseAnnotation(const std::vector<std::string>& tokens, size_t start, 
+        std::optional<GameEndCause>& cause);
+
+    /**
+     * @brief Parses a mate score from a token and updates the MoveRecord.
+     * 
+     * @param token the token containing the mate score
+     * @param factor factor (+1 or -1)
+     * @param move 
+     */
+    static void parseMateScore(std::string token, int32_t factor, MoveRecord& move);
+
+    /**
+     * @brief Parses a centipawn score from a token and updates the MoveRecord.
+     * 
+     * @param token the token containing the centipawn score
+     * @param factor factor (+1 or -1)
+     * @param move 
+     */
+    static void parseCpScore(std::string token, int32_t factor, MoveRecord& move);
 
     /**
      * @brief Skips a comment block following a SAN move without parsing.

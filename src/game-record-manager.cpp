@@ -20,7 +20,7 @@
 #include "game-record-manager.h"
 #include <algorithm>
 
-void GameRecordManager::load(const std::string& fileName, std::function<bool(const GameRecord&)> gameCallback) {
+void GameRecordManager::load(const std::string& fileName, std::function<bool(const GameRecord&, float)> gameCallback) {
     games_ = pgnIO_.loadGames(fileName, false, gameCallback);  // Load without comments
 }
 

@@ -251,8 +251,8 @@ GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::opti
 	if (!setFen(game.getStartPos(), game.getStartFen())) {
 		return copy;
 	}
-	copy.setStartPosition(game.getStartPos(), getFen(), position_.getStartHalfmoves(),
-		isWhiteToMove(), game.getWhiteEngineName(), game.getBlackEngineName());
+	copy.setStartPosition(game.getStartPos(), getFen(), isWhiteToMove(), position_.getStartHalfmoves(),
+		game.getWhiteEngineName(), game.getBlackEngineName());
 	const auto& moves = game.history();
 	uint32_t maxPly = static_cast<uint32_t>(moves.size());
 	if (plies) {

@@ -39,7 +39,7 @@ public:
      * @param fileName Name of the PGN file to load.
      * @param gameCallback Optional callback function called for each loaded game.
      */
-    void load(const std::string& fileName, std::function<bool(const GameRecord&)> gameCallback = nullptr);
+    void load(const std::string& fileName, std::function<bool(const GameRecord&, float)> gameCallback = nullptr);
 
     /**
      * @brief Gets the loaded games.

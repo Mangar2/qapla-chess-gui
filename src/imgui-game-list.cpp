@@ -122,7 +122,10 @@ void ImGuiGameList::drawLoadingStatus() {
     } else {
         ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
     }
-    ImGui::Text("Games loaded: %zu", gamesLoaded_.load());
+    float progress = loadingProgress_.load();
+    ImGui::ProgressBar(progress, ImVec2(-10.0f, 20.0f), 
+        std::to_string(gamesLoaded_.load()).c_str());
+        //std::string(std::to_string(static_cast<int>(progress * 100.0f)) + "%").c_str());
     ImGui::Unindent(10.0f);
 }
 
@@ -213,6 +216,7 @@ void ImGuiGameList::openFile() {
         // Start loading in background thread
         operationState_.store(OperationState::Loading);
         gamesLoaded_ = 0;
+        loadingProgress_ = 0.0f;
         loadingFileName_ = selectedFiles[0];
         
         loadingThread_ = std::thread(&ImGuiGameList::loadFileInBackground, this, selectedFiles[0]);
@@ -222,9 +226,11 @@ void ImGuiGameList::openFile() {
 void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
     try {
         gamesLoaded_ = 0;
+        loadingProgress_ = 0.0f;
 
-        gameRecordManager_.load(fileName, [&](const GameRecord&) {
+        gameRecordManager_.load(fileName, [&](const GameRecord&, float progress) {
             gamesLoaded_++;
+            loadingProgress_ = progress;
             return operationState_.load() != OperationState::Cancelling; 
         });
         
