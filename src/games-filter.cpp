@@ -19,6 +19,7 @@
 
 #include "games-filter.h"
 #include "imgui-controls.h"
+#include "configuration.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -55,6 +56,15 @@ bool FullTextFilter::draw() {
     return filterChanged_;
 }
 
+void FullTextFilter::sendOptionsToConfiguration() {
+    QaplaHelpers::IniFile::Section section;
+	section.name = "gamesfilter";
+	section.addEntry("id", "FullText");
+	section.addEntry("text", searchText_);
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "gamesfilter", "FullText", { section }
+    );
+}
 
 // MetaFilter implementation
 MetaFilter::MetaFilter() {

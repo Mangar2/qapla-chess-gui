@@ -303,17 +303,17 @@ namespace QaplaWindows {
         return tournament_ && tournament_->hasTasksScheduled();
     }
 
-    std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) const {
+    std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) {
         if (eloTable_.size() == 0) return std::nullopt;
         return eloTable_.draw(size, true);
     }
 
-    std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) const {
+    std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) {
         if (runningTable_.size() == 0) return std::nullopt;
         return runningTable_.draw(size, true);
 	}
 
-    void TournamentData::drawCauseTable(const ImVec2& size) const {
+    void TournamentData::drawCauseTable(const ImVec2& size) {
         if (causeTable_.size() == 0) return;
         causeTable_.draw(size, true);
     }

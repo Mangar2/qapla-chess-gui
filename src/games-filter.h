@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "game-record.h"
+#include "qapla-tester/game-record.h"
 
 namespace QaplaWindows {
 
@@ -88,6 +88,12 @@ public:
      * @param games The list of game records (ignored).
      */
     void updateOptions(const std::vector<GameRecord>& games) override {};
+
+    private:
+        /**
+         * @brief Sends the current search text to the configuration system.
+         */
+       void sendOptionsToConfiguration();
 };
 
 /**

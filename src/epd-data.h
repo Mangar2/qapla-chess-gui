@@ -59,7 +59,7 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
-        std::optional<size_t> drawTable(const ImVec2& size) const;
+        std::optional<size_t> drawTable(const ImVec2& size);
         
         struct EpdConfig {
             std::string filepath;

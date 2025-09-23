@@ -19,18 +19,18 @@
 
 #include "table-index-manager.h"
 
+#include <algorithm>
+#include <functional>
+
 namespace QaplaWindows {
 
 TableIndexManager::TableIndexManager(Mode mode) : mode_(mode) {}
 
-void TableIndexManager::setMode(Mode mode, const std::vector<size_t>& sortedIndices) {
-    mode_ = mode;
-    if (mode == Sorted) {
-        sortedIndices_ = sortedIndices;
-    } else {
-        sortedIndices_.clear();
-    }
-    setSortedIndices(sortedIndices);
+void TableIndexManager::updateSize(size_t size) {
+    if (size == size_) return; // No change
+    size_ = size;
+    sortedIndices_.resize(size);
+    for (size_t i = 0; i < size; ++i) sortedIndices_[i] = i;
 }
 
 void TableIndexManager::setSortedIndices(const std::vector<size_t>& sortedIndices) {
@@ -40,12 +40,6 @@ void TableIndexManager::setSortedIndices(const std::vector<size_t>& sortedIndice
         if (currentIndex_ && *currentIndex_ >= sortedIndices_.size()) {
             currentIndex_.reset();
         }
-    }
-}
-
-void TableIndexManager::setSize(size_t size) {
-    if (mode_ == Unsorted) {
-        size_ = size;
     }
 }
 
@@ -101,6 +95,29 @@ void TableIndexManager::navigateHome() {
 
 void TableIndexManager::navigateEnd() {
     setCurrentIndex(size() == 0 ? 0 : size() - 1);
+}
+
+std::optional<size_t> TableIndexManager::getRowIndex(size_t row) const {
+    if (mode_ == Unsorted) {
+        if (row < size_) {
+            return row;
+        }
+        return std::nullopt;
+    } else {
+        for (size_t i = 0; i < sortedIndices_.size(); ++i) {
+            if (sortedIndices_[i] == row) {
+                return i;
+            }
+        }
+        return std::nullopt;
+    }
+}
+
+void TableIndexManager::sort(const std::function<bool(size_t, size_t)>& compare, size_t size) {
+    updateSize(size);
+    if (mode_ == Sorted) {
+        std::sort(sortedIndices_.begin(), sortedIndices_.end(), compare);
+    }
 }
 
 } // namespace QaplaWindows

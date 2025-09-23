@@ -19,9 +19,12 @@
 
 #pragma once
 
+#include "games-filter.h"
+
 #include <vector>
 #include <optional>
 #include <cstddef>
+#include <functional>
 
 namespace QaplaWindows {
 
@@ -38,24 +41,18 @@ public:
      */
     TableIndexManager(Mode mode = Unsorted);
 
+
     /**
-     * @brief Sets the mode and optionally the sorted indices.
-     * @param mode The new mode.
-     * @param sortedIndices The sorted indices vector (required for Sorted mode).
+     * @brief Initializes the index manager with the given size.
+     * @param size The total number of rows.
      */
-    void setMode(Mode mode, const std::vector<size_t>& sortedIndices = {});
+    void updateSize(size_t size);
 
     /**
      * @brief Sets the sorted indices for Sorted mode.
      * @param sortedIndices The sorted indices vector.
      */
     void setSortedIndices(const std::vector<size_t>& sortedIndices);
-
-    /**
-     * @brief Sets the size for Unsorted mode.
-     * @param size The total number of rows.
-     */
-    void setSize(size_t size);
 
     /**
      * @brief Gets the size (total number of indices).
@@ -111,6 +108,43 @@ public:
      * @brief Navigates to the last row.
      */
     void navigateEnd();
+
+    /**
+     * @brief Gets the actual row number for a given index.
+     * @param index The index to convert.
+     * @return The corresponding row number.
+     */
+    size_t getRowNumber(size_t index) const {
+        if (mode_ == Sorted && index < sortedIndices_.size()) {
+            return sortedIndices_[index];
+        }
+        return index;
+    }
+
+    /**
+     * @brief Gets the index for a given row number.
+     * @param row The row number to convert.
+     * @return The corresponding index, or nullopt if not found.
+     */
+    std::optional<size_t> getRowIndex(size_t row) const;
+
+    /**
+     * @brief Get the Sorted Indices object 
+     * 
+     * @return std::vector<size_t>& 
+     */
+    std::vector<size_t>& getSortedIndices() {
+        return sortedIndices_;
+    }
+
+    /**
+     * @brief Sorts the indices based on the provided comparison function.
+     * @param compare A comparison function that takes two row numbers and returns true if the first should come before the second.
+     * @param size The total number of rows.
+     */
+    void sort(const std::function<bool(size_t, size_t)>& compare, size_t size);
+
+
 
 private:
     Mode mode_;

@@ -106,20 +106,20 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
-        std::optional<size_t> drawEloTable(const ImVec2& size) const;
+        std::optional<size_t> drawEloTable(const ImVec2& size);
 
         /**
          * @brief Draws the table displaying the running tournament pairings.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
          */
-        std::optional<size_t> drawRunningTable(const ImVec2& size) const;
+        std::optional<size_t> drawRunningTable(const ImVec2& size);
 
         /**
          * @brief Draws the table displaying the causes for game termination.
          * @param size Size of the table to draw.
          */
-        void drawCauseTable(const ImVec2& size) const;
+        void drawCauseTable(const ImVec2& size);
 
         /**
          * @brief Draws the tournament tabs showing boards for all running games.

@@ -134,7 +134,7 @@ namespace QaplaWindows {
         epdManager_->clear();
     }
 
-    std::optional<size_t> EpdData::drawTable(const ImVec2& size) const {
+    std::optional<size_t> EpdData::drawTable(const ImVec2& size) {
         return table_.draw(size);
     }
 

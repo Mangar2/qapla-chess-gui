@@ -101,25 +101,21 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiTable::handleSorting() const {
+    void ImGuiTable::handleSorting() {
         ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
-        if (needsSort_ || sortedIndices_.size() != rows_.size()) {
-            sortedIndices_.resize(rows_.size());
-            for (size_t i = 0; i < rows_.size(); ++i) sortedIndices_[i] = i;
-            needsSort_ = false;
-        }
-        if (specs && specs->SpecsDirty) {
+        if (!specs) return;
+        if (needsSort_ || (specs && specs->SpecsDirty)) {
             if (specs->SpecsCount > 0) {
                 auto spec = specs->Specs[0];
                 int column = spec.ColumnUserID;
                 bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
-                std::sort(sortedIndices_.begin(), sortedIndices_.end(), [&](size_t a, size_t b) {
+                indexManager_.sort([&](size_t a, size_t b) {
                     if (column >= static_cast<int>(columns_.size())) return false;
                     std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
                     std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
                     if (ascending) return valA < valB;
                     else return valA > valB;
-                });
+                }, rows_.size());
             }
             specs->SpecsDirty = false;
         }
@@ -193,7 +189,7 @@ namespace QaplaWindows {
         }
     }
 
-    std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) const {
+    std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) {
         std::optional<size_t> clickedRow;
         ImVec2 tableSize = size;
         if (shrink) {
@@ -205,20 +201,19 @@ namespace QaplaWindows {
         size_t visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
         if (visibleRows == 0) visibleRows = 1; // Fallback
         std::optional<size_t> keyboardRow;
+        indexManager_.updateSize(rows_.size());
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();
-            indexManager_.setSortedIndices(sortedIndices_);
             tableHeadersRow();
             if (scrollToRow_) {
                 // Find the sorted index for the row to scroll to
-                size_t sortedIndex = 0;
-                for (; sortedIndex < sortedIndices_.size(); ++sortedIndex) {
-                    if (sortedIndices_[sortedIndex] == *scrollToRow_) break;
-                }
-                auto scrollPos = calculateOptimalScrollPosition(sortedIndex);
-                if (scrollPos) {
-                    ImGui::SetScrollY(*scrollPos);
+                auto sortedIndex = indexManager_.getRowIndex(*scrollToRow_);
+                if (sortedIndex) {
+                    auto scrollPos = calculateOptimalScrollPosition(*sortedIndex);
+                    if (scrollPos) {
+                        ImGui::SetScrollY(*scrollPos);
+                    }
                 }
                 scrollToRow_.reset();
             }
@@ -226,7 +221,7 @@ namespace QaplaWindows {
             clipper.Begin(static_cast<int>(rows_.size()));
             while (clipper.Step()) {
                 for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
-                    size_t actualRow = sortedIndices_[i];
+                    size_t actualRow = indexManager_.getRowNumber(i);
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     if (isRowClicked(actualRow)) {
@@ -243,7 +238,7 @@ namespace QaplaWindows {
         return (keyboardRow) ? *keyboardRow : clickedRow;
     }
 
-    std::optional<size_t> ImGuiTable::checkKeyboard(size_t visibleRows) const {
+    std::optional<size_t> ImGuiTable::checkKeyboard(size_t visibleRows) {
         if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_None)) {
             return std::nullopt;
         }

@@ -129,7 +129,7 @@ namespace QaplaWindows {
          * @param shrink If true, the table shrinks dynamically in height.
          * @return Number of row clicked, if any
          */
-        std::optional<size_t> draw(const ImVec2& size, bool shrink = false) const;
+        std::optional<size_t> draw(const ImVec2& size, bool shrink = false);
 
         /**
          * @brief Returns the content of a specific cell.
@@ -199,14 +199,6 @@ namespace QaplaWindows {
             indexManager_.setCurrentRow(row.value_or(0));
         }
 
-        /**
-         * @brief Scrolls to a specific row immediately (for keyboard navigation).
-         * @param row The index of the row to scroll to.
-         */
-        void scrollToRow(size_t row) const {
-            scrollToRow_ = row;
-        }
-
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
@@ -221,25 +213,24 @@ namespace QaplaWindows {
          * @param visibleRows 
          * @return std::optional<size_t> index to focus IF a key was pressed
          */
-        std::optional<size_t> checkKeyboard(size_t visibleRows) const;
+        std::optional<size_t> checkKeyboard(size_t visibleRows);
         void setupTable() const;
-        void handleSorting() const;
+        void handleSorting();
         void tableHeadersRow() const;
         size_t getCurrentSortedIndex() const;
 
         bool clickable_ = false;
         bool autoScroll_ = false;
         bool allowNavigateToZero_ = false;
-        mutable std::optional<size_t> scrollToRow_;
-        mutable int lastInputFrame_ = -1;
+        std::optional<size_t> scrollToRow_;
+        int lastInputFrame_ = -1;
         bool isRowClicked(size_t index) const;
         std::string tableId_;
         ImGuiTableFlags tableFlags_;
         std::vector<ColumnDef> columns_;
         std::vector<std::vector<std::string>> rows_;
-        mutable std::vector<size_t> sortedIndices_;
-        mutable bool needsSort_ = true;
-        mutable ImGuiTableSortSpecs* sortSpecs_ = nullptr;
-        mutable TableIndexManager indexManager_;
+        bool needsSort_ = true;
+        ImGuiTableSortSpecs* sortSpecs_ = nullptr;
+        TableIndexManager indexManager_;
     };
 }
