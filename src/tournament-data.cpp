@@ -237,8 +237,6 @@ namespace QaplaWindows {
         }
 	}
 
-
-
     void TournamentData::populateViews() {
         if (tournament_) {
             GameManagerPool::getInstance().withGameRecords(
@@ -322,7 +320,7 @@ namespace QaplaWindows {
         int32_t newIndex = -1;
         for (int32_t index = 0; index < boardWindow_.size(); index++) {
             auto& window = boardWindow_[index];
-            std::string tabName = "Game " + window.id();
+            std::string tabName = window.id();
             std::string tabId = "###Game" + std::to_string(index);
             if (!window.isRunning() && index != selectedIndex_) continue;
             if (ImGui::BeginTabItem((tabName + tabId).c_str())) {

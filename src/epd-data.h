@@ -21,6 +21,8 @@
 
 #include "qapla-tester/engine-config.h"
 #include "imgui-table.h"
+#include "callback-manager.h"
+
 #include <memory>
 #include <optional>
 
@@ -80,14 +82,42 @@ namespace QaplaWindows {
 		 */
         std::optional<std::string> getFen(size_t index) const;
 
+        /**
+         * @brief Sets the selected index in the table.
+         * @param index The index to select, or std::nullopt to clear selection.
+         */
+        void setSelectedIndex(std::optional<size_t> index) {
+            selectedIndex_ = index;
+        }
+        /**
+         * @brief Retrieves the currently selected index in the table.
+         * @return Optional containing the selected index, or std::nullopt if no selection.
+         */
+        std::optional<size_t> getSelectedIndex() const {
+            return selectedIndex_;
+        }
+
+        /**
+         * @brief Retrieves the singleton instance of EpdData.
+         * @return Reference to the singleton EpdData instance.
+         */
+        static EpdData& instance() {
+            static EpdData instance;
+            return instance;
+        }
+
+
+
 	private:
 
         EpdConfig epdConfig_;
         uint64_t updateCnt = 0;
         void populateTable();
+        std::optional<size_t> selectedIndex_;
 
 		std::shared_ptr<EpdManager> epdManager_;
 		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
+   		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
         ImGuiTable table_;
 

@@ -95,6 +95,7 @@ namespace QaplaWindows
     {
         round_ = gameRecord.getRound();
         gameInRound_ = gameRecord.getGameInRound();
+        positionName_ = gameRecord.getPositionName();
         if (!active_) return;
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setFromGameRecord(gameRecord);
@@ -139,6 +140,69 @@ namespace QaplaWindows
         });
         
         getMainWindow().draw();
+    }
+
+    std::string formatTabTitle(const std::string& input, size_t maxTotalLength = 12) {
+        const std::string separator = "-";
+        // Step 1: Remove non-alphanumeric characters
+        std::string cleaned;
+        for (char c : input) {
+            if (std::isalnum(c)) {
+                cleaned += c;
+            }
+        }
+        
+        // Step 2: Find the last sequence of digits (more flexible)
+        std::string numbers;
+        size_t lastDigitEnd = cleaned.size();
+        for (size_t j = cleaned.size(); j > 0; --j) {
+            if (std::isdigit(cleaned[j - 1])) {
+                if (numbers.empty()) {
+                    lastDigitEnd = j;
+                }
+                numbers = cleaned[j - 1] + numbers;
+            } else if (!numbers.empty()) {
+                break; // Stop at the first non-digit after digits
+            }
+        }
+        
+        // Step 3: Letters are the part before the numbers
+        std::string letters = cleaned.substr(0, lastDigitEnd - numbers.size());
+        
+        // Step 4: Calculate effective max letters based on total length
+        size_t effectiveMaxLetters = maxTotalLength;
+        if (!numbers.empty() && maxTotalLength > 0) {
+            // Assume numbers are at least 3 digits for calculation
+            size_t assumedNumbersLength = 3;
+            size_t separatorLength = separator.size();
+            if (assumedNumbersLength + separatorLength < maxTotalLength) {
+                effectiveMaxLetters = maxTotalLength - assumedNumbersLength - separatorLength;
+            } else {
+                effectiveMaxLetters = 0; // Fallback if not enough space
+            }
+        }
+        
+        // Step 5: Limit letters
+        if (letters.size() > effectiveMaxLetters) {
+            letters = letters.substr(0, effectiveMaxLetters);
+        }
+        
+        // Step 6: Combine
+        if (!numbers.empty()) {
+            return letters + separator + numbers;
+        } else {
+            return letters;
+        }
+    }
+
+
+    std::string TournamentBoardWindow::id() const {
+        if (positionName_.empty()) {
+            return "Game " + std::to_string(round_) + "." + std::to_string(gameInRound_);
+        }
+        else {
+            return formatTabTitle(positionName_, 10);
+        }
     }
 
 }

@@ -284,6 +284,25 @@ public:
 	}
 
 	/**
+	 * @brief Sets the name of the starting position (e.g. ECO code, opening name or epd name)
+	 * @param positionName The name of the starting position.
+	 */
+	void setPositionName(const std::string &positionName)
+	{
+		changeTracker_.trackModification();
+		positionName_ = positionName;
+	}
+
+	/**
+	 * @brief Gets the name of the starting position (e.g. ECO code, opening name or epd name)
+	 * @return The name of the starting position.
+	 */
+	const std::string &getPositionName() const
+	{
+		return positionName_;
+	}
+
+	/**
 	 * @brief Gets the game number of the current round
 	 * @return The game number within the current round.
 	 */
@@ -447,6 +466,7 @@ private:
 	std::map<std::string, std::string> tags_;
 	bool startPos_ = true;
 	std::string startFen_;
+	std::string positionName_; ///> Optional name of the starting position (e.g. ECO code, opening name or epd name)
 	std::vector<MoveRecord> moves_;
 	uint32_t currentPly_ = 0;
 	GameEndCause gameEndCause_ = GameEndCause::Ongoing;

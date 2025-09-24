@@ -93,9 +93,7 @@ namespace QaplaWindows
          * Get the unique identifier "round.game" for this board instance.
          * @return The unique identifier as a string.
          */
-        std::string id() const {
-            return std::to_string(round_) + "." + std::to_string(gameInRound_);
-        }
+        std::string id() const;
 
     private:
         bool active_ = false;
@@ -103,6 +101,7 @@ namespace QaplaWindows
         
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
+        std::string positionName_;
 
         static VerticalSplitContainer& getMainWindow();
         static HorizontalSplitContainer& getTopWindow();

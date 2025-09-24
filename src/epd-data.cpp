@@ -42,11 +42,17 @@ namespace QaplaWindows {
         )
     { 
         table_.setClickable(true);
+        init();
     }
 
     EpdData::~EpdData() = default;
 
     void EpdData:: init() {
+        pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+		    [this]() {
+    			this->pollData();
+		    }
+    	));
         auto c1 = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
 		auto c2 = EngineWorkerFactory::getConfigManager().getConfig("Spike 1.4.1");
         if (!c1 || !c2) return;

@@ -23,11 +23,13 @@
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "imgui-controls.h"
+#include "epd-data.h"
 
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
+#include "qapla-tester/game-manager-pool.h"
 
 #include <imgui.h>
 
@@ -77,21 +79,20 @@ void EpdWindow::drawButtons()
         {
             try
             {
-                auto &boardData = InteractiveBoardWindow::instance();
                 if (button == "Run")
                 {
-                    boardData.clearPool();
-                    boardData.epdData().analyse();
+                    GameManagerPool::getInstance().clearAll();
+                    EpdData::instance().analyse();
                     SnackbarManager::instance().showSuccess("Epd analysis started");
                 }
                 else if (button == "Stop")
                 {
-                    boardData.stopPool();
+                    GameManagerPool::getInstance().stopAll();
                 }
                 else if (button == "Clear")
                 {
-                    boardData.clearPool();
-                    boardData.epdData().clear();
+                    GameManagerPool::getInstance().clearAll();
+                    EpdData::instance().clear();
                 }
             }
             catch (const std::exception &e)
@@ -112,13 +113,12 @@ void EpdWindow::drawInput()
     constexpr int maxConcurrency = 32;
     constexpr int maxSeenPlies = 32;
 
-    auto &boardData = InteractiveBoardWindow::instance();
     ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
-                                           boardData.epdData().config().concurrency, 1, maxConcurrency))
+                                           EpdData::instance().config().concurrency, 1, maxConcurrency))
     {
-        boardData.setPoolConcurrency(boardData.epdData().config().concurrency, true, true);
+        GameManagerPool::getInstance().setConcurrency(EpdData::instance().config().concurrency, true, true);
     }
 
     ImGui::Spacing();
@@ -126,22 +126,22 @@ void EpdWindow::drawInput()
     {
         ImGui::Indent(10.0f);
 
-        std::string filePath = boardData.epdData().config().filepath;
+        std::string filePath = EpdData::instance().config().filepath;
         ImGui::SetNextItemWidth(inputWidth);
         ImGuiControls::inputInt<uint32_t>("Seen plies",
-                                        boardData.epdData().config().seenPlies, 1, maxSeenPlies);
+                                        EpdData::instance().config().seenPlies, 1, maxSeenPlies);
 
         ImGui::SetNextItemWidth(inputWidth);
         ImGuiControls::inputInt<uint64_t>("Max time (s)",
-                                        boardData.epdData().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+                                        EpdData::instance().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::SetNextItemWidth(inputWidth);
         ImGuiControls::inputInt<uint64_t>("Min time (s)",
-                                        boardData.epdData().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+                                        EpdData::instance().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::Spacing();
         ImGuiControls::existingFileInput("Epd or RAW position file:",
-                                boardData.epdData().config().filepath, inputWidth * 2.0f);
+                                EpdData::instance().config().filepath, inputWidth * 2.0f);
         ImGui::Spacing();
         ImGui::Unindent(10.0f);
     }
@@ -150,19 +150,11 @@ void EpdWindow::drawInput()
 
 void EpdWindow::draw()
 {
-    auto &boardData = InteractiveBoardWindow::instance();
     drawButtons();
     drawInput();
     ImVec2 size = ImGui::GetContentRegionAvail();
     ImGui::Indent(10.0f);
-    auto clickedRow = boardData.epdData().drawTable(size);
+    auto clickedRow = EpdData::instance().drawTable(size);
     ImGui::Unindent(10.0f);
-    if (clickedRow)
-    {
-        auto fen = boardData.epdData().getFen(*clickedRow);
-        if (fen)
-        {
-            boardData.setPosition(false, *fen);
-        }
-    }
+    EpdData::instance().setSelectedIndex(clickedRow);
 }

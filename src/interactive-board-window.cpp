@@ -43,6 +43,7 @@
 #include "engine-setup-window.h"
 #include "imgui-cut-paste.h"
 #include "game-parser.h"
+#include "epd-data.h"
 
 #include "GLFW/glfw3.h"
 
@@ -66,7 +67,6 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	computeTask_->setTimeControl(timeControl_);
 	computeTask_->setPosition(true);
 	initSplitterWindows();
-	epdData_.init();
 }
 
 InteractiveBoardWindow::~InteractiveBoardWindow() {
@@ -81,13 +81,6 @@ std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance()
 	static uint32_t id = 1;
 	auto instance = std::make_unique<InteractiveBoardWindow>(id);
 	++id;
-
-	instance->pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
-		[instance = instance.get()]() {
-			instance->pollData();
-		}
-	));
-
 	return instance;
 }
 
@@ -184,9 +177,9 @@ void InteractiveBoardWindow::initSplitterWindows()
 }
 
 void InteractiveBoardWindow::draw() {
-	if (mainWindow_) {
-		mainWindow_->draw();
-	}
+	if (!mainWindow_) return;
+	mainWindow_->draw();
+	pollData();
 
 	// Handle paste only for the active tab
 	GLFWwindow* window = glfwGetCurrentContext();
@@ -424,6 +417,10 @@ void InteractiveBoardWindow::pollData()
 		if (ImGuiGameList::getSelectedGame()) {
 			setPosition(*ImGuiGameList::getSelectedGame());
 		}
+		if (EpdData::instance().getSelectedIndex()) {
+			auto index = *EpdData::instance().getSelectedIndex();
+			setPosition(false, *EpdData::instance().getFen(index));
+		}
 		if (computeTask_->isStopped()) {
 			imGuiClock_->setStopped(true);
 		}
@@ -447,7 +444,6 @@ void InteractiveBoardWindow::pollData()
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			engineWindow_->setEngineRecords(records);
 		});
-		epdData_.pollData();
 		auto timeControl = QaplaConfiguration::Configuration::instance()
 							   .getTimeControlSettings()
 							   .getSelectedTimeControl();

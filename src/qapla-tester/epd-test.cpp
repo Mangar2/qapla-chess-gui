@@ -63,6 +63,7 @@ std::optional<GameTask> EpdTest::nextTask() {
     
     GameState gameState;
 	auto& test = result_.result[testIndex_];
+    task.gameRecord.setPositionName(test.id);
     gameState.setFen(false, test.fen);
     auto correctedFen = gameState.getFen();
     task.gameRecord.setStartPosition(false, correctedFen, gameState.isWhiteToMove(), 
@@ -144,8 +145,8 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
 
     std::lock_guard<std::mutex> lock(taskMutex_);
     updateCnt_++;
-    auto& test = result_.result[static_cast<uint32_t>(taskIdIndex)];
     const size_t index = static_cast<size_t>(taskIdIndex);
+    auto& test = result_.result[index];
     assert(test.playedMove.empty());
 
     test.playedMove = played;

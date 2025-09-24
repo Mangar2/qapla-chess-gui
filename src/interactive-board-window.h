@@ -19,7 +19,6 @@
 
 #pragma once
 
-#include "epd-data.h"
 #include "embedded-window.h"
 
 #include "imgui-popup.h"
@@ -112,16 +111,6 @@ namespace QaplaWindows
 		 */
 		void setPosition(const GameRecord &gameRecord);
 
-		const EpdData &epdData() const
-		{
-			return epdData_;
-		}
-		EpdData &epdData()
-		{
-			return epdData_;
-		}
-
-
 		/**
 		 * @brief Polls data from several data provider (computeTask, edpData, ...) to provide them for imgui windows.
 		 * This method must be called in the main gui loop to keep the data up-to-date.
@@ -145,8 +134,6 @@ namespace QaplaWindows
 		 * @param start If true, starts new tasks immediately.
 		 */
 		void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
-
-
 
 		/**
 		 * @brief Starts the engines configured in the board data.
@@ -275,9 +262,6 @@ namespace QaplaWindows
 		 * This will stop ongoing computations, reset all game state and sets the start position on the board.
 		 */
 		void setStartPosition();
-
-		EpdData epdData_;
-
 		void checkForGameEnd();
 
 		std::unique_ptr<GameRecord> gameRecord_;
