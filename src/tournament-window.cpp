@@ -230,7 +230,7 @@ bool TournamentWindow::drawInput() {
         ImGui::PushID("tournament");
         ImGui::Indent(10.0f);
         ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputText("Event", tournamentData.config().event).has_value();
+        changed |= ImGuiControls::inputText("Event", tournamentData.config().event);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Type", tournamentData.config().type, { "gauntlet", "round-robin" });
         ImGui::SetNextItemWidth(inputWidth);

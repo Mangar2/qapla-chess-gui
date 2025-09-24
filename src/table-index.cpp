@@ -17,37 +17,30 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "table-index-manager.h"
+#include "table-index.h"
 
 #include <algorithm>
 #include <functional>
+#include <utility>
 
 namespace QaplaWindows {
 
-TableIndexManager::TableIndexManager(Mode mode) : mode_(mode) {}
+TableIndex::TableIndex(Mode mode) : mode_(mode) {}
 
-void TableIndexManager::updateSize(size_t size) {
-    if (size == size_) return; // No change
-    size_ = size;
+void TableIndex::updateSize(size_t size) {
+    if (size == unfilteredSize_) return; // No change
+    unfilteredSize_ = size;
+    clearFilter();
+    if (mode_ == Unsorted) return;
     sortedIndices_.resize(size);
     for (size_t i = 0; i < size; ++i) sortedIndices_[i] = i;
 }
 
-void TableIndexManager::setSortedIndices(const std::vector<size_t>& sortedIndices) {
-    if (mode_ == Sorted) {
-        sortedIndices_ = sortedIndices;
-        // Reset currentIndex if out of bounds
-        if (currentIndex_ && *currentIndex_ >= sortedIndices_.size()) {
-            currentIndex_.reset();
-        }
-    }
+size_t TableIndex::size() const {
+    return (mode_ == Unsorted) ? unfilteredSize_ : filteredSize_;
 }
 
-size_t TableIndexManager::size() const {
-    return mode_ == Sorted ? sortedIndices_.size() : size_;
-}
-
-void TableIndexManager::setCurrentIndex(size_t index) {
+void TableIndex::setCurrentIndex(size_t index) {
     if (size() == 0) {
         currentIndex_.reset();
     } else {
@@ -55,12 +48,12 @@ void TableIndexManager::setCurrentIndex(size_t index) {
     }
 }
 
-void TableIndexManager::setCurrentRow(size_t row) {
+void TableIndex::setCurrentRow(size_t row) {
     if (mode_ == Unsorted) {
         setCurrentIndex(row);
     } else {
         // Find the index in sortedIndices_
-        for (size_t i = 0; i < sortedIndices_.size(); ++i) {
+        for (size_t i = 0; i < size(); ++i) {
             if (sortedIndices_[i] == row) {
                 currentIndex_ = i;
                 return;
@@ -70,7 +63,7 @@ void TableIndexManager::setCurrentRow(size_t row) {
     }
 }
 
-std::optional<size_t> TableIndexManager::getCurrentRow() const {
+std::optional<size_t> TableIndex::getCurrentRow() const {
     if (!currentIndex_) {
         return std::nullopt;
     }
@@ -81,30 +74,30 @@ std::optional<size_t> TableIndexManager::getCurrentRow() const {
     }
 }
 
-void TableIndexManager::navigateUp(size_t rows) {
+void TableIndex::navigateUp(size_t rows) {
     setCurrentIndex((currentIndex_ && *currentIndex_ > rows) ? *currentIndex_ - rows : 0);
 }
 
-void TableIndexManager::navigateDown(size_t rows) {
+void TableIndex::navigateDown(size_t rows) {
     setCurrentIndex(currentIndex_ ? *currentIndex_ + rows : 0);
 }
 
-void TableIndexManager::navigateHome() {
+void TableIndex::navigateHome() {
     setCurrentIndex(0);
 }
 
-void TableIndexManager::navigateEnd() {
+void TableIndex::navigateEnd() {
     setCurrentIndex(size() == 0 ? 0 : size() - 1);
 }
 
-std::optional<size_t> TableIndexManager::getRowIndex(size_t row) const {
+std::optional<size_t> TableIndex::getRowIndex(size_t row) const {
     if (mode_ == Unsorted) {
-        if (row < size_) {
+        if (row < size()) {
             return row;
         }
         return std::nullopt;
     } else {
-        for (size_t i = 0; i < sortedIndices_.size(); ++i) {
+        for (size_t i = 0; i < size(); ++i) {
             if (sortedIndices_[i] == row) {
                 return i;
             }
@@ -113,11 +106,38 @@ std::optional<size_t> TableIndexManager::getRowIndex(size_t row) const {
     }
 }
 
-void TableIndexManager::sort(const std::function<bool(size_t, size_t)>& compare, size_t size) {
-    updateSize(size);
+void TableIndex::sort(const std::function<bool(size_t, size_t)>& compare) {
     if (mode_ == Sorted) {
-        std::sort(sortedIndices_.begin(), sortedIndices_.end(), compare);
+        std::sort(sortedIndices_.begin(), sortedIndices_.begin() + filteredSize_, compare);
     }
+}
+
+void TableIndex::filter(const std::function<bool(size_t)>& predicate) {
+    // We need a sortedIndex_ to filter rows
+    if (mode_ == Unsorted) return;
+
+    size_t writeIndex = 0;
+    const auto selectedRow = getCurrentRow();
+    for (size_t i = 0; i < sortedIndices_.size(); ++i) {
+        size_t row = sortedIndices_[i];
+        if (predicate(row)) {
+            if (writeIndex != i) {
+                std::swap(sortedIndices_[writeIndex], sortedIndices_[i]);
+            }
+            ++writeIndex;
+        }
+    }
+    filteredSize_ = writeIndex;
+    currentIndex_.reset();
+    if (selectedRow) {
+        // Try to keep the current row if still visible
+        for (size_t i = 0; i < filteredSize_; ++i) {
+            if (sortedIndices_[i] == *selectedRow) {
+                currentIndex_ = i;
+                return;
+            }
+        }
+    } 
 }
 
 } // namespace QaplaWindows

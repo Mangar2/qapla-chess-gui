@@ -55,7 +55,7 @@ void TimeControlWindow::draw() {
         activeButtonId = "##nodesPerMove";
         break;
     default:
-        "##blitz";
+        activeButtonId = "##blitz";
     }
     
     ImGui::PushID("TimeControlWindow");

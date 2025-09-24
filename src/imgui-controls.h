@@ -57,6 +57,20 @@ namespace QaplaWindows::ImGuiControls {
         return std::nullopt;
     }
 
+    inline bool inputText(const char* label, std::string& value,
+        ImGuiInputTextFlags flags = 0,
+        ImGuiInputTextCallback callback = nullptr,
+        void* userData = nullptr) 
+    {
+        const auto& newText = value;
+        auto result = inputText(label, newText, flags, callback, userData);
+        if (result) {
+            value = *result;
+            return true;
+        }
+        return false;
+    }
+
     /**
      * @brief Template for InputInt with min/max validation for various integer types.
      * @tparam T Integer type (e.g., int, short, long).
@@ -146,10 +160,7 @@ namespace QaplaWindows::ImGuiControls {
         // Input box for file path
         ImGui::SetNextItemWidth(inputWidth);
         ImGui::SameLine();
-        if (auto path = inputText("##filePath", filePath)) {
-            filePath = *path;
-            modified = true;
-        }
+        modified |= inputText("##filePath", filePath);
 		ImGui::PopID(); 
         return modified;
     }
@@ -187,10 +198,7 @@ namespace QaplaWindows::ImGuiControls {
 
         ImGui::SetNextItemWidth(inputWidth);
         ImGui::SameLine();
-        if (auto path = inputText("##filePath", filePath)) {
-            filePath = *path;
-            modified = true;
-        }
+        modified |= inputText("##filePath", filePath);
 
         ImGui::PopID();
         return modified;
@@ -365,10 +373,7 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         case EngineOption::Type::String: {
-            if (auto newValue = inputText(option.name.c_str(), value)) {
-                value = *newValue;
-                modified = true;
-            }
+            modified |= inputText(option.name.c_str(), value);
             break;
         }
         default:

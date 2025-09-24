@@ -163,10 +163,12 @@ void ImGuiGameList::createTable() {
         ImGuiTableFlags_Borders | 
         ImGuiTableFlags_RowBg | 
         ImGuiTableFlags_ScrollY | 
-        ImGuiTableFlags_ScrollX |
-        ImGuiTableFlags_Sortable,
+        ImGuiTableFlags_ScrollX,
         columns);
+
     gameTable_.setClickable(true);
+    gameTable_.setSortable(true);
+    gameTable_.setFilterable(true);
 
     // Fill table with game data
     for (const auto& game : games) {

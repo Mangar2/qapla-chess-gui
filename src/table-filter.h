@@ -29,14 +29,16 @@ namespace QaplaWindows {
 /**
  * @brief Interface for game filters
  */
-class IGameFilter {
+class ITableFilter {
 public:
+    using Row = std::vector<std::string>;
+    using Table = std::vector<Row>;
     /**
      * @brief Checks if a game matches the filter criteria.
      * @param game The game record to check.
      * @return True if the game matches the filter, false otherwise.
      */
-    virtual bool matches(const GameRecord& game) const = 0;
+    virtual bool matches(const Row& row) const = 0;
 
     /**
      * @brief Renders the filter's configuration UI.
@@ -48,18 +50,18 @@ public:
      * @brief Updates the filter's options based on the provided game records.
      * @param games The list of game records to analyze.
      */
-    virtual void updateOptions(const std::vector<GameRecord>& games) = 0;
+    virtual void updateOptions(const ITableFilter::Table& table) = 0;
 
     /**
      * @brief Virtual destructor for the interface.
      */
-    virtual ~IGameFilter() = default;
+    virtual ~ITableFilter() = default;
 };
 
 /**
  * @brief Full text filter for game records
  */
-class FullTextFilter : public IGameFilter {
+class FullTextFilter : public ITableFilter {
 private:
     std::string searchText_; ///< The current search text.
     bool filterChanged_; ///< Flag indicating if the filter configuration has changed.
@@ -75,7 +77,7 @@ public:
      * @param game The game record to check.
      * @return True if the game matches the search text, false otherwise.
      */
-    bool matches(const GameRecord& game) const override;
+    bool matches(const Row& row) const override;
 
     /**
      * @brief Renders the full text search UI.
@@ -87,7 +89,7 @@ public:
      * @brief Updates the filter's options (not used for full text filter).
      * @param games The list of game records (ignored).
      */
-    void updateOptions(const std::vector<GameRecord>& games) override {};
+    void updateOptions(const ITableFilter::Table& table) override {};
 
     private:
         /**
@@ -99,9 +101,9 @@ public:
 /**
  * @brief Meta filter that combines all available filters
  */
-class MetaFilter : public IGameFilter {
+class MetaFilter : public ITableFilter {
 private:
-    std::vector<std::unique_ptr<IGameFilter>> filters_; ///< List of all filters managed by the meta filter.
+    std::vector<std::unique_ptr<ITableFilter>> filters_; ///< List of all filters managed by the meta filter.
 
 public:
     /**
@@ -114,7 +116,7 @@ public:
      * @param game The game record to check.
      * @return True if the game matches all filters, false otherwise.
      */
-    bool matches(const GameRecord& game) const override;
+    bool matches(const Row& row) const override;
 
     /**
      * @brief Renders the UI for all combined filters.
@@ -126,7 +128,7 @@ public:
      * @brief Updates the options for all combined filters.
      * @param games The list of game records to analyze.
      */
-    void updateOptions(const std::vector<GameRecord>& games) override;
+    void updateOptions(const std::vector<Row>& table) override;
 };
 
 } // namespace QaplaWindows

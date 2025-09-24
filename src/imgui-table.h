@@ -26,7 +26,8 @@
 #include <optional>
 #include <functional>
 
-#include "table-index-manager.h"
+#include "table-index.h"
+#include "table-filter.h"
 
 namespace QaplaWindows {
 
@@ -35,19 +36,19 @@ namespace QaplaWindows {
      */
     class ImGuiTable {
     public:
+        struct ColumnDef {
+            std::string name; 
+            ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
+            float width = 0.0f; 
+            bool alignRight = false; 
+            std::function<void(std::string&, bool&)> customRender = nullptr;
+        };
+
+    public:
         ImGuiTable();
         ImGuiTable(ImGuiTable&&) noexcept;
         ImGuiTable& operator=(ImGuiTable&&) noexcept;
         ~ImGuiTable();
-
-        struct ColumnDef {
-			std::string name; 
-			ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
-			float width = 0.0f; 
-			bool alignRight = false; 
-            std::function<void(std::string&, bool&)> customRender = nullptr;
-        };
-
 
         /**
          * @brief Constructs an ImGuiTable with static table configuration.
@@ -66,6 +67,28 @@ namespace QaplaWindows {
         void setClickable(bool clickable) {
 			clickable_ = clickable;
 		}
+
+        /**
+         * @brief Sets whether the table supports sorting.
+         * @param sortable If true, table columns can be sorted.
+         */
+        void setSortable(bool sortable) {
+            if (sortable) {
+                tableFlags_ |= ImGuiTableFlags_Sortable;
+                indexManager_ = TableIndex::Sorted;
+            } else {
+                tableFlags_ &= ~ImGuiTableFlags_Sortable;
+                indexManager_ = TableIndex::Unsorted;
+            }
+        }
+
+        /**
+         * @brief Sets whether the table supports filtering.
+         * @param filterable If true, table can be filtered.
+         */
+        void setFilterable(bool filterable) {
+            filterable_ = filterable;
+        }
 
         /**
          * @brief Sets whether the table should auto-scroll to the current row.
@@ -129,7 +152,7 @@ namespace QaplaWindows {
          * @param shrink If true, the table shrinks dynamically in height.
          * @return Number of row clicked, if any
          */
-        std::optional<size_t> draw(const ImVec2& size, bool shrink = false);
+        std::optional<size_t> draw(const ImVec2 &size, bool shrink = false);
 
         /**
          * @brief Returns the content of a specific cell.
@@ -155,7 +178,9 @@ namespace QaplaWindows {
                 rows_[row][column] = value;
                 needsSort_ = true;
             }
-        }        /**
+        }        
+        
+        /**
 		 * @brief Adds a new column to a specific row.
 		 * @param row Index of the row to extend.
 		 * @param col New column content to add.
@@ -215,12 +240,17 @@ namespace QaplaWindows {
          */
         std::optional<size_t> checkKeyboard(size_t visibleRows);
         void setupTable() const;
+        
         void handleSorting();
+        void handleFiltering(bool changed);
+        void handleClipping(std::optional<size_t> &clickedRow);
+        void handleScrolling();
         void tableHeadersRow() const;
         size_t getCurrentSortedIndex() const;
 
         bool clickable_ = false;
         bool autoScroll_ = false;
+        bool filterable_ = false;
         bool allowNavigateToZero_ = false;
         std::optional<size_t> scrollToRow_;
         int lastInputFrame_ = -1;
@@ -231,6 +261,7 @@ namespace QaplaWindows {
         std::vector<std::vector<std::string>> rows_;
         bool needsSort_ = true;
         ImGuiTableSortSpecs* sortSpecs_ = nullptr;
-        TableIndexManager indexManager_;
+        TableIndex indexManager_;
+        MetaFilter filter_;
     };
 }

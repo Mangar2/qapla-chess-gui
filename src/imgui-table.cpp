@@ -30,7 +30,7 @@ namespace QaplaWindows {
         : tableId_(tableId),
         tableFlags_(tableFlags),
         columns_(columns),
-        indexManager_(TableIndexManager::Sorted) {
+        indexManager_(TableIndex::Unsorted) {
     }
 
     ImGuiTable::ImGuiTable() = default;
@@ -98,26 +98,6 @@ namespace QaplaWindows {
             ImGui::PushID(columnN);
             headerAligned(columns_[columnN].name, columns_[columnN].alignRight);
             ImGui::PopID();
-        }
-    }
-
-    void ImGuiTable::handleSorting() {
-        ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
-        if (!specs) return;
-        if (needsSort_ || (specs && specs->SpecsDirty)) {
-            if (specs->SpecsCount > 0) {
-                auto spec = specs->Specs[0];
-                int column = spec.ColumnUserID;
-                bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
-                indexManager_.sort([&](size_t a, size_t b) {
-                    if (column >= static_cast<int>(columns_.size())) return false;
-                    std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
-                    std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
-                    if (ascending) return valA < valB;
-                    else return valA > valB;
-                }, rows_.size());
-            }
-            specs->SpecsDirty = false;
         }
     }
 
@@ -194,7 +174,7 @@ namespace QaplaWindows {
         ImVec2 tableSize = size;
         if (shrink) {
             float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-            tableSize.y = std::min(tableSize.y, (rows_.size() + 2) * rowHeight);
+            tableSize.y = std::min(tableSize.y, (indexManager_.size() + 2) * rowHeight);
         }
         // Calculate visible rows
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
@@ -202,40 +182,95 @@ namespace QaplaWindows {
         if (visibleRows == 0) visibleRows = 1; // Fallback
         std::optional<size_t> keyboardRow;
         indexManager_.updateSize(rows_.size());
+        ImGui::Indent(10.0f);
+        if (filterable_) {
+            auto changed = filter_.draw();
+            handleFiltering(changed);
+        }
+        ImGui::Unindent(10.0f);
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();
             tableHeadersRow();
-            if (scrollToRow_) {
-                // Find the sorted index for the row to scroll to
-                auto sortedIndex = indexManager_.getRowIndex(*scrollToRow_);
-                if (sortedIndex) {
-                    auto scrollPos = calculateOptimalScrollPosition(*sortedIndex);
-                    if (scrollPos) {
-                        ImGui::SetScrollY(*scrollPos);
-                    }
-                }
-                scrollToRow_.reset();
-            }
-            ImGuiListClipper clipper;
-            clipper.Begin(static_cast<int>(rows_.size()));
-            while (clipper.Step()) {
-                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i) {
-                    size_t actualRow = indexManager_.getRowNumber(i);
-                    ImGui::TableNextRow();
-                    ImGui::TableSetColumnIndex(0);
-                    if (isRowClicked(actualRow)) {
-                        clickedRow = actualRow;
-                    }
-                    accentuateCurrentRow(actualRow);
-                    drawRow(actualRow);
-                }
-            }
+            handleScrolling();
+            handleClipping(clickedRow);
             keyboardRow = checkKeyboard(visibleRows);
             ImGui::EndTable();
         }
         
         return (keyboardRow) ? *keyboardRow : clickedRow;
+    }
+
+    void ImGuiTable::handleClipping(std::optional<size_t> &clickedRow)
+    {
+        ImGuiListClipper clipper;
+        clipper.Begin(static_cast<int>(indexManager_.size()));
+        while (clipper.Step())
+        {
+            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
+            {
+                size_t actualRow = indexManager_.getRowNumber(i);
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                if (isRowClicked(actualRow))
+                {
+                    clickedRow = actualRow;
+                }
+                accentuateCurrentRow(actualRow);
+                drawRow(actualRow);
+            }
+        }
+    }
+
+    void ImGuiTable::handleScrolling()
+    {
+        if (scrollToRow_)
+        {
+            // Find the sorted index for the row to scroll to
+            auto sortedIndex = indexManager_.getRowIndex(*scrollToRow_);
+            if (sortedIndex)
+            {
+                auto scrollPos = calculateOptimalScrollPosition(*sortedIndex);
+                if (scrollPos)
+                {
+                    ImGui::SetScrollY(*scrollPos);
+                }
+            }
+            scrollToRow_.reset();
+        }
+    }
+
+    void ImGuiTable::handleFiltering(bool changed) {
+        if (!filterable_ || !changed) return;
+        needsSort_ = true;
+        indexManager_.filter([&](size_t rowIndex) {
+            const auto& row = rows_[rowIndex];
+            if (filter_.matches(row)) {
+                return true;
+            }
+            return false;
+        });
+    }
+    
+    void ImGuiTable::handleSorting() {
+        ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
+        if (!specs) return;
+        if (needsSort_ || (specs && specs->SpecsDirty)) {
+            needsSort_ = false;
+            if (specs->SpecsCount > 0) {
+                auto spec = specs->Specs[0];
+                int column = spec.ColumnUserID;
+                bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
+                indexManager_.sort([&](size_t a, size_t b) {
+                    if (column >= static_cast<int>(columns_.size())) return false;
+                    std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
+                    std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
+                    if (ascending) return valA < valB;
+                    else return valA > valB;
+                });
+            }
+            specs->SpecsDirty = false;
+        }
     }
 
     std::optional<size_t> ImGuiTable::checkKeyboard(size_t visibleRows) {

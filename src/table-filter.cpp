@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "games-filter.h"
+#include "table-filter.h"
 #include "imgui-controls.h"
 #include "configuration.h"
 
@@ -30,15 +30,13 @@ using namespace QaplaWindows;
 FullTextFilter::FullTextFilter() : filterChanged_(false) {
 }
 
-bool FullTextFilter::matches(const GameRecord& game) const {
+bool FullTextFilter::matches(const Row& row) const {
     if (searchText_.empty()) {
         return true;
     }
     
-    // Search in all string fields of the game
-    const auto& tags = game.getTags();
-    for (const auto& tag : tags) {
-        if (tag.second.find(searchText_) != std::string::npos) {
+    for (const auto& cell : row) {
+        if (cell.find(searchText_) != std::string::npos) {
             return true;
         }
     }
@@ -49,9 +47,11 @@ bool FullTextFilter::matches(const GameRecord& game) const {
 bool FullTextFilter::draw() {
     filterChanged_ = false;
     
-    if (ImGuiControls::inputText("Full Text Search", searchText_)) {
+    ImGui::PushID("FullTextFilter");
+    if (ImGuiControls::inputText("Filter", searchText_)) {
         filterChanged_ = true;
     }
+    ImGui::PopID();
     
     return filterChanged_;
 }
@@ -71,9 +71,9 @@ MetaFilter::MetaFilter() {
     filters_.push_back(std::make_unique<FullTextFilter>());
 }
 
-bool MetaFilter::matches(const GameRecord& game) const {
+bool MetaFilter::matches(const Row& row) const {
     for (const auto& filter : filters_) {
-        if (!filter->matches(game)) {
+        if (!filter->matches(row)) {
             return false;
         }
     }
@@ -83,21 +83,17 @@ bool MetaFilter::matches(const GameRecord& game) const {
 bool MetaFilter::draw() {
     bool anyChanged = false;
     
-    ImGui::Begin("Game Filters");
-    
     for (auto& filter : filters_) {
         if (filter->draw()) {
             anyChanged = true;
         }
     }
     
-    ImGui::End();
-    
     return anyChanged;
 }
 
-void MetaFilter::updateOptions(const std::vector<GameRecord>& games) {
+void MetaFilter::updateOptions(const ITableFilter::Table& table) {
     for (auto& filter : filters_) {
-        filter->updateOptions(games);
+        filter->updateOptions(table);
     }
 }

@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "games-filter.h"
-
 #include <vector>
 #include <optional>
 #include <cstddef>
@@ -31,7 +29,7 @@ namespace QaplaWindows {
 /**
  * @brief Manages table row indices in sorted or unsorted mode transparently.
  */
-class TableIndexManager {
+class TableIndex {
 public:
     enum Mode { Unsorted, Sorted };
 
@@ -39,20 +37,13 @@ public:
      * @brief Constructs a TableIndexManager with the specified mode.
      * @param mode The initial mode (Unsorted or Sorted).
      */
-    TableIndexManager(Mode mode = Unsorted);
-
+    TableIndex(Mode mode = Unsorted);
 
     /**
      * @brief Initializes the index manager with the given size.
      * @param size The total number of rows.
      */
     void updateSize(size_t size);
-
-    /**
-     * @brief Sets the sorted indices for Sorted mode.
-     * @param sortedIndices The sorted indices vector.
-     */
-    void setSortedIndices(const std::vector<size_t>& sortedIndices);
 
     /**
      * @brief Gets the size (total number of indices).
@@ -140,17 +131,34 @@ public:
     /**
      * @brief Sorts the indices based on the provided comparison function.
      * @param compare A comparison function that takes two row numbers and returns true if the first should come before the second.
-     * @param size The total number of rows.
      */
-    void sort(const std::function<bool(size_t, size_t)>& compare, size_t size);
+    void sort(const std::function<bool(size_t, size_t)>& compare);
 
+    /**
+     * @brief Filters the indices based on the provided predicate function.
+     * 
+     * This function sorts the indices such that all rows for which the predicate returns true
+     * are at the front, and updates the displayedRows_ count accordingly.
+     * Note: resorting may be necessary after filtering.
+     * 
+     * @param predicate A predicate function that takes a row number and returns true if it should be kept.
+     */
+    void filter(const std::function<bool(size_t)>& predicate);
 
+    /**
+     * @brief Clears any applied filter, restoring all rows.
+     * Note: resorting may be necessary after clearing the filter.
+     */
+    void clearFilter() {
+        filteredSize_ = unfilteredSize_;
+    }
 
 private:
     Mode mode_;
     std::optional<size_t> currentIndex_; // Index into the table (0 to size()-1)
     std::vector<size_t> sortedIndices_;
-    size_t size_ = 0; // For Unsorted mode
+    size_t unfilteredSize_ = 0;
+    size_t filteredSize_ = 0; // Current amount of rows in the table
 };
 
 } // namespace QaplaWindows
