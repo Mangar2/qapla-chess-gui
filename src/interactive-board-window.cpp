@@ -229,7 +229,7 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 		if (halfmove == 0) return;
 		auto ply = g.getHalfmoveIndex(halfmove - 1);
 		if (!ply) return;
-		pvString = g.movesToStringUpToPly(*ply, {true, true, true, true}) + " ";
+		pvString += g.movesToStringUpToPly(*ply, {true, true, true, true}) + " ";
 	});
 
 	// convert pvPart to std::string for clipboard
