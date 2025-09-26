@@ -92,6 +92,7 @@ std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loa
 	for (const auto& [idStr, sectionList] : *sectionMap) {
 		try {
 			if (idStr == "board0") continue; // Skip static instance
+			if (!idStr.starts_with("board")) continue; // Not a board instance
 			auto instance = createInstance();
 			for (const auto& section : sectionList) {
 				instance->loadBoardEngine(section);

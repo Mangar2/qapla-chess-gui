@@ -20,6 +20,7 @@
 #pragma once
 
 #include "qapla-tester/engine-config.h"
+#include "qapla-tester/ini-file.h"
 
 #include <vector>
 #include <functional>
@@ -73,16 +74,16 @@ namespace QaplaWindows {
         bool draw();
 
         /**
-         * @brief Returns the currently selected engine configurations
-         * @return Vector with the selected configurations
+         * @brief Returns the currently configured engine configurations
+         * @return Vector with all configured engine configurations (both selected and deselected)
          */
-        const std::vector<EngineConfiguration>& getSelectedEngines() const;
+        const std::vector<EngineConfiguration>& getEngineConfigurations() const;
 
         /**
-         * @brief Sets the selected engine configurations
-         * @param configurations Vector with the configurations to select
+         * @brief Sets the configured engine configurations
+         * @param configurations Vector with all configured engine configurations
          */
-        void setSelectedEngines(const std::vector<EngineConfiguration>& configurations);
+        void setEngineConfigurations(const std::vector<EngineConfiguration>& configurations);
 
         /**
          * @brief Sets the callback for configuration changes
@@ -102,6 +103,18 @@ namespace QaplaWindows {
          */
         const Options& getOptions() const;
 
+        /**
+         * @brief Sets the engine configurations from INI file sections
+         * @param sections A list of INI file sections representing the engine configurations
+         */
+        void setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
+
+        /**
+         * @brief Sets a unique identifier for this selection instance
+         * @param id The unique identifier
+         */
+        void setId(const std::string& id) { id_ = id; }
+
     private:
         /**
          * @brief Draws a single engine configuration
@@ -112,19 +125,26 @@ namespace QaplaWindows {
         bool drawEngineConfiguration(EngineConfiguration& config, int index);
 
         /**
-         * @brief Searches for an engine configuration in the selected engines
+         * @brief Searches for an engine configuration in the configured engines
          * @param engineConfig The engine configuration to search for
          * @return Iterator to the found configuration or end()
          */
-        std::vector<EngineConfiguration>::iterator findSelectedEngine(const EngineConfig& engineConfig);
+        std::vector<EngineConfiguration>::iterator findEngineConfiguration(const EngineConfig& engineConfig);
 
         /**
          * @brief Notifies about changes via callback
          */
         void notifyConfigurationChanged();
 
+        /**
+         * @brief Informs the configuration singleton about the current engine configurations
+         * 
+         */
+        void updateConfiguration() const;
+
         Options options_;                                       ///< Current options
-        std::vector<EngineConfiguration> selectedEngines_;     ///< Selected engine configurations
+        std::string id_ = "unset";                              ///< Unique identifier for the selection instance
+        std::vector<EngineConfiguration> engineConfigurations_;     ///< All configured engine configurations (both selected and deselected)
         ConfigurationChangedCallback configurationCallback_;   ///< Callback for changes
     };
 

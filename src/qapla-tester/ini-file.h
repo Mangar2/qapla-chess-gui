@@ -78,7 +78,10 @@ namespace QaplaHelpers {
                         if (currentSection) {
                             sections.push_back(std::move(*currentSection));
                         }
-                        currentSection = Section{ QaplaHelpers::trim(line.substr(1, line.size() - 2)), {} };
+                        currentSection = Section{ 
+                            .name=QaplaHelpers::trim(line.substr(1, line.size() - 2)), 
+                            .entries={} 
+                        };
                     } else {
                         auto keyValue = QaplaHelpers::parseKeyValue(line);
                         if (keyValue && currentSection) {

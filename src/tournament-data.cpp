@@ -381,35 +381,6 @@ namespace QaplaWindows {
         imguiConcurrency_->update(count);
     }
 
-    void TournamentData::saveTournamentEngines(std::ostream& out, const std::string& header) const {
-        for (const auto& engine : engineConfigurations_) {
-            out << "[" << header << "]\n";
-            out << "name" << "=" << engine.config.getName() << "\n";
-            out << "selected=" << (engine.selected ? "true" : "false") << "\n";
-            out << "gauntlet=" << (engine.config.isGauntlet() ? "true" : "false") << "\n";
-            out << "\n";
-        }
-    }
-
-    void TournamentData::loadTournamentEngine(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
-        TournamentEngineConfig engine;
-        std::string name;
-        for (const auto& [key, value] : keyValue) {
-            if (key == "selected") {
-                engine.selected = (value == "true");
-            } else if (key == "name") {
-                name = value;
-                auto config = EngineWorkerFactory::getConfigManager().getConfig(name);
-                if (config) {
-                    engine.config = *config;
-                }
-            } else if (key == "gauntlet") {
-                engine.config.setGauntlet(value == "true");
-            }
-        }
-        engineConfigurations_.push_back(engine);
-    }
-
     void TournamentData::saveEachEngineConfig(std::ostream& out, const std::string& header) const {
         out << "[" << header << "]\n";
 
@@ -672,9 +643,7 @@ namespace QaplaWindows {
     void TournamentData::loadConfig(QaplaHelpers::IniFile::SectionList sections) {
         for (const auto& section : sections) {
             const auto& sectionName = section.name;
-            if (sectionName == "tournamentengine") {
-                loadTournamentEngine(section.entries);
-            } else if (sectionName == "tournamenteachengine") {
+            if (sectionName == "tournamenteachengine") {
                 loadEachEngineConfig(section.entries);
             } else if (sectionName == "tournament") {
                 loadTournamentConfig(section.entries);

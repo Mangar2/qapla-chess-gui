@@ -31,7 +31,6 @@
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
 #include "qapla-tester/tournament.h"
-#include "qapla-tester/engine-worker-factory.h"
 
 #include <imgui.h>
 
@@ -44,10 +43,24 @@ using namespace QaplaWindows;
 
 
 TournamentWindow::TournamentWindow()
+    : engineSelect_(std::make_unique<ImGuiEngineSelect>())
 {
+
+    setEngineConfiguration();
 }
 
 TournamentWindow::~TournamentWindow() = default;
+
+void TournamentWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
+    engineSelect_->setConfigurationChangedCallback(callback);
+}
+
+void TournamentWindow::setEngineConfiguration() {
+    auto sections = QaplaConfiguration::Configuration::instance().
+            getConfigData().getSectionList("engineselection", "tournament").value_or({});
+    engineSelect_->setId("tournament");
+    engineSelect_->setEngineConfiguration(sections);
+}
 
 void TournamentWindow::drawButtons() {
     constexpr float space = 3.0f;
@@ -122,46 +135,6 @@ void TournamentWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
-bool TournamentWindow::drawEngineList() {
-    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
-    auto configs = configManager.getAllConfigs();
-    bool modified = false;
-    int index = 0;
-    for (auto& config : configs) {
-        TournamentData::TournamentEngineConfig engine = {
-            .config = config,
-            .selected = false
-        };
-        auto& activeEngines = TournamentData::instance().getEngineConfigs();
-        auto it = std::find_if(activeEngines.begin(), activeEngines.end(),
-            [&config](const TournamentData::TournamentEngineConfig& engine) {
-                return engine.config == config;
-            });
-        if (it != activeEngines.end()) {
-            engine = *it;
-        }
-        auto& name = config.getName().empty() ? "(unnamed)" : config.getName();
-        ImGui::PushID(index);
-        ImGuiTreeNodeFlags flags = engine.selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_Leaf;
-        bool changed = ImGuiControls::collapsingSelection(name, engine.selected, flags, [&engine]() -> bool {
-            return ImGuiControls::checkbox("Gauntlet", engine.config.gauntlet());
-        });
-        if (changed) {
-            modified = true;
-            if (it == activeEngines.end()) {
-                activeEngines.push_back(engine);
-            } 
-            else {
-                it->selected = engine.selected;
-                it->config.setGauntlet(engine.config.isGauntlet());
-            }
-        }
-        ImGui::PopID();
-        index++;
-    }
-    return modified;
-}
-
 bool TournamentWindow::drawInput() {
     
 	constexpr float inputWidth = 200.0f;
@@ -193,7 +166,7 @@ bool TournamentWindow::drawInput() {
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
         ImGui::Indent(10.0f);
-        changed |= drawEngineList();
+        changed |= engineSelect_->draw();
         ImGui::Unindent(10.0f);
         ImGui::PopID();
     }

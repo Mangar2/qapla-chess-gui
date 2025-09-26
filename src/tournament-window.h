@@ -20,6 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "imgui-engine-select.h"
 
 #include "qapla-tester/engine-config.h"
 
@@ -42,11 +43,25 @@ namespace QaplaWindows {
         ~TournamentWindow();
 
         void draw() override;
+        
+        /**
+         * @brief Sets the callback that is called when the engine configuration changes.
+         * @param callback The new callback.
+         */
+        void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
+
+
 
     private:
-        bool drawEngineList();
         void drawButtons();
         bool drawInput();
+
+        /**
+         * @brief Sets the engine configurations from INI file sections
+         */
+        void setEngineConfiguration();
+        
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
 
 
     };

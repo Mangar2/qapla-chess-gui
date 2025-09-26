@@ -19,6 +19,7 @@
 
 #include "imgui-engine-select.h"
 #include "imgui-controls.h"
+#include "configuration.h"
 #include "qapla-tester/engine-worker-factory.h"
 
 #include <imgui.h>
@@ -47,9 +48,9 @@ bool ImGuiEngineSelect::draw() {
             .selected = false
         };
         
-        // Check if this engine is already selected
-        auto it = findSelectedEngine(config);
-        if (it != selectedEngines_.end()) {
+        // Check if this engine is already configured
+        auto it = findEngineConfiguration(config);
+        if (it != engineConfigurations_.end()) {
             engine = *it;
         }
         
@@ -57,19 +58,12 @@ bool ImGuiEngineSelect::draw() {
         if (drawEngineConfiguration(engine, index)) {
             modified = true;
             
-            if (it == selectedEngines_.end()) {
-                // Engine was newly selected
-                if (engine.selected) {
-                    selectedEngines_.push_back(engine);
-                }
+            if (it == engineConfigurations_.end()) {
+                // Engine was newly configured - add it to the list
+                engineConfigurations_.push_back(engine);
             } else {
-                // Existing engine was modified
-                if (engine.selected) {
-                    *it = engine;
-                } else {
-                    // Engine was deselected
-                    selectedEngines_.erase(it);
-                }
+                // Engine was modified - update existing configuration
+                *it = engine;
             }
         }
         
@@ -92,13 +86,13 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     ImGuiTreeNodeFlags flags = config.selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_Leaf;
     
     bool changed = ImGuiControls::collapsingSelection(name, config.selected, flags, [this, &config]() -> bool {
-        // Gauntlet option (if enabled) - same as original implementation
+        bool modified = false;
         if (options_.allowGauntletEdit) {
-            return ImGuiControls::checkbox("Gauntlet", config.config.gauntlet());
+            modified |= ImGuiControls::checkbox("Gauntlet", config.config.gauntlet());
         }
         
         // Additional options can be added here based on options_
-        return false;
+        return modified;
     });
     
     if (changed) {
@@ -112,12 +106,12 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
 
 
 
-const std::vector<ImGuiEngineSelect::EngineConfiguration>& ImGuiEngineSelect::getSelectedEngines() const {
-    return selectedEngines_;
+const std::vector<ImGuiEngineSelect::EngineConfiguration>& ImGuiEngineSelect::getEngineConfigurations() const {
+    return engineConfigurations_;
 }
 
-void ImGuiEngineSelect::setSelectedEngines(const std::vector<EngineConfiguration>& configurations) {
-    selectedEngines_ = configurations;
+void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfiguration>& configurations) {
+    engineConfigurations_ = configurations;
     notifyConfigurationChanged();
 }
 
@@ -134,15 +128,59 @@ const ImGuiEngineSelect::Options& ImGuiEngineSelect::getOptions() const {
 }
 
 std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
-ImGuiEngineSelect::findSelectedEngine(const EngineConfig& engineConfig) {
-    return std::find_if(selectedEngines_.begin(), selectedEngines_.end(),
-        [&engineConfig](const EngineConfiguration& selected) {
-            return selected.config == engineConfig;
+ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
+    return std::find_if(engineConfigurations_.begin(), engineConfigurations_.end(),
+        [&engineConfig](const EngineConfiguration& configured) {
+            return configured.config == engineConfig;
         });
 }
 
 void ImGuiEngineSelect::notifyConfigurationChanged() {
+    updateConfiguration();
     if (configurationCallback_) {
-        configurationCallback_(selectedEngines_);
+        configurationCallback_(engineConfigurations_);
+    }
+}
+
+void ImGuiEngineSelect::updateConfiguration() const {
+    QaplaHelpers::IniFile::SectionList sections;
+    for (const auto& engine : engineConfigurations_) {
+        // Create Section object explicitly for clarity
+        QaplaHelpers::IniFile::Section section{
+            .name = "engineselection",  // section name
+            .entries = QaplaHelpers::IniFile::KeyValueMap{  // key-value entries
+                {"id", id_},
+                {"name", engine.config.getName()},
+                {"selected", engine.selected ? "true" : "false"},
+                {"gauntlet", engine.config.isGauntlet() ? "true" : "false"}
+            }
+        };
+        sections.push_back(std::move(section));
+    }
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", "tournament", sections);
+}
+
+void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
+    engineConfigurations_.clear();
+    for (const auto& section : sections) {
+        if (section.name == "engineselection" && section.getValue("id") == id_) {
+            EngineConfiguration config;
+            auto selectedValue = section.getValue("selected");
+            config.selected = selectedValue ? (*selectedValue == "true") : false;
+            auto engineName = section.getValue("name");
+            if (!engineName) {
+                continue; 
+            }
+            auto configDef = EngineWorkerFactory::getConfigManager().getConfig(*engineName);
+            if (configDef) {
+                config.config = *configDef;
+            }
+            for (const auto& [key, value] : section.entries) {
+                if (key == "gauntlet") {
+                    config.config.setGauntlet(value == "true");
+                }
+            }
+            engineConfigurations_.push_back(std::move(config));
+        }
     }
 }
