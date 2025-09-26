@@ -76,6 +76,13 @@ namespace QaplaWindows {
             return epdConfig_;
 		}
 
+        
+        /**
+         * @brief Informs the configuration singleton about the current epd configurations
+         * 
+         */
+        void updateConfiguration() const;
+
         /**
          * @brief Sets the engine configurations for EPD analysis
          * @param configurations Vector with all engine configurations
@@ -113,7 +120,11 @@ namespace QaplaWindows {
             return instance;
         }
 
-
+        /**
+         * @brief Sets the configurations from INI file sections
+         * @param sections A list of INI file sections representing the engine configurations
+         */
+        void setConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
 
 	private:
 

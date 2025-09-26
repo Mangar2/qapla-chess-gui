@@ -61,6 +61,15 @@ namespace QaplaHelpers {
         return ec == std::errc() && ptr == s.data() + s.size();
     }
 
+    auto to_int = [](std::string_view s) -> std::optional<int> {
+        int value;
+        auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
+        if (ec == std::errc() && ptr == s.data() + s.size()) {
+            return value;
+        }
+        return std::nullopt;
+    };
+
     inline bool isUnsignedInteger(const std::string& s) {
         auto trimmed = trim(s);
         if (trimmed.empty()) return false;
@@ -70,6 +79,18 @@ namespace QaplaHelpers {
         auto [ptr, ec] = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), value);
         return ec == std::errc() && ptr == trimmed.data() + trimmed.size();
     }
+
+    auto to_uint32 = [](std::string_view s) -> std::optional<uint32_t> {
+        auto trimmed = trim(std::string(s));
+        if (trimmed.empty() || trimmed[0] == '-') return std::nullopt;
+
+        unsigned int value;
+        auto [ptr, ec] = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), value);
+        if (ec == std::errc() && ptr == trimmed.data() + trimmed.size()) {
+            return value;
+        }
+        return std::nullopt;
+    };
 
     inline std::optional<std::string> parseSection(const std::string& line) {
         if (line.size() > 2 && line.front() == '[' && line.back() == ']') {

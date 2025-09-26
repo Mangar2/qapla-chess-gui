@@ -151,25 +151,28 @@ void EpdWindow::drawInput()
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0f);
-
+        bool modified = false;
         std::string filePath = EpdData::instance().config().filepath;
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint32_t>("Seen plies",
+        modified |= ImGuiControls::inputInt<uint32_t>("Seen plies",
                                         EpdData::instance().config().seenPlies, 1, maxSeenPlies);
 
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint64_t>("Max time (s)",
+        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)",
                                         EpdData::instance().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::SetNextItemWidth(inputWidth);
-        ImGuiControls::inputInt<uint64_t>("Min time (s)",
+        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)",
                                         EpdData::instance().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::Spacing();
-        ImGuiControls::existingFileInput("Epd or RAW position file:",
+        modified |= ImGuiControls::existingFileInput("Epd or RAW position file:",
                                 EpdData::instance().config().filepath, inputWidth * 2.0f);
         ImGui::Spacing();
         ImGui::Unindent(10.0f);
+        if (modified) {
+            EpdData::instance().updateConfiguration();
+        }
     }
     ImGui::Unindent(10.0f);
 }

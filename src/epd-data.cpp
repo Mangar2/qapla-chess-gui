@@ -18,11 +18,14 @@
  */
 
 #include "epd-data.h"
+
+#include "imgui-table.h"
+#include "configuration.h"
+
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/epd-manager.h"
 #include "qapla-tester/game-manager-pool.h"
-#include "imgui-table.h"
 
 #include <imgui.h>
 
@@ -53,14 +56,34 @@ namespace QaplaWindows {
     			this->pollData();
 		    }
     	));
-        epdConfig_ = EpdConfig{
-            .filepath = "test/speelman Endgame.epd",
-            .engines = {},
-            .concurrency = 1,
-            .maxTimeInS = 10,
-            .minTimeInS = 2,
-            .seenPlies = 3
+        auto sections = QaplaConfiguration::Configuration::instance().
+            getConfigData().getSectionList("engineselection", "tournament").value_or({});
+        if (sections.size() > 0) {
+            auto section = sections[0];
+            epdConfig_ = EpdConfig{
+                .filepath = section.getValue("filepath").value_or(""),
+                .engines = {},
+                .concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("")).value_or(1),
+                .maxTimeInS = QaplaHelpers::to_uint32(section.getValue("maxtime").value_or("")).value_or(5),
+                .minTimeInS = QaplaHelpers::to_uint32(section.getValue("mintime").value_or("")).value_or(1),
+                .seenPlies = QaplaHelpers::to_uint32(section.getValue("seenplies").value_or("")).value_or(3)
+            };
+        }
+    }
+
+    void EpdData::updateConfiguration() const {
+        QaplaHelpers::IniFile::Section section {
+            .name = "epd",
+            .entries = QaplaHelpers::IniFile::KeyValueMap{
+                {"id", "epd"},
+                {"filepath", epdConfig_.filepath},
+                {"concurrency", std::to_string(epdConfig_.concurrency)},
+                {"maxtime", std::to_string(epdConfig_.maxTimeInS)},
+                {"mintime", std::to_string(epdConfig_.minTimeInS)},
+                {"seenplies", std::to_string(epdConfig_.seenPlies)}
+            }
         };
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("epd", "epd", { section });
     }
 
     std::optional<std::string> EpdData::getFen(size_t index) const {
