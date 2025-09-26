@@ -201,6 +201,16 @@ public:
     }
 
     /**
+     * @brief Adds a move to the game record.
+     * @param move The move to add.
+     */
+    void updateMove(const MoveRecord &move)
+    {
+        std::lock_guard lock(gameRecordMutex_);
+        gameRecord_.updateMove(move);
+    }
+
+    /**
      * @brief Sets the end state of the current game.
      *
      * @param cause The reason why the game ended (e.g. checkmate, draw, resignation).
@@ -214,6 +224,7 @@ public:
 
     /**
      * @brief Returns the current game record (const).
+     * Note it is not thread-safe to get the game record. Use withGameRecord() instead.
      */
     const GameRecord &gameRecord() const;
 

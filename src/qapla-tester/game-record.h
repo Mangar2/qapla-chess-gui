@@ -89,6 +89,14 @@ public:
 	/** Adds a move at the current ply position, overwriting any future moves. */
 	void addMove(const MoveRecord &move);
 
+	/** 
+	 * @brief Updates the move at the current ply position. Does not change currentPly_. 
+	 * Note: the chess move itself (move.move) must not be changed.
+	 * 
+	 * @param move The move to update.
+	 */
+	bool updateMove(const MoveRecord &move);
+
 	/** Returns the current ply index. */
 	uint32_t nextMoveIndex() const;
 

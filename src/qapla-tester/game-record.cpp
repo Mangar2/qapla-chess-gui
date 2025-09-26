@@ -75,6 +75,21 @@ void GameRecord::addMove(const MoveRecord &move)
     changeTracker_.trackUpdate();
 }
 
+bool GameRecord::updateMove(const MoveRecord &move)
+{
+    if (currentPly_ == 0 || currentPly_ > moves_.size())
+    {
+        return false;
+    }
+    if (moves_[currentPly_ - 1].move != move.move)
+    {
+        return false;
+    }
+    moves_[currentPly_ - 1] = move;
+    changeTracker_.trackModification();
+    return true;
+}
+
 uint32_t GameRecord::nextMoveIndex() const
 {
     return currentPly_;
