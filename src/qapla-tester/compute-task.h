@@ -132,11 +132,7 @@ public:
      * @param playedMoves Optional list of moves already played.
      */
     void setPosition(bool useStartPosition, const std::string &fen = "",
-                     std::optional<std::vector<std::string>> playedMoves = std::nullopt)
-    {
-        stop();
-        gameContext_.setPosition(useStartPosition, fen, playedMoves);
-    }
+                     std::optional<std::vector<std::string>> playedMoves = std::nullopt);
 
     /**
      * @brief Sets the current game position for all engines using a GameRecord.
@@ -147,21 +143,13 @@ public:
      *
      * @param game The GameRecord containing the full game setup and move history.
      */
-    void setPosition(const GameRecord &game)
-    {
-        stop();
-        gameContext_.setPosition(game);
-    }
+    void setPosition(const GameRecord &game);
 
     /**
      * @brief Sets the current move index in the game.
      * @param moveIndex The move index to set (0 = before first move).
      */
-    void setNextMoveIndex(uint32_t moveIndex)
-    {
-        stop();
-        gameContext_.setNextMoveIndex(moveIndex);
-    }
+    void setNextMoveIndex(uint32_t moveIndex);
 
     /**
      * @brief Executes a move in the current game position.

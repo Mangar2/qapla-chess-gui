@@ -38,6 +38,37 @@ ComputeTask::~ComputeTask() {
     }
 }
 
+void ComputeTask::setPosition(bool useStartPosition, const std::string &fen,
+                    std::optional<std::vector<std::string>> playedMoves)
+{
+    auto taskType = taskType_;
+    stop();
+    gameContext_.setPosition(useStartPosition, fen, playedMoves);
+    if (taskType == ComputeTaskType::Analyze) {
+        analyze();
+    }
+}
+
+void ComputeTask::setPosition(const GameRecord &game)
+{
+    auto taskType = taskType_;
+    stop();
+    gameContext_.setPosition(game);
+    if (taskType == ComputeTaskType::Analyze) {
+        analyze();
+    }
+}
+
+void ComputeTask::setNextMoveIndex(uint32_t moveIndex)
+{
+    auto taskType = taskType_;
+    stop();
+    gameContext_.setNextMoveIndex(moveIndex);
+    if (taskType == ComputeTaskType::Analyze) {
+        analyze();
+    }
+}
+
 void ComputeTask::computeMove() {
     if (gameContext_.getPlayerCount() == 0) return;
     if (checkGameOver()) return;

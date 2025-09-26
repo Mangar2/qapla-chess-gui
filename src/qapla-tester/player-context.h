@@ -306,6 +306,7 @@ public:
 	 * @param startPosition The GameRecord to set the game state from.
      */
     void setStartPosition(const GameRecord& startPosition) {
+        std::lock_guard<std::mutex> lock(stateMutex_);
         gameState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
         ponderState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
     }
@@ -317,6 +318,7 @@ public:
      * @param fen The FEN string representing the new position.
      */
     void setStartPosition(bool startPosition, const std::string& fen) {
+        std::lock_guard<std::mutex> lock(stateMutex_);
         gameState_.setFen(startPosition, fen);
         ponderState_.setFen(startPosition, fen);
     }
@@ -359,5 +361,6 @@ private:
     std::string ponderMove_ = "";
     MoveRecord currentMove_;
     mutable std::mutex currentMoveMutex_;
+    mutable std::mutex stateMutex_; // protects gameState_ and ponderState_
 	EngineReport* checklist_ = nullptr; 
 };

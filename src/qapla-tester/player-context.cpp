@@ -31,6 +31,7 @@ void PlayerContext::checkPV(const EngineEvent& event) {
 
     if (searchInfo.pv.empty()) return;
 
+    std::lock_guard<std::mutex> lock(stateMutex_);
     auto& state = computeState_ == ComputeState::ComputingMove ? gameState_ : ponderState_;
     std::vector<QaplaBasics::Move> pvMoves;
     pvMoves.reserve(searchInfo.pv.size());
@@ -105,6 +106,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         return QaplaBasics::Move();
     }
     computeState_ = ComputeState::Idle;
+    std::lock_guard<std::mutex> stateLock(stateMutex_);
     if (!checklist_->logReport("legalmove", event.bestMove.has_value())) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
@@ -132,7 +134,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     std::string san = gameState_.moveToSan(move);
     gameState_.doMove(move);
 
-    std::lock_guard lock(currentMoveMutex_);
+    std::lock_guard curMoveLock(currentMoveMutex_);
     currentMove_.updateFromBestMove(gameState_.getHalfmovePlayed(), engine_->getIdentifier(),
         event, move.getLAN(), san, computeMoveStartTimestamp_, 
         gameState_.getHalfmoveClock());
@@ -358,6 +360,7 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
         currentMove_.clear();
 		isAnalyzing_ = false;
     }
+    std::lock_guard<std::mutex> lock(stateMutex_);
     ponderMove_ = event->ponderMove ? *event->ponderMove : "";
 
     if (!ponderMove_.empty()) {

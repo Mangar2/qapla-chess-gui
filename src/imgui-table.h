@@ -224,6 +224,14 @@ namespace QaplaWindows {
             indexManager_.setCurrentRow(row.value_or(0));
         }
 
+        /**
+         * @brief Sets the current index directly. The current row not changed but the move is still scrolled in view.
+         * @param row The index of the row to scroll to view.
+         */
+        void setScrollToRow(std::optional<size_t> row) {
+            scrollToRow_ = row; 
+        }
+
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
