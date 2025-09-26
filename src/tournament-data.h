@@ -22,6 +22,7 @@
 
 #include "tournament-board-window.h"
 #include "imgui-table.h"
+#include "imgui-engine-select.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
@@ -54,10 +55,7 @@ namespace QaplaWindows {
             bool ponder;
 
 		};
-        struct TournamentEngineConfig {
-            EngineConfig config;
-            bool selected = false;
-        };
+
         enum class State {
             Stopped,
             Starting,
@@ -132,12 +130,11 @@ namespace QaplaWindows {
          */
         TournamentConfig& config();
 
-        const std::vector<TournamentEngineConfig>& getEngineConfigs() const {
-            return engineConfigurations_;
-		}
-        std::vector<TournamentEngineConfig>& getEngineConfigs() {
-            return engineConfigurations_;
-        }
+        /**
+         * @brief Sets the engine configurations for the tournament
+         * @param configurations Vector with all engine configurations
+         */
+        void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
         uint32_t& concurrency() {
             return concurrency_;
 		}
@@ -341,7 +338,7 @@ namespace QaplaWindows {
 		EachEngineConfig eachEngineConfig_;
 		AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		AdjudicationManager::ResignAdjudicationConfig resignConfig_;
-        std::vector<TournamentEngineConfig> engineConfigurations_{};
+        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{};
 
         uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games

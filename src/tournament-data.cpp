@@ -89,6 +89,10 @@ namespace QaplaWindows {
     void TournamentData:: init() {
     }
 
+    void TournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+        engineConfigurations_ = configurations;
+    }
+
     bool TournamentData::createTournament(bool verbose) {
         if (engineConfigurations_.empty()) {
             if (verbose) {

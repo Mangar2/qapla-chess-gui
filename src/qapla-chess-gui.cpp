@@ -128,20 +128,8 @@ namespace {
         // Setup tournament window with engine configuration callback
         auto tournamentWindow = std::make_unique<QaplaWindows::TournamentWindow>();
         tournamentWindow->setEngineConfigurationCallback([](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {
-            // Update TournamentData with selected engine configurations
-            auto& tournamentData = QaplaWindows::TournamentData::instance();
-            auto& activeEngines = tournamentData.getEngineConfigs();
-            activeEngines.clear();
-            
-            for (const auto& config : configs) {
-                if (config.selected) {
-                    QaplaWindows::TournamentData::TournamentEngineConfig tournamentConfig = {
-                        .config = config.config,
-                        .selected = config.selected
-                    };
-                    activeEngines.push_back(tournamentConfig);
-                }
-            }
+            // Update TournamentData with engine configurations
+            QaplaWindows::TournamentData::instance().setEngineConfigurations(configs);
         });
         
 		taskTabBar->addTab("Tournament", std::move(tournamentWindow));
