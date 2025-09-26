@@ -411,6 +411,7 @@ public:
 	 * PGN-compatible string. The numbering is based on halfmove numbers
 	 * (uses halfmoveNoAtPly) and the provided MoveRecord::toString options
 	 * are forwarded for move annotations.
+	 * Note: it will not include any PGN tags or result indication especially no start fen.
 	 *
 	 * @param lastPly inclusive ply index (0 = first ply)
 	 * @param opts formatting options forwarded to MoveRecord::toString

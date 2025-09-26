@@ -59,25 +59,30 @@ namespace QaplaWindows {
         ImGui::TableHeader(content.c_str());
     }
 
+    void ImGuiTable::updated() {
+        needsSort_ = true;
+        indexManager_.updateSize(rows_.size());
+    }
+
     void ImGuiTable::push(const std::vector<std::string>& row) {
         rows_.push_back(row);
-        needsSort_ = true;
+        updated();
     }
 
     void ImGuiTable::push_front(const std::vector<std::string>& row) {
         rows_.insert(rows_.begin(), row);
-        needsSort_ = true;
+        updated();
     }
 
     void ImGuiTable::clear() {
         rows_.clear();
-        needsSort_ = true;
+        updated();
     }
 
     void ImGuiTable::pop_back() {
         if (!rows_.empty()) {
             rows_.pop_back();
-            needsSort_ = true;
+            updated();
         }
     }
 

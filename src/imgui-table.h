@@ -228,6 +228,11 @@ namespace QaplaWindows {
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
 
+        /** 
+         * @brief Performs any necessary updates after external changes.
+         */
+        void updated();
+
         /**
          * @brief Checks for keyboard input and returns the index of the row to focus.
          * 

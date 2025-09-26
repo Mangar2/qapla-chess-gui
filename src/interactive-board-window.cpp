@@ -223,6 +223,9 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 
 	std::string pvString;
 	computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
+		if (!g.getStartPos() && g.getStartFen() != "") {
+			pvString = "[FEN \"" + g.getStartFen() + "\"]\n";
+		}
 		if (halfmove == 0) return;
 		auto ply = g.getHalfmoveIndex(halfmove - 1);
 		if (!ply) return;

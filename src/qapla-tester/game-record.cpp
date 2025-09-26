@@ -204,7 +204,7 @@ std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord:
 		std::ostringstream out;
 		if (moves_.empty()) return "";
 
-		uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
+    	uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
 
 		// If the game started with Black to move, PGN may print an initial "N... " prefix
 		// where N is the fullmove number of the first printed halfmove when that halfmove is Black.

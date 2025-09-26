@@ -77,11 +77,18 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
         table_.clear();
     }
 
+    if (table_.size() == 0) {
+        if (gameRecord.getStartPos()) {
+            table_.push(std::vector<std::string>{ "Start", "", "", "", "" });
+        } else if (!gameRecord.getStartFen().empty()) {
+            table_.push(std::vector<std::string>{ "Start (Setup)", "", "", "", "" });
+        }   
+    }
     const auto& moves = gameRecord.history();
     bool wtm = gameRecord.wtmAtPly(table_.size());
     uint32_t moveNumber = 1 + (gameRecord.halfmoveNoAtPly(table_.size()) / 2);
-
-    for (size_t i = table_.size(); i < moves.size(); ++i) {
+    // table_.size() is safe because we just added the start position if it was empty
+    for (size_t i = table_.size() - 1; i < moves.size(); ++i) {
         if (wtm) {
             table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i], i));
         } 
@@ -91,11 +98,7 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
         }
         wtm = !wtm;
     }
-    if (gameRecord.nextMoveIndex() > 0) {
-        table_.setCurrentRow(gameRecord.nextMoveIndex() - 1);
-    } else {
-        table_.setCurrentRow(std::nullopt);
-    }
+    table_.setCurrentRow(gameRecord.nextMoveIndex());
     
     // Synchronize currentPly_ with the game state
     currentPly_ = gameRecord.nextMoveIndex();
@@ -110,18 +113,7 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
 std::optional<size_t> ImGuiMoveList::draw() {
     auto size = ImGui::GetContentRegionAvail();
     auto result = table_.draw(size);
-    
-    if (result) {
-        if (*result == SIZE_MAX) {
-            // Special case: navigated to "zero" position (start position)
-            return 0;
-        } else {
-            // Convert table row index to move index (move index = row index + 1)
-            return *result + 1;
-        }
-    }
-    
-    return std::nullopt;
+    return result;
 }
 
 
