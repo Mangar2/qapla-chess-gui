@@ -117,6 +117,7 @@ void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfigur
 
 void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCallback callback) {
     configurationCallback_ = callback;
+    notifyConfigurationChanged();
 }
 
 void ImGuiEngineSelect::setOptions(const Options& options) {
@@ -157,7 +158,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
         };
         sections.push_back(std::move(section));
     }
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", "tournament", sections);
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", id_, sections);
 }
 
 void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
@@ -183,4 +184,5 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
             engineConfigurations_.push_back(std::move(config));
         }
     }
+    notifyConfigurationChanged();
 }

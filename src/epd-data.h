@@ -22,6 +22,7 @@
 #include "qapla-tester/engine-config.h"
 #include "imgui-table.h"
 #include "callback-manager.h"
+#include "imgui-engine-select.h"
 
 #include <memory>
 #include <optional>
@@ -74,6 +75,12 @@ namespace QaplaWindows {
         EpdConfig& config() {
             return epdConfig_;
 		}
+
+        /**
+         * @brief Sets the engine configurations for EPD analysis
+         * @param configurations Vector with all engine configurations
+         */
+        void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
 
         /**
          * @brief Retrieves the FEN string for a given index in the results.

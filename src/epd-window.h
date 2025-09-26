@@ -21,6 +21,7 @@
 
 #include "embedded-window.h"
 #include "interactive-board-window.h"
+#include "imgui-engine-select.h"
 #include <memory>
 
 namespace QaplaWindows
@@ -42,10 +43,23 @@ namespace QaplaWindows
         ~EpdWindow();
 
         void draw() override;
+        
+        /**
+         * @brief Sets the callback that is called when the engine configuration changes.
+         * @param callback The new callback.
+         */
+        void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
 
     private:
         void drawButtons();
         void drawInput();
+        
+        /**
+         * @brief Sets the engine configurations from INI file sections
+         */
+        void setEngineConfiguration();
+        
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
     };
 
 } // namespace QaplaWindows

@@ -53,12 +53,9 @@ namespace QaplaWindows {
     			this->pollData();
 		    }
     	));
-        auto c1 = EngineWorkerFactory::getConfigManager().getConfig("Qapla 0.4.0");
-		auto c2 = EngineWorkerFactory::getConfigManager().getConfig("Spike 1.4.1");
-        if (!c1 || !c2) return;
         epdConfig_ = EpdConfig{
             .filepath = "test/speelman Endgame.epd",
-            .engines = { *c1, *c2 },
+            .engines = {},
             .concurrency = 1,
             .maxTimeInS = 10,
             .minTimeInS = 2,
@@ -138,6 +135,15 @@ namespace QaplaWindows {
 
     void EpdData::clear() {
         epdManager_->clear();
+    }
+
+    void EpdData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+        epdConfig_.engines.clear();
+        for (const auto& config : configurations) {
+            if (config.selected) {
+                epdConfig_.engines.push_back(config.config);
+            }
+        }
     }
 
     std::optional<size_t> EpdData::drawTable(const ImVec2& size) {

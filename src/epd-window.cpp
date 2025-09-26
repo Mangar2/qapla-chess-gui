@@ -24,6 +24,7 @@
 #include "os-dialogs.h"
 #include "imgui-controls.h"
 #include "epd-data.h"
+#include "configuration.h"
 
 #include "qapla-tester/move-record.h"
 #include "qapla-tester/game-record.h"
@@ -41,10 +42,26 @@
 using namespace QaplaWindows;
 
 EpdWindow::EpdWindow()
+    : engineSelect_(std::make_unique<ImGuiEngineSelect>())
 {
+    setEngineConfiguration();
+    ImGuiEngineSelect::Options options;
+    options.allowGauntletEdit = false;
+    engineSelect_->setOptions(options);
 }
 
 EpdWindow::~EpdWindow() = default;
+
+void EpdWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
+    engineSelect_->setConfigurationChangedCallback(callback);
+}
+
+void EpdWindow::setEngineConfiguration() {
+    auto sections = QaplaConfiguration::Configuration::instance().
+            getConfigData().getSectionList("engineselection", "epd").value_or({});
+    engineSelect_->setId("epd");
+    engineSelect_->setEngineConfiguration(sections);
+}
 
 void EpdWindow::drawButtons()
 {
@@ -122,6 +139,15 @@ void EpdWindow::drawInput()
     }
 
     ImGui::Spacing();
+    
+    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("engineSettings");
+        ImGui::Indent(10.0f);
+        engineSelect_->draw();
+        ImGui::Unindent(10.0f);
+        ImGui::PopID();
+    }
+    
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0f);
