@@ -147,12 +147,15 @@ namespace QaplaWindows {
         void setConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
 
         State state = State::Cleared;
+        size_t totalTests = 0;
+        size_t remainingTests = 0;
 
 	private:
 
         EpdConfig epdConfig_;
         EpdConfig scheduledConfig_;
-        uint64_t updateCnt = 0;
+        uint64_t updateCnt_ = 0;
+
         void populateTable();
         std::optional<size_t> selectedIndex_;
         

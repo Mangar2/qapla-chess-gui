@@ -101,6 +101,8 @@ namespace QaplaWindows {
         if (!epdResults_) return;
 		table_.clear();
 		size_t col = 0; // first two columns are Name and Best Move
+        totalTests = 0;
+        remainingTests = 0;
         for (auto& result : *epdResults_) {
             size_t row = 0;
             auto& engineName = result.engineName;
@@ -122,6 +124,7 @@ namespace QaplaWindows {
                     .width = 100.0f,
                     .alignRight = true
 					});
+                totalTests++;
                 if (test.correct) {
                     table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
                 }
@@ -129,6 +132,7 @@ namespace QaplaWindows {
                     table_.extend(row, "-");
                 }
                 else {
+                    remainingTests++;
                     table_.extend(row, "?");
                 }
                 row++;
@@ -138,9 +142,9 @@ namespace QaplaWindows {
     }
 
     void EpdData::pollData() {
-        if (updateCnt != epdManager_->getUpdateCount()) {
+        if (updateCnt_ != epdManager_->getUpdateCount()) {
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
-            updateCnt = epdManager_->getUpdateCount();
+            updateCnt_ = epdManager_->getUpdateCount();
             if (state == State::Stopping || state == State::Running) {
                 if (GameManagerPool::getInstance().runningGameCount() == 0) {
                     state = State::Stopped;

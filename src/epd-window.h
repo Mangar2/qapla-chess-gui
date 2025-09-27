@@ -53,6 +53,7 @@ namespace QaplaWindows
     private:
         void drawButtons();
         void drawInput();
+        void drawProgress();
         
         /**
          * @brief Sets the engine configurations from INI file sections

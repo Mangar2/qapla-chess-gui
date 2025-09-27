@@ -229,10 +229,25 @@ void EpdWindow::drawInput()
     ImGui::Unindent(10.0f);
 }
 
+void EpdWindow::drawProgress()
+{
+    auto total = EpdData::instance().totalTests;
+    auto remaining = EpdData::instance().remainingTests;
+    if (total == 0 || remaining == 0) {
+        return;
+    }
+    ImGui::Indent(10.0f);
+    size_t testFinished = total - remaining;
+    float progress = static_cast<float>(testFinished) / static_cast<float>(total);
+    ImGui::ProgressBar(progress, ImVec2(-10.0f, 20.0f), std::to_string(testFinished).c_str());
+    ImGui::Unindent(10.0f);
+}
+
 void EpdWindow::draw()
 {
     drawButtons();
     drawInput();
+    drawProgress();
     ImGui::Indent(10.0f);
     ImVec2 size = ImGui::GetContentRegionAvail();
     auto clickedRow = EpdData::instance().drawTable(size);
