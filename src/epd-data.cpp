@@ -155,13 +155,21 @@ namespace QaplaWindows {
 		}
     }
 
+    bool EpdData::configChanged() const {
+        return scheduledEngines_ == 0 || scheduledConfig_ != epdConfig_;
+    }
+
     void EpdData::analyse() {
-        state = State::Starting;
-        if (scheduledEngines_ == 0 || scheduledConfig_ != epdConfig_) {
+        if (configChanged()) {
+            if (state == EpdData::State::Stopped) {
+                SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.");
+                return;
+            }
             clear();
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             scheduledConfig_ = epdConfig_;
         }
+        state = State::Starting;
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig);

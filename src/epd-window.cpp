@@ -69,7 +69,7 @@ static std::string getButtonText(const std::string& button, EpdData::State epdSt
         if (epdState == EpdData::State::Running) {
             return "Stop";
         } else {
-            return "Run";
+            return EpdData::instance().configChanged() ? "Analyze" : "Continue";
         } 
     } 
     return button;
@@ -81,6 +81,10 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
         if (epdState == EpdData::State::Running) {
             return QaplaButton::ButtonState::Active;
         } 
+        // Manual clear is now required before re-running analysis
+        if (EpdData::instance().configChanged() && epdState == EpdData::State::Stopped) {
+            return QaplaButton::ButtonState::Disabled;
+        }
     } 
     if (button == "Grace")
     {

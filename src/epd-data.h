@@ -145,10 +145,18 @@ namespace QaplaWindows {
          * @param sections A list of INI file sections representing the engine configurations
          */
         void setConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
-
+     
+        /**
+         * @brief Checks if the current configuration has changed since the last analysis.
+         * @return true if the configuration has changed, false otherwise.
+         */
+        bool configChanged() const;
+        
         State state = State::Cleared;
         size_t totalTests = 0;
         size_t remainingTests = 0;
+
+   
 
 	private:
 
@@ -158,7 +166,6 @@ namespace QaplaWindows {
 
         void populateTable();
         std::optional<size_t> selectedIndex_;
-        
 
 		std::shared_ptr<EpdManager> epdManager_;
 		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
