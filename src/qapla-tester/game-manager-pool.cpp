@@ -129,7 +129,7 @@ void GameManagerPool::printRunningGames(std::ostream& out) const {
     int pos = 1;
     for (const auto& managerPtr : managers_) {
         GameManager* manager = managerPtr.get();
-        if (!manager->getTaskProvider()) {
+        if (!manager->isRunning()) {
             continue;
         }
         auto whiteEngine = manager->getEngine(true);
@@ -151,7 +151,7 @@ size_t GameManagerPool::runningGameCount() const {
     size_t count = 0;
     for (const auto& managerPtr : managers_) {
         GameManager* manager = managerPtr.get();
-        if (manager->getTaskProvider() != nullptr) {
+        if (manager->isRunning()) {
             ++count;
         }
     }

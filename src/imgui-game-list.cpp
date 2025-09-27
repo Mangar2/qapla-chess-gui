@@ -49,7 +49,9 @@ ImGuiGameList::~ImGuiGameList() {
 void ImGuiGameList::draw() {
     drawButtons();
     drawLoadingStatus();
+    ImGui::Indent(10.0f);
     drawGameTable();
+    ImGui::Unindent(10.0f);
 }
 
 void ImGuiGameList::drawButtons() {

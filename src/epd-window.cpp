@@ -63,6 +63,42 @@ void EpdWindow::setEngineConfiguration() {
     engineSelect_->setEngineConfiguration(sections);
 }
 
+static std::string getButtonText(const std::string& button, EpdData::State epdState) {
+    if (button == "Run/Stop")
+    {
+        if (epdState == EpdData::State::Running) {
+            return "Stop";
+        } else {
+            return "Run";
+        } 
+    } 
+    return button;
+}
+
+static QaplaButton::ButtonState getButtonState(const std::string& button, EpdData::State epdState) {
+    if (button == "Run/Stop")
+    {
+        if (epdState == EpdData::State::Running) {
+            return QaplaButton::ButtonState::Active;
+        } 
+    } 
+    if (button == "Grace")
+    {
+         if (epdState == EpdData::State::Stopping) {
+            return QaplaButton::ButtonState::Active;
+        } else if (epdState != EpdData::State::Running) {
+            return QaplaButton::ButtonState::Disabled;
+        } 
+    } 
+    if (button == "Clear")
+    {
+        if (epdState != EpdData::State::Stopped) {
+            return QaplaButton::ButtonState::Disabled;
+        }
+    }
+    return QaplaButton::ButtonState::Normal;
+}
+
 void EpdWindow::drawButtons()
 {
     constexpr float space = 3.0f;
@@ -74,41 +110,52 @@ void EpdWindow::drawButtons()
     constexpr ImVec2 buttonSize = {25.0f, 25.0f};
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const std::string button : {"Run", "Stop", "Clear"})
+    for (const std::string button : {"Run/Stop", "Grace", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
-        auto state = QaplaButton::ButtonState::Normal;
-        if (QaplaButton::drawIconButton(
-                button, button, buttonSize, state, [&button, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+        
+        auto buttonText = getButtonText(button, EpdData::instance().state);
+        auto buttonState = getButtonState(button, EpdData::instance().state);
+       
+        if (QaplaButton::drawIconButton(button, buttonText, buttonSize, buttonState, 
+            [&button, buttonState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            {
+                auto epdState = EpdData::instance().state;
+                if (button == "Run/Stop")
                 {
-            if (button == "Run")
-            {
-                QaplaButton::drawPlay(drawList, topLeft, size, state);
+                    if (epdState == EpdData::State::Running) {
+                        QaplaButton::drawStop(drawList, topLeft, size, buttonState);
+                    } else {
+                        QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
+                    }
+                }
+                if (button == "Grace")
+                {
+                     QaplaButton::drawGrace(drawList, topLeft, size, buttonState);
+                }
+                if (button == "Clear")
+                {
+                    QaplaButton::drawClear(drawList, topLeft, size, buttonState);
+                } 
             }
-            if (button == "Stop")
-            {
-                QaplaButton::drawStop(drawList, topLeft, size, state);
-            }
-            if (button == "Clear")
-            {
-                QaplaButton::drawClear(drawList, topLeft, size, state);
-            } }))
+        ))
         {
             try
             {
-                if (button == "Run")
+                auto epdState = EpdData::instance().state;
+                if (button == "Run/Stop" && epdState != EpdData::State::Running)
                 {
-                    GameManagerPool::getInstance().clearAll();
                     EpdData::instance().analyse();
-                    SnackbarManager::instance().showSuccess("Epd analysis started");
                 }
-                else if (button == "Stop")
+                else if (button == "Run/Stop" && epdState == EpdData::State::Running)
                 {
-                    GameManagerPool::getInstance().stopAll();
+                    EpdData::instance().stopPool(false);
                 }
-                else if (button == "Clear")
+                else if (button == "Grace") {
+                    EpdData::instance().stopPool(true);
+                }
+                else if (button == "Clear" && epdState == EpdData::State::Stopped)
                 {
-                    GameManagerPool::getInstance().clearAll();
                     EpdData::instance().clear();
                 }
             }
@@ -135,7 +182,9 @@ void EpdWindow::drawInput()
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
                                            EpdData::instance().config().concurrency, 1, maxConcurrency))
     {
-        GameManagerPool::getInstance().setConcurrency(EpdData::instance().config().concurrency, true, true);
+        if (EpdData::instance().state == EpdData::State::Running) {
+            GameManagerPool::getInstance().setConcurrency(EpdData::instance().config().concurrency, true, true);
+        }
     }
 
     ImGui::Spacing();
@@ -181,8 +230,8 @@ void EpdWindow::draw()
 {
     drawButtons();
     drawInput();
-    ImVec2 size = ImGui::GetContentRegionAvail();
     ImGui::Indent(10.0f);
+    ImVec2 size = ImGui::GetContentRegionAvail();
     auto clickedRow = EpdData::instance().drawTable(size);
     ImGui::Unindent(10.0f);
     EpdData::instance().setSelectedIndex(clickedRow);

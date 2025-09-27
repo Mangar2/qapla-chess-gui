@@ -187,12 +187,10 @@ namespace QaplaWindows {
         if (visibleRows == 0) visibleRows = 1; // Fallback
         std::optional<size_t> keyboardRow;
         indexManager_.updateSize(rows_.size());
-        ImGui::Indent(10.0f);
         if (filterable_) {
             auto changed = filter_.draw();
             handleFiltering(changed);
         }
-        ImGui::Unindent(10.0f);
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();

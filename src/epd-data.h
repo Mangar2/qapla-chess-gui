@@ -33,8 +33,23 @@ struct EpdTestResult;
 
 namespace QaplaWindows {
 
-
 	class EpdData {
+    public: 
+        enum class State {
+            Starting,
+            Running,
+            Stopping,
+            Stopped,
+            Cleared
+        };
+        struct EpdConfig {
+            std::string filepath;
+            std::vector<EngineConfig> engines;
+            uint32_t concurrency;
+            uint64_t maxTimeInS;
+            uint64_t minTimeInS;
+            uint32_t seenPlies;
+        };
     public: 
         EpdData();
         ~EpdData();
@@ -50,7 +65,13 @@ namespace QaplaWindows {
          * @brief Starts the analysis of the EPD test set.
          * This method will load the EPD file and start the analysis with the configured engines.
 		 */
-        void analyse() const;
+        void analyse();
+
+        /**
+         * @brief Stops the current analysis.
+         * @param graceful If true, stops gracefully allowing current tests to finish; if false, stops immediately.
+         */ 
+        void stopPool(bool graceful);
 
         /**
 		 * @brief Clears the current analysis results.
@@ -64,18 +85,9 @@ namespace QaplaWindows {
 		 */
         std::optional<size_t> drawTable(const ImVec2& size);
         
-        struct EpdConfig {
-            std::string filepath;
-            std::vector<EngineConfig> engines;
-            uint32_t concurrency;
-            uint64_t maxTimeInS;
-            uint64_t minTimeInS;
-            uint32_t seenPlies;
-        };
         EpdConfig& config() {
             return epdConfig_;
 		}
-
         
         /**
          * @brief Informs the configuration singleton about the current epd configurations
@@ -126,16 +138,20 @@ namespace QaplaWindows {
          */
         void setConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
 
+        State state = State::Cleared;
+
 	private:
 
         EpdConfig epdConfig_;
         uint64_t updateCnt = 0;
         void populateTable();
         std::optional<size_t> selectedIndex_;
+        
 
 		std::shared_ptr<EpdManager> epdManager_;
 		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
    		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+        uint32_t scheduledEngines_ = 0;
 
         ImGuiTable table_;
 

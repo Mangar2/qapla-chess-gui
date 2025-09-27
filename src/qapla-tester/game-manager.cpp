@@ -402,17 +402,26 @@ std::optional<GameTask> GameManager::nextAssignment() {
     // Note: taskProvider_ itself is only accessed by the owning GameManager and does not
     // require internal synchronization. However, the pool must synchronize the decision-making
     // process across GameManagers to avoid clearing more instances than intended.
-	if (GameManagerPool::getInstance().maybeDeactivateManager(taskProvider_)) {
-        return std::nullopt;
-    }
+    try {
+        if (GameManagerPool::getInstance().maybeDeactivateManager(taskProvider_)) {
+            return std::nullopt;
+        }
 
-    auto task = taskProvider_->nextTask();
-    if (task) {
-        gameContext_.restartIfConfigured();
-        return task;
+        auto task = taskProvider_->nextTask();
+        if (task) {
+            gameContext_.restartIfConfigured();
+            return task;
+        }
+        // tryGetReplacementTask already provides new engine instances so restarting is not needed.
+        return assignNewProviderAndTask();
     }
-    // tryGetReplacementTask already provides new engine instances so restarting is not needed.
-    return assignNewProviderAndTask();
+    catch (const std::exception& e) {
+        Logger::testLogger().log("Exception in GameManager::nextAssignment " + std::string(e.what()), TraceLevel::error);
+    }
+    catch (...) {
+        Logger::testLogger().log("Unknown exception in GameManager::nextAssignment", TraceLevel::error);
+    }
+    return std::nullopt;
 }
 
 void GameManager::finalizeTaskAndContinue() {

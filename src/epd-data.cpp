@@ -21,6 +21,7 @@
 
 #include "imgui-table.h"
 #include "configuration.h"
+#include "snackbar.h"
 
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/string-helper.h"
@@ -57,7 +58,7 @@ namespace QaplaWindows {
 		    }
     	));
         auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "tournament").value_or({});
+            getConfigData().getSectionList("epd", "epd").value_or({});
         if (sections.size() > 0) {
             auto section = sections[0];
             epdConfig_ = EpdConfig{
@@ -140,24 +141,66 @@ namespace QaplaWindows {
         if (updateCnt != epdManager_->getUpdateCount()) {
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt = epdManager_->getUpdateCount();
+            if (state == State::Stopping || state == State::Running) {
+                if (GameManagerPool::getInstance().runningGameCount() == 0) {
+                    state = State::Stopped;
+                    SnackbarManager::instance().showSuccess("Analysis finished.");
+                }
+            }
             populateTable();
 		}
     }
 
-    void EpdData::analyse() const {
+    void EpdData::analyse() {
+        state = State::Starting;
         epdManager_->initialize(
             epdConfig_.filepath, 
             epdConfig_.maxTimeInS, 
             epdConfig_.minTimeInS, 
             epdConfig_.seenPlies);
 		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true);
-        for (const auto& engineConfig : epdConfig_.engines) {
+        
+        for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
+            auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig);
-		}
+            scheduledEngines_++;
+        }
+        
+        state = State::Running;
+        SnackbarManager::instance().showSuccess("Epd analysis started");
+    }
+
+     void EpdData::stopPool(bool graceful) {
+        //imguiConcurrency_->setActive(false);
+        auto oldState = state;
+        state = graceful ? State::Stopping : State::Stopped;
+        if (!graceful) {
+            GameManagerPool::getInstance().stopAll();
+        } else {
+            GameManagerPool::getInstance().setConcurrency(0, true, false);
+        }
+
+        if (oldState == State::Stopped) {
+            SnackbarManager::instance().showNote("No analysis running.");
+            return;
+        }
+        if (oldState == State::Stopping && graceful) {
+            SnackbarManager::instance().showNote("Analysis is already stopping gracefully.");
+            return;
+        }
+       
+        SnackbarManager::instance().showSuccess(
+            graceful ? 
+                "Analysis stopped.\nFinishing ongoing calculations." : 
+                "Analysis stopped"
+        );
     }
 
     void EpdData::clear() {
+        GameManagerPool::getInstance().clearAll();
         epdManager_->clear();
+        scheduledEngines_ = 0;
+        state = State::Cleared;
     }
 
     void EpdData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
@@ -167,6 +210,7 @@ namespace QaplaWindows {
                 epdConfig_.engines.push_back(config.config);
             }
         }
+        scheduledEngines_ = 0;
     }
 
     std::optional<size_t> EpdData::drawTable(const ImVec2& size) {
