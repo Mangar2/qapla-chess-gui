@@ -49,6 +49,14 @@ namespace QaplaWindows {
             uint64_t maxTimeInS;
             uint64_t minTimeInS;
             uint32_t seenPlies;
+            bool operator==(const EpdConfig& other) const {
+                return filepath == other.filepath &&
+                       engines == other.engines &&
+                       // Concurrency is not compared here, as changing concurrency does not change the configuration itself
+                       maxTimeInS == other.maxTimeInS &&
+                       minTimeInS == other.minTimeInS &&
+                       seenPlies == other.seenPlies;
+            }
         };
     public: 
         EpdData();
@@ -143,6 +151,7 @@ namespace QaplaWindows {
 	private:
 
         EpdConfig epdConfig_;
+        EpdConfig scheduledConfig_;
         uint64_t updateCnt = 0;
         void populateTable();
         std::optional<size_t> selectedIndex_;

@@ -153,19 +153,17 @@ namespace QaplaWindows {
 
     void EpdData::analyse() {
         state = State::Starting;
-        epdManager_->initialize(
-            epdConfig_.filepath, 
-            epdConfig_.maxTimeInS, 
-            epdConfig_.minTimeInS, 
-            epdConfig_.seenPlies);
-		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true);
-        
+        if (scheduledEngines_ == 0 || scheduledConfig_ != epdConfig_) {
+            clear();
+            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
+            scheduledConfig_ = epdConfig_;
+        }
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig);
             scheduledEngines_++;
         }
-        
+		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true, true);
         state = State::Running;
         SnackbarManager::instance().showSuccess("Epd analysis started");
     }
@@ -199,12 +197,13 @@ namespace QaplaWindows {
     void EpdData::clear() {
         GameManagerPool::getInstance().clearAll();
         epdManager_->clear();
+        epdResults_->clear();
         scheduledEngines_ = 0;
         state = State::Cleared;
     }
 
     void EpdData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-        epdConfig_.engines.clear();
+         epdConfig_.engines.clear();
         for (const auto& config : configurations) {
             if (config.selected) {
                 epdConfig_.engines.push_back(config.config);

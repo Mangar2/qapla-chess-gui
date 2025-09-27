@@ -179,12 +179,15 @@ void EpdWindow::drawInput()
 
     ImGui::Indent(10.0f);
     ImGui::SetNextItemWidth(inputWidth);
+    bool modified = false;
+
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
                                            EpdData::instance().config().concurrency, 1, maxConcurrency))
     {
         if (EpdData::instance().state == EpdData::State::Running) {
             GameManagerPool::getInstance().setConcurrency(EpdData::instance().config().concurrency, true, true);
         }
+        modified = true;
     }
 
     ImGui::Spacing();
@@ -200,7 +203,6 @@ void EpdWindow::drawInput()
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0f);
-        bool modified = false;
         std::string filePath = EpdData::instance().config().filepath;
         ImGui::SetNextItemWidth(inputWidth);
         modified |= ImGuiControls::inputInt<uint32_t>("Seen plies",
@@ -219,9 +221,10 @@ void EpdWindow::drawInput()
                                 EpdData::instance().config().filepath, inputWidth * 2.0f);
         ImGui::Spacing();
         ImGui::Unindent(10.0f);
-        if (modified) {
-            EpdData::instance().updateConfiguration();
-        }
+
+    }
+    if (modified) {
+        EpdData::instance().updateConfiguration();
     }
     ImGui::Unindent(10.0f);
 }
