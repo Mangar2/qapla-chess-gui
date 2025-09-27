@@ -126,6 +126,7 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
         auto& engineRecord = engineRecords_[tableIndex];
         if (moveRecord.engineId_ == engineRecord.identifier) {
             setTable(tableIndex, moveRecord);
+            displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
         }
     }
 }
@@ -134,11 +135,13 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
     auto moveNo = moveRecord.halfmoveNo_;
     addTables(playerIndex + 1);
 
-    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && moveNo == displayedMoveNo_[playerIndex]) {
-        return; 
-    }
+    // Only update if this is the current move showed in the table
+    if (moveNo != displayedMoveNo_[playerIndex]) return;
+    
+    // Only update if there are new info records
+    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex]) return;
+
     infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
-    displayedMoveNo_[playerIndex] = moveNo;
 
     setTable(playerIndex, moveRecord);
 }

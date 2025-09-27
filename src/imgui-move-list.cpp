@@ -84,11 +84,12 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
             table_.push(std::vector<std::string>{ "Start (Setup)", "", "", "", "" });
         }   
     }
-    const auto& moves = gameRecord.history();
-    bool wtm = gameRecord.wtmAtPly(table_.size());
-    uint32_t moveNumber = 1 + (gameRecord.halfmoveNoAtPly(table_.size()) / 2);
     // table_.size() is safe because we just added the start position if it was empty
-    for (size_t i = table_.size() - 1; i < moves.size(); ++i) {
+    auto tableSizeWithoutStartRow = table_.size() - 1;
+    const auto& moves = gameRecord.history();
+    bool wtm = gameRecord.wtmAtPly(tableSizeWithoutStartRow);
+    uint32_t moveNumber = (gameRecord.halfmoveNoAtPly(tableSizeWithoutStartRow) + 1) / 2;
+    for (size_t i = tableSizeWithoutStartRow; i < moves.size(); ++i) {
         if (wtm) {
             table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i], i));
         } 
