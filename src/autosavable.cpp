@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "auto-save-file.h"
+#include "autosavable.h"
 #include "qapla-tester/logger.h"
 #include "qapla-tester/timer.h"
 
@@ -27,10 +27,10 @@
 
 using namespace QaplaHelpers;
 
-AutoSaveFile::AutoSaveFile(const std::string& filename, 
-                           const std::string& backupSuffix,
-                           uint64_t autosaveIntervalMs,
-                           std::function<std::string()> directoryProvider)
+Autosavable::Autosavable(const std::string& filename, 
+                         const std::string& backupSuffix,
+                         uint64_t autosaveIntervalMs,
+                         std::function<std::string()> directoryProvider)
     : filename_(filename)
     , backupSuffix_(backupSuffix)
     , autosaveIntervalMs_(autosaveIntervalMs)
@@ -39,7 +39,7 @@ AutoSaveFile::AutoSaveFile(const std::string& filename,
     updateFilePaths();
 }
 
-void AutoSaveFile::autosave() {
+void Autosavable::autosave() {
     if (!changed_) return;
     
     uint64_t currentTime = Timer::getCurrentTimeMs();
@@ -52,7 +52,7 @@ void AutoSaveFile::autosave() {
     changed_ = false; 
 }
 
-void AutoSaveFile::saveFile() {
+void Autosavable::saveFile() {
     namespace fs = std::filesystem;
 
     try {
@@ -93,7 +93,7 @@ void AutoSaveFile::saveFile() {
     }
 }
 
-void AutoSaveFile::loadFile() {
+void Autosavable::loadFile() {
     namespace fs = std::filesystem;
 
     try {
@@ -135,24 +135,24 @@ void AutoSaveFile::loadFile() {
     }
 }
 
-std::string AutoSaveFile::getDirectory() const {
+std::string Autosavable::getDirectory() const {
     if (directoryProvider_) {
         return directoryProvider_();
     }
     return defaultDirectoryProvider();
 }
 
-void AutoSaveFile::updateFilePaths() {
+void Autosavable::updateFilePaths() {
     std::string directory = getDirectory();
     filePath_ = directory + "/" + filename_;
     backupFilePath_ = directory + "/" + filename_ + backupSuffix_;
 }
 
-std::string AutoSaveFile::defaultDirectoryProvider() {
+std::string Autosavable::defaultDirectoryProvider() {
     return ".";  // Current directory as fallback
 }
 
-std::string AutoSaveFile::getConfigDirectory() {
+std::string Autosavable::getConfigDirectory() {
     namespace fs = std::filesystem;
 
 #ifdef _WIN32

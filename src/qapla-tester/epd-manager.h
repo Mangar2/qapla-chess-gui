@@ -92,6 +92,12 @@ public:
         return count;
 	}
 
+    /**
+     * @brief Outputs the current results to the provided output stream in a human-readable format.
+     * @param os The output stream to write results to.
+     */
+    void saveResults(std::ostream& os) const;
+
 private:
     /**
      * @brief Loads and transforms all EPD entries into test cases.

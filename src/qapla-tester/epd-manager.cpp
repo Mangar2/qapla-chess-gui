@@ -87,6 +87,17 @@ void EpdManager::logResultLine(const EpdTestCase& current) const {
 	Logger::testLogger().log(line, TraceLevel::result);
 }
 
+void EpdManager::saveResults(std::ostream& os) const {
+    auto results = getResultsCopy();
+    if (results.empty()) {
+        return;
+    }
+    os << generateHeaderLine() << std::endl;
+    for (const auto& testCase : testsRead_) {
+        os << generateResultLine(testCase, results) << std::endl;
+    }    
+}
+
 inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
 
     formatInlineResult(os, test);

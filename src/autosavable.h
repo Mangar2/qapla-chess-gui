@@ -26,36 +26,36 @@
 namespace QaplaHelpers {
 
     /**
-     * @brief Base class for files that need automatic saving with backup and recovery functionality.
+     * @brief Base class for objects that support automatic saving with backup and recovery functionality.
      * 
-     * This class provides a generic framework for handling files that:
+     * This class provides a generic framework for handling objects that:
      * - Need periodic auto-saving when modified
      * - Require backup/recovery mechanisms for safety
      * - Can have customizable directory structures
      * - Support different file formats through virtual methods
      * 
-     * Classes inheriting from AutoSaveFile must implement:
+     * Classes inheriting from Autosavable must implement:
      * - saveData(std::ofstream&): Write data to the output stream
      * - loadData(std::ifstream&): Read data from the input stream
      */
-    class AutoSaveFile {
+    class Autosavable {
     public:
         /**
-         * @brief Constructor for AutoSaveFile.
+         * @brief Constructor for Autosavable.
          * @param filename The base filename (without path).
          * @param backupSuffix Suffix for the backup file (default: ".bak").
          * @param autosaveIntervalMs Auto-save interval in milliseconds (default: 60000ms = 1 minute).
          * @param directoryProvider Function that returns the directory path for files.
          */
-        AutoSaveFile(const std::string& filename, 
-                     const std::string& backupSuffix = ".bak",
-                     uint64_t autosaveIntervalMs = 60000,
-                     std::function<std::string()> directoryProvider = nullptr);
+        Autosavable(const std::string& filename, 
+                    const std::string& backupSuffix = ".bak",
+                    uint64_t autosaveIntervalMs = 60000,
+                    std::function<std::string()> directoryProvider = nullptr);
 
         /**
          * @brief Virtual destructor.
          */
-        virtual ~AutoSaveFile() = default;
+        virtual ~Autosavable() = default;
 
         /**
          * @brief Autosaves the file if it has changed since the last save and enough 

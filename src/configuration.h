@@ -20,7 +20,7 @@
 #pragma once
 
 #include "engine-capabilities.h"
-#include "auto-save-file.h"
+#include "autosavable.h"
 
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/ini-file.h"
@@ -100,7 +100,7 @@ namespace QaplaConfiguration {
         }
     };
 
-    class Configuration : public QaplaHelpers::AutoSaveFile {
+    class Configuration : public QaplaHelpers::Autosavable {
     public:
         Configuration();
 
@@ -133,7 +133,7 @@ namespace QaplaConfiguration {
             return instance;
 		}
 
-        // Inherited from AutoSaveFile: autosave(), saveFile(), loadFile(), setModified()
+        // Inherited from Autosavable: autosave(), saveFile(), loadFile(), setModified()
         
         const EngineCapabilities& getEngineCapabilities() const {
             return engineCapabilities_;
@@ -158,14 +158,14 @@ namespace QaplaConfiguration {
     protected:
         /**
          * @brief Saves configuration data to the output stream.
-         * Overrides AutoSaveFile::saveData.
+         * Overrides Autosavable::saveData.
 		 * @param out The output stream to write the configuration data to.
          */
         void saveData(std::ofstream& out) override;
 
         /**
          * @brief Loads configuration data from the input stream.
-         * Overrides AutoSaveFile::loadData.
+         * Overrides Autosavable::loadData.
          * @param in The input stream to read the configuration data from.
          */
         void loadData(std::ifstream& in) override;

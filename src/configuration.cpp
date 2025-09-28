@@ -39,11 +39,11 @@
 using namespace QaplaConfiguration;
 
 Configuration::Configuration() 
-    : AutoSaveFile(CONFIG_FILE, ".bak", 60000, []() { return AutoSaveFile::getConfigDirectory(); })
+    : Autosavable(CONFIG_FILE, ".bak", 60000, []() { return Autosavable::getConfigDirectory(); })
 {
 }
 
-// getConfigDirectory, autosave, saveFile, loadFile are now handled by AutoSaveFile base class
+// getConfigDirectory, autosave, saveFile, loadFile are now handled by Autosavable base class
 
 void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
