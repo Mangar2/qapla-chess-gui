@@ -33,6 +33,7 @@
 namespace QaplaWindows {
 
     EpdData::EpdData() : 
+        Autosavable("epd-result.qepd", ".bak", 60000, []() { return Autosavable::getConfigDirectory(); }),
         epdManager_(std::make_shared<EpdManager>()),
         epdResults_(std::make_unique<std::vector<EpdTestResult>>()),
         table_(
@@ -145,6 +146,7 @@ namespace QaplaWindows {
         if (updateCnt_ != epdManager_->getUpdateCount()) {
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt_ = epdManager_->getUpdateCount();
+            setModified(); // Notify autosave system about data changes
             if (state == State::Stopping || state == State::Running) {
                 if (GameManagerPool::getInstance().runningGameCount() == 0) {
                     state = State::Stopped;
@@ -229,6 +231,18 @@ namespace QaplaWindows {
 
     std::optional<size_t> EpdData::drawTable(const ImVec2& size) {
         return table_.draw(size);
+    }
+
+    void EpdData::saveData(std::ofstream& out) {
+        if (epdManager_) {
+            epdManager_->saveResults(out);
+        }
+    }
+
+    void EpdData::loadData(std::ifstream& in) {
+        // TODO: Implement loading of EPD results from file
+        // This functionality is not yet implemented in the original code
+        (void)in; // Suppress unused parameter warning
     }
 
 }

@@ -23,6 +23,7 @@
 #include "imgui-table.h"
 #include "callback-manager.h"
 #include "imgui-engine-select.h"
+#include "autosavable.h"
 
 #include <memory>
 #include <optional>
@@ -33,7 +34,7 @@ struct EpdTestResult;
 
 namespace QaplaWindows {
 
-	class EpdData {
+	class EpdData : public QaplaHelpers::Autosavable {
     public: 
         enum class State {
             Starting,
@@ -151,12 +152,28 @@ namespace QaplaWindows {
          * @return true if the configuration has changed, false otherwise.
          */
         bool configChanged() const;
-        
+
         State state = State::Cleared;
         size_t totalTests = 0;
         size_t remainingTests = 0;
 
-   
+        // Inherited from Autosavable: autosave(), saveFile(), loadFile(), setModified()
+
+    protected:
+        /**
+         * @brief Saves EPD results to the output stream.
+         * Overrides Autosavable::saveData.
+         * @param out The output stream to write the EPD results to.
+         */
+        void saveData(std::ofstream& out) override;
+
+        /**
+         * @brief Loads EPD results from the input stream.
+         * Overrides Autosavable::loadData.
+         * @param in The input stream to read the EPD results from.
+         */
+        void loadData(std::ifstream& in) override;
+        
 
 	private:
 
