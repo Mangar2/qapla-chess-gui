@@ -20,6 +20,7 @@
 #pragma once
 
 #include "engine-capabilities.h"
+#include "auto-save-file.h"
 
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/ini-file.h"
@@ -99,7 +100,7 @@ namespace QaplaConfiguration {
         }
     };
 
-    class Configuration {
+    class Configuration : public QaplaHelpers::AutoSaveFile {
     public:
         Configuration();
 
@@ -120,7 +121,7 @@ namespace QaplaConfiguration {
         void setTimeControlSettings(const TimeControlSettings& settings) {
             if (timeControlSettings_ == settings) return;
             timeControlSettings_ = settings;
-			changed_ = true;
+			setModified();
         }
 
         /**
@@ -132,25 +133,7 @@ namespace QaplaConfiguration {
             return instance;
 		}
 
-        /**
-		 * @brief Autosaves the configuration if it has changed since the last save and enough 
-         * time has passed since last save.
-         */
-        void autosave();
-
-        /**
-         * @brief Saves the configuration to a file with a safety mechanism.
-         */
-        void saveFile();
-
-        /**
-         * @brief Loads the configuration from a file with a fallback mechanism.
-         */
-        void loadFile();
-
-        void setModified() {
-            changed_ = true;
-		}
+        // Inherited from AutoSaveFile: autosave(), saveFile(), loadFile(), setModified()
         
         const EngineCapabilities& getEngineCapabilities() const {
             return engineCapabilities_;
@@ -172,20 +155,22 @@ namespace QaplaConfiguration {
             return configData_;
         }
 
-    private:
-        bool changed_ = false;
-		uint64_t lastSaveTimestamp_ = 0;
-
+    protected:
         /**
-         * @brief Placeholder for the actual save logic.
+         * @brief Saves configuration data to the output stream.
+         * Overrides AutoSaveFile::saveData.
 		 * @param out The output stream to write the configuration data to.
          */
-         void saveData(std::ofstream& out);
+        void saveData(std::ofstream& out) override;
 
         /**
-         * @brief Placeholder for the actual load logic.
+         * @brief Loads configuration data from the input stream.
+         * Overrides AutoSaveFile::loadData.
+         * @param in The input stream to read the configuration data from.
          */
-        void loadData(std::ifstream& in);
+        void loadData(std::ifstream& in) override;
+
+    private:
 
         /**
         * @brief Processes a specific section from the configuration file.
@@ -215,14 +200,9 @@ namespace QaplaConfiguration {
 
         EngineCapabilities engineCapabilities_;
         TimeControlSettings timeControlSettings_;
+        QaplaHelpers::ConfigData configData_;
 
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";
-        static constexpr const char* BACKUP_FILE = "qapla-chess-gui.ini.bak";
-
-        std::string configFilePath_;
-		std::string backupFilePath_;
-
-        QaplaHelpers::ConfigData configData_;
 
     };
 

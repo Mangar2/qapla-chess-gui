@@ -39,111 +39,11 @@
 using namespace QaplaConfiguration;
 
 Configuration::Configuration() 
+    : AutoSaveFile(CONFIG_FILE, ".bak", 60000, []() { return AutoSaveFile::getConfigDirectory(); })
 {
 }
 
-static std::string getConfigDirectory() {
-    namespace fs = std::filesystem;
-
-#ifdef _WIN32
-    char* buf = nullptr;
-    size_t sz = 0;
-    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf) {
-        std::string path(buf);
-        free(buf);
-        return path + "/qapla-chess-gui";
-    }
-    // Fallback, falls LOCALAPPDATA nicht gesetzt ist
-    return std::string(".") + "/qapla-chess-gui";
-#else
-    return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";
-#endif
-}
-
-void Configuration::autosave() {
-	static const uint64_t AUTOSAVE_INTERVAL_MS = 60000; // 60 seconds
-    if (!changed_) return;
-	uint64_t currentTime = Timer::getCurrentTimeMs();
-    if (currentTime - lastSaveTimestamp_ < AUTOSAVE_INTERVAL_MS) {
-        return; 
-	}
-    saveFile();
-	lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-    changed_ = false; 
-}
-
-void Configuration::saveFile() {
-    namespace fs = std::filesystem;
-
-    try {
-        // Rename existing file to backup
-        if (fs::exists(configFilePath_)) {
-            fs::rename(configFilePath_, backupFilePath_);
-        }
-
-        // Open the configuration file for writing
-        std::ofstream outFile(configFilePath_, std::ios::trunc);
-        if (!outFile) {
-            throw std::ios_base::failure("Failed to open configuration file for writing.");
-        }
-
-        // Save the configuration data
-        saveData(outFile);
-        outFile.close();
-
-        // Remove the backup file if saving was successful
-        if (fs::exists(configFilePath_)) {
-            fs::remove(backupFilePath_);
-        }
-    }
-    catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Error saving configuration: ") + e.what(), TraceLevel::error);
-
-        // Restore the backup if saving failed
-        if (fs::exists(backupFilePath_)) {
-            fs::rename(backupFilePath_, configFilePath_);
-        }
-    }
-}
-
-void Configuration::loadFile() {
-    namespace fs = std::filesystem;
-
-    try {
-        const std::string configDir = getConfigDirectory();
-        fs::create_directories(configDir);
-
-        configFilePath_ = configDir + "/" + CONFIG_FILE;
-		backupFilePath_ = configDir + "/" + BACKUP_FILE;
-
-        std::ifstream inFile;
-
-        if (fs::exists(configFilePath_)) {
-            inFile.open(configFilePath_, std::ios::in);
-        }
-        else if (fs::exists(backupFilePath_)) {
-            fs::rename(backupFilePath_, configFilePath_);
-            inFile.open(configFilePath_, std::ios::in);
-        }
-        else {
-            throw std::ios_base::failure("No configuration file found.");
-        }
-
-        if (!inFile.is_open()) {
-            throw std::ios_base::failure("Failed to open configuration file for reading.");
-        }
-
-        loadData(inFile);
-        inFile.close();
-
-        lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-        changed_ = false;
-    }
-    catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Cannot load configuration: ") + e.what(),
-            TraceLevel::error);
-    }
-}
+// getConfigDirectory, autosave, saveFile, loadFile are now handled by AutoSaveFile base class
 
 void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
