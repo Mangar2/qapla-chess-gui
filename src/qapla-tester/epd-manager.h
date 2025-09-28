@@ -105,9 +105,12 @@ private:
      * @return Optional EpdTestCase or std::nullopt if no more entries are available.
      */
     std::optional<EpdTestCase> nextTestCaseFromReader();
-    void printHeaderLine() const;
-    std::string formatInlineResult(const EpdTestCase& test) const;
-    void printTestResultLine(const EpdTestCase& current) const;
+    
+    std::string generateHeaderLine() const;
+    void logHeaderLine() const;
+
+    std::string generateResultLine(const EpdTestCase& current, const TestResults& results) const;
+    void logResultLine(const EpdTestCase& current) const;
 
     std::unique_ptr<EpdReader> reader_;
     std::vector<EpdTestCase> testsRead_;

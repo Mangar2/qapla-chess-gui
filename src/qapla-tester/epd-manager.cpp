@@ -24,7 +24,8 @@
 #include "game-state.h"
 #include "string-helper.h"
 
-void EpdManager::printHeaderLine() const {
+std::string EpdManager::generateHeaderLine() const {
+    std::ostringstream header;
     auto formatEngineName = [](const std::string& name) -> std::string {
         constexpr size_t totalWidth = 25;
         size_t len = name.length();
@@ -36,8 +37,6 @@ void EpdManager::printHeaderLine() const {
         size_t rightPad = padding - leftPad;
         return std::string(leftPad, ' ') + name + std::string(rightPad, ' ');
         };
-
-    std::ostringstream header;
     header << std::setw(20) << std::left << "TestId";
     auto results = getResultsCopy();
     for (const auto& result : results) {
@@ -45,21 +44,30 @@ void EpdManager::printHeaderLine() const {
             header << "|" << formatEngineName(result.engineName);
         }
     }
-
-    header << "| BM:";
-    Logger::testLogger().log(header.str(), TraceLevel::result);
+    
+    return header.str();
 }
 
-void EpdManager::printTestResultLine(const EpdTestCase& current) const {
+void EpdManager::logHeaderLine() const {
+    auto header = generateHeaderLine();
+    Logger::testLogger().log(header, TraceLevel::result);
+}
+
+static void formatInlineResult(std::ostream& os, const EpdTestCase& test) {
+    os << "|" << std::setw(8) << std::right << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
+        << ", D:" << std::setw(3) << std::right << (test.correct ? std::to_string(test.correctAtDepth) : "-")
+        << ", M: " << std::setw(5) << std::left << test.playedMove;
+}
+
+std::string EpdManager::generateResultLine(const EpdTestCase& current, const TestResults& results) const {
     std::ostringstream line;
     line << std::setw(20) << std::left << current.id;
-	auto results = getResultsCopy();
     for (const auto& result : results) {
         const auto it = std::find_if(result.result.begin(), result.result.end(), [&](const EpdTestCase& t) {
             return t.id == current.id;
             });
         if (it != result.result.end()) {
-            line << formatInlineResult(*it);
+            formatInlineResult(line, *it);
         }
         else {
             line << "|" << std::setw(23) << "-";
@@ -70,28 +78,20 @@ void EpdManager::printTestResultLine(const EpdTestCase& current) const {
     for (const auto& bm : current.bestMoves) {
         line << bm << " ";
     }
-
-	Logger::testLogger().log(line.str(), TraceLevel::result);
+    return line.str();
 }
 
-std::string EpdManager::formatInlineResult(const EpdTestCase& test) const {
-    std::ostringstream out;
-    out << "|" << std::setw(8) << std::right << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
-        << ", D:" << std::setw(3) << std::right << (test.correct ? std::to_string(test.correctAtDepth) : "-")
-        << ", M: " << std::setw(5) << std::left << test.playedMove;
-    return out.str();
+void EpdManager::logResultLine(const EpdTestCase& current) const {
+	auto results = getResultsCopy();
+    auto line = generateResultLine(current, results);
+	Logger::testLogger().log(line, TraceLevel::result);
 }
 
 inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
 
-    os << std::setw(20) << std::left << test.id
-        << "|" << std::setw(8) << std::right
-        << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
-        << ", D:" << std::setw(3) << std::right
-        << (test.correct ? std::to_string(test.correctAtDepth) : "-")
-        << ", M: " << std::setw(5) << std::left << test.playedMove
-        << " | BM: ";
+    formatInlineResult(os, test);
 
+    os << " | BM: ";
     for (const auto& bm : test.bestMoves) {
         os << bm << " ";
     }
@@ -147,6 +147,15 @@ void EpdManager::schedule(const EngineConfig& engineConfig) {
 	auto newTest = std::make_shared<EpdTest>();
 	newTest->initialize(test);
 	testInstances_.emplace_back(newTest);
+    newTest->setTestResultCallback([this]([[maybe_unused]] EpdTest* test, size_t first, size_t last) {
+        auto results = getResultsCopy();
+        for (size_t i = first; i < last && i < testsRead_.size(); ++i) {
+            const auto& current = testsRead_[i];
+            auto line = generateResultLine(current, results);
+            Logger::testLogger().log(line, TraceLevel::result);
+        }
+    });
+    logHeaderLine();
     newTest->schedule(newTest, engineConfig);
 }
 

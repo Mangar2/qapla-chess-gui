@@ -48,12 +48,12 @@ void EpdTest::initialize(const EpdTestResult& tests)
 }
 
 void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine) {
-    GameManagerPool::getInstance().addTaskProvider(self, engine);
+    GameManagerPool::getInstance().addTaskProvider(self, engine); 
     GameManagerPool::getInstance().startManagers();
 }
 
 std::optional<GameTask> EpdTest::nextTask() {
-    std::lock_guard<std::mutex> lock(taskMutex_);
+    std::lock_guard<std::mutex> lock(testResultMutex_);
     if (testIndex_ >= result_.result.size()) {
         return std::nullopt;
     }
@@ -87,7 +87,7 @@ bool EpdTest::setPV(const std::string& taskId,
     }
 
     const auto index = (std::stoi(taskId));
-    std::lock_guard<std::mutex> lock(taskMutex_);
+    std::lock_guard<std::mutex> lock(testResultMutex_);
 
     if (index < 0 || index >= static_cast<int>(result_.result.size())) return false;
 
@@ -132,7 +132,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     if (moves.empty()) return;
 
     const auto& move = moves.back();
-    const std::string& played = move.lan;
+    const std::string& played = move.san.empty() ? move.lan : move.san;
 
     int taskIdIndex = -1;
     try {
@@ -141,51 +141,57 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     catch (...) {
 		throw AppError::make("Invalid taskId: " + taskId + ". Must be a valid integer.");
     }
+
+    auto recentOldestIndex = oldestIndexInUse_;
     if (taskIdIndex < 0 || taskIdIndex >= static_cast<int>(result_.result.size())) return;
+    {
+        std::lock_guard<std::mutex> lock(testResultMutex_);
+        updateCnt_++;
+        const size_t index = static_cast<size_t>(taskIdIndex);
+        auto& test = result_.result[index];
+        assert(test.playedMove.empty());
 
-    std::lock_guard<std::mutex> lock(taskMutex_);
-    updateCnt_++;
-    const size_t index = static_cast<size_t>(taskIdIndex);
-    auto& test = result_.result[index];
-    assert(test.playedMove.empty());
+        test.playedMove = played;
+        test.correct = std::any_of(
+            test.bestMoves.begin(), test.bestMoves.end(),
+            [&](const std::string& bm) {
+                return isSameMove(fen, played, bm);
+            }
+        );
+        test.timeMs = move.timeMs;
+        test.searchDepth = static_cast<int>(move.depth);
+        test.nodeCount = move.nodes;
 
-    test.playedMove = played;
-    test.correct = std::any_of(
-        test.bestMoves.begin(), test.bestMoves.end(),
-        [&](const std::string& bm) {
-            return isSameMove(fen, played, bm);
+        // Note: SetPV might have set the correct depth, time, nodes already
+        if (test.correct && test.correctAtDepth == -1) {
+            test.correctAtDepth = static_cast<int>(move.depth);
+            test.correctAtTimeInMs = move.timeMs;
+            test.correctAtNodeCount = move.nodes;
         }
-    );
-    test.timeMs = move.timeMs;
-    test.searchDepth = static_cast<int>(move.depth);
-    test.nodeCount = move.nodes;
 
-    // Note: SetPV might have set the correct depth, time, nodes already
-    if (test.correct && test.correctAtDepth == -1) {
-        test.correctAtDepth = static_cast<int>(move.depth);
-        test.correctAtTimeInMs = move.timeMs;
-        test.correctAtNodeCount = move.nodes;
-    }
-
-    // If SetPV saw the correct move but it was finally not played, we need to remove the former result
-    if (!test.correct) {
-        test.correctAtDepth = -1;
-        test.correctAtTimeInMs = 0;
-        test.correctAtNodeCount = 0;
-    }
-
-    // Close gap, if oldest
-    if (index == oldestIndexInUse_) {
-        while (oldestIndexInUse_ < result_.result.size() && !result_.result[oldestIndexInUse_].playedMove.empty()) {
-            ++oldestIndexInUse_;
+        // If SetPV saw the correct move but it was finally not played, we need to remove the former result
+        if (!test.correct) {
+            test.correctAtDepth = -1;
+            test.correctAtTimeInMs = 0;
+            test.correctAtNodeCount = 0;
         }
+
+        // Close gap, if oldest
+        if (index == oldestIndexInUse_) {
+            while (oldestIndexInUse_ < result_.result.size() && !result_.result[oldestIndexInUse_].playedMove.empty()) {
+                ++oldestIndexInUse_;
+            }
+        }
+    }
+    if (recentOldestIndex != oldestIndexInUse_ && testResultCallback_) {
+        testResultCallback_(this, recentOldestIndex, oldestIndexInUse_);
     }
 }
 
-bool EpdTest::isSameMove(const std::string& fen, const std::string& lanMove, const std::string& sanMove) const {
+bool EpdTest::isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str) const {
     GameState gameState;
     gameState.setFen(false, fen);
-    auto lMove = gameState.stringToMove(lanMove, true);
-    auto sMove = gameState.stringToMove(sanMove, false);
-    return lMove == sMove;
+    auto move1 = gameState.stringToMove(move1str, false);
+    auto move2 = gameState.stringToMove(move2str, false);
+    return move1 == move2;
 }

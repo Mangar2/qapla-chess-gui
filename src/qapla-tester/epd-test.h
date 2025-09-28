@@ -19,6 +19,10 @@
 
 #pragma once
 
+#include "game-task.h"
+#include "epd-reader.h"
+#include "engine-config.h"
+
 #include <memory>
 #include <string>
 #include <optional>
@@ -26,9 +30,7 @@
 #include <mutex>
 #include <iostream>
 #include <iomanip>
-#include "game-task.h"
-#include "epd-reader.h"
-#include "engine-config.h"
+#include <functional>
 
 class GameManager;
 
@@ -67,6 +69,9 @@ struct EpdTestResult {
   */
 class EpdTest : public GameTaskProvider {
 public:
+    using TestResultCallback = std::function<void(EpdTest*, size_t fromIndex, size_t toIndex)>;
+
+public:
     EpdTest() = default;
 
     /**
@@ -103,6 +108,17 @@ public:
     void setGameRecord(const std::string& taskId, const GameRecord& record) override;
 
     /**
+     * @brief Sets a callback function to be invoked whenever a GameRecord is set.
+     * This allows external components to react to new results.
+     * 
+     * @param callback The callback function to set, which takes a pointer to this EpdTest instance and 
+     * the updated EpdTestCase.
+     */
+    void setTestResultCallback(TestResultCallback callback) {
+        testResultCallback_ = std::move(callback);
+    }
+
+    /**
      * @brief Reports a principal variation (PV) found by the engine during search.
      *        Allows the provider to track correct moves and optionally stop the search early.
      *
@@ -122,7 +138,7 @@ public:
         std::optional<uint32_t> multipv) override;
 
     EpdTestResult getResultsCopy() const {
-		std::lock_guard<std::mutex> lock(taskMutex_);
+		std::lock_guard<std::mutex> lock(testResultMutex_);
         return result_;
 	}
 
@@ -132,9 +148,11 @@ public:
 
 private:
 
-    bool isSameMove(const std::string& fen, const std::string& lanMove, const std::string& sanMove) const;
+    bool isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str) const;
 
-    mutable std::mutex taskMutex_;
+    TestResultCallback testResultCallback_;
+
+    mutable std::mutex testResultMutex_;
     EpdTestResult result_;
     size_t oldestIndexInUse_ = 0;
     size_t testIndex_ = 0;
