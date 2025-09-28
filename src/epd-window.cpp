@@ -106,14 +106,14 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
 void EpdWindow::drawButtons()
 {
     constexpr float space = 3.0f;
-    constexpr float topOffset = 5.0f;
-    constexpr float bottomOffset = 8.0f;
-    constexpr float leftOffset = 20.0f;
+    constexpr float paddingTop = 5.0f;
+    constexpr float paddingBottom = 8.0f;
+    constexpr float paddingLeft = 20.0f;
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
     constexpr ImVec2 buttonSize = {25.0f, 25.0f};
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
-    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     for (const std::string button : {"Run/Stop", "Grace", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
@@ -171,18 +171,14 @@ void EpdWindow::drawButtons()
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
 }
 
 void EpdWindow::drawInput()
 {
-
     constexpr float inputWidth = 200.0f;
     constexpr int maxConcurrency = 32;
     constexpr int maxSeenPlies = 32;
-
-    ImGui::Indent(10.0f);
-    ImGui::SetNextItemWidth(inputWidth);
     bool modified = false;
 
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
@@ -203,7 +199,7 @@ void EpdWindow::drawInput()
         ImGui::Unindent(10.0f);
         ImGui::PopID();
     }
-    
+
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0f);
@@ -230,7 +226,6 @@ void EpdWindow::drawInput()
     if (modified) {
         EpdData::instance().updateConfiguration();
     }
-    ImGui::Unindent(10.0f);
 }
 
 void EpdWindow::drawProgress()
@@ -240,21 +235,28 @@ void EpdWindow::drawProgress()
     if (total == 0 || remaining == 0) {
         return;
     }
-    ImGui::Indent(10.0f);
     size_t testFinished = total - remaining;
     float progress = static_cast<float>(testFinished) / static_cast<float>(total);
-    ImGui::ProgressBar(progress, ImVec2(-10.0f, 20.0f), std::to_string(testFinished).c_str());
-    ImGui::Unindent(10.0f);
+    ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0f), 
+        std::to_string(testFinished).c_str());
 }
 
 void EpdWindow::draw()
 {
+    constexpr float rightBorder = 5.0f;
     drawButtons();
+
+    ImGui::Indent(10.0f);
+    auto size = ImGui::GetContentRegionAvail();
+    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+
     drawInput();
     drawProgress();
-    ImGui::Indent(10.0f);
-    ImVec2 size = ImGui::GetContentRegionAvail();
-    auto clickedRow = EpdData::instance().drawTable(size);
+    ImVec2 tableSize = ImGui::GetContentRegionAvail();
+    auto clickedRow = EpdData::instance().drawTable(tableSize);
+    
+    ImGui::EndChild();
     ImGui::Unindent(10.0f);
+
     EpdData::instance().setSelectedIndex(clickedRow);
 }
