@@ -163,6 +163,7 @@ namespace {
         
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
+        QaplaWindows::EpdData::instance().loadFile();
         QaplaWindows::InteractiveBoardWindow::instance().setEngines();
         auto workspace = initWindows();
 
@@ -206,6 +207,7 @@ namespace {
 
             glfwSwapBuffers(window);
             QaplaConfiguration::Configuration::instance().autosave();
+            QaplaWindows::EpdData::instance().autosave();
         }
 
         shutdownImGui();
@@ -214,6 +216,7 @@ namespace {
         GameManagerPool::getInstance().stopAll();
         GameManagerPool::getInstance().waitForTask();
         QaplaConfiguration::Configuration::instance().saveFile();
+        QaplaWindows::EpdData::instance().saveFile();
         return 0;
     }
 

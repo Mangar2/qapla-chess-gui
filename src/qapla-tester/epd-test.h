@@ -137,6 +137,12 @@ public:
         std::optional<uint64_t> nodes,
         std::optional<uint32_t> multipv) override;
 
+    /**
+     * @brief Returns a copy of the current test results.
+     * @warning This is an expensive operation that creates a deep copy of all results.
+     * Use sparingly and cache the result if needed multiple times.
+     * @return A copy of the current test results.
+     */
     EpdTestResult getResultsCopy() const {
 		std::lock_guard<std::mutex> lock(testResultMutex_);
         return result_;

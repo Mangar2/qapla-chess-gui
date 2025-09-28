@@ -98,6 +98,182 @@ void EpdManager::saveResults(std::ostream& os) const {
     }    
 }
 
+static uint64_t timeColumnToMs(const std::string& timeStr) {
+    // format HH:MM:SS.msc (HH optional, MM optional)
+    std::istringstream iss(timeStr);
+    std::string part;
+    uint64_t totalMs = 0;
+    std::vector<std::string> parts;
+    while (std::getline(iss, part, ':')) {
+        parts.push_back(part);
+    }
+    if (parts.size() > 3) {
+        throw std::runtime_error("Invalid time format: " + timeStr);
+    }
+    size_t start = 0;
+    if (parts.size() == 3) {
+        auto hours = QaplaHelpers::to_int(parts[0]).value_or(0);
+        if (hours >= 0) {
+            totalMs += static_cast<uint64_t>(hours) * 3600000;
+        }
+        start = 1;
+    }
+    if (parts.size() - start == 2) {
+        auto minutes = QaplaHelpers::to_int(parts[start]).value_or(0);
+        if (minutes >= 0) {
+            totalMs += static_cast<uint64_t>(minutes) * 60000;
+        }
+        start += 1;
+    }
+    if (parts.size() - start == 1) {
+        auto secPart = parts[start];
+        size_t dotPos = secPart.find('.');
+        auto seconds = 0;
+        if (dotPos != std::string::npos) {
+            seconds = QaplaHelpers::to_int(secPart.substr(0, dotPos)).value_or(0);
+            auto millis = QaplaHelpers::to_int(secPart.substr(dotPos + 1)).value_or(0);
+            auto fracDigits = secPart.length() - dotPos - 1;
+            if (millis >= 0 && fracDigits <= 3) {
+                for (size_t i = fracDigits; i < 3; ++i) {
+                    millis *= 10;
+                }
+                totalMs += static_cast<uint64_t>(millis);
+            }
+        }
+        else {
+            seconds = QaplaHelpers::to_int(secPart).value_or(0);
+        }
+        if (seconds >= 0) {
+            totalMs += static_cast<uint64_t>(seconds) * 1000;
+        }
+    }
+    return totalMs;
+}
+
+static int depthColumnToInt(const std::string& depthStr) {
+    // Format D: <number>
+    auto pos = depthStr.find("D:");
+    if (pos != std::string::npos) {
+        auto valueStr = QaplaHelpers::trim(depthStr.substr(pos + 2));
+        return QaplaHelpers::to_int(valueStr).value_or(-1);
+    }
+    return -1;
+}
+
+static std::string moveColumnToStr(const std::string& moveCol) {
+    // Format M: <move>
+    auto pos = moveCol.find("M:");
+    if (pos != std::string::npos) {
+        return QaplaHelpers::trim(moveCol.substr(pos + 2));
+    }
+    return "-";
+}
+
+std::vector<std::string> parseResultLine(const std::string& line) {
+    std::vector<std::string> columns;
+    std::istringstream iss(line);
+    std::string column;
+    while (std::getline(iss, column, '|')) {
+        columns.push_back(QaplaHelpers::trim(column));
+    }
+    return columns;
+}
+
+std::vector<std::string> parseEngineResult(const std::string& column) {
+    std::vector<std::string> result;
+    std::istringstream iss(column);
+    std::string token;
+    while (std::getline(iss, token, ',')) {
+        result.push_back(QaplaHelpers::trim(token));
+    }
+    return result;
+}
+
+static std::vector<EpdTestResult> 
+loadTestResults(std::istream& is, const TimeControl& tc, std::vector<EpdTestCase>& testsRead) {
+    std::vector<EpdTestResult> results;
+    std::string headerLine;
+    if (!std::getline(is, headerLine)) {
+        return results;
+    }
+    auto headers = parseResultLine(headerLine);
+    if (headers.size() < 2 || headers[0] != "TestId") {
+        return results;
+    }
+    for (size_t i = 1; i < headers.size(); ++i) {
+        results.push_back(EpdTestResult{});
+        results.back().engineName = headers[i];
+        results.back().tc_ = tc; 
+    }
+
+    std::string line;
+    while (std::getline(is, line)) {
+        auto columns = parseResultLine(line);
+        if (columns.size() < 3) {
+            continue;
+        }
+        if (columns.back().find("BM:") == std::string::npos) {
+            continue; // No BM field, invalid line
+        }
+        const auto& testId = columns[0];
+        auto it = std::find_if(testsRead.begin(), testsRead.end(), [&](const EpdTestCase& t) {
+            return t.id == testId;
+            });
+        if (it == testsRead.end()) {
+            continue; // No matching test case found, skip
+        }
+        const auto columnsWithoutBm = columns.size() - 1;
+        for (size_t i = 1; i < columnsWithoutBm && i - 1 < results.size(); ++i) {
+            auto engineResults = parseEngineResult(columns[i]);
+            if (engineResults.size() < 3) {
+                continue;
+            }
+            EpdTestCase testCase = *it; // Copy original test case
+            testCase.id = testId;
+            testCase.correctAtTimeInMs = engineResults[0] != "-" ? timeColumnToMs(engineResults[0]) : 0;
+            testCase.correctAtDepth = engineResults[1] != "-" ? depthColumnToInt(engineResults[1]) : -1;
+            testCase.playedMove = moveColumnToStr(engineResults[2]);
+            testCase.correct = testCase.correctAtDepth != -1; // If depth is known, we assume correctness
+            results[i - 1].result.push_back(testCase);
+        }
+    }
+
+    return results;
+}
+
+void EpdManager::loadResults(std::istream& is) {
+    auto testResults = loadTestResults(is, tc_, testsRead_);
+    if (testResults.empty()) {
+        return;
+    }
+    for (auto& test : testResults) {
+        test.testSetName = epdFileName_;
+        // Find existing instance or create new one
+        auto it = std::find_if(testInstances_.begin(), testInstances_.end(), [&](const std::shared_ptr<EpdTest>& instance) {
+            auto results = instance->getResultsCopy();
+            return results.engineName == test.engineName;
+            });
+        if (it != testInstances_.end()) {
+            // Update existing instance
+            (*it)->initialize(test);
+        }
+        else {
+            // Create new instance
+            auto newTest = std::make_shared<EpdTest>();
+            newTest->initialize(test);
+            testInstances_.emplace_back(newTest);
+        }
+    }
+}
+
+TestResults EpdManager::getResultsCopy() const {
+		TestResults results;
+        for (const auto& instance : testInstances_) {
+            results.push_back(instance->getResultsCopy());
+		}
+        return results;
+	}
+
 inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
 
     formatInlineResult(os, test);

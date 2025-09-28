@@ -240,9 +240,10 @@ namespace QaplaWindows {
     }
 
     void EpdData::loadData(std::ifstream& in) {
-        // TODO: Implement loading of EPD results from file
-        // This functionality is not yet implemented in the original code
-        (void)in; // Suppress unused parameter warning
+        if (epdManager_) {
+            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
+            epdManager_->loadResults(in);
+        }
     }
 
 }

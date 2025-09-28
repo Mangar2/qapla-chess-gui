@@ -72,13 +72,12 @@ public:
 
 	double getSuccessRate() const;
 
-    TestResults getResultsCopy() const {
-		TestResults results;
-        for (const auto& instance : testInstances_) {
-            results.push_back(instance->getResultsCopy());
-		}
-        return results;
-	}
+    /**
+     * @brief Get a copy of all current test results.
+     * 
+     * @return TestResults 
+     */
+    TestResults getResultsCopy() const;
 
     /**
 	 * @brief Returns the update count of all test instances. 
@@ -97,6 +96,12 @@ public:
      * @param os The output stream to write results to.
      */
     void saveResults(std::ostream& os) const;
+
+    /**
+     * @brief Loads results from the provided input stream, expecting the same format as produced by saveResults.
+     * @param is The input stream to read results from.
+     */
+    void loadResults(std::istream& is);
 
 private:
     /**
