@@ -180,6 +180,7 @@ namespace QaplaWindows {
             epdManager_->schedule(engineConfig);
             scheduledEngines_++;
         }
+        epdManager_->continueAnalysis();
         if (epdConfig_.concurrency == 0) {
             epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
         }

@@ -54,16 +54,24 @@ void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig&
     GameManagerPool::getInstance().startManagers();
 }
 
+void EpdTest::continueAnalysis() {
+    testIndex_ = oldestIndexInUse_;
+}
+
 std::optional<GameTask> EpdTest::nextTask() {
     std::lock_guard<std::mutex> lock(testResultMutex_);
-    if (testIndex_ >= result_.result.size()) {
-        return std::nullopt;
-    }
+
 
     GameTask task;
     task.taskType = GameTask::Type::ComputeMove;
     
     GameState gameState;
+    while (testIndex_ < result_.result.size() && result_.result[testIndex_].tested) {
+        ++testIndex_;
+    }
+    if (testIndex_ >= result_.result.size()) {
+        return std::nullopt;
+    }
 	auto& test = result_.result[testIndex_];
     task.gameRecord.setPositionName(test.id);
     gameState.setFen(false, test.fen);
@@ -94,6 +102,8 @@ bool EpdTest::setPV(const std::string& taskId,
     if (index < 0 || index >= static_cast<int>(result_.result.size())) return false;
 
     auto& test = result_.result[static_cast<uint32_t>(index)];
+    // We may have an info line from the engine after the move was already played
+    if (test.tested) return false; 
     assert(test.playedMove.empty());
 
     const std::string& firstMove = pv.front();

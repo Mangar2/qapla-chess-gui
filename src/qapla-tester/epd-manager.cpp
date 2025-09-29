@@ -337,6 +337,12 @@ void EpdManager::schedule(const EngineConfig& engineConfig) {
     newTest->schedule(newTest, engineConfig);
 }
 
+void EpdManager::continueAnalysis() {
+    for (const auto& instance : testInstances_) {
+        instance->continueAnalysis();
+    }
+}
+
 std::optional<EpdTestCase> EpdManager::nextTestCaseFromReader() {
     if (!reader_) {
         return std::nullopt;

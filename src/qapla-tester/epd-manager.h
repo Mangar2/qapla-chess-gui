@@ -56,6 +56,11 @@ public:
     void initialize(const std::string& filepath, uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies);
 
     /**
+     * @brief Continues the analysis from the current state.
+     */
+    void continueAnalysis();
+    
+    /**
 	 * @brief Removes all current test cases and resets the EPD manager.
 	 * *** Attention: You need to ensure that the ManagerPool is cleared before ***
 	 */

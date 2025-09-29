@@ -92,6 +92,12 @@ public:
     void schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine);
 
     /**
+     * @brief Continues the analysis from the current state.
+     *
+     */
+    void continueAnalysis();
+
+    /**
      * @brief Provides the next EPD position to analyze.
      *
      * @return A GameTask with a unique taskId or std::nullopt if all positions have been analyzed.
