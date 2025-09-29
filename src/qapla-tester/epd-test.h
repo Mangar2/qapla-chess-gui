@@ -43,6 +43,7 @@ struct EpdTestCase {
     // Result fields
     std::string playedMove;
     bool correct = false;
+    bool tested = false;
     int searchDepth = -1;
     uint64_t timeMs = 0;
     uint64_t maxTimeInS = 0;
@@ -54,7 +55,7 @@ struct EpdTestCase {
     uint64_t correctAtTimeInMs = 0;
 };
 
-std::ostream& operator<<(std::ostream& os, const EpdTestCase& test);
+// std::ostream& operator<<(std::ostream& os, const EpdTestCase& test);
 
 struct EpdTestResult {
     TimeControl tc_;

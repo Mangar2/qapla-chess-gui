@@ -70,7 +70,7 @@ std::string EpdManager::generateResultLine(const EpdTestCase& current, const Tes
             formatInlineResult(line, *it);
         }
         else {
-            line << "|" << std::setw(23) << "-";
+            line << "|" << std::setw(23) << "?";
         }
     }
 
@@ -225,15 +225,15 @@ loadTestResults(std::istream& is, const TimeControl& tc, std::vector<EpdTestCase
         const auto columnsWithoutBm = columns.size() - 1;
         for (size_t i = 1; i < columnsWithoutBm && i - 1 < results.size(); ++i) {
             auto engineResults = parseEngineResult(columns[i]);
-            if (engineResults.size() < 3) {
-                continue;
-            }
             EpdTestCase testCase = *it; // Copy original test case
             testCase.id = testId;
-            testCase.correctAtTimeInMs = engineResults[0] != "-" ? timeColumnToMs(engineResults[0]) : 0;
-            testCase.correctAtDepth = engineResults[1] != "-" ? depthColumnToInt(engineResults[1]) : -1;
-            testCase.playedMove = moveColumnToStr(engineResults[2]);
-            testCase.correct = testCase.correctAtDepth != -1; // If depth is known, we assume correctness
+            if (engineResults.size() >= 3) {
+                testCase.tested = true;
+                testCase.correctAtTimeInMs = engineResults[0] != "-" ? timeColumnToMs(engineResults[0]) : 0;
+                testCase.correctAtDepth = engineResults[1] != "-" ? depthColumnToInt(engineResults[1]) : -1;
+                testCase.playedMove = moveColumnToStr(engineResults[2]);
+                testCase.correct = testCase.correctAtDepth != -1; // If depth is known, we assume correctness
+            }
             results[i - 1].result.push_back(testCase);
         }
     }
@@ -274,16 +274,6 @@ TestResults EpdManager::getResultsCopy() const {
         return results;
 	}
 
-inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
-
-    formatInlineResult(os, test);
-
-    os << " | BM: ";
-    for (const auto& bm : test.bestMoves) {
-        os << bm << " ";
-    }
-    return os;
-}
 
 void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, uint32_t seenPlies) {
     if (!reader_) {
@@ -323,6 +313,7 @@ void EpdManager::clear() {
         reader_->reset();
     }
     testInstances_.clear();
+    testsRead_.clear();
 }
 
 void EpdManager::schedule(const EngineConfig& engineConfig) {

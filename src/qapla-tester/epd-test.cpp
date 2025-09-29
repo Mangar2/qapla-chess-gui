@@ -23,13 +23,14 @@
 #include "game-state.h"
 #include "string-helper.h"
 
+/*
 inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
 
     os << std::setw(20) << std::left << test.id
         << "|" << std::setw(8) << std::right
-        << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : "-")
+        << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : test.tested ? "-" : "?")
         << ", D:" << std::setw(3) << std::right
-        << (test.correct ? std::to_string(test.correctAtDepth) : "-")
+        << (test.correct ? std::to_string(test.correctAtDepth) : test.tested ? "-" : "?")
         << ", M: " << std::setw(5) << std::left << test.playedMove
         << " | BM: ";
 
@@ -38,6 +39,7 @@ inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
     }
     return os;
 }
+*/
 
 void EpdTest::initialize(const EpdTestResult& tests)
 {
@@ -151,6 +153,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
         auto& test = result_.result[index];
         assert(test.playedMove.empty());
 
+        test.tested = true;
         test.playedMove = played;
         test.correct = std::any_of(
             test.bestMoves.begin(), test.bestMoves.end(),

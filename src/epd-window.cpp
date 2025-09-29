@@ -64,12 +64,14 @@ void EpdWindow::setEngineConfiguration() {
 }
 
 static std::string getButtonText(const std::string& button, EpdData::State epdState) {
+    auto& epdData = EpdData::instance();
     if (button == "Run/Stop")
     {
         if (epdState == EpdData::State::Running) {
             return "Stop";
         } else {
-            return EpdData::instance().configChanged() ? "Analyze" : "Continue";
+            auto remaining = epdData.remainingTests;
+            return EpdData::instance().configChanged() || remaining == 0 ? "Analyze" : "Continue";
         } 
     } 
     return button;
@@ -81,8 +83,15 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
         if (epdState == EpdData::State::Running) {
             return QaplaButton::ButtonState::Active;
         } 
+        auto& epdData = EpdData::instance();
+
         // Manual clear is now required before re-running analysis
-        if (EpdData::instance().configChanged() && epdState == EpdData::State::Stopped) {
+        if (epdData.configChanged() && epdState == EpdData::State::Stopped) {
+            return QaplaButton::ButtonState::Disabled;
+        }
+        auto total = epdData.totalTests;
+        auto remaining = epdData.remainingTests;
+        if (total > 0 && remaining == 0) {
             return QaplaButton::ButtonState::Disabled;
         }
     } 

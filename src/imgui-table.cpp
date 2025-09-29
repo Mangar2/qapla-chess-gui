@@ -47,9 +47,13 @@ namespace QaplaWindows {
 
     static void textAligned(const std::string& content, bool right) {
         if (right) {
+            // ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
 			alignRight(content);
+            ImGui::TextUnformatted(content.c_str());
+            // ImGui::PopFont();
+        } else {
+            ImGui::TextUnformatted(content.c_str());
         }
-        ImGui::TextUnformatted(content.c_str());
     }
 
     static void headerAligned(const std::string& content, bool right) {

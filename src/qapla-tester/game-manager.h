@@ -271,11 +271,6 @@ private:
     void tearDown();
 
     /**
-     * Callback to get new tasks
-     */
-    std::shared_ptr<GameTaskProvider> taskProvider_;
-
-    /**
 	 * Computes the next task from the task provider
      */
 	void finalizeTaskAndContinue();
@@ -318,6 +313,8 @@ private:
     std::promise<void> finishedPromise_;
     std::future<void> finishedFuture_;
 
+    std::mutex taskProviderMutex_;
+    std::shared_ptr<GameTaskProvider> taskProvider_;
 	std::atomic<GameTask::Type> taskType_ = GameTask::Type::None;
     std::string taskId_;
 

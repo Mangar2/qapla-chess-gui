@@ -73,6 +73,7 @@ void GameManager::enqueueEvent(const EngineEvent& event) {
 
 bool GameManager::processNextEvent() {
 	if (taskType_ == GameTask::Type::None) {
+        tearDown();
 		return false; // No task to process
 	}
     EngineEvent event;
@@ -123,8 +124,11 @@ void GameManager::processQueue() {
 }
 
 void GameManager::tearDown() {
-    if (taskProvider_) {
-        taskProvider_ = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        if (taskProvider_) {
+            taskProvider_ = nullptr;
+        }
     }
 	gameContext_.tearDown();
 	markFinished();
@@ -137,7 +141,7 @@ void GameManager::markFinished() {
             finishedPromise_.set_value();
         }
         catch (const std::future_error&) {
-            // already satisfied � ignore or log
+            // already satisfied -> ignore or log
         }
         finishedPromiseValid_ = false;
     }
@@ -330,11 +334,17 @@ void GameManager::computeNextMove(const std::optional<EngineEvent>& event) {
         white->allowPonder(gameRecord, goLimits, event);
     }
 }
-
+#include <windows.h>
 void GameManager::stop() {
-    taskType_ = GameTask::Type::None;
+   {
+        // Ensure no new tasks are assigned
+        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        if (taskProvider_) {
+            taskProvider_ = nullptr;
+        }
+        taskType_ = GameTask::Type::None;
+    }
     gameContext_.cancelCompute();
-
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
         while (!eventQueue_.empty()) {
@@ -355,8 +365,19 @@ void GameManager::executeTask(std::optional<GameTask> task) {
     // Also sets the engines names, Switched side must be set before
     setFromGameRecord(gameRecord);
     gameContext_.setTimeControls({ gameRecord.getWhiteTimeControl(), gameRecord.getBlackTimeControl() });
-    taskType_ = task->taskType;
-    taskId_ = task->taskId;
+    {
+        // We protect taskType_ against race conditions between calls of stop() restarting the game based on a new task
+        // that had been fetched before stop().
+        // TaskType_ == None guarantees that no further events are processed thus we protect continuations of games.
+        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        if (taskProvider_) {
+            taskType_ = task->taskType;
+            taskId_ = task->taskId;
+        } else {
+            taskType_ = GameTask::Type::None;
+        }
+    }
+
     // Notify engines that a new game or task is starting to allow reset of internal state (e.g., memory, hash tables)
     gameContext_.newGame();
     computeNextMove();
@@ -406,12 +427,18 @@ std::optional<GameTask> GameManager::nextAssignment() {
         if (GameManagerPool::getInstance().maybeDeactivateManager(taskProvider_)) {
             return std::nullopt;
         }
-
-        auto task = taskProvider_->nextTask();
-        if (task) {
-            gameContext_.restartIfConfigured();
-            return task;
+        {
+            std::lock_guard<std::mutex> lock(taskProviderMutex_);
+            if (!taskProvider_) {
+                return std::nullopt;
+            }
+            std::optional<GameTask> task = taskProvider_->nextTask();
+            if (task) {
+                gameContext_.restartIfConfigured();
+                return task;
+            }
         }
+
         // tryGetReplacementTask already provides new engine instances so restarting is not needed.
         return assignNewProviderAndTask();
     }
@@ -430,20 +457,25 @@ void GameManager::finalizeTaskAndContinue() {
         return;
     }
     taskType_ = GameTask::Type::None;
+    std::shared_ptr<GameTaskProvider> provider = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        provider = taskProvider_;
+    }
 	gameContext_.cancelCompute();
 
     while (!eventQueue_.empty()) {
         eventQueue_.pop();
     }
 
-	if (!taskProvider_) {
+    if (!provider) {
         tearDown();
-		return;
-	}
+        return;
+    }
     // Note: we had a check, if any move has been played and removed it as it could cause problems
     // With a direct loss e.g. due to disconnect. But I don´t know why we ever checked for any move
 	auto& gameRecord = gameContext_.gameRecord();
-    taskProvider_->setGameRecord(taskId_, gameRecord);
+    provider->setGameRecord(taskId_, gameRecord);
 	AdjudicationManager::instance().onGameFinished(gameRecord);
 
     {
@@ -456,7 +488,7 @@ void GameManager::finalizeTaskAndContinue() {
 
     auto task = nextAssignment();
     if (!task) {
-		tearDown();
+        tearDown();
         return;
     }
 

@@ -41,8 +41,7 @@ namespace QaplaWindows {
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
                 { "Name", ImGuiTableColumnFlags_WidthFixed, 160.0f },
-                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0f },
-                { "Result", ImGuiTableColumnFlags_WidthFixed, 100.0f, true }
+                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0f }
             }
         )
     { 
@@ -129,8 +128,8 @@ namespace QaplaWindows {
                 if (test.correct) {
                     table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
                 }
-                else if (test.searchDepth >= 0) {
-                    table_.extend(row, "-");
+                else if (!test.playedMove.empty()) {
+                    table_.extend(row, "- (" + test.playedMove + ")");
                 }
                 else {
                     remainingTests++;
@@ -162,6 +161,10 @@ namespace QaplaWindows {
     }
 
     void EpdData::analyse() {
+        if (totalTests > 0 && remainingTests == 0) {
+            SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.");
+            return;
+        }
         if (configChanged()) {
             if (state == EpdData::State::Stopped) {
                 SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.");
@@ -187,6 +190,10 @@ namespace QaplaWindows {
 
      void EpdData::stopPool(bool graceful) {
         //imguiConcurrency_->setActive(false);
+        if (state == State::Stopped || state == State::Cleared) {
+            SnackbarManager::instance().showNote("No analysis running.");
+            return;
+        }
         auto oldState = state;
         state = graceful ? State::Stopping : State::Stopped;
         if (!graceful) {
@@ -195,10 +202,6 @@ namespace QaplaWindows {
             GameManagerPool::getInstance().setConcurrency(0, true, false);
         }
 
-        if (oldState == State::Stopped) {
-            SnackbarManager::instance().showNote("No analysis running.");
-            return;
-        }
         if (oldState == State::Stopping && graceful) {
             SnackbarManager::instance().showNote("Analysis is already stopping gracefully.");
             return;
@@ -243,6 +246,7 @@ namespace QaplaWindows {
         if (epdManager_) {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             epdManager_->loadResults(in);
+            state = State::Stopped;
         }
     }
 
