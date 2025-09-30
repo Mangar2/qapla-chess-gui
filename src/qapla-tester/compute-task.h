@@ -161,6 +161,8 @@ public:
         if (taskType_ == ComputeTaskType::PlaySide)
         {
             computeMove();
+        } else {
+            taskType_ = ComputeTaskType::None;
         }
     }
 

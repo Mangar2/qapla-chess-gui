@@ -127,10 +127,8 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
         }
         auto& moveRecord = history[static_cast<size_t>(moveIndex)];
         auto& engineRecord = engineRecords_[tableIndex];
-        if (moveRecord.engineId_ == engineRecord.identifier) {
-            setTable(tableIndex, moveRecord);
-            displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
-        }
+        setTable(tableIndex, moveRecord);
+        displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
     }
 }
 
