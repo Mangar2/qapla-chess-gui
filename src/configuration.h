@@ -155,6 +155,13 @@ namespace QaplaConfiguration {
             return configData_;
         }
 
+        void autosave() override {
+            if (getConfigData().getDirty()) {
+                setModified();
+            }
+            Autosavable::autosave();
+        }
+
     protected:
         /**
          * @brief Saves configuration data to the output stream.

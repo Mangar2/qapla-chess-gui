@@ -40,7 +40,7 @@ Autosavable::Autosavable(const std::string& filename,
 }
 
 void Autosavable::autosave() {
-    if (!changed_) return;
+    if (!modified_) return;
     
     uint64_t currentTime = Timer::getCurrentTimeMs();
     if (currentTime - lastSaveTimestamp_ < autosaveIntervalMs_) {
@@ -49,7 +49,7 @@ void Autosavable::autosave() {
     
     saveFile();
     lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-    changed_ = false; 
+    modified_ = false; 
 }
 
 void Autosavable::saveFile() {
@@ -127,7 +127,7 @@ void Autosavable::loadFile() {
         inFile.close();
 
         lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-        changed_ = false;
+        modified_ = false;
     }
     catch (const std::exception& e) {
         Logger::testLogger().log(std::string("Cannot load file: ") + e.what(),

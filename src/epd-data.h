@@ -46,6 +46,7 @@ namespace QaplaWindows {
         struct EpdConfig {
             std::string filepath;
             std::vector<EngineConfig> engines;
+            uint32_t maxConcurrency = 32;
             uint32_t concurrency;
             uint64_t maxTimeInS;
             uint64_t minTimeInS;
@@ -69,6 +70,12 @@ namespace QaplaWindows {
 		 * @brief Polls the EPD data for new entries.
 		 */
         void pollData();
+
+        /**
+         * @brief Checks if analysis may be started or continued, and starts it if possible.
+         * @param sendMessage If true, shows a message if analysis cannot be started.
+         */
+        bool mayAnalyze(bool sendMessage = false);
 
         /**
          * @brief Starts the analysis of the EPD test set.

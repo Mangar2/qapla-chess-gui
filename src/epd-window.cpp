@@ -80,18 +80,12 @@ static std::string getButtonText(const std::string& button, EpdData::State epdSt
 static QaplaButton::ButtonState getButtonState(const std::string& button, EpdData::State epdState) {
     if (button == "Run/Stop")
     {
+        auto& epdData = EpdData::instance();
+
         if (epdState == EpdData::State::Running) {
             return QaplaButton::ButtonState::Active;
         } 
-        auto& epdData = EpdData::instance();
-
-        // Manual clear is now required before re-running analysis
-        if (epdData.configChanged() && epdState == EpdData::State::Stopped) {
-            return QaplaButton::ButtonState::Disabled;
-        }
-        auto total = epdData.totalTests;
-        auto remaining = epdData.remainingTests;
-        if (total > 0 && remaining == 0) {
+        if (epdData.mayAnalyze(false) == false) {
             return QaplaButton::ButtonState::Disabled;
         }
     } 

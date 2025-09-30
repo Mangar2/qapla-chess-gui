@@ -61,7 +61,7 @@ namespace QaplaHelpers {
          * @brief Autosaves the file if it has changed since the last save and enough 
          * time has passed since last save.
          */
-        void autosave();
+        virtual void autosave();
 
         /**
          * @brief Saves the file with a safety mechanism (backup and restore on failure).
@@ -77,7 +77,7 @@ namespace QaplaHelpers {
          * @brief Marks the file as modified, triggering autosave when conditions are met.
          */
         void setModified() {
-            changed_ = true;
+            modified_ = true;
         }
 
         /**
@@ -85,7 +85,7 @@ namespace QaplaHelpers {
          * @return True if the file has been modified, false otherwise.
          */
         bool isModified() const {
-            return changed_;
+            return modified_;
         }
 
         /**
@@ -161,7 +161,7 @@ namespace QaplaHelpers {
         std::string filePath_;                      ///< Full path to the main file
         std::string backupFilePath_;                ///< Full path to the backup file
         
-        bool changed_ = false;                      ///< Flag indicating if data has been modified
+        bool modified_ = false;                      ///< Flag indicating if data has been modified
         uint64_t lastSaveTimestamp_ = 0;            ///< Timestamp of last save operation
         uint64_t autosaveIntervalMs_;               ///< Auto-save interval in milliseconds
         

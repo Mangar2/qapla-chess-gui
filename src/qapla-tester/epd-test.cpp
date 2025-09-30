@@ -158,7 +158,6 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     if (taskIdIndex < 0 || taskIdIndex >= static_cast<int>(result_.result.size())) return;
     {
         std::lock_guard<std::mutex> lock(testResultMutex_);
-        updateCnt_++;
         const size_t index = static_cast<size_t>(taskIdIndex);
         auto& test = result_.result[index];
         assert(test.playedMove.empty());
@@ -195,6 +194,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
                 ++oldestIndexInUse_;
             }
         }
+        updateCnt_++;
     }
     if (recentOldestIndex != oldestIndexInUse_ && testResultCallback_) {
         testResultCallback_(this, recentOldestIndex, oldestIndexInUse_);

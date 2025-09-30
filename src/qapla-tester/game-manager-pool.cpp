@@ -278,6 +278,19 @@ void GameManagerPool::waitForTask() {
     taskAssignments_.clear();
 }
 
+bool GameManagerPool::areAllTasksFinished() {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(managerMutex_));
+    for (const auto& managerPtr : managers_) {
+        GameManager* manager = managerPtr.get();
+        auto& future = manager->getFinishedFuture();
+        if (future.valid() &&
+            future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void GameManagerPool::startManagers() {
     auto toStart = maxConcurrency_;
     std::lock_guard<std::mutex> lock(startManagerMutex_);

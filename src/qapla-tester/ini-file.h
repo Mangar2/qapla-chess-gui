@@ -176,7 +176,9 @@ namespace QaplaHelpers {
              * @param section The section to set.
              */
             void setSectionList(const std::string& name, const std::string& id, 
-                const IniFile::SectionList& sectionList) {
+                const IniFile::SectionList& sectionList)
+            {
+                setDirty(true);
                 if (!id.empty()) {
                     sectionTree_[name][id] = sectionList;
                 } else {
@@ -214,8 +216,24 @@ namespace QaplaHelpers {
                 return std::nullopt;
             }
 
-        private:
+            /**
+             * @brief Checks if the configuration data has been modified since the last load or save operation.
+             * @return true if the configuration data has been modified, false otherwise.
+             */
+            bool getDirty() const {
+                return dirty_;
+            }
 
+            /**
+             * @brief Sets the dirty flag indicating whether the configuration data has been modified.
+             * @param dirty The new value for the dirty flag.
+             */
+            void setDirty(bool dirty) {
+                dirty_ = dirty;
+            }
+
+        private:
+            bool dirty_ = false;
             using SectionTree = std::unordered_map<std::string, SectionMap>;
             SectionTree sectionTree_;
     };

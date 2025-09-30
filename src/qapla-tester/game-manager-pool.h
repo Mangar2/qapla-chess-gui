@@ -116,6 +116,12 @@ public:
     void waitForTask();
 
     /**
+     * @brief Checks if all tasks have finished without blocking.
+     * @return True if all futures are ready, false otherwise.
+     */
+    bool areAllTasksFinished();
+
+    /**
      * @brief Returns the singleton instance of the GameManagerPool.
      */
 	static GameManagerPool& getInstance() {

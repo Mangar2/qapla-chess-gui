@@ -64,6 +64,7 @@ namespace QaplaWindows {
             epdConfig_ = EpdConfig{
                 .filepath = section.getValue("filepath").value_or(""),
                 .engines = {},
+                .maxConcurrency = QaplaHelpers::to_uint32(section.getValue("maxconcurrency").value_or("")).value_or(32),
                 .concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("")).value_or(1),
                 .maxTimeInS = QaplaHelpers::to_uint32(section.getValue("maxtime").value_or("")).value_or(5),
                 .minTimeInS = QaplaHelpers::to_uint32(section.getValue("mintime").value_or("")).value_or(1),
@@ -78,6 +79,7 @@ namespace QaplaWindows {
             .entries = QaplaHelpers::IniFile::KeyValueMap{
                 {"id", "epd"},
                 {"filepath", epdConfig_.filepath},
+                {"maxConcurrency", std::to_string(epdConfig_.maxConcurrency)},
                 {"concurrency", std::to_string(epdConfig_.concurrency)},
                 {"maxtime", std::to_string(epdConfig_.maxTimeInS)},
                 {"mintime", std::to_string(epdConfig_.minTimeInS)},
@@ -160,16 +162,33 @@ namespace QaplaWindows {
         return scheduledEngines_ == 0 || scheduledConfig_ != epdConfig_;
     }
 
-    void EpdData::analyse() {
+    bool EpdData::mayAnalyze(bool sendMessage) {
         if (totalTests > 0 && remainingTests == 0) {
-            SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.");
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.");
+            }
+            return false;
+        }
+        if (configChanged() && state == EpdData::State::Stopped) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.");
+            }
+            return false;
+        }
+        if (!GameManagerPool::getInstance().areAllTasksFinished()) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("Some tasks are still running. Please wait until they finish.");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    void EpdData::analyse() {
+        if (!mayAnalyze(true)) {
             return;
         }
         if (configChanged()) {
-            if (state == EpdData::State::Stopped) {
-                SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.");
-                return;
-            }
             clear();
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             scheduledConfig_ = epdConfig_;
