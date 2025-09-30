@@ -241,10 +241,10 @@ loadTestResults(std::istream& is, const TimeControl& tc, std::vector<EpdTestCase
     return results;
 }
 
-void EpdManager::loadResults(std::istream& is) {
+bool EpdManager::loadResults(std::istream& is) {
     auto testResults = loadTestResults(is, tc_, testsRead_);
     if (testResults.empty()) {
-        return;
+        return false;
     }
     for (auto& test : testResults) {
         test.testSetName = epdFileName_;
@@ -264,6 +264,7 @@ void EpdManager::loadResults(std::istream& is) {
             testInstances_.emplace_back(newTest);
         }
     }
+    return true;
 }
 
 TestResults EpdManager::getResultsCopy() const {

@@ -105,8 +105,9 @@ public:
     /**
      * @brief Loads results from the provided input stream, expecting the same format as produced by saveResults.
      * @param is The input stream to read results from.
+     * @return true if any data was loaded, false otherwise.
      */
-    void loadResults(std::istream& is);
+    bool loadResults(std::istream& is);
 
 private:
     /**

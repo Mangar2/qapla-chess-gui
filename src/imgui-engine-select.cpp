@@ -40,7 +40,18 @@ bool ImGuiEngineSelect::draw() {
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
     
-    int index = 0;
+    for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
+        const auto& usedConfig = engineConfigurations_[index];
+        auto config = configManager.getConfig(usedConfig.config.getName());
+        if (!config) {
+            // No longer available engines must be removed
+            engineConfigurations_.erase(engineConfigurations_.begin() + index);
+            modified = true;
+        } else {
+            index++;
+        }
+    }
+    uint32_t index = 0;
     for (auto& config : configs) {
         // Create engine configuration (same as original implementation)
         EngineConfiguration engine = {
@@ -52,8 +63,8 @@ bool ImGuiEngineSelect::draw() {
         auto it = findEngineConfiguration(config);
         if (it != engineConfigurations_.end()) {
             engine = *it;
-        }
-        
+        }         
+
         // Draw the engine configuration
         if (drawEngineConfiguration(engine, index)) {
             modified = true;
@@ -173,9 +184,10 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
                 continue; 
             }
             auto configDef = EngineWorkerFactory::getConfigManager().getConfig(*engineName);
-            if (configDef) {
-                config.config = *configDef;
+            if (!configDef) {
+                continue;
             }
+            config.config = *configDef;
             for (const auto& [key, value] : section.entries) {
                 if (key == "gauntlet") {
                     config.config.setGauntlet(value == "true");

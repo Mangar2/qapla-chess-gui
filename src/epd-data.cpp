@@ -163,6 +163,12 @@ namespace QaplaWindows {
     }
 
     bool EpdData::mayAnalyze(bool sendMessage) {
+        if (epdConfig_.engines.empty()) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("No engines selected for analysis.");
+            }
+            return false;
+        }
         if (totalTests > 0 && remainingTests == 0) {
             if (sendMessage) {
                 SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.");
@@ -265,8 +271,8 @@ namespace QaplaWindows {
     void EpdData::loadData(std::ifstream& in) {
         if (epdManager_) {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
-            epdManager_->loadResults(in);
-            state = State::Stopped;
+            bool dataLoaded = epdManager_->loadResults(in);
+            state = dataLoaded ? State::Stopped : State::Cleared;
         }
     }
 

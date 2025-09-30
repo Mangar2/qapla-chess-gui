@@ -85,6 +85,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
         if (epdState == EpdData::State::Running) {
             return QaplaButton::ButtonState::Active;
         } 
+
         if (epdData.mayAnalyze(false) == false) {
             return QaplaButton::ButtonState::Disabled;
         }
