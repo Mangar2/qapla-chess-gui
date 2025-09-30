@@ -55,7 +55,7 @@ void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig&
 }
 
 void EpdTest::continueAnalysis() {
-    testIndex_ = oldestIndexInUse_;
+    testIndex_ = oldestIndexInUse_.load();
 }
 
 std::optional<GameTask> EpdTest::nextTask() {
@@ -81,6 +81,7 @@ std::optional<GameTask> EpdTest::nextTask() {
     task.gameRecord.setTimeControl(result_.tc_, result_.tc_);
     task.taskId = std::to_string(testIndex_);
     testIndex_++;
+    std::cout << "EPD Test: Starting task " << task.taskId << " with position " << test.id << " (" << correctedFen << ")" << std::endl;
 
     return task;
 }
@@ -154,12 +155,13 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
 		throw AppError::make("Invalid taskId: " + taskId + ". Must be a valid integer.");
     }
 
-    auto recentOldestIndex = oldestIndexInUse_;
+    auto recentOldestIndex = oldestIndexInUse_.load();
     if (taskIdIndex < 0 || taskIdIndex >= static_cast<int>(result_.result.size())) return;
     {
         std::lock_guard<std::mutex> lock(testResultMutex_);
         const size_t index = static_cast<size_t>(taskIdIndex);
         auto& test = result_.result[index];
+        std::cout << "EPD Test: " << index << " played " << played << std::endl;
         assert(test.playedMove.empty());
 
         test.tested = true;

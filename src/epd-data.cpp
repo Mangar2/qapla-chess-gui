@@ -79,7 +79,7 @@ namespace QaplaWindows {
             .entries = QaplaHelpers::IniFile::KeyValueMap{
                 {"id", "epd"},
                 {"filepath", epdConfig_.filepath},
-                {"maxConcurrency", std::to_string(epdConfig_.maxConcurrency)},
+                {"maxconcurrency", std::to_string(epdConfig_.maxConcurrency)},
                 {"concurrency", std::to_string(epdConfig_.concurrency)},
                 {"maxtime", std::to_string(epdConfig_.maxTimeInS)},
                 {"mintime", std::to_string(epdConfig_.minTimeInS)},
@@ -193,6 +193,7 @@ namespace QaplaWindows {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             scheduledConfig_ = epdConfig_;
         }
+        epdManager_->continueAnalysis();
         state = State::Starting;
 		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true, true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
@@ -200,7 +201,6 @@ namespace QaplaWindows {
             epdManager_->schedule(engineConfig);
             scheduledEngines_++;
         }
-        epdManager_->continueAnalysis();
         if (epdConfig_.concurrency == 0) {
             epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
         }

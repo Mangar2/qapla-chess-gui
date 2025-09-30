@@ -180,15 +180,15 @@ void EpdWindow::drawButtons()
 void EpdWindow::drawInput()
 {
     constexpr float inputWidth = 200.0f;
-    constexpr int maxConcurrency = 32;
     constexpr int maxSeenPlies = 32;
     bool modified = false;
 
-    if (ImGuiControls::sliderInt<uint32_t>("Concurrency",
-                                           EpdData::instance().config().concurrency, 1, maxConcurrency))
+    auto& config = EpdData::instance().config();
+
+    if (ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency))
     {
         if (EpdData::instance().state == EpdData::State::Running) {
-            GameManagerPool::getInstance().setConcurrency(EpdData::instance().config().concurrency, true, true);
+            GameManagerPool::getInstance().setConcurrency(config.concurrency, true, true);
         }
         modified = true;
     }
@@ -206,22 +206,17 @@ void EpdWindow::drawInput()
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0f);
-        std::string filePath = EpdData::instance().config().filepath;
         ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint32_t>("Seen plies",
-                                        EpdData::instance().config().seenPlies, 1, maxSeenPlies);
+        modified |= ImGuiControls::inputInt<uint32_t>("Seen plies", config.seenPlies, 1, maxSeenPlies);
 
         ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)",
-                                        EpdData::instance().config().maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)",
-                                        EpdData::instance().config().minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, 3600 * 24 * 365, 1, 100);
 
         ImGui::Spacing();
-        modified |= ImGuiControls::existingFileInput("Epd or RAW position file:",
-                                EpdData::instance().config().filepath, inputWidth * 2.0f);
+        modified |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath, inputWidth * 2.0f);
         ImGui::Spacing();
         ImGui::Unindent(10.0f);
 

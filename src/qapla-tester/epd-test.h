@@ -168,8 +168,8 @@ private:
 
     mutable std::mutex testResultMutex_;
     EpdTestResult result_;
-    size_t oldestIndexInUse_ = 0;
-    size_t testIndex_ = 0;
+    std::atomic<size_t> oldestIndexInUse_ = 0;
+    std::atomic<size_t> testIndex_ = 0;
 	std::atomic<uint64_t> updateCnt_ = 0;
 
 };
