@@ -48,9 +48,10 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param window Unique pointer to the EmbeddedWindow to display (ownership transferred)
-         * @param closable Whether the tab can be closed by the user (default: false)
+         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
          */
-        void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, bool closable = false);
+        void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window,
+            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
 
         /**
          * @brief Add a tab with a custom callback function.
@@ -60,9 +61,10 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param callback Function to call when drawing the tab content
-         * @param closable Whether the tab can be closed by the user (default: false)
+         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
          */
-        void addTab(const std::string& name, std::function<void()> callback, bool closable = false);
+        void addTab(const std::string& name, std::function<void()> callback, 
+            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
 
         /**
          * @brief Remove a tab by name.
@@ -128,12 +130,11 @@ namespace QaplaWindows {
             // Using shared_ptr allows the callback to safely reference the window
             std::shared_ptr<EmbeddedWindow> window;
             std::function<void()> callback;
-            bool closable; // Whether this tab can be closed by the user
+            ImGuiTabItemFlags defaultTabFlags = ImGuiTabItemFlags_None;
         };
-        std::vector<Tab> tabs;
-        std::function<void()> dynamicTabsCallback;
-        std::function<void(ImGuiTabBar&)> addTabCallback; // Callback for adding new tabs via + button
-
+        std::vector<Tab> tabs_;
+        std::function<void()> dynamicTabsCallback_;
+        std::function<void(ImGuiTabBar&)> addTabCallback_; // Callback for adding new tabs via + button
     };
 
 } // namespace QaplaWindows

@@ -120,6 +120,9 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
 			if (tables_.size() > tableIndex) {
                 tables_[tableIndex]->clear();
             }
+            if (moveIndex == -1) {
+                displayedMoveNo_[tableIndex] = gameRecord.getHalfmoveIndex(0).value_or(0);
+            }
             continue;
         }
         auto& moveRecord = history[static_cast<size_t>(moveIndex)];
@@ -135,9 +138,10 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
     auto moveNo = moveRecord.halfmoveNo_;
     addTables(playerIndex + 1);
 
-    // Only update if this is the current move showed in the table
-    if (moveNo != displayedMoveNo_[playerIndex]) return;
-    
+    // Only update if this is the current move showed in the table or the next move currently calculated
+    auto displayedMoveNo = displayedMoveNo_[playerIndex];
+    if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1) return;
+
     // Only update if there are new info records
     if (moveRecord.infoUpdateCount == infoCnt_[playerIndex]) return;
 

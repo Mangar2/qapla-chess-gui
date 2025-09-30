@@ -107,7 +107,9 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     const auto [cause, result] = gameRecord.getGameResult();
     if (result != GameResult::Unterminated) {
         table_.push(std::vector<std::string>{causeToString(cause)});
-        table_.setScrollToRow(table_.size() - 1);
+        if (gameRecord.nextMoveIndex() == table_.size() - 2) {
+            table_.setScrollToRow(table_.size() - 1);
+        }
     }
 
 }

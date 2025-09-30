@@ -360,6 +360,7 @@ void GameContext::restartIfConfigured()
 
 void GameContext::cancelCompute()
 {
+    std::lock_guard lock(engineMutex_);
     for (auto &player : players_)
     {
         player->cancelCompute();

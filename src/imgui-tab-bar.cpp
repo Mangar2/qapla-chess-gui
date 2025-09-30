@@ -22,7 +22,8 @@
 
 namespace QaplaWindows {
 
-    void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, bool closable) {
+    void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, 
+        ImGuiTabItemFlags flags) {
         // Create a callback that calls the embedded window's draw method
         // The shared_ptr ensures the window stays alive as long as the callback exists
         auto windowPtr = std::shared_ptr<EmbeddedWindow>(window.release());
@@ -30,37 +31,37 @@ namespace QaplaWindows {
             [windowPtr]() { windowPtr->draw(); }
         ) : nullptr;
         
-        tabs.emplace_back(Tab{ name, windowPtr, std::move(callback), closable });
+        tabs_.emplace_back(Tab{ name, windowPtr, std::move(callback), flags });
     }
 
-    void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback, bool closable) {
-        tabs.emplace_back(Tab{ name, nullptr, std::move(callback), closable });
+    void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback, 
+        ImGuiTabItemFlags flags) {
+        tabs_.emplace_back(Tab{ name, nullptr, std::move(callback), flags });
     }
 
     bool ImGuiTabBar::removeTab(const std::string& name) {
-        auto it = std::find_if(tabs.begin(), tabs.end(),
+        auto it = std::find_if(tabs_.begin(), tabs_.end(),
             [&name](const Tab& tab) { return tab.name == name; });
         
-        if (it != tabs.end()) {
-            tabs.erase(it);
+        if (it != tabs_.end()) {
+            tabs_.erase(it);
             return true;
         }
         return false;
     }
 
     void ImGuiTabBar::draw() {
-        if (ImGui::BeginTabBar("QaplaTabBar", ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable)) {
+        if (ImGui::BeginTabBar("QaplaTabBar", ImGuiTabBarFlags_Reorderable)) {
             // Draw all tabs
-            for (auto it = tabs.begin(); it != tabs.end(); ) {
+            for (auto it = tabs_.begin(); it != tabs_.end(); ) {
                 bool open = true;
                 
                 // Set flags based on whether tab is closable
-                ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
-                if (it->closable) {
-                    flags |= ImGuiTabItemFlags_UnsavedDocument;
-                }
-                
-                if (ImGui::BeginTabItem(it->name.c_str(), it->closable ? &open : nullptr, flags)) {
+                ImGuiTabItemFlags flags = it->defaultTabFlags;
+                it->defaultTabFlags &= ~ImGuiTabItemFlags_SetSelected;
+                bool closable = flags & ImGuiTabItemFlags_NoAssumedClosure;
+
+                if (ImGui::BeginTabItem(it->name.c_str(), closable ? &open : nullptr, flags)) {
                     // Always use callback (which is created for EmbeddedWindows too)
                     if (it->callback) {
                         it->callback();
@@ -69,23 +70,23 @@ namespace QaplaWindows {
                 }
                 
                 // Remove tab if it was closed
-                if (it->closable && !open) {
-                    it = tabs.erase(it);
+                if (closable && !open) {
+                    it = tabs_.erase(it);
                 } else {
                     ++it;
                 }
             }
             
             // Add + button if callback is set
-            if (addTabCallback) {
+            if (addTabCallback_) {
                 if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) {
-                    addTabCallback(*this);
+                    addTabCallback_(*this);
                 }
             }
             
             // Call dynamic tabs callback after processing all static tabs
-            if (dynamicTabsCallback) {
-                dynamicTabsCallback();
+            if (dynamicTabsCallback_) {
+                dynamicTabsCallback_();
             }
             
             ImGui::EndTabBar();
@@ -93,20 +94,20 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::setDynamicTabsCallback(std::function<void()> callback) {
-        dynamicTabsCallback = std::move(callback);
+        dynamicTabsCallback_ = std::move(callback);
     }
 
     void ImGuiTabBar::setAddTabCallback(std::function<void(ImGuiTabBar&)> callback) {
-        addTabCallback = std::move(callback);
+        addTabCallback_ = std::move(callback);
     }
 
     size_t ImGuiTabBar::getTabCount() const noexcept {
-        return tabs.size();
+        return tabs_.size();
     }
 
     bool ImGuiTabBar::hasTab(const std::string& name) const {
-        return std::find_if(tabs.begin(), tabs.end(),
-            [&name](const Tab& tab) { return tab.name == name; }) != tabs.end();
+        return std::find_if(tabs_.begin(), tabs_.end(),
+            [&name](const Tab& tab) { return tab.name == name; }) != tabs_.end();
     }
 
 } // namespace QaplaWindows

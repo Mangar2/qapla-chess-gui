@@ -109,14 +109,17 @@ namespace {
 
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         auto instances = QaplaWindows::InteractiveBoardWindow::loadInstances();
+        size_t index = 0;
         for (auto& instance : instances) {
             auto title = instance->getTitle();
-            boardTabBar->addTab(title, std::move(instance), true);
+            boardTabBar->addTab(title, std::move(instance), 
+                index == 0 ? ImGuiTabItemFlags_None : ImGuiTabItemFlags_NoAssumedClosure);
+            index++;
         }
         boardTabBar->setAddTabCallback([&](QaplaWindows::ImGuiTabBar& tb) {
             auto instance = QaplaWindows::InteractiveBoardWindow::createInstance();
-            auto tabName = instance->getTitle();
-            tb.addTab(tabName, std::move(instance), true);
+            auto title = instance->getTitle();
+            tb.addTab(title, std::move(instance), ImGuiTabItemFlags_NoAssumedClosure | ImGuiTabItemFlags_SetSelected);
         });
         boardTabBar->setDynamicTabsCallback([&]() {
             QaplaWindows::TournamentData::instance().drawTabs();
