@@ -121,7 +121,7 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
                 tables_[tableIndex]->clear();
             }
             if (moveIndex == -1) {
-                displayedMoveNo_[tableIndex] = gameRecord.getHalfmoveIndex(0).value_or(0);
+                displayedMoveNo_[tableIndex] = gameRecord.halfmoveNoAtPly(0);
             }
             continue;
         }

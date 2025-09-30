@@ -102,7 +102,7 @@ namespace QaplaWindows {
          *                     to extract timing information from. Must be less than
          *                     the size of the history vector.
          */
-        void setFromHistoryMoveRecord(const GameRecord &gameRecord, unsigned int curMoveIndex);
+        void setFromHistoryMove(const MoveRecord& moveRecord);
 
         struct ClockData {
             std::string wEngineName;
@@ -116,7 +116,7 @@ namespace QaplaWindows {
 			bool wtm = true; 
 		};
         ClockData clockData_;
-        uint32_t curHalfmoveNo_ = 0;
+        uint32_t nextHalfmoveNo_ = 0;
         ChangeTracker gameRecordTracker_;
 
         std::vector<uint32_t> infoCnt_{};

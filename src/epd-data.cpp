@@ -194,6 +194,7 @@ namespace QaplaWindows {
             scheduledConfig_ = epdConfig_;
         }
         state = State::Starting;
+		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true, true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig);
@@ -203,7 +204,6 @@ namespace QaplaWindows {
         if (epdConfig_.concurrency == 0) {
             epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
         }
-		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true, true);
         state = State::Running;
         SnackbarManager::instance().showSuccess("Epd analysis started");
     }

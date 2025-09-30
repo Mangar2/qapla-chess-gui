@@ -50,11 +50,12 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     auto btc = gameRecord.getBlackTimeControl();
     if (!wtc.isValid() || !btc.isValid()) return;
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
-    auto curMoveIndex = gameRecord.nextMoveIndex() == 0 ? 0 : gameRecord.nextMoveIndex() - 1;
+    auto nextMoveIndex = gameRecord.nextMoveIndex();
+    auto halfMoves = gameRecord.halfmoveNoAtPly(nextMoveIndex);
     GoLimits goLimits = createGoLimits(wtc, btc,
-        curMoveIndex, whiteTime, blackTime, gameRecord.isWhiteToMove());
+        halfMoves, whiteTime, blackTime, gameRecord.isWhiteToMove());
 
-    if (curMoveIndex == 0) {
+    if (nextMoveIndex == 0) {
         clockData_.wEngineName = gameRecord.getWhiteEngineName();
         clockData_.bEngineName = gameRecord.getBlackEngineName();
     }
@@ -65,45 +66,41 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     clockData_.wtm = gameRecord.isWhiteToMove();
     clockData_.wTimer.reset();
     clockData_.bTimer.reset();
+    nextHalfmoveNo_ = gameRecord.halfmoveNoAtPly(nextMoveIndex);
 
-    setFromHistoryMoveRecord(gameRecord, curMoveIndex);
+    if (nextMoveIndex > 0) {
+        setFromHistoryMove(gameRecord.history()[nextMoveIndex - 1]);
+    }
 }
 
-void QaplaWindows::ImGuiClock::setFromHistoryMoveRecord(const GameRecord &gameRecord, unsigned int curMoveIndex)
-{
-    auto nextMoveIndex = gameRecord.nextMoveIndex();
-    curHalfmoveNo_ = 0;
-    if (nextMoveIndex > 0 && curMoveIndex < gameRecord.history().size())
+void QaplaWindows::ImGuiClock::setFromHistoryMove(const MoveRecord& moveRecord) {
+    // if wtm, then black just moved (currMove is black's move)
+    if (clockData_.wtm)
     {
-        auto curMove = gameRecord.history()[curMoveIndex];
-        curHalfmoveNo_ = curMove.halfmoveNo_;
-        // if wtm, then black just moved (currMove is black's move)
-        if (clockData_.wtm)
-        {
-            if (!stopped_)
-                clockData_.wTimer.start();
-            else
-            {
-                clockData_.bTimeCurMove = curMove.timeMs;
-                // bTimeLeftMs has the time after current move.
-                clockData_.bTimeLeftMs += curMove.timeMs;
-                clockData_.bEngineName = curMove.engineName_;
-            }
-        }
+        if (!stopped_)
+            clockData_.wTimer.start();
         else
         {
-            if (!stopped_)
-                clockData_.bTimer.start();
-            else
-            {
-                clockData_.wTimeCurMove = curMove.timeMs;
-                // wTimeLeftMs has the time after current move.
-                clockData_.wTimeLeftMs += curMove.timeMs;
-                clockData_.wEngineName = curMove.engineName_;
-            }
+            clockData_.bTimeCurMove = moveRecord.timeMs;
+            // bTimeLeftMs has the time after current move.
+            clockData_.bTimeLeftMs += moveRecord.timeMs;
+            clockData_.bEngineName = moveRecord.engineName_;
+        }
+    }
+    else
+    {
+        if (!stopped_)
+            clockData_.bTimer.start();
+        else
+        {
+            clockData_.wTimeCurMove = moveRecord.timeMs;
+            // wTimeLeftMs has the time after current move.
+            clockData_.wTimeLeftMs += moveRecord.timeMs;
+            clockData_.wEngineName = moveRecord.engineName_;
         }
     }
 }
+
 
 void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
     if (stopped_) return;
@@ -112,8 +109,7 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
         infoCnt_.resize(playerIndex + 1, 0);
         displayedMoveNo_.resize(playerIndex + 1, 0);
     }
-    if (halfmoveNo != curHalfmoveNo_ + 1) {
-        // We ignore all moverecords that are not related to the halfmove no to be played
+    if (halfmoveNo != nextHalfmoveNo_) {
         return; 
     }
     if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && halfmoveNo == displayedMoveNo_[playerIndex]) {
