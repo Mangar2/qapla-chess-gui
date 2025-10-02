@@ -44,8 +44,16 @@ namespace QaplaWindows {
          * @brief Options to control which engine properties are editable
          */
         struct Options {
-            Options() : allowGauntletEdit(true) {}
-            bool allowGauntletEdit;   ///< Allows editing of the gauntlet option
+            Options() : allowGauntletEdit(true), allowNameEdit(true), allowPonderEdit(true), 
+                       allowTimeControlEdit(true), allowTraceLevelEdit(true), 
+                       allowRestartOptionEdit(true), allowEngineOptionsEdit(true) {}
+            bool allowGauntletEdit;        ///< Allows editing of the gauntlet option
+            bool allowNameEdit;            ///< Allows editing of the engine name
+            bool allowPonderEdit;          ///< Allows editing of the ponder option
+            bool allowTimeControlEdit;     ///< Allows editing of the time control
+            bool allowTraceLevelEdit;      ///< Allows editing of the trace level
+            bool allowRestartOptionEdit;   ///< Allows editing of the restart option
+            bool allowEngineOptionsEdit;   ///< Allows editing of engine-specific options
         };
 
         /**
@@ -141,6 +149,26 @@ namespace QaplaWindows {
          * 
          */
         void updateConfiguration() const;
+
+        /**
+         * @brief Draws read-only engine information
+         * @param config The engine configuration
+         */
+        void drawReadOnlyInfo(const EngineConfig& config);
+
+        /**
+         * @brief Draws editable basic engine properties
+         * @param config The engine configuration
+         * @return true if something changed
+         */
+        bool drawEditableProperties(EngineConfig& config);
+
+        /**
+         * @brief Draws engine-specific options
+         * @param config The engine configuration
+         * @return true if something changed
+         */
+        bool drawEngineOptions(EngineConfig& config);
 
         Options options_;                                       ///< Current options
         std::string id_ = "unset";                              ///< Unique identifier for the selection instance

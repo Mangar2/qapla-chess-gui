@@ -19,6 +19,7 @@
 
 #include "imgui-engine-select.h"
 #include "imgui-controls.h"
+#include "imgui-engine-controls.h"
 #include "configuration.h"
 #include "qapla-tester/engine-worker-factory.h"
 
@@ -42,8 +43,10 @@ bool ImGuiEngineSelect::draw() {
     
     for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
         const auto& usedConfig = engineConfigurations_[index];
-        auto config = configManager.getConfig(usedConfig.config.getName());
-        if (!config) {
+        // Find base engine by cmd+protocol instead of name
+        auto baseConfig = configManager.getConfigMutableByCmdAndProtocol(
+            usedConfig.config.getCmd(), usedConfig.config.getProtocol());
+        if (!baseConfig) {
             // No longer available engines must be removed
             engineConfigurations_.erase(engineConfigurations_.begin() + index);
             modified = true;
@@ -97,13 +100,15 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     ImGuiTreeNodeFlags flags = config.selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_Leaf;
     
     bool changed = ImGuiControls::collapsingSelection(name, config.selected, flags, [this, &config]() -> bool {
-        bool modified = false;
-        if (options_.allowGauntletEdit) {
-            modified |= ImGuiControls::checkbox("Gauntlet", config.config.gauntlet());
-        }
+        bool configModified = false;
         
-        // Additional options can be added here based on options_
-        return modified;
+        drawReadOnlyInfo(config.config);
+        ImGui::Separator();
+        
+        configModified |= drawEditableProperties(config.config);
+        configModified |= drawEngineOptions(config.config);
+        
+        return configModified;
     });
     
     if (changed) {
@@ -143,7 +148,9 @@ std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator
 ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
     return std::find_if(engineConfigurations_.begin(), engineConfigurations_.end(),
         [&engineConfig](const EngineConfiguration& configured) {
-            return configured.config == engineConfig;
+            // Match by command line and protocol only (base engine identification)
+            return configured.config.getCmd() == engineConfig.getCmd() && 
+                   configured.config.getProtocol() == engineConfig.getProtocol();
         });
 }
 
@@ -157,15 +164,33 @@ void ImGuiEngineSelect::notifyConfigurationChanged() {
 void ImGuiEngineSelect::updateConfiguration() const {
     QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engine : engineConfigurations_) {
-        // Create Section object explicitly for clarity
+        // Store full configuration instead of just name reference
+        QaplaHelpers::IniFile::KeyValueMap entries{
+            {"id", id_},
+            {"selected", engine.selected ? "true" : "false"},
+            // Store all engine configuration attributes
+            {"name", engine.config.getName()},
+            {"author", engine.config.getAuthor()},
+            {"cmd", engine.config.getCmd()},
+            {"dir", engine.config.getDir()},
+            {"protocol", engine.config.getProtocol() == EngineProtocol::Uci ? "uci" : "xboard"},
+            {"ponder", engine.config.isPonderEnabled() ? "true" : "false"},
+            {"gauntlet", engine.config.isGauntlet() ? "true" : "false"},
+            {"tc", engine.config.getTimeControl().toPgnTimeControlString()},
+            {"restart", to_string(engine.config.getRestartOption())},
+            {"trace", engine.config.getTraceLevel() == TraceLevel::none ? "none" :
+                     engine.config.getTraceLevel() == TraceLevel::info ? "all" : "command"}
+        };
+        
+        // Add engine-specific options
+        auto optionValues = engine.config.getOptionValues();
+        for (const auto& [optionName, optionValue] : optionValues) {
+            entries.emplace_back("option." + optionName, optionValue);
+        }
+        
         QaplaHelpers::IniFile::Section section{
-            .name = "engineselection",  // section name
-            .entries = QaplaHelpers::IniFile::KeyValueMap{  // key-value entries
-                {"id", id_},
-                {"name", engine.config.getName()},
-                {"selected", engine.selected ? "true" : "false"},
-                {"gauntlet", engine.config.isGauntlet() ? "true" : "false"}
-            }
+            .name = "engineselection",
+            .entries = std::move(entries)
         };
         sections.push_back(std::move(section));
     }
@@ -176,25 +201,103 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
     engineConfigurations_.clear();
     for (const auto& section : sections) {
         if (section.name == "engineselection" && section.getValue("id") == id_) {
-            EngineConfiguration config;
+            EngineConfiguration engineConfig;
+            
+            // Parse selection state
             auto selectedValue = section.getValue("selected");
-            config.selected = selectedValue ? (*selectedValue == "true") : false;
-            auto engineName = section.getValue("name");
-            if (!engineName) {
-                continue; 
+            engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;
+            
+            // Check for required fields
+            auto cmd = section.getValue("cmd");
+            auto protocol = section.getValue("protocol");
+            if (!cmd || !protocol) {
+                continue; // Skip invalid configurations
             }
-            auto configDef = EngineWorkerFactory::getConfigManager().getConfig(*engineName);
-            if (!configDef) {
-                continue;
+            
+            // Build EngineConfig from stored values
+            EngineConfig config;
+            
+            // Set basic attributes
+            if (auto name = section.getValue("name")) {
+                config.setName(*name);
             }
-            config.config = *configDef;
-            for (const auto& [key, value] : section.entries) {
-                if (key == "gauntlet") {
-                    config.config.setGauntlet(value == "true");
+            if (auto author = section.getValue("author")) {
+                config.setAuthor(*author);
+            }
+            config.setCmd(*cmd);
+            if (auto dir = section.getValue("dir")) {
+                config.setDir(*dir);
+            }
+            config.setProtocol(*protocol);
+            
+            // Set boolean options
+            if (auto ponder = section.getValue("ponder")) {
+                config.setPonder(*ponder == "true");
+            }
+            if (auto gauntlet = section.getValue("gauntlet")) {
+                config.setGauntlet(*gauntlet == "true");
+            }
+            
+            // Set time control
+            if (auto tc = section.getValue("tc")) {
+                try {
+                    config.setTimeControl(*tc);
+                } catch (const std::exception&) {
+                    // Use default if parsing fails
                 }
             }
-            engineConfigurations_.push_back(std::move(config));
+            
+            // Set trace level
+            if (auto trace = section.getValue("trace")) {
+                try {
+                    config.setTraceLevel(*trace);
+                } catch (const std::exception&) {
+                    // Use default if parsing fails
+                }
+            }
+            
+            // Set restart option
+            if (auto restart = section.getValue("restart")) {
+                try {
+                    config.setRestartOption(parseRestartOption(*restart));
+                } catch (const std::exception&) {
+                    // Use default if parsing fails
+                }
+            }
+            
+            // Set engine-specific options
+            for (const auto& [key, value] : section.entries) {
+                if (key.starts_with("option.")) {
+                    std::string optionName = key.substr(7); // Remove "option." prefix
+                    config.setOptionValue(optionName, value);
+                }
+            }
+            
+            // Store the configuration
+            engineConfig.config = std::move(config);
+            engineConfigurations_.push_back(std::move(engineConfig));
         }
     }
     notifyConfigurationChanged();
+}
+
+void ImGuiEngineSelect::drawReadOnlyInfo(const EngineConfig& config) {
+    ImGuiEngineControls::drawEngineReadOnlyInfo(config);
+}
+
+bool ImGuiEngineSelect::drawEditableProperties(EngineConfig& config) {
+    bool modified = false;
+    
+    modified |= ImGuiEngineControls::drawEngineName(config, options_.allowNameEdit);
+    modified |= ImGuiEngineControls::drawEngineGauntlet(config, options_.allowGauntletEdit);
+    modified |= ImGuiEngineControls::drawEnginePonder(config, options_.allowPonderEdit);
+    modified |= ImGuiEngineControls::drawEngineTimeControl(config, options_.allowTimeControlEdit);
+    modified |= ImGuiEngineControls::drawEngineTraceLevel(config, options_.allowTraceLevelEdit);
+    modified |= ImGuiEngineControls::drawEngineRestartOption(config, options_.allowRestartOptionEdit);
+    
+    return modified;
+}
+
+bool ImGuiEngineSelect::drawEngineOptions(EngineConfig& config) {
+    return ImGuiEngineControls::drawEngineOptions(config, options_.allowEngineOptionsEdit);
 }

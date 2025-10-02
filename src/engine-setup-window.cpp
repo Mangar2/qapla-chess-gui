@@ -21,6 +21,7 @@
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "imgui-controls.h"
+#include "imgui-engine-controls.h"
 #include "os-dialogs.h"
 #include "configuration.h"
 #include "snackbar.h"
@@ -88,54 +89,13 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
 
     if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_Selected)) {
         ImGui::Indent(32.0f);
-        if (auto name = ImGuiControls::inputText("Name", config.getName())) {
-            config.setName(*name);
-            changed = true;
-        }
-
-        if (auto author = ImGuiControls::inputText("Author", config.getAuthor())) {
-            config.setAuthor(*author);
-            changed = true;
-        }
-
-        if (auto cmd = ImGuiControls::inputText("Command", config.getCmd())) {
-            config.setCmd(*cmd);
-            changed = true;
-        }
-
-        if (auto dir = ImGuiControls::inputText("Directory", config.getDir())) {
-            config.setDir(*dir);
-            changed = true;
-        }
-
-        static const char* protocolItems[] = { "uci", "xboard" };
-        int protocolIndex = static_cast<int>(config.getProtocol());
-        if (ImGui::Combo("Protocol", &protocolIndex, protocolItems, IM_ARRAYSIZE(protocolItems))) {
-            config.setProtocol(static_cast<EngineProtocol>(protocolIndex));
-            changed = true;
-        }
-
-        static const char* traceItems[] = { "none", "all", "command" };
-        auto traceLevel = config.getTraceLevel();
-		int traceIndex = 0;
-        if (traceLevel == TraceLevel::info) {
-            traceIndex = 1;
-        } else if (traceLevel == TraceLevel::command) {
-            traceIndex = 2;
-        } else {
-            traceIndex = 0; // Default to none if unknown
-		}
-        if (ImGui::Combo("Trace", &traceIndex, traceItems, IM_ARRAYSIZE(traceItems))) {
-            config.setTraceLevel(traceItems[traceIndex]);
-            changed = true;
-        }
-
-        static const char* restartItems[] = { "auto", "on", "off" };
-        int restartIndex = static_cast<int>(config.getRestartOption());
-        if (ImGui::Combo("Restart", &restartIndex, restartItems, IM_ARRAYSIZE(restartItems))) {
-            config.setRestartOption(static_cast<RestartOption>(restartIndex));
-            changed = true;
-        }
+        changed |= ImGuiEngineControls::drawEngineName(config, true);
+        changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
+        changed |= ImGuiEngineControls::drawEngineCommand(config, true);
+        changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
+        changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
+        changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
+        changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
 
         try {
             changed |= drawOptions(config, 400.0f);
