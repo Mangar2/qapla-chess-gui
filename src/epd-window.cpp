@@ -47,6 +47,10 @@ EpdWindow::EpdWindow()
     setEngineConfiguration();
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = false;
+    options.allowPonderEdit = false;
+    options.allowTimeControlEdit = false;
+    options.allowTraceLevelEdit = true;
+    options.allowRestartOptionEdit = false;
     engineSelect_->setOptions(options);
 }
 

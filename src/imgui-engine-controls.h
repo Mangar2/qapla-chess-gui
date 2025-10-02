@@ -23,6 +23,7 @@
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/logger.h"
+#include "configuration.h"
 
 #include <imgui.h>
 #include <vector>
@@ -247,7 +248,7 @@ inline bool drawEngineTimeControl(EngineConfig& config, bool enabled) {
 }
 
 /**
- * @brief Draws engine-specific options controls
+ * @brief Draws engine-specific options controls using capabilities
  * @param config Engine configuration to modify
  * @param enabled Whether the control is enabled
  * @return True if any option was changed
@@ -255,38 +256,42 @@ inline bool drawEngineTimeControl(EngineConfig& config, bool enabled) {
 inline bool drawEngineOptions(EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    auto optionValues = config.getOptionValues();
-    if (optionValues.empty()) {
-        return false;
-    }
+    auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+    auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
+    if (!capability) return false;
     
-    bool modified = false;
+    auto& options = capability->getSupportedOptions();
+    if (options.empty()) return false;
+    
+    bool changed = false;
     ImGui::Separator();
     ImGui::Text("Engine Options:");
     
-    for (auto& [optionName, optionValue] : optionValues) {
-        std::string editableValue = optionValue;
-        std::string label = optionName + "##" + optionName;
-        if (ImGuiControls::inputText(label.c_str(), editableValue)) {
-            config.setOptionValue(optionName, editableValue);
-            modified = true;
+    auto optionMap = config.getOptionValues();
+    for (const auto& option : options) {
+        auto it = optionMap.find(option.name);
+        std::string value = (it != optionMap.end()) ? it->second : option.defaultValue;
+        if (ImGuiControls::engineOptionControl(option, value, 400.0f)) {
+            changed = true;
+            config.setOptionValue(option.name, value);
         }
     }
     
-    return modified;
+    return changed;
 }
 
 /**
  * @brief Draws read-only engine information
  * @param config Engine configuration to display
+ * @param full Whether to show full details (directory and author)
  */
-inline void drawEngineReadOnlyInfo(const EngineConfig& config) {
+inline void drawEngineReadOnlyInfo(const EngineConfig& config, bool full = false) {
     ImGui::Text("Command: %s", config.getCmd().c_str());
-    ImGui::Text("Directory: %s", config.getDir().c_str());
+    if (full) ImGui::Text("Directory: %s", config.getDir().c_str());
     ImGui::Text("Protocol: %s", 
         config.getProtocol() == EngineProtocol::Uci ? "UCI" :
         config.getProtocol() == EngineProtocol::XBoard ? "XBoard" : "Unknown");
-    ImGui::Text("Author: %s", config.getAuthor().c_str());
+    if (full) ImGui::Text("Author: %s", config.getAuthor().c_str());
 }
 
 } // namespace QaplaWindows::ImGuiEngineControls
