@@ -47,4 +47,12 @@ public:
      */
     static std::string saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
         const std::string& defaultPath = {});
+
+    /**
+     * Opens a native folder selection dialog.
+     *
+     * @param defaultPath The default folder path to show in the dialog.
+     * @return The selected folder path, or an empty string if cancelled.
+     */
+    static std::string selectFolderDialog(const std::string& defaultPath = {});
 };

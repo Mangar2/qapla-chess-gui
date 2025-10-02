@@ -351,8 +351,154 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
 }
 
 #else
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>&) {
+std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>&, const std::string&) {
     return {};
 }
+#endif
+
+// ============================================================================
+// FOLDER SELECTION DIALOG
+// ============================================================================
+
+#ifdef _WIN32
+
+std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
+    std::string result;
+
+    // COM initialisieren
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) {
+        return result;
+    }
+
+    IFileOpenDialog* pFileOpen = nullptr;
+    hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+                          IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+
+    if (SUCCEEDED(hr)) {
+        // Optionen für Ordner-Auswahl setzen
+        DWORD dwOptions;
+        if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
+            dwOptions |= FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM;
+            pFileOpen->SetOptions(dwOptions);
+        }
+
+        // Standard-Pfad setzen, falls angegeben
+        if (!defaultPath.empty()) {
+            IShellItem* pItem = nullptr;
+            wchar_t wDefaultPath[MAX_PATH];
+            MultiByteToWideChar(CP_UTF8, 0, defaultPath.c_str(), -1, wDefaultPath, MAX_PATH);
+            
+            hr = SHCreateItemFromParsingName(wDefaultPath, nullptr, IID_IShellItem, 
+                                             reinterpret_cast<void**>(&pItem));
+            if (SUCCEEDED(hr)) {
+                pFileOpen->SetDefaultFolder(pItem);
+                pItem->Release();
+            }
+        }
+
+        // Dialog anzeigen
+        hr = pFileOpen->Show(nullptr);
+        if (SUCCEEDED(hr)) {
+            IShellItem* pItem = nullptr;
+            hr = pFileOpen->GetResult(&pItem);
+            if (SUCCEEDED(hr)) {
+                PWSTR pszFolderPath = nullptr;
+                if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFolderPath))) {
+                    char buffer[MAX_PATH];
+                    WideCharToMultiByte(CP_UTF8, 0, pszFolderPath, -1, buffer, MAX_PATH, nullptr, nullptr);
+                    result = buffer;
+                    CoTaskMemFree(pszFolderPath);
+                }
+                pItem->Release();
+            }
+        }
+        pFileOpen->Release();
+    }
+
+    CoUninitialize();
+    return result;
+}
+
+#elif defined(__APPLE__)
+
+std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
+    std::string result;
+
+    // pool = [[NSAutoreleasePool alloc] init];
+    Class NSAutoreleasePool = (Class)objc_getClass("NSAutoreleasePool");
+    id pool = ((id(*)(Class, SEL))objc_msgSend)(NSAutoreleasePool, sel_registerName("alloc"));
+    pool = ((id(*)(id, SEL))objc_msgSend)(pool, sel_registerName("init"));
+
+    Class NSOpenPanel = (Class)objc_getClass("NSOpenPanel");
+    id panel = ((id(*)(Class, SEL))objc_msgSend)(NSOpenPanel, sel_registerName("openPanel"));
+
+    // Nur Ordner erlauben
+    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseFiles:"), (BOOL)0);
+    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseDirectories:"), (BOOL)1);
+    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setAllowsMultipleSelection:"), (BOOL)0);
+
+    // Standard-Pfad setzen, falls angegeben
+    if (!defaultPath.empty()) {
+        id nsPath = ((id(*)(Class, SEL, const char*))objc_msgSend)(
+            (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), defaultPath.c_str());
+        id dirUrl = ((id(*)(Class, SEL, id))objc_msgSend)(
+            (Class)objc_getClass("NSURL"), sel_registerName("fileURLWithPath:"), nsPath);
+        ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setDirectoryURL:"), dirUrl);
+    }
+
+    // NSModalResponseOK == 1
+    NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
+    if (r == 1) {
+        id urls = ((id(*)(id, SEL))objc_msgSend)(panel, sel_registerName("URLs"));
+        NSUInteger count = ((NSUInteger(*)(id, SEL))objc_msgSend)(urls, sel_registerName("count"));
+        if (count > 0) {
+            id url = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), 0);
+            id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
+            const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
+            if (cstr) result = cstr;
+        }
+    }
+
+    // [pool drain];
+    ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
+    return result;
+}
+
+#elif defined(__linux__)
+
+std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
+    gtk_init(nullptr, nullptr);
+    GtkWidget* dialog = gtk_file_chooser_dialog_new("Select Folder", nullptr,
+        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+        "_Cancel", GTK_RESPONSE_CANCEL,
+        "_Select", GTK_RESPONSE_ACCEPT,
+        nullptr);
+
+    // Standard-Pfad setzen, falls angegeben
+    if (!defaultPath.empty()) {
+        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), defaultPath.c_str());
+    }
+
+    std::string result;
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        char* foldername = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        if (foldername) {
+            result = foldername;
+            g_free(foldername);
+        }
+    }
+
+    gtk_widget_destroy(dialog);
+    while (gtk_events_pending()) gtk_main_iteration();
+    return result;
+}
+
+#else
+
+std::string OsDialogs::selectFolderDialog(const std::string&) {
+    return {};
+}
+
 #endif
 
