@@ -102,11 +102,16 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     bool changed = ImGuiControls::collapsingSelection(name, config.selected, flags, [this, &config]() -> bool {
         bool configModified = false;
         
-        drawReadOnlyInfo(config.config);
+        ImGuiEngineControls::drawEngineReadOnlyInfo(config.config);
         ImGui::Separator();
         
-        configModified |= drawEditableProperties(config.config);
-        configModified |= drawEngineOptions(config.config);
+        configModified |= ImGuiEngineControls::drawEngineName(config.config, options_.allowNameEdit);
+        configModified |= ImGuiEngineControls::drawEngineGauntlet(config.config, options_.allowGauntletEdit);
+        configModified |= ImGuiEngineControls::drawEnginePonder(config.config, options_.allowPonderEdit);
+        configModified |= ImGuiEngineControls::drawEngineTimeControl(config.config, options_.allowTimeControlEdit);
+        configModified |= ImGuiEngineControls::drawEngineTraceLevel(config.config, options_.allowTraceLevelEdit);
+        configModified |= ImGuiEngineControls::drawEngineRestartOption(config.config, options_.allowRestartOptionEdit);
+        configModified |= ImGuiEngineControls::drawEngineOptions(config.config, options_.allowEngineOptionsEdit);
         
         return configModified;
     });
@@ -136,13 +141,7 @@ void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCall
     notifyConfigurationChanged();
 }
 
-void ImGuiEngineSelect::setOptions(const Options& options) {
-    options_ = options;
-}
 
-const ImGuiEngineSelect::Options& ImGuiEngineSelect::getOptions() const {
-    return options_;
-}
 
 std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
 ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
@@ -281,23 +280,8 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
     notifyConfigurationChanged();
 }
 
-void ImGuiEngineSelect::drawReadOnlyInfo(const EngineConfig& config) {
-    ImGuiEngineControls::drawEngineReadOnlyInfo(config);
-}
 
-bool ImGuiEngineSelect::drawEditableProperties(EngineConfig& config) {
-    bool modified = false;
-    
-    modified |= ImGuiEngineControls::drawEngineName(config, options_.allowNameEdit);
-    modified |= ImGuiEngineControls::drawEngineGauntlet(config, options_.allowGauntletEdit);
-    modified |= ImGuiEngineControls::drawEnginePonder(config, options_.allowPonderEdit);
-    modified |= ImGuiEngineControls::drawEngineTimeControl(config, options_.allowTimeControlEdit);
-    modified |= ImGuiEngineControls::drawEngineTraceLevel(config, options_.allowTraceLevelEdit);
-    modified |= ImGuiEngineControls::drawEngineRestartOption(config, options_.allowRestartOptionEdit);
-    
-    return modified;
-}
 
-bool ImGuiEngineSelect::drawEngineOptions(EngineConfig& config) {
-    return ImGuiEngineControls::drawEngineOptions(config, options_.allowEngineOptionsEdit);
-}
+
+
+

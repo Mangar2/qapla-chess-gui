@@ -103,13 +103,13 @@ namespace QaplaWindows {
          * @brief Sets the options for available features
          * @param options The new options
          */
-        void setOptions(const Options& options);
+        void setOptions(const Options& options) { options_ = options; }
 
         /**
          * @brief Returns the current options
          * @return The current options
          */
-        const Options& getOptions() const;
+        const Options& getOptions() const { return options_; }
 
         /**
          * @brief Sets the engine configurations from INI file sections
@@ -150,25 +150,7 @@ namespace QaplaWindows {
          */
         void updateConfiguration() const;
 
-        /**
-         * @brief Draws read-only engine information
-         * @param config The engine configuration
-         */
-        void drawReadOnlyInfo(const EngineConfig& config);
 
-        /**
-         * @brief Draws editable basic engine properties
-         * @param config The engine configuration
-         * @return true if something changed
-         */
-        bool drawEditableProperties(EngineConfig& config);
-
-        /**
-         * @brief Draws engine-specific options
-         * @param config The engine configuration
-         * @return true if something changed
-         */
-        bool drawEngineOptions(EngineConfig& config);
 
         Options options_;                                       ///< Current options
         std::string id_ = "unset";                              ///< Unique identifier for the selection instance
