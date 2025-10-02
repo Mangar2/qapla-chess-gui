@@ -29,6 +29,7 @@
 #include <string>
 #include <optional>
 #include <functional>
+#include <algorithm>
 
 namespace QaplaWindows::ImGuiControls {
 
@@ -162,6 +163,44 @@ namespace QaplaWindows::ImGuiControls {
         ImGui::SameLine();
         modified |= inputText("##filePath", filePath);
 		ImGui::PopID(); 
+        return modified;
+    }
+
+    /**
+     * @brief Directory input control for selecting and displaying directory paths.
+     * @param label Label to display next to the input box.
+     * @param directoryPath Reference to the directory path string to modify.
+     * @param inputWidth Width of the input box.
+     * @param buttonLabel Label for the directory selection button.
+     * @return True if the directory path was modified, false otherwise.
+     */
+    inline bool existingDialogInput(const std::string& label, std::string& directoryPath, 
+        float inputWidth = 200.0f, const char* buttonLabel = "Browse") {
+        bool modified = false;
+        ImGui::PushID(label.c_str()); 
+        
+        // Display label
+        ImGui::TextUnformatted(label.c_str());
+
+        // Directory selection button
+        if (ImGui::Button(buttonLabel)) {
+            try {
+                auto selectedPath = OsDialogs::selectFolderDialog(directoryPath);
+                if (!selectedPath.empty()) {
+                    directoryPath = selectedPath;
+                    modified = true;
+                }
+            }
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showError(e.what());
+            }
+        }
+
+        // Input box for directory path
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::SameLine();
+        modified |= inputText("##directoryPath", directoryPath);
+        ImGui::PopID(); 
         return modified;
     }
 
@@ -373,7 +412,17 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         case EngineOption::Type::String: {
-            modified |= inputText(option.name.c_str(), value);
+            // Check if the option name contains "Path" (case insensitive)
+            std::string optionNameLower = option.name;
+            std::transform(optionNameLower.begin(), optionNameLower.end(), optionNameLower.begin(), ::tolower);
+            
+            if (optionNameLower.find("path") != std::string::npos) {
+                // Use directory selection dialog for path options
+                modified |= existingDialogInput(option.name, value);
+            } else {
+                // Use regular text input for other string options
+                modified |= inputText(option.name.c_str(), value);
+            }
             break;
         }
         default:

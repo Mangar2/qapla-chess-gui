@@ -115,7 +115,7 @@ inline bool drawEngineDirectory(EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string dir = config.getDir();
-    if (ImGuiControls::inputText("Directory", dir)) {
+    if (ImGuiControls::existingDialogInput("Directory", dir)) {
         config.setDir(dir);
         return true;
     }
