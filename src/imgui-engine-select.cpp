@@ -37,51 +37,50 @@ ImGuiEngineSelect::ImGuiEngineSelect(const Options& options, ConfigurationChange
 bool ImGuiEngineSelect::draw() {
     bool modified = false;
     
-    // Get available engines from ConfigManager (same as original implementation)
+    // Clean up engines that are no longer available
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
-    auto configs = configManager.getAllConfigs();
-    
     for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
         const auto& usedConfig = engineConfigurations_[index];
-        // Find base engine by cmd+protocol instead of name
         auto baseConfig = configManager.getConfigMutableByCmdAndProtocol(
             usedConfig.config.getCmd(), usedConfig.config.getProtocol());
         if (!baseConfig) {
-            // No longer available engines must be removed
             engineConfigurations_.erase(engineConfigurations_.begin() + index);
             modified = true;
         } else {
             index++;
         }
     }
-    uint32_t index = 0;
-    for (auto& config : configs) {
-        // Create engine configuration (same as original implementation)
-        EngineConfiguration engine = {
-            .config = config,
-            .selected = false
-        };
-        
-        // Check if this engine is already configured
-        auto it = findEngineConfiguration(config);
-        if (it != engineConfigurations_.end()) {
-            engine = *it;
-        }         
-
-        // Draw the engine configuration
-        if (drawEngineConfiguration(engine, index)) {
-            modified = true;
+    
+    if (options_.allowMultipleSelection) {
+        // Multiple selection mode: show selected engines first, then all available engines
+        modified |= drawSelectedEngines();
+        modified |= drawAvailableEngines();
+    } else {
+        // Original single selection mode
+        auto configs = configManager.getAllConfigs();
+        uint32_t index = 0;
+        for (auto& config : configs) {
+            EngineConfiguration engine = {
+                .config = config,
+                .selected = false
+            };
             
-            if (it == engineConfigurations_.end()) {
-                // Engine was newly configured - add it to the list
-                engineConfigurations_.push_back(engine);
-            } else {
-                // Engine was modified - update existing configuration
-                *it = engine;
+            auto it = findEngineConfiguration(config);
+            if (it != engineConfigurations_.end()) {
+                engine = *it;
+            }         
+
+            if (drawEngineConfiguration(engine, index)) {
+                modified = true;
+                
+                if (it == engineConfigurations_.end()) {
+                    engineConfigurations_.push_back(engine);
+                } else {
+                    *it = engine;
+                }
             }
+            index++;
         }
-        
-        index++;
     }
     
     if (modified) {
@@ -153,6 +152,88 @@ ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
         });
 }
 
+std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
+ImGuiEngineSelect::findDeselectedEngineConfiguration(const EngineConfig& engineConfig) {
+    return std::find_if(engineConfigurations_.begin(), engineConfigurations_.end(),
+        [&engineConfig](const EngineConfiguration& configured) {
+            // Match by command line and protocol, but only if not selected
+            return !configured.selected && 
+                   configured.config.getCmd() == engineConfig.getCmd() && 
+                   configured.config.getProtocol() == engineConfig.getProtocol();
+        });
+}
+
+bool ImGuiEngineSelect::drawSelectedEngines() {
+    bool modified = false;
+    
+    if (ImGui::CollapsingHeader("Selected Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0f);
+        
+        // Draw all selected engines with checkboxes
+        int index = 0;
+        for (auto& engine : engineConfigurations_) {
+            if (engine.selected) {
+                if (drawEngineConfiguration(engine, index)) {
+                    modified = true;
+                }
+            }
+            index++;
+        }
+        
+        ImGui::Unindent(10.0f);
+    }
+    
+    return modified;
+}
+
+bool ImGuiEngineSelect::drawAvailableEngines() {
+    bool modified = false;
+    
+    if (ImGui::CollapsingHeader("Available Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0f);
+        
+        auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+        auto configs = configManager.getAllConfigs();
+        
+        int index = 0;
+        for (auto& config : configs) {
+            if (config.getName().empty()) {
+                continue; 
+            }
+            ImGui::PushID(("available_" + std::to_string(index)).c_str());
+           
+            // Use a simple button to add the engine instead of checkbox
+            if (ImGui::Button("+")) {
+                // Find if there's a deselected instance of this engine
+                auto it = findDeselectedEngineConfiguration(config);
+                if (it != engineConfigurations_.end()) {
+                    // Mark existing deselected instance as selected
+                    it->selected = true;
+                } else {
+                    // Add new selected instance
+                    EngineConfiguration newEngine = {
+                        .config = config,
+                        .selected = true
+                    };
+                    engineConfigurations_.push_back(newEngine);
+                }
+                modified = true;
+            }
+            
+            // Show engine info in a collapsing header (read-only)
+            ImGui::SameLine();
+            ImGui::CollapsingHeader(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
+            
+            ImGui::PopID();
+            index++;
+        }
+        
+        ImGui::Unindent(10.0f);
+    }
+    
+    return modified;
+}
+
 void ImGuiEngineSelect::notifyConfigurationChanged() {
     updateConfiguration();
     if (configurationCallback_) {
@@ -185,8 +266,8 @@ void ImGuiEngineSelect::updateConfiguration() const {
         
         // Add engine-specific options
         auto optionValues = engine.config.getOptionValues();
-        for (const auto& [optionName, optionValue] : optionValues) {
-            entries.emplace_back("option." + optionName, optionValue);
+        for (const auto& [originalName, optionValue] : optionValues) {
+            entries.emplace_back(originalName, optionValue);
         }
         
         QaplaHelpers::IniFile::Section section{

@@ -52,6 +52,7 @@ EpdWindow::EpdWindow()
     options.allowTimeControlEdit = false;
     options.allowTraceLevelEdit = true;
     options.allowRestartOptionEdit = false;
+    options.allowMultipleSelection = true;
     engineSelect_->setOptions(options);
 }
 

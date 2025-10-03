@@ -46,7 +46,8 @@ namespace QaplaWindows {
         struct Options {
             Options() : allowGauntletEdit(true), allowNameEdit(true), allowPonderEdit(true), 
                        allowTimeControlEdit(true), allowTraceLevelEdit(true), 
-                       allowRestartOptionEdit(true), allowEngineOptionsEdit(true) {}
+                       allowRestartOptionEdit(true), allowEngineOptionsEdit(true),
+                       allowMultipleSelection(false) {}
             bool allowGauntletEdit;        ///< Allows editing of the gauntlet option
             bool allowNameEdit;            ///< Allows editing of the engine name
             bool allowPonderEdit;          ///< Allows editing of the ponder option
@@ -54,6 +55,7 @@ namespace QaplaWindows {
             bool allowTraceLevelEdit;      ///< Allows editing of the trace level
             bool allowRestartOptionEdit;   ///< Allows editing of the restart option
             bool allowEngineOptionsEdit;   ///< Allows editing of engine-specific options
+            bool allowMultipleSelection;   ///< Allows selecting the same engine multiple times
         };
 
         /**
@@ -138,6 +140,25 @@ namespace QaplaWindows {
          * @return Iterator to the found configuration or end()
          */
         std::vector<EngineConfiguration>::iterator findEngineConfiguration(const EngineConfig& engineConfig);
+        
+        /**
+         * @brief Finds the first deselected engine configuration that matches the given base engine
+         * @param engineConfig The base engine configuration to match against
+         * @return Iterator to the found configuration or end()
+         */
+        std::vector<EngineConfiguration>::iterator findDeselectedEngineConfiguration(const EngineConfig& engineConfig);
+
+        /**
+         * @brief Draws the selected engines section (with checkboxes)
+         * @return true if something changed, false otherwise
+         */
+        bool drawSelectedEngines();
+
+        /**
+         * @brief Draws the available engines section (without checkboxes)
+         * @return true if something changed, false otherwise
+         */
+        bool drawAvailableEngines();
 
         /**
          * @brief Notifies about changes via callback
