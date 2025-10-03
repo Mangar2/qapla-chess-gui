@@ -252,20 +252,30 @@ void ImGuiEngineSelect::updateConfiguration() const {
             {"name", engine.config.getName()},
             {"author", engine.config.getAuthor()},
             {"cmd", engine.config.getCmd()},
-            {"dir", engine.config.getDir()},
             {"proto", to_string(engine.config.getProtocol())},
-            {"ponder", engine.config.isPonderEnabled() ? "true" : "false"},
-            {"gauntlet", engine.config.isGauntlet() ? "true" : "false"},
-            {"restart", to_string(engine.config.getRestartOption())},
-            {"trace", ImGuiEngineControls::to_string(engine.config.getTraceLevel())}
         };
 
-        if (engine.config.getTimeControl().isValid()) {
-            entries.emplace_back("timecontrol", engine.config.getTimeControl().toPgnTimeControlString());
+        // Only store non-default or enabled options to keep the configuration concise
+        auto& config = engine.config;
+        if (engine.config.getDir() != ".") {
+            entries.emplace_back("dir", engine.config.getDir());
+        }
+        if (config.getRestartOption() != RestartOption::EngineDecides) {
+            entries.emplace_back("restart", to_string(config.getRestartOption()));
+        }
+        if (config.isGauntlet()) { entries.emplace_back("gauntlet", "true"); }
+        if (config.isPonderEnabled()) { entries.emplace_back("ponder", "true"); }
+
+        if (config.getTraceLevel() != TraceLevel::command) {
+            entries.emplace_back("trace", ImGuiEngineControls::to_string(config.getTraceLevel()));
+        }
+
+        if (config.getTimeControl().isValid()) {
+            entries.emplace_back("timecontrol", config.getTimeControl().toPgnTimeControlString());
         }
         
         // Add engine-specific options
-        auto optionValues = engine.config.getOptionValues();
+        auto optionValues = config.getOptionValues();
         for (const auto& [originalName, optionValue] : optionValues) {
             entries.emplace_back(originalName, optionValue);
         }

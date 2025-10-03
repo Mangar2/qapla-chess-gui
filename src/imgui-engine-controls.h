@@ -286,11 +286,9 @@ inline bool drawEngineOptions(EngineConfig& config, bool enabled) {
  * @param full Whether to show full details (directory and author)
  */
 inline void drawEngineReadOnlyInfo(const EngineConfig& config, bool full = false) {
-    ImGui::Text("Command: %s", config.getCmd().c_str());
+    ImGui::Text(full ? "Command: %s" : "%s", config.getCmd().c_str());
     if (full) ImGui::Text("Directory: %s", config.getDir().c_str());
-    ImGui::Text("Protocol: %s", 
-        config.getProtocol() == EngineProtocol::Uci ? "UCI" :
-        config.getProtocol() == EngineProtocol::XBoard ? "XBoard" : "Unknown");
+    ImGui::Text(full ? "Protocol: %s" : "%s", to_string(config.getProtocol()).c_str());
     if (full) ImGui::Text("Author: %s", config.getAuthor().c_str());
 }
 
