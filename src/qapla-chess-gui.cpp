@@ -148,7 +148,7 @@ namespace {
 
         // Setup Engine Test window
         auto engineTestWindow = std::make_unique<QaplaWindows::EngineTestWindow>();
-        taskTabBar->addTab("Engine Test", std::move(engineTestWindow));
+        taskTabBar->addTab("Test", std::move(engineTestWindow));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
             "main", ImGuiWindowFlags_None);

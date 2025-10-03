@@ -90,7 +90,8 @@ void EngineTestWindow::drawButtons()
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
     constexpr ImVec2 buttonSize = {25.0f, 25.0f};
-    const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Run");
+    // We use "Analyze" to calculate the width of the button to keep the layout consistent
+    const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
     for (const std::string button : {"Run/Stop", "Clear"})
