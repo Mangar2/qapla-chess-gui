@@ -166,6 +166,11 @@ namespace QaplaWindows {
         void notifyConfigurationChanged();
 
         /**
+         * @brief Updates unique display names for all configured engines
+         */
+        void updateUniqueDisplayNames();
+
+        /**
          * @brief Informs the configuration singleton about the current engine configurations
          * 
          */

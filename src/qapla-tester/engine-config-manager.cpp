@@ -96,3 +96,53 @@ std::unordered_set<std::string> EngineConfigManager::findMatchingNames(const std
     }
     return valid;
 }
+
+void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& engines) {
+    std::unordered_map<std::string, std::vector<std::size_t>> nameGroups;
+
+    // Create disambiguation maps for all engines
+    std::vector<std::unordered_map<std::string, std::string>> disambiguationMaps;
+    for (const auto& engine : engines) {
+        disambiguationMaps.push_back(engine.toDisambiguationMap());
+    }
+
+    // Group engines by base name
+    for (std::size_t i = 0; i < disambiguationMaps.size(); ++i) {
+        const auto& map = disambiguationMaps[i];
+        auto it = map.find("name");
+        const std::string& baseName = (it != map.end()) ? it->second : "unnamed";
+        nameGroups[baseName].push_back(i);
+    }
+
+    // Assign unique names to engines with the same base name
+    for (const auto& [baseName, indices] : nameGroups) {
+        if (indices.size() == 1)
+            continue;
+
+        for (std::size_t index : indices) {
+            std::string name = "[";
+
+            std::string separator = "";
+            for (const auto& [key, value] : disambiguationMaps[index]) {
+                if (key == "name") continue;
+
+                for (std::size_t i : indices) {
+                    const auto& map = disambiguationMaps[i];
+                    auto it = map.find(key);
+                    if (it == map.end() || it->second != value) {
+                        name += separator + key;
+                        if (!value.empty())
+                            name += "=" + value;
+                        separator = ", ";
+                        break;
+                    }
+                }
+            }
+
+            name += "]";
+            if (name != "[]") {
+                engines[index].setName(baseName + " " + name);
+            }
+        }
+    }
+}

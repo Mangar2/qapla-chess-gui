@@ -22,6 +22,7 @@
 #include "imgui-engine-controls.h"
 #include "configuration.h"
 #include "qapla-tester/engine-worker-factory.h"
+#include "qapla-tester/engine-config-manager.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -54,6 +55,7 @@ bool ImGuiEngineSelect::draw() {
     if (options_.allowMultipleSelection) {
         // Multiple selection mode: show selected engines first, then all available engines
         modified |= drawSelectedEngines();
+        ImGui::Separator();
         modified |= drawAvailableEngines();
     } else {
         // Original single selection mode
@@ -84,6 +86,7 @@ bool ImGuiEngineSelect::draw() {
     }
     
     if (modified) {
+        updateUniqueDisplayNames();
         notifyConfigurationChanged();
     }
     
@@ -303,6 +306,31 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
         }
     }
     notifyConfigurationChanged();
+}
+
+void ImGuiEngineSelect::updateUniqueDisplayNames() {
+    if (!options_.allowMultipleSelection) {
+        return; // Only update names in multiple selection mode
+    }
+    
+    // Extract only selected engine configs
+    std::vector<EngineConfig> selectedConfigs;
+    for (auto& engineConfig : engineConfigurations_) {
+        if (engineConfig.selected) {
+            selectedConfigs.push_back(engineConfig.config);
+        }
+    }
+    
+    // Assign unique names
+    EngineConfigManager::assignUniqueDisplayNames(selectedConfigs);
+    
+    // Update the original configurations
+    size_t selectedIndex = 0;
+    for (auto& engineConfig : engineConfigurations_) {
+        if (engineConfig.selected) {
+            engineConfig.config = selectedConfigs[selectedIndex++];
+        }
+    }
 }
 
 

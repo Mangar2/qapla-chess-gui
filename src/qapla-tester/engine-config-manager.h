@@ -145,6 +145,15 @@ public:
      */
     std::unordered_set<std::string> findMatchingNames(const std::vector<EngineConfig>& reference) const;
 
+    /**
+     * @brief Assigns unique display names to engines with identical base names.
+     *        Modifies the names of engines in-place to disambiguate between similar engines.
+     *        Uses toDisambiguationMap() to determine differentiating attributes.
+     *
+     * @param engines Vector of EngineConfig references to modify
+     */
+    static void assignUniqueDisplayNames(std::vector<EngineConfig>& engines);
+
 
 private:
     std::vector<EngineConfig> configs;
