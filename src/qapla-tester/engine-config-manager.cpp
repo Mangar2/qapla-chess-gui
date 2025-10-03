@@ -97,6 +97,86 @@ std::unordered_set<std::string> EngineConfigManager::findMatchingNames(const std
     return valid;
 }
 
+std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::string>> &disambiguationMaps, 
+    size_t index, const std::vector<size_t> &indices)
+{
+    std::vector<std::string> differentiatingKeys;
+    
+    // Collect only keys that actually differentiate from other engines
+    for (const auto &[key, value] : disambiguationMaps[index])
+    {
+        if (key == "name" || key == "trace" || key == "selected" || key == "gauntlet" )
+            continue;
+
+        // Check if this key helps distinguish from any other engine
+        for (std::size_t i : indices)
+        {
+            if (i == index) continue; // Skip self
+            
+            const auto &map = disambiguationMaps[i];
+            auto it = map.find(key);
+            if (it == map.end() || it->second != value)
+            {
+                differentiatingKeys.push_back(key);
+                break;
+            }
+        }
+    }
+    
+    // Progressive building: add one key at a time and check if it's sufficient
+    std::vector<std::string> differentiators(indices.size());
+    std::string currentEngineString;
+
+    for (const std::string& key : differentiatingKeys)
+    {
+        size_t curIndex = 0;        
+        
+        // Incrementally build all differentiators for this key
+        for (std::size_t i : indices)
+        {
+            const auto &map = disambiguationMaps[i];
+            auto it = map.find(key);
+            if (it != map.end())
+            {
+                // Add key (and value if present) to this engine's differentiator string
+                if (differentiators[curIndex].empty()) {
+                    differentiators[curIndex] += key;
+                } else {
+                    differentiators[curIndex] += ", " + key;
+                }
+                if (!it->second.empty()) {
+                    differentiators[curIndex] += "=" + it->second;
+                }
+            }
+            
+            // Track the string for our target engine
+            if (i == index) {
+                currentEngineString = differentiators[curIndex];
+            }
+            
+            curIndex++;
+        }
+        
+        // Check if current engine's string is unique among all engines
+        bool isUnique = true;
+        for (size_t i = 0; i < differentiators.size(); ++i)
+        {
+            if (indices[i] != index && differentiators[i] == currentEngineString)
+            {
+                isUnique = false;
+                break;
+            }
+        }
+        
+        if (isUnique)
+        {
+            break; // Found minimal set of keys that uniquely identify this engine
+        }
+    }
+    
+    return currentEngineString;
+}
+
 void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& engines) {
     std::unordered_map<std::string, std::vector<std::size_t>> nameGroups;
 
@@ -120,29 +200,13 @@ void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& en
             continue;
 
         for (std::size_t index : indices) {
-            std::string name = "[";
+            std::string name = "[" + computeUnifiedName(disambiguationMaps, index, indices) + "]";
 
-            std::string separator = "";
-            for (const auto& [key, value] : disambiguationMaps[index]) {
-                if (key == "name") continue;
-
-                for (std::size_t i : indices) {
-                    const auto& map = disambiguationMaps[i];
-                    auto it = map.find(key);
-                    if (it == map.end() || it->second != value) {
-                        name += separator + key;
-                        if (!value.empty())
-                            name += "=" + value;
-                        separator = ", ";
-                        break;
-                    }
-                }
-            }
-
-            name += "]";
             if (name != "[]") {
                 engines[index].setName(baseName + " " + name);
             }
         }
     }
 }
+
+

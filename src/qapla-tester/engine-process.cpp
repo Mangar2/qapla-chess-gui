@@ -82,7 +82,7 @@ EngineProcess::EngineProcess(const std::filesystem::path &path,
     }
     if (workingDir && !std::filesystem::exists(*workingDir))
     {
-        throw std::runtime_error("Working directory does not exist: " + workingDir->string());
+        workingDirectory_ = ".";
     }
     start();
 }

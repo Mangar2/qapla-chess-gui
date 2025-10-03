@@ -152,8 +152,7 @@ public:
      *
      * @param engines Vector of EngineConfig references to modify
      */
-    static void assignUniqueDisplayNames(std::vector<EngineConfig>& engines);
-
+    static void assignUniqueDisplayNames(std::vector<EngineConfig> &engines);
 
 private:
     std::vector<EngineConfig> configs;

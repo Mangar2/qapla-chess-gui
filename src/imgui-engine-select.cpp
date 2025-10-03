@@ -94,7 +94,8 @@ bool ImGuiEngineSelect::draw() {
 }
 
 bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int index) {
-    const auto& name = config.config.getName().empty() ? "(unnamed)" : config.config.getName();
+    auto name = config.config.getName().empty() ? std::to_string(index) : config.config.getName();
+    name += "###" + std::to_string(index);
     bool modified = false;
     
     ImGui::PushID(index);
@@ -108,6 +109,10 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         ImGui::Separator();
         
         configModified |= ImGuiEngineControls::drawEngineName(config.config, options_.allowNameEdit);
+        // If name was changed by user, update originalName to reflect the new user choice
+        if (configModified && options_.allowNameEdit) {
+            config.originalName = config.config.getName();
+        }
         configModified |= ImGuiEngineControls::drawEngineGauntlet(config.config, options_.allowGauntletEdit);
         configModified |= ImGuiEngineControls::drawEnginePonder(config.config, options_.allowPonderEdit);
         configModified |= ImGuiEngineControls::drawEngineTimeControl(config.config, options_.allowTimeControlEdit);
@@ -135,6 +140,12 @@ const std::vector<ImGuiEngineSelect::EngineConfiguration>& ImGuiEngineSelect::ge
 
 void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfiguration>& configurations) {
     engineConfigurations_ = configurations;
+    // Initialize originalName for all configurations
+    for (auto& config : engineConfigurations_) {
+        if (config.originalName.empty()) {
+            config.originalName = config.config.getName();
+        }
+    }
     notifyConfigurationChanged();
 }
 
@@ -216,7 +227,8 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
                     // Add new selected instance
                     EngineConfiguration newEngine = {
                         .config = config,
-                        .selected = true
+                        .selected = true,
+                        .originalName = config.getName()
                     };
                     engineConfigurations_.push_back(newEngine);
                 }
@@ -244,6 +256,14 @@ void ImGuiEngineSelect::notifyConfigurationChanged() {
     }
 }
 
+void ImGuiEngineSelect::resetNamesToOriginal() {
+    for (auto& engineConfig : engineConfigurations_) {
+        if (engineConfig.selected && !engineConfig.originalName.empty()) {
+            engineConfig.config.setName(engineConfig.originalName);
+        }
+    }
+}
+
 void ImGuiEngineSelect::updateConfiguration() const {
     QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engine : engineConfigurations_) {
@@ -253,6 +273,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
             {"selected", engine.selected ? "true" : "false"},
             // Store all engine configuration attributes
             {"name", engine.config.getName()},
+            {"originalName", engine.originalName},  // Store original name separately
             {"author", engine.config.getAuthor()},
             {"cmd", engine.config.getCmd()},
             {"proto", to_string(engine.config.getProtocol())},
@@ -299,12 +320,16 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
             EngineConfiguration engineConfig;
             
             engineConfig.config.setValues(section.getUnorderedMap());
+            // Load originalName if stored, otherwise use current name
+            auto originalNameValue = section.getValue("originalName");
+            engineConfig.originalName = originalNameValue ? *originalNameValue : engineConfig.config.getName();
             // Parse selection state
             auto selectedValue = section.getValue("selected");
             engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;            
             engineConfigurations_.push_back(std::move(engineConfig));
         }
     }
+    updateUniqueDisplayNames();
     notifyConfigurationChanged();
 }
 
@@ -312,6 +337,8 @@ void ImGuiEngineSelect::updateUniqueDisplayNames() {
     if (!options_.allowMultipleSelection) {
         return; // Only update names in multiple selection mode
     }
+
+    resetNamesToOriginal();
     
     // Extract only selected engine configs
     std::vector<EngineConfig> selectedConfigs;

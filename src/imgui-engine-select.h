@@ -38,6 +38,7 @@ namespace QaplaWindows {
         struct EngineConfiguration {
             EngineConfig config;
             bool selected = false;
+            std::string originalName;  ///< Original name from config or user-modified name, used for disambiguation reset
         };
 
         /**
@@ -175,6 +176,11 @@ namespace QaplaWindows {
          * 
          */
         void updateConfiguration() const;
+
+        /**
+         * @brief Resets all engine names to their original names before disambiguation
+         */
+        void resetNamesToOriginal();
 
 
 
