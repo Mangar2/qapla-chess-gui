@@ -8,6 +8,8 @@ static GLuint backgroundTexture{};
 static GLuint backgroundVAO{}, backgroundVBO{}, backgroundEBO{};
 static GLuint backgroundShaderProgram{};
 
+bool backgroundImageLoaded = false;
+
 static const char* vertexShaderSource = R"(
 #version 330 core
 layout (location = 0) in vec2 aPos;
@@ -113,12 +115,16 @@ void initBackgroundImage(const char* imagePath) {
 
     glDeleteShader(vs);
     glDeleteShader(fs);
+
+    backgroundImageLoaded = true;
 }
 
 /**
  * Draws the fullscreen background image. Call once per frame before ImGui::NewFrame().
  */
 void drawBackgroundImage() {
+    if (!backgroundImageLoaded) return;
+
     glUseProgram(backgroundShaderProgram);
     glDisable(GL_DEPTH_TEST);
 

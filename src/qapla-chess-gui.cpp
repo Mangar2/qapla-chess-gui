@@ -173,7 +173,11 @@ namespace {
         auto* window = initGlfwContext();
         initGlad();
         initImGui(window);
-        initBackgroundImage("assets/dark_wood_diff_4k.jpg");
+        try {
+            initBackgroundImage("assets/dark_wood_diff_4k.jpg");
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Failed to load background image: " << e.what() << std::endl;
+        }
         font::loadFonts();
         while (!glfwWindowShouldClose(window)) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {

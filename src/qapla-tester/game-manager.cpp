@@ -334,7 +334,7 @@ void GameManager::computeNextMove(const std::optional<EngineEvent>& event) {
         white->allowPonder(gameRecord, goLimits, event);
     }
 }
-#include <windows.h>
+
 void GameManager::stop() {
    {
         // Ensure no new tasks are assigned

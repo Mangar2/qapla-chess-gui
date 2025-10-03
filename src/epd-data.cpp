@@ -30,6 +30,8 @@
 
 #include <imgui.h>
 
+#include <optional>
+
 namespace QaplaWindows {
 
     EpdData::EpdData() : 
@@ -58,7 +60,7 @@ namespace QaplaWindows {
 		    }
     	));
         auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("epd", "epd").value_or({});
+            getConfigData().getSectionList("epd", "epd").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         if (sections.size() > 0) {
             auto section = sections[0];
             epdConfig_ = EpdConfig{

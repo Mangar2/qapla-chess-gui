@@ -38,6 +38,7 @@
 #include <string>
 #include <format>
 #include <memory>
+#include <optional>
 
 using namespace QaplaWindows;
 
@@ -62,7 +63,7 @@ void EpdWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationC
 
 void EpdWindow::setEngineConfiguration() {
     auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "epd").value_or({});
+            getConfigData().getSectionList("engineselection", "epd").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("epd");
     engineSelect_->setEngineConfiguration(sections);
 }

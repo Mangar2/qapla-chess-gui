@@ -13,3 +13,8 @@ void initBackgroundImage(const char* imagePath);
  * Call once per frame before ImGui::NewFrame().
  */
 void drawBackgroundImage();
+
+/**
+ * Indicates if the background image was successfully loaded.
+ */
+extern bool backgroundImageLoaded;

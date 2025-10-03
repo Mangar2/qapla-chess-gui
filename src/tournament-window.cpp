@@ -38,6 +38,7 @@
 #include <string>
 #include <format>
 #include <memory>
+#include <optional>
 
 using namespace QaplaWindows;
 
@@ -57,7 +58,7 @@ void TournamentWindow::setEngineConfigurationCallback(ImGuiEngineSelect::Configu
 
 void TournamentWindow::setEngineConfiguration() {
     auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "tournament").value_or({});
+            getConfigData().getSectionList("engineselection", "tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("tournament");
     engineSelect_->setEngineConfiguration(sections);
 }
