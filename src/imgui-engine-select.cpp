@@ -172,14 +172,16 @@ void ImGuiEngineSelect::updateConfiguration() const {
             {"author", engine.config.getAuthor()},
             {"cmd", engine.config.getCmd()},
             {"dir", engine.config.getDir()},
-            {"protocol", engine.config.getProtocol() == EngineProtocol::Uci ? "uci" : "xboard"},
+            {"proto", to_string(engine.config.getProtocol())},
             {"ponder", engine.config.isPonderEnabled() ? "true" : "false"},
             {"gauntlet", engine.config.isGauntlet() ? "true" : "false"},
-            {"tc", engine.config.getTimeControl().toPgnTimeControlString()},
             {"restart", to_string(engine.config.getRestartOption())},
-            {"trace", engine.config.getTraceLevel() == TraceLevel::none ? "none" :
-                     engine.config.getTraceLevel() == TraceLevel::info ? "all" : "command"}
+            {"trace", ImGuiEngineControls::to_string(engine.config.getTraceLevel())}
         };
+
+        if (engine.config.getTimeControl().isValid()) {
+            entries.emplace_back("timecontrol", engine.config.getTimeControl().toPgnTimeControlString());
+        }
         
         // Add engine-specific options
         auto optionValues = engine.config.getOptionValues();
@@ -202,78 +204,10 @@ void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::Sect
         if (section.name == "engineselection" && section.getValue("id") == id_) {
             EngineConfiguration engineConfig;
             
+            engineConfig.config.setValues(section.getUnorderedMap());
             // Parse selection state
             auto selectedValue = section.getValue("selected");
-            engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;
-            
-            // Check for required fields
-            auto cmd = section.getValue("cmd");
-            auto protocol = section.getValue("protocol");
-            if (!cmd || !protocol) {
-                continue; // Skip invalid configurations
-            }
-            
-            // Build EngineConfig from stored values
-            EngineConfig config;
-            
-            // Set basic attributes
-            if (auto name = section.getValue("name")) {
-                config.setName(*name);
-            }
-            if (auto author = section.getValue("author")) {
-                config.setAuthor(*author);
-            }
-            config.setCmd(*cmd);
-            if (auto dir = section.getValue("dir")) {
-                config.setDir(*dir);
-            }
-            config.setProtocol(*protocol);
-            
-            // Set boolean options
-            if (auto ponder = section.getValue("ponder")) {
-                config.setPonder(*ponder == "true");
-            }
-            if (auto gauntlet = section.getValue("gauntlet")) {
-                config.setGauntlet(*gauntlet == "true");
-            }
-            
-            // Set time control
-            if (auto tc = section.getValue("tc")) {
-                try {
-                    config.setTimeControl(*tc);
-                } catch (const std::exception&) {
-                    // Use default if parsing fails
-                }
-            }
-            
-            // Set trace level
-            if (auto trace = section.getValue("trace")) {
-                try {
-                    config.setTraceLevel(*trace);
-                } catch (const std::exception&) {
-                    // Use default if parsing fails
-                }
-            }
-            
-            // Set restart option
-            if (auto restart = section.getValue("restart")) {
-                try {
-                    config.setRestartOption(parseRestartOption(*restart));
-                } catch (const std::exception&) {
-                    // Use default if parsing fails
-                }
-            }
-            
-            // Set engine-specific options
-            for (const auto& [key, value] : section.entries) {
-                if (key.starts_with("option.")) {
-                    std::string optionName = key.substr(7); // Remove "option." prefix
-                    config.setOptionValue(optionName, value);
-                }
-            }
-            
-            // Store the configuration
-            engineConfig.config = std::move(config);
+            engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;            
             engineConfigurations_.push_back(std::move(engineConfig));
         }
     }

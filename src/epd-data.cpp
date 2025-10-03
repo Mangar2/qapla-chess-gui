@@ -271,7 +271,7 @@ namespace QaplaWindows {
     }
 
     void EpdData::loadData(std::ifstream& in) {
-        if (epdManager_) {
+        if (epdManager_ && !epdConfig_.filepath.empty()) {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             bool dataLoaded = epdManager_->loadResults(in);
             state = dataLoaded ? State::Stopped : State::Cleared;

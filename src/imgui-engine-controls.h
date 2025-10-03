@@ -36,7 +36,7 @@ namespace QaplaWindows::ImGuiEngineControls {
 /**
  * @brief Converts TraceLevel to string representation
  */
-inline std::string traceToString(TraceLevel level) {
+inline std::string to_string(TraceLevel level) {
     switch (level) {
         case TraceLevel::none: return "none";
         case TraceLevel::command: return "command";
@@ -160,10 +160,10 @@ inline bool drawEngineTraceLevel(EngineConfig& config, bool enabled) {
     
     std::vector<std::string> labels;
     for (auto option : traceOptions) {
-        labels.push_back(traceToString(option));
+        labels.push_back(to_string(option));
     }
     
-    auto traceStr = traceToString(config.getTraceLevel());
+    auto traceStr = to_string(config.getTraceLevel());
 
     if (ImGuiControls::selectionBox("Trace", traceStr, labels)) {
         config.setTraceLevel(traceStr);
