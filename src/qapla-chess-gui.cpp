@@ -25,6 +25,7 @@
 #include "time-control-window.h"
 #include "epd-window.h"
 #include "epd-data.h"
+#include "engine-test-window.h"
 #include "tournament-data.h"
 #include "tournament-window.h"
 #include "imgui-tab-bar.h"
@@ -144,6 +145,10 @@ namespace {
             QaplaWindows::EpdData::instance().setEngineConfigurations(configs);
         });
         taskTabBar->addTab("Epd", std::move(epdWindow));
+
+        // Setup Engine Test window
+        auto engineTestWindow = std::make_unique<QaplaWindows::EngineTestWindow>();
+        taskTabBar->addTab("Engine Test", std::move(engineTestWindow));
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
             "main", ImGuiWindowFlags_None);
