@@ -56,8 +56,13 @@ namespace QaplaWindows
          */
         void setEngineConfiguration();
         
+        /**
+         * @brief Gets the selected engine configurations
+         * @return Vector of selected engine configurations
+         */
+        std::vector<EngineConfig> getSelectedEngineConfigurations() const;
+        
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
-        std::unique_ptr<EngineTests> engineTests_;
         
         bool isRunning_;
         bool testStartStopSelected_;

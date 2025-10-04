@@ -18,10 +18,38 @@
  */
 
 #include "engine-tests.h"
+#include "qapla-tester/engine-test-functions.h"
 
 using namespace QaplaWindows;
 
-void EngineTests::testEngineStartStop()
+EngineTests& EngineTests::instance()
 {
-    // TODO: Implement engine start/stop test
+    static EngineTests instance;
+    return instance;
 }
+
+void EngineTests::testEngineStartStop(const std::vector<EngineConfig>& engineConfigs)
+{
+    lastResults_.clear();
+    
+    // Run the test for each engine configuration
+    for (const auto& config : engineConfigs) {
+        QaplaTester::TestResult result = QaplaTester::runEngineStartStopTest(config);
+        
+        // Store results
+        for (const auto& [key, value] : result) {
+            lastResults_.push_back({config.getName() + " - " + key, value});
+        }
+    }
+}
+
+void EngineTests::setEngineConfigurations(const std::vector<EngineConfig>& configs)
+{
+    engineConfigs_ = configs;
+}
+
+const std::vector<std::pair<std::string, std::string>>& EngineTests::getLastResults() const
+{
+    return lastResults_;
+}
+

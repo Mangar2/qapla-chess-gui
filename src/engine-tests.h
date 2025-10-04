@@ -21,26 +21,49 @@
 
 #include <vector>
 #include <string>
+#include "qapla-tester/engine-config.h"
 
 namespace QaplaWindows
 {
     /**
-     * @brief Class for executing various engine tests
+     * @brief Singleton class for executing various engine tests
      */
     class EngineTests
     {
     public:
-        EngineTests() = default;
-        ~EngineTests() = default;
-
+        /**
+         * @brief Get the singleton instance
+         */
+        static EngineTests& instance();
+        
         /**
          * @brief Test that starts and stops engines
          * This test verifies that engines can be properly started and stopped
+         * @param engineConfigs Vector of engine configurations to test
          */
-        void testEngineStartStop();
+        void testEngineStartStop(const std::vector<EngineConfig>& engineConfigs);
+        
+        /**
+         * @brief Set the selected engines for testing
+         * @param configs Vector of engine configurations
+         */
+        void setEngineConfigurations(const std::vector<EngineConfig>& configs);
+        
+        /**
+         * @brief Get the last test results
+         * @return Vector of key-value pairs with test results
+         */
+        const std::vector<std::pair<std::string, std::string>>& getLastResults() const;
 
     private:
-        // Future test state variables will be added here
+        EngineTests() = default;
+        ~EngineTests() = default;
+        EngineTests(const EngineTests&) = delete;
+        EngineTests& operator=(const EngineTests&) = delete;
+        
+        std::vector<EngineConfig> engineConfigs_;
+        std::vector<std::pair<std::string, std::string>> lastResults_;
     };
 
 } // namespace QaplaWindows
+

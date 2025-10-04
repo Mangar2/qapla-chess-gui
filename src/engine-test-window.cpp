@@ -31,7 +31,6 @@ using namespace QaplaWindows;
 
 EngineTestWindow::EngineTestWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
-    , engineTests_(std::make_unique<EngineTests>())
     , isRunning_(false)
     , testStartStopSelected_(true)
 {
@@ -57,6 +56,20 @@ void EngineTestWindow::setEngineConfiguration() {
             getConfigData().getSectionList("engineselection", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("enginetest");
     engineSelect_->setEngineConfiguration(sections);
+}
+
+std::vector<EngineConfig> EngineTestWindow::getSelectedEngineConfigurations() const
+{
+    std::vector<EngineConfig> selectedConfigs;
+    const auto& configurations = engineSelect_->getEngineConfigurations();
+    
+    for (const auto& config : configurations) {
+        if (config.selected) {
+            selectedConfigs.push_back(config.config);
+        }
+    }
+    
+    return selectedConfigs;
 }
 
 static std::string getButtonText(const std::string& button, bool isRunning) {
@@ -124,10 +137,17 @@ void EngineTestWindow::drawButtons()
                 if (button == "Run/Stop" && !isRunning_)
                 {
                     // Start tests
+                    auto selectedEngines = getSelectedEngineConfigurations();
+                    if (selectedEngines.empty()) {
+                        SnackbarManager::instance().showError("Bitte mindestens eine Engine auswählen");
+                        return;
+                    }
+                    
                     isRunning_ = true;
                     if (testStartStopSelected_) {
-                        engineTests_->testEngineStartStop();
+                        EngineTests::instance().testEngineStartStop(selectedEngines);
                     }
+                    isRunning_ = false;
                 }
                 else if (button == "Run/Stop" && isRunning_)
                 {

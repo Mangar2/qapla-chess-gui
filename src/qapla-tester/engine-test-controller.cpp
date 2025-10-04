@@ -32,6 +32,9 @@
 #include "game-manager.h"
 #include "game-manager-pool.h"
 #include "event-sink-recorder.h"
+#include "engine-test-functions.h"
+
+using namespace QaplaTester;
 
 void EngineTestController::createGameManager() {
     computeTask_ = std::make_unique<ComputeTask>();
@@ -170,29 +173,23 @@ void EngineTestController::runTest(
 }
 
 void EngineTestController::runStartStopTest() {
-    runTest("starts-and-stops-cleanly", [this]() -> std::pair<bool, std::string> {
-        Timer timer;
-        timer.start();
-        auto list = EngineWorkerFactory::createEngines(engineConfig_, 1);
-        auto startTime = timer.elapsedMs();
-        auto engine = list[0].get();
-        uint64_t memoryInBytes = engine->getEngineMemoryUsage();
-        engine->stop();
-        auto stopTime = timer.elapsedMs();
-
-        startStopSucceeded = true;
-
-        Logger::testLogger().logAligned("Engine startup test:",
-            "Name: " + engine->getEngineName() + ", Author: " + engine->getEngineAuthor());
-
-        checklist_->setAuthor(engine->getEngineAuthor());
-        Logger::testLogger().logAligned("Start/Stop timing:", "Started in " + std::to_string(startTime) + " ms, shutdown in " +
-            std::to_string(stopTime) + " ms, memory usage " + bytesToMB(memoryInBytes) + " MB");
-
-        return { true, "" };
-        });
+    // Use the new function-based implementation
+    TestResult result = runEngineStartStopTest(engineConfig_);
+    
+    // Check if the test succeeded (no error entry)
+    startStopSucceeded = true;
+    for (const auto& [key, value] : result) {
+        if (key == "Error") {
+            startStopSucceeded = false;
+            Logger::testLogger().log("Engine could not be started or stopped: " + value, 
+                TraceLevel::error);
+            break;
+        }
+    }
+    
     if (!startStopSucceeded) {
-        Logger::testLogger().log("Engine could not be started or stopped. Skipping remaining tests.", TraceLevel::error);
+        Logger::testLogger().log("Engine could not be started or stopped. Skipping remaining tests.", 
+            TraceLevel::error);
         return;
     }
 }
