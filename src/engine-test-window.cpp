@@ -40,7 +40,8 @@ EngineTestWindow::EngineTestWindow()
     options.allowTimeControlEdit = false;
     options.allowTraceLevelEdit = true;
     options.allowRestartOptionEdit = false;
-    options.allowMultipleSelection = true;
+    options.allowMultipleSelection = false;
+    options.allowEngineOptionsEdit = false;
     engineSelect_->setOptions(options);
 }
 
@@ -150,10 +151,10 @@ void EngineTestWindow::drawButtons()
                     // Start tests
                     auto selectedEngines = getSelectedEngineConfigurations();
                     if (selectedEngines.empty()) {
-                        SnackbarManager::instance().showError("Bitte mindestens eine Engine auswählen");
+                        SnackbarManager::instance().showError("Please select at least one engine");
                     } else {
                         if (testStartStopSelected_) {
-                            EngineTests::instance().testEngineStartStop(selectedEngines);
+                            EngineTests::instance().runTests(selectedEngines);
                         }
                     }
                 }
@@ -170,7 +171,7 @@ void EngineTestWindow::drawButtons()
             }
             catch (const std::exception &e)
             {
-                SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
+                SnackbarManager::instance().showError(std::string("Error: ") + e.what());
             }
         }
         pos.x += totalSize.x + space;

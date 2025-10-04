@@ -30,17 +30,26 @@ EngineTests::EngineTests()
     std::vector<ImGuiTable::ColumnDef> columns = {
         {"Engine", ImGuiTableColumnFlags_None, 150.0f},
         {"Test", ImGuiTableColumnFlags_None, 200.0f},
-        {"Result", ImGuiTableColumnFlags_None, 200.0f}
+        {"Result", ImGuiTableColumnFlags_None, 0.0f}
     };
     
     resultsTable_ = std::make_unique<ImGuiTable>(
         "EngineTestResults",
-        ImGuiTableFlags_Borders | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY,
+        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX,
         columns
     );
     resultsTable_->setClickable(false);
     resultsTable_->setSortable(false);
     resultsTable_->setFilterable(false);
+}
+
+EngineTests::~EngineTests()
+{
+    // Wait for test thread to finish if running
+    if (testThread_ && testThread_->joinable()) {
+        state_ = State::Stopping;
+        testThread_->join();
+    }
 }
 
 EngineTests& EngineTests::instance()
@@ -49,29 +58,55 @@ EngineTests& EngineTests::instance()
     return instance;
 }
 
-void EngineTests::testEngineStartStop(const std::vector<EngineConfig>& engineConfigs)
+void EngineTests::addResult(const std::string& engineName, QaplaTester::TestResult result)
+{
+    std::lock_guard<std::mutex> lock(tableMutex_);
+    for (const auto& [testName, testResult] : result) {
+        resultsTable_->push({engineName, testName, testResult});
+    }
+}
+
+void EngineTests::testEngineStartStop(const EngineConfig& config)
+{
+    // Run single start/stop test
+    if (state_ == State::Stopping) return;
+    addResult(config.getName(), QaplaTester::runEngineStartStopTest(config));
+
+    // Run multiple start/stop test (20 engines in parallel)
+    if (state_ == State::Stopping) return;
+    addResult(config.getName(), QaplaTester::runEngineMultipleStartStopTest(config, 20));
+}
+
+void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
+{
+    state_ = State::Running;
+    
+    // Loop over all engines once for all tests
+    for (const auto& config : engineConfigs) {
+        if (state_ == State::Stopping) break;
+        
+        // Run all tests for this engine
+        testEngineStartStop(config);
+        
+        // Future tests will be added here
+    }
+    
+    state_ = State::Stopped;
+}
+
+void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs)
 {
     if (!mayRun(true)) {
         return;
     }
     
-    state_ = State::Running;
-    
-    // Run the test for each engine configuration
-    for (const auto& config : engineConfigs) {
-        if (state_ == State::Stopping) {
-            break;
-        }
-        
-        QaplaTester::TestResult result = QaplaTester::runEngineStartStopTest(config);
-        
-        // Add results to table
-        for (const auto& [testName, testResult] : result) {
-            resultsTable_->push({config.getName(), testName, testResult});
-        }
+    // Wait for previous thread to finish if it exists
+    if (testThread_ && testThread_->joinable()) {
+        testThread_->join();
     }
     
-    state_ = State::Stopped;
+    // Start tests in separate thread to avoid blocking draw loop
+    testThread_ = std::make_unique<std::thread>(&EngineTests::runTestsThreaded, this, engineConfigs);
 }
 
 void EngineTests::setEngineConfigurations(const std::vector<EngineConfig>& configs)
@@ -85,6 +120,7 @@ void EngineTests::clear()
         return;
     }
     
+    std::lock_guard<std::mutex> lock(tableMutex_);
     resultsTable_->clear();
     state_ = State::Cleared;
 }
@@ -143,5 +179,6 @@ bool EngineTests::mayClear(bool sendMessage) const
 
 std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
 {
+    std::lock_guard<std::mutex> lock(tableMutex_);
     return resultsTable_->draw(size);
 }

@@ -65,4 +65,15 @@ TestResult runTest(
  */
 TestResult runEngineStartStopTest(const EngineConfig& engineConfig);
 
+/**
+ * @brief Tests multiple parallel engine start and stop functionality
+ * 
+ * Starts multiple engines in parallel, measures startup and shutdown time.
+ * 
+ * @param engineConfig Configuration for the engines to test
+ * @param numEngines Number of engines to start in parallel
+ * @return TestResult Vector containing timing information
+ */
+TestResult runEngineMultipleStartStopTest(const EngineConfig& engineConfig, uint32_t numEngines);
+
 } // namespace QaplaTester

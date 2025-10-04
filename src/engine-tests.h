@@ -22,7 +22,10 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include "qapla-tester/engine-config.h"
+#include "qapla-tester/engine-test-functions.h"
 #include "imgui-table.h"
 
 namespace QaplaWindows
@@ -46,11 +49,10 @@ namespace QaplaWindows
         static EngineTests& instance();
         
         /**
-         * @brief Test that starts and stops engines
-         * This test verifies that engines can be properly started and stopped
+         * @brief Run all tests on selected engines
          * @param engineConfigs Vector of engine configurations to test
          */
-        void testEngineStartStop(const std::vector<EngineConfig>& engineConfigs);
+        void runTests(const std::vector<EngineConfig>& engineConfigs);
         
         /**
          * @brief Set the selected engines for testing
@@ -96,13 +98,19 @@ namespace QaplaWindows
 
     private:
         EngineTests();
-        ~EngineTests() = default;
+        ~EngineTests();
         EngineTests(const EngineTests&) = delete;
         EngineTests& operator=(const EngineTests&) = delete;
+
+        void addResult(const std::string& engineName, QaplaTester::TestResult result);
+        void testEngineStartStop(const EngineConfig& engineConfig);
+        void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
         
         std::vector<EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;
         State state_;
+        std::mutex tableMutex_;
+        std::unique_ptr<std::thread> testThread_;
     };
 
 } // namespace QaplaWindows

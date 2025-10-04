@@ -1,0 +1,4 @@
+Checks: 'modernize-*,performance-*,readability-*'
+WarningsAsErrors: false
+HeaderFilterRegex: '.*'
+ExtraArgs: ['-Wno-error=avx10']

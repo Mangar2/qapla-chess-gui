@@ -195,25 +195,17 @@ void EngineTestController::runStartStopTest() {
 }
 
 void EngineTestController::runMultipleStartStopTest(uint32_t numEngines) {
-    runTest("starts-and-stops-cleanly", [this, numEngines]() -> std::pair<bool, std::string> {
-        Timer timer;
-        timer.start();
-		uint64_t startTime = 0;
-        {
-            EngineList engines = EngineWorkerFactory::createEngines(engineConfig_, numEngines);
-            startTime = timer.elapsedMs();
-            for (auto& engine : engines) {
-                engine->stop(false);
-            }
+    // Use the new function-based implementation
+    TestResult result = runEngineMultipleStartStopTest(engineConfig_, numEngines);
+    
+    // Check result for errors
+    for (const auto& [key, value] : result) {
+        if (key == "Error") {
+            checklist_->logReport("starts-and-stops-cleanly", false,
+                "  Multiple start/stop test failed: " + value);
+            return;
         }
-        auto stopTime = timer.elapsedMs();
-
-        Logger::testLogger().logAligned("Parallel start/stop (" + std::to_string(numEngines) + "):", 
-            "Started in " + std::to_string(startTime) + " ms, shutdown in " + std::to_string(stopTime) + " ms");
-
-        return { startTime < 2000 && stopTime < 5000, 
-            "Start/Stop takes too long, started in: " + std::to_string(startTime) + " ms, shutdown in " + std::to_string(stopTime) + " ms"};
-    });
+    }
 }
 
 
