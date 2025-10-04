@@ -31,23 +31,23 @@
 namespace QaplaWindows
 {
     /**
-     * @brief Struct to hold test selection flags
-     */
-    struct TestSelection {
-        bool testStartStop = true;
-        bool testHashTableMemory = true;
-        bool testLowerCaseOption = true;
-        bool testEngineOptions = true;
-        bool testAnalyze = true;
-        bool testImmediateStop = true;
-        bool testInfiniteAnalyze = true;
-    };
-
-    /**
      * @brief Singleton class for executing various engine tests
      */
     class EngineTests
     {
+    public:
+        /**
+         * @brief Struct to hold test selection flags
+         */
+        struct TestSelection {
+            bool testStartStop = true;
+            bool testHashTableMemory = true;
+            bool testLowerCaseOption = true;
+            bool testEngineOptions = true;
+            bool testAnalyze = true;
+            bool testImmediateStop = true;
+            bool testInfiniteAnalyze = true;
+        };
     public:
         enum class State {
             Cleared,
@@ -66,7 +66,7 @@ namespace QaplaWindows
          * @param engineConfigs Vector of engine configurations to test
          * @param testSelection Which tests to run
          */
-        void runTests(const std::vector<EngineConfig>& engineConfigs, const TestSelection& testSelection);
+        void runTests(const std::vector<EngineConfig>& engineConfigs, const EngineTests::TestSelection& testSelection);
         
         /**
          * @brief Set the selected engines for testing
@@ -124,7 +124,7 @@ namespace QaplaWindows
         void testAnalyze(const EngineConfig& engineConfig);
         void testImmediateStop(const EngineConfig& engineConfig);
         void testInfiniteAnalyze(const EngineConfig& engineConfig);
-        void runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection);
+        void runTestsThreaded(std::vector<EngineConfig> engineConfigs, EngineTests::TestSelection testSelection);
         
         std::vector<EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;

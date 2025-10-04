@@ -31,13 +31,6 @@ using namespace QaplaWindows;
 
 EngineTestWindow::EngineTestWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
-    , testStartStopSelected_(true)
-    , testHashTableMemorySelected_(true)
-    , testLowerCaseOptionSelected_(true)
-    , testEngineOptionsSelected_(true)
-    , testAnalyzeSelected_(true)
-    , testImmediateStopSelected_(true)
-    , testInfiniteAnalyzeSelected_(true)
 {
     setEngineConfiguration();
     ImGuiEngineSelect::Options options;
@@ -159,17 +152,7 @@ void EngineTestWindow::drawButtons()
                     if (selectedEngines.empty()) {
                         SnackbarManager::instance().showError("Please select at least one engine");
                     } else {
-                        // Create test selection from current checkbox states
-                        TestSelection testSelection;
-                        testSelection.testStartStop = testStartStopSelected_;
-                        testSelection.testHashTableMemory = testHashTableMemorySelected_;
-                        testSelection.testLowerCaseOption = testLowerCaseOptionSelected_;
-                        testSelection.testEngineOptions = testEngineOptionsSelected_;
-                        testSelection.testAnalyze = testAnalyzeSelected_;
-                        testSelection.testImmediateStop = testImmediateStopSelected_;
-                        testSelection.testInfiniteAnalyze = testInfiniteAnalyzeSelected_;
-                        
-                        EngineTests::instance().runTests(selectedEngines, testSelection);
+                        EngineTests::instance().runTests(selectedEngines, testSelection_);
                     }
                 }
                 else if (button == "Run/Stop" && testState == EngineTests::State::Running)
@@ -211,43 +194,43 @@ void EngineTestWindow::drawTests()
         ImGui::Indent(10.0f);
         
         // Engine Start/Stop Test
-        ImGui::Checkbox("Engine Start/Stop Test", &testStartStopSelected_);
+        ImGui::Checkbox("Engine Start/Stop Test", &testSelection_.testStartStop);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engines can be properly started and stopped");
         }
         
         // Hash Table Memory Test
-        ImGui::Checkbox("Hash Table Memory Test", &testHashTableMemorySelected_);
+        ImGui::Checkbox("Hash Table Memory Test", &testSelection_.testHashTableMemory);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that memory usage shrinks when reducing Hash option");
         }
         
         // Lowercase Option Test
-        ImGui::Checkbox("Lowercase Option Test", &testLowerCaseOptionSelected_);
+        ImGui::Checkbox("Lowercase Option Test", &testSelection_.testLowerCaseOption);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine accepts lowercase option names");
         }
         
         // Engine Options Test
-        ImGui::Checkbox("Engine Options Test", &testEngineOptionsSelected_);
+        ImGui::Checkbox("Engine Options Test", &testSelection_.testEngineOptions);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test all engine options with edge case values");
         }
         
         // Analyze Test
-        ImGui::Checkbox("Analyze Test", &testAnalyzeSelected_);
+        ImGui::Checkbox("Analyze Test", &testSelection_.testAnalyze);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine reacts correctly to stop command during analysis");
         }
         
         // Immediate Stop Test
-        ImGui::Checkbox("Immediate Stop Test", &testImmediateStopSelected_);
+        ImGui::Checkbox("Immediate Stop Test", &testSelection_.testImmediateStop);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine handles immediate stop command correctly");
         }
         
         // Infinite Analyze Test
-        ImGui::Checkbox("Infinite Analyze Test", &testInfiniteAnalyzeSelected_);
+        ImGui::Checkbox("Infinite Analyze Test", &testSelection_.testInfiniteAnalyze);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine correctly handles infinite analysis mode");
         }

@@ -148,7 +148,7 @@ void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runInfiniteAnalyzeTest(config));
 }
 
-void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection)
+void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, EngineTests::TestSelection testSelection)
 {
     state_ = State::Running;
     
@@ -195,7 +195,7 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, Test
     state_ = State::Stopped;
 }
 
-void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs, const TestSelection& testSelection)
+void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs, const EngineTests::TestSelection& testSelection)
 {
     if (!mayRun(true)) {
         return;
