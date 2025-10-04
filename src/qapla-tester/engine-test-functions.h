@@ -76,4 +76,38 @@ TestResult runEngineStartStopTest(const EngineConfig& engineConfig);
  */
 TestResult runEngineMultipleStartStopTest(const EngineConfig& engineConfig, uint32_t numEngines);
 
+/**
+ * @brief Tests if hash table memory shrinks when reducing Hash option
+ * 
+ * Sets Hash to 512MB, measures memory usage, then sets Hash to 16MB and measures again.
+ * Verifies that memory usage decreases by at least 400MB.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing memory usage information and test result
+ */
+TestResult runHashTableMemoryTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests if engine accepts lowercase option names
+ * 
+ * Sets lowercase 'hash' option to 512, measures memory, then sets uppercase 'Hash' to 512
+ * and measures again. Verifies that memory usage is similar (within 1000 bytes).
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test result
+ */
+TestResult runLowerCaseOptionTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests all engine options with various edge case values
+ * 
+ * Iterates through all supported engine options and tests them with edge case values
+ * based on their type (check, spin, combo, string). Verifies engine doesn't crash
+ * when setting each option.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test results for all options
+ */
+TestResult runEngineOptionTests(const EngineConfig& engineConfig);
+
 } // namespace QaplaTester

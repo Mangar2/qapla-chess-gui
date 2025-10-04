@@ -45,6 +45,26 @@ namespace QaplaWindows
          * @param callback The new callback.
          */
         void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
+        
+        /**
+         * @brief Check if Start/Stop test is selected
+         */
+        bool isStartStopTestSelected() const { return testStartStopSelected_; }
+        
+        /**
+         * @brief Check if Hash Table Memory test is selected
+         */
+        bool isHashTableMemoryTestSelected() const { return testHashTableMemorySelected_; }
+        
+        /**
+         * @brief Check if Lowercase Option test is selected
+         */
+        bool isLowerCaseOptionTestSelected() const { return testLowerCaseOptionSelected_; }
+        
+        /**
+         * @brief Check if Engine Options test is selected
+         */
+        bool isEngineOptionsTestSelected() const { return testEngineOptionsSelected_; }
 
     private:
         void drawButtons();
@@ -65,6 +85,9 @@ namespace QaplaWindows
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         
         bool testStartStopSelected_;
+        bool testHashTableMemorySelected_;
+        bool testLowerCaseOptionSelected_;
+        bool testEngineOptionsSelected_;
     };
 
 } // namespace QaplaWindows

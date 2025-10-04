@@ -31,6 +31,16 @@
 namespace QaplaWindows
 {
     /**
+     * @brief Struct to hold test selection flags
+     */
+    struct TestSelection {
+        bool testStartStop = true;
+        bool testHashTableMemory = true;
+        bool testLowerCaseOption = true;
+        bool testEngineOptions = true;
+    };
+
+    /**
      * @brief Singleton class for executing various engine tests
      */
     class EngineTests
@@ -51,8 +61,9 @@ namespace QaplaWindows
         /**
          * @brief Run all tests on selected engines
          * @param engineConfigs Vector of engine configurations to test
+         * @param testSelection Which tests to run
          */
-        void runTests(const std::vector<EngineConfig>& engineConfigs);
+        void runTests(const std::vector<EngineConfig>& engineConfigs, const TestSelection& testSelection);
         
         /**
          * @brief Set the selected engines for testing
@@ -104,13 +115,17 @@ namespace QaplaWindows
 
         void addResult(const std::string& engineName, QaplaTester::TestResult result);
         void testEngineStartStop(const EngineConfig& engineConfig);
-        void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
+        void testHashTableMemory(const EngineConfig& engineConfig);
+        void testLowerCaseOption(const EngineConfig& engineConfig);
+        void testEngineOptions(const EngineConfig& engineConfig);
+        void runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection);
         
         std::vector<EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;
         State state_;
         std::mutex tableMutex_;
         std::unique_ptr<std::thread> testThread_;
+        TestSelection testSelection_;
     };
 
 } // namespace QaplaWindows

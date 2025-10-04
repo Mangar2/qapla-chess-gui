@@ -32,6 +32,9 @@ using namespace QaplaWindows;
 EngineTestWindow::EngineTestWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
     , testStartStopSelected_(true)
+    , testHashTableMemorySelected_(true)
+    , testLowerCaseOptionSelected_(true)
+    , testEngineOptionsSelected_(true)
 {
     setEngineConfiguration();
     ImGuiEngineSelect::Options options;
@@ -153,9 +156,14 @@ void EngineTestWindow::drawButtons()
                     if (selectedEngines.empty()) {
                         SnackbarManager::instance().showError("Please select at least one engine");
                     } else {
-                        if (testStartStopSelected_) {
-                            EngineTests::instance().runTests(selectedEngines);
-                        }
+                        // Create test selection from current checkbox states
+                        TestSelection testSelection;
+                        testSelection.testStartStop = testStartStopSelected_;
+                        testSelection.testHashTableMemory = testHashTableMemorySelected_;
+                        testSelection.testLowerCaseOption = testLowerCaseOptionSelected_;
+                        testSelection.testEngineOptions = testEngineOptionsSelected_;
+                        
+                        EngineTests::instance().runTests(selectedEngines, testSelection);
                     }
                 }
                 else if (button == "Run/Stop" && testState == EngineTests::State::Running)
@@ -202,7 +210,23 @@ void EngineTestWindow::drawTests()
             ImGui::SetTooltip("Test that engines can be properly started and stopped");
         }
         
-        // Future tests will be added here
+        // Hash Table Memory Test
+        ImGui::Checkbox("Hash Table Memory Test", &testHashTableMemorySelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test that memory usage shrinks when reducing Hash option");
+        }
+        
+        // Lowercase Option Test
+        ImGui::Checkbox("Lowercase Option Test", &testLowerCaseOptionSelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test that engine accepts lowercase option names");
+        }
+        
+        // Engine Options Test
+        ImGui::Checkbox("Engine Options Test", &testEngineOptionsSelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test all engine options with edge case values");
+        }
         
         ImGui::Unindent(10.0f);
     }

@@ -77,7 +77,25 @@ void EngineTests::testEngineStartStop(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runEngineMultipleStartStopTest(config, 20));
 }
 
-void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
+void EngineTests::testHashTableMemory(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    addResult(config.getName(), QaplaTester::runHashTableMemoryTest(config));
+}
+
+void EngineTests::testLowerCaseOption(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    addResult(config.getName(), QaplaTester::runLowerCaseOptionTest(config));
+}
+
+void EngineTests::testEngineOptions(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    addResult(config.getName(), QaplaTester::runEngineOptionTests(config));
+}
+
+void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection)
 {
     state_ = State::Running;
     
@@ -85,16 +103,31 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
     for (const auto& config : engineConfigs) {
         if (state_ == State::Stopping) break;
         
-        // Run all tests for this engine
-        testEngineStartStop(config);
+        // Run selected tests for this engine
+        if (testSelection.testStartStop) {
+            testEngineStartStop(config);
+        }
         
-        // Future tests will be added here
+        if (state_ == State::Stopping) break;
+        if (testSelection.testHashTableMemory) {
+            testHashTableMemory(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection.testLowerCaseOption) {
+            testLowerCaseOption(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection.testEngineOptions) {
+            testEngineOptions(config);
+        }
     }
     
     state_ = State::Stopped;
 }
 
-void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs)
+void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs, const TestSelection& testSelection)
 {
     if (!mayRun(true)) {
         return;
@@ -106,7 +139,7 @@ void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs)
     }
     
     // Start tests in separate thread to avoid blocking draw loop
-    testThread_ = std::make_unique<std::thread>(&EngineTests::runTestsThreaded, this, engineConfigs);
+    testThread_ = std::make_unique<std::thread>(&EngineTests::runTestsThreaded, this, engineConfigs, testSelection);
 }
 
 void EngineTests::setEngineConfigurations(const std::vector<EngineConfig>& configs)
