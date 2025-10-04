@@ -64,7 +64,6 @@ namespace QaplaWindows
         
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         
-        bool isRunning_;
         bool testStartStopSelected_;
     };
 

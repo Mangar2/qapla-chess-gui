@@ -31,7 +31,6 @@ using namespace QaplaWindows;
 
 EngineTestWindow::EngineTestWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
-    , isRunning_(false)
     , testStartStopSelected_(true)
 {
     setEngineConfiguration();
@@ -72,22 +71,32 @@ std::vector<EngineConfig> EngineTestWindow::getSelectedEngineConfigurations() co
     return selectedConfigs;
 }
 
-static std::string getButtonText(const std::string& button, bool isRunning) {
+static std::string getButtonText(const std::string& button, EngineTests::State testState) {
     if (button == "Run/Stop")
     {
-        return isRunning ? "Stop" : "Run";
+        if (testState == EngineTests::State::Running) {
+            return "Stop";
+        } else {
+            return "Run";
+        } 
     } 
     return button;
 }
 
-static QaplaButton::ButtonState getButtonState(const std::string& button, bool isRunning) {
+static QaplaButton::ButtonState getButtonState(const std::string& button, EngineTests::State testState) {
     if (button == "Run/Stop")
     {
-        return isRunning ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal;
+        if (testState == EngineTests::State::Running) {
+            return QaplaButton::ButtonState::Active;
+        }
+        
+        if (!EngineTests::instance().mayRun(false)) {
+            return QaplaButton::ButtonState::Disabled;
+        }
     } 
     if (button == "Clear")
     {
-        if (isRunning) {
+        if (!EngineTests::instance().mayClear(false)) {
             return QaplaButton::ButtonState::Disabled;
         }
     }
@@ -107,19 +116,21 @@ void EngineTestWindow::drawButtons()
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
+    auto testState = EngineTests::instance().getState();
+    
     for (const std::string button : {"Run/Stop", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
         
-        auto buttonText = getButtonText(button, isRunning_);
-        auto buttonState = getButtonState(button, isRunning_);
+        auto buttonText = getButtonText(button, testState);
+        auto buttonState = getButtonState(button, testState);
        
         if (QaplaButton::drawIconButton(button, buttonText, buttonSize, buttonState, 
-            [&button, buttonState, this](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            [&button, buttonState, testState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
             {
                 if (button == "Run/Stop")
                 {
-                    if (isRunning_) {
+                    if (testState == EngineTests::State::Running) {
                         QaplaButton::drawStop(drawList, topLeft, size, buttonState);
                     } else {
                         QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
@@ -134,36 +145,32 @@ void EngineTestWindow::drawButtons()
         {
             try
             {
-                if (button == "Run/Stop" && !isRunning_)
+                if (button == "Run/Stop" && testState != EngineTests::State::Running)
                 {
                     // Start tests
                     auto selectedEngines = getSelectedEngineConfigurations();
                     if (selectedEngines.empty()) {
                         SnackbarManager::instance().showError("Bitte mindestens eine Engine auswählen");
-                        return;
+                    } else {
+                        if (testStartStopSelected_) {
+                            EngineTests::instance().testEngineStartStop(selectedEngines);
+                        }
                     }
-                    
-                    isRunning_ = true;
-                    if (testStartStopSelected_) {
-                        EngineTests::instance().testEngineStartStop(selectedEngines);
-                    }
-                    isRunning_ = false;
                 }
-                else if (button == "Run/Stop" && isRunning_)
+                else if (button == "Run/Stop" && testState == EngineTests::State::Running)
                 {
                     // Stop tests
-                    isRunning_ = false;
+                    EngineTests::instance().stop();
                 }
-                else if (button == "Clear" && !isRunning_)
+                else if (button == "Clear")
                 {
                     // Clear results
-                    // TODO: Implement clear functionality
+                    EngineTests::instance().clear();
                 }
             }
             catch (const std::exception &e)
             {
                 SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
-                isRunning_ = false;
             }
         }
         pos.x += totalSize.x + space;
@@ -212,7 +219,14 @@ void EngineTestWindow::draw()
     drawInput();
     drawTests();
     
-    // TODO: Add test results display area
+    // Draw results table
+    ImVec2 tableSize = ImGui::GetContentRegionAvail();
+    if (tableSize.y > 50.0f) {  // Only draw if there's enough space
+        ImGui::Spacing();
+        ImGui::Text("Test Results:");
+        ImGui::Spacing();
+        EngineTests::instance().drawTable(ImVec2(tableSize.x, tableSize.y - 40.0f));
+    }
     
     ImGui::EndChild();
     ImGui::Unindent(10.0f);

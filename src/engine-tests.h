@@ -21,7 +21,9 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "qapla-tester/engine-config.h"
+#include "imgui-table.h"
 
 namespace QaplaWindows
 {
@@ -31,6 +33,13 @@ namespace QaplaWindows
     class EngineTests
     {
     public:
+        enum class State {
+            Cleared,
+            Running,
+            Stopping,
+            Stopped
+        };
+
         /**
          * @brief Get the singleton instance
          */
@@ -50,19 +59,50 @@ namespace QaplaWindows
         void setEngineConfigurations(const std::vector<EngineConfig>& configs);
         
         /**
-         * @brief Get the last test results
-         * @return Vector of key-value pairs with test results
+         * @brief Clear all test results and reset state
          */
-        const std::vector<std::pair<std::string, std::string>>& getLastResults() const;
+        void clear();
+        
+        /**
+         * @brief Stop running tests
+         */
+        void stop();
+        
+        /**
+         * @brief Get current state
+         */
+        State getState() const { return state_; }
+        
+        /**
+         * @brief Check if tests may run (with optional message)
+         * @param sendMessage If true, shows a message if tests cannot run
+         * @return True if tests may run
+         */
+        bool mayRun(bool sendMessage = false) const;
+        
+        /**
+         * @brief Check if results may be cleared (with optional message)
+         * @param sendMessage If true, shows a message if results cannot be cleared
+         * @return True if results may be cleared
+         */
+        bool mayClear(bool sendMessage = false) const;
+        
+        /**
+         * @brief Draw the results table
+         * @param size Size of the table area
+         * @return Optional row index if a row was clicked
+         */
+        std::optional<size_t> drawTable(const ImVec2& size);
 
     private:
-        EngineTests() = default;
+        EngineTests();
         ~EngineTests() = default;
         EngineTests(const EngineTests&) = delete;
         EngineTests& operator=(const EngineTests&) = delete;
         
         std::vector<EngineConfig> engineConfigs_;
-        std::vector<std::pair<std::string, std::string>> lastResults_;
+        std::unique_ptr<ImGuiTable> resultsTable_;
+        State state_;
     };
 
 } // namespace QaplaWindows
