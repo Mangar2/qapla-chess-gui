@@ -27,14 +27,11 @@
 #include "engine-worker-factory.h"
 #include "engine-report.h"
 #include "cli-settings-manager.h"
-//#include "epd-test-manager.h"
+#include "epd-test-manager.h"
 #include "compute-task.h"
 #include "game-manager.h"
 #include "game-manager-pool.h"
 #include "event-sink-recorder.h"
-#include "engine-test-functions.h"
-
-using namespace QaplaTester;
 
 void EngineTestController::createGameManager() {
     computeTask_ = std::make_unique<ComputeTask>();
@@ -173,39 +170,53 @@ void EngineTestController::runTest(
 }
 
 void EngineTestController::runStartStopTest() {
-    // Use QaplaTester function
-    TestResult result = QaplaTester::runEngineStartStopTest(engineConfig_);
-    
-    // Check if the test succeeded using success flag
-    startStopSucceeded = true;
-    for (const auto& entry : result) {
-        if (!entry.success) {
-            startStopSucceeded = false;
-            Logger::testLogger().log("Engine could not be started or stopped: " + entry.result, 
-                TraceLevel::error);
-            break;
-        }
-    }
-    
+    runTest("starts-and-stops-cleanly", [this]() -> std::pair<bool, std::string> {
+        Timer timer;
+        timer.start();
+        auto list = EngineWorkerFactory::createEngines(engineConfig_, 1);
+        auto startTime = timer.elapsedMs();
+        auto engine = list[0].get();
+        uint64_t memoryInBytes = engine->getEngineMemoryUsage();
+        engine->stop();
+        auto stopTime = timer.elapsedMs();
+
+        startStopSucceeded = true;
+
+        Logger::testLogger().logAligned("Engine startup test:",
+            "Name: " + engine->getEngineName() + ", Author: " + engine->getEngineAuthor());
+
+        checklist_->setAuthor(engine->getEngineAuthor());
+        Logger::testLogger().logAligned("Start/Stop timing:", "Started in " + std::to_string(startTime) + " ms, shutdown in " +
+            std::to_string(stopTime) + " ms, memory usage " + bytesToMB(memoryInBytes) + " MB");
+
+        return { true, "" };
+        });
     if (!startStopSucceeded) {
-        Logger::testLogger().log("Engine could not be started or stopped. Skipping remaining tests.", 
-            TraceLevel::error);
+        Logger::testLogger().log("Engine could not be started or stopped. Skipping remaining tests.", TraceLevel::error);
         return;
     }
 }
 
 void EngineTestController::runMultipleStartStopTest(uint32_t numEngines) {
-    // Use QaplaTester function
-    TestResult result = QaplaTester::runEngineMultipleStartStopTest(engineConfig_, numEngines);
-    
-    // Check result using success flag
-    for (const auto& entry : result) {
-        if (!entry.success) {
-            checklist_->logReport("starts-and-stops-cleanly", false,
-                "  Multiple start/stop test failed: " + entry.result);
-            return;
+    runTest("starts-and-stops-cleanly", [this, numEngines]() -> std::pair<bool, std::string> {
+        Timer timer;
+        timer.start();
+		uint64_t startTime = 0;
+        {
+            EngineList engines = EngineWorkerFactory::createEngines(engineConfig_, numEngines);
+            startTime = timer.elapsedMs();
+            for (auto& engine : engines) {
+                engine->stop(false);
+            }
         }
-    }
+        auto stopTime = timer.elapsedMs();
+
+        Logger::testLogger().logAligned("Parallel start/stop (" + std::to_string(numEngines) + "):", 
+            "Started in " + std::to_string(startTime) + " ms, shutdown in " + std::to_string(stopTime) + " ms");
+
+        return { startTime < 2000 && stopTime < 5000, 
+            "Start/Stop takes too long, started in: " + std::to_string(startTime) + " ms, shutdown in " + std::to_string(stopTime) + " ms"};
+    });
 }
 
 
@@ -255,33 +266,178 @@ void EngineTestController::runGoLimitsTests() {
 }
 
 void EngineTestController::runHashTableMemoryTest() {
-    // Use QaplaTester function
-    auto results = QaplaTester::runHashTableMemoryTest(engineConfig_);
-    for (const auto& entry : results) {
-        if (!entry.success) {
-            Logger::testLogger().log("Hash table memory test failed: " + entry.result, TraceLevel::error);
+    runTest("shrinks-with-hash", [this]() -> std::pair<bool, std::string> {
+        setOption("Hash", "512");
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::size_t memHigh = computeTask_->getEngine()->getEngineMemoryUsage();
+
+        setOption("Hash", "16");
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::size_t memLow = computeTask_->getEngine()->getEngineMemoryUsage();
+
+        bool success = memLow + 400'000'000 < memHigh;
+
+        computeTask_->getEngine()->setOption("Hash", "32");
+
+        Logger::testLogger().logAligned("Test if memory shrinks:", "Usage with 512MB hash " +
+            bytesToMB(memHigh) + " MB and with 16MB hash " + bytesToMB(memLow) + " MB" +
+            (success ? " (shrinked)" : " (did not shrink enough)"));
+
+        std::string errorMsg;
+        if (!success) {
+            errorMsg = "Memory did not shrink as expected when changing Hash from 512 to 16. "
+                "Usage was " + std::to_string(memHigh) + " bytes before, now " +
+                std::to_string(memLow) + " bytes.";
         }
-    }
+
+        return { success, errorMsg };
+        });
 }
 
 void EngineTestController::runLowerCaseOptionTest() {
-    // Use QaplaTester function
-    auto results = QaplaTester::runLowerCaseOptionTest(engineConfig_);
-    for (const auto& entry : results) {
-        if (!entry.success) {
-            Logger::testLogger().log("Lowercase option test failed: " + entry.result, TraceLevel::error);
-        }
-    }
+    runTest("lower-case-option", [this]() -> std::pair<bool, std::string> {
+        setOption("hash", "512");
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::size_t lMem = computeTask_->getEngine()->getEngineMemoryUsage();
+
+        setOption("Hash", "512");
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::size_t uMem = computeTask_->getEngine()->getEngineMemoryUsage();
+
+        bool success = (lMem + 1000 > uMem && lMem - 1000 < uMem);
+
+        Logger::testLogger().logAligned("Test lowercase option:", std::string("Tried \"setoption name hash value 512\", ") +
+            (success ? "lowercase option is accepted" : "lowercase option is not accepted"));
+
+        return { success, success ? "" : "setoption is case sensitive."};
+        });
 }
 
+static std::vector<std::string> generateCheckValues() {
+    return { "true", "false" };
+}
+
+static std::vector<std::string> generateSpinValues(const EngineOption& opt) {
+    std::vector<std::string> values;
+    if (opt.min && opt.max) {
+        int min = *opt.min;
+        int max = *opt.max;
+        int mid = min + (max - min) / 2;
+        values = {
+            std::to_string(min),
+            std::to_string(max),
+            std::to_string(mid)
+        };
+    }
+    else {
+        values = { "0", "100", "-1" };
+    }
+    return values;
+}
+
+static std::vector<std::string> generateComboValues(const EngineOption& opt) {
+    std::vector<std::string> values = opt.vars;
+    values.push_back("invalid_option");
+    return values;
+}
+
+static std::vector<std::string> generateStringValues() {
+    return {
+        "",
+        "öäüß",               
+        "C:\\invalid\\path",
+        std::string(1024, 'A'), 
+        "\x01\x02\x03\xFF"      
+    };
+}
+
+std::pair<bool, std::string> EngineTestController::setOption(const std::string& name, const std::string& value) {
+    auto engine = computeTask_->getEngine();
+    bool success = engine->setOption(name, value);
+
+    if (success) {
+        return { true, "" };
+    }
+
+    bool failure = engine->failure();
+    if (!failure && !engine->requestReady(std::chrono::seconds{ 10 })) {
+        failure = true;
+    }
+
+    if (failure) {
+        return { false, "Engine crashed or became unresponsive after setting option '" + name + "' to '" + value + "'" };
+    }
+
+    return { false, "Engine timed out after setting option '" + name + "' to '" + value + "'" };
+}
+
+
 void EngineTestController::runEngineOptionTests() {
-    // Use QaplaTester function
-    auto results = QaplaTester::runEngineOptionTests(engineConfig_);
-    for (const auto& entry : results) {
-        if (!entry.success) {
-            Logger::testLogger().log("Engine option test failed: " + entry.result, TraceLevel::error);
+    int errors = 0;
+
+    if (!computeTask_) {
+        Logger::testLogger().log("GameManager not initialized", TraceLevel::error);
+        return;
+    }
+
+    auto engine = computeTask_->getEngine();
+    const EngineOptions& options = engine->getSupportedOptions();
+	std::cout << "Randomizing engine settings, please wait...\r";
+    for (const auto& opt : options) {
+        if (opt.name == "Hash" || opt.type == EngineOption::Type::Button) {
+            continue;
+        }
+
+        std::vector<std::string> testValues;
+
+        switch (opt.type) {
+        case EngineOption::Type::Check:
+            testValues = generateCheckValues();
+            break;
+        case EngineOption::Type::Spin:
+            testValues = generateSpinValues(opt);
+            break;
+        case EngineOption::Type::Combo:
+            testValues = generateComboValues(opt);
+            break;
+        case EngineOption::Type::String:
+            testValues = generateStringValues();
+            break;
+        default:
+            continue;
+        }
+
+        for (const auto& value : testValues) {
+            const std::string testName = "Option '" + opt.name + "' = '" + value + "'";
+            runTest("options-safe", [this, opt, value, &errors]() -> std::pair<bool, std::string> {
+                const auto [success, message] = setOption(opt.name, value);
+                if (!success) errors++;
+                return { success, message };
+                });
+
+            if (errors > 5) {
+                Logger::testLogger().log("Too many errors occurred, stopping further setoption tests.", TraceLevel::error);
+                return;
+            }
+        }
+
+        if (!opt.defaultValue.empty()) {
+            const std::string testName = "Option '" + opt.name + "' reset to default";
+            runTest("options-safe", [this, opt, def = opt.defaultValue, &errors]() -> std::pair<bool, std::string> {
+                const auto [success, message] = setOption(opt.name, def);
+                if (!success) errors++;
+                return { success, message };
+                });
+
+            if (errors > 5) {
+                Logger::testLogger().log("Too many errors occurred, stopping further setoption tests.", TraceLevel::error);
+                return;
+            }
         }
     }
+
+    Logger::testLogger().logAligned("Edge case options: ",
+        (errors == 0 ? "No issues encountered." : std::to_string(errors) + " failures detected. See log for details."));
 }
 
 void EngineTestController::runAnalyzeTest() {
@@ -430,7 +586,7 @@ void EngineTestController::runUciPonderTest() {
         testPonderHit(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds{ 0 });
 		testPonderMiss(gameRecord, engine, "e2e4", testname);
         testPonderMiss(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds{ 0 });
-        //gameRecord.setStartPosition(false, "K7/8/8/4Q3/5Q1k/8/8/8 b - - 2 68", false, name, name);
+        gameRecord.setStartPosition(false, "K7/8/8/4Q3/5Q1k/8/8/8 b - - 2 68", false, name, name);
 		testPonderHit(gameRecord, engine, "h4h3", testname);
         testPonderHit(gameRecord, engine, "h4h3", testname, std::chrono::milliseconds{ 0 });
         testPonderMiss(gameRecord, engine, "h4h3", testname);
@@ -453,14 +609,12 @@ void EngineTestController::runEpdTests() {
 	std::cout << "Testing positions, this will take a while ... \r";
 	std::cout.flush();
     try {
-        /*
         EngineList engines = startEngines(1);
         auto epdManager = std::make_shared<EpdTestManager>(EngineReport::getChecklist(engines[0]->getConfig().getName()));
         GameManager gameManager;
         gameManager.initUniqueEngine(std::move(engines[0]));
         gameManager.start(epdManager);
 		gameManager.getFinishedFuture().wait();
-        */
 
         Logger::testLogger().logAligned("Testing positions:", "All positions computed.");
     }
@@ -538,7 +692,7 @@ void EngineTestController::runPonderGameTest() {
 
 void EngineTestController::runMultipleGamesTest() {
     uint32_t parallelGames = CliSettings::Manager::get<uint32_t>("concurrency");
-/*
+
     Logger::testLogger().log("\nTesting playing games. The engine will play " + std::to_string(numGames_) + 
         " games in total, " + std::to_string(parallelGames) + " in parallel.");
 	Logger::testLogger().log("You can alter the number of games played with 'numgames' option and the number of parallel games with --concurrency option. ");
@@ -560,7 +714,6 @@ void EngineTestController::runMultipleGamesTest() {
     catch (...) {
         Logger::testLogger().log("Unknown exception during compute games test.", TraceLevel::error);
     }
-*/        
 }
 
 void EngineTestController::runPlaceholderTest() {

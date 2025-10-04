@@ -141,14 +141,6 @@ private:
 	 */
     void runMultipleGamesTest();
     
-    /**
-	 * @brief Sets a specific option for the engine and checks if it runs without crashing.
-	 * @param name Name of the option to set.
-	 * @param value Value to set for the option.
-	 * @return True if the option was set successfully, false otherwise.
-     */
-    std::pair<bool, std::string> setOption(const std::string& name, const std::string& value);
-
     EngineReport* checklist_;
     std::unique_ptr<ComputeTask> computeTask_;
     EngineConfig engineConfig_;

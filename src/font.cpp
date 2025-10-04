@@ -26,9 +26,9 @@
 
 namespace font {
 
-    const char8_t* pieceSymbol(QaplaBasics::Piece p) {
+    const char8_t* pieceSymbol(QaplaBasics::Piece piece) {
         using enum QaplaBasics::Piece;
-        switch (p) {
+        switch (piece) {
         case WHITE_PAWN:   return (u8"♙");
         case WHITE_KNIGHT: return (u8"♘");
         case WHITE_BISHOP: return (u8"♗");
@@ -48,9 +48,9 @@ namespace font {
         }
     }
 
-    const char8_t* pieceBackground(QaplaBasics::Piece p) {
+    const char8_t* pieceBackground(QaplaBasics::Piece piece) {
         using enum QaplaBasics::Piece;
-        switch (p) {
+        switch (piece) {
         case WHITE_PAWN:   return (u8"");
         case WHITE_KNIGHT:  return (u8"");
         case WHITE_BISHOP: return (u8"");
@@ -91,13 +91,13 @@ namespace font {
         if (piece == QaplaBasics::Piece::NO_PIECE)
             return;
 
-        const float fontSize = cellSize * 0.9f;
+        const float fontSize = cellSize * 0.9F;
         const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
         const char* background = reinterpret_cast<const char*>(font::pieceBackground(piece));
-        const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0f, text);
+        const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0F, text);
         const ImVec2 textPos = {
-            cellMin.x + (cellSize - textSize.x) * 0.5f,
-            cellMin.y + (cellSize - textSize.y) * 0.5f
+            cellMin.x + (cellSize - textSize.x) * 0.5F,
+            cellMin.y + (cellSize - textSize.y) * 0.5F
         };
 
         drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
@@ -105,28 +105,30 @@ namespace font {
     }
 
     void loadFonts() {
-        auto& io = ImGui::GetIO();
+        auto& imguiIO = ImGui::GetIO();
 
-        io.Fonts->AddFontDefault(); // Default UI font
+        imguiIO.Fonts->AddFontDefault(); // Default UI font
         //chessFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size);
         ImFontConfig fontCfg;
         fontCfg.FontDataOwnedByAtlas = false;
 
-        chessFont = io.Fonts->AddFontFromMemoryTTF(
+        static constexpr float internalSizeInPixel = 32.0F;
+        chessFont = imguiIO.Fonts->AddFontFromMemoryTTF(
             reinterpret_cast<void*>(const_cast<uint32_t*>(chessFontData)),
             static_cast<int>(chessFontSize),
-            32,
+            internalSizeInPixel,
             &fontCfg
         );
 
-        interVariable = io.Fonts->AddFontFromMemoryTTF(
+        static constexpr float interVariableSizeInPixel = 16.0F;
+        interVariable = imguiIO.Fonts->AddFontFromMemoryTTF(
             reinterpret_cast<void*>(const_cast<uint32_t*>(interVariableData)),
             static_cast<int>(interVariableSize),
-            16,
+            interVariableSizeInPixel,
             &fontCfg
         );
 
-        io.FontDefault = io.Fonts->Fonts[2]; 
+        imguiIO.FontDefault = imguiIO.Fonts->Fonts[2]; 
     }
 
 }

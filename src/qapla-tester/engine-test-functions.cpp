@@ -78,7 +78,7 @@ TestResult runTest(
         
         // Engines will be stopped automatically by destructors during stack unwinding
         
-        return {{"Error", std::string(e.what())}};
+        return {TestResultEntry("Error", std::string(e.what()), false)};
     }
 }
 
@@ -101,7 +101,7 @@ TestResult runEngineStartStopTest(const EngineConfig& engineConfig)
             startTime = timer.elapsedMs();
             
             if (engineList.empty()) {
-                return {{"Error", "No engine started"}};
+                return {TestResultEntry("Start/Stop timing", "No engine started", false)};
             }
             
             auto* engine = engineList[0].get();
@@ -114,7 +114,7 @@ TestResult runEngineStartStopTest(const EngineConfig& engineConfig)
             if (!isReady) {
                 Logger::testLogger().log("Engine " + engineConfig.getName() + 
                     " did not start successfully", TraceLevel::error);
-                return {{"Error", "Engine did not respond to isReady"}};
+                return {TestResultEntry("Start/Stop timing", "Engine did not respond to isReady", false)};
             }
             
             // Get engine information
@@ -137,12 +137,12 @@ TestResult runEngineStartStopTest(const EngineConfig& engineConfig)
         
         Logger::testLogger().logAligned("Start/Stop timing:", timingInfo);
         
-        return {{"Start/Stop timing:", timingInfo}};
+        return {TestResultEntry("Start/Stop timing", timingInfo, true)};
     }
     catch (const std::exception& e) {
         Logger::testLogger().log("Exception during start/stop test: " + std::string(e.what()), 
             TraceLevel::error);
-        return {{"Error", std::string(e.what())}};
+        return {TestResultEntry("Start/Stop timing", std::string(e.what()), false)};
     }
 }
 
@@ -176,12 +176,12 @@ TestResult runEngineMultipleStartStopTest(const EngineConfig& engineConfig, uint
                 " ms, shutdown in " + std::to_string(stopTime) + " ms");
         }
         
-        return {{"Parallel start/stop (" + std::to_string(numEngines) + "):", timingInfo}};
+        return {TestResultEntry("Parallel start/stop (" + std::to_string(numEngines) + ")", timingInfo, success)};
     }
     catch (const std::exception& e) {
         Logger::testLogger().log("Exception during multiple start/stop test: " + std::string(e.what()), 
             TraceLevel::error);
-        return {{"Error", std::string(e.what())}};
+        return {TestResultEntry("Parallel start/stop (" + std::to_string(numEngines) + ")", std::string(e.what()), false)};
     }
 }
 
@@ -189,7 +189,7 @@ TestResult runHashTableMemoryTest(const EngineConfig& engineConfig)
 {
     return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
         if (engines.empty()) {
-            return {{"Error", "No engine started"}};
+            return {TestResultEntry("Hash table memory test", "No engine started", false)};
         }
         
         auto* engine = engines[0].get();
@@ -218,11 +218,7 @@ TestResult runHashTableMemoryTest(const EngineConfig& engineConfig)
         Logger::testLogger().logAligned("Hash table memory test:", resultMsg);
         checklist->logReport("shrinks-with-hash", success, "  " + resultMsg);
         
-        if (!success) {
-            return {{"Hash table memory test", "FAILED - " + resultMsg}};
-        }
-        
-        return {{"Hash table memory test", resultMsg}};
+        return {TestResultEntry("Hash table memory test", resultMsg, success)};
     });
 }
 
@@ -230,7 +226,7 @@ TestResult runLowerCaseOptionTest(const EngineConfig& engineConfig)
 {
     return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
         if (engines.empty()) {
-            return {{"Error", "No engine started"}};
+            return {TestResultEntry("Lowercase option test", "No engine started", false)};
         }
         
         auto* engine = engines[0].get();
@@ -255,11 +251,7 @@ TestResult runLowerCaseOptionTest(const EngineConfig& engineConfig)
         Logger::testLogger().logAligned("Lowercase option test:", resultMsg);
         checklist->logReport("lower-case-option", success, "  " + resultMsg);
         
-        if (!success) {
-            return {{"Lowercase option test", "FAILED - " + resultMsg}};
-        }
-        
-        return {{"Lowercase option test", resultMsg}};
+        return {TestResultEntry("Lowercase option test", resultMsg, success)};
     });
 }
 
@@ -306,11 +298,31 @@ std::vector<std::string> generateStringValues() {
 
 } // anonymous namespace
 
+// Helper function to test setting an option with proper error checking
+static std::pair<bool, std::string> testSetOption(EngineWorker* engine, const std::string& name, const std::string& value) {
+    bool success = engine->setOption(name, value);
+
+    if (success) {
+        return { true, "" };
+    }
+
+    bool failure = engine->failure();
+    if (!failure && !engine->requestReady(std::chrono::seconds{ 10 })) {
+        failure = true;
+    }
+
+    if (failure) {
+        return { false, "Engine crashed or became unresponsive after setting option '" + name + "' to '" + value + "'" };
+    }
+
+    return { false, "Engine timed out after setting option '" + name + "' to '" + value + "'" };
+}
+
 TestResult runEngineOptionTests(const EngineConfig& engineConfig)
 {
     return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
         if (engines.empty()) {
-            return {{"Error", "No engine started"}};
+            return {TestResultEntry("Engine option tests", "No engine started", false)};
         }
         
         auto* engine = engines[0].get();
@@ -318,16 +330,15 @@ TestResult runEngineOptionTests(const EngineConfig& engineConfig)
         const EngineOptions& options = engine->getSupportedOptions();
         
         int errors = 0;
-        int tested = 0;
         
+        std::cout << "Randomizing engine settings, please wait...\r";
         for (const auto& opt : options) {
-            // Skip Hash option (tested separately) and Button options
             if (opt.name == "Hash" || opt.type == EngineOption::Type::Button) {
                 continue;
             }
-            
+
             std::vector<std::string> testValues;
-            
+
             switch (opt.type) {
             case EngineOption::Type::Check:
                 testValues = generateCheckValues();
@@ -344,68 +355,57 @@ TestResult runEngineOptionTests(const EngineConfig& engineConfig)
             default:
                 continue;
             }
-            
+
             for (const auto& value : testValues) {
-                tested++;
-                bool success = engine->setOption(opt.name, value);
+                const std::string testName = "Option '" + opt.name + "' = '" + value + "'";
+                const auto [success, message] = testSetOption(engine, opt.name, value);
                 
-                if (success) {
-                    // Verify engine still responds
-                    if (!engine->requestReady(std::chrono::seconds{10})) {
-                        errors++;
-                        Logger::testLogger().log("Engine became unresponsive after setting option '" + 
-                            opt.name + "' to '" + value + "'", TraceLevel::error);
-                    }
-                }
-                else {
-                    // Check if engine crashed
-                    if (engine->failure()) {
-                        errors++;
-                        Logger::testLogger().log("Engine crashed after setting option '" + 
-                            opt.name + "' to '" + value + "'", TraceLevel::error);
-                    }
-                }
+                // Log individual test result
+                checklist->logReport("options-safe", success, message);
                 
+                if (!success) {
+                    errors++;
+                    Logger::testLogger().log("Option test failed: " + testName + " - " + message, TraceLevel::error);
+                }
+
                 if (errors > 5) {
+                    Logger::testLogger().log("Too many errors occurred, stopping further setoption tests.", TraceLevel::error);
                     std::string errorMsg = "Too many errors (" + std::to_string(errors) + 
-                        ") after testing " + std::to_string(tested) + " option values";
-                    Logger::testLogger().log(errorMsg, TraceLevel::error);
-                    checklist->logReport("options-safe", false, "  " + errorMsg);
-                    return {{"Engine option tests", "FAILED - " + errorMsg}};
+                        ") after testing option values";
+                    return {TestResultEntry("Engine option tests", errorMsg, false)};
                 }
             }
-            
-            // Reset to default value if available
+
+            // Test resetting to default value
             if (!opt.defaultValue.empty()) {
-                tested++;
-                if (!engine->setOption(opt.name, opt.defaultValue)) {
-                    if (engine->failure() || !engine->requestReady(std::chrono::seconds{10})) {
-                        errors++;
-                    }
-                }
+                const std::string testName = "Option '" + opt.name + "' reset to default";
+                const auto [success, message] = testSetOption(engine, opt.name, opt.defaultValue);
                 
+                // Log individual test result
+                checklist->logReport("options-safe", success, message);
+                
+                if (!success) {
+                    errors++;
+                    Logger::testLogger().log("Option reset test failed: " + testName + " - " + message, TraceLevel::error);
+                }
+
                 if (errors > 5) {
+                    Logger::testLogger().log("Too many errors occurred, stopping further setoption tests.", TraceLevel::error);
                     std::string errorMsg = "Too many errors (" + std::to_string(errors) + 
-                        ") after testing " + std::to_string(tested) + " option values";
-                    Logger::testLogger().log(errorMsg, TraceLevel::error);
-                    checklist->logReport("options-safe", false, "  " + errorMsg);
-                    return {{"Engine option tests", "FAILED - " + errorMsg}};
+                        ") after testing option values";
+                    return {TestResultEntry("Engine option tests", errorMsg, false)};
                 }
             }
         }
+
+        bool success = errors == 0;
+        std::string resultMsg = (success ? 
+            "No issues encountered." : 
+            std::to_string(errors) + " failures detected. See log for details.");
         
-        std::string resultMsg = (errors == 0 ? 
-            "No issues encountered testing " + std::to_string(tested) + " option values" :
-            std::to_string(errors) + " failures detected out of " + std::to_string(tested) + " tests");
+        Logger::testLogger().logAligned("Edge case options:", resultMsg);
         
-        Logger::testLogger().logAligned("Engine option tests:", resultMsg);
-        checklist->logReport("options-safe", errors == 0, "  " + resultMsg);
-        
-        if (errors > 0) {
-            return {{"Engine option tests", "FAILED - " + resultMsg}};
-        }
-        
-        return {{"Engine option tests", resultMsg}};
+        return {TestResultEntry("Engine option tests", resultMsg, success)};
     });
 }
 

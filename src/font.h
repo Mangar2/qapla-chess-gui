@@ -38,12 +38,12 @@ namespace font {
 	/**
 	 * Gets the piece symbol for the given piece type.
 	 */
-	const char8_t* pieceSymbol(QaplaBasics::Piece p);
+	const char8_t* pieceSymbol(QaplaBasics::Piece piece);
 
 	/**
 	 * Gets the piece background symbol for the given piece type.
 	 */
-	const char8_t* pieceBackground(QaplaBasics::Piece p);
+	const char8_t* pieceBackground(QaplaBasics::Piece piece);
 
 	/**
 	 * Draws a chess piece at the specified cell position.

@@ -31,13 +31,25 @@ namespace QaplaTester {
  * @brief Function-based engine test implementations
  * 
  * This file contains test functions that can be called from various contexts.
- * Each test function takes all necessary parameters and returns results as a vector of string pairs.
+ * Each test function takes all necessary parameters and returns results as a vector of TestResultEntry.
  */
 
 /**
- * @brief Result type for test functions: vector of key-value pairs describing test results
+ * @brief Single test result entry
  */
-using TestResult = std::vector<std::pair<std::string, std::string>>;
+struct TestResultEntry {
+    std::string testName;
+    std::string result;
+    bool success;
+    
+    TestResultEntry(const std::string& name, const std::string& res, bool succ)
+        : testName(name), result(res), success(succ) {}
+};
+
+/**
+ * @brief Result type for test functions: vector of test result entries
+ */
+using TestResult = std::vector<TestResultEntry>;
 
 /**
  * @brief Runs a test with engine management

@@ -26,9 +26,10 @@ using namespace QaplaWindows;
 EngineTests::EngineTests()
     : state_(State::Cleared)
 {
-    // Initialize results table with 3 columns
+    // Initialize results table with 4 columns
     std::vector<ImGuiTable::ColumnDef> columns = {
         {"Engine", ImGuiTableColumnFlags_None, 150.0f},
+        {"Status", ImGuiTableColumnFlags_None, 80.0f},
         {"Test", ImGuiTableColumnFlags_None, 200.0f},
         {"Result", ImGuiTableColumnFlags_None, 0.0f}
     };
@@ -61,8 +62,10 @@ EngineTests& EngineTests::instance()
 void EngineTests::addResult(const std::string& engineName, QaplaTester::TestResult result)
 {
     std::lock_guard<std::mutex> lock(tableMutex_);
-    for (const auto& [testName, testResult] : result) {
-        resultsTable_->push({engineName, testName, testResult});
+    resultsTable_->pop_back(); // Remove "Running" entry
+    for (const auto& entry : result) {
+        std::string statusText = entry.success ? "Success" : "Fail";
+        resultsTable_->push({engineName, statusText, entry.testName, entry.result});
     }
 }
 
@@ -70,28 +73,48 @@ void EngineTests::testEngineStartStop(const EngineConfig& config)
 {
     // Run single start/stop test
     if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Start/Stop tests", ""});
+    }
     addResult(config.getName(), QaplaTester::runEngineStartStopTest(config));
 
     // Run multiple start/stop test (20 engines in parallel)
     if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Multiple Start/Stop tests", ""});
+    }
     addResult(config.getName(), QaplaTester::runEngineMultipleStartStopTest(config, 20));
 }
 
 void EngineTests::testHashTableMemory(const EngineConfig& config)
 {
     if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Hash table memory test", ""});
+    }
     addResult(config.getName(), QaplaTester::runHashTableMemoryTest(config));
 }
 
 void EngineTests::testLowerCaseOption(const EngineConfig& config)
 {
     if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Lowercase option test", ""});
+    }
     addResult(config.getName(), QaplaTester::runLowerCaseOptionTest(config));
 }
 
 void EngineTests::testEngineOptions(const EngineConfig& config)
 {
     if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Engine option tests", ""});
+    }
     addResult(config.getName(), QaplaTester::runEngineOptionTests(config));
 }
 
