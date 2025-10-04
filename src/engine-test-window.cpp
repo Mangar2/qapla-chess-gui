@@ -35,6 +35,9 @@ EngineTestWindow::EngineTestWindow()
     , testHashTableMemorySelected_(true)
     , testLowerCaseOptionSelected_(true)
     , testEngineOptionsSelected_(true)
+    , testAnalyzeSelected_(true)
+    , testImmediateStopSelected_(true)
+    , testInfiniteAnalyzeSelected_(true)
 {
     setEngineConfiguration();
     ImGuiEngineSelect::Options options;
@@ -162,6 +165,9 @@ void EngineTestWindow::drawButtons()
                         testSelection.testHashTableMemory = testHashTableMemorySelected_;
                         testSelection.testLowerCaseOption = testLowerCaseOptionSelected_;
                         testSelection.testEngineOptions = testEngineOptionsSelected_;
+                        testSelection.testAnalyze = testAnalyzeSelected_;
+                        testSelection.testImmediateStop = testImmediateStopSelected_;
+                        testSelection.testInfiniteAnalyze = testInfiniteAnalyzeSelected_;
                         
                         EngineTests::instance().runTests(selectedEngines, testSelection);
                     }
@@ -226,6 +232,24 @@ void EngineTestWindow::drawTests()
         ImGui::Checkbox("Engine Options Test", &testEngineOptionsSelected_);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test all engine options with edge case values");
+        }
+        
+        // Analyze Test
+        ImGui::Checkbox("Analyze Test", &testAnalyzeSelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test that engine reacts correctly to stop command during analysis");
+        }
+        
+        // Immediate Stop Test
+        ImGui::Checkbox("Immediate Stop Test", &testImmediateStopSelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test that engine handles immediate stop command correctly");
+        }
+        
+        // Infinite Analyze Test
+        ImGui::Checkbox("Infinite Analyze Test", &testInfiniteAnalyzeSelected_);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test that engine correctly handles infinite analysis mode");
         }
         
         ImGui::Unindent(10.0f);

@@ -118,6 +118,36 @@ void EngineTests::testEngineOptions(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runEngineOptionTests(config));
 }
 
+void EngineTests::testAnalyze(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Analyze test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runAnalyzeTest(config));
+}
+
+void EngineTests::testImmediateStop(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Immediate stop test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runImmediateStopTest(config));
+}
+
+void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Infinite analyze test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runInfiniteAnalyzeTest(config));
+}
+
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection)
 {
     state_ = State::Running;
@@ -144,6 +174,21 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, Test
         if (state_ == State::Stopping) break;
         if (testSelection.testEngineOptions) {
             testEngineOptions(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection.testAnalyze) {
+            testAnalyze(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection.testImmediateStop) {
+            testImmediateStop(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection.testInfiniteAnalyze) {
+            testInfiniteAnalyze(config);
         }
     }
     

@@ -285,90 +285,33 @@ void EngineTestController::runEngineOptionTests() {
 }
 
 void EngineTestController::runAnalyzeTest() {
-    static constexpr auto ANALYZE_TEST_TIMEOUT = std::chrono::milliseconds(500);
-    static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
-
-    runTest("reacts-on-stop", [this]() -> std::pair<bool, std::string> {
-        auto list = EngineWorkerFactory::createEngines(engineConfig_, 1);
-        TimeControl t;
-        t.setInfinite();
-        computeTask_->setTimeControl(t);
-        for (auto fen : {
-            "r3r1k1/1pq2pp1/2p2n2/1PNn4/2QN2b1/6P1/3RPP2/2R3KB b - - 0 1",
-            "r1q2rk1/p2bb2p/1p1p2p1/2pPp2n/2P1PpP1/3B1P2/PP2QR1P/R1B2NK1 b - - 0 1"
-            }) {
-            computeTask_->newGame();
-            computeTask_->setPosition(false, fen);
-            computeTask_->computeMove();
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            computeTask_->moveNow();
-            bool finished = computeTask_->getFinishedFuture().wait_for(ANALYZE_TEST_TIMEOUT) == std::future_status::ready;
-            if (!finished) {
-                bool extended = computeTask_->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
-                if (!extended) {
-					Logger::testLogger().logAligned("Testing stop command:", "Timeout after stop command (even after extended wait)");
-                    return { false, "Timeout after stop command (even after extended wait)" };
-                }
-            }
+    // Use QaplaTester function
+    auto results = QaplaTester::runAnalyzeTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Analyze test failed: " + entry.result, TraceLevel::error);
         }
-		Logger::testLogger().logAligned("Testing stop command:", "Engine correctly handled stop command and sent bestmove");
-        return { true, "" };
-        });
+    }
 }
 
 void EngineTestController::runImmediateStopTest() {
-    static constexpr auto ANALYZE_TEST_TIMEOUT = std::chrono::milliseconds(500);
-    static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
-    runTest("correct-after-immediate-stop", [this]() -> std::pair<bool, std::string> {
-        TimeControl t;
-        t.setInfinite();
-        computeTask_->setTimeControl(t);
-		computeTask_->setPosition(false, "3r1r2/pp1q2bk/2n1nppp/2p5/3pP1P1/P2P1NNQ/1PPB3P/1R3R1K w - - 0 1");
-        computeTask_->computeMove();
-        computeTask_->moveNow();
-        bool finished = computeTask_->getFinishedFuture().wait_for(ANALYZE_TEST_TIMEOUT) == std::future_status::ready;
-        if (!finished) {
-            bool extended = computeTask_->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
-            if (!extended) {
-                startEngine();
-				Logger::testLogger().logAligned("Testing immediate stop:", "Timeout after immediate stop");
-                return { false, "Timeout after immediate stop" };
-            }
+    // Use QaplaTester function
+    auto results = QaplaTester::runImmediateStopTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Immediate stop test failed: " + entry.result, TraceLevel::error);
         }
-		Logger::testLogger().logAligned("Testing immediate stop:", "Engine correctly handled immediate stop and sent bestmove");
-        return { true, "" };
-        });
+    }
 }
 
 void EngineTestController::runInfiniteAnalyzeTest() {
-    static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
-    static constexpr auto NO_BESTMOVE_TIMEOUT = std::chrono::milliseconds(10000);
-
-    runTest("infinite-move-does-not-exit", [this]() -> std::pair<bool, std::string> {
-		std::cout << "Testing infinite mode: takes about 10 seconds, please wait...";
-		std::cout.flush();
-        std::cout << "\r";
-        TimeControl t;
-        t.setInfinite();
-        computeTask_->setTimeControl(t);
-		computeTask_->setPosition(false, "K7/8/k7/8/8/8/8/3r4 b - - 0 1");
-        computeTask_->computeMove();
-        bool exited = computeTask_->getFinishedFuture().wait_for(NO_BESTMOVE_TIMEOUT) == std::future_status::ready;
-        if (exited) {
-            Logger::testLogger().logAligned("Testing infinite mode:", "Engine sent bestmove without receiving 'stop'", TraceLevel::command);
-            return { false, "Engine sent bestmove in infinite mode without receiving 'stop'" };
+    // Use QaplaTester function
+    auto results = QaplaTester::runInfiniteAnalyzeTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Infinite analyze test failed: " + entry.result, TraceLevel::error);
         }
-        computeTask_->moveNow();
-        bool stopped = computeTask_->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
-        if (!stopped) {
-            createGameManager();
-            Logger::testLogger().logAligned("Testing infinite mode:", "Timeout after stop command", TraceLevel::command);
-            return { false, "Timeout after stop command in infinite mode" };
-        }
-        computeTask_->getFinishedFuture().wait();
-        Logger::testLogger().logAligned("Testing infinite mode:", "Correctly waited for stop and then sent bestmove", TraceLevel::command);
-        return { true, "" };
-        });
+    }
 }
 
 void EngineTestController::testPonderHit(const GameRecord& gameRecord, EngineWorker* engine,

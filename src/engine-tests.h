@@ -38,6 +38,9 @@ namespace QaplaWindows
         bool testHashTableMemory = true;
         bool testLowerCaseOption = true;
         bool testEngineOptions = true;
+        bool testAnalyze = true;
+        bool testImmediateStop = true;
+        bool testInfiniteAnalyze = true;
     };
 
     /**
@@ -118,6 +121,9 @@ namespace QaplaWindows
         void testHashTableMemory(const EngineConfig& engineConfig);
         void testLowerCaseOption(const EngineConfig& engineConfig);
         void testEngineOptions(const EngineConfig& engineConfig);
+        void testAnalyze(const EngineConfig& engineConfig);
+        void testImmediateStop(const EngineConfig& engineConfig);
+        void testInfiniteAnalyze(const EngineConfig& engineConfig);
         void runTestsThreaded(std::vector<EngineConfig> engineConfigs, TestSelection testSelection);
         
         std::vector<EngineConfig> engineConfigs_;

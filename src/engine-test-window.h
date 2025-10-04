@@ -65,6 +65,21 @@ namespace QaplaWindows
          * @brief Check if Engine Options test is selected
          */
         bool isEngineOptionsTestSelected() const { return testEngineOptionsSelected_; }
+        
+        /**
+         * @brief Check if Analyze test is selected
+         */
+        bool isAnalyzeTestSelected() const { return testAnalyzeSelected_; }
+        
+        /**
+         * @brief Check if Immediate Stop test is selected
+         */
+        bool isImmediateStopTestSelected() const { return testImmediateStopSelected_; }
+        
+        /**
+         * @brief Check if Infinite Analyze test is selected
+         */
+        bool isInfiniteAnalyzeTestSelected() const { return testInfiniteAnalyzeSelected_; }
 
     private:
         void drawButtons();
@@ -88,6 +103,9 @@ namespace QaplaWindows
         bool testHashTableMemorySelected_;
         bool testLowerCaseOptionSelected_;
         bool testEngineOptionsSelected_;
+        bool testAnalyzeSelected_;
+        bool testImmediateStopSelected_;
+        bool testInfiniteAnalyzeSelected_;
     };
 
 } // namespace QaplaWindows

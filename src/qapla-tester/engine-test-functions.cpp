@@ -22,6 +22,8 @@
 #include "engine-report.h"
 #include "logger.h"
 #include "timer.h"
+#include "compute-task.h"
+#include "time-control.h"
 
 #include <memory>
 #include <sstream>
@@ -35,9 +37,10 @@ static std::string bytesToMB(uint64_t bytes) {
     return oss.str();
 }
 
+template<typename TestCallback>
 TestResult runTest(
     const std::vector<EngineConfig>& engineConfigs,
-    const std::function<TestResult(const EngineList&)>& testCallback
+    TestCallback&& testCallback
 )
 {
     EngineList engines;
@@ -66,7 +69,7 @@ TestResult runTest(
         }
         
         // Execute test callback with engine list (may be empty)
-        TestResult result = testCallback(engines);
+        TestResult result = testCallback(std::move(engines));
         
         // Engines will be stopped automatically by their destructors when leaving scope
         
@@ -187,7 +190,7 @@ TestResult runEngineMultipleStartStopTest(const EngineConfig& engineConfig, uint
 
 TestResult runHashTableMemoryTest(const EngineConfig& engineConfig)
 {
-    return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
             return {TestResultEntry("Hash table memory test", "No engine started", false)};
         }
@@ -224,7 +227,7 @@ TestResult runHashTableMemoryTest(const EngineConfig& engineConfig)
 
 TestResult runLowerCaseOptionTest(const EngineConfig& engineConfig)
 {
-    return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
             return {TestResultEntry("Lowercase option test", "No engine started", false)};
         }
@@ -320,7 +323,7 @@ static std::pair<bool, std::string> testSetOption(EngineWorker* engine, const st
 
 TestResult runEngineOptionTests(const EngineConfig& engineConfig)
 {
-    return runTest({engineConfig}, [&engineConfig](const EngineList& engines) -> TestResult {
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
             return {TestResultEntry("Engine option tests", "No engine started", false)};
         }
@@ -406,6 +409,139 @@ TestResult runEngineOptionTests(const EngineConfig& engineConfig)
         Logger::testLogger().logAligned("Edge case options:", resultMsg);
         
         return {TestResultEntry("Engine option tests", resultMsg, success)};
+    });
+}
+
+TestResult runAnalyzeTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("Analyze test", "No engine started", false)};
+        }
+        
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        
+        // Create ComputeTask and initialize with engines
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        static constexpr auto ANALYZE_TEST_TIMEOUT = std::chrono::milliseconds(500);
+        static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
+        
+        TimeControl t;
+        t.setInfinite();
+        computeTask->setTimeControl(t);
+        
+        for (auto fen : {
+            "r3r1k1/1pq2pp1/2p2n2/1PNn4/2QN2b1/6P1/3RPP2/2R3KB b - - 0 1",
+            "r1q2rk1/p2bb2p/1p1p2p1/2pPp2n/2P1PpP1/3B1P2/PP2QR1P/R1B2NK1 b - - 0 1"
+            }) {
+            computeTask->newGame();
+            computeTask->setPosition(false, fen);
+            computeTask->computeMove();
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            computeTask->moveNow();
+            bool finished = computeTask->getFinishedFuture().wait_for(ANALYZE_TEST_TIMEOUT) == std::future_status::ready;
+            if (!finished) {
+                bool extended = computeTask->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
+                if (!extended) {
+                    Logger::testLogger().logAligned("Testing stop command:", "Timeout after stop command (even after extended wait)");
+                    checklist->logReport("reacts-on-stop", false, "Timeout after stop command (even after extended wait)");
+                    return {TestResultEntry("Analyze test", "Timeout after stop command", false)};
+                }
+            }
+        }
+        
+        Logger::testLogger().logAligned("Testing stop command:", "Engine correctly handled stop command and sent bestmove");
+        checklist->logReport("reacts-on-stop", true, "");
+        
+        return {TestResultEntry("Analyze test", "Engine correctly handled stop command and sent bestmove", true)};
+    });
+}
+
+TestResult runImmediateStopTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("Immediate stop test", "No engine started", false)};
+        }
+        
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        
+        // Create ComputeTask and initialize with engines
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        static constexpr auto ANALYZE_TEST_TIMEOUT = std::chrono::milliseconds(500);
+        static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
+        
+        TimeControl t;
+        t.setInfinite();
+        computeTask->setTimeControl(t);
+        computeTask->setPosition(false, "3r1r2/pp1q2bk/2n1nppp/2p5/3pP1P1/P2P1NNQ/1PPB3P/1R3R1K w - - 0 1");
+        computeTask->computeMove();
+        computeTask->moveNow();
+        bool finished = computeTask->getFinishedFuture().wait_for(ANALYZE_TEST_TIMEOUT) == std::future_status::ready;
+        if (!finished) {
+            bool extended = computeTask->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
+            if (!extended) {
+                Logger::testLogger().logAligned("Testing immediate stop:", "Timeout after immediate stop");
+                checklist->logReport("correct-after-immediate-stop", false, "Timeout after immediate stop");
+                return {TestResultEntry("Immediate stop test", "Timeout after immediate stop", false)};
+            }
+        }
+        
+        Logger::testLogger().logAligned("Testing immediate stop:", "Engine correctly handled immediate stop and sent bestmove");
+        checklist->logReport("correct-after-immediate-stop", true, "");
+        
+        return {TestResultEntry("Immediate stop test", "Engine correctly handled immediate stop and sent bestmove", true)};
+    });
+}
+
+TestResult runInfiniteAnalyzeTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("Infinite analyze test", "No engine started", false)};
+        }
+        
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        
+        // Create ComputeTask and initialize with engines
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        static constexpr auto LONGER_TIMEOUT = std::chrono::milliseconds(2000);
+        static constexpr auto NO_BESTMOVE_TIMEOUT = std::chrono::milliseconds(10000);
+        
+        std::cout << "Testing infinite mode: takes about 10 seconds, please wait...";
+        std::cout.flush();
+        std::cout << "\r";
+        
+        TimeControl t;
+        t.setInfinite();
+        computeTask->setTimeControl(t);
+        computeTask->setPosition(false, "K7/8/k7/8/8/8/8/3r4 b - - 0 1");
+        computeTask->computeMove();
+        bool exited = computeTask->getFinishedFuture().wait_for(NO_BESTMOVE_TIMEOUT) == std::future_status::ready;
+        if (exited) {
+            Logger::testLogger().logAligned("Testing infinite mode:", "Engine sent bestmove without receiving 'stop'", TraceLevel::command);
+            checklist->logReport("infinite-move-does-not-exit", false, "Engine sent bestmove in infinite mode without receiving 'stop'");
+            return {TestResultEntry("Infinite analyze test", "Engine sent bestmove without receiving 'stop'", false)};
+        }
+        computeTask->moveNow();
+        bool stopped = computeTask->getFinishedFuture().wait_for(LONGER_TIMEOUT) == std::future_status::ready;
+        if (!stopped) {
+            Logger::testLogger().logAligned("Testing infinite mode:", "Timeout after stop command", TraceLevel::command);
+            checklist->logReport("infinite-move-does-not-exit", false, "Timeout after stop command in infinite mode");
+            return {TestResultEntry("Infinite analyze test", "Timeout after stop command in infinite mode", false)};
+        }
+        computeTask->getFinishedFuture().wait();
+        
+        Logger::testLogger().logAligned("Testing infinite mode:", "Correctly waited for stop and then sent bestmove", TraceLevel::command);
+        checklist->logReport("infinite-move-does-not-exit", true, "");
+        
+        return {TestResultEntry("Infinite analyze test", "Correctly waited for stop and then sent bestmove", true)};
     });
 }
 

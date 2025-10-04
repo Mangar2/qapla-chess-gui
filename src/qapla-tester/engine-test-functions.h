@@ -62,9 +62,10 @@ using TestResult = std::vector<TestResultEntry>;
  * @param testCallback Callback function that receives the engine list and returns test result
  * @return TestResult Vector of key-value pairs with test results
  */
+template<typename TestCallback>
 TestResult runTest(
     const std::vector<EngineConfig>& engineConfigs,
-    const std::function<TestResult(const EngineList&)>& testCallback
+    TestCallback&& testCallback
 );
 
 /**
@@ -121,5 +122,37 @@ TestResult runLowerCaseOptionTest(const EngineConfig& engineConfig);
  * @return TestResult Vector containing test results for all options
  */
 TestResult runEngineOptionTests(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests if engine reacts correctly to stop command during analysis
+ * 
+ * Starts analysis on two different positions, waits 1 second, sends stop command,
+ * and verifies that bestmove is sent within timeout.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test result
+ */
+TestResult runAnalyzeTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests if engine handles immediate stop command correctly
+ * 
+ * Starts analysis, immediately sends stop command, and verifies that bestmove is sent.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test result
+ */
+TestResult runImmediateStopTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests if engine correctly handles infinite analysis mode
+ * 
+ * Starts infinite analysis, waits 10 seconds to ensure no premature bestmove,
+ * then sends stop and verifies bestmove is sent.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test result
+ */
+TestResult runInfiniteAnalyzeTest(const EngineConfig& engineConfig);
 
 } // namespace QaplaTester
