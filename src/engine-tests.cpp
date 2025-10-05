@@ -19,7 +19,9 @@
 
 #include "engine-tests.h"
 #include "qapla-tester/engine-test-functions.h"
+#include "qapla-tester/string-helper.h"
 #include "snackbar.h"
+#include "configuration.h"
 
 using namespace QaplaWindows;
 
@@ -42,6 +44,7 @@ EngineTests::EngineTests()
     resultsTable_->setClickable(false);
     resultsTable_->setSortable(false);
     resultsTable_->setFilterable(false);
+    init();
 }
 
 EngineTests::~EngineTests()
@@ -148,7 +151,7 @@ void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runInfiniteAnalyzeTest(config));
 }
 
-void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, EngineTests::TestSelection testSelection)
+void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
 {
     state_ = State::Running;
     
@@ -157,37 +160,37 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, Engi
         if (state_ == State::Stopping) break;
         
         // Run selected tests for this engine
-        if (testSelection.testStartStop) {
+        if (testSelection_.testStartStop) {
             testEngineStartStop(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testHashTableMemory) {
+        if (testSelection_.testHashTableMemory) {
             testHashTableMemory(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testLowerCaseOption) {
+        if (testSelection_.testLowerCaseOption) {
             testLowerCaseOption(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testEngineOptions) {
+        if (testSelection_.testEngineOptions) {
             testEngineOptions(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testAnalyze) {
+        if (testSelection_.testAnalyze) {
             testAnalyze(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testImmediateStop) {
+        if (testSelection_.testImmediateStop) {
             testImmediateStop(config);
         }
         
         if (state_ == State::Stopping) break;
-        if (testSelection.testInfiniteAnalyze) {
+        if (testSelection_.testInfiniteAnalyze) {
             testInfiniteAnalyze(config);
         }
     }
@@ -195,7 +198,7 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs, Engi
     state_ = State::Stopped;
 }
 
-void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs, const EngineTests::TestSelection& testSelection)
+void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs)
 {
     if (!mayRun(true)) {
         return;
@@ -207,7 +210,7 @@ void EngineTests::runTests(const std::vector<EngineConfig>& engineConfigs, const
     }
     
     // Start tests in separate thread to avoid blocking draw loop
-    testThread_ = std::make_unique<std::thread>(&EngineTests::runTestsThreaded, this, engineConfigs, testSelection);
+    testThread_ = std::make_unique<std::thread>(&EngineTests::runTestsThreaded, this, engineConfigs);
 }
 
 void EngineTests::setEngineConfigurations(const std::vector<EngineConfig>& configs)
@@ -282,4 +285,36 @@ std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
 {
     std::lock_guard<std::mutex> lock(tableMutex_);
     return resultsTable_->draw(size);
+}
+
+void EngineTests::init() {
+    auto sections = QaplaConfiguration::Configuration::instance().
+        getConfigData().getSectionList("enginetest", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    if (sections.size() > 0) {
+        auto section = sections[0];
+        testSelection_.testStartStop = section.getValue("teststartstop").value_or("true") == "true";
+        testSelection_.testHashTableMemory = section.getValue("testhashtablememory").value_or("true") == "true";
+        testSelection_.testLowerCaseOption = section.getValue("testlowercaseoption").value_or("true") == "true";
+        testSelection_.testEngineOptions = section.getValue("testengineoptions").value_or("true") == "true";
+        testSelection_.testAnalyze = section.getValue("testanalyze").value_or("true") == "true";
+        testSelection_.testImmediateStop = section.getValue("testimmediatestop").value_or("true") == "true";
+        testSelection_.testInfiniteAnalyze = section.getValue("testinfiniteanalyze").value_or("true") == "true";
+    }
+}
+
+void EngineTests::updateConfiguration() const {
+    QaplaHelpers::IniFile::Section section {
+        .name = "enginetest",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "enginetest"},
+            {"teststartstop", testSelection_.testStartStop ? "true" : "false"},
+            {"testhashtablememory", testSelection_.testHashTableMemory ? "true" : "false"},
+            {"testlowercaseoption", testSelection_.testLowerCaseOption ? "true" : "false"},
+            {"testengineoptions", testSelection_.testEngineOptions ? "true" : "false"},
+            {"testanalyze", testSelection_.testAnalyze ? "true" : "false"},
+            {"testimmediatestop", testSelection_.testImmediateStop ? "true" : "false"},
+            {"testinfiniteanalyze", testSelection_.testInfiniteAnalyze ? "true" : "false"}
+        }
+    };
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginetest", "enginetest", { section });
 }

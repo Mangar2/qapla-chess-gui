@@ -140,10 +140,20 @@ public:
         constexpr auto readyTimeout = std::chrono::seconds{ 1 };
         if (computeState_ != ComputeState::Idle) {
             engine_->moveNow(true);
-            engine_->requestReady(readyTimeout);
+            checkReady(readyTimeout);
         }
         computeState_ = ComputeState::Idle;
         ponderMove_ = "";
+    }
+
+    /**
+     * @brief Sends an isready command to the engine and waits for readyok.
+     * 
+     * @param timeout Maximum time to wait for readyok response.
+     */
+    void checkReady(std::chrono::milliseconds timeout = std::chrono::seconds{1}) {
+        if (!engine_) return;
+        engine_->requestReady(timeout);
     }
 
     /**

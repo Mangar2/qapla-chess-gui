@@ -152,13 +152,10 @@ void ComputeTask::moveNow() {
     if (gameContext_.getPlayerCount() == 0) return;
 
     auto& gameRecord = gameContext_.gameRecord();
-
-    if (gameRecord.isWhiteToMove()) {
-        gameContext_.getWhite()->moveNow();
-    }
-    else {
-        gameContext_.getBlack()->moveNow();
-    }
+    auto player = gameRecord.isWhiteToMove() ? gameContext_.getWhite() : gameContext_.getBlack();
+    if (!player) return;
+    player->checkReady();
+    player->moveNow();
 }
 
 const std::future<void>& ComputeTask::getFinishedFuture() const {
@@ -258,6 +255,9 @@ void ComputeTask::processEvent(const EngineEvent & event) {
     }
 
     if (event.type == EngineEvent::Type::SendingComputeMove) {
+        // Sent from engine worker thread directly before sending a compute move command to the engine
+        // We use this to ensure that all engine information received before this event are counted as messages 
+        // from the previous move
         player->setComputingMove();
         return;
     }

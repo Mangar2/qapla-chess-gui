@@ -64,9 +64,8 @@ namespace QaplaWindows
         /**
          * @brief Run all tests on selected engines
          * @param engineConfigs Vector of engine configurations to test
-         * @param testSelection Which tests to run
          */
-        void runTests(const std::vector<EngineConfig>& engineConfigs, const EngineTests::TestSelection& testSelection);
+        void runTests(const std::vector<EngineConfig>& engineConfigs);
         
         /**
          * @brief Set the selected engines for testing
@@ -90,6 +89,12 @@ namespace QaplaWindows
         State getState() const { return state_; }
         
         /**
+         * @brief Get the test selection (modifiable)
+         * @return Reference to test selection
+         */
+        TestSelection& getTestSelection() { return testSelection_; }
+        
+        /**
          * @brief Check if tests may run (with optional message)
          * @param sendMessage If true, shows a message if tests cannot run
          * @return True if tests may run
@@ -109,12 +114,19 @@ namespace QaplaWindows
          * @return Optional row index if a row was clicked
          */
         std::optional<size_t> drawTable(const ImVec2& size);
+        
+        /**
+         * @brief Update configuration to INI file
+         */
+        void updateConfiguration() const;
 
     private:
         EngineTests();
         ~EngineTests();
         EngineTests(const EngineTests&) = delete;
         EngineTests& operator=(const EngineTests&) = delete;
+        
+        void init();
 
         void addResult(const std::string& engineName, QaplaTester::TestResult result);
         void testEngineStartStop(const EngineConfig& engineConfig);
@@ -124,7 +136,7 @@ namespace QaplaWindows
         void testAnalyze(const EngineConfig& engineConfig);
         void testImmediateStop(const EngineConfig& engineConfig);
         void testInfiniteAnalyze(const EngineConfig& engineConfig);
-        void runTestsThreaded(std::vector<EngineConfig> engineConfigs, EngineTests::TestSelection testSelection);
+        void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
         
         std::vector<EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;

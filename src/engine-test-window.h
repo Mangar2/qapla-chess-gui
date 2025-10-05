@@ -45,11 +45,6 @@ namespace QaplaWindows
          * @param callback The new callback.
          */
         void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
-        
-        /**
-         * @brief Get the current test selection
-         */
-        const EngineTests::TestSelection& getTestSelection() const { return testSelection_; }
 
     private:
         void drawButtons();
@@ -68,8 +63,6 @@ namespace QaplaWindows
         std::vector<EngineConfig> getSelectedEngineConfigurations() const;
         
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
-        
-        EngineTests::TestSelection testSelection_;
     };
 
 } // namespace QaplaWindows

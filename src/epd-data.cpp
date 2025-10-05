@@ -53,7 +53,7 @@ namespace QaplaWindows {
 
     EpdData::~EpdData() = default;
 
-    void EpdData:: init() {
+    void EpdData::init() {
         pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
 		    [this]() {
     			this->pollData();

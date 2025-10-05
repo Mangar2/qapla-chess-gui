@@ -152,7 +152,7 @@ void EngineTestWindow::drawButtons()
                     if (selectedEngines.empty()) {
                         SnackbarManager::instance().showError("Please select at least one engine");
                     } else {
-                        EngineTests::instance().runTests(selectedEngines, testSelection_);
+                        EngineTests::instance().runTests(selectedEngines);
                     }
                 }
                 else if (button == "Run/Stop" && testState == EngineTests::State::Running)
@@ -193,46 +193,53 @@ void EngineTestWindow::drawTests()
     if (ImGui::CollapsingHeader("Tests", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0f);
         
-        // Engine Start/Stop Test
-        ImGui::Checkbox("Engine Start/Stop Test", &testSelection_.testStartStop);
+        bool modified = false;
+        auto& testSelection = EngineTests::instance().getTestSelection();
+        
+        // Start/Stop Test
+        modified |= ImGui::Checkbox("Start/Stop Test", &testSelection.testStartStop);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that engines can be properly started and stopped");
+            ImGui::SetTooltip("Test basic engine start and stop functionality");
         }
         
         // Hash Table Memory Test
-        ImGui::Checkbox("Hash Table Memory Test", &testSelection_.testHashTableMemory);
+        modified |= ImGui::Checkbox("Hash Table Memory Test", &testSelection.testHashTableMemory);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that memory usage shrinks when reducing Hash option");
         }
         
         // Lowercase Option Test
-        ImGui::Checkbox("Lowercase Option Test", &testSelection_.testLowerCaseOption);
+        modified |= ImGui::Checkbox("Lowercase Option Test", &testSelection.testLowerCaseOption);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine accepts lowercase option names");
         }
         
         // Engine Options Test
-        ImGui::Checkbox("Engine Options Test", &testSelection_.testEngineOptions);
+        modified |= ImGui::Checkbox("Engine Options Test", &testSelection.testEngineOptions);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test all engine options with edge case values");
         }
         
         // Analyze Test
-        ImGui::Checkbox("Analyze Test", &testSelection_.testAnalyze);
+        modified |= ImGui::Checkbox("Analyze Test", &testSelection.testAnalyze);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine reacts correctly to stop command during analysis");
         }
         
         // Immediate Stop Test
-        ImGui::Checkbox("Immediate Stop Test", &testSelection_.testImmediateStop);
+        modified |= ImGui::Checkbox("Immediate Stop Test", &testSelection.testImmediateStop);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine handles immediate stop command correctly");
         }
         
         // Infinite Analyze Test
-        ImGui::Checkbox("Infinite Analyze Test", &testSelection_.testInfiniteAnalyze);
+        modified |= ImGui::Checkbox("Infinite Analyze Test", &testSelection.testInfiniteAnalyze);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test that engine correctly handles infinite analysis mode");
+        }
+        
+        if (modified) {
+            EngineTests::instance().updateConfiguration();
         }
         
         ImGui::Unindent(10.0f);
