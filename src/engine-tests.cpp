@@ -293,7 +293,7 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
             testMultipleGames(config);
         }
     }
-    
+    SnackbarManager::instance().showNote("Engine tests completed");
     state_ = State::Stopped;
 }
 
