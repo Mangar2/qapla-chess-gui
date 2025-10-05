@@ -279,52 +279,6 @@ void EngineTestController::runInfiniteAnalyzeTest() {
     }
 }
 
-void EngineTestController::testPonderHit(const GameRecord& gameRecord, EngineWorker* engine,
-    const std::string ponderMove, const std::string testname,
-    std::chrono::milliseconds sleep) {
-    static constexpr auto TIMEOUT = std::chrono::milliseconds(2000);
-
-    EventSinkRecorder recorder;
-    engine->setEventSink(recorder.getCallback());
-    engine->newGame(gameRecord, gameRecord.isWhiteToMove());
-    bool success;
-    TimeControl t;
-    t.addTimeSegment({ 0, 2000, 0 });
-    GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
-    engine->allowPonder(gameRecord, goLimits, ponderMove);
-    std::this_thread::sleep_for(sleep);
-    success = recorder.count(EngineEvent::Type::BestMove) == 0;
-    checklist_->logReport(testname, success, "Engine sent a bestmove while in ponder mode. ");
-    engine->setWaitForHandshake(EngineEvent::Type::BestMove);
-    engine->computeMove(gameRecord, goLimits, true);
-    success = engine->waitForHandshake(TIMEOUT);
-    checklist_->logReport(testname, success, "Engine did not send a bestmove after compute move in ponder mode.");
-}
-
-void EngineTestController::testPonderMiss(const GameRecord& gameRecord, EngineWorker* engine,
-    const std::string ponderMove, const std::string testname,
-    std::chrono::milliseconds sleep) {
-    static constexpr auto TIMEOUT = std::chrono::milliseconds(5000);
-
-    EventSinkRecorder recorder;
-    engine->setEventSink(recorder.getCallback());
-    engine->newGame(gameRecord, gameRecord.isWhiteToMove());
-    bool success;
-    TimeControl t;
-    t.addTimeSegment({ 0, 2000, 0 });
-    GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
-    engine->allowPonder(gameRecord, goLimits, ponderMove);
-    std::this_thread::sleep_for(sleep);
-    success = recorder.count(EngineEvent::Type::BestMove) == 0;
-    checklist_->logReport(testname, success, "Engine sent a bestmove while in ponder mode. ");
-    success = engine->moveNow(true, std::chrono::milliseconds(500));
-    checklist_->logReport(testname, success, "Engine did not send a bestmove fast after receiving stop in ponder mode.");
-    if (!success) {
-        success = engine->waitForHandshake(TIMEOUT);
-        checklist_->logReport(testname, success, "Engine never sent a bestmove after receiving stop in ponder mode.");
-    }
-}
-
 void EngineTestController::runUciPonderTest() {
     // Use QaplaTester function
     auto results = QaplaTester::runUciPonderTest(engineConfig_);
@@ -378,7 +332,7 @@ void EngineTestController::runPonderGameTest() {
 
 void EngineTestController::runMultipleGamesTest() {
     uint32_t parallelGames = CliSettings::Manager::get<uint32_t>("concurrency");
-/*
+
     Logger::testLogger().log("\nTesting playing games. The engine will play " + std::to_string(numGames_) + 
         " games in total, " + std::to_string(parallelGames) + " in parallel.");
 	Logger::testLogger().log("You can alter the number of games played with 'numgames' option and the number of parallel games with --concurrency option. ");
@@ -400,7 +354,7 @@ void EngineTestController::runMultipleGamesTest() {
     catch (...) {
         Logger::testLogger().log("Unknown exception during compute games test.", TraceLevel::error);
     }
-*/        
+        
 }
 
 void EngineTestController::runPlaceholderTest() {
