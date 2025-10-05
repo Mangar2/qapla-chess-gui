@@ -158,6 +158,7 @@ bool operator==(const EngineConfig& lhs, const EngineConfig& rhs) {
 }
 
 void  EngineConfig::setValue(const std::string& key, const std::string& value) {
+    std::set<std::string> internalKeys = { "id", "selected", "originalName" };
     if (key == "name") setName(value);
     else if (key == "author") setAuthor(value);
     else if (key == "cmd") setCmd(value);
@@ -170,6 +171,9 @@ void  EngineConfig::setValue(const std::string& key, const std::string& value) {
     }
     else if (key == "restart") restart_ = parseRestartOption(value);
     else if (key == "proto") setProtocol(value);
+    else if (internalKeys.contains(key)) {
+        internalKeys_[key] = value;
+    }
     else {
         setOptionValue(key, value);
     }
@@ -222,6 +226,9 @@ void EngineConfig::save(std::ostream& out, std::string section) const {
         out << "tc=" << tc_.toPgnTimeControlString() << '\n';
     }
 	if (ponder_) out << "ponder=" << (ponder_ ? "true" : "false") << '\n';
+    for (const auto& [key, value] : internalKeys_) {
+        out << key << "=" << value << '\n';
+    }
     for (const auto& [_, value] : optionValues_) {
         out << value.originalName << "=" << value.value << '\n';
     }

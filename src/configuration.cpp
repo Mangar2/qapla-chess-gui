@@ -83,7 +83,7 @@ void Configuration::saveTimeControls(std::ofstream& out) {
         QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.tournamentTime.toSection("TournamentTime"));
         QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.timePerMove.toSection("TimePerMove"));
         QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.fixedDepth.toSection("FixedDepth"));
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.nodesPerMove.toSection("NodesPerMoves"));
+        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.nodesPerMove.toSection("NodesPerMove"));
 
     }
     catch (const std::exception& e) {

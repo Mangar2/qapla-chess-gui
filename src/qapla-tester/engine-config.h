@@ -27,6 +27,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <variant>
+#include <set>
+
 #include "ini-file.h"
 #include "string-helper.h"
 #include "time-control.h"
@@ -275,6 +277,7 @@ private:
     RestartOption restart_ = RestartOption::EngineDecides;
     bool ponder_ = false;
 	bool gauntlet_ = false;
+    std::unordered_map<std::string, std::string> internalKeys_;
     std::unordered_map<std::string, OptionValue> optionValues_;
 };
 
