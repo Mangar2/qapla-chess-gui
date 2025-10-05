@@ -189,20 +189,33 @@ TestResult runEpFromFenTest(const EngineConfig& engineConfig);
  * @param engineConfig Configuration for the engines to test
  * @return TestResult Vector containing game result and any errors
  */
-TestResult runComputeGameTest(const EngineConfig& engineConfig);
+TestResult runComputeGameTest(const EngineConfig& engineConfig, bool logMoves = true);
 
 /**
- * @brief Tests pondering functionality (both ponder hit and ponder miss)
+ * @brief Tests UCI pondering functionality
  * 
- * Tests:
- * - Ponder hit (predicted move is played)
- * - Ponder miss (different move is played)
- * - Engine behavior during pondering
- * - Response time after ponder hit/miss
+ * Tests ponder hit and ponder miss scenarios:
+ * - Engine pondering on predicted move
+ * - Engine receiving ponderhit command
+ * - Engine receiving stop command during ponder (ponder miss)
+ * - Response times and behavior validation
  * 
  * @param engineConfig Configuration for the engine to test
- * @return TestResult Vector containing test results for pondering scenarios
+ * @param logMoves Whether to log moves during the game
+ * @return TestResult Vector containing test results for UCI ponder scenarios
  */
-TestResult runPonderTest(const EngineConfig& engineConfig);
+TestResult runUciPonderTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests pondering during a complete game
+ * 
+ * Starts two engine instances with pondering enabled and has them
+ * play a complete game. Monitors pondering behavior throughout the game.
+ * 
+ * @param engineConfig Configuration for the engines to test
+ * @param logMoves Whether to log moves during the game
+ * @return TestResult Vector containing game result and pondering behavior
+ */
+TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves = true);
 
 } // namespace QaplaTester

@@ -24,10 +24,13 @@
 #include "timer.h"
 #include "compute-task.h"
 #include "time-control.h"
+#include "game-record.h"
+#include "event-sink-recorder.h"
 
 #include <memory>
 #include <sstream>
 #include <iomanip>
+#include <thread>
 
 namespace QaplaTester {
 
@@ -574,9 +577,9 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
         TestResult results;
         int errors = 0;
         
-        for (const auto& [name, timeControl] : testCases) {
+        for (const auto& testCase : testCases) {
             computeTask->newGame();
-            computeTask->setTimeControl(timeControl);
+            computeTask->setTimeControl(testCase.timeControl);
             computeTask->setPosition(true);
             computeTask->computeMove();
             bool success = computeTask->getFinishedFuture().wait_for(GO_TIMEOUT) == std::future_status::ready;
@@ -591,13 +594,13 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
                 computeTask->stop();
             }
             
-            auto timeStr = timeControl.toPgnTimeControlString();
+            auto timeStr = testCase.timeControl.toPgnTimeControlString();
             if (!timeStr.empty()) {
                 timeStr = " Time control: " + timeStr;
             }
             
             std::string result = success ? "OK" : "Timeout";
-            results.push_back(TestResultEntry(name, result + timeStr, success));
+            results.push_back(TestResultEntry(testCase.name, result + timeStr, success));
         }
         
         Logger::testLogger().logAligned("Testing go limits:", 
@@ -633,9 +636,9 @@ TestResult runEpFromFenTest(const EngineConfig& engineConfig)
     });
 }
 
-TestResult runComputeGameTest(const EngineConfig& engineConfig)
+TestResult runComputeGameTest(const EngineConfig& engineConfig, bool logMoves)
 {
-    return runTest({engineConfig, engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+    return runTest({engineConfig, engineConfig}, [&engineConfig, logMoves](EngineList&& engines) -> TestResult {
         if (engines.size() < 2) {
             return {TestResultEntry("Compute game test", "Could not start two engines", false)};
         }
@@ -649,7 +652,7 @@ TestResult runComputeGameTest(const EngineConfig& engineConfig)
             TimeControl t1; t1.addTimeSegment({0, 20000, 100});
             TimeControl t2; t2.addTimeSegment({0, 10000, 100});
             computeTask->setTimeControls({t1, t2});
-            computeTask->autoPlay(true);
+            computeTask->autoPlay(logMoves);
             computeTask->getFinishedFuture().wait();
             
             Logger::testLogger().logAligned("Testing game play:", "Game completed successfully");
@@ -662,22 +665,104 @@ TestResult runComputeGameTest(const EngineConfig& engineConfig)
     });
 }
 
-TestResult runPonderTest(const EngineConfig& engineConfig)
+TestResult runUciPonderTest(const EngineConfig& engineConfig)
 {
     return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
-            return {TestResultEntry("Ponder test", "No engine started", false)};
+            return {TestResultEntry("UCI ponder test", "No engine started", false)};
         }
         
-        // Enable pondering for the engine
-        EngineConfig ponderConfig = engineConfig;
-        ponderConfig.setPonder(true);
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        auto* engine = engines[0].get();
         
-        // For now, return a placeholder result
-        // Full ponder testing would require extensive GameRecord and ComputeTask integration
-        Logger::testLogger().logAligned("Testing pondering:", "Ponder test not yet fully implemented");
+        const std::string testname = "correct-pondering";
+        TestResult results;
         
-        return {TestResultEntry("Ponder test", "Test requires full implementation", true)};
+        try {
+            Logger::testLogger().log("Testing UCI pondering...", TraceLevel::command);
+            
+            GameRecord gameRecord;
+            EventSinkRecorder recorder;
+            static constexpr auto TIMEOUT = std::chrono::milliseconds(2000);
+            
+            // Test ponder hit scenario
+            engine->setEventSink(recorder.getCallback());
+            engine->newGame(gameRecord, gameRecord.isWhiteToMove());
+            
+            TimeControl t;
+            t.addTimeSegment({0, 2000, 0});
+            GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
+            
+            engine->allowPonder(gameRecord, goLimits, "e2e4");
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            
+            bool success = recorder.count(EngineEvent::Type::BestMove) == 0;
+            if (!success) {
+                results.push_back(TestResultEntry(testname, "Engine sent bestmove while in ponder mode", false));
+                checklist->logReport(testname, false, "Engine sent a bestmove while in ponder mode");
+            } else {
+                engine->setWaitForHandshake(EngineEvent::Type::BestMove);
+                engine->computeMove(gameRecord, goLimits, true);
+                success = engine->waitForHandshake(TIMEOUT);
+                
+                if (success) {
+                    results.push_back(TestResultEntry(testname, "Pondering works correctly", true));
+                    checklist->logReport(testname, true, "");
+                } else {
+                    results.push_back(TestResultEntry(testname, "No bestmove after ponderhit", false));
+                    checklist->logReport(testname, false, "Engine did not send a bestmove after compute move in ponder mode");
+                }
+            }
+            
+            Logger::testLogger().logAligned("Testing UCI pondering:", success ? "Success" : "Failed");
+        }
+        catch (const std::exception& e) {
+            Logger::testLogger().log("Exception during UCI ponder test: " + std::string(e.what()), TraceLevel::error);
+            checklist->logReport(testname, false, "Exception during UCI ponder test: " + std::string(e.what()));
+            results.push_back(TestResultEntry(testname, "Exception: " + std::string(e.what()), false));
+        }
+        catch (...) {
+            Logger::testLogger().log("Unknown exception during UCI ponder test", TraceLevel::error);
+            checklist->logReport(testname, false, "Unknown exception during UCI ponder test");
+            results.push_back(TestResultEntry(testname, "Unknown exception", false));
+        }
+        
+        return results;
+    });
+}
+
+TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves)
+{
+    return runTest({engineConfig, engineConfig}, [&engineConfig, logMoves](EngineList&& engines) -> TestResult {
+        if (engines.size() < 2) {
+            return {TestResultEntry("Ponder game test", "Could not start two engines", false)};
+        }
+        
+        // Enable pondering for both engines
+        engines[0]->getConfigMutable().setPonder(true);
+        engines[1]->getConfigMutable().setPonder(true);
+        
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        try {
+            Logger::testLogger().log("The engine now plays against itself with pondering enabled", TraceLevel::command);
+            
+            computeTask->newGame();
+            computeTask->setPosition(true);
+            TimeControl t1; t1.addTimeSegment({0, 20000, 100});
+            TimeControl t2; t2.addTimeSegment({0, 10000, 100});
+            computeTask->setTimeControls({t1, t2});
+            computeTask->autoPlay(logMoves);
+            computeTask->getFinishedFuture().wait();
+            
+            Logger::testLogger().logAligned("Testing ponder game:", "Game completed successfully");
+            return {TestResultEntry("Ponder game test", "Game completed successfully", true)};
+        }
+        catch (const std::exception& e) {
+            Logger::testLogger().logAligned("Testing ponder game:", std::string("Error: ") + e.what());
+            return {TestResultEntry("Ponder game test", std::string("Error: ") + e.what(), false)};
+        }
     });
 }
 

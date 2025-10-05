@@ -178,7 +178,7 @@ void EngineTests::testComputeGame(const EngineConfig& config)
         std::lock_guard<std::mutex> lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Compute game test", ""});
     }
-    addResult(config.getName(), QaplaTester::runComputeGameTest(config));
+    addResult(config.getName(), QaplaTester::runComputeGameTest(config, false));
 }
 
 void EngineTests::testPonder(const EngineConfig& config)
@@ -186,9 +186,16 @@ void EngineTests::testPonder(const EngineConfig& config)
     if (state_ == State::Stopping) return;
     {
         std::lock_guard<std::mutex> lock(tableMutex_);
-        resultsTable_->push({config.getName(), "Running", "Ponder test", ""});
+        resultsTable_->push({config.getName(), "Running", "UCI ponder test", ""});
     }
-    addResult(config.getName(), QaplaTester::runPonderTest(config));
+    addResult(config.getName(), QaplaTester::runUciPonderTest(config));
+    
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Ponder game test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runPonderGameTest(config, false));
 }
 
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)

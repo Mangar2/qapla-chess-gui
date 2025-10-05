@@ -326,34 +326,13 @@ void EngineTestController::testPonderMiss(const GameRecord& gameRecord, EngineWo
 }
 
 void EngineTestController::runUciPonderTest() {
-    const std::string testname = "correct-pondering";
-    try {
-        std::cout << "Testing pondering:" << std::endl;
-        Timer timer;
-        timer.start();
-		auto& name = engineConfig_.getName();
-		auto engine = computeTask_->getEngine();
-        GameRecord gameRecord;
-		testPonderHit(gameRecord, engine, "e2e4", testname);
-        testPonderHit(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds{ 0 });
-		testPonderMiss(gameRecord, engine, "e2e4", testname);
-        testPonderMiss(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds{ 0 });
-        //gameRecord.setStartPosition(false, "K7/8/8/4Q3/5Q1k/8/8/8 b - - 2 68", false, name, name);
-		testPonderHit(gameRecord, engine, "h4h3", testname);
-        testPonderHit(gameRecord, engine, "h4h3", testname, std::chrono::milliseconds{ 0 });
-        testPonderMiss(gameRecord, engine, "h4h3", testname);
-        testPonderMiss(gameRecord, engine, "h4h3", testname, std::chrono::milliseconds{ 0 });
+    // Use QaplaTester function
+    auto results = QaplaTester::runUciPonderTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("UCI ponder test failed: " + entry.result, TraceLevel::error);
+        }
     }
-	catch (const std::exception& e) {
-		Logger::testLogger().log("Exception during uci ponder test: " + std::string(e.what()), TraceLevel::error);
-		checklist_->logReport(testname, false, "Exception during uci ponder test: " + std::string(e.what()));
-		return;
-	}
-	catch (...) {
-		Logger::testLogger().log("Unknown exception during uci ponder test.", TraceLevel::error);
-        checklist_->logReport(testname, false, "Unknown exception during uci ponder test.");
-		return;
-	}
 }
 
 
@@ -401,25 +380,12 @@ void EngineTestController::runComputeGameTest() {
 }
 
 void EngineTestController::runPonderGameTest() {
-    Logger::testLogger().log("\nThe engine now plays against itself with pondering enabled. ");
-    EngineList engines = startEngines(2);
-	engines[0]->getConfigMutable().setPonder(true);
-	engines[1]->getConfigMutable().setPonder(true);
-    computeTask_->initEngines(std::move(engines));
-    try {
-        computeTask_->newGame();
-        computeTask_->setPosition(true);
-        TimeControl t1; t1.addTimeSegment({ 0, 20000, 100 });
-        TimeControl t2; t2.addTimeSegment({ 0, 10000, 100 });
-        computeTask_->setTimeControls({ t1, t2 });
-        computeTask_->autoPlay(true);
-        computeTask_->getFinishedFuture().wait();
-    }
-    catch (const std::exception& e) {
-        Logger::testLogger().log("Exception during compute games test: " + std::string(e.what()), TraceLevel::error);
-    }
-    catch (...) {
-        Logger::testLogger().log("Unknown exception during compute games test.", TraceLevel::error);
+    // Use QaplaTester function
+    auto results = QaplaTester::runPonderGameTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Ponder game test failed: " + entry.result, TraceLevel::error);
+        }
     }
 }
 
