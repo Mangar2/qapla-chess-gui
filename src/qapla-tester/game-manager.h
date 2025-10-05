@@ -250,7 +250,7 @@ private:
 	 * This function checks if the game has ended and handles the end of the game.
 	 * It returns true if the game has ended, false otherwise.
 	 */
-    bool checkForGameEnd();
+    bool checkForGameEnd(bool verbose = false);
     std::tuple<GameEndCause, GameResult> getGameResult();
 
     /**

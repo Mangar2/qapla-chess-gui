@@ -289,7 +289,7 @@ std::tuple<GameEndCause, GameResult> GameManager::getGameResult() {
 	return { GameEndCause::Ongoing, GameResult::Unterminated };
 }
 
-bool GameManager::checkForGameEnd() {
+bool GameManager::checkForGameEnd(bool verbose) {
     // Both player should have the right result but the player not to move is still passive
     auto [cause, result] = getGameResult();
 
@@ -297,9 +297,10 @@ bool GameManager::checkForGameEnd() {
         return false;
     }
     gameContext_.setGameEnd(cause, result);
-
-	Logger::testLogger().log("[Result: " + gameResultToPgnResult(result) + "]", TraceLevel::info);
-	Logger::testLogger().log("[Termination: " + gameEndCauseToPgnTermination(cause) + "]", TraceLevel::info);
+    if (verbose) {
+    	Logger::testLogger().log("[Result: " + gameResultToPgnResult(result) + "]", TraceLevel::info);
+	    Logger::testLogger().log("[Termination: " + gameEndCauseToPgnTermination(cause) + "]", TraceLevel::info);
+    }
 
     return true;
 }
