@@ -218,4 +218,16 @@ TestResult runUciPonderTest(const EngineConfig& engineConfig);
  */
 TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves = true);
 
+/**
+ * @brief Tests EPD (Extended Position Description) test suite
+ * 
+ * Tests if the engine finds correct moves for a list of positions.
+ * Uses EpdTestManager to evaluate engine performance on standardized
+ * tactical and strategic positions.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing results for each EPD position
+ */
+TestResult runEpdTest(const EngineConfig& engineConfig);
+
 } // namespace QaplaTester

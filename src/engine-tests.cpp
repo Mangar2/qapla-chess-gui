@@ -198,6 +198,16 @@ void EngineTests::testPonder(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runPonderGameTest(config, false));
 }
 
+void EngineTests::testEpd(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "EPD test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runEpdTest(config));
+}
+
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
 {
     state_ = State::Running;
@@ -259,6 +269,11 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
         if (state_ == State::Stopping) break;
         if (testSelection_.testPonder) {
             testPonder(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testEpd) {
+            testEpd(config);
         }
     }
     
@@ -370,6 +385,7 @@ void EngineTests::init() {
         testSelection_.testEpFromFen = section.getValue("testepfromfen").value_or("true") == "true";
         testSelection_.testComputeGame = section.getValue("testcomputegame").value_or("true") == "true";
         testSelection_.testPonder = section.getValue("testponder").value_or("true") == "true";
+        testSelection_.testEpd = section.getValue("testepd").value_or("true") == "true";
     }
 }
 
@@ -388,7 +404,8 @@ void EngineTests::updateConfiguration() const {
             {"testgolimits", testSelection_.testGoLimits ? "true" : "false"},
             {"testepfromfen", testSelection_.testEpFromFen ? "true" : "false"},
             {"testcomputegame", testSelection_.testComputeGame ? "true" : "false"},
-            {"testponder", testSelection_.testPonder ? "true" : "false"}
+            {"testponder", testSelection_.testPonder ? "true" : "false"},
+            {"testepd", testSelection_.testEpd ? "true" : "false"}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginetest", "enginetest", { section });

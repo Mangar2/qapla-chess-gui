@@ -27,7 +27,7 @@
 #include "engine-worker-factory.h"
 #include "engine-report.h"
 #include "cli-settings-manager.h"
-//#include "epd-test-manager.h"
+#include "epd-test-manager.h"
 #include "compute-task.h"
 #include "game-manager.h"
 #include "game-manager-pool.h"
@@ -337,25 +337,12 @@ void EngineTestController::runUciPonderTest() {
 
 
 void EngineTestController::runEpdTests() {
-	std::cout << "Testing positions, this will take a while ... \r";
-	std::cout.flush();
-    try {
-        /*
-        EngineList engines = startEngines(1);
-        auto epdManager = std::make_shared<EpdTestManager>(EngineReport::getChecklist(engines[0]->getConfig().getName()));
-        GameManager gameManager;
-        gameManager.initUniqueEngine(std::move(engines[0]));
-        gameManager.start(epdManager);
-		gameManager.getFinishedFuture().wait();
-        */
-
-        Logger::testLogger().logAligned("Testing positions:", "All positions computed.");
-    }
-    catch (const std::exception& e) {
-        Logger::testLogger().log("Exception during compute epd test: " + std::string(e.what()), TraceLevel::error);
-    }
-    catch (...) {
-        Logger::testLogger().log("Unknown exception during compute epd test.", TraceLevel::error);
+    // Use QaplaTester function
+    auto results = QaplaTester::runEpdTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("EPD test failed: " + entry.result, TraceLevel::error);
+        }
     }
 }
 

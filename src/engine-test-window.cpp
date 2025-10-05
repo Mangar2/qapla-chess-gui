@@ -262,6 +262,12 @@ void EngineTestWindow::drawTests()
             ImGui::SetTooltip("Test pondering functionality (ponder hit and miss)");
         }
         
+        // EPD Test
+        modified |= ImGui::Checkbox("EPD Test", &testSelection.testEpd);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test engine finding correct moves for standardized positions");
+        }
+        
         if (modified) {
             EngineTests::instance().updateConfiguration();
         }

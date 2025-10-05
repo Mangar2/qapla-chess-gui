@@ -26,6 +26,8 @@
 #include "time-control.h"
 #include "game-record.h"
 #include "event-sink-recorder.h"
+#include "game-manager.h"
+#include "epd-test-manager.h"
 
 #include <memory>
 #include <sstream>
@@ -762,6 +764,40 @@ TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves)
         catch (const std::exception& e) {
             Logger::testLogger().logAligned("Testing ponder game:", std::string("Error: ") + e.what());
             return {TestResultEntry("Ponder game test", std::string("Error: ") + e.what(), false)};
+        }
+    });
+}
+
+TestResult runEpdTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("EPD test", "No engine started", false)};
+        }
+        
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        
+        try {
+            Logger::testLogger().log("Testing positions, this will take a while...", TraceLevel::command);
+            
+            auto epdManager = std::make_shared<EpdTestManager>(checklist);
+            GameManager gameManager;
+            gameManager.initUniqueEngine(std::move(engines[0]));
+            gameManager.start(epdManager);
+            gameManager.getFinishedFuture().wait();
+            
+            Logger::testLogger().logAligned("Testing positions:", "All positions computed");
+            return {TestResultEntry("EPD test", "All positions computed successfully", true)};
+        }
+        catch (const std::exception& e) {
+            Logger::testLogger().logAligned("Testing positions:", std::string("Error: ") + e.what());
+            checklist->logReport("epd-test", false, "Exception during EPD test: " + std::string(e.what()));
+            return {TestResultEntry("EPD test", std::string("Error: ") + e.what(), false)};
+        }
+        catch (...) {
+            Logger::testLogger().logAligned("Testing positions:", "Unknown error");
+            checklist->logReport("epd-test", false, "Unknown exception during EPD test");
+            return {TestResultEntry("EPD test", "Unknown error", false)};
         }
     });
 }

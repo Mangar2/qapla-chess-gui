@@ -51,6 +51,7 @@ namespace QaplaWindows
             bool testEpFromFen = true;
             bool testComputeGame = true;
             bool testPonder = true;
+            bool testEpd = true;
         };
     public:
         enum class State {
@@ -144,6 +145,7 @@ namespace QaplaWindows
         void testEpFromFen(const EngineConfig& engineConfig);
         void testComputeGame(const EngineConfig& engineConfig);
         void testPonder(const EngineConfig& engineConfig);
+        void testEpd(const EngineConfig& engineConfig);
         void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
         
         std::vector<EngineConfig> engineConfigs_;
