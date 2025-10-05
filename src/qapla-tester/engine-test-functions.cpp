@@ -854,8 +854,8 @@ TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGa
         
         GameManagerPool::getInstance().addTaskProvider(tournament, engineConfig, engineConfig);
         GameManagerPool::getInstance().setConcurrency(concurrency, true, true);  
-        GameManagerPool::getInstance().waitForTask();
-        
+        GameManagerPool::getInstance().waitForTaskPolling(std::chrono::seconds(1));
+
         Logger::testLogger().logAligned("Testing multiple games:", "All games completed");
         return {TestResultEntry("Multiple games test", "Completed " + std::to_string(numGames) + " games successfully", true)};
     }

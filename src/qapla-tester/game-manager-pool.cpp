@@ -244,13 +244,38 @@ void GameManagerPool::togglePause() {
     paused_ = !paused_;
 }
 
+void GameManagerPool::waitForTaskPolling(std::chrono::milliseconds pollingIntervalMs) {
+    while (true) {
+        {
+            std::lock_guard<std::mutex> lock(managerMutex_);
+            bool allIdle = true;
+            for (const auto& managerPtr : managers_) {
+                GameManager* manager = managerPtr.get();
+                auto& future = manager->getFinishedFuture();
+                if (future.valid() &&
+                    future.wait_for(std::chrono::seconds(0)) != std::future_status::ready) 
+                {
+                    allIdle = false;
+                    break;
+                }
+            }
+            if (allIdle) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(pollingIntervalMs);
+    }
+
+    std::lock_guard<std::mutex> lock(taskMutex_);
+    taskAssignments_.clear();
+}
+
 void GameManagerPool::waitForTask() {
 
     while (true) {
         std::lock_guard<std::mutex> lock(managerMutex_);
         std::vector<GameManager*> managers;
         {
-            std::lock_guard<std::mutex> lock(taskMutex_);
             for (const auto& managerPtr : managers_) {
                 GameManager* manager = managerPtr.get();
                 auto& future = manager->getFinishedFuture();

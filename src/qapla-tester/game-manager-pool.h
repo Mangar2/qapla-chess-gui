@@ -116,6 +116,12 @@ public:
     void waitForTask();
 
     /**
+     * @brief Blocks until all tasks have finished, polling the status periodically.
+     * @param pollingIntervalMs The interval in milliseconds to wait between status checks.
+     */
+    void waitForTaskPolling(std::chrono::milliseconds pollingIntervalMs = std::chrono::milliseconds(100));
+
+    /**
      * @brief Checks if all tasks have finished without blocking.
      * @return True if all futures are ready, false otherwise.
      */
