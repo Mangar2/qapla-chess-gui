@@ -20,6 +20,7 @@
 #include "engine-tests.h"
 #include "qapla-tester/engine-test-functions.h"
 #include "qapla-tester/string-helper.h"
+#include "qapla-tester/engine-report.h"
 #include "snackbar.h"
 #include "configuration.h"
 
@@ -38,7 +39,7 @@ EngineTests::EngineTests()
     
     resultsTable_ = std::make_unique<ImGuiTable>(
         "EngineTestResults",
-        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX,
+        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX,
         columns
     );
     resultsTable_->setClickable(false);
@@ -383,7 +384,54 @@ bool EngineTests::mayClear(bool sendMessage) const
 std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
 {
     std::lock_guard<std::mutex> lock(tableMutex_);
-    return resultsTable_->draw(size);
+    return resultsTable_->draw(size, true);
+}
+
+std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& engineName)
+{
+    // Get the report data from EngineReport
+    auto* checklist = EngineReport::getChecklist(engineName);
+    if (!checklist) {
+        return nullptr;
+    }
+
+    auto reportData = checklist->createReportData();
+
+    // Define the table columns
+    std::vector<ImGuiTable::ColumnDef> columns = {
+        {"Section", ImGuiTableColumnFlags_None, 120.0f},
+        {"Status", ImGuiTableColumnFlags_None, 60.0f},
+        {"Topic", ImGuiTableColumnFlags_None, 0.0f},  // Auto-size
+        {"Details", ImGuiTableColumnFlags_None, 100.0f}
+    };
+
+    // Create the table
+    auto table = std::make_unique<ImGuiTable>(
+        "EngineReport_" + engineName,
+        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX,
+        columns
+    );
+    
+    table->setClickable(false);
+    table->setSortable(false);
+    table->setFilterable(false);
+
+    // Helper lambda to add lines from a section
+    auto addSectionLines = [&table](const std::string& sectionName, const std::vector<EngineReport::ReportLine>& lines) {
+        for (const auto& line : lines) {
+            std::string status = line.passed ? "PASS" : "FAIL";
+            std::string details = line.passed ? "" : std::to_string(line.failCount) + " failed";
+            table->push({sectionName, status, line.text, details});
+        }
+    };
+
+    // Add all sections
+    addSectionLines("Important", reportData.important);
+    addSectionLines("Missbehaviour", reportData.missbehaviour);
+    addSectionLines("Notes", reportData.notes);
+    addSectionLines("Report", reportData.report);
+
+    return table;
 }
 
 void EngineTests::init() {

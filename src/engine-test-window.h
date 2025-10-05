@@ -50,6 +50,7 @@ namespace QaplaWindows
         void drawButtons();
         void drawInput();
         void drawTests();
+        void drawReportTables();
         
         /**
          * @brief Sets the engine configurations from INI file sections

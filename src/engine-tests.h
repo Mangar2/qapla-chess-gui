@@ -130,6 +130,13 @@ namespace QaplaWindows
          */
         void updateConfiguration() const;
 
+        /**
+         * @brief Create a report table for a specific engine
+         * @param engineName Name of the engine to create report for
+         * @return Unique pointer to the report table
+         */
+        std::unique_ptr<ImGuiTable> createReportTable(const std::string& engineName);
+
     private:
         EngineTests();
         ~EngineTests();

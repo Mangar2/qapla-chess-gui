@@ -300,6 +300,39 @@ void EngineTestWindow::drawTests()
     }
 }
 
+void EngineTestWindow::drawReportTables()
+{
+    // Get the selected engine configurations
+    auto selectedEngines = getSelectedEngineConfigurations();
+    
+    if (selectedEngines.empty()) {
+        return;
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+    
+    // Draw a collapsing header for each selected engine
+    for (const auto& engineConfig : selectedEngines) {
+        std::string headerLabel = engineConfig.getName() + " Report";
+        
+        if (ImGui::CollapsingHeader(headerLabel.c_str())) {
+            
+            // Create and draw the report table for this engine
+            auto reportTable = EngineTests::instance().createReportTable(engineConfig.getName());
+            
+            if (reportTable) {
+                ImVec2 tableSize = ImGui::GetContentRegionAvail();
+                reportTable->draw(ImVec2(tableSize.x, 600.0f), true);
+            } else {
+                ImGui::TextDisabled("No report data available");
+            }
+            
+        }
+    }
+}
+
 void EngineTestWindow::draw()
 {
     constexpr float rightBorder = 5.0f;
@@ -311,6 +344,7 @@ void EngineTestWindow::draw()
 
     drawInput();
     drawTests();
+    drawReportTables();
     
     // Draw results table
     ImVec2 tableSize = ImGui::GetContentRegionAvail();
@@ -318,7 +352,7 @@ void EngineTestWindow::draw()
         ImGui::Spacing();
         ImGui::Text("Test Results:");
         ImGui::Spacing();
-        EngineTests::instance().drawTable(ImVec2(tableSize.x, tableSize.y - 40.0f));
+        EngineTests::instance().drawTable(ImVec2(tableSize.x, 2000.0f));
     }
     
     ImGui::EndChild();

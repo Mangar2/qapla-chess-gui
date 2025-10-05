@@ -75,11 +75,11 @@ bool EngineReport::logReport(const std::string& topicId, bool passed, std::strin
     return passed;
 }
 
-AppReturnCode EngineReport::log(TraceLevel traceLevel, const std::optional<EngineResult>& engineResult) {
-    AppReturnCode result = AppReturnCode::NoError;
-    Logger::testLogger().log("\n== Summary ==\n", traceLevel);
-    Logger::testLogger().log(engineName_ + (engineAuthor_.empty() ? "" : " by " + engineAuthor_) + "\n", traceLevel);
-
+EngineReport::ReportData EngineReport::createReportData() {
+    std::lock_guard<std::mutex> lock(statsMutex_);
+    
+    ReportData data;
+    
     std::map<CheckSection, std::vector<std::pair<const CheckTopic*, CheckEntry>>> grouped;
 
     for (const auto& topic : registeredTopics_) {
@@ -87,6 +87,46 @@ AppReturnCode EngineReport::log(TraceLevel traceLevel, const std::optional<Engin
         if (it == entries_.end()) continue;
         grouped[topic.section].emplace_back(&topic, it->second);
     }
+
+    // Helper lambda to process a section
+    auto processSection = [](const std::vector<std::pair<const CheckTopic*, CheckEntry>>& items) -> std::vector<ReportLine> {
+        std::vector<ReportLine> lines;
+        
+        // Sort items: failures first
+        auto sortedItems = items;
+        std::sort(sortedItems.begin(), sortedItems.end(), [](const auto& a, const auto& b) {
+            const bool aFail = a.second.total > 0 && a.second.failures > 0;
+            const bool bFail = b.second.total > 0 && b.second.failures > 0;
+            return aFail > bFail;
+        });
+
+        for (const auto& [topic, stat] : sortedItems) {
+            const bool passed = stat.total > 0 && stat.failures == 0;
+            ReportLine line;
+            line.passed = passed;
+            line.text = topic->text;
+            line.failCount = passed ? 0 : stat.failures;
+            lines.push_back(line);
+        }
+        
+        return lines;
+    };
+
+    // Process each section
+    data.important = processSection(grouped[CheckSection::Important]);
+    data.missbehaviour = processSection(grouped[CheckSection::Missbehaviour]);
+    data.notes = processSection(grouped[CheckSection::Notes]);
+    data.report = processSection(grouped[CheckSection::Report]);
+
+    return data;
+}
+
+AppReturnCode EngineReport::log(TraceLevel traceLevel, const std::optional<EngineResult>& engineResult) {
+    AppReturnCode result = AppReturnCode::NoError;
+    Logger::testLogger().log("\n== Summary ==\n", traceLevel);
+    Logger::testLogger().log(engineName_ + (engineAuthor_.empty() ? "" : " by " + engineAuthor_) + "\n", traceLevel);
+
+    ReportData data = createReportData();
 
     const std::map<CheckSection, std::string> sectionTitles = {
         { CheckSection::Important, "Important" },
@@ -99,56 +139,60 @@ AppReturnCode EngineReport::log(TraceLevel traceLevel, const std::optional<Engin
         { CheckSection::Important, AppReturnCode::EngineError },
         { CheckSection::Missbehaviour, AppReturnCode::EngineMissbehaviour },
         { CheckSection::Notes, AppReturnCode::EngineNote },
-		{ CheckSection::Report, AppReturnCode::NoError  }
+        { CheckSection::Report, AppReturnCode::NoError  }
     };
 
-    for (const auto& [section, entries] : sectionTitles) {
-
-		if (section == CheckSection::Report) {
-			if (engineResult) {
-                Logger::testLogger().log("[" + entries + "]", traceLevel);
+    // Helper lambda to log a section
+    auto logSection = [&](CheckSection section, const std::vector<ReportLine>& lines, const std::string& title) {
+        if (section == CheckSection::Report) {
+            if (engineResult) {
+                Logger::testLogger().log("[" + title + "]", traceLevel);
                 std::ostringstream oss;
                 engineResult->printResults(oss);
                 Logger::testLogger().log(oss.str(), traceLevel);
-			}
-			continue;
-		}
+            }
+            return;
+        }
 
-        Logger::testLogger().log("[" + entries + "]", traceLevel);
+        Logger::testLogger().log("[" + title + "]", traceLevel);
 
-        auto& items = grouped[section];
-        std::sort(items.begin(), items.end(), [](const auto& a, const auto& b) {
-            const bool aFail = a.second.total > 0 && a.second.failures > 0;
-            const bool bFail = b.second.total > 0 && b.second.failures > 0;
-            return aFail > bFail;
-            });
+        if (lines.empty()) {
+            Logger::testLogger().log("", traceLevel);
+            return;
+        }
 
+        // Calculate max topic length for formatting
         size_t maxTopicLength = 0;
-        for (const auto& [topic, _] : items) {
-            maxTopicLength = std::max(maxTopicLength, topic->text.size());
+        for (const auto& line : lines) {
+            maxTopicLength = std::max(maxTopicLength, line.text.size());
         }
 
         bool lastWasFail = false;
-        for (const auto& [topic, stat] : items) {
-            const bool passed = stat.total > 0 && stat.failures == 0;
-            if (result == AppReturnCode::NoError && !passed) {
+        for (const auto& line : lines) {
+            if (result == AppReturnCode::NoError && !line.passed) {
                 result = sectionCodes.at(section);
             }
-            if (passed && lastWasFail) {
+            if (line.passed && lastWasFail) {
                 Logger::testLogger().log("", traceLevel);
             }
-            std::ostringstream line;
-            line << (passed ? "PASS " : "FAIL ");
-            line << std::left << std::setw(static_cast<int>(maxTopicLength) + 2) << topic->text;
-            if (!passed) {
-                line << "(" << stat.failures << " failed)";
+            std::ostringstream oss;
+            oss << (line.passed ? "PASS " : "FAIL ");
+            oss << std::left << std::setw(static_cast<int>(maxTopicLength) + 2) << line.text;
+            if (!line.passed) {
+                oss << "(" << line.failCount << " failed)";
             }
-            lastWasFail = !passed;
-            Logger::testLogger().log(line.str(), traceLevel);
+            lastWasFail = !line.passed;
+            Logger::testLogger().log(oss.str(), traceLevel);
         }
 
         Logger::testLogger().log("", traceLevel);
-    }
+    };
+
+    // Log all sections in order
+    logSection(CheckSection::Important, data.important, sectionTitles.at(CheckSection::Important));
+    logSection(CheckSection::Missbehaviour, data.missbehaviour, sectionTitles.at(CheckSection::Missbehaviour));
+    logSection(CheckSection::Notes, data.notes, sectionTitles.at(CheckSection::Notes));
+    logSection(CheckSection::Report, data.report, sectionTitles.at(CheckSection::Report));
 
     return result;
 }

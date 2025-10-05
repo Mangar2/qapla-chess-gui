@@ -50,6 +50,25 @@ public:
     };
 
     /**
+     * @brief A single line in the report output.
+     */
+    struct ReportLine {
+        bool passed;                  // true if passed, false if failed
+        std::string text;             // The topic text
+        uint32_t failCount;           // Number of failures (0 if passed)
+    };
+
+    /**
+     * @brief Structured report data organized by section.
+     */
+    struct ReportData {
+        std::vector<ReportLine> important;
+        std::vector<ReportLine> missbehaviour;
+        std::vector<ReportLine> notes;
+        std::vector<ReportLine> report;
+    };
+
+    /**
      * @brief Registers a check topic in the global topic registry.
      *        Must be called exactly once per topic ID.
      * @param topic The topic definition to register.
@@ -101,6 +120,13 @@ public:
      * @return AppReturnCode indicating the most severe issue found.
      */
     AppReturnCode log(TraceLevel traceLevel, const std::optional<EngineResult>& result);
+
+    /**
+     * @brief Creates structured report data for all check results.
+     *        Thread-safe: protected by statsMutex_.
+     * @return ReportData containing all report lines organized by section.
+     */
+    ReportData createReportData();
 
     /**
      * @brief Logs the results of all engine checklists.
