@@ -230,4 +230,17 @@ TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves = t
  */
 TestResult runEpdTest(const EngineConfig& engineConfig);
 
+/**
+ * @brief Tests playing multiple games in parallel
+ * 
+ * Runs multiple games with the engine playing against itself using
+ * TestTournament. Tests concurrent game handling and validates that
+ * the engine can handle multiple simultaneous games correctly.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @param numGames Number of games to play (default: determined by test)
+ * @return TestResult Vector containing tournament results
+ */
+TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames = 10);
+
 } // namespace QaplaTester

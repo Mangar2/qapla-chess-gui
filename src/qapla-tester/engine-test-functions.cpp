@@ -28,6 +28,8 @@
 #include "event-sink-recorder.h"
 #include "game-manager.h"
 #include "epd-test-manager.h"
+#include "test-tournament.h"
+#include "game-manager-pool.h"
 
 #include <memory>
 #include <sstream>
@@ -800,6 +802,36 @@ TestResult runEpdTest(const EngineConfig& engineConfig)
             return {TestResultEntry("EPD test", "Unknown error", false)};
         }
     });
+}
+
+TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames)
+{
+    // This test doesn't use runTest() because it needs GameManagerPool
+    // which has different lifecycle management than single engines
+    auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+    
+    try {
+        Logger::testLogger().log("Testing playing " + std::to_string(numGames) + " games...", TraceLevel::command);
+        
+        auto tournament = std::make_shared<TestTournament>(numGames, checklist);
+        
+        GameManagerPool::getInstance().addTaskProvider(tournament, engineConfig, engineConfig);
+        GameManagerPool::getInstance().setConcurrency(4, true, true);  // Use 4 parallel games
+        GameManagerPool::getInstance().waitForTask();
+        
+        Logger::testLogger().logAligned("Testing multiple games:", "All games completed");
+        return {TestResultEntry("Multiple games test", "Completed " + std::to_string(numGames) + " games successfully", true)};
+    }
+    catch (const std::exception& e) {
+        Logger::testLogger().logAligned("Testing multiple games:", std::string("Error: ") + e.what());
+        checklist->logReport("multiple-games", false, "Exception during multiple games test: " + std::string(e.what()));
+        return {TestResultEntry("Multiple games test", std::string("Error: ") + e.what(), false)};
+    }
+    catch (...) {
+        Logger::testLogger().logAligned("Testing multiple games:", "Unknown error");
+        checklist->logReport("multiple-games", false, "Unknown exception during multiple games test");
+        return {TestResultEntry("Multiple games test", "Unknown error", false)};
+    }
 }
 
 } // namespace QaplaTester

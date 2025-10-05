@@ -208,6 +208,16 @@ void EngineTests::testEpd(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runEpdTest(config));
 }
 
+void EngineTests::testMultipleGames(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Multiple games test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runMultipleGamesTest(config, 10));
+}
+
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
 {
     state_ = State::Running;
@@ -274,6 +284,11 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
         if (state_ == State::Stopping) break;
         if (testSelection_.testEpd) {
             testEpd(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testMultipleGames) {
+            testMultipleGames(config);
         }
     }
     
@@ -386,6 +401,7 @@ void EngineTests::init() {
         testSelection_.testComputeGame = section.getValue("testcomputegame").value_or("true") == "true";
         testSelection_.testPonder = section.getValue("testponder").value_or("true") == "true";
         testSelection_.testEpd = section.getValue("testepd").value_or("true") == "true";
+        testSelection_.testMultipleGames = section.getValue("testmultiplegames").value_or("true") == "true";
     }
 }
 
@@ -405,7 +421,8 @@ void EngineTests::updateConfiguration() const {
             {"testepfromfen", testSelection_.testEpFromFen ? "true" : "false"},
             {"testcomputegame", testSelection_.testComputeGame ? "true" : "false"},
             {"testponder", testSelection_.testPonder ? "true" : "false"},
-            {"testepd", testSelection_.testEpd ? "true" : "false"}
+            {"testepd", testSelection_.testEpd ? "true" : "false"},
+            {"testmultiplegames", testSelection_.testMultipleGames ? "true" : "false"}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginetest", "enginetest", { section });

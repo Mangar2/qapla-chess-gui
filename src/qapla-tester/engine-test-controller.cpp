@@ -33,6 +33,7 @@
 #include "game-manager-pool.h"
 #include "event-sink-recorder.h"
 #include "engine-test-functions.h"
+#include "test-tournament.h"
 
 using namespace QaplaTester;
 
@@ -331,30 +332,13 @@ void EngineTestController::runPonderGameTest() {
 }
 
 void EngineTestController::runMultipleGamesTest() {
-    uint32_t parallelGames = CliSettings::Manager::get<uint32_t>("concurrency");
-
-    Logger::testLogger().log("\nTesting playing games. The engine will play " + std::to_string(numGames_) + 
-        " games in total, " + std::to_string(parallelGames) + " in parallel.");
-	Logger::testLogger().log("You can alter the number of games played with 'numgames' option and the number of parallel games with --concurrency option. ");
-    Logger::testLogger().log("White has always the longer time control so we expect white to win most games. ");
-    Logger::testLogger().log("Please wait a moment before first game results occur.");
-
-	GameManagerPool::getInstance().setConcurrency(parallelGames, true);
-    auto tournament = std::make_shared<TestTournament>(numGames_, checklist_);
-
-    try {
-        GameManagerPool::getInstance().addTaskProvider(tournament, engineConfig_, engineConfig_);
-		GameManagerPool::getInstance().assignTaskToManagers();
-        GameManagerPool::getInstance().waitForTask();
-        Logger::testLogger().log("All games completed.");
+    // Use QaplaTester function
+    auto results = QaplaTester::runMultipleGamesTest(engineConfig_, numGames_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Multiple games test failed: " + entry.result, TraceLevel::error);
+        }
     }
-    catch (const std::exception& e) {
-        Logger::testLogger().log("Exception during compute games test: " + std::string(e.what()), TraceLevel::error);
-    }
-    catch (...) {
-        Logger::testLogger().log("Unknown exception during compute games test.", TraceLevel::error);
-    }
-        
 }
 
 void EngineTestController::runPlaceholderTest() {

@@ -268,6 +268,12 @@ void EngineTestWindow::drawTests()
             ImGui::SetTooltip("Test engine finding correct moves for standardized positions");
         }
         
+        // Multiple Games Test
+        modified |= ImGui::Checkbox("Multiple Games Test", &testSelection.testMultipleGames);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test playing multiple games in parallel");
+        }
+        
         if (modified) {
             EngineTests::instance().updateConfiguration();
         }
