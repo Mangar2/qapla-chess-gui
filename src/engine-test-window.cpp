@@ -19,6 +19,7 @@
 
 #include "engine-test-window.h"
 #include "imgui-button.h"
+#include "imgui-controls.h"
 #include "snackbar.h"
 #include "configuration.h"
 
@@ -272,6 +273,23 @@ void EngineTestWindow::drawTests()
         modified |= ImGui::Checkbox("Multiple Games Test", &testSelection.testMultipleGames);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Test playing multiple games in parallel");
+        }
+        
+        // Show options for Multiple Games Test if enabled
+        if (testSelection.testMultipleGames) {
+            ImGui::Indent(10.0f);
+
+            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Number of Games", testSelection.numGames, 1, 10000);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Total number of games to play");
+            }
+
+            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Concurrency", testSelection.concurrency, 1, 32);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Number of games to play in parallel");
+            }
+            
+            ImGui::Unindent(10.0f);
         }
         
         if (modified) {

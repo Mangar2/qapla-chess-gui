@@ -669,6 +669,63 @@ TestResult runComputeGameTest(const EngineConfig& engineConfig, bool logMoves)
     });
 }
 
+// Helper function to test ponder hit scenario
+static void testPonderHit(const GameRecord& gameRecord, EngineWorker* engine,
+    const std::string& ponderMove, const std::string& testname,
+    std::chrono::milliseconds sleep = std::chrono::milliseconds(0)) {
+    static constexpr auto TIMEOUT = std::chrono::milliseconds(2000);
+
+    auto* checklist = EngineReport::getChecklist(engine->getConfig().getName());
+    EventSinkRecorder recorder;
+    engine->setEventSink(recorder.getCallback());
+    engine->newGame(gameRecord, gameRecord.isWhiteToMove());
+    
+    TimeControl t;
+    t.addTimeSegment({0, 2000, 0});
+    GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
+    
+    engine->allowPonder(gameRecord, goLimits, ponderMove);
+    std::this_thread::sleep_for(sleep);
+    
+    bool success = recorder.count(EngineEvent::Type::BestMove) == 0;
+    checklist->logReport(testname, success, "Engine sent a bestmove while in ponder mode. ");
+    
+    engine->setWaitForHandshake(EngineEvent::Type::BestMove);
+    engine->computeMove(gameRecord, goLimits, true);
+    success = engine->waitForHandshake(TIMEOUT);
+    checklist->logReport(testname, success, "Engine did not send a bestmove after compute move in ponder mode.");
+}
+
+// Helper function to test ponder miss scenario
+static void testPonderMiss(const GameRecord& gameRecord, EngineWorker* engine,
+    const std::string& ponderMove, const std::string& testname,
+    std::chrono::milliseconds sleep = std::chrono::milliseconds(100)) {
+    static constexpr auto TIMEOUT = std::chrono::milliseconds(5000);
+    auto* checklist = EngineReport::getChecklist(engine->getConfig().getName());
+
+    EventSinkRecorder recorder;
+    engine->setEventSink(recorder.getCallback());
+    engine->newGame(gameRecord, gameRecord.isWhiteToMove());
+    
+    TimeControl t;
+    t.addTimeSegment({0, 2000, 0});
+    GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
+    
+    engine->allowPonder(gameRecord, goLimits, ponderMove);
+    std::this_thread::sleep_for(sleep);
+    
+    bool success = recorder.count(EngineEvent::Type::BestMove) == 0;
+    checklist->logReport(testname, success, "Engine sent a bestmove while in ponder mode. ");
+    
+    success = engine->moveNow(true, std::chrono::milliseconds(500));
+    checklist->logReport(testname, success, "Engine did not send a bestmove fast after receiving stop in ponder mode.");
+    
+    if (!success) {
+        success = engine->waitForHandshake(TIMEOUT);
+        checklist->logReport(testname, success, "Engine never sent a bestmove after receiving stop in ponder mode.");
+    }
+}
+
 TestResult runUciPonderTest(const EngineConfig& engineConfig)
 {
     return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
@@ -680,58 +737,38 @@ TestResult runUciPonderTest(const EngineConfig& engineConfig)
         auto* engine = engines[0].get();
         
         const std::string testname = "correct-pondering";
-        TestResult results;
         
         try {
-            Logger::testLogger().log("Testing UCI pondering...", TraceLevel::command);
+            std::cout << "Testing pondering:" << std::endl;
             
             GameRecord gameRecord;
-            EventSinkRecorder recorder;
-            static constexpr auto TIMEOUT = std::chrono::milliseconds(2000);
             
-            // Test ponder hit scenario
-            engine->setEventSink(recorder.getCallback());
-            engine->newGame(gameRecord, gameRecord.isWhiteToMove());
+            // Test with initial position and "e2e4" ponder move
+            testPonderHit(gameRecord, engine, "e2e4", testname);
+            testPonderHit(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds(0));
+            testPonderMiss(gameRecord, engine, "e2e4", testname);
+            testPonderMiss(gameRecord, engine, "e2e4", testname, std::chrono::milliseconds(0));
             
-            TimeControl t;
-            t.addTimeSegment({0, 2000, 0});
-            GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
+            // Test with different position and "h4h3" ponder move
+            gameRecord.setStartPosition(false, "K7/8/8/4Q3/5Q1k/8/8/8 b - - 2 68", false, 0,
+                engineConfig.getName(), engineConfig.getName());
+            testPonderHit(gameRecord, engine, "h4h3", testname);
+            testPonderHit(gameRecord, engine, "h4h3", testname, std::chrono::milliseconds(0));
+            testPonderMiss(gameRecord, engine, "h4h3", testname);
+            testPonderMiss(gameRecord, engine, "h4h3", testname, std::chrono::milliseconds(0));
             
-            engine->allowPonder(gameRecord, goLimits, "e2e4");
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            
-            bool success = recorder.count(EngineEvent::Type::BestMove) == 0;
-            if (!success) {
-                results.push_back(TestResultEntry(testname, "Engine sent bestmove while in ponder mode", false));
-                checklist->logReport(testname, false, "Engine sent a bestmove while in ponder mode");
-            } else {
-                engine->setWaitForHandshake(EngineEvent::Type::BestMove);
-                engine->computeMove(gameRecord, goLimits, true);
-                success = engine->waitForHandshake(TIMEOUT);
-                
-                if (success) {
-                    results.push_back(TestResultEntry(testname, "Pondering works correctly", true));
-                    checklist->logReport(testname, true, "");
-                } else {
-                    results.push_back(TestResultEntry(testname, "No bestmove after ponderhit", false));
-                    checklist->logReport(testname, false, "Engine did not send a bestmove after compute move in ponder mode");
-                }
-            }
-            
-            Logger::testLogger().logAligned("Testing UCI pondering:", success ? "Success" : "Failed");
+            return {TestResultEntry("UCI ponder test", "All ponder scenarios tested", true)};
         }
         catch (const std::exception& e) {
-            Logger::testLogger().log("Exception during UCI ponder test: " + std::string(e.what()), TraceLevel::error);
-            checklist->logReport(testname, false, "Exception during UCI ponder test: " + std::string(e.what()));
-            results.push_back(TestResultEntry(testname, "Exception: " + std::string(e.what()), false));
+            Logger::testLogger().log("Exception during uci ponder test: " + std::string(e.what()), TraceLevel::error);
+            checklist->logReport(testname, false, "Exception during uci ponder test: " + std::string(e.what()));
+            return {TestResultEntry("UCI ponder test", "Exception: " + std::string(e.what()), false)};
         }
         catch (...) {
-            Logger::testLogger().log("Unknown exception during UCI ponder test", TraceLevel::error);
-            checklist->logReport(testname, false, "Unknown exception during UCI ponder test");
-            results.push_back(TestResultEntry(testname, "Unknown exception", false));
+            Logger::testLogger().log("Unknown exception during uci ponder test", TraceLevel::error);
+            checklist->logReport(testname, false, "Unknown exception during uci ponder test");
+            return {TestResultEntry("UCI ponder test", "Unknown exception", false)};
         }
-        
-        return results;
     });
 }
 
@@ -804,7 +841,7 @@ TestResult runEpdTest(const EngineConfig& engineConfig)
     });
 }
 
-TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames)
+TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames, uint32_t concurrency)
 {
     // This test doesn't use runTest() because it needs GameManagerPool
     // which has different lifecycle management than single engines
@@ -816,7 +853,7 @@ TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGa
         auto tournament = std::make_shared<TestTournament>(numGames, checklist);
         
         GameManagerPool::getInstance().addTaskProvider(tournament, engineConfig, engineConfig);
-        GameManagerPool::getInstance().setConcurrency(4, true, true);  // Use 4 parallel games
+        GameManagerPool::getInstance().setConcurrency(concurrency, true, true);  
         GameManagerPool::getInstance().waitForTask();
         
         Logger::testLogger().logAligned("Testing multiple games:", "All games completed");

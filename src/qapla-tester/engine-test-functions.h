@@ -241,6 +241,6 @@ TestResult runEpdTest(const EngineConfig& engineConfig);
  * @param numGames Number of games to play (default: determined by test)
  * @return TestResult Vector containing tournament results
  */
-TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames = 10);
+TestResult runMultipleGamesTest(const EngineConfig& engineConfig, uint32_t numGames = 10, uint32_t concurrency = 4);
 
 } // namespace QaplaTester

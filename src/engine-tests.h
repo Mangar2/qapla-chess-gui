@@ -37,7 +37,7 @@ namespace QaplaWindows
     {
     public:
         /**
-         * @brief Struct to hold test selection flags
+         * @brief Struct to hold test selection flags and options
          */
         struct TestSelection {
             bool testStartStop = true;
@@ -53,6 +53,10 @@ namespace QaplaWindows
             bool testPonder = true;
             bool testEpd = true;
             bool testMultipleGames = true;
+            
+            // Test options
+            uint32_t numGames = 10;        ///< Number of games for multiple games test
+            uint32_t concurrency = 4;      ///< Number of parallel games for multiple games test
         };
     public:
         enum class State {

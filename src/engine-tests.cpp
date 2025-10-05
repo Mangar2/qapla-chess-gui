@@ -215,7 +215,9 @@ void EngineTests::testMultipleGames(const EngineConfig& config)
         std::lock_guard<std::mutex> lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Multiple games test", ""});
     }
-    addResult(config.getName(), QaplaTester::runMultipleGamesTest(config, 10));
+    addResult(config.getName(), QaplaTester::runMultipleGamesTest(config, 
+        static_cast<uint32_t>(testSelection_.numGames), 
+        static_cast<uint32_t>(testSelection_.concurrency)));
 }
 
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
@@ -402,6 +404,8 @@ void EngineTests::init() {
         testSelection_.testPonder = section.getValue("testponder").value_or("true") == "true";
         testSelection_.testEpd = section.getValue("testepd").value_or("true") == "true";
         testSelection_.testMultipleGames = section.getValue("testmultiplegames").value_or("true") == "true";
+        testSelection_.numGames = QaplaHelpers::to_uint32(section.getValue("numgames").value_or("10")).value_or(10);
+        testSelection_.concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("4")).value_or(4);
     }
 }
 
@@ -422,7 +426,9 @@ void EngineTests::updateConfiguration() const {
             {"testcomputegame", testSelection_.testComputeGame ? "true" : "false"},
             {"testponder", testSelection_.testPonder ? "true" : "false"},
             {"testepd", testSelection_.testEpd ? "true" : "false"},
-            {"testmultiplegames", testSelection_.testMultipleGames ? "true" : "false"}
+            {"testmultiplegames", testSelection_.testMultipleGames ? "true" : "false"},
+            {"numgames", std::to_string(testSelection_.numGames)},
+            {"concurrency", std::to_string(testSelection_.concurrency)}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginetest", "enginetest", { section });
