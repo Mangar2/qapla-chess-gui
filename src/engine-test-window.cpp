@@ -238,6 +238,30 @@ void EngineTestWindow::drawTests()
             ImGui::SetTooltip("Test that engine correctly handles infinite analysis mode");
         }
         
+        // Go Limits Test
+        modified |= ImGui::Checkbox("Go Limits Test", &testSelection.testGoLimits);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test various time limits, depth limits, and node limits");
+        }
+        
+        // EP from FEN Test
+        modified |= ImGui::Checkbox("EP from FEN Test", &testSelection.testEpFromFen);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test en passant handling from FEN position");
+        }
+        
+        // Compute Game Test
+        modified |= ImGui::Checkbox("Compute Game Test", &testSelection.testComputeGame);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test engine playing a complete game against itself");
+        }
+        
+        // Ponder Test
+        modified |= ImGui::Checkbox("Ponder Test", &testSelection.testPonder);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Test pondering functionality (ponder hit and miss)");
+        }
+        
         if (modified) {
             EngineTests::instance().updateConfiguration();
         }

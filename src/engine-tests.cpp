@@ -151,6 +151,46 @@ void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
     addResult(config.getName(), QaplaTester::runInfiniteAnalyzeTest(config));
 }
 
+void EngineTests::testGoLimits(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Go limits test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runGoLimitsTest(config));
+}
+
+void EngineTests::testEpFromFen(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "EP from FEN test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runEpFromFenTest(config));
+}
+
+void EngineTests::testComputeGame(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Compute game test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runComputeGameTest(config));
+}
+
+void EngineTests::testPonder(const EngineConfig& config)
+{
+    if (state_ == State::Stopping) return;
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        resultsTable_->push({config.getName(), "Running", "Ponder test", ""});
+    }
+    addResult(config.getName(), QaplaTester::runPonderTest(config));
+}
+
 void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
 {
     state_ = State::Running;
@@ -192,6 +232,26 @@ void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
         if (state_ == State::Stopping) break;
         if (testSelection_.testInfiniteAnalyze) {
             testInfiniteAnalyze(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testGoLimits) {
+            testGoLimits(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testEpFromFen) {
+            testEpFromFen(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testComputeGame) {
+            testComputeGame(config);
+        }
+        
+        if (state_ == State::Stopping) break;
+        if (testSelection_.testPonder) {
+            testPonder(config);
         }
     }
     
@@ -299,6 +359,10 @@ void EngineTests::init() {
         testSelection_.testAnalyze = section.getValue("testanalyze").value_or("true") == "true";
         testSelection_.testImmediateStop = section.getValue("testimmediatestop").value_or("true") == "true";
         testSelection_.testInfiniteAnalyze = section.getValue("testinfiniteanalyze").value_or("true") == "true";
+        testSelection_.testGoLimits = section.getValue("testgolimits").value_or("true") == "true";
+        testSelection_.testEpFromFen = section.getValue("testepfromfen").value_or("true") == "true";
+        testSelection_.testComputeGame = section.getValue("testcomputegame").value_or("true") == "true";
+        testSelection_.testPonder = section.getValue("testponder").value_or("true") == "true";
     }
 }
 
@@ -313,7 +377,11 @@ void EngineTests::updateConfiguration() const {
             {"testengineoptions", testSelection_.testEngineOptions ? "true" : "false"},
             {"testanalyze", testSelection_.testAnalyze ? "true" : "false"},
             {"testimmediatestop", testSelection_.testImmediateStop ? "true" : "false"},
-            {"testinfiniteanalyze", testSelection_.testInfiniteAnalyze ? "true" : "false"}
+            {"testinfiniteanalyze", testSelection_.testInfiniteAnalyze ? "true" : "false"},
+            {"testgolimits", testSelection_.testGoLimits ? "true" : "false"},
+            {"testepfromfen", testSelection_.testEpFromFen ? "true" : "false"},
+            {"testcomputegame", testSelection_.testComputeGame ? "true" : "false"},
+            {"testponder", testSelection_.testPonder ? "true" : "false"}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginetest", "enginetest", { section });

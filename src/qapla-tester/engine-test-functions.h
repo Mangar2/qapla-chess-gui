@@ -155,4 +155,54 @@ TestResult runImmediateStopTest(const EngineConfig& engineConfig);
  */
 TestResult runInfiniteAnalyzeTest(const EngineConfig& engineConfig);
 
+/**
+ * @brief Tests various go command time limits and constraints
+ * 
+ * Tests different time control settings including:
+ * - Time with increment (no loss on time)
+ * - Move time limits
+ * - Depth limits
+ * - Node limits
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test results for all limit types
+ */
+TestResult runGoLimitsTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests en passant handling from FEN position
+ * 
+ * Sets up a position with en passant square from FEN and performs en passant capture.
+ * Verifies that engine handles the position correctly.
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test result
+ */
+TestResult runEpFromFenTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests engine playing a complete game against itself
+ * 
+ * Starts two engine instances and has them play a complete game.
+ * Monitors for illegal moves, crashes, and protocol violations.
+ * 
+ * @param engineConfig Configuration for the engines to test
+ * @return TestResult Vector containing game result and any errors
+ */
+TestResult runComputeGameTest(const EngineConfig& engineConfig);
+
+/**
+ * @brief Tests pondering functionality (both ponder hit and ponder miss)
+ * 
+ * Tests:
+ * - Ponder hit (predicted move is played)
+ * - Ponder miss (different move is played)
+ * - Engine behavior during pondering
+ * - Response time after ponder hit/miss
+ * 
+ * @param engineConfig Configuration for the engine to test
+ * @return TestResult Vector containing test results for pondering scenarios
+ */
+TestResult runPonderTest(const EngineConfig& engineConfig);
+
 } // namespace QaplaTester

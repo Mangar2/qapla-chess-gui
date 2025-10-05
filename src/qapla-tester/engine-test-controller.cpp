@@ -210,48 +210,13 @@ void EngineTestController::runMultipleStartStopTest(uint32_t numEngines) {
 
 
 void EngineTestController::runGoLimitsTests() {
-    static constexpr auto GO_TIMEOUT = std::chrono::seconds(4);
-    struct TestCase {
-        std::string name;
-        TimeControl timeControl;
-    };
-
-    std::vector<std::pair<std::string, TimeControl>> testCases = {
-        { "no-loss-on-time", [] {
-            TimeControl t; t.addTimeSegment({0, 1000, 500}); return t;
-        }() },
-        { "no-loss-on-time", [] {
-            TimeControl t; t.addTimeSegment({0, 100, 2000}); return t;
-        }() },
-        { "supports-movetime", [] { TimeControl t; t.setMoveTime(1000); return t; }() },
-        { "supports-depth-limit", [] { TimeControl t; t.setDepth(4); return t; }() },
-        { "supports-node-limit", [] { TimeControl t; t.setNodes(10000); return t; }() }
-    };
-	int errors = 0;
-    for (const auto& [name, timeControl] : testCases) {
-        runTest(name, [this, name, timeControl, &errors]() -> std::pair<bool, std::string> {
-            computeTask_->newGame();
-			computeTask_->setTimeControl(timeControl);
-            computeTask_->setPosition(true);
-            computeTask_->computeMove();
-            bool success = computeTask_->getFinishedFuture().wait_for(GO_TIMEOUT) == std::future_status::ready;
-			if (!success) {
-                computeTask_->moveNow();
-                errors++;
-			}
-            bool finished = computeTask_->getFinishedFuture().wait_for(GO_TIMEOUT) == std::future_status::ready;
-			if (!finished) {
-                computeTask_->stop();
-			}
-            auto timeStr = timeControl.toPgnTimeControlString();
-			if (timeStr != "") {
-				timeStr = " Time control: " + timeStr + "";
-			}
-            return { success, "Compute move did not return with bestmove in time when testing " + name + timeStr};
-        });
+    // Use QaplaTester function
+    auto results = QaplaTester::runGoLimitsTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Go limits test failed: " + entry.result, TraceLevel::error);
+        }
     }
-    Logger::testLogger().logAligned("Testing compute moves:", 
-        errors == 0 ? "Time limits, node limits and depth limits works well": std::to_string(errors) + " errors");
 }
 
 void EngineTestController::runHashTableMemoryTest() {
@@ -416,43 +381,22 @@ void EngineTestController::runEpdTests() {
 }
 
 void EngineTestController::runEpFromFenTest() {
-	try {
-        Logger::testLogger().logAligned("Tested ep-pos from a Fen:", "Check EP handling in FEN parsing if errors occur.");
-		TimeControl timeControl;
-		timeControl.addTimeSegment({ 0, 1000, 100 }); 
-		computeTask_->setTimeControl(timeControl);
-		computeTask_->setPosition(false, "rnbqkb1r/ppp2ppp/8/3pP3/4n3/5N2/PPP2PPP/RNBQKB1R w KQkq d6 0 1",
-            std::vector<std::string>{ "e5d6" });
-		computeTask_->computeMove();
-        computeTask_->getFinishedFuture().wait_for(std::chrono::seconds(2));
-	}
-	catch (const std::exception& e) {
-		Logger::testLogger().log("Exception during compute ep-pos test: " + std::string(e.what()), TraceLevel::error);
-	}
-	catch (...) {
-		Logger::testLogger().log("Unknown exception during compute ep-pos test.", TraceLevel::error);
-	}
-
+    // Use QaplaTester function
+    auto results = QaplaTester::runEpFromFenTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("EP from FEN test failed: " + entry.result, TraceLevel::error);
+        }
+    }
 }
 
 void EngineTestController::runComputeGameTest() {
-	Logger::testLogger().log("\nThe engine now plays against itself. I control all engine output, and check its validity while playing.");
-    EngineList engines = startEngines(2);
-	computeTask_->initEngines(std::move(engines));
-    try {
-        computeTask_->newGame();
-        computeTask_->setPosition(true);
-        TimeControl t1; t1.addTimeSegment({ 0, 20000, 100 });
-        TimeControl t2; t2.addTimeSegment({ 0, 10000, 100 });
-        computeTask_->setTimeControls({ t1, t2 });
-        computeTask_->autoPlay(true);
-        computeTask_->getFinishedFuture().wait();
-    }
-    catch (const std::exception& e) {
-		Logger::testLogger().log("Exception during compute games test: " + std::string(e.what()), TraceLevel::error);
-    }
-    catch (...) {
-		Logger::testLogger().log("Unknown exception during compute games test.", TraceLevel::error);
+    // Use QaplaTester function
+    auto results = QaplaTester::runComputeGameTest(engineConfig_);
+    for (const auto& entry : results) {
+        if (!entry.success) {
+            Logger::testLogger().log("Compute game test failed: " + entry.result, TraceLevel::error);
+        }
     }
 }
 

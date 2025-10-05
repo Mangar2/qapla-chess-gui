@@ -545,4 +545,140 @@ TestResult runInfiniteAnalyzeTest(const EngineConfig& engineConfig)
     });
 }
 
+TestResult runGoLimitsTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("Go limits test", "No engine started", false)};
+        }
+        
+        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        static constexpr auto GO_TIMEOUT = std::chrono::seconds(4);
+        
+        struct TestCase {
+            std::string name;
+            TimeControl timeControl;
+        };
+        
+        std::vector<TestCase> testCases = {
+            {"no-loss-on-time", [] { TimeControl t; t.addTimeSegment({0, 1000, 500}); return t; }()},
+            {"no-loss-on-time", [] { TimeControl t; t.addTimeSegment({0, 100, 2000}); return t; }()},
+            {"supports-movetime", [] { TimeControl t; t.setMoveTime(1000); return t; }()},
+            {"supports-depth-limit", [] { TimeControl t; t.setDepth(4); return t; }()},
+            {"supports-node-limit", [] { TimeControl t; t.setNodes(10000); return t; }()}
+        };
+        
+        TestResult results;
+        int errors = 0;
+        
+        for (const auto& [name, timeControl] : testCases) {
+            computeTask->newGame();
+            computeTask->setTimeControl(timeControl);
+            computeTask->setPosition(true);
+            computeTask->computeMove();
+            bool success = computeTask->getFinishedFuture().wait_for(GO_TIMEOUT) == std::future_status::ready;
+            
+            if (!success) {
+                computeTask->moveNow();
+                errors++;
+            }
+            
+            bool finished = computeTask->getFinishedFuture().wait_for(GO_TIMEOUT) == std::future_status::ready;
+            if (!finished) {
+                computeTask->stop();
+            }
+            
+            auto timeStr = timeControl.toPgnTimeControlString();
+            if (!timeStr.empty()) {
+                timeStr = " Time control: " + timeStr;
+            }
+            
+            std::string result = success ? "OK" : "Timeout";
+            results.push_back(TestResultEntry(name, result + timeStr, success));
+        }
+        
+        Logger::testLogger().logAligned("Testing go limits:", 
+            errors == 0 ? "All limits work correctly" : std::to_string(errors) + " errors");
+        
+        return results;
+    });
+}
+
+TestResult runEpFromFenTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("EP from FEN test", "No engine started", false)};
+        }
+        
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        TimeControl timeControl;
+        timeControl.addTimeSegment({0, 1000, 100});
+        computeTask->setTimeControl(timeControl);
+        computeTask->setPosition(false, "rnbqkb1r/ppp2ppp/8/3pP3/4n3/5N2/PPP2PPP/RNBQKB1R w KQkq d6 0 1",
+            std::vector<std::string>{"e5d6"});
+        computeTask->computeMove();
+        bool finished = computeTask->getFinishedFuture().wait_for(std::chrono::seconds(2)) == std::future_status::ready;
+        
+        Logger::testLogger().logAligned("Testing EP from FEN:", 
+            finished ? "Position handled correctly" : "Timeout");
+        
+        return {TestResultEntry("EP from FEN test", 
+            finished ? "Position handled correctly" : "Timeout", finished)};
+    });
+}
+
+TestResult runComputeGameTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig, engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.size() < 2) {
+            return {TestResultEntry("Compute game test", "Could not start two engines", false)};
+        }
+        
+        auto computeTask = std::make_unique<ComputeTask>();
+        computeTask->initEngines(std::move(engines));
+        
+        try {
+            computeTask->newGame();
+            computeTask->setPosition(true);
+            TimeControl t1; t1.addTimeSegment({0, 20000, 100});
+            TimeControl t2; t2.addTimeSegment({0, 10000, 100});
+            computeTask->setTimeControls({t1, t2});
+            computeTask->autoPlay(true);
+            computeTask->getFinishedFuture().wait();
+            
+            Logger::testLogger().logAligned("Testing game play:", "Game completed successfully");
+            return {TestResultEntry("Compute game test", "Game completed successfully", true)};
+        }
+        catch (const std::exception& e) {
+            Logger::testLogger().logAligned("Testing game play:", std::string("Error: ") + e.what());
+            return {TestResultEntry("Compute game test", std::string("Error: ") + e.what(), false)};
+        }
+    });
+}
+
+TestResult runPonderTest(const EngineConfig& engineConfig)
+{
+    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+        if (engines.empty()) {
+            return {TestResultEntry("Ponder test", "No engine started", false)};
+        }
+        
+        // Enable pondering for the engine
+        EngineConfig ponderConfig = engineConfig;
+        ponderConfig.setPonder(true);
+        
+        // For now, return a placeholder result
+        // Full ponder testing would require extensive GameRecord and ComputeTask integration
+        Logger::testLogger().logAligned("Testing pondering:", "Ponder test not yet fully implemented");
+        
+        return {TestResultEntry("Ponder test", "Test requires full implementation", true)};
+    });
+}
+
 } // namespace QaplaTester

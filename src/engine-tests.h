@@ -47,6 +47,10 @@ namespace QaplaWindows
             bool testAnalyze = true;
             bool testImmediateStop = true;
             bool testInfiniteAnalyze = true;
+            bool testGoLimits = true;
+            bool testEpFromFen = true;
+            bool testComputeGame = true;
+            bool testPonder = true;
         };
     public:
         enum class State {
@@ -136,6 +140,10 @@ namespace QaplaWindows
         void testAnalyze(const EngineConfig& engineConfig);
         void testImmediateStop(const EngineConfig& engineConfig);
         void testInfiniteAnalyze(const EngineConfig& engineConfig);
+        void testGoLimits(const EngineConfig& engineConfig);
+        void testEpFromFen(const EngineConfig& engineConfig);
+        void testComputeGame(const EngineConfig& engineConfig);
+        void testPonder(const EngineConfig& engineConfig);
         void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
         
         std::vector<EngineConfig> engineConfigs_;
