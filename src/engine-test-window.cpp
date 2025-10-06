@@ -30,6 +30,9 @@
 
 using namespace QaplaWindows;
 
+// UI Layout Constants
+constexpr float standardIndent = 10.0F;
+
 EngineTestWindow::EngineTestWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
 {
@@ -48,7 +51,7 @@ EngineTestWindow::EngineTestWindow()
 EngineTestWindow::~EngineTestWindow() = default;
 
 void EngineTestWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
-    engineSelect_->setConfigurationChangedCallback(callback);
+    engineSelect_->setConfigurationChangedCallback(std::move(callback));
 }
 
 void EngineTestWindow::setEngineConfiguration() {
@@ -77,9 +80,8 @@ static std::string getButtonText(const std::string& button, EngineTests::State t
     {
         if (testState == EngineTests::State::Running) {
             return "Stop";
-        } else {
-            return "Run";
-        } 
+        }
+        return "Run";
     } 
     return button;
 }
@@ -104,20 +106,56 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, Engine
     return QaplaButton::ButtonState::Normal;
 }
 
+static void drawButtonIcon(const std::string& button, EngineTests::State testState, 
+    QaplaButton::ButtonState buttonState, ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+    if (button == "Run/Stop") {
+        if (testState == EngineTests::State::Running) {
+            QaplaButton::drawStop(drawList, topLeft, size, buttonState);
+        } else {
+            QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
+        }
+    } else if (button == "Clear") {
+        QaplaButton::drawClear(drawList, topLeft, size, buttonState);
+    }
+}
+
+static void handleButtonClick(const std::string& button, EngineTests::State testState, 
+    const std::vector<EngineConfig>& selectedEngines) {
+    try {
+        if (button == "Run/Stop" && testState != EngineTests::State::Running) {
+            // Start tests
+            if (selectedEngines.empty()) {
+                SnackbarManager::instance().showError("Please select at least one engine");
+            } else {
+                EngineTests::instance().runTests(selectedEngines);
+            }
+        } else if (button == "Run/Stop" && testState == EngineTests::State::Running) {
+            // Stop tests
+            EngineTests::instance().stop();
+        } else if (button == "Clear") {
+            // Clear results
+            EngineTests::instance().clear();
+        }
+    } catch (const std::exception& e) {
+        SnackbarManager::instance().showError(std::string("Error: ") + e.what());
+    }
+}
+
 void EngineTestWindow::drawButtons()
 {
-    constexpr float space = 3.0f;
-    constexpr float paddingTop = 5.0f;
-    constexpr float paddingBottom = 8.0f;
-    constexpr float paddingLeft = 20.0f;
+    constexpr float space = 3.0F;
+    constexpr float paddingTop = 5.0F;
+    constexpr float paddingBottom = 8.0F;
+    constexpr float paddingLeft = 20.0F;
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = {25.0f, 25.0f};
+    constexpr ImVec2 buttonSize = {25.0F, 25.0F};
     // We use "Analyze" to calculate the width of the button to keep the layout consistent
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
     auto testState = EngineTests::instance().getState();
+    auto selectedEngines = getSelectedEngineConfigurations();
     
     for (const std::string button : {"Run/Stop", "Clear"})
     {
@@ -129,48 +167,11 @@ void EngineTestWindow::drawButtons()
         if (QaplaButton::drawIconButton(button, buttonText, buttonSize, buttonState, 
             [&button, buttonState, testState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
             {
-                if (button == "Run/Stop")
-                {
-                    if (testState == EngineTests::State::Running) {
-                        QaplaButton::drawStop(drawList, topLeft, size, buttonState);
-                    } else {
-                        QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
-                    }
-                }
-                if (button == "Clear")
-                {
-                    QaplaButton::drawClear(drawList, topLeft, size, buttonState);
-                } 
+                drawButtonIcon(button, testState, buttonState, drawList, topLeft, size);
             }
         ))
         {
-            try
-            {
-                if (button == "Run/Stop" && testState != EngineTests::State::Running)
-                {
-                    // Start tests
-                    auto selectedEngines = getSelectedEngineConfigurations();
-                    if (selectedEngines.empty()) {
-                        SnackbarManager::instance().showError("Please select at least one engine");
-                    } else {
-                        EngineTests::instance().runTests(selectedEngines);
-                    }
-                }
-                else if (button == "Run/Stop" && testState == EngineTests::State::Running)
-                {
-                    // Stop tests
-                    EngineTests::instance().stop();
-                }
-                else if (button == "Clear")
-                {
-                    // Clear results
-                    EngineTests::instance().clear();
-                }
-            }
-            catch (const std::exception &e)
-            {
-                SnackbarManager::instance().showError(std::string("Error: ") + e.what());
-            }
+            handleButtonClick(button, testState, selectedEngines);
         }
         pos.x += totalSize.x + space;
     }
@@ -182,121 +183,69 @@ void EngineTestWindow::drawInput()
 {
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
-        ImGui::Indent(10.0f);
+        ImGui::Indent(standardIndent);
         engineSelect_->draw();
-        ImGui::Unindent(10.0f);
+        ImGui::Unindent(standardIndent);
         ImGui::PopID();
     }
 }
 
-void EngineTestWindow::drawTests()
+static void drawCheckbox(const char* label, bool& value, const char* tooltip) {
+    if (ImGui::Checkbox(label, &value)) {
+        EngineTests::instance().updateConfiguration();
+    }
+    if (ImGui::IsItemHovered() && tooltip != nullptr) {
+        ImGui::SetTooltip("%s", tooltip);
+    }
+}
+
+static void drawTests()
 {
+    constexpr uint32_t maxGames = 10000;
+    constexpr uint32_t maxConcurrency = 32;
+    
     if (ImGui::CollapsingHeader("Tests", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0f);
+        ImGui::Indent(standardIndent);
         
         bool modified = false;
         auto& testSelection = EngineTests::instance().getTestSelection();
         
-        // Start/Stop Test
-        modified |= ImGui::Checkbox("Start/Stop Test", &testSelection.testStartStop);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test basic engine start and stop functionality");
-        }
-        
-        // Hash Table Memory Test
-        modified |= ImGui::Checkbox("Hash Table Memory Test", &testSelection.testHashTableMemory);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that memory usage shrinks when reducing Hash option");
-        }
-        
-        // Lowercase Option Test
-        modified |= ImGui::Checkbox("Lowercase Option Test", &testSelection.testLowerCaseOption);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that engine accepts lowercase option names");
-        }
-        
-        // Engine Options Test
-        modified |= ImGui::Checkbox("Engine Options Test", &testSelection.testEngineOptions);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test all engine options with edge case values");
-        }
-        
-        // Analyze Test
-        modified |= ImGui::Checkbox("Analyze Test", &testSelection.testAnalyze);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that engine reacts correctly to stop command during analysis");
-        }
-        
-        // Immediate Stop Test
-        modified |= ImGui::Checkbox("Immediate Stop Test", &testSelection.testImmediateStop);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that engine handles immediate stop command correctly");
-        }
-        
-        // Infinite Analyze Test
-        modified |= ImGui::Checkbox("Infinite Analyze Test", &testSelection.testInfiniteAnalyze);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test that engine correctly handles infinite analysis mode");
-        }
-        
-        // Go Limits Test
-        modified |= ImGui::Checkbox("Go Limits Test", &testSelection.testGoLimits);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test various time limits, depth limits, and node limits");
-        }
-        
-        // EP from FEN Test
-        modified |= ImGui::Checkbox("EP from FEN Test", &testSelection.testEpFromFen);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test en passant handling from FEN position");
-        }
-        
-        // Compute Game Test
-        modified |= ImGui::Checkbox("Compute Game Test", &testSelection.testComputeGame);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test engine playing a complete game against itself");
-        }
-        
-        // Ponder Test
-        modified |= ImGui::Checkbox("Ponder Test", &testSelection.testPonder);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test pondering functionality (ponder hit and miss)");
-        }
-        
-        // EPD Test
-        modified |= ImGui::Checkbox("EPD Test", &testSelection.testEpd);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test engine finding correct moves for standardized positions");
-        }
-        
-        // Multiple Games Test
-        modified |= ImGui::Checkbox("Multiple Games Test", &testSelection.testMultipleGames);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Test playing multiple games in parallel");
-        }
+        drawCheckbox("Start/Stop Test", testSelection.testStartStop, "Test basic engine start and stop functionality");
+        drawCheckbox("Hash Table Memory Test", testSelection.testHashTableMemory, "Test that memory usage shrinks when reducing Hash option");
+        drawCheckbox("Lowercase Option Test", testSelection.testLowerCaseOption, "Test that engine accepts lowercase option names");
+        drawCheckbox("Engine Options Test", testSelection.testEngineOptions, "Test all engine options with edge case values");
+        drawCheckbox("Analyze Test", testSelection.testAnalyze, "Test that engine reacts correctly to stop command during analysis");
+        drawCheckbox("Immediate Stop Test", testSelection.testImmediateStop, "Test that engine handles immediate stop command correctly");
+        drawCheckbox("Infinite Analyze Test", testSelection.testInfiniteAnalyze, "Test that engine correctly handles infinite analysis mode");
+        drawCheckbox("Go Limits Test", testSelection.testGoLimits, "Test various time limits, depth limits, and node limits");
+        drawCheckbox("EP from FEN Test", testSelection.testEpFromFen, "Test en passant handling from FEN position");
+        drawCheckbox("Compute Game Test", testSelection.testComputeGame, "Test engine playing a complete game against itself");
+        drawCheckbox("Ponder Test", testSelection.testPonder, "Test pondering functionality (ponder hit and miss)");
+        drawCheckbox("EPD Test", testSelection.testEpd, "Test engine finding correct moves for standardized positions");
+        drawCheckbox("Multiple Games Test", testSelection.testMultipleGames, "Test playing multiple games in parallel");
         
         // Show options for Multiple Games Test if enabled
         if (testSelection.testMultipleGames) {
-            ImGui::Indent(10.0f);
+            ImGui::Indent(standardIndent);
 
-            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Number of Games", testSelection.numGames, 1, 10000);
+            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Number of Games", testSelection.numGames, 1, maxGames);
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Total number of games to play");
             }
 
-            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Concurrency", testSelection.concurrency, 1, 32);
+            modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Concurrency", testSelection.concurrency, 1, maxConcurrency);
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Number of games to play in parallel");
             }
             
-            ImGui::Unindent(10.0f);
+            ImGui::Unindent(standardIndent);
         }
         
         if (modified) {
             EngineTests::instance().updateConfiguration();
         }
         
-        ImGui::Unindent(10.0f);
+        ImGui::Unindent(standardIndent);
     }
 }
 
@@ -304,6 +253,7 @@ void EngineTestWindow::drawReportTables()
 {
     // Get the selected engine configurations
     auto selectedEngines = getSelectedEngineConfigurations();
+    constexpr float TableHeight = 600.0F;
     
     if (selectedEngines.empty()) {
         return;
@@ -324,7 +274,7 @@ void EngineTestWindow::drawReportTables()
             
             if (reportTable) {
                 ImVec2 tableSize = ImGui::GetContentRegionAvail();
-                reportTable->draw(ImVec2(tableSize.x, 600.0f), true);
+                reportTable->draw(ImVec2(tableSize.x, TableHeight), true);
             } else {
                 ImGui::TextDisabled("No report data available");
             }
@@ -335,10 +285,11 @@ void EngineTestWindow::drawReportTables()
 
 void EngineTestWindow::draw()
 {
-    constexpr float rightBorder = 5.0f;
+    constexpr float rightBorder = 5.0F;
+    constexpr float minTableSpace = 50.0F;
     drawButtons();
 
-    ImGui::Indent(10.0f);
+    ImGui::Indent(standardIndent);
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
 
@@ -348,13 +299,13 @@ void EngineTestWindow::draw()
     
     // Draw results table
     ImVec2 tableSize = ImGui::GetContentRegionAvail();
-    if (tableSize.y > 50.0f) {  // Only draw if there's enough space
+    if (tableSize.y > minTableSpace) {  // Only draw if there's enough space
         ImGui::Spacing();
         ImGui::Text("Test Results:");
         ImGui::Spacing();
-        EngineTests::instance().drawTable(ImVec2(tableSize.x, 2000.0f));
+        EngineTests::instance().drawTable(ImVec2(tableSize.x, 0.0F));
     }
     
     ImGui::EndChild();
-    ImGui::Unindent(10.0f);
+    ImGui::Unindent(standardIndent);
 }

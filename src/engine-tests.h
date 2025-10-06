@@ -135,7 +135,7 @@ namespace QaplaWindows
          * @param engineName Name of the engine to create report for
          * @return Unique pointer to the report table
          */
-        std::unique_ptr<ImGuiTable> createReportTable(const std::string& engineName);
+        static std::unique_ptr<ImGuiTable> createReportTable(const std::string& engineName);
 
     private:
         EngineTests();
@@ -145,7 +145,7 @@ namespace QaplaWindows
         
         void init();
 
-        void addResult(const std::string& engineName, QaplaTester::TestResult result);
+        void addResult(const std::string& engineName, const QaplaTester::TestResult& result);
         void testEngineStartStop(const EngineConfig& engineConfig);
         void testHashTableMemory(const EngineConfig& engineConfig);
         void testLowerCaseOption(const EngineConfig& engineConfig);
@@ -159,7 +159,7 @@ namespace QaplaWindows
         void testPonder(const EngineConfig& engineConfig);
         void testEpd(const EngineConfig& engineConfig);
         void testMultipleGames(const EngineConfig& engineConfig);
-        void runTestsThreaded(std::vector<EngineConfig> engineConfigs);
+        void runTestsThreaded(const std::vector<EngineConfig>& engineConfigs);
         
         std::vector<EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;

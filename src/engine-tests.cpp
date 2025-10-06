@@ -31,10 +31,10 @@ EngineTests::EngineTests()
 {
     // Initialize results table with 4 columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        {"Engine", ImGuiTableColumnFlags_None, 150.0f},
-        {"Status", ImGuiTableColumnFlags_None, 80.0f},
-        {"Test", ImGuiTableColumnFlags_None, 200.0f},
-        {"Result", ImGuiTableColumnFlags_None, 0.0f}
+        { .name = "Engine", .flags = ImGuiTableColumnFlags_None, .width = 150.0F },
+        { .name = "Status", .flags = ImGuiTableColumnFlags_None, .width = 80.0F },
+        { .name = "Test", .flags = ImGuiTableColumnFlags_None, .width = 200.0F },
+        { .name = "Result", .flags = ImGuiTableColumnFlags_None }
     };
     
     resultsTable_ = std::make_unique<ImGuiTable>(
@@ -63,9 +63,9 @@ EngineTests& EngineTests::instance()
     return instance;
 }
 
-void EngineTests::addResult(const std::string& engineName, QaplaTester::TestResult result)
+void EngineTests::addResult(const std::string& engineName, const QaplaTester::TestResult& result)
 {
-    std::lock_guard<std::mutex> lock(tableMutex_);
+    std::scoped_lock lock(tableMutex_);
     resultsTable_->pop_back(); // Remove "Running" entry
     for (const auto& entry : result) {
         std::string statusText = entry.success ? "Success" : "Fail";
@@ -76,27 +76,28 @@ void EngineTests::addResult(const std::string& engineName, QaplaTester::TestResu
 void EngineTests::testEngineStartStop(const EngineConfig& config)
 {
     // Run single start/stop test
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Start/Stop tests", ""});
     }
     addResult(config.getName(), QaplaTester::runEngineStartStopTest(config));
 
     // Run multiple start/stop test (20 engines in parallel)
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Multiple Start/Stop tests", ""});
     }
-    addResult(config.getName(), QaplaTester::runEngineMultipleStartStopTest(config, 20));
+    constexpr uint32_t numEngines = 20;
+    addResult(config.getName(), QaplaTester::runEngineMultipleStartStopTest(config, numEngines));
 }
 
 void EngineTests::testHashTableMemory(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Hash table memory test", ""});
     }
     addResult(config.getName(), QaplaTester::runHashTableMemoryTest(config));
@@ -104,9 +105,9 @@ void EngineTests::testHashTableMemory(const EngineConfig& config)
 
 void EngineTests::testLowerCaseOption(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Lowercase option test", ""});
     }
     addResult(config.getName(), QaplaTester::runLowerCaseOptionTest(config));
@@ -114,9 +115,9 @@ void EngineTests::testLowerCaseOption(const EngineConfig& config)
 
 void EngineTests::testEngineOptions(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Engine option tests", ""});
     }
     addResult(config.getName(), QaplaTester::runEngineOptionTests(config));
@@ -124,9 +125,9 @@ void EngineTests::testEngineOptions(const EngineConfig& config)
 
 void EngineTests::testAnalyze(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Analyze test", ""});
     }
     addResult(config.getName(), QaplaTester::runAnalyzeTest(config));
@@ -134,9 +135,9 @@ void EngineTests::testAnalyze(const EngineConfig& config)
 
 void EngineTests::testImmediateStop(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Immediate stop test", ""});
     }
     addResult(config.getName(), QaplaTester::runImmediateStopTest(config));
@@ -144,9 +145,9 @@ void EngineTests::testImmediateStop(const EngineConfig& config)
 
 void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Infinite analyze test", ""});
     }
     addResult(config.getName(), QaplaTester::runInfiniteAnalyzeTest(config));
@@ -154,9 +155,9 @@ void EngineTests::testInfiniteAnalyze(const EngineConfig& config)
 
 void EngineTests::testGoLimits(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Go limits test", ""});
     }
     addResult(config.getName(), QaplaTester::runGoLimitsTest(config));
@@ -164,9 +165,9 @@ void EngineTests::testGoLimits(const EngineConfig& config)
 
 void EngineTests::testEpFromFen(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "EP from FEN test", ""});
     }
     addResult(config.getName(), QaplaTester::runEpFromFenTest(config));
@@ -174,9 +175,9 @@ void EngineTests::testEpFromFen(const EngineConfig& config)
 
 void EngineTests::testComputeGame(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Compute game test", ""});
     }
     addResult(config.getName(), QaplaTester::runComputeGameTest(config, false));
@@ -184,16 +185,16 @@ void EngineTests::testComputeGame(const EngineConfig& config)
 
 void EngineTests::testPonder(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "UCI ponder test", ""});
     }
     addResult(config.getName(), QaplaTester::runUciPonderTest(config));
     
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Ponder game test", ""});
     }
     addResult(config.getName(), QaplaTester::runPonderGameTest(config, false));
@@ -201,9 +202,9 @@ void EngineTests::testPonder(const EngineConfig& config)
 
 void EngineTests::testEpd(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "EPD test", ""});
     }
     addResult(config.getName(), QaplaTester::runEpdTest(config));
@@ -211,85 +212,84 @@ void EngineTests::testEpd(const EngineConfig& config)
 
 void EngineTests::testMultipleGames(const EngineConfig& config)
 {
-    if (state_ == State::Stopping) return;
+    if (state_ == State::Stopping) { return; };
     {
-        std::lock_guard<std::mutex> lock(tableMutex_);
+        std::scoped_lock lock(tableMutex_);
         resultsTable_->push({config.getName(), "Running", "Multiple games test", ""});
     }
-    addResult(config.getName(), QaplaTester::runMultipleGamesTest(config, 
-        static_cast<uint32_t>(testSelection_.numGames), 
-        static_cast<uint32_t>(testSelection_.concurrency)));
+    addResult(config.getName(), QaplaTester::runMultipleGamesTest(
+        config, testSelection_.numGames, testSelection_.concurrency));
 }
 
-void EngineTests::runTestsThreaded(std::vector<EngineConfig> engineConfigs)
+void EngineTests::runTestsThreaded(const std::vector<EngineConfig>& engineConfigs)
 {
     state_ = State::Running;
     
     // Loop over all engines once for all tests
     for (const auto& config : engineConfigs) {
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         
         // Run selected tests for this engine
         if (testSelection_.testStartStop) {
             testEngineStartStop(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testHashTableMemory) {
             testHashTableMemory(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testLowerCaseOption) {
             testLowerCaseOption(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testEngineOptions) {
             testEngineOptions(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testAnalyze) {
             testAnalyze(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testImmediateStop) {
             testImmediateStop(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testInfiniteAnalyze) {
             testInfiniteAnalyze(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testGoLimits) {
             testGoLimits(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testEpFromFen) {
             testEpFromFen(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testComputeGame) {
             testComputeGame(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testPonder) {
             testPonder(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testEpd) {
             testEpd(config);
         }
         
-        if (state_ == State::Stopping) break;
+        if (state_ == State::Stopping) { break; }
         if (testSelection_.testMultipleGames) {
             testMultipleGames(config);
         }
@@ -323,8 +323,8 @@ void EngineTests::clear()
     if (!mayClear(true)) {
         return;
     }
-    
-    std::lock_guard<std::mutex> lock(tableMutex_);
+
+    std::scoped_lock lock(tableMutex_);
     resultsTable_->clear();
     state_ = State::Cleared;
 }
@@ -383,7 +383,7 @@ bool EngineTests::mayClear(bool sendMessage) const
 
 std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
 {
-    std::lock_guard<std::mutex> lock(tableMutex_);
+    std::scoped_lock lock(tableMutex_);
     return resultsTable_->draw(size, true);
 }
 
@@ -391,7 +391,7 @@ std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& en
 {
     // Get the report data from EngineReport
     auto* checklist = EngineReport::getChecklist(engineName);
-    if (!checklist) {
+    if (checklist == nullptr) {
         return nullptr;
     }
 
@@ -399,10 +399,10 @@ std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& en
 
     // Define the table columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        {"Section", ImGuiTableColumnFlags_None, 120.0f},
-        {"Status", ImGuiTableColumnFlags_None, 60.0f},
-        {"Topic", ImGuiTableColumnFlags_None, 0.0f},  // Auto-size
-        {"Details", ImGuiTableColumnFlags_None, 100.0f}
+        { .name = "Section", .flags = ImGuiTableColumnFlags_None, .width = 120.0F},
+        { .name = "Status", .flags = ImGuiTableColumnFlags_None, .width = 60.0F},
+        { .name = "Topic", .flags = ImGuiTableColumnFlags_None},  
+        { .name = "Details", .flags = ImGuiTableColumnFlags_None, .width = 100.0F}
     };
 
     // Create the table
@@ -437,8 +437,11 @@ std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& en
 void EngineTests::init() {
     auto sections = QaplaConfiguration::Configuration::instance().
         getConfigData().getSectionList("enginetest", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    if (sections.size() > 0) {
-        auto section = sections[0];
+
+    constexpr uint32_t numGames = 10;
+    constexpr uint16_t concurrency = 4;
+    if (!sections.empty()) {
+        const auto& section = sections[0];
         testSelection_.testStartStop = section.getValue("teststartstop").value_or("true") == "true";
         testSelection_.testHashTableMemory = section.getValue("testhashtablememory").value_or("true") == "true";
         testSelection_.testLowerCaseOption = section.getValue("testlowercaseoption").value_or("true") == "true";
@@ -452,8 +455,8 @@ void EngineTests::init() {
         testSelection_.testPonder = section.getValue("testponder").value_or("true") == "true";
         testSelection_.testEpd = section.getValue("testepd").value_or("true") == "true";
         testSelection_.testMultipleGames = section.getValue("testmultiplegames").value_or("true") == "true";
-        testSelection_.numGames = QaplaHelpers::to_uint32(section.getValue("numgames").value_or("10")).value_or(10);
-        testSelection_.concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("4")).value_or(4);
+        testSelection_.numGames = QaplaHelpers::to_uint32(section.getValue("numgames").value_or("10")).value_or(numGames);
+        testSelection_.concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("4")).value_or(concurrency);
     }
 }
 

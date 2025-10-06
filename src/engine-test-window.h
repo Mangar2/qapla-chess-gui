@@ -49,7 +49,6 @@ namespace QaplaWindows
     private:
         void drawButtons();
         void drawInput();
-        void drawTests();
         void drawReportTables();
         
         /**
