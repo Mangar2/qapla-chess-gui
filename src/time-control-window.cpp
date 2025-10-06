@@ -25,18 +25,27 @@
 #include "qapla-tester/time-control.h"
 
 #include <array>
+#include <utility>
+#include <limits>
 
 
 using namespace QaplaWindows;
 
-TimeControlWindow::TimeControlWindow() 
-{
-}
+constexpr uint64_t millisecondsInMinute = 60000;
+constexpr int millisecondsInSecond = 1000;
+constexpr float baseIndent = 10.0F;  
+constexpr float inputIndent = 32.0F;  // Indentation for input fields
+constexpr float inputWidth = 150.0F;  // Width for input fields
+constexpr int fastStep = 10;
+
+
+
+TimeControlWindow::TimeControlWindow() = default;
 
 void TimeControlWindow::draw() {
 	auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
     ImGui::Spacing();
-    ImGui::Indent(10.0f);
+    ImGui::Indent(baseIndent);
     std::string activeButtonId;
     switch (timeControls.selected) {
     case QaplaConfiguration::selectedTimeControl::Blitz:
@@ -86,29 +95,29 @@ void TimeControlWindow::draw() {
         ImGui::SameLine();
         if (ImGui::CollapsingHeader(headerLabel)) {
 			ImGui::PushID(headerLabel);
-            ImGui::Indent(32.0f);
-            ImGui::PushItemWidth(150.0f);
+            ImGui::Indent(inputIndent);
+            ImGui::PushItemWidth(inputWidth);
             timeControl = drawFunction(timeControl);
             ImGui::PopItemWidth();
-			ImGui::Unindent(32.0f);
+			ImGui::Unindent(inputIndent);
             ImGui::PopID();
         }
     };
 
     // Draw each section
     drawSection("##blitz", "Blitz Time", timeControls.blitzTime,
-        [&](const TimeControl& tc) { return drawBlitzTime(tc); });
+        [&](const TimeControl& timeControl) { return drawBlitzTime(timeControl); });
 	drawSection("##tournament", "Tournament Time", timeControls.tournamentTime,
-        [&](const TimeControl& tc) { return drawTournamentTime(tc); });
+        [&](const TimeControl& timeControl) { return drawTournamentTime(timeControl); });
 	drawSection("##timePerMove", "Time per Move", timeControls.timePerMove,
-        [&](const TimeControl& tc) { return drawTimePerMove(tc); });
+        [&](const TimeControl& timeControl) { return drawTimePerMove(timeControl); });
 	drawSection("##fixedDepth", "Fixed Depth", timeControls.fixedDepth,
-        [&](const TimeControl& tc) { return drawFixedDepth(tc); });
+        [&](const TimeControl& timeControl) { return drawFixedDepth(timeControl); });
 	drawSection("##nodesPerMove", "Nodes per Move", timeControls.nodesPerMove,
-        [&](const TimeControl& tc) { return drawNodesPerMove(tc); });
+        [&](const TimeControl& timeControl) { return drawNodesPerMove(timeControl); });
 
     ImGui::PopID();
-    ImGui::Unindent(10.0f);
+    ImGui::Unindent(baseIndent);
 	QaplaConfiguration::Configuration::instance().setTimeControlSettings(timeControls);
 
 }
@@ -121,16 +130,25 @@ TimeSegment TimeControlWindow::editTimeSegment(const TimeSegment& segment, bool 
     return segment;
 }
 
-TimeSegment TimeControlWindow::selectPredefinedValues(
+/**
+ * @brief Allows the user to select predefined time values for a TimeSegment.
+ *
+ * @param segment The current TimeSegment to be updated.
+ * @param predefinedLabels A vector of strings representing the labels for predefined values.
+ * @param predefinedMinutes A vector of integers representing the corresponding predefined minute values.
+ * @return TimeSegment The updated TimeSegment with the selected predefined value.
+ */
+static TimeSegment selectPredefinedValues(
     const TimeSegment& segment,
     const std::vector<std::string>& predefinedLabels,
     const std::vector<int>& predefinedMinutes) {
+
     TimeSegment updatedSegment = segment;
 
     // Extract the current base time in minutes and seconds
     uint64_t baseTimeMs = segment.baseTimeMs;
-    int minutes = static_cast<int>(baseTimeMs / 60000);
-    int seconds = static_cast<int>((baseTimeMs % 60000) / 1000);
+    int minutes = static_cast<int>(baseTimeMs / millisecondsInMinute);
+    int seconds = static_cast<int>((baseTimeMs % millisecondsInMinute) / millisecondsInSecond);
 
     // Determine the currently selected predefined value
     int selectedPredefinedIndex = -1;
@@ -147,7 +165,7 @@ TimeSegment TimeControlWindow::selectPredefinedValues(
     if (ImGui::BeginCombo("Predefined Times", selectedPredefinedIndex >= 0 ? 
         predefinedLabels[selectedPredefinedIndex].c_str() : "Custom")) {
         for (size_t i = 0; i < predefinedLabels.size(); ++i) {
-            bool isSelected = (selectedPredefinedIndex == static_cast<int>(i));
+            bool isSelected = std::cmp_equal(selectedPredefinedIndex, i);
             if (ImGui::Selectable(predefinedLabels[i].c_str(), isSelected)) {
                 selectedPredefinedIndex = static_cast<int>(i);
                 minutes = predefinedMinutes[i];
@@ -161,13 +179,18 @@ TimeSegment TimeControlWindow::selectPredefinedValues(
     }
 
     // Recalculate the base time in milliseconds
-    updatedSegment.baseTimeMs = static_cast<uint64_t>(minutes) * 60000 + static_cast<uint64_t>(seconds) * 1000;
+    updatedSegment.baseTimeMs = static_cast<uint64_t>(minutes) * millisecondsInMinute + 
+        static_cast<uint64_t>(seconds) * millisecondsInSecond;
 
     return updatedSegment;
 }
 
 TimeControl TimeControlWindow::drawBlitzTime(const TimeControl& currentTimeControl) {
-    TimeControl updatedTimeControl = currentTimeControl;
+
+    const std::vector<int> blitzTimeMinutes = { 1, 2, 3, 5, 10, 15 };
+    const std::vector<std::string> blitzTimeLabels = { 
+        "1 min", "2 min", "3 min", "5 min", "10 min", "15 min" 
+    };
 
     // Retrieve the current time segments or default to 0
     TimeSegment timeSegment;
@@ -175,9 +198,7 @@ TimeControl TimeControlWindow::drawBlitzTime(const TimeControl& currentTimeContr
         timeSegment = currentTimeControl.timeSegments()[0];
 	}
 	timeSegment = editTimeSegment(timeSegment, true);
-    timeSegment = selectPredefinedValues(timeSegment, 
-        { "1 min", "2 min", "3 min", "5 min", "10 min", "15 min" }, 
-		{ 1, 2, 3, 5, 10, 15 });
+    timeSegment = selectPredefinedValues(timeSegment, blitzTimeLabels, blitzTimeMinutes);
 
     TimeControl result;
     result.addTimeSegment(timeSegment);
@@ -185,7 +206,6 @@ TimeControl TimeControlWindow::drawBlitzTime(const TimeControl& currentTimeContr
 }
 
 TimeControl TimeControlWindow::drawTournamentTime(const TimeControl& currentTimeControl) {
-    TimeControl updatedTimeControl = currentTimeControl;
 
     // Predefined settings for tournament time
     const std::vector<std::string> predefinedLabels = {
@@ -216,7 +236,7 @@ TimeControl TimeControlWindow::drawTournamentTime(const TimeControl& currentTime
 
         ImGui::Separator(); // Visual separator between segments
         ImGui::PopID();
-        if (segments[i].movesToPlay == 0) break;
+        if (segments[i].movesToPlay == 0) { break; }
     }
 
     // Update the TimeControl with the modified segments
@@ -233,26 +253,26 @@ TimeControl TimeControlWindow::drawTimePerMove(const TimeControl& currentTimeCon
 
     uint64_t moveTimeMs = currentTimeControl.moveTimeMs().value_or(0);
 
-    int seconds = static_cast<int>(moveTimeMs / 1000);
-    int milliseconds = static_cast<int>(moveTimeMs % 1000);
+    int seconds = static_cast<int>(moveTimeMs / millisecondsInSecond);
+    int milliseconds = static_cast<int>(moveTimeMs % millisecondsInSecond);
 
-	ImGuiControls::inputInt<int>("Seconds", seconds, 0, 1000000, 1, 10);
-	ImGuiControls::inputInt<int>("Milliseconds", milliseconds, 0, 999, 1, 10);
+	ImGuiControls::inputInt<int>("Seconds", seconds, 0, std::numeric_limits<int>::max(), 1, fastStep);
+	ImGuiControls::inputInt<int>("Milliseconds", milliseconds, 0, millisecondsInSecond - 1, 1, fastStep);
 
-    moveTimeMs = static_cast<uint64_t>(seconds) * 1000 + static_cast<uint64_t>(milliseconds);
+    moveTimeMs = static_cast<uint64_t>(seconds) * millisecondsInSecond + static_cast<uint64_t>(milliseconds);
     updatedTimeControl.setMoveTime(moveTimeMs);
 
     return updatedTimeControl;
 }
 
 TimeControl TimeControlWindow::drawFixedDepth(const TimeControl& currentTimeControl) {
+    static constexpr int maxDepth = 100;
     TimeControl updatedTimeControl = currentTimeControl;
 
     int depth = static_cast<int>(currentTimeControl.depth().value_or(0));
 
-    if (ImGui::InputInt("Search Depth", &depth, 1, 10)) {
-        if (depth < 0) depth = 0;
-        if (depth > 100) depth = 100;
+    if (ImGui::InputInt("Search Depth", &depth, 1, fastStep)) {
+        depth = std::clamp(depth, 0, maxDepth);
         updatedTimeControl.setDepth(static_cast<uint32_t>(depth));
     }
 

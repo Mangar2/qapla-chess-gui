@@ -49,20 +49,9 @@ namespace QaplaWindows {
          * @param blitz If true, limits input to minutes and seconds for the base time and seconds/milliseconds for the increment.
          * @return TimeSegment The updated time segment with the new configuration.
          */
-        TimeSegment editTimeSegment(const TimeSegment& segment, bool blitz);
+        static TimeSegment editTimeSegment(const TimeSegment& segment, bool blitz);
 
-        /**
-         * @brief Allows the user to select predefined time values for a TimeSegment.
-         *
-         * @param segment The current TimeSegment to be updated.
-         * @param predefinedLabels A vector of strings representing the labels for predefined values.
-         * @param predefinedMinutes A vector of integers representing the corresponding predefined minute values.
-         * @return TimeSegment The updated TimeSegment with the selected predefined value.
-         */
-        TimeSegment selectPredefinedValues(
-            const TimeSegment& segment,
-            const std::vector<std::string>& predefinedLabels,
-            const std::vector<int>& predefinedMinutes);
+
 
         /**
          * @brief Draws the UI for configuring Blitz time settings.
@@ -70,7 +59,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        TimeControl drawBlitzTime(const TimeControl& currentTimeControl);
+        static TimeControl drawBlitzTime(const TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Tournament time settings.
@@ -78,7 +67,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        TimeControl drawTournamentTime(const TimeControl& currentTimeControl);
+        static TimeControl drawTournamentTime(const TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Time per Move settings.
@@ -86,7 +75,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        TimeControl drawTimePerMove(const TimeControl& currentTimeControl);
+        static TimeControl drawTimePerMove(const TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Fixed Depth settings.
@@ -94,7 +83,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        TimeControl drawFixedDepth(const TimeControl& currentTimeControl);
+        static TimeControl drawFixedDepth(const TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Nodes per Move settings.
@@ -102,9 +91,8 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        TimeControl drawNodesPerMove(const TimeControl& currentTimeControl);
+        static TimeControl drawNodesPerMove(const TimeControl& currentTimeControl);
 
-		static constexpr float inputIndent = 32.0f;  // Indentation for input fields
     };
 
 } // namespace QaplaWindows
