@@ -133,9 +133,17 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
 void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
     auto moveNo = moveRecord.halfmoveNo_;
     addTables(playerIndex + 1);
-
+    size_t displayedMoveNo = 0;
+    
     // Only update if this is the current move showed in the table or the next move currently calculated
-    auto displayedMoveNo = displayedMoveNo_[playerIndex];
+    if (moveRecord.ponderMove.empty()) {
+        auto opponent = playerIndex == 0 && displayedMoveNo_.size() > 1 ? 1 : 0;
+        // The last move came from the opponent thus this is the currently displayed move number on the board
+        displayedMoveNo = displayedMoveNo_[opponent];
+    } else {
+        // When pondering, the last move came from the pondering player thus we use playerIndex
+        displayedMoveNo = displayedMoveNo_[playerIndex];
+    }
     if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1) { return; }
 
     // Only update if there are new info records

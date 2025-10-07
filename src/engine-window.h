@@ -55,7 +55,7 @@ namespace QaplaWindows {
          * @param noEngines Flag indicating if there are no engines available.
          * @return The required indent for the button area.
          */
-        std::string drawConfigButtonArea(bool noEngines);
+        static std::string drawConfigButtonArea(bool noEngines);
 
     };
 

@@ -31,10 +31,7 @@
 
 using namespace QaplaWindows;
 
-EngineWindow::EngineWindow()
-{
-}
-
+EngineWindow::EngineWindow() = default;
 EngineWindow::~EngineWindow() = default;
 
 std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
@@ -49,8 +46,9 @@ std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY));
     auto state = QaplaButton::ButtonState::Normal;
-    if (noEngines)
+    if (noEngines) {
         state = QaplaButton::ButtonState::Highlighted;
+    }
     if (QaplaButton::drawIconButton("Config", "Config", buttonSize, state,
         [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             QaplaButton::drawConfig(drawList, topLeft, size, state);
@@ -86,7 +84,9 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     ImGui::Indent(areaWidth);
     auto [id2, command2] = ImGuiEngineList::draw();
     ImGui::Unindent(areaWidth);
-    if (!command.empty()) return { "", command };
+    if (!command.empty()) { 
+        return { "", command };
+    }
     return { id2, command2 };
 }
 

@@ -47,8 +47,8 @@ namespace QaplaWindows {
          * @brief Creates a popup window.
          * @param config configuration
          */
-        ImGuiPopup(Config config)
-            : content_(), config_(config) {
+        ImGuiPopup(Config config, ImVec2 size = ImVec2(400, 300))
+            : content_(), config_(config), size_(size) {
         }
 
         /**
@@ -56,7 +56,7 @@ namespace QaplaWindows {
          */
         void draw(const std::string& ok = "OK", const std::string& cancel = "Cancel") {
             if (!isOpen_) return;
-            ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_Once);
+            ImGui::SetNextWindowSize(size_, ImGuiCond_Once);
             if (!ImGui::BeginPopupModal(config_.title.c_str(), nullptr, ImGuiWindowFlags_None))
                 return;
 
@@ -133,6 +133,7 @@ namespace QaplaWindows {
 
         T content_;
         Config config_;
+        ImVec2 size_;
         std::optional<bool> confirmed_ = std::nullopt;
 		bool isOpen_ = false;
     };

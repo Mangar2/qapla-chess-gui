@@ -56,7 +56,9 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
 	  setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
-        ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" })),
+		ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" },
+		ImVec2(600, 800))
+		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
 	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())

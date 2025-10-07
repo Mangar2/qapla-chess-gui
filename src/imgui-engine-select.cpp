@@ -31,7 +31,7 @@ using namespace QaplaWindows;
 
 ImGuiEngineSelect::ImGuiEngineSelect(const Options& options, ConfigurationChangedCallback callback)
     : options_(options)
-    , configurationCallback_(callback)
+    , configurationCallback_(std::move(callback))
 {
 }
 
@@ -42,9 +42,9 @@ bool ImGuiEngineSelect::draw() {
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
         const auto& usedConfig = engineConfigurations_[index];
-        auto baseConfig = configManager.getConfigMutableByCmdAndProtocol(
+        auto* baseConfig = configManager.getConfigMutableByCmdAndProtocol(
             usedConfig.config.getCmd(), usedConfig.config.getProtocol());
-        if (!baseConfig) {
+        if (baseConfig == nullptr) {
             engineConfigurations_.erase(engineConfigurations_.begin() + index);
             modified = true;
         } else {
@@ -150,7 +150,7 @@ void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfigur
 }
 
 void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCallback callback) {
-    configurationCallback_ = callback;
+    configurationCallback_ = std::move(callback);
     notifyConfigurationChanged();
 }
 
@@ -158,7 +158,7 @@ void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCall
 
 std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
 ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
-    return std::find_if(engineConfigurations_.begin(), engineConfigurations_.end(),
+    return std::ranges::find_if(engineConfigurations_,
         [&engineConfig](const EngineConfiguration& configured) {
             // Match by command line and protocol only (base engine identification)
             return configured.config.getCmd() == engineConfig.getCmd() && 
@@ -168,7 +168,7 @@ ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
 
 std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
 ImGuiEngineSelect::findDeselectedEngineConfiguration(const EngineConfig& engineConfig) {
-    return std::find_if(engineConfigurations_.begin(), engineConfigurations_.end(),
+    return std::ranges::find_if(engineConfigurations_,
         [&engineConfig](const EngineConfiguration& configured) {
             // Match by command line and protocol, but only if not selected
             return !configured.selected && 
@@ -280,7 +280,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
         };
 
         // Only store non-default or enabled options to keep the configuration concise
-        auto& config = engine.config;
+        const auto& config = engine.config;
         if (engine.config.getDir() != ".") {
             entries.emplace_back("dir", engine.config.getDir());
         }
