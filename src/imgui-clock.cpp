@@ -35,20 +35,21 @@
 
 using namespace QaplaWindows;
 
-ImGuiClock::ImGuiClock()
-{
-}
-
+ImGuiClock::ImGuiClock() = default;
 ImGuiClock::~ImGuiClock() = default;
 
 void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     bool update = gameRecordTracker_.checkModification(gameRecord.getChangeTracker()).second;
-    if (!update) return;
+    if (!update) {
+        return;
+    }
     gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
 
-    auto wtc = gameRecord.getWhiteTimeControl();
-    auto btc = gameRecord.getBlackTimeControl();
-    if (!wtc.isValid() || !btc.isValid()) return;
+    const auto& wtc = gameRecord.getWhiteTimeControl();
+    const auto& btc = gameRecord.getBlackTimeControl();
+    if (!wtc.isValid() || !btc.isValid()) {
+        return;
+    }
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
     auto nextMoveIndex = gameRecord.nextMoveIndex();
     auto halfMoves = gameRecord.halfmoveNoAtPly(nextMoveIndex);
@@ -77,22 +78,18 @@ void QaplaWindows::ImGuiClock::setFromHistoryMove(const MoveRecord& moveRecord) 
     // if wtm, then black just moved (currMove is black's move)
     if (clockData_.wtm)
     {
-        if (!stopped_)
+        if (!stopped_) {
             clockData_.wTimer.start();
-        else
-        {
+        } else {
             clockData_.bTimeCurMove = moveRecord.timeMs;
             // bTimeLeftMs has the time after current move.
             clockData_.bTimeLeftMs += moveRecord.timeMs;
             clockData_.bEngineName = moveRecord.engineName_;
         }
-    }
-    else
-    {
-        if (!stopped_)
+    } else {
+        if (!stopped_) {
             clockData_.bTimer.start();
-        else
-        {
+        } else {
             clockData_.wTimeCurMove = moveRecord.timeMs;
             // wTimeLeftMs has the time after current move.
             clockData_.wTimeLeftMs += moveRecord.timeMs;
@@ -103,7 +100,13 @@ void QaplaWindows::ImGuiClock::setFromHistoryMove(const MoveRecord& moveRecord) 
 
 
 void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
-    if (stopped_) return;
+    if (stopped_) {
+        return;
+    }
+    if (!moveRecord.ponderMove.empty()) {
+        // Time used from pondering is not relevant
+        return;
+    }
     auto halfmoveNo = moveRecord.halfmoveNo_;
     if (infoCnt_.size() <= playerIndex) {
         infoCnt_.resize(playerIndex + 1, 0);
@@ -122,21 +125,34 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
 
     if (clockData_.wtm) {
         if (cur > clockData_.wTimeCurMove) {
-            if (stopped_) clockData_.wTimer.reset(); 
-            else clockData_.wTimer.start();
+            if (stopped_) {
+                clockData_.wTimer.reset(); 
+            } else {
+                clockData_.wTimer.start();
+            }
         }
         clockData_.wTimeCurMove = cur;
         clockData_.wEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
     } 
     else {
         if (cur > clockData_.bTimeCurMove) {
-            if (stopped_) clockData_.bTimer.reset(); 
-            else clockData_.bTimer.start();
+            if (stopped_) {
+                clockData_.bTimer.reset(); 
+            } else {
+                clockData_.bTimer.start();
+            }
         }
         clockData_.bTimeCurMove = cur;
         clockData_.bEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
     }
 }
+
+auto textSizeAt = [](ImFont* font, float size, const std::string& str) -> ImVec2 {
+    return font->CalcTextSizeA(size, FLT_MAX, 0.0F, str.c_str(), str.c_str() + str.size());
+};
+auto textWidthAt = [](ImFont* font, float size, const std::string& str) -> float {
+    return textSizeAt(font, size, str).x;
+};
 
 /**
  * Draws a single-side chess clock (engine name, total time, current move time).
@@ -159,46 +175,42 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const ImGuiStyle& style = ImGui::GetStyle();
 
     const float baseSize = ImGui::GetFontSize();
-    const float nameSize = baseSize * 1.3f;
-    const float totalSize = baseSize * 1.6f; 
+    const float nameSize = baseSize * 1.3F;
+    const float totalSize = baseSize * 1.6F;
     const float moveSize = baseSize * 1.0F;
 
-    const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5f;
+    const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
     float y = topLeft.y + 7.0F;
 
     totalMs -= std::min(totalMs, moveMs);
     totalMs += 999; // Add 999ms to compensate for formatMs truncating to full seconds
-    if (analyze) totalMs = moveMs;
+    if (analyze) {
+        totalMs = moveMs;
+    }
 
     const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
-    auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
-        return font->CalcTextSizeA(size, FLT_MAX, 0.0F, begin, end);
-        };
-    auto textWidthAt = [&](float size, const char* begin, const char* end) -> float {
-        return textSizeAt(size, begin, end).x;
-        };
+
     auto startXForColonCenter = [&](const std::string& s, float size) -> float {
         const size_t colonIdx = s.find_last_of(':'); // aligns at MM:SS colon
         if (colonIdx == std::string::npos) {
-            const float w = textWidthAt(size, s.c_str(), s.c_str() + s.size());
-            return xCenter - w * 0.5f; // safety fallback
+            const float w = textWidthAt(font, size, s);
+            return xCenter - w * 0.5F; // safety fallback
         }
-        const char* begin = s.c_str();
-        const char* mid = begin + colonIdx;
-        const float leftWidth = textWidthAt(size, begin, mid);
-        const char colonChar[] = ":";
-        const float colonWidth = textWidthAt(size, colonChar, colonChar + 1);
+
+        const float leftWidth = textWidthAt(font, size, s.substr(0, colonIdx));
+        const std::string colonChar = ":";
+        const float colonWidth = textWidthAt(font, size, colonChar);
         // Center at the colon's visual midpoint to keep different digit widths aligned.
-        return xCenter - (leftWidth + colonWidth * 0.5f);
-        };
+        return xCenter - (leftWidth + colonWidth * 0.5F);
+    };
     auto writeText = [&](float size, const std::string& text, float& y) {
         const float x = startXForColonCenter(text, size);
-        const ImVec2 ext = textSizeAt(size, text.c_str(), text.c_str() + text.size());
+        const ImVec2 ext = textSizeAt(font, size, text);
         drawList->AddText(font, size, ImVec2(x, y), textCol,
             text.c_str(), text.c_str() + text.size());
-        y += ext.y + style.ItemSpacing.y * 0.5f;
+        y += ext.y + style.ItemSpacing.y * 0.5F;
 		};
 
     ImGuiControls::drawBoxWithShadow(topLeft, bottomRight);
@@ -213,8 +225,8 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
 
     // Engine name (centered as label)
     {
-        const ImVec2 nameExtent = textSizeAt(nameSize, engineName.data(), engineName.data() + engineName.size());
-        const float nameX = xCenter - nameExtent.x * 0.5f;
+        const ImVec2 nameExtent = textSizeAt(font, nameSize, std::string(engineName));
+        const float nameX = xCenter - nameExtent.x * 0.5F;
         drawList->AddText(font, nameSize, ImVec2(nameX, y), textCol,
             engineName.data(), engineName.data() + engineName.size());
     }
@@ -241,44 +253,39 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const ImGuiStyle& style = ImGui::GetStyle();
 
     const float baseSize = ImGui::GetFontSize();
-    const float totalSize = baseSize * 1.6f; 
+    const float totalSize = baseSize * 1.6F;
     const float moveSize = baseSize * 1.0F;
 
-    const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5f;
+    const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
     float y = topLeft.y + 7.0F;
 
     totalMs -= std::min(totalMs, moveMs);
-    if (analyze) totalMs = moveMs;
+    if (analyze) { 
+        totalMs = moveMs;
+    }
 
     const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
-    auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
-        return font->CalcTextSizeA(size, FLT_MAX, 0.0F, begin, end);
-        };
-    auto textWidthAt = [&](float size, const char* begin, const char* end) -> float {
-        return textSizeAt(size, begin, end).x;
-        };
     auto startXForColonCenter = [&](const std::string& s, float size) -> float {
         const size_t colonIdx = s.find_last_of(':'); // aligns at MM:SS colon
         if (colonIdx == std::string::npos) {
-            const float w = textWidthAt(size, s.c_str(), s.c_str() + s.size());
-            return xCenter - w * 0.5f; // safety fallback
+            const float w = textWidthAt(font, size, s);
+            return xCenter - w * 0.5F; // safety fallback
         }
-        const char* begin = s.c_str();
-        const char* mid = begin + colonIdx;
-        const float leftWidth = textWidthAt(size, begin, mid);
-        const char colonChar[] = ":";
-        const float colonWidth = textWidthAt(size, colonChar, colonChar + 1);
+
+        const float leftWidth = textWidthAt(font, size, s.substr(0, colonIdx));
+        const std::string colonChar = ":";
+        const float colonWidth = textWidthAt(font, size, colonChar);
         // Center at the colon's visual midpoint to keep different digit widths aligned.
-        return xCenter - (leftWidth + colonWidth * 0.5f);
+        return xCenter - (leftWidth + colonWidth * 0.5F);
         };
     auto writeText = [&](float size, const std::string& text, float& y) {
         const float x = startXForColonCenter(text, size);
-        const ImVec2 ext = textSizeAt(size, text.c_str(), text.c_str() + text.size());
+        const ImVec2 ext = textSizeAt(font, size, text);
         drawList->AddText(font, size, ImVec2(x, y), textCol,
             text.c_str(), text.c_str() + text.size());
-        y += ext.y + style.ItemSpacing.y * 0.5f;
+        y += ext.y + style.ItemSpacing.y * 0.5F;
 		};
 
     if (wtm == white) {
@@ -291,7 +298,7 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
 	writeText(moveSize, moveStr, y);
 }
 
-void ImGuiClock::draw() {
+void ImGuiClock::draw() const {
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
 	constexpr float clockWidth = 180.0F;
@@ -304,10 +311,10 @@ void ImGuiClock::draw() {
 
     const float spacing = 10.0F;
     const float totalContentWidth = smallClock ? clockWidth : 2 * clockWidth + spacing;
-	const float topSpace = smallClock ? 0 : std::round((totalHeight - clockHeight) * 0.5f);
+	const float topSpace = smallClock ? 0 : std::round((totalHeight - clockHeight) * 0.5F);
 
     // White Clock
-    ImVec2 whiteMin = ImVec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5f),
+    ImVec2 whiteMin = ImVec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5F),
         std::round(topLeft.y + topSpace));
     ImVec2 whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
@@ -341,4 +348,3 @@ void ImGuiClock::draw() {
 
     ImGui::Dummy(ImVec2(0.0F, 0.0F));
 }
-

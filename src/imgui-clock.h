@@ -46,7 +46,7 @@ namespace QaplaWindows {
         ImGuiClock();
         ~ImGuiClock();
 
-        void draw();
+        void draw() const;
 
         /**
          * @brief Sets the clock data from the game record.
