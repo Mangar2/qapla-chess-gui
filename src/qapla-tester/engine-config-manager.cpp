@@ -21,14 +21,14 @@
 #include "cli-settings-manager.h"
 #include "string-helper.h"
 
-void EngineConfigManager::loadFromStream(std::istream& in) {
+void EngineConfigManager::loadFromStream(std::istream& input) {
 
     errors.clear();
 
-    while (in) {
+    while (input) {
         EngineConfig config;
 
-        in >> config;
+        input >> config;
         addOrReplaceConfig(config);
     }
 }
@@ -42,7 +42,9 @@ void EngineConfigManager::saveToStream(std::ostream& out) const {
 
 void EngineConfigManager::saveToFile(const std::string& filePath) const {
     std::ofstream file(filePath);
-    if (!file.is_open()) throw std::runtime_error("Unable to write file");
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to write file");
+    }
 
     saveToStream(file);
 }
@@ -52,15 +54,19 @@ std::vector<EngineConfig> EngineConfigManager::getAllConfigs() const {
 }
 
 const EngineConfig* EngineConfigManager::getConfig(const std::string& name) const {
-    for (auto& config : configs) {
-        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) return &config;
+    for (const auto& config : configs) {
+        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) {
+            return &config;
+        }
     }
     return nullptr;
 }
 
 EngineConfig* EngineConfigManager::getConfigMutable(const std::string& name)  {
     for (auto& config : configs) {
-        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) return &config;
+        if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) {
+            return &config;
+        }
     }
     return nullptr;
 }
@@ -182,6 +188,7 @@ void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& en
 
     // Create disambiguation maps for all engines
     std::vector<std::unordered_map<std::string, std::string>> disambiguationMaps;
+    disambiguationMaps.reserve(engines.size());
     for (const auto& engine : engines) {
         disambiguationMaps.push_back(engine.toDisambiguationMap());
     }
@@ -196,8 +203,9 @@ void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& en
 
     // Assign unique names to engines with the same base name
     for (const auto& [baseName, indices] : nameGroups) {
-        if (indices.size() == 1)
+        if (indices.size() == 1) {
             continue;
+        }
 
         for (std::size_t index : indices) {
             std::string name = "[" + computeUnifiedName(disambiguationMaps, index, indices) + "]";

@@ -20,7 +20,6 @@
 #include "compute-task.h"
 
 ComputeTask::ComputeTask()
-    : gameContext_()
 {
     finishedFuture_ = finishedPromise_.get_future();
     finishedPromiseValid_ = true;
@@ -39,7 +38,7 @@ ComputeTask::~ComputeTask() {
 }
 
 void ComputeTask::setPosition(bool useStartPosition, const std::string &fen,
-                    std::optional<std::vector<std::string>> playedMoves)
+                    const std::optional<std::vector<std::string>>& playedMoves)
 {
     auto taskType = taskType_;
     stop();
@@ -69,18 +68,56 @@ void ComputeTask::setNextMoveIndex(uint32_t moveIndex)
     }
 }
 
-void ComputeTask::computeMove() {
-    if (gameContext_.getPlayerCount() == 0) return;
-    if (checkGameOver()) return;
-    if (taskType_ != ComputeTaskType::None && taskType_ != ComputeTaskType::PlaySide) return;
-	gameContext_.ensureStarted();
+void ComputeTask::ponderMove(const std::optional<EngineEvent>& event) {
+    if (gameContext_.getPlayerCount() == 0) {
+        return;
+    }
+    if (checkGameOver()) {
+        return;
+    }
+    if (taskType_ != ComputeTaskType::None && taskType_ != ComputeTaskType::PlaySide) {
+        return;
+    }
+    gameContext_.ensureStarted();
     logMoves_ = false;
     taskType_ = taskType_ == ComputeTaskType::None ? ComputeTaskType::ComputeMove : taskType_;
     markRunning();
 
-    auto& gameRecord = gameContext_.gameRecord();
-    auto white = gameContext_.getWhite();
-    auto black = gameContext_.getBlack();
+    const auto& gameRecord = gameContext_.gameRecord();
+    auto* white = gameContext_.getWhite();
+    auto* black = gameContext_.getBlack();
+
+    auto [whiteTime, blackTime] = gameRecord.timeUsed();
+    GoLimits goLimits = createGoLimits(
+        white->getTimeControl(), black->getTimeControl(),
+        gameRecord.nextMoveIndex(), whiteTime, blackTime, gameRecord.isWhiteToMove());
+
+    if (gameRecord.isWhiteToMove()) {
+        black->allowPonder(gameRecord, goLimits, event);
+    }
+    else {
+        white->allowPonder(gameRecord, goLimits, event);
+    }
+}
+
+void ComputeTask::computeMove() {
+    if (gameContext_.getPlayerCount() == 0) {
+        return;
+    }
+    if (checkGameOver()) {
+        return;
+    }
+    if (taskType_ != ComputeTaskType::None && taskType_ != ComputeTaskType::PlaySide) {
+        return;
+    }
+    gameContext_.ensureStarted();
+    logMoves_ = false;
+    taskType_ = taskType_ == ComputeTaskType::None ? ComputeTaskType::ComputeMove : taskType_;
+    markRunning();
+
+    const auto& gameRecord = gameContext_.gameRecord();
+    auto* white = gameContext_.getWhite();
+    auto* black = gameContext_.getBlack();
 
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
     GoLimits goLimits = createGoLimits(
@@ -96,21 +133,21 @@ void ComputeTask::computeMove() {
 }
 
 void ComputeTask::analyze() {
-    if (gameContext_.getPlayerCount() == 0) return;
-    if (checkGameOver()) return;
-    if (taskType_ != ComputeTaskType::None) return;
+    if (gameContext_.getPlayerCount() == 0) { return; }
+    if (checkGameOver()) { return; }
+    if (taskType_ != ComputeTaskType::None) { return; }
     gameContext_.ensureStarted();
     logMoves_ = false;
     taskType_ = ComputeTaskType::Analyze;
     markRunning();
-    auto& gameRecord = gameContext_.gameRecord();
+    const auto& gameRecord = gameContext_.gameRecord();
     TimeControl time;
     GoLimits goLimits;
     goLimits.hasTimeControl = true;
 	goLimits.infinite = true;
     for (size_t i = 0; i < gameContext_.getPlayerCount(); ++i) {
-        auto player = gameContext_.player(i);
-        if (player) {
+        auto* player = gameContext_.player(i);
+        if (player != nullptr) {
             player->computeMove(gameRecord, goLimits, true);
         }
 	}
@@ -118,20 +155,22 @@ void ComputeTask::analyze() {
 
 void ComputeTask::autoPlay(bool logMoves) {
     logMoves_ = logMoves;
-    if (taskType_ != ComputeTaskType::None) return;
+    if (taskType_ != ComputeTaskType::None) {
+        return;
+    }
     taskType_ = ComputeTaskType::Autoplay;
     autoPlay(std::nullopt);
 }
 
 void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
-    if (gameContext_.getPlayerCount() == 0) return;
-    if (checkGameOver()) return;
-    if (taskType_ != ComputeTaskType::Autoplay ) return;
+    if (gameContext_.getPlayerCount() == 0) { return; }
+    if (checkGameOver()) { return; }
+    if (taskType_ != ComputeTaskType::Autoplay ) { return; }
     markRunning();
     gameContext_.ensureStarted();
-    auto& gameRecord = gameContext_.gameRecord();
-	auto white = gameContext_.getWhite();
-	auto black = gameContext_.getBlack();
+    const auto& gameRecord = gameContext_.gameRecord();
+	auto* white = gameContext_.getWhite();
+	auto* black = gameContext_.getBlack();
 
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
     GoLimits goLimits = createGoLimits(
@@ -149,11 +188,15 @@ void ComputeTask::autoPlay(const std::optional<EngineEvent>& event) {
 }
 
 void ComputeTask::moveNow() {
-    if (gameContext_.getPlayerCount() == 0) return;
+    if (gameContext_.getPlayerCount() == 0) {
+        return;
+    }
 
-    auto& gameRecord = gameContext_.gameRecord();
-    auto player = gameRecord.isWhiteToMove() ? gameContext_.getWhite() : gameContext_.getBlack();
-    if (!player) return;
+    const auto& gameRecord = gameContext_.gameRecord();
+    auto* player = gameRecord.isWhiteToMove() ? gameContext_.getWhite() : gameContext_.getBlack();
+    if (player == nullptr) {
+        return;
+    }
     player->checkReady();
     player->moveNow();
 }
@@ -166,7 +209,7 @@ void ComputeTask::stop() {
     taskType_ = ComputeTaskType::None;
     gameContext_.cancelCompute();
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
+        std::scoped_lock lock(queueMutex_);
         while (!eventQueue_.empty()) {
             eventQueue_.pop();
         }
@@ -175,14 +218,13 @@ void ComputeTask::stop() {
     markFinished();
 }
 
-
-void ComputeTask::enqueueEvent(const EngineEvent& event) {
+void ComputeTask::enqueueEvent(EngineEvent&& event) {
     if (event.type == EngineEvent::Type::None || event.type == EngineEvent::Type::NoData) {
         return;
     }
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        eventQueue_.push(event);
+        std::scoped_lock lock(queueMutex_);
+        eventQueue_.push(std::move(event));
     }
     queueCondition_.notify_one();
 }
@@ -209,21 +251,27 @@ void ComputeTask::processQueue() {
         while (true) {
             EngineEvent event;
             {
-                std::lock_guard<std::mutex> lock(queueMutex_);
-                if (eventQueue_.empty()) break;
+                std::scoped_lock lock(queueMutex_);
+                if (eventQueue_.empty()) {
+                    break;
+                }
                 event = std::move(eventQueue_.front());
                 eventQueue_.pop();
             }
             processEvent(event);
         }
 
-        if (taskType_ == ComputeTaskType::Analyze) continue;
+        if (taskType_ == ComputeTaskType::Analyze) {
+            continue;
+        }
 
         if (std::chrono::steady_clock::now() >= nextTimeoutCheck) {
             nextTimeoutCheck = std::chrono::steady_clock::now() + timeoutInterval;
 
             bool restarted = gameContext_.checkForTimeoutsAndRestart();
-            if (restarted) markFinished();
+            if (restarted) {
+                markFinished();
+            }
         }
     }
 }
@@ -231,7 +279,9 @@ void ComputeTask::processQueue() {
 void ComputeTask::processEvent(const EngineEvent & event) {
 
     PlayerContext* player = gameContext_.findPlayerByEngineId(event.engineIdentifier);
-    if (!player) return;
+    if (player == nullptr) {
+        return;
+    }
 
     if (!event.errors.empty()) {
         const std::string& name = player->getEngine()->getConfig().getName();
@@ -243,8 +293,8 @@ void ComputeTask::processEvent(const EngineEvent & event) {
 
     if (event.type == EngineEvent::Type::EngineDisconnected) {
         player->handleDisconnect(true);
-        player->getEngine()->setEventSink([this](EngineEvent&& e) {
-            enqueueEvent(std::move(e));
+        player->getEngine()->setEventSink([this](EngineEvent&& event) {
+            enqueueEvent(std::move(event));
             });
         return;
     }
@@ -278,7 +328,9 @@ void ComputeTask::handleBestMove(const EngineEvent& event) {
     MoveRecord moveRecord;
 
     PlayerContext* player = gameContext_.findPlayerByEngineId(event.engineIdentifier);
-    if (!player) return;
+    if (player == nullptr) {
+        return;
+    }
 
     if (logMoves_ && event.bestMove) {
         std::cout << *event.bestMove << " " << std::flush;
@@ -309,6 +361,7 @@ void ComputeTask::nextMove(const EngineEvent& event) {
         return;
     }
     if (taskType_ == ComputeTaskType::PlaySide) {
+        ponderMove(event);
         return;
     }
 
@@ -319,7 +372,9 @@ void ComputeTask::nextMove(const EngineEvent& event) {
 bool ComputeTask::checkGameOver(bool verbose) {
 
     auto [cause, result] = gameContext_.checkGameResult();
-    if (logMoves_) std::cout << "\n";
+    if (logMoves_) {
+        std::cout << "\n";
+    }
     if (verbose && result != GameResult::Unterminated) {
         Logger::testLogger().log("[Result: " + gameResultToPgnResult(result) + "]", TraceLevel::info);
         Logger::testLogger().log("[Termination: " + gameEndCauseToPgnTermination(cause) + "]", TraceLevel::info);

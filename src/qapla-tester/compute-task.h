@@ -132,7 +132,7 @@ public:
      * @param playedMoves Optional list of moves already played.
      */
     void setPosition(bool useStartPosition, const std::string &fen = "",
-                     std::optional<std::vector<std::string>> playedMoves = std::nullopt);
+                     const std::optional<std::vector<std::string>>& playedMoves = std::nullopt);
 
     /**
      * @brief Sets the current game position for all engines using a GameRecord.
@@ -170,6 +170,12 @@ public:
      * @brief computes a single move for the current position.
      */
     void computeMove();
+
+    /**
+     * @brief allows pondering on a previous event.
+     * @param event preceding event to ponder on
+     */
+    void ponderMove(const std::optional<EngineEvent>& event);
 
     /**
      * @brief Analyzes the current position
@@ -283,7 +289,8 @@ private:
     void nextMove(const EngineEvent &event);
     void autoPlay(const std::optional<EngineEvent> &event);
 
-    void enqueueEvent(const EngineEvent &event);
+    // Pass-by-value to leverage move semantics from callers and into the queue
+    void enqueueEvent(EngineEvent&& event);
     void processQueue();
     void processEvent(const EngineEvent &event);
     void handleBestMove(const EngineEvent &event);

@@ -122,13 +122,13 @@ public:
      * @param playedMoves Optional move history.
      */
     void setPosition(bool useStartPosition, const std::string &fen = "",
-                     std::optional<std::vector<std::string>> playedMoves = std::nullopt);
+                     const std::optional<std::vector<std::string>>& playedMoves = std::nullopt);
 
     /**
      * @brief Sets the game record and initializes players from it.
      * @param game The game record to adopt.
      */
-    void setPosition(const GameRecord &game);
+    void setPosition(const GameRecord &gameRecord);
 
     /**
      * @brief Sets the current move index in the game.

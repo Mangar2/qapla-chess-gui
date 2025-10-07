@@ -39,14 +39,14 @@ void GameContext::updateEngineNames()
 
 void GameContext::tearDown()
 {
-    std::lock_guard lock(engineMutex_);
+    std::scoped_lock lock(engineMutex_);
     players_.clear();
 }
 
 void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines)
 {
     {
-        std::lock_guard lock(engineMutex_);
+        std::scoped_lock lock(engineMutex_);
         players_.clear();
         for (auto &engine : engines)
         {
@@ -126,7 +126,7 @@ void GameContext::setTimeControl(const TimeControl &timeControl)
     {
         player->setTimeControl(timeControl);
     }
-    std::lock_guard lock(gameRecordMutex_);
+    std::scoped_lock lock(gameRecordMutex_);
     gameRecord_.setTimeControl(timeControl, timeControl);
 }
 
@@ -141,11 +141,11 @@ void GameContext::newGame()
 }
 
 void GameContext::setPosition(bool useStartPosition, const std::string &fen,
-                              std::optional<std::vector<std::string>> playedMoves)
+                              const std::optional<std::vector<std::string>>& playedMoves)
 {
     cancelCompute();
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         GameState gameState;
         gameState.setFen(useStartPosition, fen);
         gameRecord_.setStartPosition(useStartPosition, fen, gameState.isWhiteToMove(), gameState.getStartHalfmoves());
@@ -169,12 +169,12 @@ void GameContext::setPosition(bool useStartPosition, const std::string &fen,
     }
 }
 
-void GameContext::setPosition(const GameRecord &record)
+void GameContext::setPosition(const GameRecord &gameRecord)
 {
     cancelCompute();
     {
-        std::lock_guard lock(gameRecordMutex_);
-        gameRecord_ = record;
+        std::scoped_lock lock(gameRecordMutex_);
+        gameRecord_ = gameRecord;
         updateEngineNames();
     }
 
@@ -188,7 +188,7 @@ void GameContext::setNextMoveIndex(uint32_t moveIndex)
 {
     cancelCompute();
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         if (moveIndex <= gameRecord_.history().size())
         {
             gameRecord_.setNextMoveIndex(moveIndex);
@@ -211,7 +211,7 @@ void GameContext::doMove(const MoveRecord& move)
     cancelCompute();
     assert (!move.move.isEmpty());
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         gameRecord_.addMove(move);
     }
 
@@ -290,7 +290,7 @@ const GameRecord &GameContext::gameRecord() const
 
 void GameContext::withGameRecord(std::function<void(const GameRecord &)> accessFn) const
 {
-    std::lock_guard lock(gameRecordMutex_);
+    std::scoped_lock lock(gameRecordMutex_);
     accessFn(gameRecord_);
 }
 
@@ -302,7 +302,7 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult()
         auto [pcause, presult] = player->getGameResult();
         if (presult != GameResult::Unterminated)
         {
-            std::lock_guard lock(gameRecordMutex_);
+            std::scoped_lock lock(gameRecordMutex_);
             gameRecord_.setGameEnd(pcause, presult);
             break;
         }
@@ -360,7 +360,7 @@ void GameContext::restartIfConfigured()
 
 void GameContext::cancelCompute()
 {
-    std::lock_guard lock(engineMutex_);
+    std::scoped_lock lock(engineMutex_);
     for (auto &player : players_)
     {
         player->cancelCompute();
