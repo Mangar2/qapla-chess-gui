@@ -49,19 +49,19 @@ ImGuiGameList::~ImGuiGameList() {
 void ImGuiGameList::draw() {
     drawButtons();
     drawLoadingStatus();
-    ImGui::Indent(10.0f);
+    ImGui::Indent(10.0F);
     drawGameTable();
-    ImGui::Unindent(10.0f);
+    ImGui::Unindent(10.0F);
 }
 
 void ImGuiGameList::drawButtons() {
-    constexpr float space = 3.0f;
-    constexpr float topOffset = 5.0f;
-    constexpr float bottomOffset = 8.0f;
-    constexpr float leftOffset = 20.0f;
+    constexpr float space = 3.0F;
+    constexpr float topOffset = 5.0F;
+    constexpr float bottomOffset = 8.0F;
+    constexpr float leftOffset = 20.0F;
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = {25.0f, 25.0f};
+    constexpr ImVec2 buttonSize = {25.0F, 25.0F};
 
     const std::vector<std::string> buttons = {"Open", "Save As", "Filter"};
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
@@ -118,17 +118,17 @@ void ImGuiGameList::drawLoadingStatus() {
     OperationState state = operationState_.load();
     if (state == OperationState::Idle) return;
     
-    ImGui::Indent(10.0f);
+    ImGui::Indent(10.0F);
     if (state == OperationState::Cancelling) {
         ImGui::Text("Cancelling loading from %s...", loadingFileName_.c_str());
     } else {
         ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
     }
     float progress = loadingProgress_.load();
-    ImGui::ProgressBar(progress, ImVec2(-10.0f, 20.0f), 
+    ImGui::ProgressBar(progress, ImVec2(-10.0F, 20.0F), 
         std::to_string(gamesLoaded_.load()).c_str());
-        //std::string(std::to_string(static_cast<int>(progress * 100.0f)) + "%").c_str());
-    ImGui::Unindent(10.0f);
+        //std::string(std::to_string(static_cast<int>(progress * 100.0F)) + "%").c_str());
+    ImGui::Unindent(10.0F);
 }
 
 void ImGuiGameList::createTable() {
@@ -145,10 +145,10 @@ void ImGuiGameList::createTable() {
 
     // Define fixed columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        {"White", ImGuiTableColumnFlags_WidthFixed, 120.0f},
-        {"Black", ImGuiTableColumnFlags_WidthFixed, 120.0f},
-        {"Result", ImGuiTableColumnFlags_WidthFixed, 80.0f},
-        {"PlyCount", ImGuiTableColumnFlags_WidthFixed, 65.0f, true}
+        {"White", ImGuiTableColumnFlags_WidthFixed, 120.0F},
+        {"Black", ImGuiTableColumnFlags_WidthFixed, 120.0F},
+        {"Result", ImGuiTableColumnFlags_WidthFixed, 80.0F},
+        {"PlyCount", ImGuiTableColumnFlags_WidthFixed, 65.0F, true}
     };
 
     auto knownTags = std::set<std::string>{"White", "Black", "Result", "PlyCount"};
@@ -156,7 +156,7 @@ void ImGuiGameList::createTable() {
     // Add common tag columns
     for (const auto& tag : commonTags) {
         if (knownTags.find(tag) == knownTags.end()) { // Skip already included columns
-            columns.push_back({tag, ImGuiTableColumnFlags_WidthFixed, 100.0f});
+            columns.push_back({tag, ImGuiTableColumnFlags_WidthFixed, 100.0F});
         }
     }
 
@@ -220,7 +220,7 @@ void ImGuiGameList::openFile() {
         // Start loading in background thread
         operationState_.store(OperationState::Loading);
         gamesLoaded_ = 0;
-        loadingProgress_ = 0.0f;
+        loadingProgress_ = 0.0F;
         loadingFileName_ = selectedFiles[0];
         
         loadingThread_ = std::thread(&ImGuiGameList::loadFileInBackground, this, selectedFiles[0]);
@@ -230,7 +230,7 @@ void ImGuiGameList::openFile() {
 void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
     try {
         gamesLoaded_ = 0;
-        loadingProgress_ = 0.0f;
+        loadingProgress_ = 0.0F;
 
         gameRecordManager_.load(fileName, [&](const GameRecord&, float progress) {
             gamesLoaded_++;

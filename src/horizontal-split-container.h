@@ -105,10 +105,10 @@ namespace QaplaWindows {
         void drawSplitter(const std::string& id, const ImVec2& vec);
         
         /** @brief Width of the splitter in pixels */
-        const float splitterWidth_ = 5.0f;
+        const float splitterWidth_ = 5.0F;
         
         /** @brief Minimum size for each panel in pixels */
-        const float minSize_ = 100.0f;
+        const float minSize_ = 100.0F;
 
         /** @brief Embedded window displayed in the left panel */
         std::unique_ptr<EmbeddedWindow> leftWindow_;
@@ -132,19 +132,19 @@ namespace QaplaWindows {
         std::string name_;
 
         /** @brief Current width of the left panel in pixels */
-        float leftWidth_ = 0.0f;
+        float leftWidth_ = 0.0F;
         
         /** @brief Current width of the right panel in pixels */
-        float rightWidth_ = 0.0f;
+        float rightWidth_ = 0.0F;
         
         /** @brief Preset width for the right panel (0 if not set) */
-        float rightPresetWidth_ = 0.0f;
+        float rightPresetWidth_ = 0.0F;
         
         /** @brief Preset width for the left panel (0 if not set) */
-        float leftPresetWidth_ = 0.0f;
+        float leftPresetWidth_ = 0.0F;
         
         /** @brief Previous available width for delta calculations */
-        float availX_ = 0.0f;
+        float availX_ = 0.0F;
         
         /** @brief Whether the left panel has a fixed width */
         bool leftFixed_ = false;

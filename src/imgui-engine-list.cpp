@@ -46,9 +46,9 @@ using namespace QaplaWindows;
  * @param lines Vector of text lines to display, each as its own styled box.
  */
 static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_t index) {
-    constexpr float boxPaddingX = 4.0f;
-    constexpr float boxPaddingY = 2.0f;
-    constexpr float boxRounding = 2.0f;
+    constexpr float boxPaddingX = 4.0F;
+    constexpr float boxPaddingY = 2.0F;
+    constexpr float boxRounding = 2.0F;
     constexpr ImU32 boxBgColor = IM_COL32(50, 52, 60, 255);
     constexpr ImU32 boxBorderColor = IM_COL32(90, 90, 100, 255);
 
@@ -63,7 +63,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
 
         drawList->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
         drawList->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
-		drawList->PushClipRect(pos, ImVec2(pos.x + size.x - 4.0f, pos.y + size.y), true);
+		drawList->PushClipRect(pos, ImVec2(pos.x + size.x - 4.0F, pos.y + size.y), true);
         auto textTopLeft = ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
         ImGui::SetCursorScreenPos(textTopLeft);
         if (i == 0 && index <= 1) {
@@ -77,7 +77,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
 }
 
 static void drawEngineInfo(const EngineRecord& record, size_t index) {
-    ImGui::Indent(5.0f);
+    ImGui::Indent(5.0F);
     ImGui::PushID("EngineInfo");
     std::string name = record.config.getName();
 	std::string status = EngineRecord::to_string(record.status);
@@ -85,7 +85,7 @@ static void drawEngineInfo(const EngineRecord& record, size_t index) {
         ", " + std::to_string(*record.memoryUsageB / (1024 * 1024)) + " MB" : "";
 	renderReadonlyTextBoxes({ name, status + memory }, index);
     ImGui::PopID();
-    ImGui::Unindent(5.0f);
+    ImGui::Unindent(5.0F);
 }
 
 
@@ -155,13 +155,13 @@ void ImGuiEngineList::addTables(size_t size) {
         tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
             std::vector<ImGuiTable::ColumnDef>{
-                {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
-                { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0f, true },
-                { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0f, true },
-                { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Primary variant", ImGuiTableColumnFlags_WidthFixed, 1660.0f }
+                {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0F, true},
+                { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0F, true },
+                { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0F, true },
+                { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Primary variant", ImGuiTableColumnFlags_WidthFixed, 1660.0F }
         }));
         tables_[i]->setClickable(true);
 	}
@@ -182,7 +182,7 @@ std::vector<std::string> ImGuiEngineList::mkTableLine(ImGuiTable* table, const S
             score = std::format("{}M{}", *info.scoreMate < 0 ? "-" : "", std::abs(*info.scoreMate));
         }
         else if (info.scoreCp) {
-            score = std::format("{:.2f}", *info.scoreCp / 100.0f);
+            score = std::format("{:.2f}", *info.scoreCp / 100.0F);
         }
         if (score != "-" && table->size() == 1 && table->getField(0, 5)  == "-") {
             table->setField(0, 5, score);
@@ -230,17 +230,17 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
 }
 
 std::string ImGuiEngineList::drawButtons(size_t index) {
-    constexpr float space = 3.0f;
-    constexpr float topOffset = 5.0f;
-    constexpr float bottomOffset = 8.0f;
-    constexpr float leftOffset = 20.0f;
+    constexpr float space = 3.0F;
+    constexpr float topOffset = 5.0F;
+    constexpr float bottomOffset = 8.0F;
+    constexpr float leftOffset = 20.0F;
     std::vector<std::string> buttons{ "Restart", "Stop" };
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
 	topLeft.x = std::round(topLeft.x);
 	topLeft.y = std::round(topLeft.y);
     auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
 
-    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
 
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
 
@@ -268,10 +268,10 @@ std::string ImGuiEngineList::drawButtons(size_t index) {
 
 std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
 
-    constexpr float cEngineInfoWidth = 160.0f;
-    constexpr float cSectionSpacing = 4.0f;
+    constexpr float cEngineInfoWidth = 160.0F;
+    constexpr float cSectionSpacing = 4.0F;
     
-    const bool isSmall = size.y < 100.0f;
+    const bool isSmall = size.y < 100.0F;
     
     const ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_TableRowBg);
 
@@ -292,7 +292,7 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     std::string pv = drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
     
     ImGui::SetCursorScreenPos(topLeft);
-    ImGui::Dummy(ImVec2(size.x, size.y - 3.0f));
+    ImGui::Dummy(ImVec2(size.x, size.y - 3.0F));
     ImGui::PopID();
     return command.empty() ? pv : command;
 }
@@ -303,8 +303,8 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     std::string command;
     ImGui::SetCursorScreenPos(topLeft);
     drawList->PushClipRect(topLeft, max);
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0f));
-    ImGui::PushItemWidth(cEngineInfoWidth - 10.0f);
+    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0F));
+    ImGui::PushItemWidth(cEngineInfoWidth - 10.0F);
     bool hasEngine = (index < engineRecords_.size());
     if (allowInput_ && (!isSmall || !hasEngine)) command = drawButtons(index);
     if (hasEngine) drawEngineInfo(engineRecords_[index], index);
@@ -332,7 +332,7 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
         if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
             ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
         {
-            auto clicked = tables_[index]->draw(ImVec2(2000.0f, tableSize.y));
+            auto clicked = tables_[index]->draw(ImVec2(2000.0F, tableSize.y));
             if (clicked) {
                 pv = encodePV(displayedMoveNo_[index], tables_[index]->getField(*clicked, 6));
             }
@@ -343,10 +343,10 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
 }
 
 std::pair<std::string, std::string> ImGuiEngineList::draw() {
-    const float cMinRowHeight = 50.0f;
-    constexpr float cEngineInfoWidth = 160.0f;
-    constexpr float cMinTableWidth = 200.0f;
-    constexpr float cSectionSpacing = 4.0f;
+    const float cMinRowHeight = 50.0F;
+    constexpr float cEngineInfoWidth = 160.0F;
+    constexpr float cMinTableWidth = 200.0F;
+    constexpr float cSectionSpacing = 4.0F;
 
 	const auto records = engineRecords_.size();
     addTables(records);

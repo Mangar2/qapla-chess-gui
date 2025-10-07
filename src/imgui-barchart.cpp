@@ -98,7 +98,7 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         ImVec2(chartMin.x - 5, zeroY),
         ImVec2(chartMax.x + 10, zeroY),
         config_.axisColor,
-        2.0f
+        2.0F
     );
     
     if (values_.empty()) return;
@@ -130,7 +130,7 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             ImVec2(x, zeroY - 3),
             ImVec2(x, zeroY + 3),
             config_.axisColor,
-            1.0f
+            1.0F
         );
         
         std::string label = std::to_string(moveNumber / 2);
@@ -149,7 +149,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         ImVec2(chartMin.x, chartMin.y - 10),
         ImVec2(chartMin.x, chartMax.y + 10),
         config_.axisColor,
-        2.0f
+        2.0F
     );
     
     float chartHeight = chartMax.y - chartMin.y;
@@ -174,7 +174,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     
     // Special case: window too small for 3 labels - adjust step size to fit
     if (!showZero) {
-        float availableSpacingForTwo = chartHeight / 2.0f;
+        float availableSpacingForTwo = chartHeight / 2.0F;
         int32_t maxValueThatFits = static_cast<int32_t>((availableSpacingForTwo / chartHeight) * scale);
         
         int32_t adjustedStepSize = stepSize;
@@ -194,7 +194,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
             ImVec2(chartMin.x - 3, y),
             ImVec2(chartMin.x + 3, y),
             config_.axisColor,
-            1.0f
+            1.0F
         );
         
         std::string label = "0";
@@ -223,14 +223,14 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 ImVec2(chartMin.x, y),
                 ImVec2(chartMax.x, y),
                 config_.gridColor,
-                1.0f
+                1.0F
             );
             
             drawList->AddLine(
                 ImVec2(chartMin.x - 3, y),
                 ImVec2(chartMin.x + 3, y),
                 config_.axisColor,
-                1.0f
+                1.0F
             );
             
             std::string label = std::to_string(positiveValue / 100);
@@ -249,14 +249,14 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
                 ImVec2(chartMin.x, y),
                 ImVec2(chartMax.x, y),
                 config_.gridColor,
-                1.0f
+                1.0F
             );
             
             drawList->AddLine(
                 ImVec2(chartMin.x - 3, y),
                 ImVec2(chartMin.x + 3, y),
                 config_.axisColor,
-                1.0f
+                1.0F
             );
             
             std::string label = std::to_string(negativeValue / 100);
@@ -293,16 +293,16 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
         }
         
         // Ensure minimum bar height for visibility
-        if (std::abs(barMax.y - barMin.y) < 1.0f) {
+        if (std::abs(barMax.y - barMin.y) < 1.0F) {
             if (value >= 0) {
-                barMax.y = barMin.y + 1.0f;
+                barMax.y = barMin.y + 1.0F;
             } else {
-                barMin.y = barMax.y - 1.0f;
+                barMin.y = barMax.y - 1.0F;
             }
         }
         
         drawList->AddRectFilled(barMin, barMax, fillColor);
-        drawList->AddRect(barMin, barMax, borderColor, 0.0f, 0, 1.0f);
+        drawList->AddRect(barMin, barMax, borderColor, 0.0F, 0, 1.0F);
     }
 }
 

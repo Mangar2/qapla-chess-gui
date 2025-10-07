@@ -29,7 +29,7 @@ namespace QaplaWindows {
         leftFlags_ = left;
         rightFlags_ = right;
         name_ = name;
-        leftWidth_ = 400.0f;
+        leftWidth_ = 400.0F;
     }
 
     void HorizontalSplitContainer::setLeft(std::unique_ptr<EmbeddedWindow> window) {
@@ -87,7 +87,7 @@ namespace QaplaWindows {
     }
 
     float HorizontalSplitContainer::computeLeftWidth(ImVec2 avail) {
-        constexpr float imguiPadding = 13.0f; 
+        constexpr float imguiPadding = 13.0F; 
         float availableWidth = std::max(avail.x - splitterWidth_ - imguiPadding, 2 * minSize_);
         float width = leftWidth_;
 

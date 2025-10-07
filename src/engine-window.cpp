@@ -38,11 +38,11 @@ EngineWindow::EngineWindow()
 EngineWindow::~EngineWindow() = default;
 
 std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
-    constexpr float borderX = 20.0f;
-    constexpr float borderY = 8.0f;
-    constexpr float spacingY = 30.0f;
+    constexpr float borderX = 20.0F;
+    constexpr float borderY = 8.0F;
+    constexpr float spacingY = 30.0F;
 
-    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     auto topLeft = ImGui::GetCursorScreenPos();
 
     std::string command;
@@ -75,10 +75,10 @@ std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
 }
 
 std::pair<std::string, std::string> EngineWindow::draw() {
-    constexpr float cMinRowHeight = 80.0f;
-    constexpr float cEngineInfoWidth = 160.0f;
-    constexpr float cMinTableWidth = 200.0f;
-    constexpr float cSectionSpacing = 4.0f;
+    constexpr float cMinRowHeight = 80.0F;
+    constexpr float cEngineInfoWidth = 160.0F;
+    constexpr float cMinTableWidth = 200.0F;
+    constexpr float cSectionSpacing = 4.0F;
 
     const auto engineRecords = getEngineRecords();
 

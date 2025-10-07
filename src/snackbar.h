@@ -119,17 +119,17 @@ private:
     bool drawCloseButton(const ImVec2& position, float radius);
 
     static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
-        ImVec4(0.8f, 0.8f, 0.8f, 1.0f), // Note: Light Gray
-        ImVec4(0.7f, 0.8f, 0.7f, 1.0f), // Success: Light Green
-        ImVec4(0.8f, 0.8f, 0.7f, 1.0f), // Warning: Light Yellow
-        ImVec4(0.8f, 0.7f, 0.7f, 1.0f)  // Error: Light Red
+        ImVec4(0.8f, 0.8f, 0.8f, 1.0F), // Note: Light Gray
+        ImVec4(0.7f, 0.8f, 0.7f, 1.0F), // Success: Light Green
+        ImVec4(0.8f, 0.8f, 0.7f, 1.0F), // Warning: Light Yellow
+        ImVec4(0.8f, 0.7f, 0.7f, 1.0F)  // Error: Light Red
     };
 
     static constexpr std::array<float, static_cast<size_t>(SnackbarType::Count)> durations = {
-        10.0f, // Note
-        10.0f, // Success
-        15.0f, // Warning
-        20.0f  // Error
+        10.0F, // Note
+        10.0F, // Success
+        15.0F, // Warning
+        20.0F  // Error
     };
 
     static constexpr std::array<const char*, static_cast<size_t>(SnackbarType::Count)> typeNames = {

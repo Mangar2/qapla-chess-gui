@@ -65,11 +65,11 @@ namespace QaplaWindows {
             ImGui::EndChild();
 
             ImGui::Separator();
-            const auto buttonSize = ImVec2(80.0f, 25.0f);
-			const float buttonSpacing = 30.0f;
+            const auto buttonSize = ImVec2(80.0F, 25.0F);
+			const float buttonSpacing = 30.0F;
 
 			ImGui::SetCursorPosX(buttonSpacing);
-            ImGui::SetCursorPosY(ImGui::GetWindowHeight() - buttonSize.y - 8.0f);
+            ImGui::SetCursorPosY(ImGui::GetWindowHeight() - buttonSize.y - 8.0F);
             if (config_.okButton) {
                 if (ImGui::Button("OK", buttonSize)) {
                     confirmed_ = true;

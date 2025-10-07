@@ -51,9 +51,9 @@ namespace QaplaWindows
         static std::unique_ptr<VerticalSplitContainer> mainWindow;
         if (!mainWindow) {
             mainWindow = std::make_unique<VerticalSplitContainer>("main_window");
-            mainWindow->setMinTopHeight(300.0f);
-            mainWindow->setMinBottomHeight(184.0f);
-            mainWindow->setPresetHeight(110.0f, false);
+            mainWindow->setMinTopHeight(300.0F);
+            mainWindow->setMinBottomHeight(184.0F);
+            mainWindow->setPresetHeight(110.0F, false);
         }
         return *mainWindow;
     }
@@ -62,7 +62,7 @@ namespace QaplaWindows
         static HorizontalSplitContainer* topWindow;
         if (!topWindow) {
             auto window = std::make_unique<HorizontalSplitContainer>("tournament_top");
-            window->setPresetWidth(400.0f, false);
+            window->setPresetWidth(400.0F, false);
             topWindow = window.get();
             getMainWindow().setTop(std::move(window));
         }
@@ -73,7 +73,7 @@ namespace QaplaWindows
         static VerticalSplitContainer* clockMovesWindow;
         if (!clockMovesWindow) {
             auto window = std::make_unique<VerticalSplitContainer>("top_right");
-            window->setFixedHeight(120.0f, true);
+            window->setFixedHeight(120.0F, true);
             clockMovesWindow = window.get();
             getTopWindow().setRight(std::move(window));
         }
@@ -84,7 +84,7 @@ namespace QaplaWindows
         static VerticalSplitContainer* movesChartWindow;
         if (!movesChartWindow) {
             auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
-            window->setPresetHeight(180.0f, false);
+            window->setPresetHeight(180.0F, false);
             movesChartWindow = window.get();
             getClockMovesWindow().setBottom(std::move(window));
         }

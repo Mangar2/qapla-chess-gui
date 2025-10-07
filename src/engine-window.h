@@ -48,7 +48,7 @@ namespace QaplaWindows {
 
     private:
 
-        static constexpr float areaWidth = 65.0f;
+        static constexpr float areaWidth = 65.0F;
 
         /**
          * @brief Draws the configuration button area for all engines.

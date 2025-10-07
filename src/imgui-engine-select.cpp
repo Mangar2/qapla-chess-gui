@@ -181,7 +181,7 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
     bool modified = false;
     
     if (ImGui::CollapsingHeader("Selected Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0f);
+        ImGui::Indent(10.0F);
         
         // Draw all selected engines with checkboxes
         int index = 0;
@@ -194,7 +194,7 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
             index++;
         }
         
-        ImGui::Unindent(10.0f);
+        ImGui::Unindent(10.0F);
     }
     
     return modified;
@@ -204,7 +204,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
     bool modified = false;
     
     if (ImGui::CollapsingHeader("Available Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0f);
+        ImGui::Indent(10.0F);
         
         auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
         auto configs = configManager.getAllConfigs();
@@ -243,7 +243,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             index++;
         }
         
-        ImGui::Unindent(10.0f);
+        ImGui::Unindent(10.0F);
     }
     
     return modified;

@@ -663,7 +663,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
             if (inMoveSection) {
                 finalizeParsedTags(currentGame);
                 games.push_back(std::move(currentGame));
-                float progress = fileSize > 0 ? static_cast<float>(currentPos) / fileSize : 0.0f;
+                float progress = fileSize > 0 ? static_cast<float>(currentPos) / fileSize : 0.0F;
                 if (gameCallback && !gameCallback(games.back(), progress)) {
                     return games; // Stop loading if callback returns false
                 }
@@ -694,7 +694,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
         finalizeParsedTags(currentGame);
         games.push_back(std::move(currentGame));
         if (gameCallback) {
-            gameCallback(games.back(), 100.0f); // Don't stop at the end
+            gameCallback(games.back(), 100.0F); // Don't stop at the end
         }
     }
 

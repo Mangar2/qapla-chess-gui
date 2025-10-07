@@ -86,7 +86,7 @@ namespace QaplaWindows
             whiteToMove ? Piece::WHITE_BISHOP : Piece::BLACK_BISHOP,
             whiteToMove ? Piece::WHITE_KNIGHT : Piece::BLACK_KNIGHT};
 
-        cellSize = std::max(30.0f, cellSize * SHRINK_CELL_SIZE);
+        cellSize = std::max(30.0F, cellSize * SHRINK_CELL_SIZE);
         ImDrawList *drawList = ImGui::GetWindowDrawList();
         ImFont *font = ImGui::GetFont();
         ImGui::PushFont(font::chessFont);
@@ -265,15 +265,15 @@ namespace QaplaWindows
 
     std::optional<MoveRecord> ImGuiBoard::draw()
     {
-        constexpr float maxBorderTextSize = 30.0f;
+        constexpr float maxBorderTextSize = 30.0F;
         constexpr int gridSize = 8;
 
         const auto screenPos = ImGui::GetCursorScreenPos();
         const auto region = ImGui::GetContentRegionAvail();
-        const auto boardHeight = std::max(50.0f, region.y - 10.0f);
-        const auto boardWidth = std::max(50.0f, region.x - 10.0f);
+        const auto boardHeight = std::max(50.0F, region.y - 10.0F);
+        const auto boardWidth = std::max(50.0F, region.x - 10.0F);
 
-        if (region.x <= 0.0f || boardHeight <= 0.0f)
+        if (region.x <= 0.0F || boardHeight <= 0.0F)
         {
             return {};
         }
@@ -284,7 +284,7 @@ namespace QaplaWindows
 
         if (promotionPending_)
         {
-            ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0f, 1.0f, 1.0f, 0.3f));
+            ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0F, 1.0F, 1.0F, 0.3f));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
             if (ImGui::BeginPopup("Promotion"))
             {

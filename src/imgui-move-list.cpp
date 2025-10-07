@@ -32,17 +32,17 @@ ImGuiMoveList::ImGuiMoveList()
 : table_("MoveListTable",
     ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
     std::vector<ImGuiTable::ColumnDef>{
-        {"Move", ImGuiTableColumnFlags_WidthFixed, 90.0f, false, [](std::string& content, bool& alignRight) {
+        {"Move", ImGuiTableColumnFlags_WidthFixed, 90.0F, false, [](std::string& content, bool& alignRight) {
             if (!content.empty() && content[0] == '.') {
                 alignRight = true;
             } else {
                 alignRight = false;
             }
         }},
-        {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0f, true},
-        { "Time", ImGuiTableColumnFlags_WidthFixed, 80.0f, true },
-        { "Eval", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-        { "PV", ImGuiTableColumnFlags_WidthStretch, 0.0f, false }
+        {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0F, true},
+        { "Time", ImGuiTableColumnFlags_WidthFixed, 80.0F, true },
+        { "Eval", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+        { "PV", ImGuiTableColumnFlags_WidthStretch, 0.0F, false }
 })
 {
     table_.setAutoScroll(true);  
@@ -139,7 +139,7 @@ std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const Mo
         row.push_back(std::format("{}M{}", *move.scoreMate < 0 ? "-" : "", std::abs(*move.scoreMate)));
     }
     else if (move.scoreCp) {
-        row.push_back(std::format("{:.2f}", *move.scoreCp / 100.0f));
+        row.push_back(std::format("{:.2f}", *move.scoreCp / 100.0F));
     } else {
         row.push_back("-");
 	}

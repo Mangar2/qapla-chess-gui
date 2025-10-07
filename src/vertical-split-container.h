@@ -140,28 +140,28 @@ namespace QaplaWindows {
         std::string name_;
 
         /** @brief Height of the splitter in pixels */
-        const float splitterHeight_ = 5.0f;
+        const float splitterHeight_ = 5.0F;
 
         /** @brief Minimum height for the top panel in pixels */
-        float minTopHeight_ = 100.0f;
+        float minTopHeight_ = 100.0F;
         
         /** @brief Minimum height for the bottom panel in pixels */
-        float minBottomHeight_ = 100.0f;
+        float minBottomHeight_ = 100.0F;
 
         /** @brief Current height of the top panel in pixels */
-        float topHeight_ = 500.0f;
+        float topHeight_ = 500.0F;
         
         /** @brief Current height of the bottom panel in pixels */
-        float bottomHeight_ = 0.0f;
+        float bottomHeight_ = 0.0F;
         
         /** @brief Preset height for the top panel (0 if not set) */
-        float topPresetHeight_ = 0.0f;
+        float topPresetHeight_ = 0.0F;
         
         /** @brief Preset height for the bottom panel (0 if not set) */
-        float bottomPresetHeight_ = 0.0f;
+        float bottomPresetHeight_ = 0.0F;
         
         /** @brief Previous available height for delta calculations */
-        float availY_ = 0.0f;
+        float availY_ = 0.0F;
 
         /** @brief Whether the top panel has a fixed height */
         bool topFixed_ = false;

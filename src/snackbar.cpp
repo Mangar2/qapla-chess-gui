@@ -46,9 +46,9 @@ void SnackbarManager::show(const std::string& message, SnackbarType type) {
 }
 
 void SnackbarManager::draw() {
-    constexpr ImVec2 snackbarSize = ImVec2(450.0f, 120.0f); 
-    constexpr float closeButtonRadius = 10.0f;
-    constexpr float borderThickness = 2.0f;
+    constexpr ImVec2 snackbarSize = ImVec2(450.0F, 120.0F); 
+    constexpr float closeButtonRadius = 10.0F;
+    constexpr float borderThickness = 2.0F;
 
     while (!snackbarStack_.empty()) {
         auto& currentSnackbar = snackbarStack_.back();
@@ -62,14 +62,14 @@ void SnackbarManager::draw() {
         }
 
         ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
-        ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0f);
+        ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0F);
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0F);
 
         ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
         ImVec2 windowSize = ImGui::GetMainViewport()->Size;
-        ImVec2 snackbarPos = ImVec2(windowPos.x + 20.0f, windowPos.y + windowSize.y - snackbarSize.y - 20.0f);
+        ImVec2 snackbarPos = ImVec2(windowPos.x + 20.0F, windowPos.y + windowSize.y - snackbarSize.y - 20.0F);
 
         ImGui::SetNextWindowPos(snackbarPos, ImGuiCond_Always);
         ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
@@ -80,23 +80,23 @@ void SnackbarManager::draw() {
         auto drawList = ImGui::GetWindowDrawList();
         ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
         ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
-        drawList->AddRect(p1, p2, ImColor(borderColor), 10.0f, 0, borderThickness);
+        drawList->AddRect(p1, p2, ImColor(borderColor), 10.0F, 0, borderThickness);
 
         ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0F, 0.0F, 0.0F, 1.0F));
         ImGui::SetWindowFontScale(1.1f);
-        ImGui::SetCursorPos(ImVec2(0.0f, 20.0f));
-        ImGui::Indent(20.0f); 
+        ImGui::SetCursorPos(ImVec2(0.0F, 20.0F));
+        ImGui::Indent(20.0F); 
         ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
         ImGui::Text("%s", currentSnackbar.message.c_str());
-        ImGui::Unindent(20.0f);
-        ImGui::SetWindowFontScale(1.0f);
+        ImGui::Unindent(20.0F);
+        ImGui::SetWindowFontScale(1.0F);
         ImGui::PopStyleColor();
         ImGui::PopTextWrapPos(); 
 
         ImVec2 closeButtonPos = ImVec2(
-            snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0f, 
-            snackbarPos.y + closeButtonRadius + 10.0f                  
+            snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0F, 
+            snackbarPos.y + closeButtonRadius + 10.0F                  
         );
         
         if (drawCloseButton(closeButtonPos, closeButtonRadius)) {
@@ -115,19 +115,19 @@ bool SnackbarManager::drawCloseButton(const ImVec2& position, float radius) {
     auto drawList = ImGui::GetWindowDrawList();
 
     // Draw circle background
-    drawList->AddCircleFilled(position, radius, ImColor(1.0f, 1.0f, 1.0f, 0.9f));
-    drawList->AddCircle(position, radius, ImColor(0.0f, 0.0f, 0.0f, 0.9f), 16, 1.5f);
+    drawList->AddCircleFilled(position, radius, ImColor(1.0F, 1.0F, 1.0F, 0.9f));
+    drawList->AddCircle(position, radius, ImColor(0.0F, 0.0F, 0.0F, 0.9f), 16, 1.5f);
 
     // Draw "X" mark 
-    float lineThickness = 2.0f;
+    float lineThickness = 2.0F;
     float crossSize = radius * 0.5f;
     ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
     ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
     ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
     ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
 
-    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness);
-    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0f, 0.0f, 0.0f, 0.9f), lineThickness);
+    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0F, 0.0F, 0.0F, 0.9f), lineThickness);
+    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0F, 0.0F, 0.0F, 0.9f), lineThickness);
 
     // Create invisible button for interaction
     ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));

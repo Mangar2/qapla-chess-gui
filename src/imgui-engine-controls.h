@@ -271,7 +271,7 @@ inline bool drawEngineOptions(EngineConfig& config, bool enabled) {
     for (const auto& option : options) {
         auto it = optionMap.find(option.name);
         std::string value = (it != optionMap.end()) ? it->second : option.defaultValue;
-        if (ImGuiControls::engineOptionControl(option, value, 400.0f)) {
+        if (ImGuiControls::engineOptionControl(option, value, 400.0F)) {
             changed = true;
             config.setOptionValue(option.name, value);
         }

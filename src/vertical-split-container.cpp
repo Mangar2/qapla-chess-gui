@@ -29,7 +29,7 @@ namespace QaplaWindows {
         topFlags_ = top;
         bottomFlags_ = bottom;
         name_ = name;
-        topHeight_ = 500.0f;
+        topHeight_ = 500.0F;
     }
 
     void VerticalSplitContainer::setTop(std::unique_ptr<EmbeddedWindow> window) {
@@ -180,7 +180,7 @@ namespace QaplaWindows {
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(80, 80, 80, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(80, 80, 80, 255));
             
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0F);
             ImGui::Button(("###" + id).c_str(), size);
             
             ImGui::PopStyleColor(3);
@@ -190,7 +190,7 @@ namespace QaplaWindows {
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
 
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0f);
+            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0F);
             ImGui::Button(("###" + id).c_str(), size);
 
             if (ImGui::IsItemActive()) {

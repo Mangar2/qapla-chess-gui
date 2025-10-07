@@ -26,7 +26,7 @@
 
 namespace QaplaButton {
 
-    constexpr float BORDER = 4.0f;
+    constexpr float BORDER = 4.0F;
 
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
@@ -87,25 +87,25 @@ namespace QaplaButton {
     }
 
     void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        auto yReduce = BORDER + 5.0f;
-        auto thickness = 7.0f;
-        auto arrowInset = 4.0f;
-        auto xPos = topLeft.x + BORDER - 1.0f;
+        auto yReduce = BORDER + 5.0F;
+        auto thickness = 7.0F;
+        auto arrowInset = 4.0F;
+        auto xPos = topLeft.x + BORDER - 1.0F;
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3.0f, yPos + thickness), color);
-        xPos += 3.0f;
+        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3.0F, yPos + thickness), color);
+        xPos += 3.0F;
         for (int i = 0; i < 8; i++) {
             list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i),
                 ImVec2(xPos + i, yPos + thickness + arrowInset - i),
                 color);
         }
-		xPos += 9.0f;
+		xPos += 9.0F;
         for (int i = 0; i <= 3; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos + 3.0f - i),
-                ImVec2(xPos + i, yPos + 5.0f + i), color);
-            list->AddLine(ImVec2(xPos + 7.0f - i, yPos + 3.0f - i),
-                ImVec2(xPos + 7.0f - i, yPos + 5.0f + i), color);
+            list->AddLine(ImVec2(xPos + i, yPos + 3.0F - i),
+                ImVec2(xPos + i, yPos + 5.0F + i), color);
+            list->AddLine(ImVec2(xPos + 7.0F - i, yPos + 3.0F - i),
+                ImVec2(xPos + 7.0F - i, yPos + 5.0F + i), color);
         }
     }
 
@@ -117,9 +117,9 @@ namespace QaplaButton {
                 ImVec2(topLeft.x + reduce, topLeft.y + reduce),
                 ImVec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
                 color,
-                0.0f,
+                0.0F,
                 ImDrawFlags_None,
-                1.0f);
+                1.0F);
         }
     }
 
@@ -135,20 +135,20 @@ namespace QaplaButton {
 
     void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto color = getFgColor(state);
-        constexpr float reduce = 4.0f;
+        constexpr float reduce = 4.0F;
         auto rectSize = ImVec2(size.x - BORDER * 2 - reduce, size.y - BORDER * 2 - reduce);
         int centeredX = static_cast<int>((size.x - rectSize.x) / 2);
         auto rectPosX = topLeft.x + static_cast<float>(centeredX);
         drawRect(list, ImVec2(rectPosX, topLeft.y + BORDER), rectSize, state);
 
         // Parameter
-        const float dotSize = 2.0f;   // 2x2 Pixel
-        const float gap = 2.0f;       // Abstand zwischen Punkten
+        const float dotSize = 2.0F;   // 2x2 Pixel
+        const float gap = 2.0F;       // Abstand zwischen Punkten
         const int count = 3;
 
         // Referenzpunkt: linke untere Ecke des Symbols
         float startX = rectPosX + 1;
-        float startY = topLeft.y + size.y - BORDER - dotSize + 1.0f;
+        float startY = topLeft.y + size.y - BORDER - dotSize + 1.0F;
 
         for (int i = 0; i < count; ++i) {
             float x0 = startX + i*(dotSize + gap);
@@ -227,7 +227,7 @@ namespace QaplaButton {
         ImVec2 center = topLeft;
         center.x += size.x / 2;
         center.y += size.y / 2;
-        float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
+        float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         constexpr float pi = 3.14159265358979323846f;
@@ -244,28 +244,28 @@ namespace QaplaButton {
             center.y + sinf(pi) * radius);
 
         for (int i = 0; i < 3; ++i) {
-            float width = std::max(5.0f - 2.0f * static_cast<float>(i), 1.0f);
-            float yOffset = -2.0f * i;
-            ImVec2 p1 = ImVec2(arrowTip.x - width / 2.0f, arrowTip.y + yOffset);
-            ImVec2 p2 = ImVec2(arrowTip.x + width / 2.0f, arrowTip.y + yOffset);
-            drawList->AddLine(p1, p2, color, 2.0f);
+            float width = std::max(5.0F - 2.0F * static_cast<float>(i), 1.0F);
+            float yOffset = -2.0F * i;
+            ImVec2 p1 = ImVec2(arrowTip.x - width / 2.0F, arrowTip.y + yOffset);
+            ImVec2 p2 = ImVec2(arrowTip.x + width / 2.0F, arrowTip.y + yOffset);
+            drawList->AddLine(p1, p2, color, 2.0F);
         }
     }
 
     void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto color = getFgColor(state);
-        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0f, topLeft.y + size.y / 2.0f);
-        float radius = std::min(size.x, size.y) / 2.0f - BORDER - 1;
+        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
         constexpr float pi = 3.14159265358979323846f;
         
         float innerRadius = radius - 0.5f;
-        list->AddCircle(center, innerRadius, color, 0, 2.0f);
+        list->AddCircle(center, innerRadius, color, 0, 2.0F);
         // Draw the gear shape
         for (int i = 0; i < 8; ++i) {
-            float angle = i * (pi / 4.0f); // 45 degrees
+            float angle = i * (pi / 4.0F); // 45 degrees
             float x = center.x + cos(angle) * radius;
             float y = center.y + sin(angle) * radius;
-            list->AddCircleFilled(ImVec2(x, y), 2.0f, color);
+            list->AddCircleFilled(ImVec2(x, y), 2.0F, color);
         }
 	}
 
@@ -273,22 +273,22 @@ namespace QaplaButton {
         auto color = getFgColor(state);
         ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
         ImVec2 textPos = ImVec2(
-            topLeft.x + std::round((size.x - textSize.x) * 0.5f) - 2.0f,
-            topLeft.y - 2.0f
+            topLeft.x + std::round((size.x - textSize.x) * 0.5f) - 2.0F,
+            topLeft.y - 2.0F
         );
-        float fontSize = size.y * 1.0f;
+        float fontSize = size.y * 1.0F;
         list->AddText(ImGui::GetFont(), fontSize, textPos, color, text.c_str());
 	}
 
     void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-		auto yReduce = BORDER + 5.0f;
-        auto thickness = 7.0f;
-        auto arrowInset = 4.0f;
-        auto xPos = topLeft.x + BORDER - 1.0f;
+		auto yReduce = BORDER + 5.0F;
+        auto thickness = 7.0F;
+        auto arrowInset = 4.0F;
+        auto xPos = topLeft.x + BORDER - 1.0F;
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
-        for (auto add : { 3.0f, 4.0f, 5.0f }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
+        for (auto add : { 3.0F, 4.0F, 5.0F }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
             xPos += add;
         }
         for (int i = 0; i < 8; i++) {
@@ -299,14 +299,14 @@ namespace QaplaButton {
     }
 
     void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        auto yReduce = BORDER + 4.0f;
-        auto thickness = 5.0f;
-        auto arrowInset = 3.0f;
+        auto yReduce = BORDER + 4.0F;
+        auto thickness = 5.0F;
+        auto arrowInset = 3.0F;
         auto xPos = topLeft.x + BORDER;
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
-        for (auto add : { 3.0f, 4.0f, 5.0f }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
+        for (auto add : { 3.0F, 4.0F, 5.0F }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
             xPos += add;
         }
         for (int i = 0; i < 6; i++) {
@@ -323,17 +323,17 @@ namespace QaplaButton {
     }
 
     void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        auto yReduce = BORDER + 2.0f;
-        auto thickness = 5.0f;
-        auto arrowInset = 3.0f;
+        auto yReduce = BORDER + 2.0F;
+        auto thickness = 5.0F;
+        auto arrowInset = 3.0F;
         auto xPos = topLeft.x + BORDER;
 		auto x2Pos = topLeft.x + size.x - BORDER;
         auto yPos = topLeft.y + yReduce;
-		auto y2Pos = topLeft.y + yReduce + thickness + 3.0f;
+		auto y2Pos = topLeft.y + yReduce + thickness + 3.0F;
         auto color = getFgColor(state);
-        for (auto add : { 3.0f, 4.0f, 5.0f }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f) , yPos + thickness), color);
-            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0f ? 0.0f : 1.0f), y2Pos + thickness), color);
+        for (auto add : { 3.0F, 4.0F, 5.0F }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F) , yPos + thickness), color);
+            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
             xPos += add;
 			x2Pos -= add;
 		}
@@ -348,16 +348,16 @@ namespace QaplaButton {
     }
 
     void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        auto yReduce = BORDER + 2.0f;
-        auto thickness = 5.0f;
-        auto xPos = topLeft.x + BORDER + 3.0f;
-        auto x2Pos = topLeft.x + size.x - BORDER - 2.0f;
+        auto yReduce = BORDER + 2.0F;
+        auto thickness = 5.0F;
+        auto xPos = topLeft.x + BORDER + 3.0F;
+        auto x2Pos = topLeft.x + size.x - BORDER - 2.0F;
         auto yPos = topLeft.y + yReduce;
-        auto y2Pos = topLeft.y + yReduce + thickness + 3.0f;
+        auto y2Pos = topLeft.y + yReduce + thickness + 3.0F;
         auto color = getFgColor(state);
-        for (auto add : { 3.0f, 4.0f, 5.0f }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0f ? 0.0f : 1.0f), yPos + thickness), color);
-            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0f ? 0.0f : 1.0f), y2Pos + thickness), color);
+        for (auto add : { 3.0F, 4.0F, 5.0F }) {
+            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
+            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
             xPos += add;
             x2Pos -= add;
         }
@@ -376,29 +376,29 @@ namespace QaplaButton {
 
         // Draw scanning line
         if (state == ButtonState::Animated) {
-            float angle = static_cast<float>(ImGui::GetTime()) * 2.0f;
+            float angle = static_cast<float>(ImGui::GetTime()) * 2.0F;
             ImVec2 endPoint = ImVec2(
                 center.x + cos(angle) * (radius + 2),
                 center.y + sin(angle) * (radius + 2)
             );
-            list->AddLine(center, endPoint, color, 2.0f);
+            list->AddLine(center, endPoint, color, 2.0F);
         }
     }
 
     void drawSwapEngines(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        auto xReduce = BORDER + 2.0f;
-        auto thickness = 5.0f;
-        auto arrowInset = 3.0f;
+        auto xReduce = BORDER + 2.0F;
+        auto thickness = 5.0F;
+        auto arrowInset = 3.0F;
         auto yPos = topLeft.y + BORDER;
         auto y2Pos = topLeft.y + size.y - BORDER;
         auto xPos = topLeft.x + xReduce;
-        auto x2Pos = topLeft.x + xReduce + thickness + 3.0f;
+        auto x2Pos = topLeft.x + xReduce + thickness + 3.0F;
         
         // Colors: white for up arrow, black for down arrow
         auto whiteColor = getFgColor(state);
         auto blackColor = IM_COL32(0, 0, 0, 255);
         
-        auto add = 11.0f;
+        auto add = 11.0F;
 
         // Draw white arrow pointing up 
         list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + thickness, yPos + add), whiteColor);
@@ -423,36 +423,36 @@ namespace QaplaButton {
         auto fgColor = getFgColor(state);
         
         // Left bottom: Square (7x7)
-        float squareSize = 7.0f;
-        float squareX = topLeft.x + 4.0f;
-        float squareY = topLeft.y + size.y - 11.0f;
+        float squareSize = 7.0F;
+        float squareX = topLeft.x + 4.0F;
+        float squareY = topLeft.y + size.y - 11.0F;
         list->AddRectFilled(ImVec2(squareX, squareY), ImVec2(squareX + squareSize, squareY + squareSize), fgColor);
         
         // Right bottom: Circle (Radius 4)
-        float circleCenterX = topLeft.x + size.x - 7.0f;
-        float circleCenterY = topLeft.y + size.y - 8.0f;
-        float circleRadius = 4.0f;
+        float circleCenterX = topLeft.x + size.x - 7.0F;
+        float circleCenterY = topLeft.y + size.y - 8.0F;
+        float circleRadius = 4.0F;
         list->AddCircleFilled(ImVec2(circleCenterX, circleCenterY), circleRadius, fgColor);
         
         // Top middle: Triangle (Height 6, Base 10)
-        float triangleBaseX = topLeft.x + size.x / 2.0f - 5.0f;
-        float triangleTopY = topLeft.y + 4.0f;
-        float triangleHeight = 6.0f;
-        float triangleBaseWidth = 10.0f;
+        float triangleBaseX = topLeft.x + size.x / 2.0F - 5.0F;
+        float triangleTopY = topLeft.y + 4.0F;
+        float triangleHeight = 6.0F;
+        float triangleBaseWidth = 10.0F;
         
         // Draw filled triangle using horizontal lines
         for (int i = 0; i < static_cast<int>(triangleHeight); ++i) {
             float y = triangleTopY + i;
-            float width = triangleBaseWidth * (1.0f - static_cast<float>(i) / triangleHeight);
-            float leftX = triangleBaseX + (triangleBaseWidth - width) / 2.0f;
+            float width = triangleBaseWidth * (1.0F - static_cast<float>(i) / triangleHeight);
+            float leftX = triangleBaseX + (triangleBaseWidth - width) / 2.0F;
             float rightX = leftX + width;
-            list->AddLine(ImVec2(leftX, y), ImVec2(rightX, y), fgColor, 1.0f);
+            list->AddLine(ImVec2(leftX, y), ImVec2(rightX, y), fgColor, 1.0F);
         }
     }
 
     void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         constexpr int LINE_THICKNESS = 2; 
-        constexpr float BORDER = 6.0f;
+        constexpr float BORDER = 6.0F;
 
         auto color = getFgColor(state);
 
@@ -464,15 +464,15 @@ namespace QaplaButton {
         float endY1 = startY1 + static_cast<float>(lineSize);
 
 
-        list->AddLine(ImVec2(startX1, startY1), ImVec2(endX1 + 1.0f, endY1 + 1.0f), color, LINE_THICKNESS);
-        list->AddLine(ImVec2(startX1, endY1), ImVec2(endX1 + 1.0f, startY1 - 1.0f), color, LINE_THICKNESS);
+        list->AddLine(ImVec2(startX1, startY1), ImVec2(endX1 + 1.0F, endY1 + 1.0F), color, LINE_THICKNESS);
+        list->AddLine(ImVec2(startX1, endY1), ImVec2(endX1 + 1.0F, startY1 - 1.0F), color, LINE_THICKNESS);
     }
 
     void drawSave(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
-        constexpr float borderThickness = 2.0f;
-        constexpr float rounding = 1.0f;
+        constexpr float borderThickness = 2.0F;
+        constexpr float rounding = 1.0F;
         ImVec2 outerRectTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER);
         ImVec2 outerRectBottomRight = ImVec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
         
@@ -480,16 +480,16 @@ namespace QaplaButton {
         list->AddRect(outerRectTopLeft, outerRectBottomRight, fgColor, rounding, ImDrawFlags_None, borderThickness);
         
         // In the rectangle: A smaller filled rectangle
-        constexpr float innerRectWidth = 6.0f;
-        constexpr float innerRectHeight = 3.0f;
-        ImVec2 innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0f, outerRectTopLeft.y + 4.0f);
+        constexpr float innerRectWidth = 6.0F;
+        constexpr float innerRectHeight = 3.0F;
+        ImVec2 innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0F, outerRectTopLeft.y + 4.0F);
         ImVec2 innerRectBottomRight = ImVec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
         list->AddRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
         
         // In the rectangle: A small filled circle at the bottom center
         constexpr float circleRadius = 2.5f;
-        ImVec2 circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0f,
-                                     outerRectBottomRight.y - 5.0f);
+        ImVec2 circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
+                                     outerRectBottomRight.y - 5.0F);
         list->AddCircleFilled(circleCenter, circleRadius, fgColor);
     }
 
@@ -497,9 +497,9 @@ namespace QaplaButton {
         auto fgColor = getFgColor(state);
         
         // Document rectangle with 2px thick border
-        constexpr float borderThickness = 2.0f;
-        constexpr float rectReduce = 2.0f;
-        constexpr float fold = 7.0f;
+        constexpr float borderThickness = 2.0F;
+        constexpr float rectReduce = 2.0F;
+        constexpr float fold = 7.0F;
 
         ImVec2 docTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
         ImVec2 docBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
@@ -517,28 +517,28 @@ namespace QaplaButton {
         for (int i = 0; i <= static_cast<int>(fold); i++) {
             list->AddLine(
                 ImVec2(docBottomRight.x - fold + 1, docTopLeft.y + i - 1), 
-                ImVec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0f);
+                ImVec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0F);
         }
     }
 
     void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
-        constexpr float borderThickness = 2.0f;
-        constexpr float triangleHeight = 10.0f;
-        constexpr float triangleBaseWidth = 21.0f;
-        constexpr float spoutThickness = 4.0f;
+        constexpr float borderThickness = 2.0F;
+        constexpr float triangleHeight = 10.0F;
+        constexpr float triangleBaseWidth = 21.0F;
+        constexpr float spoutThickness = 4.0F;
         
         // Draw funnel shape
-        ImVec2 triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0f);
+        ImVec2 triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0F);
         ImVec2 triangleTopRight = ImVec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
         ImVec2 triangleMiddle = ImVec2(
-            (triangleTopLeft.x + triangleTopRight.x) / 2.0f, 
+            (triangleTopLeft.x + triangleTopRight.x) / 2.0F, 
             triangleTopLeft.y + triangleHeight);
 
         list->AddLine(triangleTopLeft, triangleTopRight, fgColor, borderThickness);
         list->AddLine(triangleTopLeft, triangleMiddle, fgColor, borderThickness);
         list->AddLine(triangleTopRight, triangleMiddle, fgColor, borderThickness);
-        float rectLeft = std::trunc(triangleMiddle.x - spoutThickness / 2) + 1.0f;
+        float rectLeft = std::trunc(triangleMiddle.x - spoutThickness / 2) + 1.0F;
         list->AddRectFilled(
             ImVec2(rectLeft, triangleMiddle.y), 
             ImVec2(rectLeft + spoutThickness, topLeft.y + size.y - BORDER), 
@@ -555,7 +555,7 @@ namespace QaplaButton {
 
 		ImU32 bgColor = getBgColor(state);
 
-        drawList->AddRectFilled(topLeft, ImVec2(topLeft.x + size.x, topLeft.y + size.y), bgColor, 3.0f);
+        drawList->AddRectFilled(topLeft, ImVec2(topLeft.x + size.x, topLeft.y + size.y), bgColor, 3.0F);
 
         if (iconDraw) {
             iconDraw(drawList, topLeft, size);
@@ -563,14 +563,14 @@ namespace QaplaButton {
 
         if (state == ButtonState::Highlighted) {
             // draw red dot on top right position
-            constexpr float dotRadius = 6.0f;
-            constexpr float dotLocation = 2.0f;
+            constexpr float dotRadius = 6.0F;
+            constexpr float dotLocation = 2.0F;
             ImVec2 dotPos = ImVec2(topLeft.x + size.x - dotLocation, topLeft.y + dotLocation);
             drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
         }
 
         ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());
-        ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5f - labelSize.x * 0.5f, topLeft.y + size.y + 4.0f);
+        ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5f - labelSize.x * 0.5f, topLeft.y + size.y + 4.0F);
         drawList->AddText(labelPos, getTextColor(state), label.c_str());
 
         return clicked;
@@ -585,7 +585,7 @@ namespace QaplaButton {
      */
     ImVec2 calcIconButtonTotalSize(ImVec2 size, const char* label) {
         ImVec2 labelSize = ImGui::CalcTextSize(label);
-        float totalHeight = size.y + 4.0f + labelSize.y;
+        float totalHeight = size.y + 4.0F + labelSize.y;
         float totalWidth = std::max(size.x, labelSize.x);
         return ImVec2(totalWidth, totalHeight);
     }

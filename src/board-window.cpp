@@ -37,13 +37,13 @@ namespace QaplaWindows
 
     std::string BoardWindow::drawButtons(const std::string& status)
     {
-        constexpr float space = 3.0f;
-        constexpr float topOffset = 5.0f;
-        constexpr float bottomOffset = 8.0f;
-        constexpr float leftOffset = 20.0f;
+        constexpr float space = 3.0F;
+        constexpr float topOffset = 5.0F;
+        constexpr float bottomOffset = 8.0F;
+        constexpr float leftOffset = 20.0F;
         ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
-        constexpr ImVec2 buttonSize = {25.0f, 25.0f};
+        constexpr ImVec2 buttonSize = {25.0F, 25.0F};
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;

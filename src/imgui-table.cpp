@@ -149,7 +149,7 @@ namespace QaplaWindows {
         bool clicked = ImGui::Selectable("##row", false,
             ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
         ImGui::PopID();
-        ImGui::SameLine(0.0f, 0.0f);
+        ImGui::SameLine(0.0F, 0.0F);
         return clicked;
     }
 

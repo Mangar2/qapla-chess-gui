@@ -37,13 +37,13 @@ namespace QaplaWindows {
         int32_t maxScaleCP = 1000;   // Maximum scaling +/- 10000cp
         
         // Chart dimensions
-        float barWidth = 10.0f;
-        float minBarWidth = 2.0f;
-        float barSpacing = 0.0f;
+        float barWidth = 10.0F;
+        float minBarWidth = 2.0F;
+        float barSpacing = 0.0F;
 
-        float verticalMargin = 10.0f;
-        float leftMargin = 30.0f;
-        float rightMargin = 20.0f;
+        float verticalMargin = 10.0F;
+        float leftMargin = 30.0F;
+        float rightMargin = 20.0F;
         
         // Colors for alternating bars (white/black moves)
         ImU32 whiteBarFill = IM_COL32(220, 220, 255, 180);    // Light fill for white

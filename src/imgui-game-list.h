@@ -111,7 +111,7 @@ private:
     /**
      * @brief Loading progress percentage (0-100).
      */
-    std::atomic<float> loadingProgress_{0.0f};
+    std::atomic<float> loadingProgress_{0.0F};
 
     /**
      * @brief Loading thread.

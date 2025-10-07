@@ -85,10 +85,10 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
     ImGui::PushID(index);
  
     ImGui::Checkbox("##select", &selected);
-    ImGui::SameLine(0.0f, 4.0f);
+    ImGui::SameLine(0.0F, 4.0F);
 
     if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_Selected)) {
-        ImGui::Indent(32.0f);
+        ImGui::Indent(32.0F);
         changed |= ImGuiEngineControls::drawEngineName(config, true);
         changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
         changed |= ImGuiEngineControls::drawEngineCommand(config, true);
@@ -98,24 +98,24 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
         changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
 
         try {
-            changed |= drawOptions(config, 400.0f);
+            changed |= drawOptions(config, 400.0F);
         }
         catch (const std::exception& e) {
             SnackbarManager::instance().showError(
 				std::format("Error in options: {}", e.what()));
 		}
 
-        ImGui::Unindent(32.0f);
+        ImGui::Unindent(32.0F);
     }
     ImGui::PopID();
     return { changed, selected };
 }
 
 void EngineSetupWindow::drawButtons() {
-    constexpr float space = 3.0f;
-    constexpr float topOffset = 5.0f;
-    constexpr float bottomOffset = 8.0f;
-    constexpr float leftOffset = 20.0f;
+    constexpr float space = 3.0F;
+    constexpr float topOffset = 5.0F;
+    constexpr float bottomOffset = 8.0F;
+    constexpr float leftOffset = 20.0F;
     
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
     topLeft.x = std::round(topLeft.x);
@@ -123,7 +123,7 @@ void EngineSetupWindow::drawButtons() {
     auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
     
     std::vector<std::string> buttons{ "Add", "Remove", "Detect" };
-    constexpr ImVec2 buttonSize = { 25.0f, 25.0f };
+    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
 
@@ -228,14 +228,14 @@ void EngineSetupWindow::draw() {
     auto configs = configManager.getAllConfigs();
 
     if (configs.empty()) {
-        QaplaWindows::ImGuiControls::drawDot(6.0f, 10.0f);
+        QaplaWindows::ImGuiControls::drawDot(6.0F, 10.0F);
     }
 	drawButtons();
     
     ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
-    ImGui::Indent(10.0f);
+    ImGui::Indent(10.0F);
     drawEngineList();
-    ImGui::Unindent(10.0f);
+    ImGui::Unindent(10.0F);
     ImGui::EndChild();
 }
 

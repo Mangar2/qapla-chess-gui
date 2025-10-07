@@ -51,32 +51,32 @@ namespace QaplaWindows {
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "Elo", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Error", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Score", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Total", ImGuiTableColumnFlags_WidthFixed, 50.0f, true }
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0F },
+                { "Elo", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Error", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Score", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Total", ImGuiTableColumnFlags_WidthFixed, 50.0F, true }
             }
         ),
         runningTable_(
             "Running",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "White", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "Black", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "Round", ImGuiTableColumnFlags_WidthFixed, 50.0f },
-                { "Game", ImGuiTableColumnFlags_WidthFixed, 50.0f },
-                { "Opening", ImGuiTableColumnFlags_WidthFixed, 50.0f }
+                { "White", ImGuiTableColumnFlags_WidthFixed, 150.0F },
+                { "Black", ImGuiTableColumnFlags_WidthFixed, 150.0F },
+                { "Round", ImGuiTableColumnFlags_WidthFixed, 50.0F },
+                { "Game", ImGuiTableColumnFlags_WidthFixed, 50.0F },
+                { "Opening", ImGuiTableColumnFlags_WidthFixed, 50.0F }
             }
 		),
         causeTable_(
             "Causes",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0f },
-                { "WDL", ImGuiTableColumnFlags_WidthFixed, 50.0f },
-                { "Count", ImGuiTableColumnFlags_WidthFixed, 50.0f, true },
-                { "Cause", ImGuiTableColumnFlags_WidthFixed, 200.0f }
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0F },
+                { "WDL", ImGuiTableColumnFlags_WidthFixed, 50.0F },
+                { "Count", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
+                { "Cause", ImGuiTableColumnFlags_WidthFixed, 200.0F }
             }
         )
     { 
@@ -172,7 +172,7 @@ namespace QaplaWindows {
                 row.push_back("+/- " + std::to_string(scored.error));
             }
             row.push_back(std::format("{:.1f}%", scored.score * 100.0));
-            row.push_back(std::format("{:.0f}", scored.total));
+            row.push_back(std::format("{:.0F}", scored.total));
             eloTable_.push(row);
 		}
     }

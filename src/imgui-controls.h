@@ -138,7 +138,7 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the file path was modified, false otherwise.
      */
     inline bool existingFileInput(const std::string& label, std::string& filePath, 
-        float inputWidth = 200.0f, const char* buttonLabel = "Select") {
+        float inputWidth = 200.0F, const char* buttonLabel = "Select") {
         bool modified = false;
 		ImGui::PushID(label.c_str()); 
         // Display label
@@ -175,7 +175,7 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the directory path was modified, false otherwise.
      */
     inline bool existingDialogInput(const std::string& label, std::string& directoryPath, 
-        float inputWidth = 200.0f, const char* buttonLabel = "Browse") {
+        float inputWidth = 200.0F, const char* buttonLabel = "Browse") {
         bool modified = false;
         ImGui::PushID(label.c_str()); 
         
@@ -215,7 +215,7 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool newFileInput(const std::string& label, std::string& filePath,
         const std::vector<std::pair<std::string, std::string>>& filters = {},
-        float inputWidth = 200.0f, const char* buttonLabel = "Select") {
+        float inputWidth = 200.0F, const char* buttonLabel = "Select") {
         
         bool modified = false;
         ImGui::PushID(label.c_str());
@@ -343,14 +343,14 @@ namespace QaplaWindows::ImGuiControls {
         const std::function<bool()>& contentCallback = nullptr){
         bool modified = false;
         modified = ImGui::Checkbox("##select", &selected);
-        ImGui::SameLine(0.0f, 4.0f);
+        ImGui::SameLine(0.0F, 4.0F);
         if (ImGui::CollapsingHeader(label.c_str(), flags)) {
-            ImGui::Indent(10.0f);
+            ImGui::Indent(10.0F);
             // call callback to draw content
             if ((flags & ImGuiTreeNodeFlags_Leaf) == 0 && contentCallback) {
                 modified |= contentCallback();
             }
-            ImGui::Unindent(10.0f);
+            ImGui::Unindent(10.0F);
         }
         return modified;
     }
@@ -362,7 +362,7 @@ namespace QaplaWindows::ImGuiControls {
     * @param inputWidth Optional width for a file Input field.
     * @return True if the value was modified, false otherwise.
     */
-    inline bool engineOptionControl(const EngineOption& option, std::string& value, float fileInputWidth = 400.0f) {
+    inline bool engineOptionControl(const EngineOption& option, std::string& value, float fileInputWidth = 400.0F) {
         bool modified = false;
 
         switch (option.type) {
@@ -545,20 +545,20 @@ namespace QaplaWindows::ImGuiControls {
         ImU32 borderCol = ImGui::GetColorU32(ImGuiCol_Border);
         ImU32 shadowCol = ImGui::GetColorU32(ImGuiCol_BorderShadow);
 
-        const float shadowSpread = 2.0f; 
+        const float shadowSpread = 2.0F; 
         ImVec2 shadowMin = ImVec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
         ImVec2 shadowMax = ImVec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
         drawList->AddRect(shadowMin, shadowMax, shadowCol, style.FrameRounding + shadowSpread);
 
-        drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0f);
+        drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0F);
     }
 
-    inline void drawDot(float offsetX = 3.0f, float offsetY = 3.0f) {
+    inline void drawDot(float offsetX = 3.0F, float offsetY = 3.0F) {
         if (ImGui::IsItemVisible()) {
             ImVec2 tabMin = ImGui::GetItemRectMin();
             ImVec2 tabMax = ImGui::GetItemRectMax();
 
-            constexpr float dotRadius = 6.0f;
+            constexpr float dotRadius = 6.0F;
             ImVec2 dotPos = ImVec2(tabMax.x - offsetX, tabMin.y + offsetY);
 
             ImDrawList* drawList = ImGui::GetWindowDrawList();

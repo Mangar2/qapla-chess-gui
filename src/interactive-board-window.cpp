@@ -129,10 +129,10 @@ void InteractiveBoardWindow::initSplitterWindows()
 				}
 			}
 		);
-		MovesBarchartContainer->setPresetHeight(180.0f, false);
+		MovesBarchartContainer->setPresetHeight(180.0F, false);
 
         auto ClockMovesContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("clock_moves");
-        ClockMovesContainer->setFixedHeight(120.0f, true);
+        ClockMovesContainer->setFixedHeight(120.0F, true);
         ClockMovesContainer->setTop(
 			[this]() {
 				imGuiClock_->draw();
@@ -155,7 +155,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 			}
 		);
         BoardMovesContainer->setRight(std::move(ClockMovesContainer));
-        BoardMovesContainer->setPresetWidth(400.0f, false);
+        BoardMovesContainer->setPresetWidth(400.0F, false);
 
         auto BoardEngineContainer = std::make_unique<QaplaWindows::VerticalSplitContainer>("board_engine");
         BoardEngineContainer->setTop(std::move(BoardMovesContainer));
@@ -171,8 +171,8 @@ void InteractiveBoardWindow::initSplitterWindows()
 				else if (command.starts_with("pv|")) copyPv(id, command);
 			}
 		);
-        BoardEngineContainer->setMinBottomHeight(55.0f);
-        BoardEngineContainer->setPresetHeight(230.0f, false);
+        BoardEngineContainer->setMinBottomHeight(55.0F);
+        BoardEngineContainer->setPresetHeight(230.0F, false);
 
 		mainWindow_ = std::move(BoardEngineContainer);
 }

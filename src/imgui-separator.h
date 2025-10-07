@@ -35,7 +35,7 @@ namespace ImGuiSeparator {
      * 
      * This function mimics ImGui's layout behavior for horizontal separators.
      */
-	inline void Vertical(float thickness = 1.0f) {
+	inline void Vertical(float thickness = 1.0F) {
 		ImVec2 topLeft = ImGui::GetCursorScreenPos();
 		ImVec2 avail = ImGui::GetContentRegionAvail();
 		ImGui::GetWindowDrawList()->AddRectFilled(

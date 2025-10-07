@@ -161,10 +161,10 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const float baseSize = ImGui::GetFontSize();
     const float nameSize = baseSize * 1.3f;
     const float totalSize = baseSize * 1.6f; 
-    const float moveSize = baseSize * 1.0f;
+    const float moveSize = baseSize * 1.0F;
 
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5f;
-    float y = topLeft.y + 7.0f;
+    float y = topLeft.y + 7.0F;
 
     totalMs -= std::min(totalMs, moveMs);
     totalMs += 999; // Add 999ms to compensate for formatMs truncating to full seconds
@@ -174,7 +174,7 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
-        return font->CalcTextSizeA(size, FLT_MAX, 0.0f, begin, end);
+        return font->CalcTextSizeA(size, FLT_MAX, 0.0F, begin, end);
         };
     auto textWidthAt = [&](float size, const char* begin, const char* end) -> float {
         return textSizeAt(size, begin, end).x;
@@ -242,10 +242,10 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
 
     const float baseSize = ImGui::GetFontSize();
     const float totalSize = baseSize * 1.6f; 
-    const float moveSize = baseSize * 1.0f;
+    const float moveSize = baseSize * 1.0F;
 
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5f;
-    float y = topLeft.y + 7.0f;
+    float y = topLeft.y + 7.0F;
 
     totalMs -= std::min(totalMs, moveMs);
     if (analyze) totalMs = moveMs;
@@ -254,7 +254,7 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
 
     auto textSizeAt = [&](float size, const char* begin, const char* end) -> ImVec2 {
-        return font->CalcTextSizeA(size, FLT_MAX, 0.0f, begin, end);
+        return font->CalcTextSizeA(size, FLT_MAX, 0.0F, begin, end);
         };
     auto textWidthAt = [&](float size, const char* begin, const char* end) -> float {
         return textSizeAt(size, begin, end).x;
@@ -294,15 +294,15 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
 void ImGuiClock::draw() {
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
-	constexpr float clockWidth = 180.0f;
+	constexpr float clockWidth = 180.0F;
 
     const float totalWidth = ImGui::GetContentRegionAvail().x;
 	const float totalHeight = ImGui::GetContentRegionAvail().y;
 
-    bool smallClock = totalWidth < 370.0f;
-    const float clockHeight = smallClock ? 40.0f : 85.0f;
+    bool smallClock = totalWidth < 370.0F;
+    const float clockHeight = smallClock ? 40.0F : 85.0F;
 
-    const float spacing = 10.0f;
+    const float spacing = 10.0F;
     const float totalContentWidth = smallClock ? clockWidth : 2 * clockWidth + spacing;
 	const float topSpace = smallClock ? 0 : std::round((totalHeight - clockHeight) * 0.5f);
 
@@ -326,7 +326,7 @@ void ImGuiClock::draw() {
 
     // Black Clock
     ImVec2 blackMin = smallClock ?
-        ImVec2(whiteMin.x, whiteMax.y + 10.0f) :
+        ImVec2(whiteMin.x, whiteMax.y + 10.0F) :
         ImVec2(whiteMax.x + spacing, whiteMin.y);
     ImVec2 blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
 
@@ -339,6 +339,6 @@ void ImGuiClock::draw() {
             clockData_.bEngineName, false, clockData_.wtm, analyze_);
     }
 
-    ImGui::Dummy(ImVec2(0.0f, 0.0f));
+    ImGui::Dummy(ImVec2(0.0F, 0.0F));
 }
 

@@ -39,7 +39,7 @@ namespace QaplaWindows {
         struct ColumnDef {
             std::string name; 
             ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
-            float width = 0.0f; 
+            float width = 0.0F; 
             bool alignRight = false; 
             std::function<void(std::string&, bool&)> customRender = nullptr;
         };

@@ -42,8 +42,8 @@ namespace QaplaWindows {
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 160.0f },
-                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0f }
+                { "Name", ImGuiTableColumnFlags_WidthFixed, 160.0F },
+                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0F }
             }
         )
     { 
@@ -125,7 +125,7 @@ namespace QaplaWindows {
                 table_.setColumnHead(col + 2, {
                     .name = engineName,
                     .flags = ImGuiTableColumnFlags_WidthFixed,
-                    .width = 100.0f,
+                    .width = 100.0F,
                     .alignRight = true
 					});
                 totalTests++;

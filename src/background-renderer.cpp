@@ -71,10 +71,10 @@ void initBackgroundImage(const char* imagePath) {
 
     // Quad vertex data
     float vertices[] = {
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f,
+        -1.0F,  1.0F,  0.0F, 1.0F,
+        -1.0F, -1.0F,  0.0F, 0.0F,
+         1.0F, -1.0F,  1.0F, 0.0F,
+         1.0F,  1.0F,  1.0F, 1.0F,
     };
     GLuint indices[] = { 0, 1, 2, 2, 3, 0 };
 
