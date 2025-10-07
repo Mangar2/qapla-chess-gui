@@ -270,7 +270,7 @@ void EngineTestWindow::drawReportTables()
         if (ImGui::CollapsingHeader(headerLabel.c_str())) {
             
             // Create and draw the report table for this engine
-            auto reportTable = EngineTests::instance().createReportTable(engineConfig.getName());
+            auto reportTable = EngineTests::createReportTable(engineConfig.getName());
             
             if (reportTable) {
                 ImVec2 tableSize = ImGui::GetContentRegionAvail();

@@ -16,23 +16,22 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
+
 #include "game-context.h"
 #include "engine-worker-factory.h"
 
-GameContext::GameContext()
-{
-};
+GameContext::GameContext() = default;
 
-GameContext::~GameContext()
-{
-}
+GameContext::~GameContext() = default;
 
 void GameContext::updateEngineNames()
 {
     auto *white = getWhite();
     auto *black = getBlack();
-    const std::string whiteName = white && white->getEngine() ? white->getEngine()->getConfig().getName() : "";
-    const std::string blackName = black && black->getEngine() ? black->getEngine()->getConfig().getName() : "";
+    const std::string whiteName = white != nullptr && white->getEngine() != nullptr ? 
+        white->getEngine()->getConfig().getName() : "";
+    const std::string blackName = black != nullptr && black->getEngine() != nullptr ? 
+        black->getEngine()->getConfig().getName() : "";
     gameRecord_.setWhiteEngineName(whiteName);
     gameRecord_.setBlackEngineName(blackName);
 }
@@ -62,7 +61,7 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
     }
     updateEngineNames();
     setTimeControl(gameRecord_.getWhiteTimeControl());
-    if (getBlack() && getWhite() != getBlack())
+    if (getBlack() != nullptr && getWhite() != getBlack())
     {
         getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
     }
@@ -86,7 +85,9 @@ void GameContext::ensureStarted()
 void GameContext::restartPlayer(uint32_t index)
 {
     if (index >= players_.size())
+    {
         return;
+    }
     players_[index]->restartEngine();
     if (eventCallback_)
     {
@@ -208,7 +209,7 @@ void GameContext::setNextMoveIndex(uint32_t moveIndex)
 
 void GameContext::doMove(const MoveRecord& move)
 {
-    cancelCompute();
+    cancelCompute(true);
     assert (!move.move.isEmpty());
     {
         std::scoped_lock lock(gameRecordMutex_);
@@ -229,35 +230,45 @@ size_t GameContext::getPlayerCount() const
 PlayerContext *GameContext::player(size_t index)
 {
     if (index >= players_.size())
+    {
         return nullptr;
+    }
     return players_[index].get();
 }
 
 PlayerContext *GameContext::getWhite()
 {
     if (players_.empty())
+    {
         return nullptr;
+    }
     return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
 }
 
 const PlayerContext *GameContext::getWhite() const
 {
     if (players_.empty())
+    {
         return nullptr;
+    }
     return players_[(switchedSide_ ? 1 : 0) % players_.size()].get();
 }
 
 PlayerContext *GameContext::getBlack()
 {
     if (players_.size() < 2)
+    {
         return getWhite();
+    }
     return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
 }
 
 const PlayerContext *GameContext::getBlack() const
 {
     if (players_.empty())
+    {
         return nullptr;
+    }
     return players_[(switchedSide_ ? 0 : 1) % players_.size()].get();
 }
 
@@ -276,7 +287,7 @@ void GameContext::setEventCallback(std::function<void(EngineEvent &&)> callback)
     eventCallback_ = std::move(callback);
     for (auto &player : players_)
     {
-        if (player->getEngine())
+        if (player->getEngine() != nullptr)
         {
             player->getEngine()->setEventSink(eventCallback_);
         }
@@ -288,7 +299,7 @@ const GameRecord &GameContext::gameRecord() const
     return gameRecord_;
 }
 
-void GameContext::withGameRecord(std::function<void(const GameRecord &)> accessFn) const
+void GameContext::withGameRecord(const std::function<void(const GameRecord &)> &accessFn) const
 {
     std::scoped_lock lock(gameRecordMutex_);
     accessFn(gameRecord_);
@@ -314,7 +325,9 @@ std::tuple<GameEndCause, GameResult> GameContext::checkGameResult()
 bool GameContext::checkForTimeoutsAndRestart()
 {
     if (!eventCallback_)
+    {
         throw AppError::make("GameContext::checkForTimeoutsAndRestart; No event callback set.");
+    }
 
     bool restarted = false;
     for (auto &player : players_)
@@ -344,8 +357,10 @@ void GameContext::restartIfConfigured()
 {
     for (auto &player : players_)
     {
-        if (!player->getEngine())
+        if (player->getEngine() == nullptr)
+        {
             continue;
+        }
 
         if (player->getEngine()->getConfig().getRestartOption() == RestartOption::Always)
         {
@@ -358,11 +373,14 @@ void GameContext::restartIfConfigured()
     }
 }
 
-void GameContext::cancelCompute()
+void GameContext::cancelCompute(bool keepPondering)
 {
     std::scoped_lock lock(engineMutex_);
     for (auto &player : players_)
     {
+        if (player->isPondering() && keepPondering) {
+            continue;
+        }
         player->cancelCompute();
     }
 }
@@ -402,11 +420,17 @@ EngineRecords GameContext::mkEngineRecords() const
     for (const auto &player : players_)
     {
         uint32_t adjustedIndex = index;
-        if (switchedSide_ && index == 0) adjustedIndex = 1;
-        if (switchedSide_ && index == 1) adjustedIndex = 0;
+        if (switchedSide_ && index == 0)
+        {
+            adjustedIndex = 1;
+        }
+        if (switchedSide_ && index == 1)
+        {
+            adjustedIndex = 0;
+        }
         index++;
 
-        if (!player->getEngine())
+        if (player->getEngine() == nullptr)
         {
             EngineRecord record = {
                 .identifier{},
@@ -417,12 +441,13 @@ EngineRecords GameContext::mkEngineRecords() const
             records[adjustedIndex] = record;
             continue;
         }
-        auto engine = player->getEngine();
+        auto *engine = player->getEngine();
         EngineRecord record = {
             .identifier = engine->getIdentifier(),
             .config = engine->getConfig(),
             .supportedOptions = engine->getSupportedOptions(),
-            .memoryUsageB = engine->getEngineMemoryUsage()};
+            .memoryUsageB = engine->getEngineMemoryUsage()
+        };
         switch (engine->workerState())
         {
         case EngineWorker::WorkerState::notStarted:

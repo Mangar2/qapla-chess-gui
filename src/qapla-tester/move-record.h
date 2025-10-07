@@ -41,6 +41,7 @@ struct MoveRecord {
     std::string original{};
     std::string lan{};
     std::string san{};
+    std::string ponderMove{};
     QaplaBasics::Move move{};
     std::string comment{};
     std::string nag{};

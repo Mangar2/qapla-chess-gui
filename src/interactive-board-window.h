@@ -120,12 +120,12 @@ namespace QaplaWindows
 		/**
 		 * @brief Stops all ongoing tasks in the pool.
 		 */
-		void stopPool();
+		static void stopPool();
 
 		/**
 		 * @brief Stops all ongoing tasks and clears all task providers in the pool.
 		 */
-		void clearPool();
+		static void clearPool();
 
 		/**
 		 * @brief Sets the pool concurrency level.
@@ -133,7 +133,7 @@ namespace QaplaWindows
 		 * @param nice If true, reduces the number of active managers gradually.
 		 * @param start If true, starts new tasks immediately.
 		 */
-		void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
+		static void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
 
 		/**
 		 * @brief Starts the engines configured in the board data.
@@ -234,7 +234,7 @@ namespace QaplaWindows
 		 * - "Analyze": Sets the mode to analyze (engine analysis only).
 		 * @param command The command to execute.
 		 */
-		void execute(std::string command);
+		void execute(const std::string& command);
 
 		/**
 		 * @brief Initializes the InteractiveBoardWindow instance.

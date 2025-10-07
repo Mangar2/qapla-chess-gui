@@ -87,12 +87,18 @@ std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance()
 std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
 	auto sectionMap = config.getSectionMap("engineselection");
-	if (!sectionMap) return {};
+	if (!sectionMap) {
+		return {};
+	}
 	std::vector<std::unique_ptr<InteractiveBoardWindow>> instances;
 	for (const auto& [idStr, sectionList] : *sectionMap) {
 		try {
-			if (idStr == "board0") continue; // Skip static instance
-			if (!idStr.starts_with("board")) continue; // Not a board instance
+			if (idStr == "board0") {
+				continue; // Skip static instance
+			}
+			if (!idStr.starts_with("board")) {
+				continue; // Not a board instance
+			}
 			auto instance = createInstance();
 			for (const auto& section : sectionList) {
 				instance->loadBoardEngine(section);
@@ -163,12 +169,24 @@ void InteractiveBoardWindow::initSplitterWindows()
 			[this]() {
 				auto [id, command] = engineWindow_->draw();
 				drawEngineSelectionPopup();
-				if (command == "") return;
-				if (command == "Restart") restartEngine(id);
-        		else if (command == "Stop") stopEngine(id);
-				else if (command == "Config") openEngineSelectionPopup();
-				else if (command == "Swap") swapEngines();
-				else if (command.starts_with("pv|")) copyPv(id, command);
+				if (command.empty()) {
+					return;
+				}
+				if (command == "Restart") {
+					restartEngine(id);
+				}
+				else if (command == "Stop") {
+					stopEngine(id);
+				}
+				else if (command == "Config") {
+					openEngineSelectionPopup();
+				}
+				else if (command == "Swap") {
+					swapEngines();
+				}
+				else if (command.starts_with("pv|")) {
+					copyPv(id, command);
+				}
 			}
 		);
         BoardEngineContainer->setMinBottomHeight(55.0F);
@@ -178,13 +196,15 @@ void InteractiveBoardWindow::initSplitterWindows()
 }
 
 void InteractiveBoardWindow::draw() {
-	if (!mainWindow_) return;
+	if (!mainWindow_) {
+		return;
+	}
 	mainWindow_->draw();
 	pollData();
 
 	// Handle paste only for the active tab
 	GLFWwindow* window = glfwGetCurrentContext();
-	if (window) {
+	if (window != nullptr) {
 		auto pasted = ImGuiCutPaste::checkForPaste(window);
 		if (pasted) {
 			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
@@ -200,14 +220,18 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 
 	std::string_view sv(pv);
 	constexpr std::string_view prefix = "pv|";
-	if (!sv.starts_with(prefix)) return;
+	if (!sv.starts_with(prefix)) {
+		return;
+	}
 
 	// skip prefix
 	sv.remove_prefix(prefix.size());
 
 	// find separator between number and pv text
 	size_t sep = sv.find('|');
-	if (sep == std::string_view::npos) return;
+	if (sep == std::string_view::npos) {
+		return;
+	}
 
 	std::string_view numPart = sv.substr(0, sep);
 	std::string_view pvPart = sv.substr(sep + 1);
@@ -217,34 +241,47 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 	if (!numPart.empty()) {
 		// use from_chars for fast, no-throw parsing
 		auto [ptr, ec] = std::from_chars(numPart.data(), numPart.data() + numPart.size(), halfmove);
-		if (ec != std::errc()) return; // parse failed
+		if (ec != std::errc()) {
+			return; // parse failed
+		}
 	} else {
 		return; // no number
 	}
 
 	std::string pvString;
 	computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
-		if (!g.getStartPos() && g.getStartFen() != "") {
+		if (!g.getStartPos() && !g.getStartFen().empty()) {
 			pvString = "[FEN \"" + g.getStartFen() + "\"]\n";
 		}
-		if (halfmove == 0) return;
+		if (halfmove == 0) {
+			return;
+		}
 		auto ply = g.getHalfmoveIndex(halfmove - 1);
-		if (!ply) return;
-		pvString += g.movesToStringUpToPly(*ply, {true, true, true, true}) + " ";
+		if (!ply) {
+			return;
+		}
+		pvString += g.movesToStringUpToPly(*ply, MoveRecord::toStringOptions{
+			.includeClock = true,
+			.includeEval = true,
+			.includePv = true,
+			.includeDepth = true
+		}) + " ";
 	});
 
 	// convert pvPart to std::string for clipboard
 	pvString += std::string(pvPart);
 
 	GLFWwindow* window = glfwGetCurrentContext();
-	if (window) {
+	if (window != nullptr) {
 		ImGuiCutPaste::setClipboardString(window, pvString);
 		SnackbarManager::instance().showNote("Copied PV to clipboard:\n" + pvString);
 	}
 }
 
 void InteractiveBoardWindow::swapEngines() {
-	if (engineConfigs_.size() < 2) return;
+	if (engineConfigs_.size() < 2) {
+		return;
+	}
 	bool isSwitched = computeTask_->getGameContext().isSideSwitched();
 	computeTask_->getGameContext().setSideSwitched(!isSwitched);
 }
@@ -260,7 +297,9 @@ void InteractiveBoardWindow::openEngineSelectionPopup() {
 }
 
 void InteractiveBoardWindow::drawEngineSelectionPopup() {
-	if (!setupWindow_) return;
+	if (!setupWindow_) {
+		return;
+	}
 	setupWindow_->draw("Use", "Cancel");
     if (auto confirmed = setupWindow_->confirmed()) {
         if (*confirmed) {
@@ -307,16 +346,20 @@ bool InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Sectio
         }
     }
 
-    if (name && index) {
-        auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
-		if (!config) return false;
+	if (name && index) {
+		const auto* config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+		if (config == nullptr) {
+			return false;
+		}
         if (*index >= engineConfigs_.size()) {
             engineConfigs_.resize(*index + 1);
         }
         engineConfigs_[*index] = *config;
-    } else if (name) {
-        auto config = EngineWorkerFactory::getConfigManager().getConfig(*name);
-		if (!config) return false;
+	} else if (name) {
+		const auto* config = EngineWorkerFactory::getConfigManager().getConfig(*name);
+		if (config == nullptr) {
+			return false;
+		}
         engineConfigs_.push_back(*config);
     } else {
 		return false;
@@ -342,14 +385,12 @@ void InteractiveBoardWindow::setPosition(const GameRecord &gameRecord)
 void InteractiveBoardWindow::stop()
 {
 	computeTask_->stop();
-	//imGuiClock_->setStopped(true);
 }
 
 void InteractiveBoardWindow::playSide()
 {
 	try {
 		computeTask_->playSide();
-		//imGuiClock_->setStopped(false);
 	}
 	catch (const std::exception& e) {
 		SnackbarManager::instance().showError(std::string("Failed to compute a move:\n") + e.what());
@@ -360,7 +401,6 @@ void InteractiveBoardWindow::analyze()
 {
 	try {
 		computeTask_->analyze();
-		//imGuiClock_->setStopped(false);
 	}
 	catch (const std::exception& e) {
 		SnackbarManager::instance().showError(std::string("Failed to analyze:\n") + e.what());
@@ -371,7 +411,6 @@ void InteractiveBoardWindow::autoPlay()
 {
 	try {
 		computeTask_->autoPlay();
-		//imGuiClock_->setStopped(false);
 	}
 	catch (const std::exception& e) {
 		SnackbarManager::instance().showError(std::string("Failed to compute moves:\n") + e.what());
@@ -380,23 +419,43 @@ void InteractiveBoardWindow::autoPlay()
 
 void InteractiveBoardWindow::setStartPosition()
 {
-	//imGuiClock_->setStopped(true);
 	computeTask_->setPosition(true, "");
 }
 
-void InteractiveBoardWindow::execute(std::string command)
+void InteractiveBoardWindow::execute(const std::string& command)
 {
-	if (command == "") return;
+	if (command.empty()) {
+		return;
+	}
 
-	if (command == "New") setStartPosition();
-	else if (command == "Stop") stop();
-	else if (command == "Now") computeTask_->moveNow();
-	else if (command == "Newgame") computeTask_->newGame();
-	else if (command == "Play") playSide();
-	else if (command == "Analyze") analyze();
-	else if (command == "Auto") autoPlay();
-	else if (command == "Invert") boardWindow_->setInverted(!boardWindow_->isInverted());
-	else std::cerr << "Unknown command: " << command << '\n';
+	if (command == "New") {
+		computeTask_->newGame();
+		setStartPosition();
+	}
+	else if (command == "Stop") {
+		stop();
+	}
+	else if (command == "Now") {
+		computeTask_->moveNow();
+	}
+	else if (command == "Newgame") {
+		computeTask_->newGame();
+	}
+	else if (command == "Play") {
+		playSide();
+	}
+	else if (command == "Analyze") {
+		analyze();
+	}
+	else if (command == "Auto") {
+		autoPlay();
+	}
+	else if (command == "Invert") {
+		boardWindow_->setInverted(!boardWindow_->isInverted());
+	}
+	else {
+		std::cerr << "Unknown command: " << command << '\n';
+	}
 }
 
 void InteractiveBoardWindow::stopPool()
@@ -487,7 +546,7 @@ void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines
 		"board" + std::to_string(id_),
 		getIniSections()
 	);
-	if (engines.size() == 0)
+	if (engines.empty())
 	{
 		computeTask_->initEngines(EngineList{});
 		return;

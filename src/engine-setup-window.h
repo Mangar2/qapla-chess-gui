@@ -60,25 +60,10 @@ namespace QaplaWindows {
         void setMatchingActiveEngines(const std::vector<EngineConfig>& engines);
 
     private:
-
         void drawButtons();
-		void drawEngineList();
+        void executeCommand(const std::string &button);
+        void drawEngineList();
 
-        /**
-         * @brief Draws a collapsible section for editing a single engine configuration.
-         * @param config Reference to the engine configuration to edit.
-         * @param index Index of the engine, used to generate unique ImGui IDs.
-		 * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
-         */
-        std::tuple<bool, bool> drawEngineConfigSection(EngineConfig& config, int index, bool selected);
-
-        /**
-         * @brief Draws the options for a given engine configuration.
-         * @param config Reference to the engine configuration.
-         * @param inputWidth Width of the input fields for options.
-         * @return True if any option was changed, false otherwise.
-		 */
-        bool drawOptions(EngineConfig& config, float inputWidth);
         std::vector<EngineConfig> activeEngines_;
     };
 

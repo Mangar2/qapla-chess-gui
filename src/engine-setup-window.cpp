@@ -47,21 +47,27 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>
     activeEngines_.clear();
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
-    for (auto& engine : engines) {
-        auto matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
-		if (matching) {
-            if (std::find(activeEngines_.begin(), activeEngines_.end(), *matching) == activeEngines_.end()) {
+    for (const auto& engine : engines) {
+        auto* matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
+		if (matching != nullptr) {
+            if (std::ranges::find(activeEngines_, *matching) == activeEngines_.end()) {
                 activeEngines_.push_back(*matching);
             }
         }
     }
 }
 
-bool EngineSetupWindow::drawOptions(EngineConfig& config, float inputWidth) {
+/**
+ * @brief Draws the options for a given engine configuration.
+ * @param config Reference to the engine configuration.
+ * @param inputWidth Width of the input fields for options.
+ * @return True if any option was changed, false otherwise.
+ */
+static bool drawOptions(EngineConfig& config, float inputWidth) {
     auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-    auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
-    if (!capability) return false;
-	auto& options = capability->getSupportedOptions();
+    const auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
+    if (!capability) { return false; }
+	const auto& options = capability->getSupportedOptions();
     bool changed = false;
     
     auto optionMap = config.getOptionValues();
@@ -77,7 +83,13 @@ bool EngineSetupWindow::drawOptions(EngineConfig& config, float inputWidth) {
 	return changed;
 }
 
-std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
+/**
+ * @brief Draws a collapsible section for editing a single engine configuration.
+ * @param config Reference to the engine configuration to edit.
+ * @param index Index of the engine, used to generate unique ImGui IDs.
+ * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
+ */
+static std::tuple<bool, bool> drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
     std::string headerLabel = config.getName().empty()
         ? std::format("Engine {}###engineHeader{}", index + 1, index)
         : std::format("{}###engineHeader{}", config.getName(), index, index);
@@ -96,6 +108,7 @@ std::tuple<bool, bool> EngineSetupWindow::drawEngineConfigSection(EngineConfig& 
         changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
         changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
         changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
+        changed |= ImGuiEngineControls::drawEnginePonder(config, true);
 
         try {
             changed |= drawOptions(config, 400.0F);
@@ -149,34 +162,45 @@ void EngineSetupWindow::drawButtons() {
                 }
             }))
         {
-            try {
-                if (button == "Add") {
-                    auto commands = OsDialogs::openFileDialog(true);
-                    for (auto& command : commands) {
-						EngineWorkerFactory::getConfigManagerMutable().addConfig(EngineConfig::createFromPath(command));
-                    }
-                    QaplaConfiguration::Configuration::instance().setModified();
-                }
-                else if (button == "Remove") {
-                    for (auto& active : activeEngines_) {
-						EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
-                        QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
-							active.getCmd(), active.getProtocol());
-                    }
-                }
-                else if (button == "Detect") {
-                    QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
-                    QaplaConfiguration::Configuration::instance().setModified();
-                }
-            }
-            catch (...) {
-
-            }
+            executeCommand(button);
         }
         curPos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
+}
+
+void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
+{
+    try
+    {
+        if (button == "Add")
+        {
+            auto commands = OsDialogs::openFileDialog(true);
+            for (auto &command : commands)
+            {
+                EngineWorkerFactory::getConfigManagerMutable().addConfig(EngineConfig::createFromPath(command));
+            }
+            QaplaConfiguration::Configuration::instance().setModified();
+        }
+        else if (button == "Remove")
+        {
+            for (auto &active : activeEngines_)
+            {
+                EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
+                QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
+                    active.getCmd(), active.getProtocol());
+            }
+        }
+        else if (button == "Detect")
+        {
+            QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
+            QaplaConfiguration::Configuration::instance().setModified();
+        }
+    }
+    catch (...)
+    {
+    }
 }
 
 void EngineSetupWindow::drawEngineList() {
@@ -203,10 +227,9 @@ void EngineSetupWindow::drawEngineList() {
         }
         if (selected) {
             bool found = false;
-            for (size_t i = 0; i < activeEngines_.size(); i++) {
-                auto& active = activeEngines_[i];
+            for (auto & active: activeEngines_) {
                 if (active.getCmd() == config.getCmd() && active.getProtocol() == config.getProtocol()) {
-                    activeEngines_[i] = config;
+                    active = config;
                     found = true;
                     break;
                 }
@@ -216,7 +239,7 @@ void EngineSetupWindow::drawEngineList() {
             }
         }
         else {
-            activeEngines_.erase(std::remove(activeEngines_.begin(), activeEngines_.end(), config), activeEngines_.end());
+            std::erase(activeEngines_, config);
         }
 
         index++;

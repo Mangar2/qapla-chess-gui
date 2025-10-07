@@ -234,7 +234,7 @@ public:
      *
      * @param accessFn A callable that takes a const GameRecord&.
      */
-    void withGameRecord(std::function<void(const GameRecord &)> accessFn) const;
+    void withGameRecord(const std::function<void(const GameRecord &)> &accessFn) const;
 
     /**
      * @brief Returns the result of the game.
@@ -271,8 +271,9 @@ public:
 
     /**
      * @brief Cancels any running computation on all players.
+     * @param keepPondering If true, keeps pondering engines in pondering state.
      */
-    void cancelCompute();
+    void cancelCompute(bool keepPondering = false);
 
     /**
      * @brief Returns list of information about all engines.

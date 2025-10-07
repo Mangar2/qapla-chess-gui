@@ -112,10 +112,6 @@ namespace QaplaWindows {
 
         void setTable(size_t index, const MoveRecord& moveRecord);
 
-        std::vector<std::string> mkTableLine(ImGuiTable* table, const SearchInfo& info);
-
-        std::string drawButtons(size_t index);
-        
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
         std::vector<uint32_t> displayedMoveNo_;
         std::vector<uint32_t> infoCnt_;

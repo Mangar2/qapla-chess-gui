@@ -291,6 +291,17 @@ bool PlayerContext::restartIfNotReady() {
     return false;
 }
 
+void PlayerContext::cancelCompute() {
+    if (!engine_) { return; }
+    constexpr auto readyTimeout = std::chrono::seconds{ 1 };
+    if (computeState_ != ComputeState::Idle) {
+        engine_->moveNow(true);
+        checkReady(readyTimeout);
+    }
+    computeState_ = ComputeState::Idle;
+    ponderMove_ = "";
+}
+
 void PlayerContext::doMove(const MoveRecord& moveRecord) {
     const auto move = gameState_.stringToMove(moveRecord.original, false);
     doMove(move);
@@ -335,9 +346,12 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
 
     {
         std::scoped_lock lock(currentMoveMutex_);
-        currentMove_.clear();
+        if (computeState_ != ComputeState::PonderHit) {
+            currentMove_.clear();
+        }
         currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
         currentMove_.engineName_ = engine_->getEngineName();
+        currentMove_.ponderMove.clear();
 		isAnalyzing_ = analyze;
     }
     goLimits_ = goLimits;
@@ -368,13 +382,15 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
 		throw AppError::make("PlayerContext::allowPonder; Cannot allow pondering while already computing a move.");
 	}
 	goLimits_ = goLimits;
+    std::scoped_lock lock(stateMutex_);
+    ponderMove_ = event->ponderMove ? *event->ponderMove : "";
     {
         std::scoped_lock lock(currentMoveMutex_);
         currentMove_.clear();
+        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
+        currentMove_.ponderMove = ponderMove_;
 		isAnalyzing_ = false;
     }
-    std::scoped_lock lock(stateMutex_);
-    ponderMove_ = event->ponderMove ? *event->ponderMove : "";
 
     if (!ponderMove_.empty()) {
         const auto move = gameState_.stringToMove(ponderMove_, requireLan_);

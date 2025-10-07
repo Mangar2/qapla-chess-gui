@@ -89,9 +89,7 @@ static void drawEngineInfo(const EngineRecord& record, size_t index) {
 }
 
 
-ImGuiEngineList::ImGuiEngineList()
-{
-}
+ImGuiEngineList::ImGuiEngineList() = default;
 
 ImGuiEngineList::ImGuiEngineList(ImGuiEngineList&&) noexcept = default;
 ImGuiEngineList& ImGuiEngineList::operator=(ImGuiEngineList&&) noexcept = default;
@@ -100,21 +98,21 @@ ImGuiEngineList::~ImGuiEngineList() = default;
 
 void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
     auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
-    if (!update) return;
+    if (!update) { return; }
     gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
     auto nextMoveIndex = gameRecord.nextMoveIndex();
     nextHalfmoveNo_ = gameRecord.halfmoveNoAtPly(nextMoveIndex) + 1;
-    auto& history = gameRecord.history();
+    const auto& history = gameRecord.history();
 
     // Set the first two engines (white/black) based on the game record
     // Set table checks, if the table index exists
     for (int i = 0; i < 2; i++) {
         int moveIndex = static_cast<int>(nextMoveIndex) - i - 1;
-        size_t tableIndex = static_cast<size_t>(i);
-        if (tableIndex >= engineRecords_.size()) break;
+        auto tableIndex = static_cast<size_t>(i);
+        if (tableIndex >= engineRecords_.size()) { break; }
         // If isWhiteToMove, last move is a black move (tableIndex == 1), so swap table index
         if (engineRecords_.size() >= 2) {
-            if (gameRecord.isWhiteToMove()) tableIndex = 1 - tableIndex;
+            if (gameRecord.isWhiteToMove()) { tableIndex = 1 - tableIndex; }
         }
         if (moveIndex < 0 || moveIndex >= history.size()) {
 			if (tables_.size() > tableIndex) {
@@ -125,7 +123,7 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
             }
             continue;
         }
-        auto& moveRecord = history[static_cast<size_t>(moveIndex)];
+        const auto& moveRecord = history[static_cast<size_t>(moveIndex)];
         auto& engineRecord = engineRecords_[tableIndex];
         setTable(tableIndex, moveRecord);
         displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
@@ -138,10 +136,10 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
 
     // Only update if this is the current move showed in the table or the next move currently calculated
     auto displayedMoveNo = displayedMoveNo_[playerIndex];
-    if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1) return;
+    if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1) { return; }
 
     // Only update if there are new info records
-    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex]) return;
+    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex]) { return; }
 
     infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
 
@@ -155,22 +153,22 @@ void ImGuiEngineList::addTables(size_t size) {
         tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
             std::vector<ImGuiTable::ColumnDef>{
-                {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0F, true},
-                { "Time", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Nodes", ImGuiTableColumnFlags_WidthFixed, 80.0F, true },
-                { "NPS", ImGuiTableColumnFlags_WidthFixed, 60.0F, true },
-                { "Tb hits", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Value", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Primary variant", ImGuiTableColumnFlags_WidthFixed, 1660.0F }
+                { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "NPS", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
+                { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Primary variant", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 1660.0F }
         }));
         tables_[i]->setClickable(true);
-	}
+    }
 }
 
-std::vector<std::string> ImGuiEngineList::mkTableLine(ImGuiTable* table, const SearchInfo& info) {
+static std::vector<std::string> mkTableLine(ImGuiTable* table, const SearchInfo& info, const std::string& ponderMove) {
         std::string npsStr = "-";
         std::string score = "-";
-        std::string pv = "";
+        std::string pv;
         if (info.nps) {
             npsStr = std::format("{:L}", *info.nps);
         }
@@ -188,12 +186,14 @@ std::vector<std::string> ImGuiEngineList::mkTableLine(ImGuiTable* table, const S
             table->setField(0, 5, score);
 		}
         if (!info.pv.empty()) {
-            for (auto& move : info.pv) {
-                if (!pv.empty()) pv += ' ';
+            if (!ponderMove.empty()) { pv = ponderMove + "  "; }
+            for (const auto& move : info.pv) {
+                if (!pv.empty()) { pv += ' '; }
                 pv += move;
             }
         } else if (info.currMove) {
-            pv = *info.currMove;
+            if (!ponderMove.empty()) { pv = ponderMove + "  "; }
+            pv += *info.currMove;
         } 
         std::vector<std::string> row = {
             info.depth ? std::to_string(*info.depth) : "-",
@@ -214,22 +214,22 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
     }
     
     auto& table = tables_[index];
-	auto& searchInfos = moveRecord.info;
+	const auto& searchInfos = moveRecord.info;
 
     table->clear();
 
     bool last = true;
     for (size_t i = searchInfos.size(); i > 0; --i) {
-        if (table->size() >= searchInfos.size()) break;
-        auto& info = searchInfos[i - 1];
-        if (info.pv.empty() && !last) continue;
+        if (table->size() >= searchInfos.size()) { break; }
+        const auto& info = searchInfos[i - 1];
+        if (info.pv.empty() && !last) { continue; }
         last = false;
-        auto row = mkTableLine(table.get(), info);
+        auto row = mkTableLine(table.get(), info, moveRecord.ponderMove);
         table->push(row);
     }
 }
 
-std::string ImGuiEngineList::drawButtons(size_t index) {
+static std::string drawButtons(size_t index) {
     constexpr float space = 3.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
@@ -306,8 +306,10 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0F));
     ImGui::PushItemWidth(cEngineInfoWidth - 10.0F);
     bool hasEngine = (index < engineRecords_.size());
-    if (allowInput_ && (!isSmall || !hasEngine)) command = drawButtons(index);
-    if (hasEngine) drawEngineInfo(engineRecords_[index], index);
+    if (allowInput_ && (!isSmall || !hasEngine)) { command = drawButtons(index); }
+    if (hasEngine) {
+        drawEngineInfo(engineRecords_[index], index);
+    }
     ImGui::PopItemWidth();
     drawList->PopClipRect();
     return command;

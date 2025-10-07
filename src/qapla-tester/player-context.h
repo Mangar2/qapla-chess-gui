@@ -129,22 +129,22 @@ public:
     void allowPonder(const GameRecord& gameRecord, const GoLimits& goLimits, 
         const std::optional<EngineEvent>& event = std::nullopt);
 
+    /**
+     * @brief Checks if the engine is currently pondering.
+     * 
+     * @return True if the engine is pondering, false otherwise.
+     */
+    bool isPondering() const {
+        return computeState_ == ComputeState::Pondering;
+    }
+
 	/**
 	 * @brief Cancels the current move computation.
 	 *
 	 * This function requests the engine to cancel computing the current move.
 	 * If the engine responds with a move, it will be ignored.
 	 */
-    void cancelCompute() {
-        if (!engine_) return;
-        constexpr auto readyTimeout = std::chrono::seconds{ 1 };
-        if (computeState_ != ComputeState::Idle) {
-            engine_->moveNow(true);
-            checkReady(readyTimeout);
-        }
-        computeState_ = ComputeState::Idle;
-        ponderMove_ = "";
-    }
+    void cancelCompute();
 
     /**
      * @brief Sends an isready command to the engine and waits for readyok.
