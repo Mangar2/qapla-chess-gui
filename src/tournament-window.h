@@ -53,7 +53,8 @@ namespace QaplaWindows {
 
 
     private:
-        void drawButtons();
+        static void drawButtons();
+        static void executeCommand(const std::string &button);
         bool drawInput();
 
         /**

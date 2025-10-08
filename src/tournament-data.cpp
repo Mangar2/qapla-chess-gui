@@ -51,32 +51,32 @@ namespace QaplaWindows {
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0F },
-                { "Elo", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Error", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Score", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Total", ImGuiTableColumnFlags_WidthFixed, 50.0F, true }
+                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Elo", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Error", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
             }
         ),
         runningTable_(
             "Running",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "White", ImGuiTableColumnFlags_WidthFixed, 150.0F },
-                { "Black", ImGuiTableColumnFlags_WidthFixed, 150.0F },
-                { "Round", ImGuiTableColumnFlags_WidthFixed, 50.0F },
-                { "Game", ImGuiTableColumnFlags_WidthFixed, 50.0F },
-                { "Opening", ImGuiTableColumnFlags_WidthFixed, 50.0F }
+                { .name = "White", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Black", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Round", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
+                { .name = "Game", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
+                { .name = "Opening", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F }
             }
 		),
         causeTable_(
             "Causes",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 150.0F },
-                { "WDL", ImGuiTableColumnFlags_WidthFixed, 50.0F },
-                { "Count", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-                { "Cause", ImGuiTableColumnFlags_WidthFixed, 200.0F }
+                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "WDL", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
+                { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F }
             }
         )
     { 
@@ -103,7 +103,9 @@ namespace QaplaWindows {
         std::vector<EngineConfig> selectedEngines;
         config_->type = "round-robin";
         for (auto& tournamentConfig : engineConfigurations_) {
-            if (!tournamentConfig.selected) continue;
+            if (!tournamentConfig.selected) {
+                continue;
+            }
             EngineConfig engine = tournamentConfig.config;
             engine.setPonder(eachEngineConfig_.ponder);
 			engine.setTimeControl(eachEngineConfig_.tc);
@@ -116,7 +118,9 @@ namespace QaplaWindows {
             selectedEngines.push_back(engine);
 		}
 
-        if (!validateOpenings()) return false;
+        if (!validateOpenings()) {
+            return false;
+        }
 
         if (tournament_) {
             PgnIO::tournament().setOptions(pgnConfig_);
@@ -167,7 +171,7 @@ namespace QaplaWindows {
             row.push_back(scored.engineName);
             row.push_back(std::format("{:.1f}", scored.elo));
             if (scored.error <= 0) {
-                row.push_back("-");
+                row.emplace_back("-");
             } else {
                 row.push_back("+/- " + std::to_string(scored.error));
             }
@@ -178,7 +182,9 @@ namespace QaplaWindows {
     }
 
     static void addRow(ImGuiTable& table, const std::string& name, const std::string& wdl, const std::string& cause, int count) {
-        if (count == 0) return;
+        if (count == 0) {
+            return;
+        }
         std::vector<std::string> row;
         row.push_back(name);
         row.push_back(wdl);
@@ -189,7 +195,7 @@ namespace QaplaWindows {
 
     void TournamentData::populateCauseTable() {
         causeTable_.clear();
-        for (auto scored : result_->getScoredEngines()) {
+        for (const auto& scored : result_->getScoredEngines()) {
             auto aggregate = scored.result.aggregate(scored.engineName);
             for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
                 const auto& stat = aggregate.causeStats[index];
@@ -214,21 +220,20 @@ namespace QaplaWindows {
             }
             bool anyRunning = false;
             GameManagerPool::getInstance().withGameRecords(
-                [&](const GameRecord& game, uint32_t gameIndex
-            ) {
-                std::vector<std::string> row;
-                row.push_back(game.getWhiteEngineName());
-                row.push_back(game.getBlackEngineName());
-                row.push_back(std::to_string(game.getRound()));
-                row.push_back(std::to_string(game.getGameInRound()));
-                row.push_back(std::to_string(game.getOpeningNo()));
-                runningTable_.push(row);
-                runningCount_++;
-                if (gameIndex < boardWindow_.size()) {
-                    boardWindow_[gameIndex].setRunning(true);
-                    anyRunning = true;
-                }
-            },
+                [&](const GameRecord& game, uint32_t gameIndex) {
+                    std::vector<std::string> row;
+                    row.push_back(game.getWhiteEngineName());
+                    row.push_back(game.getBlackEngineName());
+                    row.push_back(std::to_string(game.getRound()));
+                    row.push_back(std::to_string(game.getGameInRound()));
+                    row.push_back(std::to_string(game.getOpeningNo()));
+                    runningTable_.push(row);
+                    runningCount_++;
+                    if (gameIndex < boardWindow_.size()) {
+                        boardWindow_[gameIndex].setRunning(true);
+                        anyRunning = true;
+                    }
+                },
             [&](uint32_t gameIndex) -> bool {
                 return true;
             });
@@ -245,7 +250,9 @@ namespace QaplaWindows {
         if (tournament_) {
             GameManagerPool::getInstance().withGameRecords(
                 [&](const GameRecord& game, uint32_t gameIndex) {
-                    if (gameIndex >= boardWindow_.size()) return;
+                    if (gameIndex >= boardWindow_.size()) {
+                        return;
+                    }
                     boardWindow_[gameIndex].setFromGameRecord(game);
                 },
                 [&](uint32_t gameIndex) -> bool {
@@ -258,11 +265,15 @@ namespace QaplaWindows {
             );
             GameManagerPool::getInstance().withEngineRecords(
                 [&](const EngineRecords& records, uint32_t gameIndex) {
-                    if (gameIndex >= boardWindow_.size()) return;
+                    if (gameIndex >= boardWindow_.size()) {
+                        return;
+                    }
                     boardWindow_[gameIndex].setFromEngineRecords(records);
                 },
                 [&](uint32_t gameIndex) -> bool {
-                    if (gameIndex >= boardWindow_.size()) return false;
+                    if (gameIndex >= boardWindow_.size()) {
+                        return false;
+                    }
                     return boardWindow_[gameIndex].isActive();
                 }
             );
@@ -270,11 +281,16 @@ namespace QaplaWindows {
                 [&](const MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) 
                 {
                     // Called for each player in the board, playerIndex == 0 indicates the next board.
-                    if (gameIndex >= boardWindow_.size()) return;
+                    if (gameIndex >= boardWindow_.size()) { 
+                        return;
+                    }
+
                     boardWindow_[gameIndex].setFromMoveRecord(record, playerIndex);
                 },
                 [&](uint32_t gameIndex) -> bool {
-                    if (gameIndex >= boardWindow_.size()) return false;
+                    if (gameIndex >= boardWindow_.size()) {
+                        return false;
+                    }
                     return boardWindow_[gameIndex].isActive();
                 }
             );
@@ -306,17 +322,23 @@ namespace QaplaWindows {
     }
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) {
-        if (eloTable_.size() == 0) return std::nullopt;
+        if (eloTable_.size() == 0) {
+            return std::nullopt;
+        }
         return eloTable_.draw(size, true);
     }
 
     std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) {
-        if (runningTable_.size() == 0) return std::nullopt;
+        if (runningTable_.size() == 0) {
+            return std::nullopt;
+        }
         return runningTable_.draw(size, true);
 	}
 
     void TournamentData::drawCauseTable(const ImVec2& size) {
-        if (causeTable_.size() == 0) return;
+        if (causeTable_.size() == 0) {
+            return;
+        }
         causeTable_.draw(size, true);
     }
 
@@ -326,11 +348,13 @@ namespace QaplaWindows {
             auto& window = boardWindow_[index];
             std::string tabName = window.id();
             std::string tabId = "###Game" + std::to_string(index);
-            if (!window.isRunning() && index != selectedIndex_) continue;
+            if (!window.isRunning() && index != selectedIndex_) {
+                continue;
+            }
             if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
                 if (window.isActive()) {
                     window.draw();
-                } else if (selectedIndex_ >= 0 && selectedIndex_ < static_cast<int32_t>(boardWindow_.size())) {
+                } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindow_.size())) {
                     boardWindow_[selectedIndex_].draw();
                 }
                 window.setActive(true);
@@ -348,7 +372,9 @@ namespace QaplaWindows {
         imguiConcurrency_->setActive(false);
         auto oldState = state_;
         state_ = graceful ? State::GracefulStopping : State::Stopped;
-        if (!graceful) GameManagerPool::getInstance().stopAll();
+        if (!graceful) {
+            GameManagerPool::getInstance().stopAll();
+        }
 
         if (oldState == State::Stopped) {
             SnackbarManager::instance().showNote("Tournament is not running.");
@@ -380,7 +406,9 @@ namespace QaplaWindows {
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
-        if (!isRunning()) return;
+        if (!isRunning()) {
+            return;
+        }
         imguiConcurrency_->setNiceStop(nice);
         imguiConcurrency_->update(count);
     }
@@ -396,7 +424,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
+    void TournamentData::loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "tc") {
                 eachEngineConfig_.tc = value;
@@ -420,11 +448,7 @@ namespace QaplaWindows {
                 eachEngineConfig_.ponder = (value == "true");
             }
             else if (key == "hash") {
-                try {
-                    eachEngineConfig_.hash = std::stoul(value);
-                } catch (...) {
-                    eachEngineConfig_.hash = 32;
-                } 
+                eachEngineConfig_.hash = QaplaHelpers::to_uint32(value).value_or(32);
             }
         }
     }
@@ -445,7 +469,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
+    void TournamentData::loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "event") {
                 config_->event = value;
@@ -488,8 +512,8 @@ namespace QaplaWindows {
 		out << "\n";
 	}
 
-    void TournamentData::loadOpenings(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
-        for (auto [key, value] : keyValue) {
+    void TournamentData::loadOpenings(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
+        for (const auto& [key, value] : keyValue) {
             if (key == "file") {
                 config_->openings.file = value;
             }
@@ -500,13 +524,13 @@ namespace QaplaWindows {
                 config_->openings.order = value;
             }
             else if (key == "seed") {
-                config_->openings.seed = std::stoul(value);
+                config_->openings.seed = QaplaHelpers::to_uint32(value).value_or(815);
             }
             else if (key == "plies") {
-                config_->openings.plies = std::make_optional<int>(std::stoi(value));
+                config_->openings.plies = QaplaHelpers::to_int(value);
             }
             else if (key == "start") {
-                config_->openings.start = std::stoul(value);
+                config_->openings.start = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "policy" && (value == "default" || value == "encounter" || value == "round")) {
                 config_->openings.policy = value;
@@ -528,7 +552,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
+    void TournamentData::loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "file") {
                 pgnConfig_.file = value;
@@ -586,7 +610,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
+    void TournamentData::loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "minFullMoves") {
                 drawConfig_.minFullMoves = std::stoul(value);
@@ -612,7 +636,7 @@ namespace QaplaWindows {
         out << "\n";
     }
 
-    void TournamentData::loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue) {
+    void TournamentData::loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
         for (const auto& [key, value] : keyValue) {
             if (key == "requiredConsecutiveMoves") {
                 resignConfig_.requiredConsecutiveMoves = std::stoul(value);
@@ -644,7 +668,7 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::loadConfig(QaplaHelpers::IniFile::SectionList sections) {
+    void TournamentData::loadConfig(const QaplaHelpers::IniFile::SectionList& sections) {
         for (const auto& section : sections) {
             const auto& sectionName = section.name;
             if (sectionName == "tournamenteachengine") {

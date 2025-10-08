@@ -190,7 +190,7 @@ namespace QaplaWindows {
          * @details This method processes each section and loads the corresponding configuration data
          *          into the tournament data structure.
          */
-        void loadConfig(QaplaHelpers::IniFile::SectionList sections);
+        void loadConfig(const QaplaHelpers::IniFile::SectionList& sections);
 
        
         static TournamentData& instance() {
@@ -239,38 +239,38 @@ namespace QaplaWindows {
          * @param keyValue A map containing opening keys and their corresponding values.
          * @details This method assigns the values from the map to the appropriate fields in the tournament openings.
 		 */
-        void loadOpenings(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadOpenings(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Loads the tournament configuration from a key-value mapping.
          * @param keyValue A map containing configuration keys and their corresponding values.
          * @details This method assigns the values from the map to the appropriate fields in the tournament configuration.
          */
-        void loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Loads the configuration for each engine from a key-value mapping.
          * @param keyValue A map containing configuration keys and their corresponding values.
          */
-        void loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Loads the PGN configuration from a key-value mapping.
          * @param keyValue A map containing PGN configuration keys and their corresponding values.
          */
-        void loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Loads the draw adjudication configuration from a key-value mapping.
          * @param keyValue A map containing draw adjudication configuration keys and their corresponding values.
          */
-        void loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Loads the resign adjudication configuration from a key-value mapping.
          * @param keyValue A map containing resign adjudication configuration keys and their corresponding values.
          */
-        void loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap keyValue);
+        void loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
 
         /**
          * @brief Saves the tournament openings configuration to a stream.

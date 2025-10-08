@@ -46,14 +46,21 @@ using namespace QaplaWindows;
 TournamentWindow::TournamentWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
 {
-
     setEngineConfiguration();
+    ImGuiEngineSelect::Options options;
+    options.allowGauntletEdit = true;
+    options.allowPonderEdit = true;
+    options.allowTimeControlEdit = true;
+    options.allowTraceLevelEdit = true;
+    options.allowRestartOptionEdit = true;
+    options.allowMultipleSelection = true;
+    engineSelect_->setOptions(options);
 }
 
 TournamentWindow::~TournamentWindow() = default;
 
 void TournamentWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
-    engineSelect_->setConfigurationChangedCallback(callback);
+    engineSelect_->setConfigurationChangedCallback(std::move(callback));
 }
 
 void TournamentWindow::setEngineConfiguration() {
@@ -62,6 +69,32 @@ void TournamentWindow::setEngineConfiguration() {
     engineSelect_->setId("tournament");
     engineSelect_->setEngineConfiguration(sections);
 }
+
+static void drawSingleButton(
+    ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
+    const std::string &button, bool running, QaplaButton::ButtonState state)
+{
+    if (button == "Run")
+    {
+        if (running)
+        {
+            QaplaButton::drawGrace(drawList, topLeft, size, state);
+        }
+        else
+        {
+            QaplaButton::drawPlay(drawList, topLeft, size, state);
+        }
+    }
+    if (button == "Stop")
+    {
+        QaplaButton::drawStop(drawList, topLeft, size, state);
+    }
+    if (button == "Clear")
+    {
+        QaplaButton::drawClear(drawList, topLeft, size, state);
+    }
+}
+
 
 void TournamentWindow::drawButtons() {
     constexpr float space = 3.0F;
@@ -78,8 +111,12 @@ void TournamentWindow::drawButtons() {
         bool running = TournamentData::instance().isRunning();
         auto label = button;
         
-        if (label == "Run" && running) label = "Grace";
-        if (label == "Run" && TournamentData::instance().hasTasksScheduled()) label = "Continue";
+        if (label == "Run" && running) {
+            label = "Grace";
+        }
+        if (label == "Run" && TournamentData::instance().hasTasksScheduled()) {
+            label = "Continue";
+        }
 
         auto state = QaplaButton::ButtonState::Normal;
         if (button == "Run" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
@@ -93,47 +130,50 @@ void TournamentWindow::drawButtons() {
         }
 
         if (QaplaButton::drawIconButton(button, label, buttonSize, state,
-            [&button, running, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-                if (button == "Run") {
-                    if (running) {
-                        QaplaButton::drawGrace(drawList, topLeft, size, state);
-                    } else {
-                        QaplaButton::drawPlay(drawList, topLeft, size, state);
-                    }
-                }
-                if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size, state);
-				}
-                if (button == "Clear") {
-                    QaplaButton::drawClear(drawList, topLeft, size, state);
-                }
-            }
-        ))
+                [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
+                    drawSingleButton(drawList, topLeft, size, button, running, state);
+                }))
         {
-            try {
-                if (button == "Run") {
-                    bool running = TournamentData::instance().isRunning();
-                    if (running) {
-                        TournamentData::instance().stopPool(true);
-                    } else {
-                        TournamentData::instance().startTournament();
-                    }
-                } 
-                else if (button == "Stop") {
-                    TournamentData::instance().stopPool();
-			    } 
-                else if (button == "Clear") {
-                    TournamentData::instance().clear();
-                }
-            } 
-            catch (const std::exception& e) {
-                SnackbarManager::instance().showError(e.what());
-            }
+            executeCommand(button);
         }
         pos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+}
+
+
+void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
+{
+    {
+        try
+        {
+            if (button == "Run")
+            {
+                bool running = TournamentData::instance().isRunning();
+                if (running)
+                {
+                    TournamentData::instance().stopPool(true);
+                }
+                else
+                {
+                    TournamentData::instance().startTournament();
+                }
+            }
+            else if (button == "Stop")
+            {
+                TournamentData::instance().stopPool();
+            }
+            else if (button == "Clear")
+            {
+                TournamentData::instance().clear();
+            }
+        }
+        catch (const std::exception &e)
+        {
+            SnackbarManager::instance().showError(e.what());
+        }
+    }
 }
 
 bool TournamentWindow::drawInput() {
