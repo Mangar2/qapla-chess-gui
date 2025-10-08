@@ -32,17 +32,15 @@ ImGuiMoveList::ImGuiMoveList()
 : table_("MoveListTable",
     ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
     std::vector<ImGuiTable::ColumnDef>{
-        {"Move", ImGuiTableColumnFlags_WidthFixed, 90.0F, false, [](std::string& content, bool& alignRight) {
-            if (!content.empty() && content[0] == '.') {
-                alignRight = true;
-            } else {
-                alignRight = false;
+        { .name = "Move", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 90.0F, .alignRight = false, 
+            .customRender = [](std::string& content, bool& alignRight) {
+                alignRight = (!content.empty() && content[0] == '.');
             }
-        }},
-        {"Depth", ImGuiTableColumnFlags_WidthFixed, 50.0F, true},
-        { "Time", ImGuiTableColumnFlags_WidthFixed, 80.0F, true },
-        { "Eval", ImGuiTableColumnFlags_WidthFixed, 50.0F, true },
-        { "PV", ImGuiTableColumnFlags_WidthStretch, 0.0F, false }
+        },
+        { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+        { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+        { .name = "Eval", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+        { .name = "PV", .flags = ImGuiTableColumnFlags_WidthStretch, .width = 0.0F, .alignRight = false }
 })
 {
     table_.setAutoScroll(true);  
@@ -71,7 +69,9 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     
     auto [changed, updated] = gameRecord.getChangeTracker().checkModification(referenceTracker_);
     referenceTracker_.updateFrom(gameRecord.getChangeTracker());
-    if (!updated) return;
+    if (!updated) {
+        return;
+    }
 
     if (changed) {
         table_.clear();
@@ -141,7 +141,7 @@ std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const Mo
     else if (move.scoreCp) {
         row.push_back(std::format("{:.2f}", *move.scoreCp / 100.0F));
     } else {
-        row.push_back("-");
+        row.emplace_back("-");
 	}
 
     // PV

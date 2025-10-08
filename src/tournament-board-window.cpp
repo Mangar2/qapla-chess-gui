@@ -29,8 +29,6 @@
 #include "qapla-tester/game-record.h"
 #include "qapla-tester/engine-record.h"
 
-#include "imgui-board.h"
-
 #include <imgui.h>
 #include <memory>
 #include <vector>
@@ -60,7 +58,7 @@ namespace QaplaWindows
 
     HorizontalSplitContainer& TournamentBoardWindow::getTopWindow() {
         static HorizontalSplitContainer* topWindow;
-        if (!topWindow) {
+        if (topWindow == nullptr) {
             auto window = std::make_unique<HorizontalSplitContainer>("tournament_top");
             window->setPresetWidth(400.0F, false);
             topWindow = window.get();
@@ -71,7 +69,7 @@ namespace QaplaWindows
 
     VerticalSplitContainer& TournamentBoardWindow::getClockMovesWindow() {
         static VerticalSplitContainer* clockMovesWindow;
-        if (!clockMovesWindow) {
+        if (clockMovesWindow == nullptr) {
             auto window = std::make_unique<VerticalSplitContainer>("top_right");
             window->setFixedHeight(120.0F, true);
             clockMovesWindow = window.get();
@@ -82,7 +80,7 @@ namespace QaplaWindows
 
     VerticalSplitContainer& TournamentBoardWindow::getMovesChartWindow() {
         static VerticalSplitContainer* movesChartWindow;
-        if (!movesChartWindow) {
+        if (movesChartWindow == nullptr) {
             auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
             window->setPresetHeight(180.0F, false);
             movesChartWindow = window.get();
@@ -96,23 +94,30 @@ namespace QaplaWindows
         round_ = gameRecord.getRound();
         gameInRound_ = gameRecord.getGameInRound();
         positionName_ = gameRecord.getPositionName();
-        if (!active_) return;
+        if (!active_) {
+            return;
+        }
         imGuiBoard_.setAllowMoveInput(false);
         imGuiBoard_.setFromGameRecord(gameRecord);
         imGuiClock_.setFromGameRecord(gameRecord);
         imGuiMoveList_.setFromGameRecord(gameRecord);
         imGuiBarChart_.setFromGameRecord(gameRecord);
+        imGuiEngineList_.setFromGameRecord(gameRecord);
     }
 
     void TournamentBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
     {
-        if (!active_) return;
+        if (!active_) {
+            return;
+        }
         imGuiEngineList_.setEngineRecords(engineRecords);
     }
 
     void TournamentBoardWindow::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex)
     {
-        if (!active_) return;
+        if (!active_) {
+            return;
+        }
         imGuiEngineList_.setFromMoveRecord(moveRecord, playerIndex);
         imGuiClock_.setFromMoveRecord(moveRecord, playerIndex);
     }
@@ -147,7 +152,7 @@ namespace QaplaWindows
         // Step 1: Remove non-alphanumeric characters
         std::string cleaned;
         for (char c : input) {
-            if (std::isalnum(c)) {
+            if (std::isalnum(c) != 0) {
                 cleaned += c;
             }
         }
@@ -156,11 +161,11 @@ namespace QaplaWindows
         std::string numbers;
         size_t lastDigitEnd = cleaned.size();
         for (size_t j = cleaned.size(); j > 0; --j) {
-            if (std::isdigit(cleaned[j - 1])) {
+            if (std::isdigit(cleaned[j - 1]) != 0) {
                 if (numbers.empty()) {
                     lastDigitEnd = j;
                 }
-                numbers = cleaned[j - 1] + numbers;
+                numbers.insert(numbers.begin(), cleaned[j - 1]);
             } else if (!numbers.empty()) {
                 break; // Stop at the first non-digit after digits
             }
@@ -190,9 +195,8 @@ namespace QaplaWindows
         // Step 6: Combine
         if (!numbers.empty()) {
             return letters + separator + numbers;
-        } else {
-            return letters;
-        }
+        } 
+        return letters;
     }
 
 
@@ -200,9 +204,7 @@ namespace QaplaWindows
         if (positionName_.empty()) {
             return "Game " + std::to_string(round_) + "." + std::to_string(gameInRound_);
         }
-        else {
-            return formatTabTitle(positionName_, 10);
-        }
+        return formatTabTitle(positionName_, 10);
     }
 
 }
