@@ -149,12 +149,6 @@ namespace QaplaWindows
 		void setEngines(const std::vector<EngineConfig> &engines);
 
 		/**
-		 * @brief Saves the board configuration to the specified output stream in ini file format.
-		 * @param out The output stream to write the configuration to.
-		 */
-		void saveConfig(std::ostream &out) const;
-
-		/**
 		 * @brief Loads a board engine configuration from a key-value map.
 		 * @param keyValueMap A map containing key-value pairs representing the engine configuration.
 		 */
@@ -176,12 +170,10 @@ namespace QaplaWindows
 
 		/**
 		 * @brief Loads global engine settings from the provided section map into the given InteractiveBoardWindow instance.
-		 * @param globalSettingsMap Optional map of section names to their corresponding section lists.
 		 * @param idStr The identifier string for the board (e.g., "board1").
 		 * @param instance Unique pointer to the InteractiveBoardWindow instance to load settings into.
 		 */
 		static void loadGlobalEngineSettings(
-			std::optional<QaplaHelpers::ConfigData::SectionMap> &globalSettingsMap, 
 			const std::string &idStr, 
 			std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance);
 
@@ -274,6 +266,8 @@ namespace QaplaWindows
 		 */
 		void setStartPosition();
 		void checkForGameEnd();
+
+		void setGlobalEngineConfig();
 
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;

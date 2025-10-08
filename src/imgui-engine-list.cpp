@@ -134,6 +134,10 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
     auto moveNo = moveRecord.halfmoveNo_;
     addTables(playerIndex + 1);
     size_t displayedMoveNo = 0;
+    if (moveRecord.depth == 0 && moveRecord.nodes == 0) {
+        // No search info yet, nothing to display
+        return;
+    }
     
     // Only update if this is the current move showed in the table or the next move currently calculated
     if (moveRecord.ponderMove.empty()) {
