@@ -51,9 +51,10 @@ namespace QaplaWindows
         void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
 
     private:
-        void drawButtons();
+        static void drawButtons();
+        static void executeCommand(const std::string &button);
         void drawInput();
-        void drawProgress();
+        static void drawProgress();
         
         /**
          * @brief Sets the engine configurations from INI file sections

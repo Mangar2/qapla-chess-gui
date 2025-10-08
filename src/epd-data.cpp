@@ -42,8 +42,8 @@ namespace QaplaWindows {
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { "Name", ImGuiTableColumnFlags_WidthFixed, 160.0F },
-                { "Best move", ImGuiTableColumnFlags_WidthFixed, 100.0F }
+                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 160.0F },
+                { .name = "Best move", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F }
             }
         )
     { 
@@ -61,8 +61,8 @@ namespace QaplaWindows {
     	));
         auto sections = QaplaConfiguration::Configuration::instance().
             getConfigData().getSectionList("epd", "epd").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-        if (sections.size() > 0) {
-            auto section = sections[0];
+        if (!sections.empty()) {
+            const auto& section = sections[0];
             epdConfig_ = EpdConfig{
                 .filepath = section.getValue("filepath").value_or(""),
                 .engines = {},
@@ -92,7 +92,9 @@ namespace QaplaWindows {
     }
 
     std::optional<std::string> EpdData::getFen(size_t index) const {
-		if (epdResults_->size() == 0) return std::nullopt;
+		if (epdResults_->empty()) {
+            return std::nullopt;
+        }
 		auto& result = (*epdResults_)[0].result;
         if (index < result.size()) {
             auto testCase = result[index];
@@ -102,7 +104,9 @@ namespace QaplaWindows {
     }
 
     void EpdData::populateTable() {
-        if (!epdResults_) return;
+        if (!epdResults_) {
+            return;
+        }
 		table_.clear();
 		size_t col = 0; // first two columns are Name and Best Move
         totalTests = 0;
@@ -116,7 +120,9 @@ namespace QaplaWindows {
                     row.push_back(test.id);
                     std::string bestMoves;
                     for (auto& move : test.bestMoves) {
-                        if (!bestMoves.empty()) bestMoves += ", ";
+                        if (!bestMoves.empty()) {
+                            bestMoves += ", ";
+                        }
                         bestMoves += move;
                     }
                     row.push_back(bestMoves);
@@ -164,7 +170,7 @@ namespace QaplaWindows {
         return scheduledEngines_ == 0 || scheduledConfig_ != epdConfig_;
     }
 
-    bool EpdData::mayAnalyze(bool sendMessage) {
+    bool EpdData::mayAnalyze(bool sendMessage) const {
         if (epdConfig_.engines.empty()) {
             if (sendMessage) {
                 SnackbarManager::instance().showWarning("No engines selected for analysis.");

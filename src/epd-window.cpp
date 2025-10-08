@@ -59,7 +59,7 @@ EpdWindow::EpdWindow()
 EpdWindow::~EpdWindow() = default;
 
 void EpdWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
-    engineSelect_->setConfigurationChangedCallback(callback);
+    engineSelect_->setConfigurationChangedCallback(std::move(callback));
 }
 
 void EpdWindow::setEngineConfiguration() {
@@ -75,10 +75,9 @@ static std::string getButtonText(const std::string& button, EpdData::State epdSt
     {
         if (epdState == EpdData::State::Running) {
             return "Stop";
-        } else {
-            auto remaining = epdData.remainingTests;
-            return EpdData::instance().configChanged() || remaining == 0 ? "Analyze" : "Continue";
         } 
+        auto remaining = epdData.remainingTests;
+        return EpdData::instance().configChanged() || remaining == 0 ? "Analyze" : "Continue";
     } 
     return button;
 }
@@ -92,7 +91,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
             return QaplaButton::ButtonState::Active;
         } 
 
-        if (epdData.mayAnalyze(false) == false) {
+        if (!epdData.mayAnalyze(false)) {
             return QaplaButton::ButtonState::Disabled;
         }
     } 
@@ -100,7 +99,8 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
     {
          if (epdState == EpdData::State::Stopping) {
             return QaplaButton::ButtonState::Active;
-        } else if (epdState != EpdData::State::Running) {
+        } 
+        if (epdState != EpdData::State::Running) {
             return QaplaButton::ButtonState::Disabled;
         } 
     } 
@@ -145,43 +145,50 @@ void EpdWindow::drawButtons()
                 }
                 if (button == "Grace")
                 {
-                     QaplaButton::drawGrace(drawList, topLeft, size, buttonState);
+                        QaplaButton::drawGrace(drawList, topLeft, size, buttonState);
                 }
                 if (button == "Clear")
                 {
                     QaplaButton::drawClear(drawList, topLeft, size, buttonState);
                 } 
-            }
-        ))
+            }))
         {
-            try
-            {
-                auto epdState = EpdData::instance().state;
-                if (button == "Run/Stop" && epdState != EpdData::State::Running)
-                {
-                    EpdData::instance().analyse();
-                }
-                else if (button == "Run/Stop" && epdState == EpdData::State::Running)
-                {
-                    EpdData::instance().stopPool(false);
-                }
-                else if (button == "Grace") {
-                    EpdData::instance().stopPool(true);
-                }
-                else if (button == "Clear" && epdState == EpdData::State::Stopped)
-                {
-                    EpdData::instance().clear();
-                }
-            }
-            catch (const std::exception &e)
-            {
-                SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
-            }
+            executeCommand(button);
         }
         pos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
+}
+
+void QaplaWindows::EpdWindow::executeCommand(const std::string &button)
+{
+    {
+        try
+        {
+            auto epdState = EpdData::instance().state;
+            if (button == "Run/Stop" && epdState != EpdData::State::Running)
+            {
+                EpdData::instance().analyse();
+            }
+            else if (button == "Run/Stop" && epdState == EpdData::State::Running)
+            {
+                EpdData::instance().stopPool(false);
+            }
+            else if (button == "Grace")
+            {
+                EpdData::instance().stopPool(true);
+            }
+            else if (button == "Clear" && epdState == EpdData::State::Stopped)
+            {
+                EpdData::instance().clear();
+            }
+        }
+        catch (const std::exception &e)
+        {
+            SnackbarManager::instance().showError(std::string("Fehler: ") + e.what());
+        }
+    }
 }
 
 void EpdWindow::drawInput()

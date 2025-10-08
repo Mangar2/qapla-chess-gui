@@ -86,12 +86,57 @@ std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance()
 	return instance;
 }
 
+void InteractiveBoardWindow::loadGlobalEngineSettings(
+	std::optional<QaplaHelpers::ConfigData::SectionMap> &globalSettingsMap, 
+	const std::string &idStr, std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance)
+{
+    if (globalSettingsMap)
+    {
+        auto settingsIt = globalSettingsMap->find(idStr);
+        if (settingsIt != globalSettingsMap->end() && !settingsIt->second.empty())
+        {
+            const auto &settingsSection = settingsIt->second[0];
+
+            EngineSetupWindow::GlobalEngineSettings globalSettings;
+
+            if (auto val = settingsSection.getValue("useGlobalPonder"))
+            {
+                globalSettings.useGlobalPonder = (*val == "true" || *val == "1");
+            }
+            if (auto val = settingsSection.getValue("ponder"))
+            {
+                globalSettings.ponder = (*val == "true" || *val == "1");
+            }
+            if (auto val = settingsSection.getValue("useGlobalHash"))
+            {
+                globalSettings.useGlobalHash = (*val == "true" || *val == "1");
+            }
+            if (auto val = settingsSection.getValue("hashSizeMB"))
+            {
+                try
+                {
+                    globalSettings.hashSizeMB = std::stoul(*val);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            instance->setupWindow_->content().setGlobalSettings(globalSettings);
+        }
+    }
+}
+
 std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
 	auto sectionMap = config.getSectionMap("engineselection");
 	if (!sectionMap) {
 		return {};
 	}
+	
+	// Load global engine settings
+	auto globalSettingsMap = config.getSectionMap("globalenginesettings");
+	
 	std::vector<std::unique_ptr<InteractiveBoardWindow>> instances;
 	for (const auto& [idStr, sectionList] : *sectionMap) {
 		try {
@@ -105,7 +150,11 @@ std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loa
 			for (const auto& section : sectionList) {
 				instance->loadBoardEngine(section);
 			}
-			instance->setEngines();
+			
+			// Load global settings for this board
+            loadGlobalEngineSettings(globalSettingsMap, idStr, instance);
+
+            instance->setEngines();
 			instances.push_back(std::move(instance));
 		} catch (const std::exception& e) {
 			// Ignore invalid entries
@@ -116,6 +165,8 @@ std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loa
 	}
 	return instances;
 }
+
+
 
 void InteractiveBoardWindow::initSplitterWindows()
 {
@@ -332,6 +383,17 @@ void InteractiveBoardWindow::saveConfig(std::ostream &out) const
 	for (const auto& section : sections) {
 		QaplaHelpers::IniFile::saveSection(out, section);
 	}
+	
+	// Save global engine settings
+	const auto& globalSettings = setupWindow_->content().getGlobalSettings();
+	QaplaHelpers::IniFile::Section globalSection;
+	globalSection.name = "globalenginesettings";
+	globalSection.addEntry("id", "board" + std::to_string(id_));
+	globalSection.addEntry("useGlobalPonder", globalSettings.useGlobalPonder ? "true" : "false");
+	globalSection.addEntry("ponder", globalSettings.ponder ? "true" : "false");
+	globalSection.addEntry("useGlobalHash", globalSettings.useGlobalHash ? "true" : "false");
+	globalSection.addEntry("hashSizeMB", std::to_string(globalSettings.hashSizeMB));
+	QaplaHelpers::IniFile::saveSection(out, globalSection);
 }
 
 bool InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)

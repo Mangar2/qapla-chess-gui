@@ -88,9 +88,9 @@ namespace QaplaWindows
 		 * The instances are created based on the saved configuration data.
 		 * @return A vector of unique pointers to the loaded InteractiveBoardWindow instances.
 		 */
-		static std::vector<std::unique_ptr<InteractiveBoardWindow>> loadInstances();
+        static std::vector<std::unique_ptr<InteractiveBoardWindow>> loadInstances();
 
-		/**
+        /**
 		 * @brief Returns the title of the board window.
 		 * @return The title string, e.g., "Board 1".
 		 */
@@ -173,6 +173,17 @@ namespace QaplaWindows
 		 * @return A list of INI file sections representing the current configuration.
 		 */
 		QaplaHelpers::IniFile::SectionList getIniSections() const;
+
+		/**
+		 * @brief Loads global engine settings from the provided section map into the given InteractiveBoardWindow instance.
+		 * @param globalSettingsMap Optional map of section names to their corresponding section lists.
+		 * @param idStr The identifier string for the board (e.g., "board1").
+		 * @param instance Unique pointer to the InteractiveBoardWindow instance to load settings into.
+		 */
+		static void loadGlobalEngineSettings(
+			std::optional<QaplaHelpers::ConfigData::SectionMap> &globalSettingsMap, 
+			const std::string &idStr, 
+			std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance);
 
 		/**
 		 * @brief Draws a popup window to select engines using EngineSetupWindow.

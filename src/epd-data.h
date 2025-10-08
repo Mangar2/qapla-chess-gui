@@ -75,7 +75,7 @@ namespace QaplaWindows {
          * @brief Checks if analysis may be started or continued, and starts it if possible.
          * @param sendMessage If true, shows a message if analysis cannot be started.
          */
-        bool mayAnalyze(bool sendMessage = false);
+        bool mayAnalyze(bool sendMessage = false) const;
 
         /**
          * @brief Starts the analysis of the EPD test set.

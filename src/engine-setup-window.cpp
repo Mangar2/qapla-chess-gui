@@ -36,12 +36,34 @@
 #include <format>
 #include <memory>
 #include <filesystem>
+#include <algorithm>
 
 using namespace QaplaWindows;
 
 
-EngineSetupWindow::EngineSetupWindow() = default;
+EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
+    : showGlobalControls_(showGlobalControls)
+{
+    //auto& configManager = EngineWorkerFactory::getConfigManager();
+    // activeEngines_ = configManager.getAllConfigs();
+}
 EngineSetupWindow::~EngineSetupWindow() = default;
+
+std::vector<EngineConfig> EngineSetupWindow::getActiveEngines() const {
+    std::vector<EngineConfig> engines = activeEngines_;
+    
+    // Apply global settings if enabled
+    for (auto& engine : engines) {
+        if (globalSettings_.useGlobalPonder) {
+            engine.setPonder(globalSettings_.ponder);
+        }
+        if (globalSettings_.useGlobalHash) {
+            engine.setOptionValue("Hash", std::to_string(globalSettings_.hashSizeMB));
+        }
+    }
+    
+    return engines;
+}
 
 void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>& engines) {
     activeEngines_.clear();
@@ -170,6 +192,45 @@ void EngineSetupWindow::drawButtons() {
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
 }
 
+bool EngineSetupWindow::drawGlobalSettings() {
+    constexpr float controlWidth = 150.0F;
+    if (!showGlobalControls_) {
+        return false;
+    }
+
+    ImGui::Separator();
+    ImGui::Spacing();
+    
+    // Global settings checkbox
+    bool modified = false;
+    ImGui::Indent(controlIndent_);
+    if (ImGui::CollapsingHeader("Global Engine Settings")) {
+        ImGui::Indent(controlIndent_);
+        
+        // Ponder control
+        modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(controlWidth);
+        ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
+        modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
+        ImGui::EndDisabled();
+       
+        // Hash size control
+        constexpr uint32_t maxHashMB = 64000;
+        modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(controlWidth);
+        ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
+        modified |= ImGuiControls::inputInt<uint32_t>("Global Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
+        ImGui::EndDisabled();
+        ImGui::Unindent(controlIndent_);
+    }
+    ImGui::Unindent(controlIndent_);
+    ImGui::Spacing();
+    ImGui::Separator();
+    return modified;
+}
+
 void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
 {
     try
@@ -251,14 +312,17 @@ void EngineSetupWindow::draw() {
     auto configs = configManager.getAllConfigs();
 
     if (configs.empty()) {
-        QaplaWindows::ImGuiControls::drawDot(6.0F, 10.0F);
+        constexpr float dotOffsetX = 6.0F;
+        constexpr float dotOffsetY = 10.0F;
+        QaplaWindows::ImGuiControls::drawDot(dotOffsetX, dotOffsetY);
     }
 	drawButtons();
+    drawGlobalSettings();
     
     ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
-    ImGui::Indent(10.0F);
+    ImGui::Indent(controlIndent_);
     drawEngineList();
-    ImGui::Unindent(10.0F);
+    ImGui::Unindent(controlIndent_);
     ImGui::EndChild();
 }
 

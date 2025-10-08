@@ -62,8 +62,9 @@ namespace {
     GLFWwindow* initGlfwContext() {
         glfwSetErrorCallback(glfwErrorCallback);
 
-        if (!glfwInit())
+        if (glfwInit() == 0) {
             throw std::runtime_error("Failed to initialize GLFW");
+        }
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -73,8 +74,9 @@ namespace {
 #endif
 
         auto* window = glfwCreateWindow(1400, 800, "Qapla Chess GUI", nullptr, nullptr);
-        if (!window)
+        if (window == nullptr) {
             throw std::runtime_error("Failed to create GLFW window");
+        }
 
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
@@ -82,15 +84,16 @@ namespace {
     }
 
     void initGlad() {
-        if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
+        if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)) == 0) {
             throw std::runtime_error("Failed to initialize GLAD");
+        }
     }
 
     void initImGui(GLFWwindow* window) {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
-        ImGui::GetStyle().Colors[ImGuiCol_BorderShadow] = ImVec4(0.25f, 0.28f, 0.32f, 0.40f);
+        ImGui::GetStyle().Colors[ImGuiCol_BorderShadow] = ImVec4(0.25F, 0.28F, 0.32F, 0.40F);
         //ImGui::StyleColorsClassic();
 		//ImGui::StyleColorsLight();
         ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -127,7 +130,7 @@ namespace {
         });
 
 		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>());
+        taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(false));
         taskTabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
         
         auto tournamentWindow = std::make_unique<QaplaWindows::TournamentWindow>();
@@ -181,20 +184,21 @@ namespace {
         try {
             initBackgroundImage("assets/dark_wood_diff_4k.jpg");
         } catch (const std::exception& e) {
-            std::cerr << "Warning: Failed to load background image: " << e.what() << std::endl;
+            std::cerr << "Warning: Failed to load background image: " << e.what() << "\n";
         }
         font::loadFonts();
-        while (!glfwWindowShouldClose(window)) {
+        while (glfwWindowShouldClose(window) == 0) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
                 glfwWaitEvents(); 
                 continue;
             }
             glfwPollEvents();
 
-            int width{}, height{};
+            int width{};
+            int height{};
             glfwGetFramebufferSize(window, &width, &height);
             glViewport(0, 0, width, height);
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0F);
+            glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
             glClear(GL_COLOR_BUFFER_BIT);
             
             drawBackgroundImage();
@@ -240,14 +244,13 @@ namespace {
 #include <fcntl.h>
 
 bool attachToParentConsole() {
-    // Versuche, sich an die Console des Elternprozesses anzuhängen
-    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-        // Umleitung von stdout, stdin, stderr zur bestehenden Console
+    if (AttachConsole(ATTACH_PARENT_PROCESS) != 0) {
+        // Redirect the CRT standard input, output, and error handles to the console
         freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
         freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
         freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
         
-        // Synchronisiere C++ streams mit C streams
+        // Synchronize C++ streams with C streams
         std::ios::sync_with_stdio(true);
         std::wcout.clear();
         std::cout.clear();
@@ -261,7 +264,7 @@ bool attachToParentConsole() {
     return false;
 }
 
-int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     bool hasConsole = attachToParentConsole();
     
     try {

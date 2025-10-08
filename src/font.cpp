@@ -73,8 +73,9 @@ namespace font {
 
     void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, ImFont* font)
     {
-        if (piece == QaplaBasics::Piece::NO_PIECE)
+        if (piece == QaplaBasics::Piece::NO_PIECE) {
             return;
+        }
 
         const float fontSize = ImGui::GetFontSize();
         const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
@@ -88,8 +89,9 @@ namespace font {
     void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
         const ImVec2& cellMin, float cellSize, ImFont* font)
     {
-        if (piece == QaplaBasics::Piece::NO_PIECE)
+        if (piece == QaplaBasics::Piece::NO_PIECE) {
             return;
+        }
 
         const float fontSize = cellSize * 0.9F;
         const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
