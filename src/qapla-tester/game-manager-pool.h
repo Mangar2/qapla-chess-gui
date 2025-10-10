@@ -197,6 +197,7 @@ private:
     
     void printRunningGames(std::ostream& out) const;
     void viewEngineTrace(int gameManagerIndex) const;
+    void updateConcurrency(InputHandler::CommandValue &value);
 
     /**
      * @brief Returns the singleton instance of the GameManagerPool.

@@ -55,7 +55,7 @@ public:
 	 * @param fen The FEN string to set, if startPos = false. 
 	 * @return True if the FEN string was valid and the position was set, false otherwise.
 	 */
-	bool setFen(bool startPos, const std::string fen = "");
+	bool setFen(bool startPos, const std::string& fen = "");
 
 	/**
 	 * @brief Undo the last move and restore the previous position.
@@ -66,7 +66,7 @@ public:
 	 * Find the correct move providing a partial move information
 	 * @param moveStr The move string to parse.
 	 */
-	QaplaBasics::Move stringToMove(std::string moveStr, bool requireLan);
+	QaplaBasics::Move stringToMove(const std::string& moveStr, bool requireLan);
 
 	/**
 	 * Attempts to resolve a move from partially specified parameters.
@@ -130,11 +130,11 @@ public:
 
 	/**
 	 * @brief sets the game state from a game record information and copies the GameRecord until the given ply number.
-	 * @param record The game record to set the state from.
+	 * @param game The game record to set the state from.
 	 * @param plies The ply number to set the game state to.
 	 * @return The copy of the GameRecord up to the given ply number.
 	 */
-	GameRecord setFromGameRecordAndCopy(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
+	GameRecord setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies = std::nullopt);
 
 	/**
 	 * @brief Sets the game state from a game record information.
@@ -142,10 +142,10 @@ public:
 	 * This method sets the game state to the position described by the given GameRecord.
 	 * It does not create and return a copy of the GameRecord and is thus faster than setFromGameRecordAndCopy.
 	 * 
-	 * @param record The game record to set the state from.
+	 * @param game The game record to set the state from.
 	 * @param plies The ply number to set the game state to. If not provided, the full game record is used.
 	 */
-	void setFromGameRecord(const GameRecord& record, std::optional<uint32_t> plies = std::nullopt);
+	void setFromGameRecord(const GameRecord& game, std::optional<uint32_t> plies = std::nullopt);
 
 	/**
 	 * @brief Incrementally synchronizes this GameState to match the move history of the given reference state.

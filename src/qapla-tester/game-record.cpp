@@ -21,7 +21,7 @@
 
 #include "qapla-engine/move.h"
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves)
+void GameRecord::setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves)
 {
     moves_.clear();
     isWhiteToMoveAtStart_ = isWhiteToMove;
@@ -34,8 +34,8 @@ void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWh
     changeTracker_.trackModification();
 }
 
-void GameRecord::setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves,
-                                  std::string whiteEngineName, std::string blackEngineName)
+void GameRecord::setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves,
+                                  const std::string& whiteEngineName, const std::string& blackEngineName)
 {
     setStartPosition(startPos, startFen, isWhiteToMove, startHalfmoves);
     whiteEngineName_ = whiteEngineName;
@@ -177,8 +177,9 @@ GameStruct GameRecord::createGameStruct() const
     uint32_t index = 0;
     for (const auto &move : moves_)
     {
-        if (index >= currentPly_)
+        if (index >= currentPly_) {
             break;
+        }
         index++;
 
         gs.lanMoves += spacer + move.lan;
@@ -207,7 +208,7 @@ GameRecord GameRecord::createMinimalCopy() const
     record.totalGameNo_ = totalGameNo_;
     record.opening_ = opening_;
     record.moves_.reserve(moves_.size());
-    for (auto &move : moves_)
+    for (const auto &move : moves_)
     {
         record.moves_.emplace_back(move.createMinimalCopy());
     }
@@ -217,7 +218,9 @@ GameRecord GameRecord::createMinimalCopy() const
 
 std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts) const {
 		std::ostringstream out;
-		if (moves_.empty()) return "";
+		if (moves_.empty()) {
+            return "";
+        }
 
     	uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
 
@@ -227,7 +230,7 @@ std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord:
 		uint32_t firstHalfmove = halfmoveNoAtPly(0);
 		bool wtm = isWhiteToMoveAtStart_;
 		uint32_t moveNumber = (firstHalfmove + 1) / 2;
-		std::string spacer = "";
+		std::string spacer;
 		if (!wtm) {
 			out << moveNumber << "...";
 			spacer = " ";

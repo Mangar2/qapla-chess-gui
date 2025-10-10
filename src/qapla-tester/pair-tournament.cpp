@@ -29,7 +29,7 @@
 void PairTournament::initialize(const EngineConfig& engineA, const EngineConfig& engineB,
 	const PairTournamentConfig& config, std::shared_ptr<StartPositions> startPositions) {
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     if (started_) {
         throw std::logic_error("PairTournament already initialized");
     }
@@ -101,10 +101,8 @@ uint32_t PairTournament::newOpeningIndex(size_t gameInEncounter) {
         std::uniform_int_distribution<size_t> dist(0, startPositions_->size() - 1);
         return static_cast<uint32_t>(dist(rng_));
     }
-    else {
-        uint32_t size = startPositions_->size();
-        return (gameInEncounter / config_.repeat + config_.openings.start) % size;
-    }
+    uint32_t size = startPositions_->size();
+    return (gameInEncounter / config_.repeat + config_.openings.start) % size;
 } 
 
 void PairTournament::updateOpening(uint32_t openingIndex) {
@@ -122,7 +120,7 @@ void PairTournament::updateOpening(uint32_t openingIndex) {
 }
 
 std::optional<GameTask> PairTournament::nextTask() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
 
     if (!started_ || !startPositions_ || startPositions_->empty()) {
         return std::nullopt;
@@ -170,7 +168,7 @@ std::optional<GameTask> PairTournament::nextTask() {
             << " game " << std::setw(3) << i + 1
             << " opening " << std::setw(6) << openingIndex_
             << " engines " << white.getName() << " vs " << black.getName()
-            << std::endl;
+            << "\n" << std::flush;
 
         return task;
     }
@@ -179,7 +177,7 @@ std::optional<GameTask> PairTournament::nextTask() {
 }
 
 void PairTournament::setGameRecord([[maybe_unused]] const std::string& taskId, const GameRecord& record) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
 
     auto [cause, result] = record.getGameResult();
     uint32_t gameInRound = record.getGameInRound();
@@ -210,7 +208,7 @@ void PairTournament::setGameRecord([[maybe_unused]] const std::string& taskId, c
         Logger::testLogger().log(oss.str(), TraceLevel::result);
     }
 
-    isFinished_ = duelResult_.total() >= config_.games;
+    isFinished_ = std::cmp_greater_equal(duelResult_.total(), config_.games);
 
     if (onGameFinished_){
         onGameFinished_(this);
@@ -241,14 +239,14 @@ std::string PairTournament::getResultSequenceEngineView() const {
 }
 
 std::string PairTournament::toString() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     std::ostringstream oss;
 	oss << engineA_.getName() << " vs " << engineB_.getName() << " : " << getResultSequenceEngineView();
     return oss.str();
 }
 
 void PairTournament::fromString(const std::string& line) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
 
     // The index of the next game to play is derived from the results_ vector, not from nextIndex_.
     // nextIndex_ is only used to avoid rechecking already completed games in nextTask().
@@ -293,7 +291,9 @@ void PairTournament::fromString(const std::string& line) {
 
 void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& prefix) const {
     QaplaHelpers::IniFile::Section section;
-    if (results_.empty()) return;
+    if (results_.empty()) {
+        return;
+    }
 
     section.name = prefix + "round";
     section.addEntry("round", std::to_string(config_.round + 1));
@@ -303,7 +303,7 @@ void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& pre
     const auto& stats = duelResult_.causeStats;
     section.addEntry("games", getResultSequenceEngineView());
 
-    auto addStats = [&](const std::string label, auto accessor) {
+    auto addStats = [&](const std::string& label, auto accessor) {
         for (size_t i = 0; i < stats.size(); ++i) {
             int value = accessor(stats[i]);
             if (value > 0) {
@@ -341,13 +341,17 @@ static void parseEndCauses(std::string_view text, EngineDuelResult& result, int 
 
     while (std::getline(ss, token, ',')) {
         const auto sep = token.find(':');
-        if (sep == std::string::npos) continue;
+        if (sep == std::string::npos) {
+            continue;
+        }
 
         const std::string causeStr = QaplaHelpers::trim(token.substr(0, sep));
         const int count = std::stoi(token.substr(sep + 1));
 
         const auto causeOpt = tryParseGameEndCause(causeStr);
-        if (!causeOpt) continue;
+        if (!causeOpt) {
+            continue;
+        }
 
         result.causeStats[static_cast<size_t>(*causeOpt)].*field += count;
     }

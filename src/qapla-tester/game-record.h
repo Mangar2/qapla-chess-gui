@@ -61,9 +61,9 @@ enum class GameEvent
 class GameRecord
 {
 public:
-	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves);
-	void setStartPosition(bool startPos, std::string startFen, bool isWhiteToMove, uint32_t startHalfmoves,
-						  std::string whiteEngineName, std::string blackEngineName);
+	void setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves);
+	void setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves,
+						  const std::string& whiteEngineName, const std::string& blackEngineName);
 
 	/**
 	 * @brief Initializes this GameRecord using another GameRecord (for PGN-based start setup).

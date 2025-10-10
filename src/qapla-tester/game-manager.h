@@ -182,7 +182,7 @@ private:
      * Adds a new engine event to the processing queue.
      * This method is thread-safe and does not block.
      */
-    void enqueueEvent(const EngineEvent& event);
+    void enqueueEvent(EngineEvent&& event);
     /**
      * Continuously processes events from the queue and performs periodic tasks.
      * Intended to run in a dedicated thread.

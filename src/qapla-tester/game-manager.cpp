@@ -40,7 +40,7 @@
 #include "adjudication-manager.h"
 
 GameManager::GameManager()
-    : taskProvider_(nullptr), gameContext_()
+    : taskProvider_(nullptr)
 {
     eventThread_ = std::thread(&GameManager::processQueue, this);
     gameContext_.setEventCallback([this](EngineEvent&& event) {
@@ -56,7 +56,7 @@ GameManager::~GameManager() {
     }
 }
 
-void GameManager::enqueueEvent(const EngineEvent& event) {
+void GameManager::enqueueEvent(EngineEvent&& event) {
 	if (taskType_ == GameTask::Type::None) {
 		// No task to process, ignore the event
 		return;
@@ -65,8 +65,8 @@ void GameManager::enqueueEvent(const EngineEvent& event) {
         return;
     }
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        eventQueue_.push(event);
+        std::scoped_lock lock(queueMutex_);
+        eventQueue_.push(std::move(event));
     }
     queueCondition_.notify_one();
 }
@@ -78,7 +78,7 @@ bool GameManager::processNextEvent() {
 	}
     EngineEvent event;
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
+        std::scoped_lock lock(queueMutex_);
         if (eventQueue_.empty()) {
             return false;
         }
@@ -107,11 +107,15 @@ void GameManager::processQueue() {
         }
 
         if (std::chrono::steady_clock::now() >= nextTimeoutCheck) {
-            if (debug_) std::cout << "Timeout check" << std::endl;
+            if (debug_) {
+                std::cout << "Timeout check\n";
+            }
             nextTimeoutCheck = std::chrono::steady_clock::now() + timeoutInterval;
 
             if (taskType_ != GameTask::Type::ComputeMove && taskType_ != GameTask::Type::PlayGame) {
-                if (debug_) std::cout << "Stop check, cause task-type" << std::to_string(static_cast<int>(taskType_.load())) << std::endl;
+                if (debug_) {
+                    std::cout << "Stop check, cause task-type" << std::to_string(static_cast<int>(taskType_.load())) << "\n";
+                }
                 continue;
             }
 			bool restarted = gameContext_.checkForTimeoutsAndRestart();
@@ -125,7 +129,7 @@ void GameManager::processQueue() {
 
 void GameManager::tearDown() {
     {
-        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        std::scoped_lock lock(taskProviderMutex_);
         if (taskProvider_) {
             taskProvider_ = nullptr;
         }
@@ -160,7 +164,7 @@ void GameManager::processEvent(const EngineEvent& event) {
 		PlayerContext* player = gameContext_.findPlayerByEngineId(event.engineIdentifier);
 		bool isWhitePlayer = player == gameContext_.getWhite();
 
-        if (!player) {
+        if (player == nullptr) {
             // Usally from an engine in termination process. E.g. we stop an engine not reacting and already
             // Started new engines but the old engine still sends data.
             return;
@@ -169,7 +173,7 @@ void GameManager::processEvent(const EngineEvent& event) {
         // Error reporting
 		std::string name = player->getEngine()->getConfig().getName();
 		EngineReport* checklist = EngineReport::getChecklist(name);
-        for (auto& error : event.errors) {
+        for (const auto& error : event.errors) {
             checklist->logReport(error.name, false, error.detail, error.level);
         }
 
@@ -233,7 +237,7 @@ void GameManager::handleBestMove(const EngineEvent& event) {
 	MoveRecord moveRecord;
 	PlayerContext* player = gameContext_.findPlayerByEngineId(event.engineIdentifier);
 
-    if (player) {
+    if (player != nullptr) {
         move = player->handleBestMove(event);
         moveRecord = player->getCurrentMove();
     }
@@ -276,15 +280,19 @@ std::tuple<GameEndCause, GameResult> GameManager::getGameResult() {
         return { cause, result };
     }
 
-	auto& gameRecord = gameContext_.gameRecord();
+	const auto& gameRecord = gameContext_.gameRecord();
 
 	AdjudicationManager::instance().testAdjudicate(gameRecord);
 
 	auto [dcause, dresult] = AdjudicationManager::instance().adjudicateDraw(gameRecord);
-    if (dresult != GameResult::Unterminated) return { dcause, dresult };
+    if (dresult != GameResult::Unterminated) {
+        return { dcause, dresult };
+    }
 
 	auto [rcause, rresult] = AdjudicationManager::instance().adjudicateResign(gameRecord);
-	if (rresult != GameResult::Unterminated) return { rcause, rresult };
+	if (rresult != GameResult::Unterminated) {
+        return { rcause, rresult };
+    }
 
 	return { GameEndCause::Ongoing, GameResult::Unterminated };
 }
@@ -306,9 +314,11 @@ bool GameManager::checkForGameEnd(bool verbose) {
 }
 
 void GameManager::moveNow() {
-    if (gameContext_.getPlayerCount() == 0) return;
+    if (gameContext_.getPlayerCount() == 0) {
+        return;
+    }
 
-    auto& gameRecord = gameContext_.gameRecord();
+    const auto& gameRecord = gameContext_.gameRecord();
 
     if (gameRecord.isWhiteToMove()) {
         gameContext_.getWhite()->getEngine()->moveNow();
@@ -319,9 +329,9 @@ void GameManager::moveNow() {
 }
 
 void GameManager::computeNextMove(const std::optional<EngineEvent>& event) {
-    auto& gameRecord = gameContext_.gameRecord();
-	auto white = gameContext_.getWhite();
-	auto black = gameContext_.getBlack();
+    const auto& gameRecord = gameContext_.gameRecord();
+	auto* white = gameContext_.getWhite();
+	auto* black = gameContext_.getBlack();
     auto [whiteTime, blackTime] = gameRecord.timeUsed();
     GoLimits goLimits = createGoLimits(
 		white->getTimeControl(), black->getTimeControl(),
@@ -329,8 +339,7 @@ void GameManager::computeNextMove(const std::optional<EngineEvent>& event) {
 	if (gameRecord.isWhiteToMove()) {
         white->computeMove(gameRecord, goLimits);
         black->allowPonder(gameRecord, goLimits, event);
-    }
-    else {
+    } else {
 		black->computeMove(gameRecord, goLimits);
         white->allowPonder(gameRecord, goLimits, event);
     }
@@ -339,7 +348,7 @@ void GameManager::computeNextMove(const std::optional<EngineEvent>& event) {
 void GameManager::stop() {
    {
         // Ensure no new tasks are assigned
-        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        std::scoped_lock lock(taskProviderMutex_);
         if (taskProvider_) {
             taskProvider_ = nullptr;
         }
@@ -347,7 +356,7 @@ void GameManager::stop() {
     }
     gameContext_.cancelCompute();
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
+        std::scoped_lock lock(queueMutex_);
         while (!eventQueue_.empty()) {
             eventQueue_.pop();
         }
@@ -370,7 +379,7 @@ void GameManager::executeTask(std::optional<GameTask> task) {
         // We protect taskType_ against race conditions between calls of stop() restarting the game based on a new task
         // that had been fetched before stop().
         // TaskType_ == None guarantees that no further events are processed thus we protect continuations of games.
-        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        std::scoped_lock lock(taskProviderMutex_);
         if (taskProvider_) {
             taskType_ = task->taskType;
             taskId_ = task->taskId;
@@ -429,7 +438,7 @@ std::optional<GameTask> GameManager::nextAssignment() {
             return std::nullopt;
         }
         {
-            std::lock_guard<std::mutex> lock(taskProviderMutex_);
+            std::scoped_lock lock(taskProviderMutex_);
             if (!taskProvider_) {
                 return std::nullopt;
             }
@@ -460,7 +469,7 @@ void GameManager::finalizeTaskAndContinue() {
     taskType_ = GameTask::Type::None;
     std::shared_ptr<GameTaskProvider> provider = nullptr;
     {
-        std::lock_guard<std::mutex> lock(taskProviderMutex_);
+        std::scoped_lock lock(taskProviderMutex_);
         provider = taskProvider_;
     }
 	gameContext_.cancelCompute();
@@ -475,12 +484,12 @@ void GameManager::finalizeTaskAndContinue() {
     }
     // Note: we had a check, if any move has been played and removed it as it could cause problems
     // With a direct loss e.g. due to disconnect. But I don´t know why we ever checked for any move
-	auto& gameRecord = gameContext_.gameRecord();
+	const auto& gameRecord = gameContext_.gameRecord();
     provider->setGameRecord(taskId_, gameRecord);
 	AdjudicationManager::instance().onGameFinished(gameRecord);
 
     {
-        std::lock_guard<std::mutex> lock(pauseMutex_);
+        std::scoped_lock lock(pauseMutex_);
         if (pauseRequested_) {
             paused_ = true;
             return;
@@ -516,9 +525,11 @@ bool GameManager::start(std::shared_ptr<GameTaskProvider> taskProvider) {
 
 void GameManager::resume() {
     {
-        std::lock_guard<std::mutex> lock(pauseMutex_);
+        std::scoped_lock lock(pauseMutex_);
         pauseRequested_ = false;
-        if (!paused_) return;
+        if (!paused_) {
+            return;
+        }
         paused_ = false;
     }
     taskType_ = GameTask::Type::FetchNextTask;
