@@ -309,7 +309,7 @@ namespace QaplaBasics {
 		/**
 		 * Gets the board in Fen representation
 		 */
-		std::string getFen(int fullMoveNumber = 1) const;
+		std::string getFen() const;
 
 		/**
 		 * Prints the board as fen to std-out
@@ -420,17 +420,17 @@ namespace QaplaBasics {
 		/**
 		 * Moves a piece as part of a move
 		 */
-		void movePiece(Square departure, Square destination);
+		void movePiece(Square fromSquare, Square toSquare);
 
 		/**
 		 * Remove current piece as part of a move
 	  	 */
-		void removePiece(Square squareOfPiece);
+		void removePiece(Square square);
 
 		/**
 		 * Adds a piece as part of a move (for example for promotions)
 		 */
-		void addPiece(Square squareOfPiece, Piece pieceToAdd);
+		void addPiece(Square square, Piece pieceToAdd);
 
 
 		/**

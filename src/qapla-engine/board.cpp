@@ -72,37 +72,37 @@ void Board::setToSymetricBoard(const Board& board) {
 	setWhiteToMove(!board.isWhiteToMove());
 }
 
-void Board::removePiece(Square squareOfPiece) {
-	Piece pieceToRemove = _board[squareOfPiece];
-	removePieceBB(squareOfPiece, pieceToRemove);
-	_boardState.updateHash(squareOfPiece, pieceToRemove);
-	_board[squareOfPiece] = NO_PIECE;
+void Board::removePiece(Square square) {
+	Piece pieceToRemove = _board[square];
+	removePieceBB(square, pieceToRemove);
+	_boardState.updateHash(square, pieceToRemove);
+	_board[square] = NO_PIECE;
 	_pieceSignature.removePiece(pieceToRemove, bitBoardsPiece[pieceToRemove]);
 	_materialBalance.removePiece(pieceToRemove);
-	_pstBonus -= PST::getValue(squareOfPiece, pieceToRemove);
+	_pstBonus -= PST::getValue(square, pieceToRemove);
 }
 
-void Board::addPiece(Square squareOfPiece, Piece pieceToAdd) {
+void Board::addPiece(Square square, Piece pieceToAdd) {
 	_pieceSignature.addPiece(pieceToAdd);
-	addPieceBB(squareOfPiece, pieceToAdd);
-	_boardState.updateHash(squareOfPiece, pieceToAdd);
-	_board[squareOfPiece] = pieceToAdd;
+	addPieceBB(square, pieceToAdd);
+	_boardState.updateHash(square, pieceToAdd);
+	_board[square] = pieceToAdd;
 	_materialBalance.addPiece(pieceToAdd);
-	_pstBonus += PST::getValue(squareOfPiece, pieceToAdd);
+	_pstBonus += PST::getValue(square, pieceToAdd);
 }
 
-void Board::movePiece(Square departure, Square destination) {
-	Piece pieceToMove = _board[departure];
+void Board::movePiece(Square fromSquare, Square toSquare) {
+	Piece pieceToMove = _board[fromSquare];
 	if (isKing(pieceToMove)) {
-		kingSquares[getPieceColor(pieceToMove)] = destination;
+		kingSquares[getPieceColor(pieceToMove)] = toSquare;
 	}
-	_pstBonus += PST::getValue(destination, pieceToMove) -
-		PST::getValue(departure, pieceToMove);
-	movePieceBB(departure, destination, pieceToMove);
-	_boardState.updateHash(departure, pieceToMove);
-	_board[departure] = NO_PIECE;
-	_boardState.updateHash(destination, pieceToMove);
-	_board[destination] = pieceToMove;
+	_pstBonus += PST::getValue(toSquare, pieceToMove) -
+		PST::getValue(fromSquare, pieceToMove);
+	movePieceBB(fromSquare, toSquare, pieceToMove);
+	_boardState.updateHash(fromSquare, pieceToMove);
+	_board[fromSquare] = NO_PIECE;
+	_boardState.updateHash(toSquare, pieceToMove);
+	_board[toSquare] = pieceToMove;
 }
 
 void Board::doMoveSpecialities(Move move) {
@@ -279,8 +279,8 @@ void Board::undoMove(Move move, BoardState recentBoardState) {
 	assert(_board[departure] != NO_PIECE);
 }
 
-std::string Board::getFen(int fullMoveNumber) const {
-	std::string result = "";
+std::string Board::getFen() const {
+	std::string result;
 	File file;
 	Rank rank;
 	int amoutOfEmptyFields;
@@ -291,9 +291,9 @@ std::string Board::getFen(int fullMoveNumber) const {
 		{
 			Square square = computeSquare(file, rank);
 			Piece piece = operator[](square);
-			if (piece == Piece::NO_PIECE) amoutOfEmptyFields++;
-			else
-			{
+			if (piece == Piece::NO_PIECE) {
+				amoutOfEmptyFields++;
+			} else {
 				if (amoutOfEmptyFields > 0) {
 					result += std::to_string(amoutOfEmptyFields);
 				}
@@ -328,6 +328,7 @@ std::string Board::getFen(int fullMoveNumber) const {
 	result += " ";
 	result += std::to_string(getHalfmovesWithoutPawnMoveOrCapture());
 
+	int fullMoveNumber = _startHalfmoves / 2 + 1;
 	result += " ";
 	result += std::to_string(fullMoveNumber);
 
@@ -336,7 +337,9 @@ std::string Board::getFen(int fullMoveNumber) const {
 
 void Board::printPst(Piece piece) const {
 	auto pieceBB = getPieceBB(piece);
-	if (!pieceBB) return;
+	if (pieceBB == 0) {
+		return;
+	}
 
 	std::cout << " " << colorToString(getPieceColor(piece)) 
 		<< " " << pieceToChar(piece) << " PST: " 
@@ -344,20 +347,20 @@ void Board::printPst(Piece piece) const {
 
 	EvalValue total;
 
-	for (auto bb = pieceBB; bb; bb &= bb - 1)
+	for (auto bb = pieceBB; bb != 0; bb &= bb - 1)
 	{
 		const auto square = lsb(bb);
 		total += PST::getValue(square, piece);
 	}
 	std::cout << total << " (";
 
-	for (auto bb = pieceBB; bb; bb &= bb - 1)
+	for (auto bb = pieceBB; bb != 0; bb &= bb - 1)
 	{
 		const auto square = lsb(bb);
 		const auto value = PST::getValue(square, piece);
 		std::cout << squareToString(square) << value << " ";
 	}
-	std::cout << ")" << std::endl;
+	std::cout << ")\n" << std::flush;
 }
 
 
@@ -369,7 +372,7 @@ void Board::printPst() const {
 
 
 void Board::printFen() const {
-	std::cout << getFen() << std::endl;
+	std::cout << getFen() << "\n" << std::flush;
 }
 
 void Board::print() const {
@@ -378,9 +381,9 @@ void Board::print() const {
 			Piece piece = operator[](computeSquare(file, rank));
 			std::cout << " " << pieceToChar(piece) << " ";
 		}
-		std::cout << std::endl;
+		std::cout << "\n";
 	}
-	std::cout << "hash: " << computeBoardHash() << std::endl;
+	std::cout << "hash: " << computeBoardHash() << "\n";
 	printFen();
 	//printf("White King: %ld, Black King: %ld\n", kingPos[WHITE], kingPos[BLACK]);
 }

@@ -74,6 +74,11 @@ public:
         id_ = other.id_;
     }
 
+    void clear() {
+        modificationCnt_ = 0;
+        updateCnt_ = 0;
+    }
+
 private:
     static inline int64_t nextId_ = 1;
     int64_t id_ = nextId_++;

@@ -98,21 +98,24 @@ ImGuiEngineList::~ImGuiEngineList() = default;
 
 void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
     auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
-    if (!update) { return; }
+    if (!update) { 
+        return; 
+    }
     gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
     auto nextMoveIndex = gameRecord.nextMoveIndex();
     nextHalfmoveNo_ = gameRecord.halfmoveNoAtPly(nextMoveIndex) + 1;
     const auto& history = gameRecord.history();
-
     // Set the first two engines (white/black) based on the game record
     // Set table checks, if the table index exists
     for (int i = 0; i < 2; i++) {
         int moveIndex = static_cast<int>(nextMoveIndex) - i - 1;
         auto tableIndex = static_cast<size_t>(i);
-        if (tableIndex >= engineRecords_.size()) { break; }
         // If isWhiteToMove, last move is a black move (tableIndex == 1), so swap table index
         if (engineRecords_.size() >= 2) {
             if (gameRecord.isWhiteToMove()) { tableIndex = 1 - tableIndex; }
+        }
+        if (tableIndex >= engineRecords_.size()) {
+            break; 
         }
         if (moveIndex < 0 || moveIndex >= history.size()) {
 			if (tables_.size() > tableIndex) {
@@ -161,6 +164,7 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
 void ImGuiEngineList::addTables(size_t size) {
     for (size_t i = tables_.size(); i < size; ++i) {
 		displayedMoveNo_.push_back(0);
+        gameRecordTracker_.clear();
 		infoCnt_.push_back(0);
         tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,

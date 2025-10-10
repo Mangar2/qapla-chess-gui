@@ -132,7 +132,7 @@ void GameManager::tearDown() {
         std::scoped_lock lock(taskProviderMutex_);
         if (taskProvider_) {
             taskProvider_ = nullptr;
-        }
+        } 
     }
 	gameContext_.tearDown();
 	markFinished();
@@ -399,7 +399,11 @@ std::optional<GameTask> GameManager::assignNewProviderAndTask() {
         return std::nullopt;
     }
 
-    taskProvider_ = extendedTask->provider;
+    {
+        std::scoped_lock lock(taskProviderMutex_);
+        taskProvider_ = extendedTask->provider;
+        taskType_ = GameTask::Type::FetchNextTask;
+    }
 
     if (extendedTask->black) {
         initEngines(
@@ -507,6 +511,7 @@ void GameManager::finalizeTaskAndContinue() {
 
 bool GameManager::start(std::shared_ptr<GameTaskProvider> taskProvider) {
     std::optional<GameTask> task;
+    std::cout << "starting game manager\n" << std::flush;
     if (taskProvider == nullptr) {
         task = assignNewProviderAndTask();
     }
