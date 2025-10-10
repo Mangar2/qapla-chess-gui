@@ -188,13 +188,14 @@ public:
 	}
     
 	/**
-	 * @brief Saves the current tournament state to the given output stream if it is not empty.
+	 * @brief Returns the tournament state as a section if it is not empty.
 	 *
-	 * Writes the round header, results, and engine names.
+	 * Returns the round information, results, and engine names as an IniFile section.
 	 *
-	 * @param out Output stream to write the state to.
+	 * @param prefix Optional prefix for the section name.
+	 * @return Optional section containing the tournament state, or std::nullopt if empty.
 	 */
-    void trySaveIfNotEmpty(std::ostream& out, const std::string& prefix = "") const;
+    std::optional<QaplaHelpers::IniFile::Section> getSectionIfNotEmpty(const std::string& prefix = "") const;
 
      /**
      * @brief Checks if this pairing matches the given round and engine names.

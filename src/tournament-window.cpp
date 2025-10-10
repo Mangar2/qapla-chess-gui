@@ -280,13 +280,13 @@ bool TournamentWindow::drawInput() {
 		changed |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", tournamentData.eachEngineConfig().hash, 1, 10000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::selectionBox("Restart", tournamentData.eachEngineConfig().restart,
-            {"auto", "on", "off"});
+            {"auto", "on", "off", "per engine"});
         ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::selectionBox("Trace", tournamentData.eachEngineConfig().traceLevel,
-            { "none", "all", "command" });
+            { "none", "all", "command", "per engine" });
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::selectionBox("Ponder", tournamentData.eachEngineConfig().ponder,
-            {"Off", "On", "Per Engine"});
+            {"off", "on", "per engine"});
         ImGui::Unindent(10.0F);
         ImGui::PopID();
 	}
@@ -357,7 +357,7 @@ bool TournamentWindow::drawInput() {
 void TournamentWindow::draw() {
     drawButtons();
     if (drawInput()) {
-        QaplaConfiguration::Configuration::instance().setModified();
+        TournamentData::instance().updateConfiguration();
     }
     ImVec2 size = ImGui::GetContentRegionAvail();
     /* auto clickedRow = */

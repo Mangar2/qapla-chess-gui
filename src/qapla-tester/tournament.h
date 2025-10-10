@@ -79,27 +79,14 @@ public:
      * @brief Waits for all engines to finish.
      * @return true if all tasks completed successfully, false if the analysis was stopped prematurely.
      */
-    bool wait();
+    static bool wait();
 
     /**
-     * @brief Saves the state of all pairings to a stream.
-     * @param out Output stream to write to.
-     * @param prefix Optional prefix for section names (e.g., "tournament1.").
+     * @brief Returns the state of all pairings as a list of sections.
+     * @param prefix Optional prefix for section names (e.g., "tournament").
+     * @return Vector of IniFile sections containing the tournament state.
      */
-    void save(std::ostream& out, const std::string& prefix = "") const;
-
-    /**
-     * @brief Saves the state of all pairings to a file.
-     * @param filename Path to the output file.
-     * @param prefix Optional prefix for section names (e.g., "tournament1.").
-     */
-	void save(const std::string& filename, const std::string& prefix = "") const {
-		std::ofstream out(filename);
-		if (!out) {
-			throw std::runtime_error("Failed to open file for saving tournament results: " + filename);
-		}
-		save(out, prefix);
-	}
+    std::vector<QaplaHelpers::IniFile::Section> getSections(const std::string& prefix = "") const;
 
     /**
      * @brief Loads the state of all pairings from a stream.
@@ -179,15 +166,6 @@ private:
     */
     void onGameFinished(PairTournament* sender);
 
-    /**
-     * @brief Parses a single round block from the input and updates results if engines are valid.
-     * @param section The INI file section representing the round.
-     * @param validEngines Set of engine names that are part of this tournament.
-     * @return The next round header line or empty if end of input is reached.
-     */
-	void loadRound(const QaplaHelpers::IniFile::Section& section,
-		const std::unordered_set<std::string>& validEngines);
-
     void createGauntletPairings(const std::vector<EngineConfig>& engines,
         const TournamentConfig& config);
 
@@ -202,6 +180,12 @@ private:
      * @param savedPairings The saved pairings to restore.
      */
     void restoreResults(const std::vector<std::shared_ptr<PairTournament>>& savedPairings);
+
+    /**
+     * @brief Saves the tournament state to a file.
+     * @param filename Path to the output file.
+     */
+    void save(const std::string& filename) const;
 
     std::vector<EngineConfig> engineConfig_;
 	TournamentConfig config_;

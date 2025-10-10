@@ -81,16 +81,128 @@ namespace QaplaWindows {
         )
     { 
         runningTable_.setClickable(true);
-        init();
+        loadConfig();
     }
 
     TournamentData::~TournamentData() = default;
 
-    void TournamentData:: init() {
+    void TournamentData::updateConfiguration() const {
+        // Each Engine Config
+         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournamenteachengine", "eachengine", {{
+                .name = "tournamenteachengine",
+                .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"tc", eachEngineConfig_.tc},
+                    {"restart", eachEngineConfig_.restart},
+                    {"trace", eachEngineConfig_.traceLevel},
+                    {"ponder", eachEngineConfig_.ponder},
+                    {"hash", std::to_string(eachEngineConfig_.hash)}
+                }
+        }});
+
+        // Tournament Config
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournament", "tournament", {{
+                .name = "tournament",
+                .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"event", config_->event},
+                    {"type", config_->type},
+                    {"rounds", std::to_string(config_->rounds)},
+                    {"games", std::to_string(config_->games)},
+                    {"repeat", std::to_string(config_->repeat)},
+                    {"noSwap", config_->noSwap ? "true" : "false"},
+                    {"averageElo", std::to_string(config_->averageElo)},
+                    {"saveInterval", std::to_string(config_->saveInterval)}
+                }
+        }});
+
+        // Opening Config
+        QaplaHelpers::IniFile::KeyValueMap openingEntries{
+            {"file", config_->openings.file},
+            {"format", config_->openings.format},
+            {"order", config_->openings.order},
+            {"seed", std::to_string(config_->openings.seed)},
+            {"start", std::to_string(config_->openings.start)},
+            {"policy", config_->openings.policy}
+        };
+
+        if (config_->openings.plies) {
+            openingEntries.emplace_back("plies", std::to_string(*config_->openings.plies));
+        }
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournamentopening", "opening", {{
+                .name = "tournamentopening",
+                .entries = openingEntries
+        }});
+
+        // PGN Config
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournamentpgnoutput", "pgnoutput", {{
+                .name = "tournamentpgnoutput",
+                .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"file", pgnConfig_.file},
+                    {"append", pgnConfig_.append ? "true" : "false"},
+                    {"onlyFinishedGames", pgnConfig_.onlyFinishedGames ? "true" : "false"},
+                    {"minimalTags", pgnConfig_.minimalTags ? "true" : "false"},
+                    {"saveAfterMove", pgnConfig_.saveAfterMove ? "true" : "false"},
+                    {"includeClock", pgnConfig_.includeClock ? "true" : "false"},
+                    {"includeEval", pgnConfig_.includeEval ? "true" : "false"},
+                    {"includePv", pgnConfig_.includePv ? "true" : "false"},
+                    {"includeDepth", pgnConfig_.includeDepth ? "true" : "false"}
+                }
+        }});
+
+        // Draw Adjudication Config
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournamentdrawadjudication", "drawadjudication", {{
+                .name = "tournamentdrawadjudication",
+                .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"minFullMoves", std::to_string(drawConfig_.minFullMoves)},
+                    {"requiredConsecutiveMoves", std::to_string(drawConfig_.requiredConsecutiveMoves)},
+                    {"centipawnThreshold", std::to_string(drawConfig_.centipawnThreshold)},
+                    {"testOnly", drawConfig_.testOnly ? "true" : "false"}
+                }
+        }});
+
+        // Resign Adjudication Config
+        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+            "tournamentresignadjudication", "resignadjudication", {{
+                .name = "tournamentresignadjudication",
+                .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"requiredConsecutiveMoves", std::to_string(resignConfig_.requiredConsecutiveMoves)},
+                    {"centipawnThreshold", std::to_string(resignConfig_.centipawnThreshold)},
+                    {"twoSided", resignConfig_.twoSided ? "true" : "false"},
+                    {"testOnly", resignConfig_.testOnly ? "true" : "false"}
+                }
+        }});
+
+        // Tournament Round Data
+        if (tournament_) {
+            auto roundSections = tournament_->getSections("tournament");
+            if (!roundSections.empty()) {
+                QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+                    "tournamentround", "round", roundSections);
+            }
+        }
     }
 
     void TournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
         engineConfigurations_ = configurations;
+        if (!loadedTournamentData_) {
+            loadedTournamentData_ = true;
+            if (createTournament(false)) {
+                auto sections = QaplaConfiguration::Configuration::instance().
+                    getConfigData().getSectionList("tournamentround").
+                    value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+
+                for (const auto& section : sections) {
+                    const auto& sectionName = section.name;
+                    if (sectionName == "tournamentround" && tournament_) {
+                        tournament_->load(section);
+                    }
+                }
+            }
+        }
     }
 
     bool TournamentData::createTournament(bool verbose) {
@@ -100,37 +212,42 @@ namespace QaplaWindows {
             }
             return false;
 		}
-        std::vector<EngineConfig> selectedEngines;
-        config_->type = "round-robin";
-        for (auto& tournamentConfig : engineConfigurations_) {
-            if (!tournamentConfig.selected) {
-                continue;
+        try {
+            std::vector<EngineConfig> selectedEngines;
+            config_->type = "round-robin";
+            for (auto& tournamentConfig : engineConfigurations_) {
+                if (!tournamentConfig.selected) {
+                    continue;
+                }
+                EngineConfig engine = tournamentConfig.config;
+                if (eachEngineConfig_.ponder != "per engine") {
+                    engine.setPonder(eachEngineConfig_.ponder == "on");
+                }
+                engine.setTimeControl(eachEngineConfig_.tc);
+                engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
+                engine.setTraceLevel(eachEngineConfig_.traceLevel);
+                engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
+                if (engine.gauntlet()) {
+                    config_->type = "gauntlet";
+                }
+                selectedEngines.push_back(engine);
             }
-            EngineConfig engine = tournamentConfig.config;
-            if (eachEngineConfig_.ponder != "Per Engine") {
-                engine.setPonder(eachEngineConfig_.ponder == "On");
-            }
-			engine.setTimeControl(eachEngineConfig_.tc);
-			engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
-			engine.setTraceLevel(eachEngineConfig_.traceLevel);
-            engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
-            if (engine.gauntlet()) {
-                config_->type = "gauntlet";
-            }
-            selectedEngines.push_back(engine);
-		}
 
-        if (!validateOpenings()) {
-            return false;
-        }
+            if (!validateOpenings()) {
+                return false;
+            }
 
-        if (tournament_) {
-            PgnIO::tournament().setOptions(pgnConfig_);
-            AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
-            AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
-			tournament_->createTournament(selectedEngines, *config_);
-        } else {
-            SnackbarManager::instance().showError("Internal error, tournament not initialized");
+            if (tournament_) {
+                PgnIO::tournament().setOptions(pgnConfig_);
+                AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
+                AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
+                tournament_->createTournament(selectedEngines, *config_);
+            } else {
+                SnackbarManager::instance().showError("Internal error, tournament not initialized");
+                return false;
+            }
+        } catch (const std::exception& ex) {
+            SnackbarManager::instance().showError(std::string("Failed to create tournament: ") + ex.what());
             return false;
         }
         return true;
@@ -415,19 +532,14 @@ namespace QaplaWindows {
         imguiConcurrency_->update(count);
     }
 
-    void TournamentData::saveEachEngineConfig(std::ostream& out, const std::string& header) const {
-        out << "[" << header << "]\n";
+    void TournamentData::loadEachEngineConfig() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournamenteachengine");
+        if (!sections || sections->empty()) {
+            return;
+        }
 
-        out << "tc=" << eachEngineConfig_.tc << "\n";
-        out << "restart=" << eachEngineConfig_.restart << "\n";
-		out << "trace=" << eachEngineConfig_.traceLevel << "\n";
-		out << "ponder=" << eachEngineConfig_.ponder << "\n";
-		out << "hash=" << eachEngineConfig_.hash << "\n";
-        out << "\n";
-    }
-
-    void TournamentData::loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "tc") {
                 eachEngineConfig_.tc = value;
                 if (value.empty()) {
@@ -455,24 +567,14 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::saveTournamentConfig(std::ostream& out, const std::string& header) const {
-        out << "[" << header << "]\n";
+    void TournamentData::loadTournamentConfig() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournament");
+        if (!sections || sections->empty()) {
+            return;
+        }
 
-        // Save only fields edited in the tournament window
-        out << "event=" << config_->event << "\n";
-        out << "type=" << config_->type << "\n";
-        out << "rounds=" << config_->rounds << "\n";
-        out << "games=" << config_->games << "\n";
-        out << "repeat=" << config_->repeat << "\n";
-        out << "noSwap=" << (config_->noSwap ? "true" : "false") << "\n";
-        out << "averageElo=" << config_->averageElo << "\n";
-        out << "saveInterval=" << config_->saveInterval << "\n";
-
-        out << "\n";
-    }
-
-    void TournamentData::loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "event") {
                 config_->event = value;
             }
@@ -480,42 +582,34 @@ namespace QaplaWindows {
                 config_->type = value;
             }
             else if (key == "rounds") {
-                config_->rounds = std::stoul(value);
+                config_->rounds = QaplaHelpers::to_uint32(value).value_or(1);
             }
             else if (key == "games") {
-                config_->games = std::stoul(value);
+                config_->games = QaplaHelpers::to_uint32(value).value_or(1);
             }
             else if (key == "repeat") {
-                config_->repeat = std::stoul(value);
+                config_->repeat = QaplaHelpers::to_uint32(value).value_or(1);
             }
             else if (key == "noSwap") {
                 config_->noSwap = (value == "true");
             }
             else if (key == "averageElo") {
-                config_->averageElo = std::stoi(value);
+                config_->averageElo = QaplaHelpers::to_int(value).value_or(0);
             }
             else if (key == "saveInterval") {
-                config_->saveInterval = std::stoul(value);
+                config_->saveInterval = QaplaHelpers::to_uint32(value).value_or(10);
             }
         }
     }
 
-    void TournamentData::saveOpeningConfig(std::ostream& out, const std::string& header) const {
-		out << "[" << header << "]\n";
-		out << "file=" << config_->openings.file << "\n";
-		out << "format=" << config_->openings.format << "\n";
-		out << "order=" << config_->openings.order << "\n";
-        out << "seed=" << config_->openings.seed << "\n";
-        if (config_->openings.plies) {
-            out << "plies=" << *config_->openings.plies << "\n";
+    void TournamentData::loadOpenings() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournamentopening");
+        if (!sections || sections->empty()) {
+            return;
         }
-        out << "start=" << config_->openings.start << "\n";
-		out << "policy=" << config_->openings.policy << "\n";
-		out << "\n";
-	}
 
-    void TournamentData::loadOpenings(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "file") {
                 config_->openings.file = value;
             }
@@ -540,22 +634,14 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::savePgnConfig(std::ostream& out, const std::string& header) const {
-        out << "[" << header << "]\n";
-        out << "file=" << pgnConfig_.file << "\n";
-        out << "append=" << (pgnConfig_.append ? "true" : "false") << "\n";
-        out << "onlyFinishedGames=" << (pgnConfig_.onlyFinishedGames ? "true" : "false") << "\n";
-        out << "minimalTags=" << (pgnConfig_.minimalTags ? "true" : "false") << "\n";
-        out << "saveAfterMove=" << (pgnConfig_.saveAfterMove ? "true" : "false") << "\n";
-        out << "includeClock=" << (pgnConfig_.includeClock ? "true" : "false") << "\n";
-        out << "includeEval=" << (pgnConfig_.includeEval ? "true" : "false") << "\n";
-        out << "includePv=" << (pgnConfig_.includePv ? "true" : "false") << "\n";
-        out << "includeDepth=" << (pgnConfig_.includeDepth ? "true" : "false") << "\n";
-        out << "\n";
-    }
+    void TournamentData::loadPgnConfig() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournamentpgnoutput");
+        if (!sections || sections->empty()) {
+            return;
+        }
 
-    void TournamentData::loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "file") {
                 pgnConfig_.file = value;
             }
@@ -586,42 +672,22 @@ namespace QaplaWindows {
         }
     }
 
-        struct DrawAdjudicationConfig {
-        uint32_t minFullMoves = 0;
-        uint32_t requiredConsecutiveMoves = 0;
-        int centipawnThreshold = 0;
-        bool testOnly = false;
-    };
+    void TournamentData::loadDrawAdjudicationConfig() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournamentdrawadjudication");
+        if (!sections || sections->empty()) {
+            return;
+        }
 
-    /**
-     * @brief Configuration for resign adjudication logic.
-     */
-    struct ResignAdjudicationConfig {
-        uint32_t requiredConsecutiveMoves = 0;
-        int centipawnThreshold = 0;
-        bool twoSided = false;
-        bool testOnly = false;
-    };
-
-    void TournamentData::saveDrawAdjudicationConfig(std::ostream& out, const std::string& header) const {
-        out << "[" << header << "]\n";
-        out << "minFullMoves=" << drawConfig_.minFullMoves << "\n";
-        out << "requiredConsecutiveMoves=" << drawConfig_.requiredConsecutiveMoves << "\n";
-        out << "centipawnThreshold=" << drawConfig_.centipawnThreshold << "\n";
-        out << "testOnly=" << (drawConfig_.testOnly ? "true" : "false") << "\n";
-        out << "\n";
-    }
-
-    void TournamentData::loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "minFullMoves") {
-                drawConfig_.minFullMoves = std::stoul(value);
+                drawConfig_.minFullMoves = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "requiredConsecutiveMoves") {
-                drawConfig_.requiredConsecutiveMoves = std::stoul(value);
+                drawConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "centipawnThreshold") {
-                drawConfig_.centipawnThreshold = std::stoi(value);
+                drawConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
             }
             else if (key == "testOnly") {
                 drawConfig_.testOnly = (value == "true");
@@ -629,22 +695,19 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::saveResignAdjudicationConfig(std::ostream& out, const std::string& header) const {
-        out << "[" << header << "]\n";
-        out << "requiredConsecutiveMoves=" << resignConfig_.requiredConsecutiveMoves << "\n";
-        out << "centipawnThreshold=" << resignConfig_.centipawnThreshold << "\n";
-        out << "twoSided=" << (resignConfig_.twoSided ? "true" : "false") << "\n";
-        out << "testOnly=" << (resignConfig_.testOnly ? "true" : "false") << "\n";
-        out << "\n";
-    }
+    void TournamentData::loadResignAdjudicationConfig() {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        auto sections = configData.getSectionList("tournamentresignadjudication");
+        if (!sections || sections->empty()) {
+            return;
+        }
 
-    void TournamentData::loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue) {
-        for (const auto& [key, value] : keyValue) {
+        for (const auto& [key, value] : (*sections)[0].entries) {
             if (key == "requiredConsecutiveMoves") {
-                resignConfig_.requiredConsecutiveMoves = std::stoul(value);
+                resignConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "centipawnThreshold") {
-                resignConfig_.centipawnThreshold = std::stoi(value);
+                resignConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
             }
             else if (key == "twoSided") {
                 resignConfig_.twoSided = (value == "true");
@@ -664,37 +727,13 @@ namespace QaplaWindows {
         return valid;
 	}
 
-    void TournamentData::saveTournamentResults(std::ostream& out, const std::string& header) const {
-        if (tournament_) {
-            tournament_->save(out, header);
-        }
-    }
-
-    void TournamentData::loadConfig(const QaplaHelpers::IniFile::SectionList& sections) {
-        for (const auto& section : sections) {
-            const auto& sectionName = section.name;
-            if (sectionName == "tournamenteachengine") {
-                loadEachEngineConfig(section.entries);
-            } else if (sectionName == "tournament") {
-                loadTournamentConfig(section.entries);
-            } else if (sectionName == "tournamentopening") {
-                loadOpenings(section.entries);
-            } else if (sectionName == "tournamentpgn") {
-                loadPgnConfig(section.entries);
-            } else if (sectionName == "tournamentdrawadjudication") {
-                loadDrawAdjudicationConfig(section.entries);
-            } else if (sectionName == "tournamentresignadjudication") {
-                loadResignAdjudicationConfig(section.entries);
-            } 
-        }
-        if (createTournament(false)) {
-            for (const auto& section : sections) {
-                const auto& sectionName = section.name;
-                if (sectionName == "tournamentround" && tournament_) {
-                    tournament_->load(section);
-                }
-            }
-        }
+    void TournamentData::loadConfig() {
+        loadEachEngineConfig();
+        loadTournamentConfig();
+        loadOpenings();
+        loadPgnConfig();
+        loadDrawAdjudicationConfig();
+        loadResignAdjudicationConfig();
     }
 
 }

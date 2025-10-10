@@ -49,7 +49,6 @@ void Configuration::saveData(std::ofstream& out) {
 	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
-	QaplaWindows::TournamentData::instance().saveConfig(out);
     getConfigData().save(out);
 }
 
@@ -59,11 +58,10 @@ void Configuration::loadData(std::ifstream& in) {
         std::string line;
 
         for (const auto& section : sectionList) {
-            if (!processSection(section) && !section.name.starts_with("tournament")) {
+            if (!processSection(section)) {
                 configData_.addSection(section);
             }
         }
-        QaplaWindows::TournamentData::instance().loadConfig(sectionList);
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error in loadData: ") + e.what());

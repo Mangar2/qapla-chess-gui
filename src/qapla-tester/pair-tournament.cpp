@@ -289,12 +289,12 @@ void PairTournament::fromString(const std::string& line) {
 
 }
 
-void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& prefix) const {
-    QaplaHelpers::IniFile::Section section;
+std::optional<QaplaHelpers::IniFile::Section> PairTournament::getSectionIfNotEmpty(const std::string& prefix) const {
     if (results_.empty()) {
-        return;
+        return std::nullopt;
     }
 
+    QaplaHelpers::IniFile::Section section;
     section.name = prefix + "round";
     section.addEntry("round", std::to_string(config_.round + 1));
     section.addEntry("engineA", getEngineA().getName());
@@ -315,7 +315,8 @@ void PairTournament::trySaveIfNotEmpty(std::ostream& out, const std::string& pre
     addStats("wincauses", [](const CauseStats& s) { return s.win; });
     addStats("drawcauses", [](const CauseStats& s) { return s.draw; });
     addStats("losscauses", [](const CauseStats& s) { return s.loss; });
-    QaplaHelpers::IniFile::saveSection(out, section);
+    
+    return section;
 }
 
 bool PairTournament::matches(uint32_t round, const std::string& engineA, const std::string& engineB) const {

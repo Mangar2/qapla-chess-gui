@@ -67,11 +67,6 @@ namespace QaplaWindows {
         ~TournamentData();
 
         /**
-         * @brief Initializes the tournament data.
-         */
-        void init();
-
-        /**
          * @brief Starts the tournament.
          */
         void startTournament();
@@ -169,30 +164,16 @@ namespace QaplaWindows {
         }
 
         /**
-         * @brief Saves the tournament configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @details This method saves the tournament openings, tournament configuration, and each engine's configuration
-         *          in a structured format.
-		 */
-        void saveConfig(std::ostream& out) const {
-            saveOpeningConfig(out, "tournamentopening");
-			saveTournamentConfig(out, "tournament");
-			saveEachEngineConfig(out, "tournamenteachengine");
-            savePgnConfig(out, "tournamentpgnoutput");
-            saveDrawAdjudicationConfig(out, "tournamentdrawadjudication");
-            saveResignAdjudicationConfig(out, "tournamentresignadjudication");
-            saveTournamentResults(out, "tournament");
-        }
-
-        /**
-         * @brief Loads the tournament configuration from a list of INI file sections.
-         * @param sections The list of INI file sections to load the configuration from.
-         * @details This method processes each section and loads the corresponding configuration data
-         *          into the tournament data structure.
+         * @brief Updates the configuration in the singleton.
+         * @details This method creates Section entries for all configuration aspects and stores them
+         *          in the Configuration singleton using setSectionList.
          */
-        void loadConfig(const QaplaHelpers::IniFile::SectionList& sections);
-
+        void updateConfiguration() const;
        
+        /**
+         * @brief Returns a reference to the tournament data singleton.
+         * @return A reference to the tournament data singleton.
+         */
         static TournamentData& instance() {
             static TournamentData instance;
             return instance;
@@ -234,92 +215,46 @@ namespace QaplaWindows {
          */
         bool createTournament(bool verbose);
 
-         /**
-         * @brief Loads the tournament openings from a key-value mapping.
-         * @param keyValue A map containing opening keys and their corresponding values.
-         * @details This method assigns the values from the map to the appropriate fields in the tournament openings.
-		 */
-        void loadOpenings(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Loads the tournament configuration from a key-value mapping.
-         * @param keyValue A map containing configuration keys and their corresponding values.
-         * @details This method assigns the values from the map to the appropriate fields in the tournament configuration.
-         */
-        void loadTournamentConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Loads the configuration for each engine from a key-value mapping.
-         * @param keyValue A map containing configuration keys and their corresponding values.
-         */
-        void loadEachEngineConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Loads the PGN configuration from a key-value mapping.
-         * @param keyValue A map containing PGN configuration keys and their corresponding values.
-         */
-        void loadPgnConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Loads the draw adjudication configuration from a key-value mapping.
-         * @param keyValue A map containing draw adjudication configuration keys and their corresponding values.
-         */
-        void loadDrawAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Loads the resign adjudication configuration from a key-value mapping.
-         * @param keyValue A map containing resign adjudication configuration keys and their corresponding values.
-         */
-        void loadResignAdjudicationConfig(const QaplaHelpers::IniFile::KeyValueMap& keyValue);
-
-        /**
-         * @brief Saves the tournament openings configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
-         */
-        void saveOpeningConfig(std::ostream& out, const std::string& header) const;
-
-        /**
-         * @brief Saves the tournament configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
-         */
-        void saveTournamentConfig(std::ostream& out, const std::string& header) const;
         
         /**
-         * @brief Saves the configuration for each engine to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
+         * @brief Loads the tournament configuration from a list of INI file sections.
+         * @details This method processes each section and loads the corresponding configuration data
+         *          into the tournament data structure.
          */
-        void saveEachEngineConfig(std::ostream& out, const std::string& header) const;
+        void loadConfig();
+
+
+         /**
+         * @brief Loads the tournament openings from configuration.
+         * @details This method loads opening settings from the configuration data.
+		 */
+        void loadOpenings();
 
         /**
-         * @brief Saves the PGN configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
+         * @brief Loads the tournament configuration from configuration data.
+         * @details This method loads tournament settings from the configuration data.
          */
-        void savePgnConfig(std::ostream& out, const std::string& header) const;
+        void loadTournamentConfig();
 
         /**
-         * @brief Saves the draw adjudication configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
+         * @brief Loads the configuration for each engine from configuration data.
          */
-        void saveDrawAdjudicationConfig(std::ostream& out, const std::string& header) const;
+        void loadEachEngineConfig();
 
         /**
-         * @brief Saves the resign adjudication configuration to a stream.
-         * @param out The output stream to write the configuration to.
-         * @param header The header name for the configuration section.
+         * @brief Loads the PGN configuration from configuration data.
          */
-        void saveResignAdjudicationConfig(std::ostream& out, const std::string& header) const;
+        void loadPgnConfig();
 
         /**
-         * @brief Saves the tournament results to a stream.
-         * @param out The output stream to write the results to.
-         * @param header The header name for the results section.
+         * @brief Loads the draw adjudication configuration from configuration data.
          */
-        void saveTournamentResults(std::ostream& out, const std::string& header) const;
+        void loadDrawAdjudicationConfig();
+
+        /**
+         * @brief Loads the resign adjudication configuration from configuration data.
+         */
+        void loadResignAdjudicationConfig();
 
         void populateEloTable();
 		void populateRunningTable();
@@ -350,6 +285,8 @@ namespace QaplaWindows {
 
         int32_t selectedIndex_ = 0;
         State state_ = State::Stopped;
+
+        bool loadedTournamentData_ = false;
 
     };
 
