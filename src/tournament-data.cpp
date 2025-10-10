@@ -107,7 +107,9 @@ namespace QaplaWindows {
                 continue;
             }
             EngineConfig engine = tournamentConfig.config;
-            engine.setPonder(eachEngineConfig_.ponder);
+            if (eachEngineConfig_.ponder != "Per Engine") {
+                engine.setPonder(eachEngineConfig_.ponder == "On");
+            }
 			engine.setTimeControl(eachEngineConfig_.tc);
 			engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
 			engine.setTraceLevel(eachEngineConfig_.traceLevel);
@@ -419,7 +421,7 @@ namespace QaplaWindows {
         out << "tc=" << eachEngineConfig_.tc << "\n";
         out << "restart=" << eachEngineConfig_.restart << "\n";
 		out << "trace=" << eachEngineConfig_.traceLevel << "\n";
-		out << "ponder=" << (eachEngineConfig_.ponder ? "true" : "false") << "\n";
+		out << "ponder=" << eachEngineConfig_.ponder << "\n";
 		out << "hash=" << eachEngineConfig_.hash << "\n";
         out << "\n";
     }
@@ -445,7 +447,7 @@ namespace QaplaWindows {
 				}
             }
             else if (key == "ponder") {
-                eachEngineConfig_.ponder = (value == "true");
+                eachEngineConfig_.ponder = value;
             }
             else if (key == "hash") {
                 eachEngineConfig_.hash = QaplaHelpers::to_uint32(value).value_or(32);

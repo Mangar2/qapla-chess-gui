@@ -287,6 +287,9 @@ namespace QaplaWindows::ImGuiControls {
     inline bool selectionBox(const char* label, std::string& currentItem, const std::vector<std::string>& options) {
 
         int currentIndex = static_cast<int>(std::find(options.begin(), options.end(), currentItem) - options.begin());
+        if (std::cmp_equal(currentIndex, options.size())) {
+            currentIndex = 0; // default to first item if not found
+        }
         auto modified = selectionBox(label, currentIndex, options);
         if (modified) {
             if (currentIndex >= 0 && currentIndex < static_cast<int>(options.size())) {

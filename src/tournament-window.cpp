@@ -285,7 +285,8 @@ bool TournamentWindow::drawInput() {
 		changed |= ImGuiControls::selectionBox("Trace", tournamentData.eachEngineConfig().traceLevel,
             { "none", "all", "command" });
 		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Ponder", tournamentData.eachEngineConfig().ponder);
+		changed |= ImGuiControls::selectionBox("Ponder", tournamentData.eachEngineConfig().ponder,
+            {"Off", "On", "Per Engine"});
         ImGui::Unindent(10.0F);
         ImGui::PopID();
 	}

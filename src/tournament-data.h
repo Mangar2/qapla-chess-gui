@@ -52,7 +52,7 @@ namespace QaplaWindows {
 			std::string restart;
 			std::string traceLevel;
             uint32_t hash;
-            bool ponder;
+            std::string ponder;
 
 		};
 
