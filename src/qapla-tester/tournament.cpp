@@ -219,11 +219,11 @@ void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) 
 	}
 }
 
-std::vector<QaplaHelpers::IniFile::Section> Tournament::getSections(const std::string& prefix) const {
+std::vector<QaplaHelpers::IniFile::Section> Tournament::getSections() const {
     std::vector<QaplaHelpers::IniFile::Section> sections;
     
     for (const auto& pairing : pairings_) {
-        auto section = pairing->getSectionIfNotEmpty(prefix);
+        auto section = pairing->getSectionIfNotEmpty();
         if (section.has_value()) {
             sections.push_back(std::move(section.value()));
         }
@@ -244,7 +244,7 @@ void Tournament::save(const std::string& filename) const {
     }
     
     // Write tournament round sections
-    auto sections = getSections("");
+    auto sections = getSections();
     for (const auto& section : sections) {
         QaplaHelpers::IniFile::saveSection(out, section);
     }
@@ -290,13 +290,9 @@ void Tournament::load(const QaplaHelpers::IniFile::Section& section) {
     }
 }
 
-void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix) {
+void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections) {
 
     for (const auto& section : sections) {
-        // Every loader ensures that we have a round header as next line
-        if (section.name != prefix + "round") {
-            continue;
-        }
         load(section);
     }
 }

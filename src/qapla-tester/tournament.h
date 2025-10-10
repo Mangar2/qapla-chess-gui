@@ -86,13 +86,13 @@ public:
      * @param prefix Optional prefix for section names (e.g., "tournament").
      * @return Vector of IniFile sections containing the tournament state.
      */
-    std::vector<QaplaHelpers::IniFile::Section> getSections(const std::string& prefix = "") const;
+    std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     /**
      * @brief Loads the state of all pairings from a stream.
      */
     void load(const QaplaHelpers::IniFile::Section& section);
-    void load(const QaplaHelpers::IniFile::SectionList& sections, const std::string& prefix = "");
+    void load(const QaplaHelpers::IniFile::SectionList& sections);
 	void load(const std::string& filename) {
 		std::ifstream in(filename);
 		if (!in) {

@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker Böhm
- * @copyright Copyright (c) 2025 Volker Böhm
+ * @author Volker Bï¿½hm
+ * @copyright Copyright (c) 2025 Volker Bï¿½hm
  */
 
 #include "tournament-result-incremental.h"
@@ -51,7 +51,9 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 		gamesLeft_ = true;
 		if (resultToAdd.total() == 0) {
 			extra--;
-			if (extra == 0) break; 
+			if (extra == 0) {
+				break; 
+			}
 			continue;
 		}
 		totalResult_.add(resultToAdd);

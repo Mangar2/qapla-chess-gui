@@ -89,9 +89,10 @@ namespace QaplaWindows {
     void TournamentData::updateConfiguration() const {
         // Each Engine Config
          QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournamenteachengine", "eachengine", {{
+            "eachengine", "tournament", {{
                 .name = "tournamenteachengine",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"id", "tournament"},
                     {"tc", eachEngineConfig_.tc},
                     {"restart", eachEngineConfig_.restart},
                     {"trace", eachEngineConfig_.traceLevel},
@@ -105,6 +106,7 @@ namespace QaplaWindows {
             "tournament", "tournament", {{
                 .name = "tournament",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"id", "tournament"},
                     {"event", config_->event},
                     {"type", config_->type},
                     {"rounds", std::to_string(config_->rounds)},
@@ -118,6 +120,7 @@ namespace QaplaWindows {
 
         // Opening Config
         QaplaHelpers::IniFile::KeyValueMap openingEntries{
+            {"id", "tournament"},
             {"file", config_->openings.file},
             {"format", config_->openings.format},
             {"order", config_->openings.order},
@@ -130,16 +133,17 @@ namespace QaplaWindows {
             openingEntries.emplace_back("plies", std::to_string(*config_->openings.plies));
         }
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournamentopening", "opening", {{
+            "opening", "tournament", {{
                 .name = "tournamentopening",
                 .entries = openingEntries
         }});
 
         // PGN Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournamentpgnoutput", "pgnoutput", {{
+            "pgnoutput", "tournament", {{
                 .name = "tournamentpgnoutput",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"id", "tournament"},
                     {"file", pgnConfig_.file},
                     {"append", pgnConfig_.append ? "true" : "false"},
                     {"onlyFinishedGames", pgnConfig_.onlyFinishedGames ? "true" : "false"},
@@ -154,9 +158,10 @@ namespace QaplaWindows {
 
         // Draw Adjudication Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournamentdrawadjudication", "drawadjudication", {{
+            "drawadjudication", "tournament", {{
                 .name = "tournamentdrawadjudication",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"id", "tournament"},
                     {"minFullMoves", std::to_string(drawConfig_.minFullMoves)},
                     {"requiredConsecutiveMoves", std::to_string(drawConfig_.requiredConsecutiveMoves)},
                     {"centipawnThreshold", std::to_string(drawConfig_.centipawnThreshold)},
@@ -166,9 +171,10 @@ namespace QaplaWindows {
 
         // Resign Adjudication Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournamentresignadjudication", "resignadjudication", {{
+            "resignadjudication", "tournament", {{
                 .name = "tournamentresignadjudication",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
+                    {"id", "tournament"},
                     {"requiredConsecutiveMoves", std::to_string(resignConfig_.requiredConsecutiveMoves)},
                     {"centipawnThreshold", std::to_string(resignConfig_.centipawnThreshold)},
                     {"twoSided", resignConfig_.twoSided ? "true" : "false"},
@@ -176,12 +182,14 @@ namespace QaplaWindows {
                 }
         }});
 
-        // Tournament Round Data
+    }
+
+    void TournamentData::updateTournamentResults() const {
         if (tournament_) {
-            auto roundSections = tournament_->getSections("tournament");
+            auto roundSections = tournament_->getSections();
             if (!roundSections.empty()) {
                 QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-                    "tournamentround", "round", roundSections);
+                    "round", "tournament", roundSections);
             }
         }
     }
@@ -192,14 +200,11 @@ namespace QaplaWindows {
             loadedTournamentData_ = true;
             if (createTournament(false)) {
                 auto sections = QaplaConfiguration::Configuration::instance().
-                    getConfigData().getSectionList("tournamentround").
+                    getConfigData().getSectionList("round", "tournament").
                     value_or(std::vector<QaplaHelpers::IniFile::Section>{});
 
-                for (const auto& section : sections) {
-                    const auto& sectionName = section.name;
-                    if (sectionName == "tournamentround" && tournament_) {
-                        tournament_->load(section);
-                    }
+                if (tournament_) {
+                    tournament_->load(sections);
                 }
             }
         }
@@ -419,7 +424,7 @@ namespace QaplaWindows {
     void TournamentData::pollData() {
         if (tournament_) {
             if (result_->poll(*tournament_, config_->averageElo)) {
-                QaplaConfiguration::Configuration::instance().setModified();
+                updateTournamentResults();
                 populateEloTable();
                 populateCauseTable();
             }
@@ -534,7 +539,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadEachEngineConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournamenteachengine");
+        auto sections = configData.getSectionList("eachengine", "tournament");
         if (!sections || sections->empty()) {
             return;
         }
@@ -569,7 +574,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadTournamentConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournament");
+        auto sections = configData.getSectionList("tournament", "tournament");
         if (!sections || sections->empty()) {
             return;
         }
@@ -604,7 +609,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadOpenings() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournamentopening");
+        auto sections = configData.getSectionList("opening", "tournament");
         if (!sections || sections->empty()) {
             return;
         }
@@ -636,7 +641,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadPgnConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournamentpgnoutput");
+        auto sections = configData.getSectionList("pgnoutput", "tournament");
         if (!sections || sections->empty()) {
             return;
         }
@@ -674,7 +679,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadDrawAdjudicationConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournamentdrawadjudication");
+        auto sections = configData.getSectionList("drawadjudication", "tournament");
         if (!sections || sections->empty()) {
             return;
         }
@@ -697,7 +702,7 @@ namespace QaplaWindows {
 
     void TournamentData::loadResignAdjudicationConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournamentresignadjudication");
+        auto sections = configData.getSectionList("resignadjudication", "tournament");
         if (!sections || sections->empty()) {
             return;
         }

@@ -169,6 +169,12 @@ namespace QaplaWindows {
          *          in the Configuration singleton using setSectionList.
          */
         void updateConfiguration() const;
+
+        /**
+         * @brief Updates the tournament data in the singleton.
+         * @details This method creates Section entries for tournament result data
+         */
+        void updateTournamentResults() const;
        
         /**
          * @brief Returns a reference to the tournament data singleton.

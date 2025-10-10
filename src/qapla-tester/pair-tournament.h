@@ -192,10 +192,9 @@ public:
 	 *
 	 * Returns the round information, results, and engine names as an IniFile section.
 	 *
-	 * @param prefix Optional prefix for the section name.
 	 * @return Optional section containing the tournament state, or std::nullopt if empty.
 	 */
-    std::optional<QaplaHelpers::IniFile::Section> getSectionIfNotEmpty(const std::string& prefix = "") const;
+    std::optional<QaplaHelpers::IniFile::Section> getSectionIfNotEmpty() const;
 
      /**
      * @brief Checks if this pairing matches the given round and engine names.
