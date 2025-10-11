@@ -200,7 +200,7 @@ bool TournamentWindow::drawInput() {
     bool changed = false;
     ImGui::Indent(10.0F);
 
-    ImGuiControls::newFileInput("Tournament file", tournamentData.config().tournamentFilename, 
+    changed |= ImGuiControls::newFileInput("Tournament file", tournamentData.config().tournamentFilename, 
         { {"Qapla Tournament Files", "*.qtour"} }, fileInputWidth);
     ImGui::Spacing();
 

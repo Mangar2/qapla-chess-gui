@@ -34,7 +34,9 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 
 	// We store all results that are consecutively finished
 	while (auto pairTournament = tournament.getPairTournament(currentIndex_)) {
-		if (!(*pairTournament)->isFinished()) break;
+		if (!(*pairTournament)->isFinished()) {
+			break;
+		}
 		auto resultToAdd = (*pairTournament)->getResult();
 		finishedResultsAggregate_.add(resultToAdd);
 		engineNames_.insert(resultToAdd.getEngineA());

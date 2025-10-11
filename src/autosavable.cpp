@@ -27,12 +27,12 @@
 
 using namespace QaplaHelpers;
 
-Autosavable::Autosavable(const std::string& filename, 
-                         const std::string& backupSuffix,
+Autosavable::Autosavable(std::string filename, 
+                         std::string backupSuffix,
                          uint64_t autosaveIntervalMs,
-                         std::function<std::string()> directoryProvider)
-    : filename_(filename)
-    , backupSuffix_(backupSuffix)
+                         const std::function<std::string()>& directoryProvider)
+    : filename_(std::move(filename))
+    , backupSuffix_(std::move(backupSuffix))
     , autosaveIntervalMs_(autosaveIntervalMs)
     , directoryProvider_(directoryProvider ? directoryProvider : defaultDirectoryProvider)
 {
@@ -40,7 +40,9 @@ Autosavable::Autosavable(const std::string& filename,
 }
 
 void Autosavable::autosave() {
-    if (!modified_) return;
+    if (!modified_) {
+         return;
+    }
     
     uint64_t currentTime = Timer::getCurrentTimeMs();
     if (currentTime - lastSaveTimestamp_ < autosaveIntervalMs_) {
@@ -58,10 +60,13 @@ void Autosavable::saveFile() {
     try {
         // Ensure the directory exists
         std::string directory = getDirectory();
-        fs::create_directories(directory);
-        
-        // Update file paths in case directory changed
-        updateFilePaths();
+
+        if (!directory.empty()) {
+            fs::create_directories(directory);
+
+            // Update file paths in case directory changed
+            updateFilePaths();
+        }
         
         // Rename existing file to backup
         if (fs::exists(filePath_)) {
@@ -97,12 +102,12 @@ void Autosavable::loadFile() {
     namespace fs = std::filesystem;
 
     try {
-        // Ensure the directory exists
         std::string directory = getDirectory();
-        fs::create_directories(directory);
-        
-        // Update file paths in case directory changed
-        updateFilePaths();
+
+        if (!directory.empty()) {
+            // Update file paths in case directory changed
+            updateFilePaths();
+        }
 
         std::ifstream inFile;
 
@@ -148,8 +153,20 @@ void Autosavable::updateFilePaths() {
     backupFilePath_ = directory + "/" + filename_ + backupSuffix_;
 }
 
+void Autosavable::updateFilePaths(const std::string& filePath) {
+    namespace fs = std::filesystem;
+    fs::path path(filePath);
+    filename_ = path.filename().string();
+    std::string directory = path.parent_path().string();
+    if (directory.empty()) {
+        directory = getDirectory();
+    }
+    filePath_ = (fs::path(directory) / path.filename()).string();
+    backupFilePath_ = (fs::path(directory) / (path.filename().string() + backupSuffix_)).string();
+}
+
 std::string Autosavable::defaultDirectoryProvider() {
-    return ".";  // Current directory as fallback
+    return "";  // No directory as fallback
 }
 
 std::string Autosavable::getConfigDirectory() {
@@ -158,12 +175,12 @@ std::string Autosavable::getConfigDirectory() {
 #ifdef _WIN32
     char* buf = nullptr;
     size_t sz = 0;
-    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf) {
+    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf != nullptr) {
         std::string path(buf);
         free(buf);
         return path + "/qapla-chess-gui";
     }
-    // Fallback, falls LOCALAPPDATA nicht gesetzt ist
+    // Fallback, if LOCALAPPDATA is not set
     return std::string(".") + "/qapla-chess-gui";
 #else
     return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";

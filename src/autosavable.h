@@ -47,10 +47,10 @@ namespace QaplaHelpers {
          * @param autosaveIntervalMs Auto-save interval in milliseconds (default: 60000ms = 1 minute).
          * @param directoryProvider Function that returns the directory path for files.
          */
-        Autosavable(const std::string& filename, 
-                    const std::string& backupSuffix = ".bak",
+        Autosavable(std::string filename, 
+                    std::string backupSuffix = ".bak",
                     uint64_t autosaveIntervalMs = 60000,
-                    std::function<std::string()> directoryProvider = nullptr);
+                    const std::function<std::string()>& directoryProvider = nullptr);
 
         /**
          * @brief Virtual destructor.
@@ -147,6 +147,12 @@ namespace QaplaHelpers {
          * @brief Updates the file paths based on current directory and filename settings.
          */
         void updateFilePaths();
+
+        /**
+         * @brief Updates the file paths based on a specific file path.
+         * @param filePath The full file path to use for updating.
+         */
+        void updateFilePaths(const std::string& filePath);
 
         /**
          * @brief Configuration-specific directory provider.

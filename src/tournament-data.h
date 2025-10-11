@@ -23,6 +23,7 @@
 #include "tournament-board-window.h"
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
+#include "autosavable.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
@@ -45,7 +46,7 @@ namespace QaplaWindows {
 
     class TournamentResultIncremental;
 
-	class TournamentData {
+	class TournamentData : public QaplaHelpers::Autosavable {
     public: 
         struct EachEngineConfig {
             std::string tc;
@@ -129,7 +130,8 @@ namespace QaplaWindows {
          * @brief Sets the engine configurations for the tournament
          * @param configurations Vector with all engine configurations
          */
-        void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
+        void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration> &configurations);
+ 
         uint32_t& concurrency() {
             return concurrency_;
 		}
@@ -168,13 +170,13 @@ namespace QaplaWindows {
          * @details This method creates Section entries for all configuration aspects and stores them
          *          in the Configuration singleton using setSectionList.
          */
-        void updateConfiguration() const;
+        void updateConfiguration();
 
         /**
          * @brief Updates the tournament data in the singleton.
          * @details This method creates Section entries for tournament result data
          */
-        void updateTournamentResults() const;
+        void updateTournamentResults();
        
         /**
          * @brief Returns a reference to the tournament data singleton.
@@ -221,6 +223,10 @@ namespace QaplaWindows {
          */
         bool createTournament(bool verbose);
 
+        /**
+        * @brief Creates a tournament and loads it from the current configuration and engine settings.
+        */
+        void loadTournament();
         
         /**
          * @brief Loads the tournament configuration from a list of INI file sections.
@@ -262,6 +268,25 @@ namespace QaplaWindows {
          */
         void loadResignAdjudicationConfig();
 
+    protected:
+        /**
+         * @brief Autosaves the tournament data if filename is set and conditions are met.
+         */
+        void autosave() override;
+
+        /**
+         * @brief Saves all tournament data including configuration and results to a stream.
+         * @param out The output stream to write data to.
+         */
+        void saveData(std::ofstream& out) override;
+
+        /**
+         * @brief Loads all tournament data from a stream.
+         * @param in The input stream to read data from.
+         */
+        void loadData(std::ifstream& in) override;
+
+    private:
         void populateEloTable();
 		void populateRunningTable();
         void populateCauseTable();
@@ -293,6 +318,17 @@ namespace QaplaWindows {
         State state_ = State::Stopped;
 
         bool loadedTournamentData_ = false;
+
+        // List of all section names used
+        static constexpr std::array<const char*, 7> sectionNames = {
+            "eachengine",
+            "tournament",
+            "opening",
+            "pgnoutput",
+            "drawadjudication",
+            "resignadjudication",
+            "round"
+        };
 
     };
 
