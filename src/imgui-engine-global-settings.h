@@ -1,0 +1,243 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#pragma once
+
+#include "qapla-tester/ini-file.h"
+
+#include <string>
+#include <functional>
+
+namespace QaplaWindows {
+
+    /**
+     * @brief Standalone class for global engine settings in ImGui
+     * 
+     * This class manages UI controls and data for global engine settings that apply
+     * across multiple engines. It can be embedded in various dialogs (e.g., tournament,
+     * engine setup) to provide consistent global configuration options.
+     */
+    class ImGuiEngineGlobalSettings {
+    public:
+        /**
+         * @brief Global engine settings data structure
+         */
+        struct GlobalSettings {
+            bool useGlobalHash = false;      ///< Whether to use a global hash size setting
+            uint32_t hashSizeMB = 128;       ///< Hash size in MB (1-64000)
+            
+            bool useGlobalPonder = false;    ///< Whether to use a global ponder setting
+            bool ponder = false;             ///< Whether pondering is enabled globally
+            
+            bool useGlobalTrace = false;     ///< Whether to use a global trace level setting
+            std::string traceLevel = "none"; ///< Global trace level ("none", "all", "command")
+            
+            bool useGlobalRestart = false;   ///< Whether to use a global restart option
+            std::string restart = "auto";    ///< Global restart option ("auto", "on", "off")
+        };
+
+        /**
+         * @brief Time control settings data structure
+         */
+        struct TimeControlSettings {
+            std::string timeControl = "60.0+0.0";  ///< Time control string
+            std::string predefinedTimeControl = "Custom"; ///< Selected predefined time control
+            std::vector<std::string> predefinedOptions = {
+                "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
+            };
+        };
+
+        /**
+         * @brief Options to control which settings are displayed
+         */
+        struct Options {
+            Options() : showHash(true), showPonder(true), showTrace(true), showRestart(true) {}
+            
+            bool showHash;      ///< Show hash size control
+            bool showPonder;    ///< Show ponder control
+            bool showTrace;     ///< Show trace level control
+            bool showRestart;   ///< Show restart option control
+        };
+
+        /**
+         * @brief Callback type that is called when the configuration changes
+         * @param globalSettings The current global settings
+         */
+        using ConfigurationChangedCallback = std::function<void(const GlobalSettings&)>;
+
+        /**
+         * @brief Callback type that is called when the time control changes
+         * @param timeControlSettings The current time control settings
+         */
+        using TimeControlChangedCallback = std::function<void(const TimeControlSettings&)>;
+
+        /**
+         * @brief Constructor
+         * @param options Options to control which settings are displayed
+         * @param callback Optional callback that is called when configuration changes
+         */
+        ImGuiEngineGlobalSettings(const Options& options = Options{}, 
+                                 ConfigurationChangedCallback callback = nullptr);
+
+        /**
+         * @brief Destructor
+         */
+        ~ImGuiEngineGlobalSettings() = default;
+
+        /**
+         * @brief Draws the global engine settings interface
+         * @param controlWidth Width of the input controls
+         * @param controlIndent Indentation for controls (default: 10.0)
+         * @return true if any setting was changed, false otherwise
+         */
+        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F);
+
+        /**
+         * @brief Draws the time control interface
+         * @param controlWidth Width of the input controls
+         * @param controlIndent Indentation for controls (default: 10.0)
+         * @param blitz Whether to use blitz mode (no hours in time input)
+         * @return true if any setting was changed, false otherwise
+         */
+        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false);
+
+        /**
+         * @brief Returns the current global settings
+         * @return Reference to the current global settings
+         */
+        const GlobalSettings& getGlobalSettings() const { return globalSettings_; }
+
+        /**
+         * @brief Sets the global settings
+         * @param globalSettings The new global settings
+         */
+        void setGlobalSettings(const GlobalSettings& globalSettings);
+
+        /**
+         * @brief Returns the current time control settings
+         * @return Reference to the current time control settings
+         */
+        const TimeControlSettings& getTimeControlSettings() const { return timeControlSettings_; }
+
+        /**
+         * @brief Sets the time control settings
+         * @param timeControlSettings The new time control settings
+         */
+        void setTimeControlSettings(const TimeControlSettings& timeControlSettings);
+
+        /**
+         * @brief Sets the callback for configuration changes
+         * @param callback The new callback
+         */
+        void setConfigurationChangedCallback(ConfigurationChangedCallback callback);
+
+        /**
+         * @brief Sets the callback for time control changes
+         * @param callback The new callback
+         */
+        void setTimeControlChangedCallback(TimeControlChangedCallback callback);
+
+        /**
+         * @brief Sets the options for displayed controls
+         * @param options The new options
+         */
+        void setOptions(const Options& options) { options_ = options; }
+
+        /**
+         * @brief Returns the current options
+         * @return The current options
+         */
+        const Options& getOptions() const { return options_; }
+
+        /**
+         * @brief Sets the global settings from INI file sections
+         * @param sections A list of INI file sections representing the global settings
+         */
+        void setGlobalConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
+
+        /**
+         * @brief Sets the time control settings from INI file sections
+         * @param sections A list of INI file sections representing the time control settings
+         */
+        void setTimeControlConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
+
+        /**
+         * @brief Sets a unique identifier for this instance
+         * @param id The unique identifier
+         */
+        void setId(const std::string& id) { id_ = id; }
+
+    private:
+        /**
+         * @brief Notifies about configuration changes via callback
+         */
+        void notifyConfigurationChanged();
+
+        /**
+         * @brief Notifies about time control changes via callback
+         */
+        void notifyTimeControlChanged();
+
+        /**
+         * @brief Updates the configuration singleton with current global settings
+         */
+        void updateConfiguration() const;
+
+        /**
+         * @brief Updates the time control options configuration
+         */
+        void updateTimeControlConfiguration() const;
+
+        /**
+         * @brief Loads hash settings from an INI section
+         * @param section The INI section to load from
+         * @param settings The settings structure to update
+         */
+        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+
+        /**
+         * @brief Loads ponder settings from an INI section
+         * @param section The INI section to load from
+         * @param settings The settings structure to update
+         */
+        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+
+        /**
+         * @brief Loads trace settings from an INI section
+         * @param section The INI section to load from
+         * @param settings The settings structure to update
+         */
+        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+
+        /**
+         * @brief Loads restart settings from an INI section
+         * @param section The INI section to load from
+         * @param settings The settings structure to update
+         */
+        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+
+        Options options_;                                       ///< Display options
+        std::string id_ = "unset";                              ///< Unique identifier for this instance
+        GlobalSettings globalSettings_;                         ///< Current global settings
+        TimeControlSettings timeControlSettings_;               ///< Current time control settings
+        ConfigurationChangedCallback configurationCallback_;    ///< Callback for changes
+        TimeControlChangedCallback timeControlCallback_;        ///< Callback for time control changes
+    };
+
+} // namespace QaplaWindows
