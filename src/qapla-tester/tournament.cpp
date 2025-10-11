@@ -267,6 +267,7 @@ void Tournament::load(const QaplaHelpers::IniFile::Section& section) {
     std::string engineB;
     uint32_t round = 0;
     std::string games;
+    updateCnt_++;
     try {
         for (const auto& [key, value]: section.entries) {
             if (key == "engineA") {

@@ -43,7 +43,6 @@
 namespace QaplaWindows {
 
     TournamentData::TournamentData() : 
-        Autosavable("tournament.ini", ".bak", 60000),
         tournament_(std::make_unique<Tournament>()),
 		config_(std::make_unique<TournamentConfig>()),
         result_(std::make_unique<TournamentResultIncremental>()),
@@ -108,7 +107,6 @@ namespace QaplaWindows {
                 .name = "tournament",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
                     {"id", "tournament"},
-                    {"filename", config_->tournamentFilename},
                     {"event", config_->event},
                     {"type", config_->type},
                     {"rounds", std::to_string(config_->rounds)},
@@ -184,9 +182,6 @@ namespace QaplaWindows {
                 }
         }});
 
-        // Mark as modified for auto-save
-        setModified();
-        autosave();
     }
 
     void TournamentData::updateTournamentResults() {
@@ -195,9 +190,6 @@ namespace QaplaWindows {
             if (!roundSections.empty()) {
                 QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
                     "round", "tournament", roundSections);
-                // Mark as modified for auto-save
-                setModified();
-                autosave();
             }
         }
     }
@@ -594,10 +586,7 @@ namespace QaplaWindows {
         }
 
         for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "filename") {
-                config_->tournamentFilename = value;
-            }
-            else if (key == "event") {
+            if (key == "event") {
                 config_->event = value;
             }
             else if (key == "type") {
@@ -758,47 +747,82 @@ namespace QaplaWindows {
         loadResignAdjudicationConfig();
     }
 
-    void TournamentData::autosave() {
-        // Only autosave if tournament filename is set and not empty
-        if (config_->tournamentFilename.empty()) {
+    void TournamentData::saveTournament(const std::string& filename) {
+        if (filename.empty()) {
+            SnackbarManager::instance().showError("No filename specified for saving tournament.");
             return;
         }
-        Autosavable::updateFilePaths(config_->tournamentFilename);
-        Autosavable::autosave();
-    }
 
-    void TournamentData::saveData(std::ofstream& out) {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        try {
+            std::ofstream out(filename, std::ios::trunc);
+            if (!out) {
+                SnackbarManager::instance().showError("Failed to open file for writing: " + filename);
+                return;
+            }
 
-        // Save each section type (all with id "tournament")
-        for (const auto& sectionName : sectionNames) {
-            auto sections = configData.getSectionList(sectionName, "tournament");
-            if (sections && !sections->empty()) {
-                for (const auto& section : *sections) {
-                    QaplaHelpers::IniFile::saveSection(out, section);
+            auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+
+            // Save each section type (all with id "tournament")
+            for (const auto& sectionName : sectionNames) {
+                auto sections = configData.getSectionList(sectionName, "tournament");
+                if (sections && !sections->empty()) {
+                    for (const auto& section : *sections) {
+                        QaplaHelpers::IniFile::saveSection(out, section);
+                    }
                 }
             }
+
+            out.close();
+            if (!out) {
+                SnackbarManager::instance().showError("Error while writing to file: " + filename);
+                return;
+            }
+
+            SnackbarManager::instance().showSuccess("Tournament saved to: " + filename);
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showError("Failed to save tournament: " + std::string(e.what()));
         }
     }
 
-    void TournamentData::loadData(std::ifstream& in) {
-        // Load all sections from the file
-        auto sections = QaplaHelpers::IniFile::load(in);
-        QaplaHelpers::ConfigData configData;
-        configData.load(in);
-
-        for (const auto& sectionName: sectionNames) {
-            auto sections = configData.getSectionList(sectionName, "tournament");
-            if (sections && !sections->empty()) {
-                QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-                    sectionName, "tournament", *sections);
-            }
+    void TournamentData::loadTournament(const std::string& filename) {
+        if (filename.empty()) {
+            SnackbarManager::instance().showError("No filename specified for loading tournament.");
+            return;
         }
-        
-        // Reload configuration from the updated singleton
-        loadConfig();
-        // Create tournament based on the configuration and load the tournament data
-        loadTournament();
+
+        try {
+            std::ifstream in(filename);
+            if (!in) {
+                SnackbarManager::instance().showError("Failed to open file for reading: " + filename);
+                return;
+            }
+
+            // Load all sections from the file
+            QaplaHelpers::ConfigData configData;
+            configData.load(in);
+            in.close();
+
+            // Transfer sections to the global configuration
+            for (const auto& sectionName : sectionNames) {
+                auto sections = configData.getSectionList(sectionName, "tournament");
+                if (sections && !sections->empty()) {
+                    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+                        sectionName, "tournament", *sections);
+                }
+            }
+
+            // Reload configuration from the updated singleton
+            loadConfig();
+
+            // Create tournament based on the configuration and load the tournament data
+            loadTournament();
+
+            SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename);
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showError("Failed to load tournament: " + std::string(e.what()));
+        }
     }
 
 }

@@ -23,7 +23,6 @@
 #include "tournament-board-window.h"
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
-#include "autosavable.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
@@ -46,7 +45,7 @@ namespace QaplaWindows {
 
     class TournamentResultIncremental;
 
-	class TournamentData : public QaplaHelpers::Autosavable {
+	class TournamentData {
     public: 
         struct EachEngineConfig {
             std::string tc;
@@ -213,6 +212,18 @@ namespace QaplaWindows {
          */
         bool hasTasksScheduled() const;
 
+        /**
+         * @brief Saves all tournament data including configuration and results to a file.
+         * @param filename The file path to save the tournament data to.
+         */
+        static void saveTournament(const std::string& filename);
+
+        /**
+         * @brief Loads all tournament data from a file.
+         * @param filename The file path to load the tournament data from.
+         */
+        void loadTournament(const std::string& filename);
+
 	private:
         bool validateOpenings();
 
@@ -268,24 +279,6 @@ namespace QaplaWindows {
          */
         void loadResignAdjudicationConfig();
 
-    protected:
-        /**
-         * @brief Autosaves the tournament data if filename is set and conditions are met.
-         */
-        void autosave() override;
-
-        /**
-         * @brief Saves all tournament data including configuration and results to a stream.
-         * @param out The output stream to write data to.
-         */
-        void saveData(std::ofstream& out) override;
-
-        /**
-         * @brief Loads all tournament data from a stream.
-         * @param in The input stream to read data from.
-         */
-        void loadData(std::ifstream& in) override;
-
     private:
         void populateEloTable();
 		void populateRunningTable();
@@ -320,8 +313,9 @@ namespace QaplaWindows {
         bool loadedTournamentData_ = false;
 
         // List of all section names used
-        static constexpr std::array<const char*, 7> sectionNames = {
+        static constexpr std::array<const char*, 8> sectionNames = {
             "eachengine",
+            "engineselection",
             "tournament",
             "opening",
             "pgnoutput",

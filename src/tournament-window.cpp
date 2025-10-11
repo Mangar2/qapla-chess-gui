@@ -74,7 +74,7 @@ static void drawSingleButton(
     ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
 {
-    if (button == "Run")
+    if (button == "Run/Grace/Continue")
     {
         if (running)
         {
@@ -93,6 +93,14 @@ static void drawSingleButton(
     {
         QaplaButton::drawClear(drawList, topLeft, size, state);
     }
+    if (button == "Load")
+    {
+        QaplaButton::drawOpen(drawList, topLeft, size, state);
+    }
+    if (button == "Save As")
+    {
+        QaplaButton::drawSave(drawList, topLeft, size, state);
+    }
 }
 
 
@@ -106,26 +114,29 @@ void TournamentWindow::drawButtons() {
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const std::string button : { "Run", "Stop", "Clear" }) {
+    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
         ImGui::SetCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
         auto label = button;
         
-        if (label == "Run" && running) {
-            label = "Grace";
-        }
-        if (label == "Run" && TournamentData::instance().hasTasksScheduled()) {
+        if (label == "Run/Grace/Continue") {
+            label = running ? "Grace" : "Run";
+        } 
+        if (label == "Run/Grace/Continue" && TournamentData::instance().hasTasksScheduled()) {
             label = "Continue";
         }
 
         auto state = QaplaButton::ButtonState::Normal;
-        if (button == "Run" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
+        if (button == "Run/Grace/Continue" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
             state = QaplaButton::ButtonState::Active;
         }
-        if (button == "Stop" && !TournamentData::instance().isRunning()) {
+        if ((button == "Stop") && !TournamentData::instance().isRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
         if (button == "Clear" && !TournamentData::instance().hasTasksScheduled()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+        if ((button == "Load" || button == "Save As") && TournamentData::instance().isRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
 
@@ -148,25 +159,35 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
     {
         try
         {
-            if (button == "Run")
+            if (button == "Run/Grace/Continue")
             {
                 bool running = TournamentData::instance().isRunning();
                 if (running)
                 {
                     TournamentData::instance().stopPool(true);
-                }
-                else
-                {
+                } else {
                     TournamentData::instance().startTournament();
                 }
-            }
-            else if (button == "Stop")
+            } else if (button == "Stop")
             {
                 TournamentData::instance().stopPool();
-            }
-            else if (button == "Clear")
+            } else if (button == "Clear")
             {
                 TournamentData::instance().clear();
+            } else if (button == "Load")
+            {
+                auto selectedPath = OsDialogs::openFileDialog();
+                if (!selectedPath.empty() && !selectedPath[0].empty())
+                {
+                    TournamentData::instance().loadTournament(selectedPath[0]);
+                }
+            } else if (button == "Save As")
+            {
+                auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla Tournament Files", "qtour"} });
+                if (!selectedPath.empty())
+                {
+                    TournamentData::saveTournament(selectedPath);
+                }
             }
         }
         catch (const std::exception &e)
@@ -199,10 +220,6 @@ bool TournamentWindow::drawInput() {
 
     bool changed = false;
     ImGui::Indent(10.0F);
-
-    changed |= ImGuiControls::newFileInput("Tournament file", tournamentData.config().tournamentFilename, 
-        { {"Qapla Tournament Files", "*.qtour"} }, fileInputWidth);
-    ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
