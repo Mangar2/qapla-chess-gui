@@ -260,11 +260,6 @@ namespace QaplaWindows {
         void loadTournamentConfig();
 
         /**
-         * @brief Loads the configuration for each engine from configuration data.
-         */
-        void loadEachEngineConfig();
-
-        /**
          * @brief Loads the PGN configuration from configuration data.
          */
         void loadPgnConfig();
@@ -313,7 +308,7 @@ namespace QaplaWindows {
         bool loadedTournamentData_ = false;
 
         // List of all section names used
-        static constexpr std::array<const char*, 8> sectionNames = {
+        static constexpr std::array<const char*, 9> sectionNames = {
             "eachengine",
             "engineselection",
             "tournament",
@@ -321,6 +316,7 @@ namespace QaplaWindows {
             "pgnoutput",
             "drawadjudication",
             "resignadjudication",
+            "timecontroloptions",
             "round"
         };
 

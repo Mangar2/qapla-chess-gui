@@ -134,9 +134,6 @@ namespace {
         taskTabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
         
         auto tournamentWindow = std::make_unique<QaplaWindows::TournamentWindow>();
-        tournamentWindow->setEngineConfigurationCallback([](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {
-            QaplaWindows::TournamentData::instance().setEngineConfigurations(configs);
-        });
         taskTabBar->addTab("Tournament", std::move(tournamentWindow));
 
         taskTabBar->addTab("Pgn", std::make_unique<QaplaWindows::ImGuiGameList>());

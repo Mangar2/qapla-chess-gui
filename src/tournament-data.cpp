@@ -87,19 +87,6 @@ namespace QaplaWindows {
     TournamentData::~TournamentData() = default;
 
     void TournamentData::updateConfiguration() {
-        // Each Engine Config
-         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "eachengine", "tournament", {{
-                .name = "eachengine",
-                .entries = QaplaHelpers::IniFile::KeyValueMap{
-                    {"id", "tournament"},
-                    {"tc", eachEngineConfig_.tc},
-                    {"restart", eachEngineConfig_.restart},
-                    {"trace", eachEngineConfig_.traceLevel},
-                    {"ponder", eachEngineConfig_.ponder},
-                    {"hash", std::to_string(eachEngineConfig_.hash)}
-                }
-        }});
 
         // Tournament Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
@@ -542,42 +529,7 @@ namespace QaplaWindows {
         imguiConcurrency_->setNiceStop(nice);
         imguiConcurrency_->update(count);
     }
-
-    void TournamentData::loadEachEngineConfig() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("eachengine", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "tc") {
-                eachEngineConfig_.tc = value;
-                if (value.empty()) {
-                    eachEngineConfig_.tc = "60+0";
-                }
-            }
-            else if (key == "restart") {
-                eachEngineConfig_.restart = value;
-                if (value != "auto" && value != "on" && value != "off") {
-                    eachEngineConfig_.restart = "auto";
-                }
-            }
-            else if (key == "trace") {
-                eachEngineConfig_.traceLevel = value;
-                if (value != "command" && value != "all" && value != "none") {
-                    eachEngineConfig_.traceLevel = "none";
-				}
-            }
-            else if (key == "ponder") {
-                eachEngineConfig_.ponder = value;
-            }
-            else if (key == "hash") {
-                eachEngineConfig_.hash = QaplaHelpers::to_uint32(value).value_or(32);
-            }
-        }
-    }
-
+    
     void TournamentData::loadTournamentConfig() {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
         auto sections = configData.getSectionList("tournament", "tournament");
@@ -739,7 +691,6 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::loadConfig() {
-        loadEachEngineConfig();
         loadTournamentConfig();
         loadOpenings();
         loadPgnConfig();

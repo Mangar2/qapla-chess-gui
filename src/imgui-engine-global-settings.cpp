@@ -35,7 +35,6 @@ ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, Con
 bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent) {
     bool modified = false;
     
-    ImGui::Indent(controlIndent);
     if (ImGui::CollapsingHeader("Global Engine Settings")) {
         ImGui::Indent(controlIndent);
         
@@ -84,7 +83,6 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         
         ImGui::Unindent(controlIndent);
     }
-    ImGui::Unindent(controlIndent);
     
     if (modified) {
         notifyConfigurationChanged();
@@ -96,7 +94,6 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
 bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz) {
     bool modified = false;
     
-    ImGui::Indent(controlIndent);
     if (ImGui::CollapsingHeader("Time Control")) {
         ImGui::Indent(controlIndent);
         
@@ -113,7 +110,6 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
         
         ImGui::Unindent(controlIndent);
     }
-    ImGui::Unindent(controlIndent);
     
     if (modified) {
         notifyTimeControlChanged();
@@ -157,77 +153,58 @@ void ImGuiEngineGlobalSettings::notifyTimeControlChanged() {
 }
 
 void ImGuiEngineGlobalSettings::updateConfiguration() const {
-    QaplaHelpers::IniFile::KeyValueMap entries;
-
-    // Set the id for this configuration
-    entries.emplace_back("id", id_);
-    
-    // Save hash settings
-    entries.emplace_back("useGlobalHash", globalSettings_.useGlobalHash ? "true" : "false");
-    entries.emplace_back("hashSizeMB", std::to_string(globalSettings_.hashSizeMB));
-    
-    // Save ponder settings
-    entries.emplace_back("useGlobalPonder", globalSettings_.useGlobalPonder ? "true" : "false");
-    entries.emplace_back("ponder", globalSettings_.ponder ? "true" : "false");
-    
-    // Save trace settings
-    entries.emplace_back("useGlobalTrace", globalSettings_.useGlobalTrace ? "true" : "false");
-    entries.emplace_back("traceLevel", globalSettings_.traceLevel);
-    
-    // Save restart settings
-    entries.emplace_back("useGlobalRestart", globalSettings_.useGlobalRestart ? "true" : "false");
-    entries.emplace_back("restart", globalSettings_.restart);
-    
-    QaplaHelpers::IniFile::Section section{
-        .name = "eachengine",
-        .entries = std::move(entries)
-    };
-    
-    QaplaHelpers::IniFile::SectionList sections;
-    sections.push_back(std::move(section));
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("eachengine", id_, sections);
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "eachengine", id_, {{
+            .name = "eachengine",
+            .entries = QaplaHelpers::IniFile::KeyValueMap{
+                {"id", id_},
+                {"usehash", globalSettings_.useGlobalHash ? "true" : "false"},
+                {"hash", std::to_string(globalSettings_.hashSizeMB)},
+                {"useponder", globalSettings_.useGlobalPonder ? "true" : "false"},
+                {"ponder", globalSettings_.ponder ? "true" : "false"},
+                {"usetrace", globalSettings_.useGlobalTrace ? "true" : "false"},
+                {"trace", globalSettings_.traceLevel},
+                {"userestart", globalSettings_.useGlobalRestart ? "true" : "false"},
+                {"restart", globalSettings_.restart}
+            }
+    }});
 }
 
 void ImGuiEngineGlobalSettings::updateTimeControlConfiguration() const {
-    QaplaHelpers::IniFile::KeyValueMap entries;
+    // Build predefined options entries
+    QaplaHelpers::IniFile::KeyValueMap entries{
+        {"id", id_},
+        {"timeControl", timeControlSettings_.timeControl},
+        {"predefinedTimeControl", timeControlSettings_.predefinedTimeControl}
+    };
     
-    // Set the id for this configuration
-    entries.emplace_back("id", id_);
-    
-    // Save time control settings
-    entries.emplace_back("timeControl", timeControlSettings_.timeControl);
-    entries.emplace_back("predefinedTimeControl", timeControlSettings_.predefinedTimeControl);
-    
-    // Save predefined options
+    // Add predefined options
     for (size_t i = 0; i < timeControlSettings_.predefinedOptions.size(); ++i) {
         entries.emplace_back("predefinedOption" + std::to_string(i), timeControlSettings_.predefinedOptions[i]);
     }
     
-    QaplaHelpers::IniFile::Section section{
-        .name = "timecontroloptions",
-        .entries = std::move(entries)
-    };
-    
-    QaplaHelpers::IniFile::SectionList sections;
-    sections.push_back(std::move(section));
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("timecontroloptions", id_, sections);
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "timecontroloptions", id_, {{
+            .name = "timecontroloptions",
+            .entries = std::move(entries)
+    }});
 }
 
 void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings) {
-    if (auto value = section.getValue("useGlobalHash")) {
+    if (auto value = section.getValue("usehash")) {
         settings.useGlobalHash = (*value == "true" || *value == "1");
     }
-    if (auto value = section.getValue("hashSizeMB")) {
+    if (auto value = section.getValue("hash")) {
         try {
             settings.hashSizeMB = std::stoul(*value);
         } catch (...) {
-            settings.hashSizeMB = 128;
+            settings.hashSizeMB = 32;
         }
     }
 }
 
 void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings) {
-    if (auto value = section.getValue("useGlobalPonder")) {
+    if (auto value = section.getValue("useponder")) {
         settings.useGlobalPonder = (*value == "true" || *value == "1");
     }
     if (auto value = section.getValue("ponder")) {
@@ -236,16 +213,16 @@ void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::
 }
 
 void ImGuiEngineGlobalSettings::loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings) {
-    if (auto value = section.getValue("useGlobalTrace")) {
+    if (auto value = section.getValue("usetrace")) {
         settings.useGlobalTrace = (*value == "true" || *value == "1");
     }
-    if (auto value = section.getValue("traceLevel")) {
+    if (auto value = section.getValue("trace")) {
         settings.traceLevel = *value;
     }
 }
 
 void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings) {
-    if (auto value = section.getValue("useGlobalRestart")) {
+    if (auto value = section.getValue("userestart")) {
         settings.useGlobalRestart = (*value == "true" || *value == "1");
     }
     if (auto value = section.getValue("restart")) {

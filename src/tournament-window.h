@@ -21,6 +21,7 @@
 
 #include "embedded-window.h"
 #include "imgui-engine-select.h"
+#include "imgui-engine-global-settings.h"
 
 #include "qapla-tester/engine-config.h"
 
@@ -61,8 +62,14 @@ namespace QaplaWindows {
          * @brief Sets the engine configurations from INI file sections
          */
         void setEngineConfiguration();
+
+        /**
+         * @brief Sets the global settings configuration from INI file
+         */
+        void setGlobalSettingsConfiguration();
         
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
 
 
     };

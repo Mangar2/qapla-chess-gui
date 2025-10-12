@@ -24,6 +24,7 @@
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "imgui-controls.h"
+#include "imgui-engine-global-settings.h"
 #include "configuration.h"
 
 #include "qapla-tester/move-record.h"
@@ -45,8 +46,11 @@ using namespace QaplaWindows;
 
 TournamentWindow::TournamentWindow()
     : engineSelect_(std::make_unique<ImGuiEngineSelect>())
+    , globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>())
 {
     setEngineConfiguration();
+    setGlobalSettingsConfiguration();
+    
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = true;
     options.allowPonderEdit = true;
@@ -55,6 +59,47 @@ TournamentWindow::TournamentWindow()
     options.allowRestartOptionEdit = true;
     options.allowMultipleSelection = true;
     engineSelect_->setOptions(options);
+    
+    // Set up callbacks to synchronize global settings with tournament data
+    globalSettings_->setConfigurationChangedCallback(
+        [](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+            auto& tournamentData = TournamentData::instance();
+            
+            // Sync hash
+            if (settings.useGlobalHash) {
+                tournamentData.eachEngineConfig().hash = settings.hashSizeMB;
+            }
+            
+            // Sync restart
+            if (settings.useGlobalRestart) {
+                tournamentData.eachEngineConfig().restart = settings.restart;
+            }
+            
+            // Sync trace
+            if (settings.useGlobalTrace) {
+                tournamentData.eachEngineConfig().traceLevel = settings.traceLevel;
+            }
+            
+            // Sync ponder
+            if (settings.useGlobalPonder) {
+                tournamentData.eachEngineConfig().ponder = settings.ponder ? "on" : "off";
+            }
+        }
+    );
+    
+    globalSettings_->setTimeControlChangedCallback(
+        [](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
+            auto& tournamentData = TournamentData::instance();
+            tournamentData.eachEngineConfig().tc = settings.timeControl;
+        }
+    );
+
+    engineSelect_->setConfigurationChangedCallback(
+        [](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+            TournamentData::instance().setEngineConfigurations(configurations);
+        }
+    );
+   
 }
 
 TournamentWindow::~TournamentWindow() = default;
@@ -68,6 +113,20 @@ void TournamentWindow::setEngineConfiguration() {
             getConfigData().getSectionList("engineselection", "tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("tournament");
     engineSelect_->setEngineConfiguration(sections);
+}
+
+void TournamentWindow::setGlobalSettingsConfiguration() {
+    auto& config = QaplaConfiguration::Configuration::instance();
+    globalSettings_->setId("tournament");
+    // Load global engine settings
+    auto globalSections = config.getConfigData().getSectionList("eachengine", "tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setGlobalConfiguration(globalSections);
+    
+    // Load time control settings
+    auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setTimeControlConfiguration(timeControlSections);
 }
 
 static void drawSingleButton(
@@ -279,34 +338,11 @@ bool TournamentWindow::drawInput() {
         ImGui::Unindent(10.0F);
         ImGui::PopID();
     }
-    if (ImGui::CollapsingHeader("Time Control", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("timeControl");
-        ImGui::Indent(10.0F);
-        ImGuiControls::timeControlInput(tournamentData.eachEngineConfig().tc, false, inputWidth);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Predefined time control", tournamentData.eachEngineConfig().tc, {
-            "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
-            });
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
-    if (ImGui::CollapsingHeader("Engine settings", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("engineSettings");
-        ImGui::Indent(10.0F);
-        ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", tournamentData.eachEngineConfig().hash, 1, 10000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::selectionBox("Restart", tournamentData.eachEngineConfig().restart,
-            {"auto", "on", "off", "per engine"});
-        ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::selectionBox("Trace", tournamentData.eachEngineConfig().traceLevel,
-            { "none", "all", "command", "per engine" });
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::selectionBox("Ponder", tournamentData.eachEngineConfig().ponder,
-            {"off", "on", "per engine"});
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-	}
+    
+    // Draw time control and global engine settings using the new class
+    changed |= globalSettings_->drawTimeControl(inputWidth, 10.0F, false);
+    changed |= globalSettings_->drawGlobalSettings(inputWidth, 10.0F);
+    
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("pgn");
         ImGui::Indent(10.0F);

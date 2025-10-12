@@ -39,16 +39,16 @@ namespace QaplaWindows {
          * @brief Global engine settings data structure
          */
         struct GlobalSettings {
-            bool useGlobalHash = false;      ///< Whether to use a global hash size setting
-            uint32_t hashSizeMB = 128;       ///< Hash size in MB (1-64000)
+            bool useGlobalHash = true;      ///< Whether to use a global hash size setting
+            uint32_t hashSizeMB = 32;       ///< Hash size in MB (1-64000)
             
-            bool useGlobalPonder = false;    ///< Whether to use a global ponder setting
+            bool useGlobalPonder = true;    ///< Whether to use a global ponder setting
             bool ponder = false;             ///< Whether pondering is enabled globally
             
-            bool useGlobalTrace = false;     ///< Whether to use a global trace level setting
-            std::string traceLevel = "none"; ///< Global trace level ("none", "all", "command")
+            bool useGlobalTrace = true;     ///< Whether to use a global trace level setting
+            std::string traceLevel = "command"; ///< Global trace level ("none", "all", "command")
             
-            bool useGlobalRestart = false;   ///< Whether to use a global restart option
+            bool useGlobalRestart = true;   ///< Whether to use a global restart option
             std::string restart = "auto";    ///< Global restart option ("auto", "on", "off")
         };
 
