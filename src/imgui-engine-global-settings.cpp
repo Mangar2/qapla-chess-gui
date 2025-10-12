@@ -289,15 +289,15 @@ void ImGuiEngineGlobalSettings::setTimeControlConfiguration(const QaplaHelpers::
             newTimeControlSettings.predefinedOptions.clear();
             for (size_t i = 0; ; ++i) {
                 auto value = section.getValue("predefinedOption" + std::to_string(i));
-                if (!value) break;
+                if (!value) {
+                    break;
+                }
                 newTimeControlSettings.predefinedOptions.push_back(*value);
             }
             
             // If no predefined options were loaded, use defaults
             if (newTimeControlSettings.predefinedOptions.empty()) {
-                newTimeControlSettings.predefinedOptions = {
-                    "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
-                };
+                newTimeControlSettings.predefinedOptions = timeControlSettings_.predefinedOptions;
             }
             
             timeControlSettings_ = newTimeControlSettings;
