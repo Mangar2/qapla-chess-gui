@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author Volker B�hm
- * @copyright Copyright (c) 2025 Volker B�hm
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #include "tournament-result-incremental.h"
@@ -32,12 +32,20 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 	constexpr size_t extraChecks = 10; // Number of extra results to fetch
 	tournamentUpdateCount_ = tournament.getUpdateCount();
 
+	if (totalScheduledGames_ == 0) {
+		// Count all games (both finished and scheduled) from all pair tournaments
+		for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+			totalScheduledGames_ += (*pairTournament)->getConfig().games;
+		}
+	}
+
 	// We store all results that are consecutively finished
 	while (auto pairTournament = tournament.getPairTournament(currentIndex_)) {
 		if (!(*pairTournament)->isFinished()) {
 			break;
 		}
 		auto resultToAdd = (*pairTournament)->getResult();
+		playedGamesFromCompletedPairs_ += static_cast<uint32_t>(resultToAdd.total());
 		finishedResultsAggregate_.add(resultToAdd);
 		engineNames_.insert(resultToAdd.getEngineA());
 		engineNames_.insert(resultToAdd.getEngineB());
@@ -47,9 +55,11 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 
 	// We add all results that are not consecutively finished including partial results
 	totalResult_ = finishedResultsAggregate_;
+	playedGamesFromPartialPairs_ = 0;
 	size_t extra = extraChecks;
 	for (size_t i = currentIndex_; auto pairTournament = tournament.getPairTournament(i); ++i) {
 		auto resultToAdd = (*pairTournament)->getResult();
+		playedGamesFromPartialPairs_ += static_cast<uint32_t>(resultToAdd.total());
 		gamesLeft_ = true;
 		if (resultToAdd.total() == 0) {
 			extra--;

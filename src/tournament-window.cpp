@@ -179,12 +179,11 @@ bool TournamentWindow::drawInput() {
     constexpr int maxConcurrency = 32;
 	auto& tournamentData = TournamentData::instance();
     
-    ImGui::Indent(10.0F);
     ImGui::SetNextItemWidth(inputWidth);
     ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
     tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
-    ImGui::Unindent(10.0F);
-
+    drawProgress();
+    
     ImGui::Spacing();
     if (tournamentData.isRunning()) {
 		ImGui::Indent(10.0F);
@@ -194,7 +193,8 @@ bool TournamentWindow::drawInput() {
     }
 
     bool changed = false;
-    ImGui::Indent(10.0F);
+
+    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
 
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
@@ -257,7 +257,6 @@ bool TournamentWindow::drawInput() {
     
     // Draw time control and global engine settings using the new class
     changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
-    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
     
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("pgn");
@@ -320,26 +319,44 @@ bool TournamentWindow::drawInput() {
 	}
 	
     ImGui::Spacing();
-    ImGui::Unindent(10.0F);
 
     return changed;
 }
 
+void TournamentWindow::drawProgress()
+{
+    auto& tournamentData = TournamentData::instance();
+    auto totalGames = tournamentData.getTotalScheduledGames();
+    auto playedGames = tournamentData.getPlayedGames();
+    
+    if (totalGames == 0) {
+        return;
+    }
+    
+    float progress = static_cast<float>(playedGames) / static_cast<float>(totalGames);
+    ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0F), 
+        std::to_string(playedGames).c_str());
+}
+
 void TournamentWindow::draw() {
+    constexpr float rightBorder = 5.0F;
     auto& tournamentData = TournamentData::instance();
     drawButtons();
+
+    ImGui::Indent(10.0F);
+    auto size = ImGui::GetContentRegionAvail();
+    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
     if (drawInput()) {
         tournamentData.updateConfiguration();
     }
-    ImVec2 size = ImGui::GetContentRegionAvail();
-    /* auto clickedRow = */
-    ImGui::Indent(10.0F);
     tournamentData.drawRunningTable(ImVec2(size.x, 600.0F));
     tournamentData.drawEloTable(ImVec2(size.x, 400.0F));
     tournamentData.drawCauseTable(ImVec2(size.x, 400.0F));
     if (tournamentData.drawConfig().testOnly || tournamentData.resignConfig().testOnly) {
         tournamentData.drawAdjudicationTable(ImVec2(size.x, 200.0F));
     }
+
+    ImGui::EndChild();
     ImGui::Unindent(10.0F);
 }
 

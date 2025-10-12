@@ -235,6 +235,18 @@ namespace QaplaWindows {
         bool hasTasksScheduled() const;
 
         /**
+         * @brief Returns the total number of games scheduled in the tournament.
+         * @return Total number of games that will be played.
+         */
+        uint32_t getTotalScheduledGames() const;
+
+        /**
+         * @brief Returns the number of games that have been completed.
+         * @return Number of finished games.
+         */
+        uint32_t getPlayedGames() const;
+
+        /**
          * @brief Saves all tournament data including configuration and results to a file.
          * @param filename The file path to save the tournament data to.
          */

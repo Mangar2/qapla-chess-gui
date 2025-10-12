@@ -40,6 +40,9 @@ namespace QaplaWindows {
 			totalResult_.clear();
             updateCount_ = 0;
             currentIndex_ = 0;
+            totalScheduledGames_ = 0;
+            playedGamesFromCompletedPairs_ = 0;
+            playedGamesFromPartialPairs_ = 0;
 		}
 
 		/**
@@ -82,6 +85,22 @@ namespace QaplaWindows {
         void setGamesLeft() {
             gamesLeft_ = true;
         }
+
+        /**
+         * @brief Returns the total number of games scheduled in the tournament.
+         * @return Total number of games that will be played.
+         */
+        uint32_t getTotalScheduledGames() const {
+            return totalScheduledGames_;
+        }
+
+        /**
+         * @brief Returns the number of games that have been completed.
+         * @return Number of finished games.
+         */
+        uint32_t getPlayedGames() const {
+            return playedGamesFromCompletedPairs_ + playedGamesFromPartialPairs_;
+        }
 			
 
     private:
@@ -94,6 +113,10 @@ namespace QaplaWindows {
 		size_t currentIndex_ = 0; 
 		size_t tournamentUpdateCount_ = 0; ///< Tournament update count, used to track changes
 		bool gamesLeft_ = false; ///< Flag to indicate if the tournament is currently running
+        
+        uint32_t totalScheduledGames_ = 0; ///< Total number of games scheduled in the tournament
+        uint32_t playedGamesFromCompletedPairs_ = 0; ///< Number of games that have been completed
+        uint32_t playedGamesFromPartialPairs_ = 0; ///< Number of games that have been completed in pairs not fully completed
     };
 
 }

@@ -235,6 +235,15 @@ public:
         return isFinished_.load();
 	}
 
+    /**
+     * @brief Returns the tournament configuration.
+     *
+     * @return PairTournamentConfig containing all configuration parameters.
+     */
+    const PairTournamentConfig& getConfig() const {
+        return config_;
+    }
+
 private:
 
     /**

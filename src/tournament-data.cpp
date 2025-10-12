@@ -90,7 +90,7 @@ namespace QaplaWindows {
                 { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Correct", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
                 { .name = "Incorrect", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 70.0F, .alignRight = true },
-                { .name = "Saved", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "Saveable", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
                 { .name = "Total Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true }
             }
         )
@@ -552,6 +552,20 @@ namespace QaplaWindows {
 
     bool TournamentData::hasTasksScheduled() const {
         return tournament_ && tournament_->hasTasksScheduled();
+    }
+
+    uint32_t TournamentData::getTotalScheduledGames() const {
+        if (!result_) {
+            return 0;
+        }
+        return result_->getTotalScheduledGames();
+    }
+
+    uint32_t TournamentData::getPlayedGames() const {
+        if (!result_) {
+            return 0;
+        }
+        return result_->getPlayedGames();
     }
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) {
