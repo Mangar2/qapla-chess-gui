@@ -326,16 +326,20 @@ bool TournamentWindow::drawInput() {
 }
 
 void TournamentWindow::draw() {
+    auto& tournamentData = TournamentData::instance();
     drawButtons();
     if (drawInput()) {
-        TournamentData::instance().updateConfiguration();
+        tournamentData.updateConfiguration();
     }
     ImVec2 size = ImGui::GetContentRegionAvail();
     /* auto clickedRow = */
     ImGui::Indent(10.0F);
-    TournamentData::instance().drawRunningTable(ImVec2(size.x, 600.0F));
-    TournamentData::instance().drawEloTable(ImVec2(size.x, 400.0F));
-    TournamentData::instance().drawCauseTable(ImVec2(size.x, 400.0F));
+    tournamentData.drawRunningTable(ImVec2(size.x, 600.0F));
+    tournamentData.drawEloTable(ImVec2(size.x, 400.0F));
+    tournamentData.drawCauseTable(ImVec2(size.x, 400.0F));
+    if (tournamentData.drawConfig().testOnly || tournamentData.resignConfig().testOnly) {
+        tournamentData.drawAdjudicationTable(ImVec2(size.x, 200.0F));
+    }
     ImGui::Unindent(10.0F);
 }
 

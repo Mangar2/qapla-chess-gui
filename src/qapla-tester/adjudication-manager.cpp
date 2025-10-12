@@ -17,15 +17,17 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
- #include "adjudication-manager.h"
- #include "string-helper.h"
+#include "adjudication-manager.h"
+#include "string-helper.h"
+
+namespace QaplaTester {
 
 std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const GameRecord& game) const {
-    if (!drawConfig.active || drawConfig.testOnly) {
+    if (!drawConfig_.active || drawConfig_.testOnly) {
 		return { GameEndCause::Ongoing, GameResult::Unterminated };
     }
     const auto& moves = game.history();
-    const auto& cfg = drawConfig;
+    const auto& cfg = drawConfig_;
 
     if (cfg.requiredConsecutiveMoves <= 0 
         || cfg.centipawnThreshold <= 0 
@@ -56,11 +58,11 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
 }
 
  std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateResign(const GameRecord& game) const {
-    if (!resignConfig.active || resignConfig.testOnly) {
+    if (!resignConfig_.active || resignConfig_.testOnly) {
         return { GameEndCause::Ongoing, GameResult::Unterminated };
     }
     const auto& moves = game.history();
-    const auto& cfg = resignConfig;
+    const auto& cfg = resignConfig_;
 
     if (cfg.requiredConsecutiveMoves <= 0 
         || cfg.centipawnThreshold <= 0 
@@ -111,7 +113,7 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
 }
 
 std::optional<size_t> AdjudicationManager::findDrawAdjudicationIndex(const GameRecord& game) const {
-	const auto& cfg = drawConfig;
+	const auto& cfg = drawConfig_;
     const auto& moves = game.history();
     if (cfg.requiredConsecutiveMoves <= 0 || cfg.centipawnThreshold <= 0 || moves.size() < 2 * cfg.minFullMoves) {
         return std::nullopt;
@@ -151,7 +153,7 @@ static bool isValidResignConfig(const AdjudicationManager::ResignAdjudicationCon
 std::pair<GameResult, size_t> AdjudicationManager::findResignAdjudicationIndex(const GameRecord& game) const {
     
     const auto& moves = game.history();
-    if (!isValidResignConfig(resignConfig, moves)) {
+    if (!isValidResignConfig(resignConfig_, moves)) {
         return { GameResult::Unterminated , 0 };
     }
 
@@ -162,21 +164,21 @@ std::pair<GameResult, size_t> AdjudicationManager::findResignAdjudicationIndex(c
     uint32_t wConsecutive = 0;
     uint32_t bConsecutive = 0;
     // Required to ensure that both sides satisfy their respective conditions when two-sided resign is active
-    uint32_t requiredConsecutive = resignConfig.twoSided ? 
-        2 * resignConfig.requiredConsecutiveMoves : resignConfig.requiredConsecutiveMoves;
+    uint32_t requiredConsecutive = resignConfig_.twoSided ? 
+        2 * resignConfig_.requiredConsecutiveMoves : resignConfig_.requiredConsecutiveMoves;
 
     for (size_t i = 0; i < moves.size(); ++i) {
         const auto& move = moves[i];
 
-        bool loosing = move.scoreCp && *move.scoreCp <= -resignConfig.centipawnThreshold;
+        bool loosing = move.scoreCp && *move.scoreCp <= -resignConfig_.centipawnThreshold;
         if (wtm) {
             wConsecutive = updateConsecutiveCounts(loosing, wConsecutive);
         } else {
             bConsecutive = updateConsecutiveCounts(loosing, bConsecutive);
         }
 
-        if (resignConfig.twoSided) {
-            bool winning = move.scoreCp && *move.scoreCp >= resignConfig.centipawnThreshold;
+        if (resignConfig_.twoSided) {
+            bool winning = move.scoreCp && *move.scoreCp >= resignConfig_.centipawnThreshold;
             if (wtm) {
                 bConsecutive = updateConsecutiveCounts(winning, bConsecutive);
             } else {
@@ -201,72 +203,72 @@ void AdjudicationManager::onGameFinished(const GameRecord& game) {
     const auto& [finalCause, finalResult] = game.getGameResult();
     const auto& moves = game.history();
 
-    if (drawConfig.active && drawConfig.testOnly) {
-        drawStats.totalGames++;
+    if (drawConfig_.active && drawConfig_.testOnly) {
+        drawStats_.totalGames++;
 
         if (auto index = findDrawAdjudicationIndex(game)) {
             for (size_t i = *index + 1; i < moves.size(); ++i) {
-                drawStats.savedTimeMs += moves[i].timeMs;
+                drawStats_.savedTimeMs += moves[i].timeMs;
             }
 
             if (finalResult == GameResult::Draw) {
-                drawStats.correctDecisions++;
+                drawStats_.correctDecisions++;
             } else {
-                drawStats.incorrectDecisions++;
-                drawStats.failed.push_back(game);
+                drawStats_.incorrectDecisions++;
+                drawStats_.failed.push_back(game);
             }
         }
 
         for (const auto& m : moves) {
-            drawStats.totalTimeMs += m.timeMs;
+            drawStats_.totalTimeMs += m.timeMs;
         }
     }
 
-    if (resignConfig.active && resignConfig.testOnly) {
-        resignStats.totalGames++;
+    if (resignConfig_.active && resignConfig_.testOnly) {
+        resignStats_.totalGames++;
         auto [adjudicatedResult, index] = findResignAdjudicationIndex(game);
         if (adjudicatedResult != GameResult::Unterminated) {
             for (size_t i = index + 1; i < moves.size(); ++i) {
-                resignStats.savedTimeMs += moves[i].timeMs;
+                resignStats_.savedTimeMs += moves[i].timeMs;
             }
 
             if (finalResult == adjudicatedResult) {
-                resignStats.correctDecisions++;
+                resignStats_.correctDecisions++;
             } else {
-                resignStats.incorrectDecisions++;
-                resignStats.failed.push_back(game);
+                resignStats_.incorrectDecisions++;
+                resignStats_.failed.push_back(game);
             }
         }
         auto [wtime, btime] = game.timeUsed();
-        resignStats.totalTimeMs += wtime + btime;
+        resignStats_.totalTimeMs += wtime + btime;
     }
 }
 
 AdjudicationManager::TestResults AdjudicationManager::computeTestResults() const {
     TestResults results;
     
-    results.hasDrawTest = drawConfig.active && drawConfig.testOnly;
-    results.hasResignTest = resignConfig.active && resignConfig.testOnly;
+    results.hasDrawTest = drawConfig_.active && drawConfig_.testOnly;
+    results.hasResignTest = resignConfig_.active && resignConfig_.testOnly;
     
     if (results.hasDrawTest) {
         results.drawResult = {
             {.key = "label", .value = "draw"},
-            {.key = "total", .value = std::to_string(drawStats.totalGames)},
-            {.key = "correct", .value = std::to_string(drawStats.correctDecisions)},
-            {.key = "incorrect", .value = std::to_string(drawStats.incorrectDecisions)},
-            {.key = "saved", .value = QaplaHelpers::formatMs(drawStats.savedTimeMs)},
-            {.key = "total_time", .value = QaplaHelpers::formatMs(drawStats.totalTimeMs)}
+            {.key = "total", .value = std::to_string(drawStats_.totalGames)},
+            {.key = "correct", .value = std::to_string(drawStats_.correctDecisions)},
+            {.key = "incorrect", .value = std::to_string(drawStats_.incorrectDecisions)},
+            {.key = "saved", .value = QaplaHelpers::formatMs(drawStats_.savedTimeMs)},
+            {.key = "total_time", .value = QaplaHelpers::formatMs(drawStats_.totalTimeMs)}
         };
     }
     
     if (results.hasResignTest) {
         results.resignResult = {
             {.key = "label", .value = "resign"},
-            {.key = "total", .value = std::to_string(resignStats.totalGames)},
-            {.key = "correct", .value = std::to_string(resignStats.correctDecisions)},
-            {.key = "incorrect", .value = std::to_string(resignStats.incorrectDecisions)},
-            {.key = "saved", .value = QaplaHelpers::formatMs(resignStats.savedTimeMs)},
-            {.key = "total_time", .value = QaplaHelpers::formatMs(resignStats.totalTimeMs)}
+            {.key = "total", .value = std::to_string(resignStats_.totalGames)},
+            {.key = "correct", .value = std::to_string(resignStats_.correctDecisions)},
+            {.key = "incorrect", .value = std::to_string(resignStats_.incorrectDecisions)},
+            {.key = "saved", .value = QaplaHelpers::formatMs(resignStats_.savedTimeMs)},
+            {.key = "total_time", .value = QaplaHelpers::formatMs(resignStats_.totalTimeMs)}
         };
     }
     
@@ -315,3 +317,5 @@ void AdjudicationManager::printTestResult(std::ostream& out) const {
     }
     out << "\n" << std::flush;
 }
+
+} // namespace QaplaTester

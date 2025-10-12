@@ -25,6 +25,8 @@
 #include "game-record.h"
 #include "game-result.h"
 
+namespace QaplaTester {
+
 /**
  * @brief Singleton class responsible for evaluating draw and resign conditions.
  */
@@ -100,7 +102,7 @@ public:
      * @param config The draw configuration to apply.
      */
     void setDrawAdjudicationConfig(const DrawAdjudicationConfig& config) {
-        drawConfig = config;
+        drawConfig_ = config;
     }
 
     /**
@@ -108,7 +110,7 @@ public:
      * @param config The resign configuration to apply.
      */
     void setResignAdjudicationConfig(const ResignAdjudicationConfig& config) {
-        resignConfig = config;
+        resignConfig_ = config;
     }
 
     /**
@@ -118,7 +120,7 @@ public:
      */
     std::pair<GameEndCause, GameResult> adjudicateDraw(const GameRecord& game) const;
     void testAdjudicate(const GameRecord& game) const {
-        if (drawConfig.active && !drawConfig.testOnly) {
+        if (drawConfig_.active && !drawConfig_.testOnly) {
             auto [cause, result] = adjudicateDraw(game);
             auto index = findDrawAdjudicationIndex(game);
             if ((result == GameResult::Unterminated) == index.has_value()) {
@@ -127,7 +129,7 @@ public:
                     << ", but index was: " << (index ? std::to_string(*index) : "none") << std::endl;
             }
         }
-        if (resignConfig.active && !resignConfig.testOnly) {
+        if (resignConfig_.active && !resignConfig_.testOnly) {
             auto [cause, result] = adjudicateResign(game);
             auto [resResult, resIndex] = findResignAdjudicationIndex(game);
             if (result != resResult) {
@@ -170,9 +172,13 @@ private:
 
     AdjudicationManager() = default;
 
-    DrawAdjudicationConfig drawConfig;
-    ResignAdjudicationConfig resignConfig;
+    DrawAdjudicationConfig drawConfig_;
+    ResignAdjudicationConfig resignConfig_;
 
-    AdjudicationTestStats drawStats;
-    AdjudicationTestStats resignStats;
+    AdjudicationTestStats drawStats_;
+    AdjudicationTestStats resignStats_;
+
+    std::mutex statsMutex_;
 };
+
+} // namespace QaplaTester

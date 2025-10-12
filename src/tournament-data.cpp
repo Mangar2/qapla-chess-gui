@@ -81,6 +81,18 @@ namespace QaplaWindows {
                 { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F }
             }
+        ),
+        adjudicationTable_(
+            "Adjudication Tests",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { .name = "Adjudicate", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F },
+                { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Correct", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
+                { .name = "Incorrect", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 70.0F, .alignRight = true },
+                { .name = "Saved", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "Total Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true }
+            }
         )
     { 
         runningTable_.setClickable(true);
@@ -299,8 +311,8 @@ namespace QaplaWindows {
 
             if (tournament_) {
                 PgnIO::tournament().setOptions(pgnConfig_);
-                AdjudicationManager::poolInstance().setDrawAdjudicationConfig(drawConfig_);
-                AdjudicationManager::poolInstance().setResignAdjudicationConfig(resignConfig_);
+                QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(drawConfig_);
+                QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(resignConfig_);
                 tournament_->createTournament(selectedEngines, *config_);
             } else {
                 SnackbarManager::instance().showError("Internal error, tournament not initialized");
@@ -387,6 +399,56 @@ namespace QaplaWindows {
             for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
                 const auto& stat = aggregate.causeStats[index];
                 addRow(causeTable_, scored.engineName, "loss", to_string(static_cast<GameEndCause>(index)), stat.loss);
+            }
+        }
+    }
+
+    void TournamentData::populateAdjudicationTable() {
+        adjudicationTable_.clear();
+        
+        auto results = QaplaTester::AdjudicationManager::poolInstance().computeTestResults();
+        
+        if (results.hasDrawTest) {
+            std::vector<std::string> row;
+            for (const auto& entry : results.drawResult) {
+                if (entry.key == "label") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "total") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "correct") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "incorrect") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "saved") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "total_time") {
+                    row.push_back(entry.value);
+                }
+            }
+            if (!row.empty()) {
+                adjudicationTable_.push(row);
+            }
+        }
+        
+        if (results.hasResignTest) {
+            std::vector<std::string> row;
+            for (const auto& entry : results.resignResult) {
+                if (entry.key == "label") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "total") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "correct") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "incorrect") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "saved") {
+                    row.push_back(entry.value);
+                } else if (entry.key == "total_time") {
+                    row.push_back(entry.value);
+                }
+            }
+            if (!row.empty()) {
+                adjudicationTable_.push(row);
             }
         }
     }
@@ -482,6 +544,7 @@ namespace QaplaWindows {
                 updateTournamentResults();
                 populateEloTable();
                 populateCauseTable();
+                populateAdjudicationTable();
             }
             populateRunningTable();
             populateViews();
@@ -519,6 +582,13 @@ namespace QaplaWindows {
             return;
         }
         causeTable_.draw(size, true);
+    }
+
+    void TournamentData::drawAdjudicationTable(const ImVec2& size) {
+        if (adjudicationTable_.size() == 0) {
+            return;
+        }
+        adjudicationTable_.draw(size, true);
     }
 
     void TournamentData::drawTabs() {

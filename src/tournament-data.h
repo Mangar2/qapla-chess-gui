@@ -116,6 +116,12 @@ namespace QaplaWindows {
         void drawCauseTable(const ImVec2& size);
 
         /**
+         * @brief Draws the table displaying adjudication test results.
+         * @param size Size of the table to draw.
+         */
+        void drawAdjudicationTable(const ImVec2& size);
+
+        /**
          * @brief Draws the tournament tabs showing boards for all running games.
          */
         void drawTabs();
@@ -184,16 +190,16 @@ namespace QaplaWindows {
             return *globalSettings_;
         }
 
-        const AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
+        const QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
             return drawConfig_;
         }
-        AdjudicationManager::DrawAdjudicationConfig& drawConfig() {
+        QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() {
             return drawConfig_;
         }
-		const AdjudicationManager::ResignAdjudicationConfig& resignConfig() const {
+		const QaplaTester::AdjudicationManager::ResignAdjudicationConfig& resignConfig() const {
             return resignConfig_;
         }
-        AdjudicationManager::ResignAdjudicationConfig& resignConfig() {
+        QaplaTester::AdjudicationManager::ResignAdjudicationConfig& resignConfig() {
             return resignConfig_;
         }
 
@@ -325,6 +331,7 @@ namespace QaplaWindows {
         void populateEloTable();
 		void populateRunningTable();
         void populateCauseTable();
+        void populateAdjudicationTable();
 
         void populateViews();
 
@@ -339,15 +346,16 @@ namespace QaplaWindows {
 
         PgnIO::Options pgnConfig_;
 		EachEngineConfig eachEngineConfig_;
-		AdjudicationManager::DrawAdjudicationConfig drawConfig_;
-		AdjudicationManager::ResignAdjudicationConfig resignConfig_;
-        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{};        uint32_t concurrency_ = 1;
+		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
+		QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
+        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{}; 
+        uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games
 
         ImGuiTable eloTable_;
         ImGuiTable runningTable_;
         ImGuiTable causeTable_;
-
+        ImGuiTable adjudicationTable_;
 
         int32_t selectedIndex_ = 0;
         State state_ = State::Stopped;

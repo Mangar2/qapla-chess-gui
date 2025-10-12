@@ -207,7 +207,7 @@ void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) 
                 auto result = getResult();
                 if (cmd == InputHandler::ImmediateCommand::Info) {
                     result.printRatingTableUciStyle(std::cout, config_.averageElo);
-                    AdjudicationManager::poolInstance().printTestResult(std::cout);
+                    QaplaTester::AdjudicationManager::poolInstance().printTestResult(std::cout);
                 }
                 else if (cmd == InputHandler::ImmediateCommand::Outcome) {
                     result.printOutcome(std::cout);
