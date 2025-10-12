@@ -23,6 +23,7 @@
 #include "tournament-board-window.h"
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
+#include "imgui-engine-global-settings.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
@@ -151,6 +152,38 @@ namespace QaplaWindows {
             return eachEngineConfig_;
 		}
 
+        /**
+         * @brief Returns a reference to the engine selection.
+         * @return Reference to the engine selection.
+         */
+        ImGuiEngineSelect& engineSelect() {
+            return *engineSelect_;
+        }
+
+        /**
+         * @brief Returns a const reference to the engine selection.
+         * @return Const reference to the engine selection.
+         */
+        const ImGuiEngineSelect& engineSelect() const {
+            return *engineSelect_;
+        }
+
+        /**
+         * @brief Returns a reference to the global engine settings.
+         * @return Reference to the global engine settings.
+         */
+        ImGuiEngineGlobalSettings& globalSettings() {
+            return *globalSettings_;
+        }
+
+        /**
+         * @brief Returns a const reference to the global engine settings.
+         * @return Const reference to the global engine settings.
+         */
+        const ImGuiEngineGlobalSettings& globalSettings() const {
+            return *globalSettings_;
+        }
+
         const AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
             return drawConfig_;
         }
@@ -274,7 +307,21 @@ namespace QaplaWindows {
          */
         void loadResignAdjudicationConfig();
 
-    private:
+        /**
+         * @brief Loads the engine selection configuration from configuration data.
+         */
+        void loadEngineSelectionConfig();
+
+        /**
+         * @brief Loads the global engine settings configuration from configuration data.
+         */
+        void loadGlobalSettingsConfig();
+
+        /**
+         * @brief Sets up callbacks for engine selection and global settings.
+         */
+        void setupCallbacks();
+
         void populateEloTable();
 		void populateRunningTable();
         void populateCauseTable();
@@ -283,18 +330,18 @@ namespace QaplaWindows {
 
         std::vector<TournamentBoardWindow> boardWindow_;
 
-		std::unique_ptr<Tournament> tournament_;
+        std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;
         std::unique_ptr<TournamentResultIncremental> result_;
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
 
         PgnIO::Options pgnConfig_;
 		EachEngineConfig eachEngineConfig_;
 		AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		AdjudicationManager::ResignAdjudicationConfig resignConfig_;
-        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{};
-
-        uint32_t concurrency_ = 1;
+        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{};        uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games
 
         ImGuiTable eloTable_;

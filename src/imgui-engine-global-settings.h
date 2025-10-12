@@ -57,7 +57,6 @@ namespace QaplaWindows {
          */
         struct TimeControlSettings {
             std::string timeControl = "60.0+0.0";  ///< Time control string
-            std::string predefinedTimeControl = "Custom"; ///< Selected predefined time control
             std::vector<std::string> predefinedOptions = {
                 "Custom", "10.0+0.02", "20.0+0.02", "50.0+0.10", "60.0+0.20"
             };

@@ -97,17 +97,14 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
     if (ImGui::CollapsingHeader("Time Control")) {
         ImGui::Indent(controlIndent);
         
+        // Both controls work with the SAME variable (timeControlSettings_.timeControl)
+        // This ensures automatic synchronization: selecting "50.0+0.10" in the dropdown
+        // automatically updates the input field, and vice versa - no separate sync needed
         modified |= ImGuiControls::timeControlInput(timeControlSettings_.timeControl, blitz, controlWidth);
         
         ImGui::SetNextItemWidth(controlWidth);
-        if (ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.predefinedTimeControl, 
-                                        timeControlSettings_.predefinedOptions)) {
-            modified = true;
-            if (timeControlSettings_.predefinedTimeControl != "Custom") {
-                timeControlSettings_.timeControl = timeControlSettings_.predefinedTimeControl;
-            }
-        }
-        
+        modified |= ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.timeControl, 
+                                        timeControlSettings_.predefinedOptions);
         ImGui::Unindent(controlIndent);
     }
     
@@ -174,8 +171,7 @@ void ImGuiEngineGlobalSettings::updateTimeControlConfiguration() const {
     // Build predefined options entries
     QaplaHelpers::IniFile::KeyValueMap entries{
         {"id", id_},
-        {"timeControl", timeControlSettings_.timeControl},
-        {"predefinedTimeControl", timeControlSettings_.predefinedTimeControl}
+        {"timeControl", timeControlSettings_.timeControl}
     };
     
     // Add predefined options
@@ -255,11 +251,6 @@ void ImGuiEngineGlobalSettings::setTimeControlConfiguration(const QaplaHelpers::
             // Load time control
             if (auto value = section.getValue("timeControl")) {
                 newTimeControlSettings.timeControl = *value;
-            }
-            
-            // Load predefined time control
-            if (auto value = section.getValue("predefinedTimeControl")) {
-                newTimeControlSettings.predefinedTimeControl = *value;
             }
             
             // Load predefined options

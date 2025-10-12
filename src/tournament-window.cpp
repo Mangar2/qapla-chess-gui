@@ -43,92 +43,6 @@
 
 using namespace QaplaWindows;
 
-
-TournamentWindow::TournamentWindow()
-    : engineSelect_(std::make_unique<ImGuiEngineSelect>())
-    , globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>())
-{
-    setEngineConfiguration();
-    setGlobalSettingsConfiguration();
-    
-    ImGuiEngineSelect::Options options;
-    options.allowGauntletEdit = true;
-    options.allowPonderEdit = true;
-    options.allowTimeControlEdit = true;
-    options.allowTraceLevelEdit = true;
-    options.allowRestartOptionEdit = true;
-    options.allowMultipleSelection = true;
-    engineSelect_->setOptions(options);
-    
-    // Set up callbacks to synchronize global settings with tournament data
-    globalSettings_->setConfigurationChangedCallback(
-        [](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
-            auto& tournamentData = TournamentData::instance();
-            
-            // Sync hash
-            if (settings.useGlobalHash) {
-                tournamentData.eachEngineConfig().hash = settings.hashSizeMB;
-            }
-            
-            // Sync restart
-            if (settings.useGlobalRestart) {
-                tournamentData.eachEngineConfig().restart = settings.restart;
-            }
-            
-            // Sync trace
-            if (settings.useGlobalTrace) {
-                tournamentData.eachEngineConfig().traceLevel = settings.traceLevel;
-            }
-            
-            // Sync ponder
-            if (settings.useGlobalPonder) {
-                tournamentData.eachEngineConfig().ponder = settings.ponder ? "on" : "off";
-            }
-        }
-    );
-    
-    globalSettings_->setTimeControlChangedCallback(
-        [](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
-            auto& tournamentData = TournamentData::instance();
-            tournamentData.eachEngineConfig().tc = settings.timeControl;
-        }
-    );
-
-    engineSelect_->setConfigurationChangedCallback(
-        [](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-            TournamentData::instance().setEngineConfigurations(configurations);
-        }
-    );
-   
-}
-
-TournamentWindow::~TournamentWindow() = default;
-
-void TournamentWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
-    engineSelect_->setConfigurationChangedCallback(std::move(callback));
-}
-
-void TournamentWindow::setEngineConfiguration() {
-    auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    engineSelect_->setId("tournament");
-    engineSelect_->setEngineConfiguration(sections);
-}
-
-void TournamentWindow::setGlobalSettingsConfiguration() {
-    auto& config = QaplaConfiguration::Configuration::instance();
-    globalSettings_->setId("tournament");
-    // Load global engine settings
-    auto globalSections = config.getConfigData().getSectionList("eachengine", "tournament")
-        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    globalSettings_->setGlobalConfiguration(globalSections);
-    
-    // Load time control settings
-    auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "tournament")
-        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    globalSettings_->setTimeControlConfiguration(timeControlSections);
-}
-
 static void drawSingleButton(
     ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
@@ -283,7 +197,7 @@ bool TournamentWindow::drawInput() {
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
         ImGui::Indent(10.0F);
-        changed |= engineSelect_->draw();
+        changed |= tournamentData.engineSelect().draw();
         ImGui::Unindent(10.0F);
         ImGui::PopID();
     }
@@ -340,8 +254,8 @@ bool TournamentWindow::drawInput() {
     }
     
     // Draw time control and global engine settings using the new class
-    changed |= globalSettings_->drawTimeControl(inputWidth, 10.0F, false);
-    changed |= globalSettings_->drawGlobalSettings(inputWidth, 10.0F);
+    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
+    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
     
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("pgn");

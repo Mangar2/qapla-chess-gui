@@ -23,6 +23,7 @@
 #include "tournament-board-window.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
+#include "imgui-engine-global-settings.h"
 #include "configuration.h"
 
 #include "qapla-tester/string-helper.h"
@@ -47,6 +48,8 @@ namespace QaplaWindows {
 		config_(std::make_unique<TournamentConfig>()),
         result_(std::make_unique<TournamentResultIncremental>()),
         imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
+        engineSelect_(std::make_unique<ImGuiEngineSelect>()),
+        globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -81,10 +84,67 @@ namespace QaplaWindows {
         )
     { 
         runningTable_.setClickable(true);
+        
+        // Set up engine select options
+        ImGuiEngineSelect::Options options;
+        options.allowGauntletEdit = true;
+        options.allowPonderEdit = true;
+        options.allowTimeControlEdit = true;
+        options.allowTraceLevelEdit = true;
+        options.allowRestartOptionEdit = true;
+        options.allowMultipleSelection = true;
+        engineSelect_->setOptions(options);
+        
+        // Set up callbacks
+        setupCallbacks();
+        
         loadConfig();
+        loadTournament();
     }
 
     TournamentData::~TournamentData() = default;
+
+    void TournamentData::setupCallbacks() {
+        // Callback is triggered whenever the user modifies global engine settings in the UI
+        // It copies the settings from the UI component into eachEngineConfig_, which is later
+        // used in createTournament() to apply these global settings to all selected engines
+        globalSettings_->setConfigurationChangedCallback(
+            [this](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+                // Copy global settings to eachEngineConfig_ (only when "use global" checkbox is enabled)
+                if (settings.useGlobalHash) {
+                    eachEngineConfig_.hash = settings.hashSizeMB;
+                }
+                
+                if (settings.useGlobalRestart) {
+                    eachEngineConfig_.restart = settings.restart;
+                }
+                
+                if (settings.useGlobalTrace) {
+                    eachEngineConfig_.traceLevel = settings.traceLevel;
+                }
+                
+                if (settings.useGlobalPonder) {
+                    eachEngineConfig_.ponder = settings.ponder ? "on" : "off";
+                }
+            }
+        );
+        
+        // Callback is triggered when the user changes time control settings in the UI
+        // It copies the time control string into eachEngineConfig_.tc for use in createTournament()
+        globalSettings_->setTimeControlChangedCallback(
+            [this](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
+                eachEngineConfig_.tc = settings.timeControl;
+            }
+        );
+
+        // Callback is triggered when the user selects/deselects engines in the UI
+        // It updates the list of engine configurations that will be used in the tournament
+        engineSelect_->setConfigurationChangedCallback(
+            [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+                engineConfigurations_ = configurations;
+            }
+        );
+    }
 
     void TournamentData::updateConfiguration() {
 
@@ -690,12 +750,37 @@ namespace QaplaWindows {
         return valid;
 	}
 
+     void TournamentData::loadEngineSelectionConfig() {
+        auto sections = QaplaConfiguration::Configuration::instance()
+            .getConfigData().getSectionList("engineselection", "tournament")
+            .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+        engineSelect_->setId("tournament");
+        engineSelect_->setEngineConfiguration(sections);
+    }
+
+    void TournamentData::loadGlobalSettingsConfig() {
+        auto& config = QaplaConfiguration::Configuration::instance();
+        
+        // Load global engine settings
+        auto globalSections = config.getConfigData().getSectionList("eachengine", "tournament")
+            .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+        globalSettings_->setId("tournament");
+        globalSettings_->setGlobalConfiguration(globalSections);
+        
+        // Load time control settings
+        auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "tournament")
+            .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+        globalSettings_->setTimeControlConfiguration(timeControlSections);
+    }
+
     void TournamentData::loadConfig() {
         loadTournamentConfig();
         loadOpenings();
         loadPgnConfig();
         loadDrawAdjudicationConfig();
         loadResignAdjudicationConfig();
+        loadEngineSelectionConfig();
+        loadGlobalSettingsConfig();
     }
 
     void TournamentData::saveTournament(const std::string& filename) {

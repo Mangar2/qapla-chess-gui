@@ -21,7 +21,6 @@
 
 #include "embedded-window.h"
 #include "imgui-engine-select.h"
-#include "imgui-engine-global-settings.h"
 
 #include "qapla-tester/engine-config.h"
 
@@ -36,42 +35,15 @@ namespace QaplaWindows {
      */
     class TournamentWindow: public EmbeddedWindow {
     public:
-        /**
-         * @brief Sets the data source for this window.
-         * @param record Shared pointer to the constant game record.
-         */
-        TournamentWindow();
-        ~TournamentWindow();
+        TournamentWindow() = default;
+        ~TournamentWindow() = default;
 
         void draw() override;
-        
-        /**
-         * @brief Sets the callback that is called when the engine configuration changes.
-         * @param callback The new callback.
-         */
-        void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
-
-
 
     private:
         static void drawButtons();
         static void executeCommand(const std::string &button);
-        bool drawInput();
-
-        /**
-         * @brief Sets the engine configurations from INI file sections
-         */
-        void setEngineConfiguration();
-
-        /**
-         * @brief Sets the global settings configuration from INI file
-         */
-        void setGlobalSettingsConfiguration();
-        
-        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
-        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
-
-
+        static bool drawInput();
     };
 
 } // namespace QaplaWindows
