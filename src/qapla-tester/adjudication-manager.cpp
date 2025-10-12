@@ -242,28 +242,76 @@ void AdjudicationManager::onGameFinished(const GameRecord& game) {
     }
 }
 
+AdjudicationManager::TestResults AdjudicationManager::computeTestResults() const {
+    TestResults results;
+    
+    results.hasDrawTest = drawConfig.active && drawConfig.testOnly;
+    results.hasResignTest = resignConfig.active && resignConfig.testOnly;
+    
+    if (results.hasDrawTest) {
+        results.drawResult = {
+            {.key = "label", .value = "draw"},
+            {.key = "total", .value = std::to_string(drawStats.totalGames)},
+            {.key = "correct", .value = std::to_string(drawStats.correctDecisions)},
+            {.key = "incorrect", .value = std::to_string(drawStats.incorrectDecisions)},
+            {.key = "saved", .value = QaplaHelpers::formatMs(drawStats.savedTimeMs)},
+            {.key = "total_time", .value = QaplaHelpers::formatMs(drawStats.totalTimeMs)}
+        };
+    }
+    
+    if (results.hasResignTest) {
+        results.resignResult = {
+            {.key = "label", .value = "resign"},
+            {.key = "total", .value = std::to_string(resignStats.totalGames)},
+            {.key = "correct", .value = std::to_string(resignStats.correctDecisions)},
+            {.key = "incorrect", .value = std::to_string(resignStats.incorrectDecisions)},
+            {.key = "saved", .value = QaplaHelpers::formatMs(resignStats.savedTimeMs)},
+            {.key = "total_time", .value = QaplaHelpers::formatMs(resignStats.totalTimeMs)}
+        };
+    }
+    
+    return results;
+}
+
 void AdjudicationManager::printTestResult(std::ostream& out) const {
-    auto print = [&](const std::string& label, const AdjudicationTestStats& stats) {
-        out << "adjudicate " << std::setw(6) << std::left << label
-            << " total     " << std::setw(6) << stats.totalGames
-            << " correct   " << std::setw(6) << stats.correctDecisions
-            << " incorrect " << std::setw(6) << stats.incorrectDecisions
-            << " saved     " << std::setw(10) << QaplaHelpers::formatMs(stats.savedTimeMs)
-            << " total     " << QaplaHelpers::formatMs(stats.totalTimeMs)
-            << "\n";
+    auto results = computeTestResults();
+    
+    if (!results.hasDrawTest && !results.hasResignTest) {
+        return;
+    }
+    
+    auto printResult = [&](const std::vector<TestResultEntry>& result) {
+        std::string label;
+        for (const auto& entry : result) {
+            if (entry.key == "label") {
+                label = entry.value;
+                break;
+            }
+        }
+        
+        out << "adjudicate " << std::setw(6) << std::left << label;
+        for (const auto& entry : result) {
+            if (entry.key == "total") {
+                out << " total     " << std::setw(6) << entry.value;
+            } else if (entry.key == "correct") {
+                out << " correct   " << std::setw(6) << entry.value;
+            } else if (entry.key == "incorrect") {
+                out << " incorrect " << std::setw(6) << entry.value;
+            } else if (entry.key == "saved") {
+                out << " saved     " << std::setw(10) << entry.value;
+            } else if (entry.key == "total_time") {
+                out << " total     " << entry.value;
+            }
+        }
+        out << "\n";
     };
     
-    bool drawTest = drawConfig.active && drawConfig.testOnly;
-    bool resignTest = resignConfig.active && resignConfig.testOnly;
-    
-    if (drawTest || resignTest) {
-        out << "Adjudication test results:\n";
-        if (drawTest) {
-            print("draw", drawStats);
-        }
-        if (resignTest) {
-            print("resign", resignStats);
-        }
-        out << "\n" << std::flush;
+    out << "Adjudication test results:\n";
+    if (results.hasDrawTest) {
+        printResult(results.drawResult);
     }
+    if (results.hasResignTest) {
+        printResult(results.resignResult);
+    }
+    out << "\n" << std::flush;
 }

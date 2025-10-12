@@ -20,6 +20,8 @@
 
 #include <optional>
 #include <iostream>
+#include <string>
+#include <vector>
 #include "game-record.h"
 #include "game-result.h"
 
@@ -59,6 +61,23 @@ public:
         std::vector<GameRecord> failed;
     };
 
+    /**
+     * @brief Key-value pair for test result output.
+     */
+    struct TestResultEntry {
+        std::string key;
+        std::string value;
+    };
+
+    /**
+     * @brief Complete test results for both draw and resign adjudication.
+     */
+    struct TestResults {
+        bool hasDrawTest = false;
+        bool hasResignTest = false;
+        std::vector<TestResultEntry> drawResult;
+        std::vector<TestResultEntry> resignResult;
+    };
 
     /**
      * @brief Returns the singleton instance.
@@ -131,6 +150,12 @@ public:
      * @param game The complete and finalized game record.
      */
     void onGameFinished(const GameRecord& game);
+
+    /**
+     * @brief Computes the test results for both draw and resign adjudication.
+     * @return TestResults structure containing formatted test results.
+     */
+    TestResults computeTestResults() const;
 
     /**
      * @brief Prints adjudication test statistics to the given output stream.
