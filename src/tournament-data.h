@@ -48,15 +48,6 @@ namespace QaplaWindows {
 
 	class TournamentData {
     public: 
-        struct EachEngineConfig {
-            std::string tc;
-			std::string restart;
-			std::string traceLevel;
-            uint32_t hash;
-            std::string ponder;
-
-		};
-
         enum class State {
             Stopped,
             Starting,
@@ -149,14 +140,6 @@ namespace QaplaWindows {
         PgnIO::Options& pgnConfig() {
             return pgnConfig_;
         }
-
-        const EachEngineConfig& eachEngineConfig() const {
-            return eachEngineConfig_;
-		}
-
-        EachEngineConfig& eachEngineConfig() {
-            return eachEngineConfig_;
-		}
 
         /**
          * @brief Returns a reference to the engine selection.
@@ -345,7 +328,8 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
 
         PgnIO::Options pgnConfig_;
-		EachEngineConfig eachEngineConfig_;
+        ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
+        ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{}; 

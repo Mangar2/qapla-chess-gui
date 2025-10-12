@@ -122,22 +122,7 @@ namespace QaplaWindows {
         // used in createTournament() to apply these global settings to all selected engines
         globalSettings_->setConfigurationChangedCallback(
             [this](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
-                // Copy global settings to eachEngineConfig_ (only when "use global" checkbox is enabled)
-                if (settings.useGlobalHash) {
-                    eachEngineConfig_.hash = settings.hashSizeMB;
-                }
-                
-                if (settings.useGlobalRestart) {
-                    eachEngineConfig_.restart = settings.restart;
-                }
-                
-                if (settings.useGlobalTrace) {
-                    eachEngineConfig_.traceLevel = settings.traceLevel;
-                }
-                
-                if (settings.useGlobalPonder) {
-                    eachEngineConfig_.ponder = settings.ponder ? "on" : "off";
-                }
+                eachEngineConfig_ = settings;
             }
         );
         
@@ -145,7 +130,7 @@ namespace QaplaWindows {
         // It copies the time control string into eachEngineConfig_.tc for use in createTournament()
         globalSettings_->setTimeControlChangedCallback(
             [this](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
-                eachEngineConfig_.tc = settings.timeControl;
+                timeControlSettings_ = settings;
             }
         );
 
@@ -292,13 +277,19 @@ namespace QaplaWindows {
                     continue;
                 }
                 EngineConfig engine = tournamentConfig.config;
-                if (eachEngineConfig_.ponder != "per engine") {
-                    engine.setPonder(eachEngineConfig_.ponder == "on");
+                if (eachEngineConfig_.useGlobalPonder) {
+                    engine.setPonder(eachEngineConfig_.ponder);
                 }
-                engine.setTimeControl(eachEngineConfig_.tc);
-                engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
-                engine.setTraceLevel(eachEngineConfig_.traceLevel);
-                engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hash));
+                engine.setTimeControl(timeControlSettings_.timeControl);
+                if (eachEngineConfig_.useGlobalRestart) {
+                    engine.setRestartOption(parseRestartOption(eachEngineConfig_.restart));
+                }
+                if (eachEngineConfig_.useGlobalTrace) {
+                    engine.setTraceLevel(eachEngineConfig_.traceLevel);
+                }
+                if (eachEngineConfig_.useGlobalHash) {
+                    engine.setOptionValue("Hash", std::to_string(eachEngineConfig_.hashSizeMB));
+                }
                 if (engine.gauntlet()) {
                     config_->type = "gauntlet";
                 }
