@@ -127,12 +127,10 @@ void ImGuiEngineGlobalSettings::setTimeControlSettings(const TimeControlSettings
 
 void ImGuiEngineGlobalSettings::setConfigurationChangedCallback(ConfigurationChangedCallback callback) {
     configurationCallback_ = std::move(callback);
-    notifyConfigurationChanged();
 }
 
 void ImGuiEngineGlobalSettings::setTimeControlChangedCallback(TimeControlChangedCallback callback) {
     timeControlCallback_ = std::move(callback);
-    notifyTimeControlChanged();
 }
 
 void ImGuiEngineGlobalSettings::notifyConfigurationChanged() {

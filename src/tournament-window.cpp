@@ -170,6 +170,8 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
     }
 }
 
+
+
 bool TournamentWindow::drawInput() {
     
 	constexpr float inputWidth = 200.0F;
@@ -290,15 +292,14 @@ bool TournamentWindow::drawInput() {
         ImGui::PushID("drawAdjudication");
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Active", tournamentData.drawConfig().active);
+   		changed |= ImGuiControls::triStateInput("Active", 
+            tournamentData.drawConfig().active, tournamentData.drawConfig().testOnly);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData.drawConfig().minFullMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.drawConfig().requiredConsecutiveMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.drawConfig().centipawnThreshold, -10000, 10000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Test adjudication only", tournamentData.drawConfig().testOnly);
         ImGui::Unindent(10.0F);
         ImGui::PopID();
 	}
@@ -306,15 +307,14 @@ bool TournamentWindow::drawInput() {
         ImGui::PushID("resignAdjudication");
         ImGui::Indent(10.0F);
 		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Active", tournamentData.resignConfig().active);
+		changed |= ImGuiControls::triStateInput("Active", 
+            tournamentData.resignConfig().active, tournamentData.resignConfig().testOnly);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.resignConfig().requiredConsecutiveMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.resignConfig().centipawnThreshold, -10000, 10000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::booleanInput("Both side decides", tournamentData.resignConfig().twoSided);
-		ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Test adjudication only", tournamentData.resignConfig().testOnly);
         ImGui::Unindent(10.0F);
         ImGui::PopID();
 	}

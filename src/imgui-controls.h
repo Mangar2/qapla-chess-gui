@@ -324,6 +324,37 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
+     * @brief Tri-state input for two boolean values using a selection box with three options.
+     * 
+     * Logic: the major controls if the feature is active at all, 0 = inactive, 2 = active, 
+     * the minor controls if it is in test mode, 1 = test mode (only if major is true).
+     * 
+     * @param label Label to display next to the input field.
+     * @param major Reference to the major boolean value to modify.
+     * @param minor Reference to the minor boolean value to modify.
+     * @param labels Optional labels for the three states (default: {"Inactive", "Test", "Active"}).
+     */
+    inline bool triStateInput(const char* label, bool& major, bool& minor, 
+        std::vector<std::string> labels = {"Inactive", "Test", "Active"}) {
+
+        // Map the boolean value to the selection index
+        int currentItem = major ? 2 : 0;
+        if (major && minor) {
+            currentItem = 1;
+        }
+        
+        // Use the selectionBox function to render the input
+        if (selectionBox(label, currentItem, labels)) {
+            // Update the boolean value based on the selected index
+            major = (currentItem != 0);
+            minor = (currentItem == 1);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @brief Checkbox input for a boolean value.
      * @param label Label to display next to the checkbox.
      * @param value Reference to the boolean value to modify.
