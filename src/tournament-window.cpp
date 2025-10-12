@@ -290,6 +290,8 @@ bool TournamentWindow::drawInput() {
         ImGui::PushID("drawAdjudication");
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
+		changed |= ImGuiControls::booleanInput("Active", tournamentData.drawConfig().active);
+		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData.drawConfig().minFullMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.drawConfig().requiredConsecutiveMoves, 0, 1000);
@@ -303,6 +305,8 @@ bool TournamentWindow::drawInput() {
     if (ImGui::CollapsingHeader("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("resignAdjudication");
         ImGui::Indent(10.0F);
+		ImGui::SetNextItemWidth(inputWidth);
+		changed |= ImGuiControls::booleanInput("Active", tournamentData.resignConfig().active);
 		ImGui::SetNextItemWidth(inputWidth);
 		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.resignConfig().requiredConsecutiveMoves, 0, 1000);
 		ImGui::SetNextItemWidth(inputWidth);

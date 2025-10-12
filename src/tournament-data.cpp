@@ -209,6 +209,7 @@ namespace QaplaWindows {
                 .name = "drawadjudication",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
                     {"id", "tournament"},
+                    {"active", drawConfig_.active ? "true" : "false"},
                     {"minFullMoves", std::to_string(drawConfig_.minFullMoves)},
                     {"requiredConsecutiveMoves", std::to_string(drawConfig_.requiredConsecutiveMoves)},
                     {"centipawnThreshold", std::to_string(drawConfig_.centipawnThreshold)},
@@ -222,6 +223,7 @@ namespace QaplaWindows {
                 .name = "resignadjudication",
                 .entries = QaplaHelpers::IniFile::KeyValueMap{
                     {"id", "tournament"},
+                    {"active", resignConfig_.active ? "true" : "false"},
                     {"requiredConsecutiveMoves", std::to_string(resignConfig_.requiredConsecutiveMoves)},
                     {"centipawnThreshold", std::to_string(resignConfig_.centipawnThreshold)},
                     {"twoSided", resignConfig_.twoSided ? "true" : "false"},
@@ -297,8 +299,8 @@ namespace QaplaWindows {
 
             if (tournament_) {
                 PgnIO::tournament().setOptions(pgnConfig_);
-                AdjudicationManager::instance().setDrawAdjudicationConfig(drawConfig_);
-                AdjudicationManager::instance().setResignAdjudicationConfig(resignConfig_);
+                AdjudicationManager::poolInstance().setDrawAdjudicationConfig(drawConfig_);
+                AdjudicationManager::poolInstance().setResignAdjudicationConfig(resignConfig_);
                 tournament_->createTournament(selectedEngines, *config_);
             } else {
                 SnackbarManager::instance().showError("Internal error, tournament not initialized");
@@ -703,7 +705,10 @@ namespace QaplaWindows {
         }
 
         for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "minFullMoves") {
+            if (key == "active") {
+                drawConfig_.active = (value == "true");
+            }
+            else if (key == "minFullMoves") {
                 drawConfig_.minFullMoves = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "requiredConsecutiveMoves") {
@@ -726,7 +731,10 @@ namespace QaplaWindows {
         }
 
         for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "requiredConsecutiveMoves") {
+            if (key == "active") {
+                resignConfig_.active = (value == "true");
+            }
+            else if (key == "requiredConsecutiveMoves") {
                 resignConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
             }
             else if (key == "centipawnThreshold") {

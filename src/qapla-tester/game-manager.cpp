@@ -282,14 +282,14 @@ std::tuple<GameEndCause, GameResult> GameManager::getGameResult() {
 
 	const auto& gameRecord = gameContext_.gameRecord();
 
-	AdjudicationManager::instance().testAdjudicate(gameRecord);
+	AdjudicationManager::poolInstance().testAdjudicate(gameRecord);
 
-	auto [dcause, dresult] = AdjudicationManager::instance().adjudicateDraw(gameRecord);
+	auto [dcause, dresult] = AdjudicationManager::poolInstance().adjudicateDraw(gameRecord);
     if (dresult != GameResult::Unterminated) {
         return { dcause, dresult };
     }
 
-	auto [rcause, rresult] = AdjudicationManager::instance().adjudicateResign(gameRecord);
+	auto [rcause, rresult] = AdjudicationManager::poolInstance().adjudicateResign(gameRecord);
 	if (rresult != GameResult::Unterminated) {
         return { rcause, rresult };
     }
@@ -490,7 +490,7 @@ void GameManager::finalizeTaskAndContinue() {
     // With a direct loss e.g. due to disconnect. But I don´t know why we ever checked for any move
 	const auto& gameRecord = gameContext_.gameRecord();
     provider->setGameRecord(taskId_, gameRecord);
-	AdjudicationManager::instance().onGameFinished(gameRecord);
+	AdjudicationManager::poolInstance().onGameFinished(gameRecord);
 
     {
         std::scoped_lock lock(pauseMutex_);

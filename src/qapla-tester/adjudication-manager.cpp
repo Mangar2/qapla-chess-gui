@@ -21,11 +21,11 @@
  #include "string-helper.h"
 
 std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const GameRecord& game) const {
-    if (!drawConfig || drawConfig->testOnly) {
+    if (!drawConfig.active || drawConfig.testOnly) {
 		return { GameEndCause::Ongoing, GameResult::Unterminated };
     }
     const auto& moves = game.history();
-    const auto& cfg = *drawConfig;
+    const auto& cfg = drawConfig;
 
     if (cfg.requiredConsecutiveMoves <= 0 
         || cfg.centipawnThreshold <= 0 
@@ -56,11 +56,11 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
 }
 
  std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateResign(const GameRecord& game) const {
-    if (!resignConfig || resignConfig->testOnly) {
+    if (!resignConfig.active || resignConfig.testOnly) {
         return { GameEndCause::Ongoing, GameResult::Unterminated };
     }
     const auto& moves = game.history();
-    const auto& cfg = *resignConfig;
+    const auto& cfg = resignConfig;
 
     if (cfg.requiredConsecutiveMoves <= 0 
         || cfg.centipawnThreshold <= 0 
@@ -70,7 +70,7 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
 
     uint32_t consecutive = 0;
 
-	auto& lastMove = moves.back();
+	const auto& lastMove = moves.back();
     bool curLoosing = lastMove.scoreCp && *lastMove.scoreCp <= -cfg.centipawnThreshold;
     // If white to move, the last move is a black move. When last last move looses the opponent wins
     GameResult prospectiveResult = game.isWhiteToMove() == curLoosing ? GameResult::WhiteWins : GameResult::BlackWins;
@@ -79,9 +79,13 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
         const auto& move = moves[static_cast<uint32_t>(i)];
 
         if (curLoosing) {
-            if (!move.scoreCp || *move.scoreCp > -cfg.centipawnThreshold) break;
+            if (!move.scoreCp || *move.scoreCp > -cfg.centipawnThreshold) {
+                break;
+            }
         } else if (cfg.twoSided) {
-            if (!move.scoreCp || *move.scoreCp < cfg.centipawnThreshold) break;
+            if (!move.scoreCp || *move.scoreCp < cfg.centipawnThreshold) {
+                break;
+            }
         }
         consecutive++;
 
@@ -107,7 +111,7 @@ std::pair<GameEndCause, GameResult> AdjudicationManager::adjudicateDraw(const Ga
 }
 
 std::optional<size_t> AdjudicationManager::findDrawAdjudicationIndex(const GameRecord& game) const {
-	const auto& cfg = *drawConfig;
+	const auto& cfg = drawConfig;
     const auto& moves = game.history();
     if (cfg.requiredConsecutiveMoves <= 0 || cfg.centipawnThreshold <= 0 || moves.size() < 2 * cfg.minFullMoves) {
         return std::nullopt;
@@ -133,10 +137,21 @@ std::optional<size_t> AdjudicationManager::findDrawAdjudicationIndex(const GameR
     return std::nullopt;
 }
 
+static uint32_t updateConsecutiveCounts(bool loosing, uint32_t consecutive) {
+    return loosing ? consecutive + 1 : 0;
+}
+
+static bool isValidResignConfig(const AdjudicationManager::ResignAdjudicationConfig& config, 
+    const std::vector<MoveRecord>& moves) {
+    return config.requiredConsecutiveMoves > 0 
+        && config.centipawnThreshold > 0 
+        && moves.size() >= 2 * static_cast<size_t>(config.requiredConsecutiveMoves);
+}
+
 std::pair<GameResult, size_t> AdjudicationManager::findResignAdjudicationIndex(const GameRecord& game) const {
-	const auto& cfg = *resignConfig;
+    
     const auto& moves = game.history();
-    if (cfg.requiredConsecutiveMoves <= 0 || cfg.centipawnThreshold <= 0 || moves.size() < 2 * cfg.requiredConsecutiveMoves) {
+    if (!isValidResignConfig(resignConfig, moves)) {
         return { GameResult::Unterminated , 0 };
     }
 
@@ -147,24 +162,25 @@ std::pair<GameResult, size_t> AdjudicationManager::findResignAdjudicationIndex(c
     uint32_t wConsecutive = 0;
     uint32_t bConsecutive = 0;
     // Required to ensure that both sides satisfy their respective conditions when two-sided resign is active
-    uint32_t requiredConsecutive = cfg.twoSided ? 2 * cfg.requiredConsecutiveMoves : cfg.requiredConsecutiveMoves;
+    uint32_t requiredConsecutive = resignConfig.twoSided ? 
+        2 * resignConfig.requiredConsecutiveMoves : resignConfig.requiredConsecutiveMoves;
 
     for (size_t i = 0; i < moves.size(); ++i) {
         const auto& move = moves[i];
 
-        bool loosing = move.scoreCp && *move.scoreCp <= -cfg.centipawnThreshold;
+        bool loosing = move.scoreCp && *move.scoreCp <= -resignConfig.centipawnThreshold;
         if (wtm) {
-            wConsecutive = loosing ? wConsecutive + 1 : 0;
+            wConsecutive = updateConsecutiveCounts(loosing, wConsecutive);
         } else {
-            bConsecutive = loosing ? bConsecutive + 1 : 0;
+            bConsecutive = updateConsecutiveCounts(loosing, bConsecutive);
         }
-        
-        if (cfg.twoSided) {
-            bool winning = move.scoreCp && *move.scoreCp >= cfg.centipawnThreshold;
+
+        if (resignConfig.twoSided) {
+            bool winning = move.scoreCp && *move.scoreCp >= resignConfig.centipawnThreshold;
             if (wtm) {
-                bConsecutive = winning ? bConsecutive + 1 : 0;
+                bConsecutive = updateConsecutiveCounts(winning, bConsecutive);
             } else {
-                wConsecutive = winning ? wConsecutive + 1 : 0;
+                wConsecutive = updateConsecutiveCounts(winning, wConsecutive);
             }
         }
 
@@ -185,11 +201,13 @@ void AdjudicationManager::onGameFinished(const GameRecord& game) {
     const auto& [finalCause, finalResult] = game.getGameResult();
     const auto& moves = game.history();
 
-    if (drawConfig && drawConfig->testOnly) {
+    if (drawConfig.active && drawConfig.testOnly) {
         drawStats.totalGames++;
 
         if (auto index = findDrawAdjudicationIndex(game)) {
-            for (size_t i = *index + 1; i < moves.size(); ++i) drawStats.savedTimeMs += moves[i].timeMs;
+            for (size_t i = *index + 1; i < moves.size(); ++i) {
+                drawStats.savedTimeMs += moves[i].timeMs;
+            }
 
             if (finalResult == GameResult::Draw) {
                 drawStats.correctDecisions++;
@@ -199,14 +217,18 @@ void AdjudicationManager::onGameFinished(const GameRecord& game) {
             }
         }
 
-        for (const auto& m : moves) drawStats.totalTimeMs += m.timeMs;
+        for (const auto& m : moves) {
+            drawStats.totalTimeMs += m.timeMs;
+        }
     }
 
-    if (resignConfig && resignConfig->testOnly) {
+    if (resignConfig.active && resignConfig.testOnly) {
         resignStats.totalGames++;
         auto [adjudicatedResult, index] = findResignAdjudicationIndex(game);
         if (adjudicatedResult != GameResult::Unterminated) {
-            for (size_t i = index + 1; i < moves.size(); ++i) resignStats.savedTimeMs += moves[i].timeMs;
+            for (size_t i = index + 1; i < moves.size(); ++i) {
+                resignStats.savedTimeMs += moves[i].timeMs;
+            }
 
             if (finalResult == adjudicatedResult) {
                 resignStats.correctDecisions++;
@@ -215,8 +237,8 @@ void AdjudicationManager::onGameFinished(const GameRecord& game) {
                 resignStats.failed.push_back(game);
             }
         }
-
-        for (const auto& m : moves) resignStats.totalTimeMs += m.timeMs;
+        auto [wtime, btime] = game.timeUsed();
+        resignStats.totalTimeMs += wtime + btime;
     }
 }
 
@@ -231,13 +253,17 @@ void AdjudicationManager::printTestResult(std::ostream& out) const {
             << "\n";
     };
     
-    bool drawTest = drawConfig && drawConfig->testOnly;
-    bool resignTest = resignConfig && resignConfig->testOnly;
+    bool drawTest = drawConfig.active && drawConfig.testOnly;
+    bool resignTest = resignConfig.active && resignConfig.testOnly;
     
     if (drawTest || resignTest) {
         out << "Adjudication test results:\n";
-        if (drawTest) print("draw", drawStats);
-        if (resignTest) print("resign", resignStats);
-        out << std::endl;
+        if (drawTest) {
+            print("draw", drawStats);
+        }
+        if (resignTest) {
+            print("resign", resignStats);
+        }
+        out << "\n" << std::flush;
     }
 }

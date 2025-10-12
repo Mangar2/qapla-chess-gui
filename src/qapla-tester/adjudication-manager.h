@@ -32,20 +32,22 @@ public:
      * @brief Configuration for draw adjudication logic.
      */
     struct DrawAdjudicationConfig {
-        uint32_t minFullMoves = 0;
-        uint32_t requiredConsecutiveMoves = 0;
-        int centipawnThreshold = 0;
+        uint32_t minFullMoves = 80;
+        uint32_t requiredConsecutiveMoves = 20;
+        int centipawnThreshold = 20;
         bool testOnly = false;
+        bool active = false;
     };
 
     /**
      * @brief Configuration for resign adjudication logic.
      */
     struct ResignAdjudicationConfig {
-        uint32_t requiredConsecutiveMoves = 0;
-        int centipawnThreshold = 0;
+        uint32_t requiredConsecutiveMoves = 5;
+        int centipawnThreshold = 500;
         bool twoSided = false;
         bool testOnly = false;
+        bool active = false;
     };
 
     struct AdjudicationTestStats {
@@ -64,6 +66,14 @@ public:
     static AdjudicationManager& instance() {
         static AdjudicationManager singletonInstance;
         return singletonInstance;
+    }
+
+    /**
+     * @brief Returns a singleton instance for usage in games managed by the GameManagerPool.
+     */
+    static AdjudicationManager& poolInstance() {
+        static AdjudicationManager poolSingletonInstance;
+        return poolSingletonInstance;
     }
 
     /**
@@ -89,7 +99,7 @@ public:
      */
     std::pair<GameEndCause, GameResult> adjudicateDraw(const GameRecord& game) const;
     void testAdjudicate(const GameRecord& game) const {
-        if (drawConfig && !drawConfig->testOnly) {
+        if (drawConfig.active && !drawConfig.testOnly) {
             auto [cause, result] = adjudicateDraw(game);
             auto index = findDrawAdjudicationIndex(game);
             if ((result == GameResult::Unterminated) == index.has_value()) {
@@ -98,7 +108,7 @@ public:
                     << ", but index was: " << (index ? std::to_string(*index) : "none") << std::endl;
             }
         }
-        if (resignConfig && !resignConfig->testOnly) {
+        if (resignConfig.active && !resignConfig.testOnly) {
             auto [cause, result] = adjudicateResign(game);
             auto [resResult, resIndex] = findResignAdjudicationIndex(game);
             if (result != resResult) {
@@ -135,8 +145,8 @@ private:
 
     AdjudicationManager() = default;
 
-    std::optional<DrawAdjudicationConfig> drawConfig;
-    std::optional<ResignAdjudicationConfig> resignConfig;
+    DrawAdjudicationConfig drawConfig;
+    ResignAdjudicationConfig resignConfig;
 
     AdjudicationTestStats drawStats;
     AdjudicationTestStats resignStats;
