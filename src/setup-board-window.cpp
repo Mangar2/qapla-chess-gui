@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,26 +16,19 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
-#include "board-window.h"
+#include "setup-board-window.h"
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/game-state.h"
-#include "qapla-tester/game-record.h"
-
 #include "font.h"
 #include "imgui-button.h"
-#include "imgui-board.h"
 
 #include <imgui.h>
-#include <algorithm>
-#include <array>
-#include <cmath>
 #include <string>
 
 namespace QaplaWindows
 {
 
-    static bool drawBoardButton(
+    static bool drawSetupButton(
         const std::string& button, const std::string& label,
         const ImVec2& buttonSize,
         QaplaButton::ButtonState state)
@@ -44,42 +37,22 @@ namespace QaplaWindows
             button, label, buttonSize, state,
             [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
             {
-                if (button == "Stop")
+                if (button == "Setup")
                 {
-                    QaplaButton::drawStop(drawList, topLeft, size, state);
-                }
-                else if (button == "Play")
-                {
-                    QaplaButton::drawPlay(drawList, topLeft, size, state);
-                }
-                else if (button == "Analyze")
-                {
-                    QaplaButton::drawAnalyze(drawList, topLeft, size, state);
+                    QaplaButton::drawSetup(drawList, topLeft, size, state);
                 }
                 else if (button == "New")
                 {
                     QaplaButton::drawNew(drawList, topLeft, size, state);
                 }
-                else if (button == "Auto")
+                else if (button == "Clear")
                 {
-                    QaplaButton::drawAutoPlay(drawList, topLeft, size, state);
-                }
-                else if (button == "Invert")
-                {
-                    QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
-                }
-                else if (button == "Now")
-                {
-                    QaplaButton::drawNow(drawList, topLeft, size, state);
-                }
-                else if (button == "Setup")
-                {
-                    QaplaButton::drawSetup(drawList, topLeft, size, state);
+                    QaplaButton::drawStop(drawList, topLeft, size, state);
                 }
             });
     }
 
-    std::string BoardWindow::drawButtons(const std::string& status)
+    std::string SetupBoardWindow::drawButtons()
     {
         constexpr float space = 3.0F;
         constexpr float topOffset = 5.0F;
@@ -88,18 +61,15 @@ namespace QaplaWindows
         ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
         constexpr ImVec2 buttonSize = {25.0F, 25.0F};
-        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Setup");
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"Setup", "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
+        for (const std::string button : {"Setup", "New", "Clear"})
         {
             ImGui::SetCursorScreenPos(pos);
             auto state = QaplaButton::ButtonState::Normal;
-            if (button == status || (button == "Invert" && isInverted())) {
-                state = QaplaButton::ButtonState::Active;
-            }
-            if (drawBoardButton(button, button, buttonSize, state))
+            if (drawSetupButton(button, button, buttonSize, state))
             {
                clickedButton = button;
             }
