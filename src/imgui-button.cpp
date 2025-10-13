@@ -22,7 +22,9 @@
 #include <functional>
 #include <string>
 #include <imgui.h>
-#include <math.h>
+
+#include <cmath>
+#include <numbers>
 
 namespace QaplaButton {
 
@@ -31,40 +33,49 @@ namespace QaplaButton {
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
 
     static auto getBgColor(ButtonState state) {
-        if (state == ButtonState::Disabled) 
-            return ImGui::GetColorU32(ImVec4(0.3f, 0.3f, 0.3f, 0.5f));
-		if (ImGui::IsItemActive() || state == ButtonState::Active) 
+        if (state == ButtonState::Disabled) {
+            return ImGui::GetColorU32(ImVec4(0.3F, 0.3F, 0.3F, 0.5F));
+        }
+		if (ImGui::IsItemActive() || state == ButtonState::Active) {
             return ImGui::GetColorU32(ImGuiCol_ButtonActive);
+        }
 
-		if (ImGui::IsItemHovered()) return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+		if (ImGui::IsItemHovered()) {
+            return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+        }
 		return ImGui::GetColorU32(ImGuiCol_Button);
     }
 
     static auto getTextColor(ButtonState state) {
-        if (state == ButtonState::Disabled) return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        if (state == ButtonState::Disabled) {
+            return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        }
 		return ImGui::GetColorU32(ImGuiCol_Text);
     }
 
     static ImVec4 lerpVec4(const ImVec4& a, const ImVec4& b, float t) {
-        return ImVec4(
+        return {
             std::lerp(a.x, b.x, t),
             std::lerp(a.y, b.y, t),
             std::lerp(a.z, b.z, t),
             std::lerp(a.w, b.w, t)
-        );
+        };
     }
 
     static auto getFgColor(ButtonState state) {
-        if (state == ButtonState::Disabled) return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        if (state == ButtonState::Disabled) {
+            return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        }
         bool hovered = ImGui::IsItemHovered();
         bool active = ImGui::IsItemActive() || state == ButtonState::Active;
 
-        if (active || hovered)
+        if (active || hovered) {
             return ImGui::GetColorU32(ImGuiCol_Text);
+        }
 
         const ImVec4 a = ImGui::GetStyleColorVec4(ImGuiCol_Text);
         const ImVec4 b = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
-        const ImVec4 m = lerpVec4(a, b, 0.80f);
+        const ImVec4 m = lerpVec4(a, b, 0.8F);
         return ImGui::GetColorU32(m);
     }
 
@@ -171,8 +182,12 @@ namespace QaplaButton {
         int verticalLength = height * lengthPercentage / 100;
 
         // Ensure symmetry
-        if ((horizontalLength - thickness) % 2 != 0) horizontalLength--; 
-        if ((verticalLength - thickness) % 2 != 0) verticalLength--; 
+        if ((horizontalLength - thickness) % 2 != 0) {
+            horizontalLength--;
+        }
+        if ((verticalLength - thickness) % 2 != 0) {
+            verticalLength--;
+        }
 
         int horizontalStartX = static_cast<int>(topLeft.x) + (width - horizontalLength) / 2;
         int horizontalStartY = static_cast<int>(topLeft.y) + (height - thickness) / 2;
@@ -207,8 +222,12 @@ namespace QaplaButton {
         int verticalLength = height * lengthPercentage / 100;
 
         // Ensure symmetry
-        if ((horizontalLength - thickness) % 2 != 0) horizontalLength--;
-        if ((verticalLength - thickness) % 2 != 0) verticalLength--;
+        if ((horizontalLength - thickness) % 2 != 0) {
+            horizontalLength--;
+        }
+        if ((verticalLength - thickness) % 2 != 0) {
+            verticalLength--;
+        }
 
         int horizontalStartX = static_cast<int>(topLeft.x) + (width - horizontalLength) / 2;
         int horizontalStartY = static_cast<int>(topLeft.y) + (height - thickness) / 2;
@@ -230,14 +249,14 @@ namespace QaplaButton {
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-        constexpr float pi = 3.14159265358979323846f;
+        constexpr float pi = std::numbers::pi_v<float>;
 
         auto color = getFgColor(state);
 
-        float startAngle = 1.5f * pi;   // 270° = 3/2 Pi
-        float endAngle = startAngle + 1.5f * pi;  // 270° → 45° 
+        float startAngle = 1.5F * pi;   // 270° = 3/2 Pi
+        float endAngle = startAngle + 1.5F * pi;  // 270° → 45° 
         drawList->PathArcTo(center, radius, startAngle, endAngle, 20);
-        drawList->PathStroke(color, false, 1.5f);
+        drawList->PathStroke(color, ImDrawFlags_None, 1.5F);
 
         // Pfeilspitze
         ImVec2 arrowTip = ImVec2(center.x + cosf(pi) * radius,
@@ -256,9 +275,9 @@ namespace QaplaButton {
         auto color = getFgColor(state);
         ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
-        constexpr float pi = 3.14159265358979323846f;
+        constexpr float pi = std::numbers::pi_v<float>;
         
-        float innerRadius = radius - 0.5f;
+        float innerRadius = radius - 0.5F;
         list->AddCircle(center, innerRadius, color, 0, 2.0F);
         // Draw the gear shape
         for (int i = 0; i < 8; ++i) {
@@ -273,7 +292,7 @@ namespace QaplaButton {
         auto color = getFgColor(state);
         ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
         ImVec2 textPos = ImVec2(
-            topLeft.x + std::round((size.x - textSize.x) * 0.5f) - 2.0F,
+            topLeft.x + std::round((size.x - textSize.x) * 0.5F) - 2.0F,
             topLeft.y - 2.0F
         );
         float fontSize = size.y * 1.0F;
@@ -369,10 +388,10 @@ namespace QaplaButton {
         float radius = std::min(size.x, size.y) / 2 - BORDER; // Leave some padding
 
         // Draw outer circle
-        list->AddCircle(center, radius, color, 32, 1.5f);
+        list->AddCircle(center, radius, color, 32, 1.5F);
 
         // Draw inner circle
-        list->AddCircle(center, radius * 0.6f, color, 32, 1.5f);
+        list->AddCircle(center, radius * 0.6F, color, 32, 1.5F);
 
         // Draw scanning line
         if (state == ButtonState::Animated) {
@@ -450,22 +469,52 @@ namespace QaplaButton {
         }
     }
 
-    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        constexpr int LINE_THICKNESS = 2; 
-        constexpr float BORDER = 6.0F;
-
-        auto color = getFgColor(state);
-
-        int lineSize = static_cast<int>(std::min(size.x, size.y)) + (LINE_THICKNESS % 2 == 0 ? 1 : 0) - 2 * BORDER;
+    /**
+     * @brief Helper function to draw a cross (X shape) within a given area.
+     * 
+     * @param list           The ImGui draw list to draw on
+     * @param topLeft        Top-left corner of the area
+     * @param size           Size of the area
+     * @param color          Color of the cross
+     * @param lineThickness  Thickness of the cross lines
+     * @param border         Border/padding around the cross
+     */
+    static void drawCross(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ImU32 color, 
+                         float lineThickness = 2.0F, float border = 6.0F) {
+        int lineSize = static_cast<int>(std::min(size.x, size.y)) + 
+                      (static_cast<int>(lineThickness) % 2 == 0 ? 1 : 0) - 
+                      static_cast<int>(2 * border);
 
         float startX1 = topLeft.x + static_cast<float>((static_cast<int>(size.x) - lineSize) / 2);
         float startY1 = topLeft.y + static_cast<float>((static_cast<int>(size.y) - lineSize) / 2);
         float endX1 = startX1 + static_cast<float>(lineSize);
         float endY1 = startY1 + static_cast<float>(lineSize);
 
+        list->AddLine(ImVec2(startX1 - 0.5F, startY1 - 0.5F), ImVec2(endX1 + 1.0F, endY1 + 1.0F), color, lineThickness);
+        list->AddLine(ImVec2(startX1 - 0.5F, endY1 + 0.5F), ImVec2(endX1 + 1.0F, startY1 - 1.0F), color, lineThickness);
+    }
 
-        list->AddLine(ImVec2(startX1, startY1), ImVec2(endX1 + 1.0F, endY1 + 1.0F), color, LINE_THICKNESS);
-        list->AddLine(ImVec2(startX1, endY1), ImVec2(endX1 + 1.0F, startY1 - 1.0F), color, LINE_THICKNESS);
+    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        constexpr int LINE_THICKNESS = 2; 
+        constexpr float CROSS_BORDER = 6.0F;
+        auto color = getFgColor(state);
+        drawCross(list, topLeft, size, color, LINE_THICKNESS, CROSS_BORDER);
+    }
+
+    void drawCancel(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto color = getFgColor(state);
+        
+        // Draw circle
+        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
+        list->AddCircle(center, radius, color, 0, 2.0F);
+        
+        // Draw small cross inside the circle
+        constexpr float CROSS_LINE_THICKNESS = 2.0F;
+        float crossSize = radius - 3.0F;
+        ImVec2 crossTopLeft = ImVec2(center.x - crossSize / 2.0F - 1.0F, center.y - crossSize / 2.0F - 1.0F);
+        ImVec2 crossSizeVec = ImVec2(crossSize, crossSize);
+        drawCross(list, crossTopLeft, crossSizeVec, color, CROSS_LINE_THICKNESS, 0.0F);
     }
 
     void drawSave(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
@@ -487,7 +536,7 @@ namespace QaplaButton {
         list->AddRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
         
         // In the rectangle: A small filled circle at the bottom center
-        constexpr float circleRadius = 2.5f;
+        constexpr float circleRadius = 2.5F;
         ImVec2 circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
                                      outerRectBottomRight.y - 5.0F);
         list->AddCircleFilled(circleCenter, circleRadius, fgColor);
@@ -547,7 +596,7 @@ namespace QaplaButton {
     }
 
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
-        IconDrawCallback iconDraw) {
+        const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();
         bool clicked = ImGui::InvisibleButton(id.c_str(), size);
 
@@ -570,7 +619,7 @@ namespace QaplaButton {
         }
 
         ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());
-        ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5f - labelSize.x * 0.5f, topLeft.y + size.y + 4.0F);
+        ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
         drawList->AddText(labelPos, getTextColor(state), label.c_str());
 
         return clicked;
@@ -587,7 +636,7 @@ namespace QaplaButton {
         ImVec2 labelSize = ImGui::CalcTextSize(label);
         float totalHeight = size.y + 4.0F + labelSize.y;
         float totalWidth = std::max(size.x, labelSize.x);
-        return ImVec2(totalWidth, totalHeight);
+        return { totalWidth, totalHeight };
     }
 
 } // namespace QaplaButton

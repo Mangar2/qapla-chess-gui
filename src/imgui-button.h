@@ -43,6 +43,8 @@ namespace QaplaButton {
 
     void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
+    void drawCancel(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+
     void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
     void drawRestart(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
@@ -87,7 +89,7 @@ namespace QaplaButton {
      * @return true if the button was clicked.
      */
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
-        IconDrawCallback iconDraw = nullptr);
+        const IconDrawCallback& iconDraw = nullptr);
 
     /**
      * @brief Calculates the total area needed to draw the icon button including its label.
