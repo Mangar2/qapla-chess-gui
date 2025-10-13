@@ -79,7 +79,31 @@ namespace QaplaWindows
             });
     }
 
-    std::string BoardWindow::drawButtons(const std::string& status)
+    static bool drawSetupButton(
+        const std::string& button, const std::string& label,
+        const ImVec2& buttonSize,
+        QaplaButton::ButtonState state)
+    {
+        return QaplaButton::drawIconButton(
+            button, label, buttonSize, state,
+            [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            {
+                if (button == "Setup")
+                {
+                    QaplaButton::drawSetup(drawList, topLeft, size, state);
+                }
+                else if (button == "New")
+                {
+                    QaplaButton::drawNew(drawList, topLeft, size, state);
+                }
+                else if (button == "Clear")
+                {
+                    QaplaButton::drawClear(drawList, topLeft, size, state);
+                }
+            });
+    }
+
+     std::string BoardWindow::drawBoardButtons(const std::string& status)
     {
         constexpr float space = 3.0F;
         constexpr float topOffset = 5.0F;
@@ -107,6 +131,64 @@ namespace QaplaWindows
         }
 
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+        if (clickedButton == "Setup") {
+            setupMode_ = true;
+            return {};
+        }
         return clickedButton;
+    }
+
+    void BoardWindow::executeSetupCommand(const std::string& command)
+    {
+        if (command.empty()) {
+            return;
+        }
+        if (command == "New") {
+            setFromFen(true, "");
+        }
+        if (command == "Setup") {
+            setupMode_ = false;
+        }
+        if (command == "Clear") {
+            setFromFen(false, "8/8/8/8/8/8/8/8 w - - 0 1");
+        }
+    }
+
+    std::string BoardWindow::drawSetupButtons()
+    {
+        constexpr float space = 3.0F;
+        constexpr float topOffset = 5.0F;
+        constexpr float bottomOffset = 8.0F;
+        constexpr float leftOffset = 20.0F;
+        ImVec2 boardPos = ImGui::GetCursorScreenPos();
+
+        constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+        auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        std::string clickedButton;
+
+        for (const std::string button : {"Setup", "New", "Clear"})
+        {
+            ImGui::SetCursorScreenPos(pos);
+            auto state = QaplaButton::ButtonState::Normal;
+            if (drawSetupButton(button, button, buttonSize, state))
+            {
+               clickedButton = button;
+            }
+            pos.x += totalSize.x + space;
+        }
+        executeSetupCommand(clickedButton);
+        ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+
+        // Setup here means we deactivated the setup mode and thus we inform the caller to update its fen
+        return clickedButton == "Setup" ? "Position: " + getFen() : "";
+    }
+
+    std::string BoardWindow::drawButtons(const std::string& status)
+    {
+        if (setupMode_) {
+            return drawSetupButtons();
+        } 
+        return drawBoardButtons(status);
     }
 }

@@ -260,11 +260,6 @@ namespace QaplaWindows
 		 * @brief Notifies task processor to autoplay the game (both sides).
 		 */
 		void autoPlay();
-		/**
-		 * @brief Notifies task processor to set the start position.
-		 * This will stop ongoing computations, reset all game state and sets the start position on the board.
-		 */
-		void setStartPosition();
 		void checkForGameEnd();
 
 		void setGlobalEngineConfig();

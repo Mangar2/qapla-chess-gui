@@ -306,6 +306,10 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 	}
 }
 
+void executeBoardCommand(const std::string& command) {
+	
+}
+
 void InteractiveBoardWindow::swapEngines() {
 	if (engineConfigs_.size() < 2) {
 		return;
@@ -439,11 +443,6 @@ void InteractiveBoardWindow::autoPlay()
 	}
 }
 
-void InteractiveBoardWindow::setStartPosition()
-{
-	computeTask_->setPosition(true, "");
-}
-
 void InteractiveBoardWindow::execute(const std::string& command)
 {
 	if (command.empty()) {
@@ -452,7 +451,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 
 	if (command == "New") {
 		computeTask_->newGame();
-		setStartPosition();
+		computeTask_->setPosition(true, "");
 	}
 	else if (command == "Stop") {
 		stop();
@@ -475,7 +474,11 @@ void InteractiveBoardWindow::execute(const std::string& command)
 	else if (command == "Invert") {
 		boardWindow_->setInverted(!boardWindow_->isInverted());
 	}
-	else {
+	else if (command.starts_with("Position: ")) {
+		computeTask_->newGame();
+		std::string fen = command.substr(std::string("Position: ").size());
+		computeTask_->setPosition(false, fen);
+	} else {
 		std::cerr << "Unknown command: " << command << '\n';
 	}
 }

@@ -38,7 +38,35 @@ namespace QaplaWindows
         explicit BoardWindow() {}
         ~BoardWindow() override = default;
         
+        /**
+         * @brief Draws the control buttons for the board.
+         * 
+         * @param status The current status of the game (e.g., "Running", "Stopped").
+         * @return The command associated with the clicked button, or an empty string if no button was clicked.
+         * 
+         */
         std::string drawButtons(const std::string& status);
+    private:
+        /**
+         * @brief Draws the setup mode buttons and executes the associated commands.
+         */
+        std::string drawSetupButtons();
+        
+        /**
+         * @brief Draws the board control buttons and returns the command of the clicked button.
+         * 
+         * @param status The current status of the game (e.g., "Running", "Stopped").
+         * @return The command associated with the clicked button, or an empty string if no button was clicked.
+         */
+        std::string drawBoardButtons(const std::string& status);
+
+        /**
+         * @brief Executes the setup command associated with the clicked button.
+         * 
+         * @param command The command to execute.
+         */
+        void executeSetupCommand(const std::string& command);
+        bool setupMode_ = false;
         
     };
 

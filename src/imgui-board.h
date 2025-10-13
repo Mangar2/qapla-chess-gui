@@ -98,6 +98,21 @@ namespace QaplaWindows
          */
         void doMove(QaplaBasics::Move move);
 
+        /**
+         * @brief Set the From Fen object
+         * 
+         * @param startPos Whether it's the standard starting position.
+         * @param fen The FEN string representing the position.
+         */
+        void setFromFen(bool startPos, const std::string &fen);
+
+        /**
+         * @brief Get the Fen object
+         * 
+         * @return The FEN string representing the current position.
+         */
+        std::string getFen() const;
+
     private:
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
@@ -113,7 +128,7 @@ namespace QaplaWindows
         std::optional<MoveRecord> checkMove();
 
         std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
-                                                         QaplaBasics::File file, QaplaBasics::Rank rank);
+            QaplaBasics::File file, QaplaBasics::Rank rank) const;
 
         void drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize,
                              QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
@@ -121,7 +136,8 @@ namespace QaplaWindows
 
         void drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
 
-        void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize);
+        void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, 
+            float cellSize, float boardSize, ImFont *font, float maxSize) const;
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;

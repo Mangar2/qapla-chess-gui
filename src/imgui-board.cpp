@@ -48,10 +48,22 @@ namespace QaplaWindows
     // Must be defined in the .cpp file to ensure that the destructor of unique_ptr<GameState> is known here.
     ImGuiBoard::~ImGuiBoard() = default;
 
-    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
-                                                                 QaplaBasics::File file, QaplaBasics::Rank rank)
+    void ImGuiBoard::setFromFen(bool startPos, const std::string &fen)
     {
-        float cellX, cellY;
+        gameState_->setFen(startPos, fen);
+        moveInput_ = {};
+    }
+
+    std::string ImGuiBoard::getFen() const
+    {
+        return gameState_->position().getFen();
+    }
+
+    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
+        QaplaBasics::File file, QaplaBasics::Rank rank) const
+    {
+        float cellX;
+        float cellY;
         
         if (boardInverted_) {
             // When inverted: a1 should be at top-right, h8 at bottom-left
@@ -73,14 +85,15 @@ namespace QaplaWindows
     void ImGuiBoard::drawPromotionPopup(float cellSize)
     {
         using QaplaBasics::Piece;
-        constexpr float SHRINK_CELL_SIZE = 0.8f;
-        auto &position = gameState_->position();
+        constexpr float SHRINK_CELL_SIZE = 0.8F;
+        const auto &position = gameState_->position();
 
-        if (!moveInput_.to)
+        if (!moveInput_.to) {
             return;
+        }
 
         const bool whiteToMove = position.isWhiteToMove();
-        const Piece pieces[4] = {
+        const std::array<Piece, 4> pieces = {
             whiteToMove ? Piece::WHITE_QUEEN : Piece::BLACK_QUEEN,
             whiteToMove ? Piece::WHITE_ROOK : Piece::BLACK_ROOK,
             whiteToMove ? Piece::WHITE_BISHOP : Piece::BLACK_BISHOP,
@@ -119,12 +132,20 @@ namespace QaplaWindows
         ImGui::PopFont();
     }
 
+    static ImU32 getSquareColor(bool isSelected, bool isWhite)
+    {
+        if (isSelected) {
+            return IM_COL32(100, 149, 237, 255);
+        }
+        return isWhite ? IM_COL32(240, 217, 181, 255) : IM_COL32(181, 136, 99, 255);
+    }
+
     void ImGuiBoard::drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos,
                                      float cellSize, QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite)
     {
         using QaplaBasics::Piece;
         using QaplaBasics::Square;
-        auto &position = gameState_->position();
+        const auto &position = gameState_->position();
 
         const Square square = computeSquare(file, rank);
         const Piece piece = position[square];
@@ -132,9 +153,7 @@ namespace QaplaWindows
         const auto [cellMin, cellMax] = computeCellCoordinates(boardPos, cellSize, file, rank);
 
         const bool isSelected = (moveInput_.from && *moveInput_.from == square) || (moveInput_.to && *moveInput_.to == square);
-        const ImU32 bgColor = isSelected
-                                  ? IM_COL32(100, 149, 237, 255)
-                                  : (isWhite ? IM_COL32(240, 217, 181, 255) : IM_COL32(181, 136, 99, 255));
+        const ImU32 bgColor = getSquareColor(isSelected, isWhite);
 
         drawList->AddRectFilled(cellMin, cellMax, bgColor);
 
@@ -183,7 +202,7 @@ namespace QaplaWindows
         using QaplaBasics::Piece;
         using QaplaBasics::Rank;
         using QaplaBasics::Square;
-        auto &position = gameState_->position();
+        const auto &position = gameState_->position();
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
         {
             for (File file = File::A; file <= File::H; ++file)
@@ -197,7 +216,7 @@ namespace QaplaWindows
     }
 
     void ImGuiBoard::drawBoardCoordinates(ImDrawList *drawList,
-        const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize)
+        const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize) const
     {
         const int gridSize = 8;
 
@@ -209,9 +228,9 @@ namespace QaplaWindows
             char fileChar = boardInverted_ ? ('h' - col) : ('a' + col);
             std::string label(1, fileChar);
             ImVec2 pos = {
-                boardPos.x + col * cellSize + cellSize * 0.5f - ImGui::CalcTextSize(label.c_str()).x * 0.5f,
+                boardPos.x + col * cellSize + cellSize * 0.5F - ImGui::CalcTextSize(label.c_str()).x * 0.5F,
                 boardPos.y + boardSize};
-            drawList->AddText(font, std::min(cellSize * 0.5f, maxSize), pos, IM_COL32_WHITE, label.c_str());
+            drawList->AddText(font, std::min(cellSize * 0.5F, maxSize), pos, IM_COL32_WHITE, label.c_str());
         }
 
         // Draw rank labels (1-8)
@@ -223,8 +242,8 @@ namespace QaplaWindows
             std::string label = std::to_string(rankNumber);
             ImVec2 pos = {
                 boardPos.x + boardSize,
-                boardPos.y + row * cellSize + cellSize * 0.3f};
-            drawList->AddText(font, std::min(cellSize * 0.5f, maxSize), pos, IM_COL32_WHITE, label.c_str());
+                boardPos.y + row * cellSize + cellSize * 0.3F};
+            drawList->AddText(font, std::min(cellSize * 0.5F, maxSize), pos, IM_COL32_WHITE, label.c_str());
         }
     }
 
@@ -280,11 +299,11 @@ namespace QaplaWindows
 
         ImGui::PushFont(font::chessFont);
 
-        const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95f;
+        const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95F;
 
         if (promotionPending_)
         {
-            ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0F, 1.0F, 1.0F, 0.3f));
+            ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0F, 1.0F, 1.0F, 0.3F));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
             if (ImGui::BeginPopup("Promotion"))
             {
@@ -307,7 +326,7 @@ namespace QaplaWindows
         drawBoardPieces(drawList, topLeft, cellSize, font);
         drawBoardCoordinates(drawList, topLeft, cellSize, boardSize, font, maxBorderTextSize);
 
-        const float coordTextHeight = std::min(cellSize * 0.5f, maxBorderTextSize);
+        const float coordTextHeight = std::min(cellSize * 0.5F, maxBorderTextSize);
         ImGui::Dummy(ImVec2(boardSize, boardSize + coordTextHeight));
 
         ImGui::PopFont();
