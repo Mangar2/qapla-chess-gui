@@ -164,6 +164,7 @@ public:
 	const QaplaMoveGenerator::MoveGenerator& position() const {
 		return position_;
 	}
+	
 private:
 	/**
 	 * @brief Computes if the game is over and returns the result based on the chess board.

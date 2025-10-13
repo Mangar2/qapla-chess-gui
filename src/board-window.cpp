@@ -25,6 +25,7 @@
 #include "font.h"
 #include "imgui-button.h"
 #include "imgui-board.h"
+#include "snackbar.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -79,11 +80,19 @@ namespace QaplaWindows
             });
     }
 
-    static bool drawSetupButton(
+    QaplaButton::ButtonState BoardWindow::getSetupButtonState(const std::string& button) const {
+        auto state = QaplaButton::ButtonState::Normal;
+        if (button == "Ok") {
+            return isValidPosition() ? QaplaButton::ButtonState::Normal : QaplaButton::ButtonState::Disabled;
+        } 
+        return state;
+    }
+
+    bool BoardWindow::drawSetupButton(
         const std::string& button, const std::string& label,
-        const ImVec2& buttonSize,
-        QaplaButton::ButtonState state)
+        const ImVec2& buttonSize) const
     {
+        auto state = getSetupButtonState(button);
         return QaplaButton::drawIconButton(
             button, label, buttonSize, state,
             [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
@@ -100,7 +109,7 @@ namespace QaplaWindows
             });
     }
 
-     std::string BoardWindow::drawBoardButtons(const std::string& status)
+    std::string BoardWindow::drawBoardButtons(const std::string& status)
     {
         constexpr float space = 3.0F;
         constexpr float topOffset = 5.0F;
@@ -130,6 +139,7 @@ namespace QaplaWindows
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
         if (clickedButton == "Setup") {
             setAllowMoveInput(false);
+            setAllowPieceInput(true);
             setupMode_ = true;
             return {};
         }
@@ -144,9 +154,19 @@ namespace QaplaWindows
         if (command == "New") {
             setFromFen(true, "");
         }
-        if (command == "Ok" || command == "Cancel") {
+        if (command == "Ok") {
+            if (!isValidPosition()) {
+                SnackbarManager::instance().showWarning("Invalid position");
+            } else {
+                setupMode_ = false;
+                setAllowMoveInput(true);
+                setAllowPieceInput(false);
+            }
+        }
+        if (command == "Cancel") {
             setupMode_ = false;
             setAllowMoveInput(true);
+            setAllowPieceInput(false);
         }
         if (command == "Clear") {
             setFromFen(false, "8/8/8/8/8/8/8/8 w - - 0 1");
@@ -169,8 +189,7 @@ namespace QaplaWindows
         for (const std::string button : {"Ok", "New", "Clear", "Cancel"})
         {
             ImGui::SetCursorScreenPos(pos);
-            auto state = QaplaButton::ButtonState::Normal;
-            if (drawSetupButton(button, button, buttonSize, state))
+            if (drawSetupButton(button, button, buttonSize))
             {
                clickedButton = button;
             }

@@ -147,7 +147,7 @@ namespace QaplaMoveGenerator {
 		 * Uses the precomputed checkBitmaps from computeCheckBitmaps().
 		 */
 		bool isCheckMove(QaplaBasics::Move move, const std::array<QaplaBasics::bitBoard_t, 
-			QaplaBasics::Piece::PIECE_AMOUNT / 2>& checkingBitmaps);
+			QaplaBasics::Piece::PIECE_AMOUNT / 2>& checkBitmaps);
 
 		/**
 		 * Generates all legal moves that evade a check for the side to move.
@@ -218,11 +218,11 @@ namespace QaplaMoveGenerator {
 		 * Generates moves for a single piece on a given square.
 		 *
 		 * @param piece The piece type to generate for.
-		 * @param startPos The square the piece is on.
+		 * @param departure The square the piece is on.
 		 * @param destinationBB Bitboard of legal destination squares.
 		 * @param moveList Output list of generated moves.
 		 */
-		void genMovesSinglePiece(uint32_t piece, QaplaBasics::Square startPos, 
+		void genMovesSinglePiece(uint32_t piece, QaplaBasics::Square departure, 
 			QaplaBasics::bitBoard_t destinationBB, QaplaBasics::MoveList& moveList);
 
 		/**
@@ -245,21 +245,21 @@ namespace QaplaMoveGenerator {
 		 * for sliding attacks on the king.
 		 */
 		template<QaplaBasics::Piece COLOR>
-		void genEPMove(QaplaBasics::Square startPos, QaplaBasics::Square epPos, QaplaBasics::MoveList& moveList);
+		void genEPMove(QaplaBasics::Square departure, QaplaBasics::Square epPos, QaplaBasics::MoveList& moveList);
 
 		template<QaplaBasics::Piece COLOR>
-		void genPawnPromotions(QaplaBasics::bitBoard_t targetBitBoard, int32_t moveDirection, QaplaBasics::MoveList& moveList);
+		void genPawnPromotions(QaplaBasics::bitBoard_t destinationBB, int32_t moveDirection, QaplaBasics::MoveList& moveList);
 
 		template <QaplaBasics::Piece COLOR>
-		void genPawnCaptures(QaplaBasics::bitBoard_t targetBitBoard, int32_t moveDirection, QaplaBasics::MoveList& moveList);
+		void genPawnCaptures(QaplaBasics::bitBoard_t destinationBB, int32_t moveDirection, QaplaBasics::MoveList& moveList);
 
 		template <QaplaBasics::Piece COLOR>
-		void genSilentSinglePawnMoves(QaplaBasics::Square startPos, 
+		void genSilentSinglePawnMoves(QaplaBasics::Square departure, 
 			QaplaBasics::bitBoard_t allowedPositionMask, QaplaBasics::MoveList& moveList);
 
 		template <QaplaBasics::Piece COLOR>
-		void genPawnCaptureSinglePiece(QaplaBasics::Square startPos, 
-			QaplaBasics::bitBoard_t targetBitBoard, QaplaBasics::MoveList& moveList);
+		void genPawnCaptureSinglePiece(QaplaBasics::Square departure, 
+			QaplaBasics::bitBoard_t destinationBB, QaplaBasics::MoveList& moveList);
 
 		template <QaplaBasics::Piece COLOR>
 		void genSilentPawnMoves(QaplaBasics::MoveList& moveList);

@@ -87,6 +87,12 @@ namespace QaplaWindows
         void setAllowMoveInput(bool moveInput) { allowMoveInput_ = moveInput; }
 
         /**
+         * Set whether to allow piece input (for setup mode).
+         * @param pieceInput Whether to allow piece input.
+         */
+        void setAllowPieceInput(bool pieceInput) { allowPieceInput_ = pieceInput; }
+
+        /**
          * Set the position.
          * @param gameRecord Board to get the position from.
          */
@@ -112,6 +118,12 @@ namespace QaplaWindows
          * @return The FEN string representing the current position.
          */
         std::string getFen() const;
+
+        /**
+         * @brief Check if the current position is valid.
+         * 
+         */
+        bool isValidPosition() const;
 
     private:
         void drawPromotionPopup(float cellSize);
@@ -139,9 +151,14 @@ namespace QaplaWindows
         void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, 
             float cellSize, float boardSize, ImFont *font, float maxSize) const;
 
+        void drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize);
+
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
+        bool allowPieceInput_ = false;
         bool gameOver_ = false;
+
+        QaplaBasics::Piece lastSelectedPiece_ = QaplaBasics::Piece::WHITE_PAWN;
 
         ChangeTracker gameRecordTracker_;
 

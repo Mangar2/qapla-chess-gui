@@ -22,6 +22,7 @@
 #include "qapla-tester/move-record.h"
 
 #include "imgui-board.h"
+#include "imgui-button.h"
 
 #include <optional>
 #include <unordered_set>
@@ -51,7 +52,27 @@ namespace QaplaWindows
          * @brief Draws the setup mode buttons and executes the associated commands.
          */
         std::string drawSetupButtons();
-        
+
+        /**
+         * @brief Draws a button in setup mode and returns whether it was clicked.
+         * 
+         * @param button The button identifier (e.g., "New", "Clear").
+         * @param label The label to display on the button.
+         * @param buttonSize The size of the button.
+         * @return True if the button was clicked, false otherwise.
+         */
+        bool drawSetupButton(
+            const std::string& button, const std::string& label,
+            const ImVec2& buttonSize) const;
+
+        /**
+         * @brief Determines the button state (normal, highlighted, disabled) based on the current setup mode and button type.
+         * 
+         * @param button The button identifier
+         * @return The ButtonState for the specified button.
+         */
+        QaplaButton::ButtonState getSetupButtonState(const std::string& button) const;
+
         /**
          * @brief Draws the board control buttons and returns the command of the clicked button.
          * 

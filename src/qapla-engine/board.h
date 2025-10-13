@@ -48,6 +48,10 @@ namespace QaplaBasics {
 		 */
 		void undoMove(Move move, BoardState boardState);
 		void clear();
+		/**
+		 * Checks if the board is in a valid state
+		 */
+		bool isValidPosition() const;
 		inline auto operator[](Square square) const { return _board[square]; }
 		inline auto isWhiteToMove() const { return _whiteToMove; }
 		inline void setWhiteToMove(bool whiteToMove) { _whiteToMove = whiteToMove; }
@@ -361,7 +365,7 @@ namespace QaplaBasics {
 		 * Checks, if king side castling is allowed
 		 */
 		template <Piece COLOR>
-		inline bool isKingSideCastleAllowed() {
+		inline bool isKingSideCastleAllowed() const {
 			return _boardState.isKingSideCastleAllowed<COLOR>();
 		}
 
@@ -369,7 +373,7 @@ namespace QaplaBasics {
 		 * Checks, if queen side castling is allowed
 		 */
 		template <Piece COLOR>
-		inline bool isQueenSideCastleAllowed() {
+		inline bool isQueenSideCastleAllowed() const {
 			return _boardState.isQueenSideCastleAllowed<COLOR>();
 		}
 
@@ -407,6 +411,11 @@ namespace QaplaBasics {
 
 		
 		void initClearCastleMask();
+		bool validateCastlingRights() const;
+		bool validateEPSquare() const;
+		bool validatePieceCounts() const;
+		bool validatePawnRows() const;
+
 
 		/**
 		 * Clears the bitboards

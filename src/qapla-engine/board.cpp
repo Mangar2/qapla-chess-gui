@@ -20,6 +20,7 @@
 #include <iomanip>
 #include "bits.h"
 #include "board.h"
+#include "bitboardmasks.h"
 #include "pst.h"
 
 using namespace QaplaBasics;
@@ -399,6 +400,105 @@ bool Board::assertMove(Move move) const {
 	return true;
 }
 
+bool Board::isValidPosition() const {
+	
+	if (!validatePieceCounts()) {
+		return false;
+	}
+	if (!validatePawnRows()) {
+		return false;
+	}
+	if (!validateEPSquare()) {
+		return false;
+	}
+	if (!validateCastlingRights()) {
+		return false;
+	}
+	return true;
+}
 
+bool Board::validatePawnRows() const {
+	// Check pawns not on 1st or 8th rank
+	const bitBoard_t whitePawnBB = bitBoardsPiece[WHITE_PAWN];
+	const bitBoard_t blackPawnBB = bitBoardsPiece[BLACK_PAWN];
+	const bitBoard_t pawnMask = QaplaMoveGenerator::BitBoardMasks::RANK_1_BITMASK | QaplaMoveGenerator::BitBoardMasks::RANK_8_BITMASK;
+	if ((whitePawnBB & pawnMask) != 0) {
+		return false;
+	}
+	if ((blackPawnBB & pawnMask) != 0) {
+		return false;
+	}
+	return true;
+}
 
+bool Board::validatePieceCounts() const {
+	// Check exactly one white and one black king
+	if (popCount(bitBoardsPiece[WHITE_KING]) != 1 || popCount(bitBoardsPiece[BLACK_KING]) != 1) {
+		return false;
+	}
+	uint32_t whitePawns = popCount(bitBoardsPiece[WHITE_PAWN]);
+	uint32_t blackPawns = popCount(bitBoardsPiece[BLACK_PAWN]);
 
+	// Check pawn limits
+	if (whitePawns > 8 || blackPawns > 8) {
+		return false;
+	}
+	// Check piece limits
+	for (Piece piece = WHITE_KNIGHT; piece <= BLACK_BISHOP; ++piece) {
+		uint32_t count = popCount(bitBoardsPiece[piece]);
+		count += getPieceColor(piece) == WHITE ? whitePawns : blackPawns;
+		if (count > 10) { 
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Board::validateEPSquare() const {
+	const Square ep = getEP();
+	if (ep == 0) {
+		return true;
+	}
+	const Rank epRank = getRank(ep);
+	if (_whiteToMove) {
+		if (epRank != Rank::R6) {
+			return false;
+		}
+		if (_board[ep + NORTH] != WHITE_PAWN) {
+			return false;
+		}
+	} else {
+		if (epRank != Rank::R3) {
+			return false;	
+		}
+		if (_board[ep + SOUTH] != BLACK_PAWN) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool Board::validateCastlingRights() const {
+	// Check castling rights
+	if (isKingSideCastleAllowed<WHITE>()) {
+		if (_board[_kingRookStartSquare[WHITE]] != WHITE_ROOK || kingSquares[WHITE] != _kingStartSquare[WHITE]) {
+			return false;
+		}
+	}
+	if (isQueenSideCastleAllowed<WHITE>()) {
+		if (_board[_queenRookStartSquare[WHITE]] != WHITE_ROOK || kingSquares[WHITE] != _kingStartSquare[WHITE]) {
+			return false;
+		}
+	}
+	if (isKingSideCastleAllowed<BLACK>()) {
+		if (_board[_kingRookStartSquare[BLACK]] != BLACK_ROOK || kingSquares[BLACK] != _kingStartSquare[BLACK]) {
+			return false;
+		}
+	}
+	if (isQueenSideCastleAllowed<BLACK>()) {
+		if (_board[_queenRookStartSquare[BLACK]] != BLACK_ROOK || kingSquares[BLACK] != _kingStartSquare[BLACK]) {
+			return false;
+		}
+	}
+	return true;
+}
