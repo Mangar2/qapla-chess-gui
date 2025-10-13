@@ -296,7 +296,7 @@ private:
      * @param currentElo All scored engines with current Elo values
      * @return Weighted average Elo of all opponents
      */
-    double averageOpponentElo(const Scored &s, const std::unordered_map<std::string, double>& currentElo) const; 
+    static double averageOpponentElo(const Scored &s, const std::unordered_map<std::string, double>& currentElo);
 
     std::vector<EngineDuelResult> results_;
 	std::vector<Scored> scoredEngines_;

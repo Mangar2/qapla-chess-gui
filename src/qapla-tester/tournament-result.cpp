@@ -105,8 +105,9 @@ EngineDuelResult &EngineDuelResult::operator+=(const EngineDuelResult &other)
 
 EngineDuelResult EngineResult::aggregate(const std::string &targetEngine) const
 {
-    if (duels.empty())
+    if (duels.empty()) {
         return {};
+    }
 
     EngineDuelResult result(targetEngine, std::string(EngineDuelResult::ANY_ENGINE));
 
@@ -203,9 +204,11 @@ void TournamentResult::push_back(const EngineDuelResult &result)
 
 void TournamentResult::add(const EngineDuelResult& result) {
     // We do not skip if engineB is empty, because this is a wildercard 
-    if (result.getEngineA().empty()) return;
+    if (result.getEngineA().empty()) {
+        return;
+    }
 
-    auto it = std::find_if(results_.begin(), results_.end(),
+    auto it = std::ranges::find_if(results_,
         [&result](const EngineDuelResult& r) {
             return r.engineNamesMatch(result);
         });
@@ -225,7 +228,7 @@ std::vector<std::string> TournamentResult::engineNames() const
         names.insert(duel.getEngineA());
         names.insert(duel.getEngineB());
     }
-    return std::vector<std::string>(names.begin(), names.end());
+    return {names.begin(), names.end()};
 }
 
 std::optional<EngineResult> TournamentResult::forEngine(const std::string &name) const
@@ -250,8 +253,9 @@ std::optional<EngineResult> TournamentResult::forEngine(const std::string &name)
         }
     }
 
-    if (aggregated.empty())
+    if (aggregated.empty()) {
         return std::nullopt;
+    }
 
     EngineResult result;
     result.engineName = name;
@@ -277,13 +281,15 @@ void TournamentResult::initializeScoredEngines(bool update, double baseElo)
     for (const auto& name : engineNames())
     {
         auto opt = forEngine(name);
-        if (!opt)
+        if (!opt) {
             continue;
+        }
 
         EngineDuelResult agg = opt->aggregate(name);
         int total = agg.total();
-        if (total == 0)
+        if (total == 0) {
             continue;
+        }
 
         double score = (agg.winsEngineA + 0.5 * agg.draws) / total;
 
@@ -310,7 +316,7 @@ void TournamentResult::initializeScoredEngines(bool update, double baseElo)
 }
 
 double TournamentResult::averageOpponentElo(const Scored &s,
-                                            const std::unordered_map<std::string, double> &currentElo) const
+                                            const std::unordered_map<std::string, double> &currentElo)
 {
     const std::string &name = s.engineName;
     const auto &duels = s.result.duels;
@@ -322,8 +328,9 @@ double TournamentResult::averageOpponentElo(const Scored &s,
     {
         std::string opponent = duel.getEngineA() == name ? duel.getEngineB() : duel.getEngineA();
         int games = duel.total();
-        if (games == 0)
+        if (games == 0) {
             continue;
+        }
 
         weightedSum += currentElo.at(opponent) * games;
         totalGames += games;
@@ -350,14 +357,20 @@ std::vector<TournamentResult::Scored> TournamentResult::computeAllElos(
             const std::string& name = s.engineName;
 
             for (const auto& duel : s.result.duels) {
-                if (duel.getEngineA() != name) continue;
+                if (duel.getEngineA() != name) {
+                    continue;
+                }
                 std::string opponent = duel.getEngineB();
                 auto it = scoredMap.find(opponent);
-                if (it == scoredMap.end()) continue;
+                if (it == scoredMap.end()) {
+                    continue;
+                }
                 Scored* opponentScore = it->second;
 
                 int total = duel.total();
-                if (total == 0) continue;
+                if (total == 0) {
+                    continue;
+                }
 
                 int targetEloDiff = computeEloWithError(duel.winsEngineA, duel.winsEngineB, duel.draws).first;
                 double currentEloDiff = s.elo - opponentScore->elo;
@@ -378,7 +391,7 @@ std::vector<TournamentResult::Scored> TournamentResult::computeAllElos(
         s.error = computeEloWithError(agg.winsEngineA, agg.winsEngineB, agg.draws).second;
     }
 
-    std::sort(scoredEngines_.begin(), scoredEngines_.end(), [](const Scored& a, const Scored& b) {
+    std::ranges::sort(scoredEngines_, [](const Scored& a, const Scored& b) {
         return a.elo > b.elo;
     });
 
@@ -417,7 +430,7 @@ void TournamentResult::printRatingTableUciStyle(std::ostream &os, int averageElo
            << " score " << std::setw(7) << oss.str()
            << " draw "  << drawPct << "%\n";
     }
-    os << std::endl;
+    os << "\n" << std::flush;
 }
 
 void TournamentResult::printOutcome(std::ostream &os) const
@@ -427,12 +440,13 @@ void TournamentResult::printOutcome(std::ostream &os) const
     for (const auto &name : engineNames())
     {
         auto optResult = forEngine(name);
-        if (!optResult)
+        if (!optResult) {
             continue;
+        }
 
         optResult->printOutcome(os);
     }
-    os << std::endl;
+    os << "\n" << std::flush;
 }
 
 std::vector<std::vector<std::string>> TournamentResult::getSummary() const
@@ -443,8 +457,9 @@ std::vector<std::vector<std::string>> TournamentResult::getSummary() const
     for (const auto& name : engineNames())
     {
         auto optResult = forEngine(name);
-        if (!optResult)
+        if (!optResult) {
             continue;
+        }
 
         EngineDuelResult agg = optResult->aggregate(name);
         int wins = agg.winsEngineA;
@@ -464,7 +479,7 @@ std::vector<std::vector<std::string>> TournamentResult::getSummary() const
         lines.emplace_back(row);
     }
 
-    std::sort(lines.begin(), lines.end(), [](const auto& a, const auto& b)
+    std::ranges::sort(lines, [](const auto& a, const auto& b)
         {
             return b[1] < a[1]; // descending
         });
@@ -488,5 +503,5 @@ void TournamentResult::printSummary(std::ostream &os) const
             << " L:" << entry[4]         // Losses
             << "\n";
     }
-    os << std::endl;
+    os << "\n" << std::flush;
 }
