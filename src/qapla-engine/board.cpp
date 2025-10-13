@@ -322,7 +322,7 @@ std::string Board::getFen() const {
 	result += " ";
 	auto uncorrectedEp = getBoardState().getEP();
 	// adjust for the fact that we store the square of the pawn to be captured
-	auto correctedEp = Rank(uncorrectedEp) == Rank::R4 ? uncorrectedEp + SOUTH : uncorrectedEp + NORTH;
+	auto correctedEp = getRank(uncorrectedEp) == Rank::R4 ? uncorrectedEp + SOUTH : uncorrectedEp + NORTH;
 	result += getBoardState().hasEP() ? squareToString(correctedEp) : "-";
 
 	result += " ";
