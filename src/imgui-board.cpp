@@ -93,6 +93,9 @@ namespace QaplaWindows
     };
     
     constexpr bool ROUND_POPUP_FIELD = true;
+    constexpr float ENLARGE_CENTER = 1.2F;
+    constexpr float REDUCE_SATELLITES = 0.8F;
+
     constexpr auto POPUP_CENTER_COLOR = IM_COL32(255, 255, 128, 255);
     constexpr auto POPUP_PIECE_BACKGROUND = IM_COL32(240, 217, 181, 255);
     constexpr auto POPUP_SWITCH_BACKGROUND = IM_COL32(200, 200, 200, 255);
