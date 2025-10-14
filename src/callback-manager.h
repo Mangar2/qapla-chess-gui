@@ -46,10 +46,13 @@ public:
  * 
  * This class provides automatic unregistration of callbacks when the
  * handle goes out of scope or is explicitly destroyed.
+ * 
+ * @param unregisterable Pointer to the Unregistration manager.
+ * @param callbackId The ID of the callback to unregister.
  */
 class UnregisterHandle {
 public:
-    UnregisterHandle(Unregistration* unregistration, Unregistration::CallbackId callbackId);
+    UnregisterHandle(Unregistration* unregisterable, Unregistration::CallbackId callbackId);
     ~UnregisterHandle();
     
     // Move constructor and assignment

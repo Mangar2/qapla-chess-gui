@@ -21,9 +21,7 @@
 
 #include <iostream>
 
-namespace QaplaWindows {
-
-namespace Callback {
+namespace QaplaWindows::Callback {
 
 // UnregisterHandle implementation
 UnregisterHandle::UnregisterHandle(Unregistration* unregisterable, size_t callbackId)
@@ -52,13 +50,12 @@ UnregisterHandle& UnregisterHandle::operator=(UnregisterHandle&& other) noexcept
 }
 
 void UnregisterHandle::unregister() {
-    if (unregisterable_) {
+    if (unregisterable_ != nullptr) {
         unregisterable_->unregister(callbackId_);
     }
 }
 
 
 
-} // namespace Callback
+} // namespace QaplaWindows::Callback
 
-} // namespace QaplaWindows

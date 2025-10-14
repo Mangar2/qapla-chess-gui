@@ -398,47 +398,84 @@ namespace QaplaWindows {
         adjudicationTable_.clear();
         
         auto results = QaplaTester::AdjudicationManager::poolInstance().computeTestResults();
-        
-        if (results.hasDrawTest) {
+
+        populateDrawTest(results);
+        populateResignTest(results);
+    }
+
+    void TournamentData::populateResignTest(QaplaTester::AdjudicationManager::TestResults &results)
+    {
+        if (results.hasResignTest)
+        {
             std::vector<std::string> row;
-            for (const auto& entry : results.drawResult) {
-                if (entry.key == "label") {
+            for (const auto &entry : results.resignResult)
+            {
+                if (entry.key == "label")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "total") {
+                }
+                else if (entry.key == "total")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "correct") {
+                }
+                else if (entry.key == "correct")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "incorrect") {
+                }
+                else if (entry.key == "incorrect")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "saved") {
+                }
+                else if (entry.key == "saved")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "total_time") {
+                }
+                else if (entry.key == "total_time")
+                {
                     row.push_back(entry.value);
                 }
             }
-            if (!row.empty()) {
+            if (!row.empty())
+            {
                 adjudicationTable_.push(row);
             }
         }
-        
-        if (results.hasResignTest) {
+    }
+
+    void TournamentData::populateDrawTest(QaplaTester::AdjudicationManager::TestResults &results)
+    {
+        if (results.hasDrawTest)
+        {
             std::vector<std::string> row;
-            for (const auto& entry : results.resignResult) {
-                if (entry.key == "label") {
+            for (const auto &entry : results.drawResult)
+            {
+                if (entry.key == "label")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "total") {
+                }
+                else if (entry.key == "total")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "correct") {
+                }
+                else if (entry.key == "correct")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "incorrect") {
+                }
+                else if (entry.key == "incorrect")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "saved") {
+                }
+                else if (entry.key == "saved")
+                {
                     row.push_back(entry.value);
-                } else if (entry.key == "total_time") {
+                }
+                else if (entry.key == "total_time")
+                {
                     row.push_back(entry.value);
                 }
             }
-            if (!row.empty()) {
+            if (!row.empty())
+            {
                 adjudicationTable_.push(row);
             }
         }

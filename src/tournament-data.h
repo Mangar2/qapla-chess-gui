@@ -326,7 +326,10 @@ namespace QaplaWindows {
         void populateEloTable();
 		void populateRunningTable();
         void populateCauseTable();
+
         void populateAdjudicationTable();
+        void populateResignTest(QaplaTester::AdjudicationManager::TestResults &results);
+        void populateDrawTest(QaplaTester::AdjudicationManager::TestResults &results);
 
         void populateViews();
 

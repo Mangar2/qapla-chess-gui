@@ -261,19 +261,18 @@ namespace QaplaWindows
     }
 
     std::optional<MoveRecord> ImGuiBoard::checkMove() {
+        if (!moveInput_.to) {
+            // Autocomplete is disabled if only the starting position is provided,
+            // as this could confuse users.
+            return std::nullopt;
+        }
         const auto [move, valid, promotion] = gameState_->resolveMove(
             std::nullopt, moveInput_.from, moveInput_.to, moveInput_.promotion);
 
         promotionPending_ = promotion;
         if (!valid) {
             moveInput_ = {};
-        }
-        else if (!moveInput_.to) {
-            // Autocomplete is disabled if only the starting position is provided,
-            // as this could confuse users.
-            return std::nullopt;
-        }
-        else if (!move.isEmpty()) {
+        } else if (!move.isEmpty()) {
             moveInput_ = {};
             MoveRecord moveRecord;
             moveRecord.lan = move.getLAN();
@@ -478,7 +477,6 @@ namespace QaplaWindows
         }
         
         // Draw all configured cells
-        const bool isWhite = QaplaBasics::getPieceColor(lastSelectedPiece_) == Piece::WHITE;
         for (const auto& cell : cells) {
             if (cell.type == PopupCellType::EMPTY || cell.type == PopupCellType::CENTER) {
                 continue; // Skip empty cells and center (already drawn)
@@ -486,15 +484,19 @@ namespace QaplaWindows
             
             const auto [cellMin, cellMax] = getPopupCellBounds(popupMin, gridCellSize, cell.col, cell.row);
             
+            
             if (cell.type == PopupCellType::PIECE) {
-                const Piece coloredPiece = isWhite ? (cell.basePiece + Piece::WHITE) : (cell.basePiece + Piece::BLACK);
+                const Piece coloredPiece = cell.basePiece + pieceColor_;
                 drawPopupRect(drawList, cellMin, cellMax, IM_COL32(240, 217, 181, 255));
                 drawPopupPiece(drawList, font, coloredPiece, cellMin, gridCellSize);
             } else if (cell.type == PopupCellType::COLOR_SWITCH) {
                 drawPopupRect(drawList, cellMin, cellMax, IM_COL32(200, 200, 200, 255));
                 const ImVec2 center = {(cellMin.x + cellMax.x) * 0.5F, (cellMin.y + cellMax.y) * 0.5F};
                 const float radius = gridCellSize * 0.3F;
-                drawList->AddCircleFilled(center, radius, isWhite ? IM_COL32(0, 0, 0, 255) : IM_COL32(255, 255, 255, 255));
+                ImU32 circleColor = (pieceColor_ == QaplaBasics::Piece::WHITE) ? 
+                    IM_COL32(0, 0, 0, 255) : IM_COL32(255, 255, 255, 255);
+
+                drawList->AddCircleFilled(center, radius, circleColor);
             } else if (cell.type == PopupCellType::CLEAR) {
                 drawPopupRect(drawList, cellMin, cellMax, IM_COL32(240, 217, 181, 255));
                 const float padding = gridCellSize * 0.2F;
