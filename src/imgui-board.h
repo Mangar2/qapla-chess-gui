@@ -163,12 +163,21 @@ namespace QaplaWindows
             QaplaBasics::Piece basePiece = QaplaBasics::Piece::NO_PIECE; // Base piece type (without color)
         };
 
+        struct SatelliteDrawParams {
+            ImDrawList* drawList;
+            ImFont* font;
+            ImVec2 popupMin;
+            float gridCellSize;
+            int col;
+            int row;
+        };
+
         static std::pair<ImVec2, ImVec2> getPopupCellBounds(const ImVec2& popupMin, float cellSize, 
             int col, int row);
         static void drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor);
-        static void drawPopupPiece(ImDrawList* drawList, ImFont* font, QaplaBasics::Piece piece, 
-            const ImVec2& min, float size);
-        void drawSwitchColorIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max) const;
+        static void drawPopupPiece(const SatelliteDrawParams& params, QaplaBasics::Piece piece);
+        void drawSwitchColorIcon(const SatelliteDrawParams& params) const;
+        void drawClearField(const SatelliteDrawParams& params) const;
         void drawPopupCenter(ImDrawList* drawList, ImFont* font, 
             const ImVec2& popupMin, float gridCellSize, QaplaBasics::Piece currentPieceOnSquare) const;
         static bool isRectClicked(const ImVec2& min, const ImVec2& max);

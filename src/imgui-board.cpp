@@ -470,11 +470,13 @@ namespace QaplaWindows
         drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255));
     }
 
-    void ImGuiBoard::drawPopupPiece(ImDrawList* drawList, ImFont* font, 
-                                     Piece piece, const ImVec2& min, float size)
+    void ImGuiBoard::drawPopupPiece(const SatelliteDrawParams& params, Piece piece)
     {
-        drawPopupRect(drawList, min, {min.x + size, min.y + size}, POPUP_PIECE_BACKGROUND);
-        font::drawPiece(drawList, piece, min, size, font);
+        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
+        const float size = max.x - min.x;
+        
+        drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
+        font::drawPiece(params.drawList, piece, min, size, params.font);
     }
 
     bool ImGuiBoard::isRectClicked(const ImVec2& min, const ImVec2& max)
@@ -498,13 +500,23 @@ namespace QaplaWindows
                        IM_COL32(255, 0, 0, 255), 2.0F);
     }
 
-    void ImGuiBoard::drawSwitchColorIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max) const
+    void ImGuiBoard::drawSwitchColorIcon(const SatelliteDrawParams& params) const
     {
-        drawPopupRect(drawList, min, max, POPUP_SWITCH_BACKGROUND);
+        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
+        
+        drawPopupRect(params.drawList, min, max, POPUP_SWITCH_BACKGROUND);
         const ImVec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
         const float radius = (max.x - min.x) * 0.3F;
         ImU32 circleColor = (pieceColor_ == Piece::WHITE) ? BLACK_COLOR : WHITE_COLOR;
-        drawList->AddCircleFilled(center, radius, circleColor);
+        params.drawList->AddCircleFilled(center, radius, circleColor);
+    }
+
+    void ImGuiBoard::drawClearField(const SatelliteDrawParams& params) const
+    {
+        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
+        
+        drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
+        drawClearIcon(params.drawList, min, max, 0.2F);
     }
 
     void ImGuiBoard::drawPopupCenter(ImDrawList* drawList, ImFont* font, 
@@ -532,8 +544,6 @@ namespace QaplaWindows
     std::optional<Piece> ImGuiBoard::drawPieceSelectionPopup(
         const ImVec2& cellMin, const ImVec2& cellMax, float cellSize, Piece currentPieceOnSquare)
     {
-        
-        
         const float gridCellSize = cellSize * GRID_CELL_SIZE_RATIO;
         const float popupWidth = gridCellSize * GRID_COL_COUNT;
         const float popupHeight = gridCellSize * GRID_ROW_COUNT;
@@ -560,16 +570,22 @@ namespace QaplaWindows
                 continue; // Center is drawn separately
             }
             
-            const auto [cellMin, cellMax] = getPopupCellBounds(popupMin, gridCellSize, cell.col, cell.row);
+            const SatelliteDrawParams params = {
+                .drawList = drawList,
+                .font = font,
+                .popupMin = popupMin,
+                .gridCellSize = gridCellSize,
+                .col = cell.col,
+                .row = cell.row
+            };
             
             if (cell.type == PopupCellType::PIECE) {
                 const Piece coloredPiece = cell.basePiece + pieceColor_;
-                drawPopupPiece(drawList, font, coloredPiece, cellMin, gridCellSize);
+                drawPopupPiece(params, coloredPiece);
             } else if (cell.type == PopupCellType::COLOR_SWITCH) {
-                drawSwitchColorIcon(drawList, cellMin, cellMax);
+                drawSwitchColorIcon(params);
             } else if (cell.type == PopupCellType::CLEAR) {
-                drawPopupRect(drawList, cellMin, cellMax, POPUP_PIECE_BACKGROUND);
-                drawClearIcon(drawList, cellMin, cellMax, 0.2F);
+                drawClearField(params);
             }
         }
         
