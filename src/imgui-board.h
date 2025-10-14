@@ -164,10 +164,13 @@ namespace QaplaWindows
         };
 
         static std::pair<ImVec2, ImVec2> getPopupCellBounds(const ImVec2& popupMin, float cellSize, 
-                                                       int col, int row);
+            int col, int row);
         static void drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor);
         static void drawPopupPiece(ImDrawList* drawList, ImFont* font, QaplaBasics::Piece piece, 
-                            const ImVec2& min, float size);
+            const ImVec2& min, float size);
+        void drawSwitchColorIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max) const;
+        void drawPopupCenter(ImDrawList* drawList, ImFont* font, 
+            const ImVec2& popupMin, float gridCellSize) const;
         static bool isRectClicked(const ImVec2& min, const ImVec2& max);
         
         // Returns selected piece when center is clicked
@@ -199,25 +202,7 @@ namespace QaplaWindows
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;
 
-        inline static const std::vector<PopupCell> cells = {
-            // Top row
-            {1, 0, PopupCellType::PIECE, QaplaBasics::Piece::PAWN},
-            {2, 0, PopupCellType::PIECE, QaplaBasics::Piece::ROOK},
-            // Left column
-            {0, 1, PopupCellType::PIECE, QaplaBasics::Piece::KNIGHT},
-            {0, 2, PopupCellType::PIECE, QaplaBasics::Piece::QUEEN},
-            // Right column
-            {3, 1, PopupCellType::PIECE, QaplaBasics::Piece::BISHOP},
-            {3, 2, PopupCellType::PIECE, QaplaBasics::Piece::KING},
-            // Bottom row
-            {1, 3, PopupCellType::COLOR_SWITCH, QaplaBasics::Piece::NO_PIECE},
-            {2, 3, PopupCellType::CLEAR, QaplaBasics::Piece::NO_PIECE},
-            // Center (4 cells for click detection)
-            {1, 1, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
-            {2, 1, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
-            {1, 2, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
-            {2, 2, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE}
-        };
+        static const std::vector<PopupCell> cells;
     };
 
 }
