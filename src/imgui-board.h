@@ -22,10 +22,12 @@
 
 #include "qapla-tester/change-tracker.h"
 
+#include <imgui.h>
+
 #include <optional>
 #include <memory>
 #include <utility>
-#include <imgui.h>
+#include <vector>
 
 namespace QaplaMoveGenerator
 {
@@ -143,15 +145,40 @@ namespace QaplaWindows
             QaplaBasics::File file, QaplaBasics::Rank rank) const;
 
         void drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize,
-                             QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite);
-        void drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize);
+                             QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite, bool popupIsHovered);
+        void drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, bool popupIsHovered);
 
         void drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
 
         void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, 
             float cellSize, float boardSize, ImFont *font, float maxSize) const;
 
-        void drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize);
+        // Popup configuration and helpers
+        enum class PopupCellType { EMPTY, PIECE, COLOR_SWITCH, CLEAR, CENTER };
+        
+        struct PopupCell {
+            int col;
+            int row;
+            PopupCellType type;
+            QaplaBasics::Piece basePiece = QaplaBasics::Piece::NO_PIECE; // Base piece type (without color)
+        };
+
+        static std::pair<ImVec2, ImVec2> getPopupCellBounds(const ImVec2& popupMin, float cellSize, 
+                                                       int col, int row);
+        static void drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor);
+        static void drawPopupPiece(ImDrawList* drawList, ImFont* font, QaplaBasics::Piece piece, 
+                            const ImVec2& min, float size);
+        static bool isRectClicked(const ImVec2& min, const ImVec2& max);
+        
+        // Returns selected piece when center is clicked
+        // std::nullopt: no action (just cursor change)
+        // NO_PIECE: remove piece from square
+        // other piece: place that piece on square
+        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize);
+        std::optional<QaplaBasics::Piece> handlePieceSelectionClick(const ImVec2& popupMin, float gridCellSize);
+        
+        // Handles piece selection popup logic - returns true if mouse is over popup
+        bool handlePieceSelectionPopup();
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
@@ -159,11 +186,38 @@ namespace QaplaWindows
         bool gameOver_ = false;
 
         QaplaBasics::Piece lastSelectedPiece_ = QaplaBasics::Piece::WHITE_PAWN;
+        QaplaBasics::Piece pieceColor_ = QaplaBasics::Piece::WHITE;
+        
+        // For rendering piece selection popup after board (to avoid z-order issues)
+        std::optional<QaplaBasics::Square> hoveredSquareForPopup_;
+        ImVec2 hoveredSquareCellMin_;
+        ImVec2 hoveredSquareCellMax_;
+        float hoveredSquareCellSize_;
 
         ChangeTracker gameRecordTracker_;
 
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;
+
+        inline static const std::vector<PopupCell> cells = {
+            // Top row
+            {1, 0, PopupCellType::PIECE, QaplaBasics::Piece::PAWN},
+            {2, 0, PopupCellType::PIECE, QaplaBasics::Piece::ROOK},
+            // Left column
+            {0, 1, PopupCellType::PIECE, QaplaBasics::Piece::KNIGHT},
+            {0, 2, PopupCellType::PIECE, QaplaBasics::Piece::QUEEN},
+            // Right column
+            {3, 1, PopupCellType::PIECE, QaplaBasics::Piece::BISHOP},
+            {3, 2, PopupCellType::PIECE, QaplaBasics::Piece::KING},
+            // Bottom row
+            {1, 3, PopupCellType::COLOR_SWITCH, QaplaBasics::Piece::NO_PIECE},
+            {2, 3, PopupCellType::CLEAR, QaplaBasics::Piece::NO_PIECE},
+            // Center (4 cells for click detection)
+            {1, 1, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
+            {2, 1, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
+            {1, 2, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE},
+            {2, 2, PopupCellType::CENTER, QaplaBasics::Piece::NO_PIECE}
+        };
     };
 
 }

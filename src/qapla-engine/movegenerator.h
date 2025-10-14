@@ -173,6 +173,14 @@ namespace QaplaMoveGenerator {
 			Board::setPiece(square, piece);
 			computeAttackMasksForBothColors();
 		}
+
+		/**
+		 * Clears a square on the board
+		 */
+		void clearPiece(QaplaBasics::Square square) {
+			Board::clearPiece(square);
+			computeAttackMasksForBothColors();
+		}
 		
 		/**
 		 * Sets a piece, you need to call compute attack masks before move generation

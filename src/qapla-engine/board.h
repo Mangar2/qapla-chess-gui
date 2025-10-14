@@ -100,6 +100,19 @@ namespace QaplaBasics {
 		}
 
 		/**
+		 * Removes a piece from the board adjusting all state variables
+		 */
+		void clearPiece(Square square) {
+			removePiece(square);
+			if (kingSquares[WHITE] == square) {
+				kingSquares[WHITE] = NO_SQUARE;
+			}
+			if (kingSquares[BLACK] == square) {
+				kingSquares[BLACK] = NO_SQUARE;
+			}
+		}
+
+		/**
 		 * Computes the hash value of the current board
 		 * @returns board hash for the current position
 		 */

@@ -461,14 +461,16 @@ bool Board::validateEPSquare() const {
 	}
 	const Rank epRank = getRank(ep);
 	if (_whiteToMove) {
-		if (epRank != Rank::R6) {
+		// EP square is stored as the square of the pawn that can be captured
+		if (epRank != Rank::R5) {
 			return false;
 		}
 		if (_board[ep + NORTH] != WHITE_PAWN) {
 			return false;
 		}
 	} else {
-		if (epRank != Rank::R3) {
+		// EP square is stored as the square of the pawn that can be captured
+		if (epRank != Rank::R4) {
 			return false;	
 		}
 		if (_board[ep + SOUTH] != BLACK_PAWN) {

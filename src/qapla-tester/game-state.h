@@ -161,7 +161,15 @@ public:
 	 */
 	void synchronizeIncrementalFrom(const GameState& referenceState);
 	
+	/**
+	 * @brief Gets the board position after all moves played so far.
+	 * 
+	 * @return The current board position.
+	 */
 	const QaplaMoveGenerator::MoveGenerator& position() const {
+		return position_;
+	}
+	QaplaMoveGenerator::MoveGenerator& position() {
 		return position_;
 	}
 	
