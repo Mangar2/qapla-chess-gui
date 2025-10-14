@@ -170,14 +170,14 @@ namespace QaplaWindows
             const ImVec2& min, float size);
         void drawSwitchColorIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max) const;
         void drawPopupCenter(ImDrawList* drawList, ImFont* font, 
-            const ImVec2& popupMin, float gridCellSize) const;
+            const ImVec2& popupMin, float gridCellSize, QaplaBasics::Piece currentPieceOnSquare) const;
         static bool isRectClicked(const ImVec2& min, const ImVec2& max);
         
         // Returns selected piece when center is clicked
         // std::nullopt: no action (just cursor change)
         // NO_PIECE: remove piece from square
         // other piece: place that piece on square
-        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize);
+        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize, QaplaBasics::Piece currentPieceOnSquare);
         std::optional<QaplaBasics::Piece> handlePieceSelectionClick(const ImVec2& popupMin, float gridCellSize);
         
         // Handles piece selection popup logic - returns true if mouse is over popup

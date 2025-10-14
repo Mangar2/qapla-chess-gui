@@ -40,7 +40,7 @@ namespace QaplaWindows
     using QaplaBasics::Square;
     using QaplaBasics::File;
     using QaplaBasics::Rank;
-    
+    /*
     // 4x4 version
     constexpr int GRID_ROW_COUNT = 4;
     constexpr int GRID_COL_COUNT = 4;
@@ -66,10 +66,10 @@ namespace QaplaWindows
         { .col = 1, .row = 2, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE},
         { .col = 2, .row = 2, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE}
     };
-    
+    */
 
     // 3x3 version
-    /*
+    
     constexpr int GRID_ROW_COUNT = 3;
     constexpr int GRID_COL_COUNT = 3;
     constexpr float CENTER_EXTENT = 1.0F;
@@ -91,8 +91,8 @@ namespace QaplaWindows
         // Center (4 cells for click detection)
         { .col = 1, .row = 1, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE},
     };
-    */
-
+    
+    constexpr bool ROUND_POPUP_FIELD = true;
     constexpr auto POPUP_CENTER_COLOR = IM_COL32(255, 255, 128, 255);
     constexpr auto POPUP_PIECE_BACKGROUND = IM_COL32(240, 217, 181, 255);
     constexpr auto POPUP_SWITCH_BACKGROUND = IM_COL32(200, 200, 200, 255);
@@ -428,8 +428,9 @@ namespace QaplaWindows
         // Draw piece selection popup AFTER everything else (on top) if there's a hovered square
         if (hoveredSquareForPopup_)
         {
+            const Piece currentPieceOnSquare = gameState_->position()[*hoveredSquareForPopup_];
             auto selectedPiece = drawPieceSelectionPopup(
-                hoveredSquareCellMin_, hoveredSquareCellMax_, hoveredSquareCellSize_);
+                hoveredSquareCellMin_, hoveredSquareCellMax_, hoveredSquareCellSize_, currentPieceOnSquare);
             
             if (selectedPiece) {
                 if (*selectedPiece != Piece::NO_PIECE) {
@@ -504,13 +505,18 @@ namespace QaplaWindows
     }
 
     void ImGuiBoard::drawPopupCenter(ImDrawList* drawList, ImFont* font, 
-        const ImVec2& popupMin, float gridCellSize) const
+        const ImVec2& popupMin, float gridCellSize, Piece currentPieceOnSquare) const
     {
         const ImVec2 min = {popupMin.x + gridCellSize, popupMin.y + gridCellSize};
         const ImVec2 max = {min.x + CENTER_EXTENT * gridCellSize, min.y + CENTER_EXTENT * gridCellSize};
 
         const auto size = max.x - min.x;
-        drawList->AddRectFilled(min, max, POPUP_CENTER_COLOR);
+        
+        // Check if the piece on the square is already the selected piece
+        const bool isAlreadyThere = (currentPieceOnSquare == lastSelectedPiece_);
+        const ImU32 centerColor = isAlreadyThere ? IM_COL32(150, 150, 150, 255) : POPUP_CENTER_COLOR; // Gray if already there, yellow otherwise
+        
+        drawList->AddRectFilled(min, max, centerColor);
         drawList->AddRect(min, max, BLACK_COLOR, 0.0F, 0, 2.0F);
         
         if (lastSelectedPiece_ == Piece::NO_PIECE) {
@@ -521,7 +527,7 @@ namespace QaplaWindows
     }
 
     std::optional<Piece> ImGuiBoard::drawPieceSelectionPopup(
-        const ImVec2& cellMin, const ImVec2& cellMax, float cellSize)
+        const ImVec2& cellMin, const ImVec2& cellMax, float cellSize, Piece currentPieceOnSquare)
     {
         
         
@@ -543,7 +549,7 @@ namespace QaplaWindows
         //drawList->AddRectFilled(popupMin, popupMax, IM_COL32(50, 50, 50, 50));
         //drawList->AddRect(popupMin, popupMax, IM_COL32(255, 255, 255, 255), 0.0F, 0, 2.0F);
         
-        drawPopupCenter(drawList, font, popupMin, gridCellSize);
+        drawPopupCenter(drawList, font, popupMin, gridCellSize, currentPieceOnSquare);
         
         // Draw all configured cells
         for (const auto& cell : cells) {
