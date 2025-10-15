@@ -21,6 +21,7 @@
 #include "qapla-engine/types.h"
 
 #include "qapla-tester/change-tracker.h"
+#include "imgui-board-setup.h"
 
 #include <imgui.h>
 
@@ -90,9 +91,9 @@ namespace QaplaWindows
 
         /**
          * Set whether to allow piece input (for setup mode).
-         * @param pieceInput Whether to allow piece input.
+         * @param setupMode Whether to show the setup mode and allow piece input.
          */
-        void setAllowPieceInput(bool pieceInput) { allowPieceInput_ = pieceInput; }
+        void setSetupMode(bool setupMode) { setupMode_ = setupMode; }
 
         /**
          * Sets the board position from the game record.
@@ -205,9 +206,12 @@ namespace QaplaWindows
         // Handles piece selection popup logic - returns true if mouse is over popup
         bool handlePieceSelectionPopup();
 
+        // Draws setup controls like side to move, castling rights, en passant, ...
+        void drawSetupControls(const ImVec2 &screenPos, const float boardSize, const ImVec2 &region);
+
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
-        bool allowPieceInput_ = false;
+        bool setupMode_ = false;
         bool gameOver_ = false;
 
         QaplaBasics::Piece lastSelectedPiece_ = QaplaBasics::Piece::WHITE_PAWN;
@@ -221,6 +225,8 @@ namespace QaplaWindows
 
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;
+
+        BoardSetupData setupData_;
 
         static const std::vector<PopupCell> cells;
     };

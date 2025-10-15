@@ -120,7 +120,7 @@ namespace QaplaWindows
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
         if (clickedButton == "Setup") {
             setAllowMoveInput(false);
-            setAllowPieceInput(true);
+            setSetupMode(true);
             setupMode_ = true;
             return {};
         }
@@ -141,7 +141,7 @@ namespace QaplaWindows
             } else {
                 setupMode_ = false;
                 setAllowMoveInput(true);
-                setAllowPieceInput(false);
+                setSetupMode(false);
             }
         }
         if (command == "Copy") {
@@ -161,7 +161,7 @@ namespace QaplaWindows
         if (command == "Cancel") {
             setupMode_ = false;
             setAllowMoveInput(true);
-            setAllowPieceInput(false);
+            setSetupMode(false);
             // The board is updated by polling, on change. 
             // Resetting the tracker thus enforces updating with the current position, resetting all changes.
             gameRecordTracker_.clear();

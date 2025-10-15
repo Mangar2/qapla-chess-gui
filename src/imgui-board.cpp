@@ -230,7 +230,7 @@ namespace QaplaWindows
         ImGui::SetCursorScreenPos(cellMin);
         ImGui::InvisibleButton(("cell_" + std::to_string(square)).c_str(), ImVec2(cellSize, cellSize));
 
-        if (allowPieceInput_ && ImGui::IsItemHovered() && !popupIsHovered)
+        if (setupMode_ && ImGui::IsItemHovered() && !popupIsHovered)
         {
             // Store hovered square for later rendering (after board pieces)
             hoveredSquareForPopup_ = square;
@@ -367,7 +367,7 @@ namespace QaplaWindows
             static_cast<int>(QaplaBasics::getRank(epSquare))) % 2 != 0;
         const auto bgColor = getSquareColor(false, !isWhite);
 
-        if (!allowPieceInput_ || epSquare == Square::NO_SQUARE) {
+        if (!setupMode_ || epSquare == Square::NO_SQUARE) {
             return;
         }
         
@@ -383,7 +383,7 @@ namespace QaplaWindows
     void ImGuiBoard::drawWhiteKingCastlingIndicators(ImDrawList *drawList, 
         const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
     {
-        if (!allowPieceInput_) {
+        if (!setupMode_) {
             return;
         }
         const auto &position = gameState_->position();
@@ -401,7 +401,7 @@ namespace QaplaWindows
     void ImGuiBoard::drawBlackKingCastlingIndicators(ImDrawList *drawList, 
         const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
     {
-        if (!allowPieceInput_) {
+        if (!setupMode_) {
             return;
         }
         const auto &position = gameState_->position();
@@ -552,8 +552,32 @@ namespace QaplaWindows
 
         ImGui::PopFont();
 
+        drawSetupControls(screenPos, boardSize, region);
+
         const auto moveRecord = checkMove();
         return moveRecord;
+    }
+
+    void ImGuiBoard::drawSetupControls(const ImVec2 &screenPos, const float boardSize, const ImVec2 &region)
+    {
+        // Draw setup controls to the right of the board if in setup mode
+        if (setupMode_)
+        {
+            // Must include the space to skip the numbering right to the board
+            const float spacing = 30.0F;
+            const float setupPanelX = screenPos.x + boardSize + spacing;
+            const float setupPanelY = screenPos.y;
+
+            ImGui::SetCursorScreenPos(ImVec2(setupPanelX, setupPanelY));
+
+            ImGui::BeginGroup();
+            ImGui::PushItemWidth(200.0F);
+
+            ImGuiBoardSetup::draw(setupData_);
+
+            ImGui::PopItemWidth();
+            ImGui::EndGroup();
+        }
     }
 
     std::pair<ImVec2, ImVec2> ImGuiBoard::getPopupCellBounds(
