@@ -504,3 +504,52 @@ bool Board::validateCastlingRights() const {
 	}
 	return true;
 }
+
+void Board::setupAddPiece(Square square, Piece piece) {
+	addPiece(square, piece);
+	auto pieceType = getPieceType(piece);
+	auto pieceColor = getPieceColor(piece);
+	// auto enabling castling rights if king or rook is placed on its starting square
+	if (pieceType == KING) {
+		setupRemovePiece(kingSquares[pieceColor]);
+		kingSquares[pieceColor] = square;
+		if (square == _kingStartSquare[pieceColor]) {
+			if (_board[_kingRookStartSquare[pieceColor]] == piece) {
+				setCastlingRight(pieceColor, true, true);
+			} 
+			if (_board[_queenRookStartSquare[pieceColor]] == piece) {
+				setCastlingRight(pieceColor, false, true);
+			}
+		} 
+	}
+	if (pieceType == ROOK) {
+		if (square == _kingRookStartSquare[pieceColor]) {
+			if (kingSquares[pieceColor] == _kingStartSquare[pieceColor]) {
+				setCastlingRight(pieceColor, true, true);
+			}
+		} 
+		if (square == _queenRookStartSquare[pieceColor]) {
+			if (kingSquares[pieceColor] == _kingStartSquare[pieceColor]) {
+				setCastlingRight(pieceColor, false, true);
+			}
+		} 
+	}
+}
+
+void Board::setupRemovePiece(Square square) {
+	auto piece = _board[square];
+	auto pieceType = getPieceType(piece);
+	auto pieceColor = getPieceColor(piece);
+	bool isPawn = pieceType == PAWN;
+	removePiece(square);
+	if (kingSquares[pieceColor] == square) {
+		kingSquares[pieceColor] = NO_SQUARE;
+	}
+	_boardState.clearEP();
+	_boardState.disableCastlingRightsByMask(_clearCastleFlagMask[square]);
+	_boardState.halfmovesWithoutPawnMoveOrCapture = 0;
+	_boardState.fenHalfmovesWithoutPawnMoveOrCapture = 0;
+	if (isPawn && square == _boardState.getEP()) {
+		_boardState.clearEP();
+	}
+}

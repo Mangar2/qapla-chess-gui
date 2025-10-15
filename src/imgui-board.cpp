@@ -40,12 +40,15 @@ namespace QaplaWindows
     using QaplaBasics::Square;
     using QaplaBasics::File;
     using QaplaBasics::Rank;
-    /*
+    
     // 4x4 version
     constexpr int GRID_ROW_COUNT = 4;
     constexpr int GRID_COL_COUNT = 4;
     constexpr float CENTER_EXTENT = 2.0F;
     constexpr float GRID_CELL_SIZE_RATIO = 0.35F; 
+    constexpr bool ROUND_POPUP_FIELD = false;
+    constexpr float ENLARGE_CENTER = 1.0F;
+    constexpr float REDUCE_SATELLITES = 1.0F;
 
     const std::vector<ImGuiBoard::PopupCell> ImGuiBoard::cells = {
         // Top row
@@ -66,10 +69,13 @@ namespace QaplaWindows
         { .col = 1, .row = 2, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE},
         { .col = 2, .row = 2, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE}
     };
-    */
-
-    // 3x3 version
     
+    /*
+    // 3x3 version
+    constexpr bool ROUND_POPUP_FIELD = true;
+    constexpr float ENLARGE_CENTER = 1.4F;
+    constexpr float REDUCE_SATELLITES = 0.7F;
+
     constexpr int GRID_ROW_COUNT = 3;
     constexpr int GRID_COL_COUNT = 3;
     constexpr float CENTER_EXTENT = 1.0F;
@@ -91,10 +97,7 @@ namespace QaplaWindows
         // Center (4 cells for click detection)
         { .col = 1, .row = 1, .type = PopupCellType::CENTER, .basePiece = Piece::NO_PIECE},
     };
-    
-    constexpr bool ROUND_POPUP_FIELD = true;
-    constexpr float ENLARGE_CENTER = 1.2F;
-    constexpr float REDUCE_SATELLITES = 0.8F;
+    */
 
     constexpr auto POPUP_CENTER_COLOR = IM_COL32(255, 255, 128, 255);
     constexpr auto POPUP_PIECE_BACKGROUND = IM_COL32(240, 217, 181, 255);
@@ -271,6 +274,8 @@ namespace QaplaWindows
 
     void ImGuiBoard::drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font) {
         const auto &position = gameState_->position();
+        
+        // Draw EP indicator outside the piece loop
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
         {
             for (File file = File::A; file <= File::H; ++file)
@@ -278,9 +283,20 @@ namespace QaplaWindows
                 Square sq = computeSquare(file, rank);
                 Piece piece = position[sq];
                 const auto [cellMin, _] = computeCellCoordinates(boardPos, cellSize, file, rank);
+                
+                // Draw the piece
                 font::drawPiece(drawList, piece, cellMin, cellSize, font);
+                
+                // Draw castling indicators on top of king pieces
+                bool isWhite = (static_cast<int>(file) + static_cast<int>(rank)) % 2 != 0;
+                if (piece == Piece::WHITE_KING) {
+                    drawWhiteKingCastlingIndicators(drawList, cellMin, cellSize, isWhite,font);
+                } else if (piece == Piece::BLACK_KING) {
+                    drawBlackKingCastlingIndicators(drawList, cellMin, cellSize, isWhite, font);
+                }
             }
         }
+        drawEPIndicator(drawList, boardPos, cellSize, font);
     }
 
     void ImGuiBoard::drawBoardCoordinates(ImDrawList *drawList,
@@ -312,6 +328,88 @@ namespace QaplaWindows
                 boardPos.x + boardSize,
                 boardPos.y + row * cellSize + cellSize * 0.3F};
             drawList->AddText(font, std::min(cellSize * 0.5F, maxSize), pos, IM_COL32_WHITE, label.c_str());
+        }
+    }
+
+    void ImGuiBoard::drawIndicatorIcon(ImDrawList *drawList, const ImVec2 &cellMin, 
+        float cellSize, bool left, Piece piece, ImU32 bgColor, ImFont *font)
+    {
+        constexpr float INDICATOR_SIZE = 0.30F;
+        constexpr float INDICATOR_PADDING = 0.25F;
+        
+        const float indicatorSize = cellSize * INDICATOR_SIZE;
+        const float radius = indicatorSize * 0.6F;
+        float posX = indicatorSize * INDICATOR_PADDING;
+        if (!left) {
+            posX = cellSize - posX - indicatorSize;
+        }
+        const ImVec2 indicatorMin = { 
+            cellMin.x + posX, 
+            cellMin.y + indicatorSize * INDICATOR_PADDING 
+        };
+        const ImVec2 center = { 
+            indicatorMin.x + indicatorSize * 0.5F, 
+            indicatorMin.y + indicatorSize * 0.5F 
+        };
+        
+        drawList->AddCircleFilled(center, radius, bgColor);
+        
+        // Draw piece icon
+        font::drawPiece(drawList, piece, indicatorMin, indicatorSize, font);
+    }
+
+    void ImGuiBoard::drawEPIndicator(ImDrawList *drawList, const ImVec2 &boardPos, 
+        float cellSize, ImFont *font)
+    {
+        const auto &position = gameState_->position();
+        const auto epSquare = position.getEP();
+
+        if (!allowPieceInput_ || epSquare == Square::NO_SQUARE) {
+            return;
+        }
+        
+        const auto epFile = getFile(epSquare);
+        const auto epRank = getRank(epSquare);
+        const auto [cellMin, _] = computeCellCoordinates(boardPos, cellSize, epFile, epRank);
+        
+        // Draw opponent's pawn (the one that can be captured)
+        const Piece epPawn = position.isWhiteToMove() ? Piece::WHITE_PAWN : Piece::BLACK_PAWN;
+        drawIndicatorIcon(drawList, cellMin, cellSize, false, epPawn, IM_COL32(255, 255, 0, 255), font);
+    }
+
+    void ImGuiBoard::drawWhiteKingCastlingIndicators(ImDrawList *drawList, 
+        const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
+    {
+        if (!allowPieceInput_) {
+            return;
+        }
+        const auto &position = gameState_->position();
+        const auto bgColor = getSquareColor(false, !isWhite);
+        
+        if (position.isKingSideCastleAllowed<Piece::WHITE>()) {
+            drawIndicatorIcon(drawList, cellMin, cellSize, false, Piece::WHITE_ROOK, bgColor, font);
+        }
+        
+        if (position.isQueenSideCastleAllowed<Piece::WHITE>()) {
+            drawIndicatorIcon(drawList, cellMin, cellSize, true, Piece::WHITE_ROOK, bgColor, font);
+        }
+    }
+
+    void ImGuiBoard::drawBlackKingCastlingIndicators(ImDrawList *drawList, 
+        const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
+    {
+        if (!allowPieceInput_) {
+            return;
+        }
+        const auto &position = gameState_->position();
+        const auto bgColor = getSquareColor(false, !isWhite);
+        
+        if (position.isKingSideCastleAllowed<Piece::BLACK>()) {
+            drawIndicatorIcon(drawList, cellMin, cellSize, false, Piece::BLACK_ROOK, bgColor, font);
+        }
+        
+        if (position.isQueenSideCastleAllowed<Piece::BLACK>()) {
+            drawIndicatorIcon(drawList, cellMin, cellSize, true, Piece::BLACK_ROOK, bgColor, font);
         }
     }
 
@@ -437,9 +535,9 @@ namespace QaplaWindows
             
             if (selectedPiece) {
                 if (*selectedPiece != Piece::NO_PIECE) {
-                    gameState_->position().setPiece(*hoveredSquareForPopup_, *selectedPiece);
+                    gameState_->position().setupAddPiece(*hoveredSquareForPopup_, *selectedPiece);
                 } else {
-                    gameState_->position().clearPiece(*hoveredSquareForPopup_);
+                    gameState_->position().setupRemovePiece(*hoveredSquareForPopup_);
                 }
             }
         }
@@ -466,17 +564,14 @@ namespace QaplaWindows
 
     void ImGuiBoard::drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor)
     {
-        drawList->AddRectFilled(min, max, bgColor);
-        drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255));
-    }
-
-    void ImGuiBoard::drawPopupPiece(const SatelliteDrawParams& params, Piece piece)
-    {
-        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
-        const float size = max.x - min.x;
-        
-        drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
-        font::drawPiece(params.drawList, piece, min, size, params.font);
+        if (ROUND_POPUP_FIELD) {
+            const float rounding = (max.x - min.x) * 0.5F; // Fully round
+            drawList->AddRectFilled(min, max, bgColor, rounding);
+            drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255), rounding);
+        } else {
+            drawList->AddRectFilled(min, max, bgColor);
+            drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255));
+        }
     }
 
     bool ImGuiBoard::isRectClicked(const ImVec2& min, const ImVec2& max)
@@ -487,6 +582,70 @@ namespace QaplaWindows
         const ImVec2 mousePos = ImGui::GetMousePos();
         return mousePos.x >= min.x && mousePos.x <= max.x && 
                mousePos.y >= min.y && mousePos.y <= max.y;
+    }
+
+    // Helper function to adjust satellite position for round popup
+    static std::pair<ImVec2, ImVec2> adjustSatellitePosition(
+        const ImVec2& originalMin, const ImVec2& originalMax, 
+        const ImVec2& popupMin, float gridCellSize)
+    {
+        if (!ROUND_POPUP_FIELD) {
+            return {originalMin, originalMax};
+        }
+        
+        // Calculate center of popup (grid center)
+        const ImVec2 popupCenter = {
+            popupMin.x + (GRID_COL_COUNT * gridCellSize) * 0.5F,
+            popupMin.y + (GRID_ROW_COUNT * gridCellSize) * 0.5F
+        };
+        
+        // Original cell center
+        const ImVec2 originalCenter = {
+            (originalMin.x + originalMax.x) * 0.5F, 
+            (originalMin.y + originalMax.y) * 0.5F
+        };
+        
+        // Calculate angle from popup center to satellite
+        const float dx = originalCenter.x - popupCenter.x;
+        const float dy = originalCenter.y - popupCenter.y;
+        const float angle = std::atan2(dy, dx);
+        
+        // Reduce size
+        const float originalSize = originalMax.x - originalMin.x;
+        const float newSize = originalSize * REDUCE_SATELLITES;
+        
+        // Calculate radius for circular arrangement
+        // Use the grid cell size as the base radius (distance from center to satellite)
+        const float baseRadius = gridCellSize * (GRID_COL_COUNT * 0.5F);
+        // Add half the enlarged center size and half the satellite size
+        const float enlargedCenterRadius = (gridCellSize * CENTER_EXTENT * ENLARGE_CENTER) * 0.5F;
+        const float satelliteRadius = newSize * 0.5F;
+        const float circularRadius = enlargedCenterRadius + satelliteRadius;
+        
+        // New center position on circle
+        const ImVec2 newCenter = {
+            popupCenter.x + std::cos(angle) * circularRadius,
+            popupCenter.y + std::sin(angle) * circularRadius
+        };
+        
+        return {
+            {newCenter.x - newSize * 0.5F, newCenter.y - newSize * 0.5F},
+            {newCenter.x + newSize * 0.5F, newCenter.y + newSize * 0.5F}
+        };
+    }
+
+    void ImGuiBoard::drawPopupPiece(const SatelliteDrawParams& params, Piece piece)
+    {
+        const auto [originalMin, originalMax] = getPopupCellBounds(
+            params.popupMin, params.gridCellSize, params.col, params.row);
+        
+        const auto [min, max] = adjustSatellitePosition(
+            originalMin, originalMax, params.popupMin, params.gridCellSize);
+        
+        const float size = max.x - min.x;
+        
+        drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
+        font::drawPiece(params.drawList, piece, min, size, params.font);
     }
 
     static void drawClearIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, float paddingRatio)
@@ -502,18 +661,28 @@ namespace QaplaWindows
 
     void ImGuiBoard::drawSwitchColorIcon(const SatelliteDrawParams& params) const
     {
-        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
+        const auto [originalMin, originalMax] = getPopupCellBounds(
+            params.popupMin, params.gridCellSize, params.col, params.row);
+        
+        const auto [min, max] = adjustSatellitePosition(
+            originalMin, originalMax, params.popupMin, params.gridCellSize);
+        
+        const float cellSize = max.x - min.x;
         
         drawPopupRect(params.drawList, min, max, POPUP_SWITCH_BACKGROUND);
         const ImVec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
-        const float radius = (max.x - min.x) * 0.3F;
+        const float radius = cellSize * 0.3F;
         ImU32 circleColor = (pieceColor_ == Piece::WHITE) ? BLACK_COLOR : WHITE_COLOR;
         params.drawList->AddCircleFilled(center, radius, circleColor);
     }
 
-    void ImGuiBoard::drawClearField(const SatelliteDrawParams& params) const
+    void ImGuiBoard::drawClearField(const SatelliteDrawParams& params)
     {
-        const auto [min, max] = getPopupCellBounds(params.popupMin, params.gridCellSize, params.col, params.row);
+        const auto [originalMin, originalMax] = getPopupCellBounds(
+            params.popupMin, params.gridCellSize, params.col, params.row);
+        
+        const auto [min, max] = adjustSatellitePosition(
+            originalMin, originalMax, params.popupMin, params.gridCellSize);
         
         drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
         drawClearIcon(params.drawList, min, max, 0.2F);
@@ -522,17 +691,32 @@ namespace QaplaWindows
     void ImGuiBoard::drawPopupCenter(ImDrawList* drawList, ImFont* font, 
         const ImVec2& popupMin, float gridCellSize, Piece currentPieceOnSquare) const
     {
-        const ImVec2 min = {popupMin.x + gridCellSize, popupMin.y + gridCellSize};
-        const ImVec2 max = {min.x + CENTER_EXTENT * gridCellSize, min.y + CENTER_EXTENT * gridCellSize};
-
-        const auto size = max.x - min.x;
+        ImVec2 min = {popupMin.x + gridCellSize, popupMin.y + gridCellSize};
+        ImVec2 max = {min.x + CENTER_EXTENT * gridCellSize, min.y + CENTER_EXTENT * gridCellSize};
+        float size = max.x - min.x;
+        
+        if (ROUND_POPUP_FIELD) {
+            // Enlarge center
+            const ImVec2 originalCenter = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
+            size *= ENLARGE_CENTER;
+            min = {originalCenter.x - size * 0.5F, originalCenter.y - size * 0.5F};
+            max = {originalCenter.x + size * 0.5F, originalCenter.y + size * 0.5F};
+        }
         
         // Check if the piece on the square is already the selected piece
         const bool isAlreadyThere = (currentPieceOnSquare == lastSelectedPiece_);
-        const ImU32 centerColor = isAlreadyThere ? IM_COL32(150, 150, 150, 255) : POPUP_CENTER_COLOR; // Gray if already there, yellow otherwise
+        const ImU32 centerColor = isAlreadyThere ? IM_COL32(150, 150, 150, 255) : POPUP_CENTER_COLOR;
         
-        drawList->AddRectFilled(min, max, centerColor);
-        drawList->AddRect(min, max, BLACK_COLOR, 0.0F, 0, 2.0F);
+        if (ROUND_POPUP_FIELD) {
+            // Draw as circle
+            const ImVec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
+            const float radius = size * 0.5F;
+            drawList->AddCircleFilled(center, radius, centerColor);
+            drawList->AddCircle(center, radius, BLACK_COLOR, 0, 2.0F);
+        } else {
+            drawList->AddRectFilled(min, max, centerColor);
+            drawList->AddRect(min, max, BLACK_COLOR, 0.0F, 0, 2.0F);
+        }
         
         if (lastSelectedPiece_ == Piece::NO_PIECE) {
             drawClearIcon(drawList, min, max, 0.3F);

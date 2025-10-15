@@ -153,6 +153,14 @@ namespace QaplaWindows
         void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, 
             float cellSize, float boardSize, ImFont *font, float maxSize) const;
 
+        static void drawIndicatorIcon(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, bool left,
+            QaplaBasics::Piece piece, ImU32 bgColor, ImFont *font);
+        void drawEPIndicator(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
+        void drawWhiteKingCastlingIndicators(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, 
+            bool isWhite, ImFont *font);
+        void drawBlackKingCastlingIndicators(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, 
+            bool isWhite, ImFont *font);
+
         // Popup configuration and helpers
         enum class PopupCellType { EMPTY, PIECE, COLOR_SWITCH, CLEAR, CENTER };
         
@@ -177,7 +185,7 @@ namespace QaplaWindows
         static void drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor);
         static void drawPopupPiece(const SatelliteDrawParams& params, QaplaBasics::Piece piece);
         void drawSwitchColorIcon(const SatelliteDrawParams& params) const;
-        void drawClearField(const SatelliteDrawParams& params) const;
+        static void drawClearField(const SatelliteDrawParams& params);
         void drawPopupCenter(ImDrawList* drawList, ImFont* font, 
             const ImVec2& popupMin, float gridCellSize, QaplaBasics::Piece currentPieceOnSquare) const;
         static bool isRectClicked(const ImVec2& min, const ImVec2& max);

@@ -100,19 +100,6 @@ namespace QaplaBasics {
 		}
 
 		/**
-		 * Removes a piece from the board adjusting all state variables
-		 */
-		void clearPiece(Square square) {
-			removePiece(square);
-			if (kingSquares[WHITE] == square) {
-				kingSquares[WHITE] = NO_SQUARE;
-			}
-			if (kingSquares[BLACK] == square) {
-				kingSquares[BLACK] = NO_SQUARE;
-			}
-		}
-
-		/**
 		 * Computes the hash value of the current board
 		 * @returns board hash for the current position
 		 */
@@ -410,6 +397,36 @@ namespace QaplaBasics {
 
 		uint32_t getStartHalfmoves() const {
 			return _startHalfmoves;
+		}
+
+		/**
+		 * Setup method to add a piece to the board.
+		 * @param square The square to place the piece on.
+		 * @param piece The piece to add.
+		 */
+		void setupAddPiece(Square square, Piece piece);
+
+		/**
+		 * Setup method to remove a piece from the board.
+		 * @param square The square to remove the piece from.
+		 */
+		void setupRemovePiece(Square square);
+
+		/**
+		 * Gets the EP square for setup position, the internal representation is different
+		 * @returns the square where the pawn moved to, not the capture square
+		 */
+		Square getSetupEpSquare() const {
+			auto internalEpSquare = _boardState.getEP();
+			if (internalEpSquare == 0) return NO_SQUARE;
+			auto epRank = getRank(internalEpSquare);
+			if (epRank == Rank::R4) {
+				return Square(internalEpSquare + SOUTH);
+			}
+			if (epRank == Rank::R5) {
+				return Square(internalEpSquare + NORTH);
+			}
+			return NO_SQUARE;
 		}
 
 	protected:
