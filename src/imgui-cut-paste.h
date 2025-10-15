@@ -22,14 +22,12 @@
 #include <string>
 #include <optional>
 
-struct GLFWwindow;
-
 namespace QaplaWindows {
 
 /**
  * @brief Utility functions for clipboard operations in ImGui applications
  * 
- * This namespace provides cross-platform clipboard functionality using GLFW
+ * This namespace provides cross-platform clipboard functionality using ImGui
  * for reading clipboard content and detecting paste keyboard shortcuts.
  */
 namespace ImGuiCutPaste {
@@ -37,20 +35,18 @@ namespace ImGuiCutPaste {
     /**
      * @brief Gets text content from the system clipboard
      * 
-     * @param window GLFW window handle
      * @return std::optional<std::string> The clipboard text content if available,
      *                                   std::nullopt if clipboard is empty or contains non-text data
      */
-    std::optional<std::string> getClipboardString(GLFWwindow* window);
+    std::optional<std::string> getClipboardString();
 
     /**
      * @brief Sets text content to the system clipboard
      * 
-     * @param window GLFW window handle
      * @param text The text to copy to clipboard
      * @return bool true if the operation was successful, false otherwise
      */
-    bool setClipboardString(GLFWwindow* window, const std::string& text);
+    bool setClipboardString(const std::string& text);
 
     /**
      * @brief Checks for copy keyboard shortcut
@@ -60,10 +56,9 @@ namespace ImGuiCutPaste {
      * - Windows/Linux: Ctrl+C
      * - macOS: Cmd+C
      * 
-     * @param window GLFW window handle
      * @return bool true if copy shortcut was pressed, false otherwise
      */
-    bool checkForCopy(GLFWwindow* window);
+    bool checkForCopy();
 
     /**
      * @brief Checks for paste keyboard shortcut and returns clipboard content if triggered
@@ -73,11 +68,10 @@ namespace ImGuiCutPaste {
      * - Windows/Linux: Ctrl+V
      * - macOS: Cmd+V
      * 
-     * @param window GLFW window handle
      * @return std::optional<std::string> The clipboard text content if paste shortcut was pressed,
      *                                   std::nullopt if no paste shortcut was detected
      */
-    std::optional<std::string> checkForPaste(GLFWwindow* window);
+    std::optional<std::string> checkForPaste();
 
 } // namespace ImGuiCutPaste
 

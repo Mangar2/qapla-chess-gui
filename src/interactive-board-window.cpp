@@ -233,7 +233,7 @@ void InteractiveBoardWindow::draw() {
 	// Handle paste only for the active tab
 	GLFWwindow* window = glfwGetCurrentContext();
 	if (window != nullptr) {
-		auto pasted = ImGuiCutPaste::checkForPaste(window);
+		auto pasted = ImGuiCutPaste::checkForPaste();
 		if (pasted) {
 			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
 			if (gameRecord) {
@@ -301,7 +301,7 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 
 	GLFWwindow* window = glfwGetCurrentContext();
 	if (window != nullptr) {
-		ImGuiCutPaste::setClipboardString(window, pvString);
+		ImGuiCutPaste::setClipboardString(pvString);
 		SnackbarManager::instance().showNote("Copied PV to clipboard:\n" + pvString);
 	}
 }

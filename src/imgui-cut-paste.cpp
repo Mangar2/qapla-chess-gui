@@ -19,37 +19,25 @@
 
 #include "imgui-cut-paste.h"
 
-#include <GLFW/glfw3.h>
 #include <imgui.h>
 
 namespace QaplaWindows::ImGuiCutPaste {
 
-std::optional<std::string> getClipboardString(GLFWwindow* window) {
-    if (window == nullptr) {
-        return std::nullopt;
-    }
-
-    const char* text = glfwGetClipboardString(window);
-    if (text == nullptr) {
+std::optional<std::string> getClipboardString() {
+    const char* text = ImGui::GetClipboardText();
+    if (text == nullptr || text[0] == '\0') {
         return std::nullopt;
     }
 
     return std::string(text);
 }
 
-bool setClipboardString(GLFWwindow* window, const std::string& text) {
-    if (window == nullptr) {
-        return false;
-    }
-
-    glfwSetClipboardString(window, text.c_str());
+bool setClipboardString(const std::string& text) {
+    ImGui::SetClipboardText(text.c_str());
     return true;
 }
 
-bool checkForCopy(GLFWwindow* window) {
-    if (window == nullptr) {
-        return false;
-    }
+bool checkForCopy() {
 
     // Check for platform-specific copy shortcuts
     // Windows/Linux: Ctrl+C, macOS: Cmd+C (Super key)
@@ -61,11 +49,7 @@ bool checkForCopy(GLFWwindow* window) {
     return ctrlOrCmd && ImGui::IsKeyPressed(ImGuiKey_C);
 }
 
-std::optional<std::string> checkForPaste(GLFWwindow* window) {
-    if (window == nullptr) {
-        return std::nullopt;
-    }
-
+std::optional<std::string> checkForPaste() {
     // Check for platform-specific paste shortcuts
     // Windows/Linux: Ctrl+V, macOS: Cmd+V (Super key)
     bool ctrlOrCmd = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || 
@@ -74,7 +58,7 @@ std::optional<std::string> checkForPaste(GLFWwindow* window) {
                      ImGui::IsKeyDown(ImGuiKey_RightSuper);
 
     if (ctrlOrCmd && ImGui::IsKeyPressed(ImGuiKey_V)) {
-        return getClipboardString(window);
+        return getClipboardString();
     }
 
     return std::nullopt;
