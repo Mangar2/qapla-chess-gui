@@ -85,7 +85,7 @@ std::optional<GameRecord> parsePGN(const std::string& input) {
 
     // Create a clean copy using GameState
     GameState gameState;
-    GameRecord cleanRecord = gameState.setFromGameRecordAndCopy(record);
+    GameRecord cleanRecord = gameState.setFromGameRecordAndCopy(record, std::nullopt, false);
 
     // Check if either FEN is set or at least one move is present
     bool hasFen = !cleanRecord.getStartFen().empty() && cleanRecord.getStartFen() != "startpos";
@@ -111,7 +111,7 @@ GameParser::GameParser() {
     // addParser("UCI", parseUci);
 }
 
-void GameParser::addParser(const std::string& name, ParserFunction parser) {
+void GameParser::addParser(const std::string& name, const ParserFunction& parser) {
     if (parser) {
         parsers_.emplace_back(name, parser);
     }

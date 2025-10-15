@@ -114,7 +114,7 @@ public:
 	 * 
 	 * @return The total number of half moves played.
 	 */ 
-	uint32_t getHalfmovePlayed() const {
+	uint32_t getHalfmovesPlayed() const {
 		return position_.getStartHalfmoves() + static_cast<uint32_t>(moveList_.size());
 	}
 
@@ -132,9 +132,11 @@ public:
 	 * @brief sets the game state from a game record information and copies the GameRecord until the given ply number.
 	 * @param game The game record to set the state from.
 	 * @param plies The ply number to set the game state to.
+	 * @param verbose If true, loggs warnings if the game record is invalid.
 	 * @return The copy of the GameRecord up to the given ply number.
 	 */
-	GameRecord setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies = std::nullopt);
+	GameRecord setFromGameRecordAndCopy(const GameRecord& game, 
+		std::optional<uint32_t> plies = std::nullopt, bool verbose = true);
 
 	/**
 	 * @brief Sets the game state from a game record information.

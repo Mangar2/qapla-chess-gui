@@ -280,7 +280,7 @@ void Board::undoMove(Move move, BoardState recentBoardState) {
 	assert(_board[departure] != NO_PIECE);
 }
 
-std::string Board::getFen() const {
+std::string Board::getFen(uint32_t halvmovesPlayed) const {
 	std::string result;
 	File file;
 	Rank rank;
@@ -329,7 +329,7 @@ std::string Board::getFen() const {
 	result += " ";
 	result += std::to_string(getHalfmovesWithoutPawnMoveOrCapture());
 
-	int fullMoveNumber = _startHalfmoves / 2 + 1;
+	int fullMoveNumber = (_startHalfmoves + halvmovesPlayed) / 2 + 1;
 	result += " ";
 	result += std::to_string(fullMoveNumber);
 

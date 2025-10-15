@@ -259,7 +259,8 @@ std::tuple<QaplaBasics::Move, bool, bool> GameState::resolveMove(
 	return { matchCount == 1 ? foundMove : QaplaBasics::Move(), matchCount > 0, promotion && matchCount > 0 };
 }
 
-GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies) {
+GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::optional<uint32_t> plies, 
+	bool verbose) {
 	GameRecord copy;
 	if (!setFen(game.getStartPos(), game.getStartFen())) {
 		return copy;
@@ -277,8 +278,10 @@ GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::opti
 		auto& moveStr = move.original.empty() ? move.san : move.original;
 		auto parsed = stringToMove(moveStr, false);
 		if (parsed.isEmpty()) {
-			Logger::testLogger().log("Illegal move in game record: " + moveStr + " pos: " + getFen(),
-				TraceLevel::error);
+			if (verbose) {
+				Logger::testLogger().log("Illegal move in game record: " + moveStr + " pos: " + getFen(),
+					TraceLevel::error);
+			}
 			return copy;
 		}
 		move.lan = parsed.getLAN();

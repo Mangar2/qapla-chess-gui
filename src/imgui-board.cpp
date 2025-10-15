@@ -124,7 +124,7 @@ namespace QaplaWindows
 
     std::string ImGuiBoard::getFen() const
     {
-        return gameState_->position().getFen();
+        return gameState_->position().getFen(gameState_->getHalfmovesPlayed());
     }
 
     bool ImGuiBoard::isValidPosition() const
@@ -433,18 +433,20 @@ namespace QaplaWindows
             MoveRecord moveRecord;
             moveRecord.lan = move.getLAN();
             moveRecord.san = gameState_->moveToSan(move);
-            moveRecord.halfmoveNo_ = gameState_->getHalfmovePlayed() + 1;
+            moveRecord.halfmoveNo_ = gameState_->getHalfmovesPlayed() + 1;
             moveRecord.move = move;
             return moveRecord;
         }
         return std::nullopt;
     }
 
-    void ImGuiBoard::setFromGameRecord(const GameRecord &gameRecord)
+    void ImGuiBoard::setFromGameRecord(const GameRecord &gameRecord, bool suppressChangeTracking)
     {
         auto updated = gameRecordTracker_.checkModification(gameRecord.getChangeTracker()).second;
-        gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
-        if (updated) {
+        if (!suppressChangeTracking) {
+            gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
+        }
+        if (updated || suppressChangeTracking) {
             gameState_->setFromGameRecord(gameRecord, gameRecord.nextMoveIndex());
             gameOver_ = gameRecord.isGameOver();
         }

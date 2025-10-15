@@ -95,10 +95,13 @@ namespace QaplaWindows
         void setAllowPieceInput(bool pieceInput) { allowPieceInput_ = pieceInput; }
 
         /**
-         * Set the position.
+         * Sets the board position from the game record.
+         * 
          * @param gameRecord Board to get the position from.
+         * @param suppressChangeTracking If true, the change tracker is not updated from the game record
+         * and the board is set no matter if the record has changed.
          */
-        void setFromGameRecord(const GameRecord &gameRecord);
+        void setFromGameRecord(const GameRecord &gameRecord, bool suppressChangeTracking = false);
 
         /**
          * Does a move.

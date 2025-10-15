@@ -120,7 +120,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
         std::scoped_lock lock(currentMoveMutex_);
-        currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
+        currentMove_ = MoveRecord(gameState_.getHalfmovesPlayed(), engine_->getIdentifier());
         return {};
     }
     
@@ -130,7 +130,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
         gameState_.setGameResult(GameEndCause::IllegalMove, 
             gameState_.isWhiteToMove() ? GameResult::BlackWins : GameResult::WhiteWins);
         std::scoped_lock lock(currentMoveMutex_);
-        currentMove_ = MoveRecord(gameState_.getHalfmovePlayed(), engine_->getIdentifier());
+        currentMove_ = MoveRecord(gameState_.getHalfmovesPlayed(), engine_->getIdentifier());
         Logger::engineLogger().log(std::format("{} Illegal move in bestmove: {} in raw info line \"{}\"", 
             engine_->getIdentifier(), *event.bestMove, event.rawLine), TraceLevel::info);
         return {};
@@ -144,7 +144,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     gameState_.doMove(move);
 
     std::scoped_lock curMoveLock(currentMoveMutex_);
-    currentMove_.updateFromBestMove(gameState_.getHalfmovePlayed(), engine_->getIdentifier(),
+    currentMove_.updateFromBestMove(gameState_.getHalfmovesPlayed(), engine_->getIdentifier(),
         event, move.getLAN(), san, computeMoveStartTimestamp_, 
         gameState_.getHalfmoveClock());
     return move;
@@ -349,7 +349,7 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
         if (computeState_ != ComputeState::PonderHit) {
             currentMove_.clear();
         }
-        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
+        currentMove_.halfmoveNo_ = gameState_.getHalfmovesPlayed() + 1;
         currentMove_.engineName_ = engine_->getEngineName();
         currentMove_.ponderMove.clear();
 		isAnalyzing_ = analyze;
@@ -387,7 +387,7 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
     {
         std::scoped_lock lock(currentMoveMutex_);
         currentMove_.clear();
-        currentMove_.halfmoveNo_ = gameState_.getHalfmovePlayed() + 1;
+        currentMove_.halfmoveNo_ = gameState_.getHalfmovesPlayed() + 1;
         currentMove_.ponderMove = ponderMove_;
 		isAnalyzing_ = false;
     }

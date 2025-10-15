@@ -313,7 +313,7 @@ namespace QaplaBasics {
 		/**
 		 * Gets the board in Fen representation
 		 */
-		std::string getFen() const;
+		std::string getFen(uint32_t halvmovesPlayed = 0) const;
 
 		/**
 		 * Prints the board as fen to std-out

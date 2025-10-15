@@ -23,8 +23,10 @@
 #include "qapla-tester/game-record.h"
 
 #include "font.h"
+#include "imgui-cut-paste.h"
 #include "imgui-button.h"
 #include "imgui-board.h"
+#include "game-parser.h"
 #include "snackbar.h"
 
 #include <imgui.h>
@@ -144,8 +146,17 @@ namespace QaplaWindows
         }
         if (command == "Copy") {
             auto fen = getFen();
-            ImGui::SetClipboardText(fen.c_str());
+            ImGuiCutPaste::setClipboardString(fen);
             SnackbarManager::instance().showNote("FEN copied to clipboard\n" + fen);
+        }
+        if (command == "Paste") {
+            auto pasted = ImGuiCutPaste::getClipboardString();
+            if (pasted) {
+                auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
+                if (gameRecord) {
+                    setFromGameRecord(*gameRecord, true);
+                }
+            }
         }
         if (command == "Cancel") {
             setupMode_ = false;
@@ -177,6 +188,8 @@ namespace QaplaWindows
                     QaplaButton::drawClear(drawList, topLeft, size, state);
                 } else if (button == "Copy") {
                     QaplaButton::drawCopy(drawList, topLeft, size, state);
+                } else if (button == "Paste") {
+                    QaplaButton::drawPaste(drawList, topLeft, size, state);
                 } else if (button == "Cancel") {
                     QaplaButton::drawCancel(drawList, topLeft, size, state);
                 }
@@ -196,7 +209,7 @@ namespace QaplaWindows
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"Ok", "New", "Clear", "Copy", "Cancel"})
+        for (const std::string button : {"Ok", "New", "Clear", "Copy", "Paste", "Cancel"})
         {
             ImGui::SetCursorScreenPos(pos);
             if (drawSetupButton(button, button, buttonSize))

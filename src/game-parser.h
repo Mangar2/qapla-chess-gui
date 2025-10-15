@@ -54,7 +54,7 @@ public:
      * @param name Name of the parser (for debugging/feedback)
      * @param parser Parser function that takes string and returns optional GameRecord
      */
-    void addParser(const std::string& name, ParserFunction parser);
+    void addParser(const std::string& name, const ParserFunction& parser);
 
     /**
      * @brief Attempts to parse input string using all registered parsers

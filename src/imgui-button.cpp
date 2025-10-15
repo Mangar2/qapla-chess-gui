@@ -634,6 +634,40 @@ namespace QaplaButton {
             fgColor, 0.0F, ImDrawFlags_None, borderThickness);
     }
 
+    void drawPaste(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        constexpr float borderThickness = 2.0F;
+        constexpr float widthReduce = 1.0F;
+        
+        // Calculate dimensions for the clipboard
+        float clipboardWidth = size.x - 2 * BORDER - 2 * widthReduce;
+        float clipboardHeight = size.y - 2 * BORDER;
+        
+        // Main clipboard rectangle
+        float clipboardLeft = topLeft.x + BORDER + widthReduce;
+        float clipboardTop = topLeft.y + BORDER + 3.0F; // Leave space for clip at top
+        float clipboardRight = clipboardLeft + clipboardWidth;
+        float clipboardBottom = clipboardTop + clipboardHeight - 3.0F;
+        
+        // Draw main clipboard rectangle
+        list->AddRect(
+            ImVec2(clipboardLeft, clipboardTop),
+            ImVec2(clipboardRight, clipboardBottom),
+            fgColor, 0.0F, ImDrawFlags_None, borderThickness);
+        
+        // Draw clip at the top (small rectangle centered)
+        float clipWidth = clipboardWidth * 0.35F;
+        float clipHeight = 4.0F;
+        float clipLeft = clipboardLeft + (clipboardWidth - clipWidth) * 0.5F;
+        float clipTop = topLeft.y + BORDER;
+        
+        // Draw clip as filled rectangle with rounded corners
+        list->AddRectFilled(
+            ImVec2(clipLeft, clipTop),
+            ImVec2(clipLeft + clipWidth, clipTop + clipHeight),
+            fgColor, 1.0F);
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();
