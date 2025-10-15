@@ -35,8 +35,8 @@ void Board::clear() {
 	_pieceSignature.clear();
 	_materialBalance.clear();
 	_pstBonus = 0;
-	kingSquares[WHITE] = E1;
-	kingSquares[BLACK] = E8;
+	kingSquares[WHITE] = NO_SQUARE;
+	kingSquares[BLACK] = NO_SQUARE;
 	_kingStartSquare = { E1, E8 };
 	_queenRookStartSquare = { A1, A8 };
 	_kingRookStartSquare = { H1, H8 };
@@ -280,7 +280,7 @@ void Board::undoMove(Move move, BoardState recentBoardState) {
 	assert(_board[departure] != NO_PIECE);
 }
 
-std::string Board::getFen(uint32_t halvmovesPlayed) const {
+std::string Board::getFen(uint32_t halfmovesPlayed) const {
 	std::string result;
 	File file;
 	Rank rank;
@@ -327,9 +327,9 @@ std::string Board::getFen(uint32_t halvmovesPlayed) const {
 	result += getBoardState().hasEP() ? squareToString(correctedEp) : "-";
 
 	result += " ";
-	result += std::to_string(getHalfmovesWithoutPawnMoveOrCapture());
-
-	int fullMoveNumber = (_startHalfmoves + halvmovesPlayed) / 2 + 1;
+	result += std::to_string(getTotalHalfmovesWithoutPawnMoveOrCapture());
+	halfmovesPlayed = std::max<uint32_t>(_startHalfmoves, halfmovesPlayed);
+	int fullMoveNumber = (halfmovesPlayed) / 2 + 1;
 	result += " ";
 	result += std::to_string(fullMoveNumber);
 
@@ -493,6 +493,9 @@ bool Board::validateCastlingRights() const {
 }
 
 void Board::setupAddPiece(Square square, Piece piece) {
+	if (square == NO_SQUARE || piece == NO_PIECE) {
+		return;
+	}
 	addPiece(square, piece);
 	auto pieceType = getPieceType(piece);
 	auto pieceColor = getPieceColor(piece);
@@ -524,7 +527,13 @@ void Board::setupAddPiece(Square square, Piece piece) {
 }
 
 void Board::setupRemovePiece(Square square) {
+	if (square == NO_SQUARE) {
+		return;
+	}
 	auto piece = _board[square];
+	if (piece == NO_PIECE) {
+		return;
+	}
 	auto pieceType = getPieceType(piece);
 	auto pieceColor = getPieceColor(piece);
 	bool isPawn = pieceType == PAWN;
@@ -532,11 +541,40 @@ void Board::setupRemovePiece(Square square) {
 	if (kingSquares[pieceColor] == square) {
 		kingSquares[pieceColor] = NO_SQUARE;
 	}
-	_boardState.clearEP();
 	_boardState.disableCastlingRightsByMask(_clearCastleFlagMask[square]);
-	_boardState.halfmovesWithoutPawnMoveOrCapture = 0;
-	_boardState.fenHalfmovesWithoutPawnMoveOrCapture = 0;
 	if (isPawn && square == _boardState.getEP()) {
 		_boardState.clearEP();
 	}
+}
+
+Square Board::getSetupEpSquare() const {
+	auto internalEpSquare = _boardState.getEP();
+	if (internalEpSquare == 0) {
+		return NO_SQUARE;
+	}
+	auto epRank = getRank(internalEpSquare);
+	if (epRank == Rank::R4) {
+		return Square(internalEpSquare + SOUTH);
+	}
+	if (epRank == Rank::R5) {
+		return Square(internalEpSquare + NORTH);
+	}
+	return NO_SQUARE;
+}
+
+void Board::setSetupEpSquare(Square epSquare) {
+	if (epSquare == NO_SQUARE) {
+		_boardState.setEP(Square(0));
+		return;
+	}
+	auto epRank = getRank(epSquare);
+	if (epRank == Rank::R3) {
+		_boardState.setEP(Square(epSquare + NORTH));
+		return;
+	}
+	if (epRank == Rank::R6) {
+		_boardState.setEP(Square(epSquare + SOUTH));
+		return;
+	}
+	_boardState.setEP(Square(0));
 }

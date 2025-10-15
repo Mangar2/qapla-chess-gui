@@ -226,8 +226,6 @@ namespace QaplaWindows
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;
 
-        BoardSetupData setupData_;
-
         static const std::vector<PopupCell> cells;
     };
 

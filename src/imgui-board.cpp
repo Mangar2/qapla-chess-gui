@@ -563,8 +563,19 @@ namespace QaplaWindows
         // Draw setup controls to the right of the board if in setup mode
         if (setupMode_)
         {
+           BoardSetupData setupData {
+            .whiteToMove = gameState_->position().isWhiteToMove(),
+            .whiteKingsideCastle = gameState_->position().isKingSideCastleAllowed<Piece::WHITE>(),
+            .whiteQueensideCastle = gameState_->position().isQueenSideCastleAllowed<Piece::WHITE>(),
+            .blackKingsideCastle = gameState_->position().isKingSideCastleAllowed<Piece::BLACK>(),
+            .blackQueensideCastle = gameState_->position().isQueenSideCastleAllowed<Piece::BLACK>(),
+            .enPassantSquare = QaplaBasics::squareToString(gameState_->position().getSetupEpSquare()),
+            .fullmoveNumber = gameState_->getFullmoveNumber(),
+            .halfmoveClock = gameState_->getHalfmoveClock()
+           };
+
             // Must include the space to skip the numbering right to the board
-            const float spacing = 30.0F;
+            const float spacing = 40.0F;
             const float setupPanelX = screenPos.x + boardSize + spacing;
             const float setupPanelY = screenPos.y;
 
@@ -573,7 +584,18 @@ namespace QaplaWindows
             ImGui::BeginGroup();
             ImGui::PushItemWidth(200.0F);
 
-            ImGuiBoardSetup::draw(setupData_);
+            bool modified = ImGuiBoardSetup::draw(setupData);
+            if (modified) {
+                gameState_->position().setWhiteToMove(setupData.whiteToMove);
+                gameState_->position().setCastlingRight(Piece::WHITE, true, setupData.whiteKingsideCastle);
+                gameState_->position().setCastlingRight(Piece::WHITE, false, setupData.whiteQueensideCastle);
+                gameState_->position().setCastlingRight(Piece::BLACK, true, setupData.blackKingsideCastle);
+                gameState_->position().setCastlingRight(Piece::BLACK, false, setupData.blackQueensideCastle);
+                gameState_->position().setSetupEpSquare(
+                    QaplaBasics::stringToSquare(setupData.enPassantSquare));
+                gameState_->setSetupFullmoveNumber(setupData.fullmoveNumber);
+                gameState_->setSetupHalfmoveClock(setupData.halfmoveClock);
+            }
 
             ImGui::PopItemWidth();
             ImGui::EndGroup();

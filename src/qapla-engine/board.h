@@ -313,7 +313,7 @@ namespace QaplaBasics {
 		/**
 		 * Gets the board in Fen representation
 		 */
-		std::string getFen(uint32_t halvmovesPlayed = 0) const;
+		std::string getFen(uint32_t halfmovesPlayed = 0) const;
 
 		/**
 		 * Prints the board as fen to std-out
@@ -416,18 +416,13 @@ namespace QaplaBasics {
 		 * Gets the EP square for setup position, the internal representation is different
 		 * @returns the square where the pawn moved to, not the capture square
 		 */
-		Square getSetupEpSquare() const {
-			auto internalEpSquare = _boardState.getEP();
-			if (internalEpSquare == 0) return NO_SQUARE;
-			auto epRank = getRank(internalEpSquare);
-			if (epRank == Rank::R4) {
-				return Square(internalEpSquare + SOUTH);
-			}
-			if (epRank == Rank::R5) {
-				return Square(internalEpSquare + NORTH);
-			}
-			return NO_SQUARE;
-		}
+		Square getSetupEpSquare() const;
+
+		/**
+		 * Sets the EP square for setup position, the internal representation is different
+		 * @param epSquare the square where the pawn moved to, not the capture square
+		 */
+		void setSetupEpSquare(Square epSquare);
 
 	protected:
 		std::array<Square, COLOR_COUNT> kingSquares;

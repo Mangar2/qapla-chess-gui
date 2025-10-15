@@ -37,11 +37,58 @@ class GameState {
 public:
 	GameState();
 
+	/**
+	 * @brief Checks if it's White's turn to move.
+	 * @return True if it's White's turn, false otherwise.
+	 */
 	bool isWhiteToMove() const { return position_.isWhiteToMove(); }
 
+	/**
+	 * @brief Get the current position in FEN notation.
+	 * @return The FEN string representing the current position.
+	 */
 	std::string getFen() const { return position_.getFen(); }
 
+	/**
+	 * @brief Get the number of half moves without pawn move or capture from the starting position (from FEN).
+	 * 
+	 * This is the halfmove clock value from the FEN string of the starting position.
+	 * It does not include any moves played in the current game.
+	 * 
+	 * @return The halfmove clock value from the starting position FEN.
+	 */
 	uint32_t getStartHalfmoves() const { return position_.getStartHalfmoves(); }
+
+	/**
+	 * @brief Get the Fullmove Number according to FEN specification.
+	 * 
+	 * The fullmove number starts at 1 and is incremented after Black
+	 * 's move. It is derived from the halfmoves of the fen + played halfmoves.
+	 * 
+	 * @return The fullmove number.
+	 */
+	uint32_t getFullmoveNumber() const { 
+		return getHalfmovesPlayed() / 2 + 1;
+	}
+
+	/**
+	 * @brief Sets the fullmove number for the starting position (from FEN).
+	 * This resets the current halfmove counter to zero.
+	 * 
+	 * @param fullmoves The fullmove number from the starting position FEN.
+	 */
+	void setSetupFullmoveNumber(uint32_t fullmoves) {
+		if (fullmoves == 0) fullmoves = 1;
+		uint32_t halfmoves = (fullmoves - 1) * 2;
+		if (!position_.isWhiteToMove()) {
+			halfmoves += 1;
+		}
+		uint32_t currentHalfmoves = static_cast<uint32_t>(moveList_.size());
+		if (halfmoves < currentHalfmoves) {
+			halfmoves = currentHalfmoves;
+		}
+		position_.setStartHalfmoves(halfmoves - currentHalfmoves);
+	}
 
 	/**
 	 * @brief Performs a move on the current position and updates the move list.
@@ -106,6 +153,17 @@ public:
 	 */
 	uint32_t getHalfmoveClock() const {
 		return position_.getTotalHalfmovesWithoutPawnMoveOrCapture();
+	}
+
+	/**
+	 * @brief Sets the halfmove clock for the starting position (from FEN).
+	 * This resets the current halfmove counter to zero.
+	 * 
+	 * @param halfmoves The halfmove clock value from the starting position FEN.
+	 */
+	void setSetupHalfmoveClock(uint32_t halfmoves) {
+		position_.setFenHalfmovesWihtoutPawnMoveOrCapture(halfmoves);
+		position_.setHalfmovesWithoutPawnMoveOrCapture(0);
 	}
 
 	/**

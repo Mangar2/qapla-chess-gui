@@ -36,8 +36,8 @@ namespace QaplaWindows
         bool blackKingsideCastle = true;
         bool blackQueensideCastle = true;
         std::string enPassantSquare = "-";
-        int fullmoveNumber = 1;
-        int halfmoveClock = 0;
+        uint32_t fullmoveNumber = 1;
+        uint32_t halfmoveClock = 0;
     };
 
     /**

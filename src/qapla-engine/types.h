@@ -308,10 +308,19 @@ namespace QaplaBasics {
 	 * @example stringToSquare("e1")
 	 */
 	constexpr auto stringToSquare(std::string squareAsString) {
+		if (squareAsString.length() != 2) {
+			return NO_SQUARE;
+		}
+		if (squareAsString[0] < 'a' || squareAsString[0] > 'h') {
+			return NO_SQUARE;
+		}
+		if (squareAsString[1] < '1' || squareAsString[1] > '8') {
+			return NO_SQUARE;
+		}
 		square_t result =
 			(squareAsString[0] - 'a') * EAST +
 			(squareAsString[1] - '1') * NORTH;
-		return result;
+		return static_cast<Square>(result);
 	}
 
 	/**

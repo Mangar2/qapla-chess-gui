@@ -19,6 +19,7 @@
 
 #include "imgui-board-setup.h"
 #include "imgui-controls.h"
+#include "qapla-engine/types.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -28,6 +29,7 @@ namespace QaplaWindows
 {
     namespace
     {
+        constexpr float ITEM_WIDTH = 100.0F;
         /**
          * Validates if a string represents a valid en passant square.
          * @param square The square string to validate (e.g., "e3", "-").
@@ -86,14 +88,11 @@ namespace QaplaWindows
             return 0;
         }
 
-    } // anonymous namespace
-
-    namespace
-    {
-        void drawSideToMove(BoardSetupData& data, bool& modified)
+        bool drawSideToMove(BoardSetupData& data)
         {
             ImGui::Text("Side to Move");
             
+            bool modified = false;
             bool whiteToMove = data.whiteToMove;
             if (ImGui::RadioButton("White", whiteToMove)) {
                 data.whiteToMove = true;
@@ -104,6 +103,8 @@ namespace QaplaWindows
                 data.whiteToMove = false;
                 modified = true;
             }
+            
+            return modified;
         }
 
         void drawSeparator()
@@ -113,9 +114,11 @@ namespace QaplaWindows
             ImGui::Spacing();
         }
 
-        void drawCastlingRights(BoardSetupData& data, bool& modified)
+        bool drawCastlingRights(BoardSetupData& data)
         {
             ImGui::Text("Castling Rights");
+            
+            bool modified = false;
             
             if (ImGui::Checkbox("White Kingside", &data.whiteKingsideCastle)) {
                 modified = true;
@@ -132,13 +135,17 @@ namespace QaplaWindows
             if (ImGui::Checkbox("Black Queenside", &data.blackQueensideCastle)) {
                 modified = true;
             }
+            
+            return modified;
         }
 
-        void drawEnPassantSquare(BoardSetupData& data, bool& modified)
+        bool drawEnPassantSquare(BoardSetupData& data)
         {
             ImGui::Text("En Passant Square");
             
+            bool modified = false;
             std::string tempSquare = data.enPassantSquare;
+            ImGui::SetNextItemWidth(ITEM_WIDTH);
             if (ImGuiControls::inputText(
                 "##enpassant", 
                 tempSquare, 
@@ -154,27 +161,28 @@ namespace QaplaWindows
             
             ImGui::SameLine();
             ImGui::TextDisabled("(e.g., e3, -)");
+            
+            return modified;
         }
 
-        void drawFullmoveNumber(BoardSetupData& data, bool& modified)
+        bool drawFullmoveNumber(BoardSetupData& data)
         {
             ImGui::Text("Fullmove Number");
-            
-            if (ImGuiControls::inputInt("##fullmove", data.fullmoveNumber, 1, 9999)) {
-                modified = true;
-            }
+            ImGui::SetNextItemWidth(ITEM_WIDTH);
+            return ImGuiControls::inputInt<uint32_t>("##fullmove", data.fullmoveNumber, 1, 9999);
         }
 
-        void drawHalfmoveClock(BoardSetupData& data, bool& modified)
+        bool drawHalfmoveClock(BoardSetupData& data)
         {
             ImGui::Text("Halfmove Clock");
             
-            if (ImGuiControls::inputInt("##halfmove", data.halfmoveClock, 0, 100)) {
-                modified = true;
-            }
+            ImGui::SetNextItemWidth(ITEM_WIDTH);
+            bool modified = ImGuiControls::inputInt<uint32_t>("##halfmove", data.halfmoveClock, 0, 100);
             
             ImGui::SameLine();
             ImGui::TextDisabled("(50-move rule)");
+            
+            return modified;
         }
 
     } // anonymous namespace
@@ -183,19 +191,19 @@ namespace QaplaWindows
     {
         bool modified = false;
 
-        drawSideToMove(data, modified);
+        modified |= drawSideToMove(data);
         drawSeparator();
         
-        drawCastlingRights(data, modified);
+        modified |= drawCastlingRights(data);
         drawSeparator();
         
-        drawEnPassantSquare(data, modified);
+        modified |= drawEnPassantSquare(data);
         drawSeparator();
         
-        drawFullmoveNumber(data, modified);
+        modified |= drawFullmoveNumber(data);
         drawSeparator();
         
-        drawHalfmoveClock(data, modified);
+        modified |= drawHalfmoveClock(data);
 
         return modified;
     }
