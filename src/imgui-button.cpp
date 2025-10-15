@@ -595,6 +595,45 @@ namespace QaplaButton {
 
     }
 
+    void drawCopy(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        constexpr float borderThickness = 2.0F;
+        constexpr float gap = 3.0F;  // Gap between the two rectangles
+        constexpr float rectangleWidth = 0.8F;
+        
+        // Calculate dimensions for the rectangles
+        float rectWidth = (size.x - 2 * BORDER - gap) * rectangleWidth;
+        float rectHeight = size.y - 2 * BORDER;
+        
+        // Back rectangle (L-shaped, left and below)
+        float backRectLeft = topLeft.x + (size.x - rectWidth - gap) / 2.0F;
+        float backRectTop = topLeft.y + BORDER + gap;
+        
+        // Draw left vertical line of L-shape
+        list->AddLine(
+            ImVec2(backRectLeft, backRectTop),
+            ImVec2(backRectLeft, topLeft.y + size.y - BORDER),
+            fgColor, borderThickness);
+        
+        // Draw bottom horizontal line of L-shape  
+        list->AddLine(
+            ImVec2(backRectLeft, topLeft.y + size.y - BORDER),
+            ImVec2(backRectLeft + rectWidth, topLeft.y + size.y - BORDER),
+            fgColor, borderThickness);
+        
+        // Front rectangle (complete rectangle, top and right)
+        float frontRectLeft = backRectLeft + gap;
+        float frontRectTop = topLeft.y + BORDER;
+        float frontRectRight = frontRectLeft + rectWidth;
+        float frontRectBottom = frontRectTop + rectHeight - gap;
+        
+        // Draw complete rectangle
+        list->AddRect(
+            ImVec2(frontRectLeft, frontRectTop),
+            ImVec2(frontRectRight, frontRectBottom),
+            fgColor, 0.0F, ImDrawFlags_None, borderThickness);
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();

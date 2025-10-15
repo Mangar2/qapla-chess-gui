@@ -88,27 +88,6 @@ namespace QaplaWindows
         return state;
     }
 
-    bool BoardWindow::drawSetupButton(
-        const std::string& button, const std::string& label,
-        const ImVec2& buttonSize) const
-    {
-        auto state = getSetupButtonState(button);
-        return QaplaButton::drawIconButton(
-            button, label, buttonSize, state,
-            [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
-            {
-                if (button == "Ok") {
-                    QaplaButton::drawSetup(drawList, topLeft, size, state);
-                } else if (button == "New") {
-                    QaplaButton::drawNew(drawList, topLeft, size, state);
-                } else if (button == "Clear") {
-                    QaplaButton::drawClear(drawList, topLeft, size, state);
-                } else if (button == "Cancel") {
-                    QaplaButton::drawCancel(drawList, topLeft, size, state);
-                }
-            });
-    }
-
     std::string BoardWindow::drawBoardButtons(const std::string& status)
     {
         constexpr float space = 3.0F;
@@ -163,14 +142,45 @@ namespace QaplaWindows
                 setAllowPieceInput(false);
             }
         }
+        if (command == "Copy") {
+            auto fen = getFen();
+            ImGui::SetClipboardText(fen.c_str());
+            SnackbarManager::instance().showNote("FEN copied to clipboard\n" + fen);
+        }
         if (command == "Cancel") {
             setupMode_ = false;
             setAllowMoveInput(true);
             setAllowPieceInput(false);
+            // The board is updated by polling, on change. 
+            // Resetting the tracker thus enforces updating with the current position, resetting all changes.
+            gameRecordTracker_.clear();
         }
         if (command == "Clear") {
             setFromFen(false, "8/8/8/8/8/8/8/8 w - - 0 1");
         }
+    }
+
+        bool BoardWindow::drawSetupButton(
+        const std::string& button, const std::string& label,
+        const ImVec2& buttonSize) const
+    {
+        auto state = getSetupButtonState(button);
+        return QaplaButton::drawIconButton(
+            button, label, buttonSize, state,
+            [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            {
+                if (button == "Ok") {
+                    QaplaButton::drawSetup(drawList, topLeft, size, state);
+                } else if (button == "New") {
+                    QaplaButton::drawNew(drawList, topLeft, size, state);
+                } else if (button == "Clear") {
+                    QaplaButton::drawClear(drawList, topLeft, size, state);
+                } else if (button == "Copy") {
+                    QaplaButton::drawCopy(drawList, topLeft, size, state);
+                } else if (button == "Cancel") {
+                    QaplaButton::drawCancel(drawList, topLeft, size, state);
+                }
+            });
     }
 
     std::string BoardWindow::drawSetupButtons()
@@ -186,7 +196,7 @@ namespace QaplaWindows
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"Ok", "New", "Clear", "Cancel"})
+        for (const std::string button : {"Ok", "New", "Clear", "Copy", "Cancel"})
         {
             ImGui::SetCursorScreenPos(pos);
             if (drawSetupButton(button, button, buttonSize))

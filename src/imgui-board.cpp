@@ -362,7 +362,10 @@ namespace QaplaWindows
         float cellSize, ImFont *font)
     {
         const auto &position = gameState_->position();
-        const auto epSquare = position.getEP();
+        const auto epSquare = position.getSetupEpSquare();
+        bool isWhite = (static_cast<int>(QaplaBasics::getFile(epSquare)) + 
+            static_cast<int>(QaplaBasics::getRank(epSquare))) % 2 != 0;
+        const auto bgColor = getSquareColor(false, !isWhite);
 
         if (!allowPieceInput_ || epSquare == Square::NO_SQUARE) {
             return;
@@ -374,7 +377,7 @@ namespace QaplaWindows
         
         // Draw opponent's pawn (the one that can be captured)
         const Piece epPawn = position.isWhiteToMove() ? Piece::WHITE_PAWN : Piece::BLACK_PAWN;
-        drawIndicatorIcon(drawList, cellMin, cellSize, false, epPawn, IM_COL32(255, 255, 0, 255), font);
+        drawIndicatorIcon(drawList, cellMin, cellSize, false, epPawn, bgColor, font);
     }
 
     void ImGuiBoard::drawWhiteKingCastlingIndicators(ImDrawList *drawList, 

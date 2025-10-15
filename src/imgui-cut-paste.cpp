@@ -25,12 +25,12 @@
 namespace QaplaWindows::ImGuiCutPaste {
 
 std::optional<std::string> getClipboardString(GLFWwindow* window) {
-    if (!window) {
+    if (window == nullptr) {
         return std::nullopt;
     }
 
     const char* text = glfwGetClipboardString(window);
-    if (!text) {
+    if (text == nullptr) {
         return std::nullopt;
     }
 
@@ -38,7 +38,7 @@ std::optional<std::string> getClipboardString(GLFWwindow* window) {
 }
 
 bool setClipboardString(GLFWwindow* window, const std::string& text) {
-    if (!window) {
+    if (window == nullptr) {
         return false;
     }
 
@@ -47,7 +47,7 @@ bool setClipboardString(GLFWwindow* window, const std::string& text) {
 }
 
 bool checkForCopy(GLFWwindow* window) {
-    if (!window) {
+    if (window == nullptr) {
         return false;
     }
 
@@ -62,7 +62,7 @@ bool checkForCopy(GLFWwindow* window) {
 }
 
 std::optional<std::string> checkForPaste(GLFWwindow* window) {
-    if (!window) {
+    if (window == nullptr) {
         return std::nullopt;
     }
 

@@ -77,6 +77,8 @@ namespace QaplaButton {
 
     void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
+    void drawCopy(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+
     /**
      * @brief Draws a clickable icon-style button with optional icon and label below.
      *

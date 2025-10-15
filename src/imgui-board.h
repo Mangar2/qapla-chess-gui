@@ -127,6 +127,8 @@ namespace QaplaWindows
          */
         bool isValidPosition() const;
 
+    protected:
+        ChangeTracker gameRecordTracker_;
     private:
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
@@ -213,8 +215,6 @@ namespace QaplaWindows
         ImVec2 hoveredSquareCellMin_;
         ImVec2 hoveredSquareCellMax_;
         float hoveredSquareCellSize_;
-
-        ChangeTracker gameRecordTracker_;
 
         MoveInput moveInput_;
         std::unique_ptr<GameState> gameState_;

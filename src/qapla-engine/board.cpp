@@ -460,24 +460,11 @@ bool Board::validateEPSquare() const {
 		return true;
 	}
 	const Rank epRank = getRank(ep);
-	if (_whiteToMove) {
-		// EP square is stored as the square of the pawn that can be captured
-		if (epRank != Rank::R5) {
-			return false;
-		}
-		if (_board[ep + NORTH] != WHITE_PAWN) {
-			return false;
-		}
-	} else {
-		// EP square is stored as the square of the pawn that can be captured
-		if (epRank != Rank::R4) {
-			return false;	
-		}
-		if (_board[ep + SOUTH] != BLACK_PAWN) {
-			return false;
-		}
-	}
-	return true;
+	// Internal representation: EP square is the square of the pawn moved two squares (different from FEN)
+	auto requiredRank = _whiteToMove ? Rank::R5 : Rank::R4;
+	// if White to move, last move was by Black.
+	auto requiredPawn = _whiteToMove ? BLACK_PAWN : WHITE_PAWN;
+	return (epRank == requiredRank && _board[ep] == requiredPawn);
 }
 
 bool Board::validateCastlingRights() const {
