@@ -42,33 +42,35 @@ constexpr int fastStep = 10;
 
 TimeControlWindow::TimeControlWindow() = default;
 
+namespace {
+    std::string computeActiveButtonId() {
+        auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
+        switch (timeControls.selected) {
+        case QaplaConfiguration::selectedTimeControl::Blitz:
+            return "##blitz";
+        case QaplaConfiguration::selectedTimeControl::tcTournament:
+            return "##tournament";
+        case QaplaConfiguration::selectedTimeControl::TimePerMove:
+            return "##timePerMove";
+        case QaplaConfiguration::selectedTimeControl::FixedDepth:
+            return "##fixedDepth";
+        case QaplaConfiguration::selectedTimeControl::NodesPerMove:
+            return "##nodesPerMove";
+        default:
+            return "##blitz";
+        }
+    }
+}
+
 void TimeControlWindow::draw() {
 	auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
+    std::string activeButtonId = computeActiveButtonId();
     ImGui::Spacing();
-    ImGui::Indent(baseIndent);
-    std::string activeButtonId;
-    switch (timeControls.selected) {
-    case QaplaConfiguration::selectedTimeControl::Blitz:
-        activeButtonId = "##blitz";
-        break;
-    case QaplaConfiguration::selectedTimeControl::tcTournament:
-        activeButtonId = "##tournament";
-        break;
-    case QaplaConfiguration::selectedTimeControl::TimePerMove:
-        activeButtonId = "##timePerMove";
-        break;
-    case QaplaConfiguration::selectedTimeControl::FixedDepth:
-        activeButtonId = "##fixedDepth";
-        break;
-    case QaplaConfiguration::selectedTimeControl::NodesPerMove:
-        activeButtonId = "##nodesPerMove";
-        break;
-    default:
-        activeButtonId = "##blitz";
-    }
+    constexpr float rightBorder = 5.0F;
+    ImGui::Indent(10.0F);
+    auto size = ImGui::GetContentRegionAvail();
+    ImGui::BeginChild("TimeControlWindow", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
     
-    ImGui::PushID("TimeControlWindow");
-
     // Lambda to handle radio buttons and collapsing headers
     auto drawSection = [&](const char* radioButtonId, const char* headerLabel,  
         TimeControl& timeControl, auto drawFunction) {
@@ -116,7 +118,7 @@ void TimeControlWindow::draw() {
 	drawSection("##nodesPerMove", "Nodes per Move", timeControls.nodesPerMove,
         [&](const TimeControl& timeControl) { return drawNodesPerMove(timeControl); });
 
-    ImGui::PopID();
+    ImGui::EndChild();
     ImGui::Unindent(baseIndent);
 	QaplaConfiguration::Configuration::instance().setTimeControlSettings(timeControls);
 

@@ -77,9 +77,9 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     constexpr float cEngineInfoWidth = 160.0F;
     constexpr float cMinTableWidth = 200.0F;
     constexpr float cSectionSpacing = 4.0F;
+    constexpr float rightBorder = 5.0F;
 
     const auto engineRecords = getEngineRecords();
-
     auto command = drawConfigButtonArea(engineRecords.empty());
     ImGui::Indent(areaWidth);
     auto [id2, command2] = ImGuiEngineList::draw();

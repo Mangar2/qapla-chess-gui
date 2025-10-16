@@ -204,6 +204,7 @@ bool EngineSetupWindow::drawGlobalSettings() {
     // Global settings checkbox
     bool modified = false;
     ImGui::Indent(controlIndent_);
+
     if (ImGui::CollapsingHeader("Global Engine Settings")) {
         ImGui::Indent(controlIndent_);
         
@@ -308,6 +309,7 @@ void EngineSetupWindow::drawEngineList() {
 }
 
 void EngineSetupWindow::draw() {
+    constexpr float rightBorder = 5.0F;
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
 
@@ -318,8 +320,8 @@ void EngineSetupWindow::draw() {
     }
 	drawButtons();
     drawGlobalSettings();
-    
-    ImGui::BeginChild("EngineList", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+        auto size = ImGui::GetContentRegionAvail();
+    ImGui::BeginChild("EngineList", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
     ImGui::Indent(controlIndent_);
     drawEngineList();
     ImGui::Unindent(controlIndent_);
