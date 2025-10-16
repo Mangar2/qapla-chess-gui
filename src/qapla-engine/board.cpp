@@ -35,8 +35,9 @@ void Board::clear() {
 	_pieceSignature.clear();
 	_materialBalance.clear();
 	_pstBonus = 0;
-	kingSquares[WHITE] = NO_SQUARE;
-	kingSquares[BLACK] = NO_SQUARE;
+	// Important to keep legal positions for the king squares even on a clear board
+	kingSquares[WHITE] = E1;
+	kingSquares[BLACK] = E8;
 	_kingStartSquare = { E1, E8 };
 	_queenRookStartSquare = { A1, A8 };
 	_kingRookStartSquare = { H1, H8 };
