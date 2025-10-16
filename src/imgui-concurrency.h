@@ -21,10 +21,11 @@
 
 #include "snackbar.h"
 
-#include "qapla-tester/game-manager-pool.h"
+#include "qapla-tester/game-manager-pool-access.h"
 
 #include <thread>
 #include <atomic>
+#include <utility>
 
 /**
  * @class ImGuiConcurrency
@@ -34,9 +35,10 @@ class ImGuiConcurrency {
 public:
     /**
      * @brief Constructor for ImGuiConcurrency.
-     * @param initialConcurrency The initial concurrency value.
+     * @param poolAccess Access to the GameManagerPool (default: uses singleton).
      */
-    ImGuiConcurrency() = default;
+    explicit ImGuiConcurrency(GameManagerPoolAccess poolAccess = GameManagerPoolAccess())
+        : poolAccess_(std::move(poolAccess)) {}
 
     /**
      * @brief Initializes the ImGuiConcurrency object.
@@ -90,6 +92,7 @@ public:
     }
 
 private:
+    GameManagerPoolAccess poolAccess_; ///< Access to the GameManagerPool instance.
     std::atomic<bool> active_ = false;  ///< Whether the concurrency control is active.
     bool niceStop_ = true;  ///< Whether to finish games or abort them.
     uint32_t currentConcurrency_ = 0; ///< Tracks the current concurrency value.
@@ -104,18 +107,16 @@ private:
         if (currentConcurrency_ == targetConcurrency_) {
             return; 
         }
-        auto& pool = GameManagerPool::getInstance();
         if (currentConcurrency_ > targetConcurrency_ && active_) {
             currentConcurrency_ = targetConcurrency_;
-            pool.setConcurrency(currentConcurrency_, niceStop_, true);
+            poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
             return;
         }
         std::thread([this]() {
-            auto& pool = GameManagerPool::getInstance();
             try {
                 while (currentConcurrency_ < targetConcurrency_ && active_) {
                     ++currentConcurrency_;
-                    pool.setConcurrency(currentConcurrency_, niceStop_, true);
+                    poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
                 }
             }
             catch (const std::exception& e) {
