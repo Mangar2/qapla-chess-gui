@@ -21,7 +21,7 @@
 
 #include "snackbar.h"
 
-#include "qapla-tester/game-manager-pool-access.h"
+#include "game-manager-pool-access.h"
 
 #include <thread>
 #include <atomic>

@@ -21,6 +21,7 @@
 
 
 #include "viewer-board-window.h"
+#include "viewer-board-window-list.h"
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
@@ -111,11 +112,6 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          */
         void drawAdjudicationTable(const ImVec2& size);
-
-        /**
-         * @brief Draws the tournament tabs showing boards for all running games.
-         */
-        void drawTabs();
 
         /**
          * @brief Returns a reference to the tournament configuration.
@@ -258,6 +254,13 @@ namespace QaplaWindows {
          */
         void loadTournament(const std::string& filename);
 
+        /**
+         * @brief Draws tabs for the board windows.
+         */
+        void drawTabs() {
+            boardWindowList_.drawTabs();
+        }
+
 	private:
         bool validateOpenings();
 
@@ -331,9 +334,7 @@ namespace QaplaWindows {
         void populateResignTest(QaplaTester::AdjudicationManager::TestResults &results);
         void populateDrawTest(QaplaTester::AdjudicationManager::TestResults &results);
 
-        void populateViews();
-
-        std::vector<ViewerBoardWindow> boardWindow_;
+        ViewerBoardWindowList boardWindowList_;
 
         std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;
@@ -356,7 +357,6 @@ namespace QaplaWindows {
         ImGuiTable causeTable_;
         ImGuiTable adjudicationTable_;
 
-        int32_t selectedIndex_ = 0;
         State state_ = State::Stopped;
 
         bool loadedTournamentData_ = false;

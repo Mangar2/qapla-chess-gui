@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "game-manager-pool.h"
+#include "qapla-tester/game-manager-pool.h"
 #include <memory>
 
 /**

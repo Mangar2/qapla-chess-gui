@@ -21,6 +21,7 @@
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
 #include "viewer-board-window.h"
+#include "viewer-board-window-list.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 #include "imgui-engine-global-settings.h"
@@ -484,10 +485,6 @@ namespace QaplaWindows {
     void TournamentData::populateRunningTable() {
         runningTable_.clear();
         if (tournament_) {
-            for (auto& window: boardWindow_) {
-                window.setRunning(false);
-            }
-            bool anyRunning = false;
             GameManagerPool::getInstance().withGameRecords(
                 [&](const GameRecord& game, uint32_t gameIndex) {
                     std::vector<std::string> row;
@@ -498,14 +495,11 @@ namespace QaplaWindows {
                     row.push_back(std::to_string(game.getOpeningNo()));
                     runningTable_.push(row);
                     runningCount_++;
-                    if (gameIndex < boardWindow_.size()) {
-                        boardWindow_[gameIndex].setRunning(true);
-                        anyRunning = true;
-                    }
                 },
             [&](uint32_t gameIndex) -> bool {
                 return true;
             });
+            bool anyRunning = boardWindowList_.isAnyRunning();
             if (state_ == State::Starting && anyRunning) {
                 state_ = State::Running;
             }
@@ -514,57 +508,6 @@ namespace QaplaWindows {
             }
         }
 	}
-
-    void TournamentData::populateViews() {
-        if (tournament_) {
-            GameManagerPool::getInstance().withGameRecords(
-                [&](const GameRecord& game, uint32_t gameIndex) {
-                    if (gameIndex >= boardWindow_.size()) {
-                        return;
-                    }
-                    boardWindow_[gameIndex].setFromGameRecord(game);
-                },
-                [&](uint32_t gameIndex) -> bool {
-                    while (gameIndex >= boardWindow_.size()) {
-                        ViewerBoardWindow window;
-                        boardWindow_.push_back(std::move(window));
-                    }
-                    return true;
-                }
-            );
-            GameManagerPool::getInstance().withEngineRecords(
-                [&](const EngineRecords& records, uint32_t gameIndex) {
-                    if (gameIndex >= boardWindow_.size()) {
-                        return;
-                    }
-                    boardWindow_[gameIndex].setFromEngineRecords(records);
-                },
-                [&](uint32_t gameIndex) -> bool {
-                    if (gameIndex >= boardWindow_.size()) {
-                        return false;
-                    }
-                    return boardWindow_[gameIndex].isActive();
-                }
-            );
-            GameManagerPool::getInstance().withMoveRecord(
-                [&](const MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) 
-                {
-                    // Called for each player in the board, playerIndex == 0 indicates the next board.
-                    if (gameIndex >= boardWindow_.size()) { 
-                        return;
-                    }
-
-                    boardWindow_[gameIndex].setFromMoveRecord(record, playerIndex);
-                },
-                [&](uint32_t gameIndex) -> bool {
-                    if (gameIndex >= boardWindow_.size()) {
-                        return false;
-                    }
-                    return boardWindow_[gameIndex].isActive();
-                }
-            );
-        }
-    }
 
     void TournamentData::pollData() {
         if (tournament_) {
@@ -575,7 +518,7 @@ namespace QaplaWindows {
                 populateAdjudicationTable();
             }
             populateRunningTable();
-            populateViews();
+            boardWindowList_.populateViews();
         }
     }
 
@@ -631,31 +574,6 @@ namespace QaplaWindows {
             return;
         }
         adjudicationTable_.draw(size, true);
-    }
-
-    void TournamentData::drawTabs() {
-        int32_t newIndex = -1;
-        for (int32_t index = 0; index < boardWindow_.size(); index++) {
-            auto& window = boardWindow_[index];
-            std::string tabName = window.id();
-            std::string tabId = "###Game" + std::to_string(index);
-            if (!window.isRunning() && index != selectedIndex_) {
-                continue;
-            }
-            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
-                if (window.isActive()) {
-                    window.draw();
-                } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindow_.size())) {
-                    boardWindow_[selectedIndex_].draw();
-                }
-                window.setActive(true);
-                newIndex = index;
-                ImGui::EndTabItem();
-            } else {
-                window.setActive(false);
-            }
-        }
-        selectedIndex_ = newIndex;
     }
 
     void TournamentData::stopPool(bool graceful) {

@@ -1,0 +1,169 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#pragma once
+
+#include "viewer-board-window.h"
+#include "game-manager-pool-access.h"
+#include "imgui-table.h"
+
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+namespace QaplaWindows {
+
+/**
+ * @class ViewerBoardWindowList
+ * @brief Manages a list of viewer board windows and populates them with game data.
+ */
+class ViewerBoardWindowList {
+public:
+    /**
+     * @brief Constructor for ViewerBoardWindowList.
+     * @param poolAccess Access to the GameManagerPool instance.
+     */
+    explicit ViewerBoardWindowList(GameManagerPoolAccess poolAccess = GameManagerPoolAccess())
+        : poolAccess_(std::move(poolAccess)) {}
+
+    /**
+     * @brief Populates all viewer windows with current game data.
+     */
+    void populateViews() {
+        clearRunningFlags();
+
+        poolAccess_->withGameRecords(
+            [&](const GameRecord& game, uint32_t gameIndex) {
+                ensureWindowExists(gameIndex);
+                boardWindows_[gameIndex].setFromGameRecord(game);
+                boardWindows_[gameIndex].setRunning(true);
+            },
+            [&](uint32_t gameIndex) -> bool {
+                ensureWindowExists(gameIndex);
+                return true;
+            }
+        );
+
+        poolAccess_->withEngineRecords(
+            [&](const EngineRecords& records, uint32_t gameIndex) {
+                if (gameIndex >= boardWindows_.size()) {
+                    return;
+                }
+                boardWindows_[gameIndex].setFromEngineRecords(records);
+            },
+            [&](uint32_t gameIndex) -> bool {
+                if (gameIndex >= boardWindows_.size()) {
+                    return false;
+                }
+                return boardWindows_[gameIndex].isActive();
+            }
+        );
+
+        poolAccess_->withMoveRecord(
+            [&](const MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) {
+                if (gameIndex >= boardWindows_.size()) {
+                    return;
+                }
+                boardWindows_[gameIndex].setFromMoveRecord(record, playerIndex);
+            },
+            [&](uint32_t gameIndex) -> bool {
+                if (gameIndex >= boardWindows_.size()) {
+                    return false;
+                }
+                return boardWindows_[gameIndex].isActive();
+            }
+        );
+    }
+
+    /**
+     * @brief Checks if any window is currently running.
+     * @return True if at least one window is running, false otherwise.
+     */
+    [[nodiscard]] bool isAnyRunning() const {
+        return std::ranges::any_of(boardWindows_,
+            [](const ViewerBoardWindow& window) { return window.isRunning(); });
+    }
+
+    /**
+     * @brief Draws the tabs for all viewer windows.
+     */
+    void drawTabs() {
+        size_t newIndex = -1;
+        for (size_t index = 0; index < boardWindows_.size(); index++) {
+            auto& window = boardWindows_[index];
+            std::string tabName = window.id();
+            std::string tabId = "###Game" + std::to_string(index);
+            if (!window.isRunning() && index != selectedIndex_) {
+                continue;
+            }
+            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
+                if (window.isActive()) {
+                    window.draw();
+                } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindows_.size())) {
+                    boardWindows_[selectedIndex_].draw();
+                }
+                window.setActive(true);
+                newIndex = index;
+                ImGui::EndTabItem();
+            } else {
+                window.setActive(false);
+            }
+        }
+        selectedIndex_ = newIndex;
+    }
+
+    /**
+     * @brief Gets the list of board windows.
+     * @return Reference to the vector of board windows.
+     */
+    std::vector<ViewerBoardWindow>& getWindows() { return boardWindows_; }
+
+    /**
+     * @brief Gets the list of board windows (const version).
+     * @return Const reference to the vector of board windows.
+     */
+    [[nodiscard]] const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
+
+private:
+    GameManagerPoolAccess poolAccess_;
+    std::vector<ViewerBoardWindow> boardWindows_;
+    size_t selectedIndex_ = 0;
+
+    /**
+     * @brief Ensures that a window exists at the given index.
+     * @param index The index to ensure exists.
+     */
+    void ensureWindowExists(size_t index) {
+        while (index >= boardWindows_.size()) {
+            boardWindows_.emplace_back();
+        }
+    }
+
+    /**
+     * @brief Resets the running flag for all windows.
+     */
+    void clearRunningFlags() {
+        for (auto& window : boardWindows_) {
+            window.setRunning(false);
+        }
+    }
+
+};
+
+} // namespace QaplaWindows
