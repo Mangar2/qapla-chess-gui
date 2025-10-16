@@ -20,7 +20,7 @@
 
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
-#include "tournament-board-window.h"
+#include "viewer-board-window.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 #include "imgui-engine-global-settings.h"
@@ -526,7 +526,7 @@ namespace QaplaWindows {
                 },
                 [&](uint32_t gameIndex) -> bool {
                     while (gameIndex >= boardWindow_.size()) {
-                        TournamentBoardWindow window;
+                        ViewerBoardWindow window;
                         boardWindow_.push_back(std::move(window));
                     }
                     return true;

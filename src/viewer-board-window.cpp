@@ -16,8 +16,7 @@
  * @author Volker Böhm
  * @copyright Copyright (c) 2025 Volker Böhm
  */
-#include "tournament-board-window.h"
-#include "tournament-data.h"
+#include "viewer-board-window.h"
 
 #include "imgui-engine-list.h"
 #include "imgui-board.h"
@@ -36,16 +35,16 @@
 namespace QaplaWindows
 {
 
-    TournamentBoardWindow::TournamentBoardWindow() {
+    ViewerBoardWindow::ViewerBoardWindow() {
         imGuiEngineList_.setAllowInput(false);
     }
 
-    TournamentBoardWindow::TournamentBoardWindow(TournamentBoardWindow&&) noexcept = default;
-    TournamentBoardWindow& TournamentBoardWindow::operator=(TournamentBoardWindow&&) noexcept = default;
+    ViewerBoardWindow::ViewerBoardWindow(ViewerBoardWindow&&) noexcept = default;
+    ViewerBoardWindow& ViewerBoardWindow::operator=(ViewerBoardWindow&&) noexcept = default;
 
-    TournamentBoardWindow::~TournamentBoardWindow() = default;
+    ViewerBoardWindow::~ViewerBoardWindow() = default;
 
-    VerticalSplitContainer& TournamentBoardWindow::getMainWindow() {
+    VerticalSplitContainer& ViewerBoardWindow::getMainWindow() {
         static std::unique_ptr<VerticalSplitContainer> mainWindow;
         if (!mainWindow) {
             mainWindow = std::make_unique<VerticalSplitContainer>("main_window");
@@ -56,7 +55,7 @@ namespace QaplaWindows
         return *mainWindow;
     }
 
-    HorizontalSplitContainer& TournamentBoardWindow::getTopWindow() {
+    HorizontalSplitContainer& ViewerBoardWindow::getTopWindow() {
         static HorizontalSplitContainer* topWindow;
         if (topWindow == nullptr) {
             auto window = std::make_unique<HorizontalSplitContainer>("tournament_top");
@@ -67,7 +66,7 @@ namespace QaplaWindows
         return *topWindow;
     }
 
-    VerticalSplitContainer& TournamentBoardWindow::getClockMovesWindow() {
+    VerticalSplitContainer& ViewerBoardWindow::getClockMovesWindow() {
         static VerticalSplitContainer* clockMovesWindow;
         if (clockMovesWindow == nullptr) {
             auto window = std::make_unique<VerticalSplitContainer>("top_right");
@@ -78,7 +77,7 @@ namespace QaplaWindows
         return *clockMovesWindow;
     }
 
-    VerticalSplitContainer& TournamentBoardWindow::getMovesChartWindow() {
+    VerticalSplitContainer& ViewerBoardWindow::getMovesChartWindow() {
         static VerticalSplitContainer* movesChartWindow;
         if (movesChartWindow == nullptr) {
             auto window = std::make_unique<VerticalSplitContainer>("moves_chart");
@@ -89,7 +88,7 @@ namespace QaplaWindows
         return *movesChartWindow;
     }
 
-    void TournamentBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
+    void ViewerBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
     {
         round_ = gameRecord.getRound();
         gameInRound_ = gameRecord.getGameInRound();
@@ -105,7 +104,7 @@ namespace QaplaWindows
         imGuiEngineList_.setFromGameRecord(gameRecord);
     }
 
-    void TournamentBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
+    void ViewerBoardWindow::setFromEngineRecords(const EngineRecords& engineRecords)
     {
         if (!active_) {
             return;
@@ -113,7 +112,7 @@ namespace QaplaWindows
         imGuiEngineList_.setEngineRecords(engineRecords);
     }
 
-    void TournamentBoardWindow::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex)
+    void ViewerBoardWindow::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex)
     {
         if (!active_) {
             return;
@@ -122,7 +121,7 @@ namespace QaplaWindows
         imGuiClock_.setFromMoveRecord(moveRecord, playerIndex);
     }
 
-    void TournamentBoardWindow::draw()
+    void ViewerBoardWindow::draw()
     {
         getTopWindow().setLeft([&]() {
             imGuiBoard_.draw();
@@ -200,7 +199,7 @@ namespace QaplaWindows
     }
 
 
-    std::string TournamentBoardWindow::id() const {
+    std::string ViewerBoardWindow::id() const {
         if (positionName_.empty()) {
             return "Game " + std::to_string(round_) + "." + std::to_string(gameInRound_);
         }

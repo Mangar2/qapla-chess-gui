@@ -20,7 +20,7 @@
 #pragma once
 
 
-#include "tournament-board-window.h"
+#include "viewer-board-window.h"
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
@@ -333,7 +333,7 @@ namespace QaplaWindows {
 
         void populateViews();
 
-        std::vector<TournamentBoardWindow> boardWindow_;
+        std::vector<ViewerBoardWindow> boardWindow_;
 
         std::unique_ptr<Tournament> tournament_;
         std::unique_ptr<TournamentConfig> config_;

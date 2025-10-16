@@ -39,15 +39,15 @@ namespace QaplaWindows
     class VerticalSplitContainer;
     class HorizontalSplitContainer;
 
-    class TournamentBoardWindow : public EmbeddedWindow
+    class ViewerBoardWindow : public EmbeddedWindow
     {
     public:
 
-        TournamentBoardWindow();
-        TournamentBoardWindow(TournamentBoardWindow&&) noexcept;
-        TournamentBoardWindow& operator=(TournamentBoardWindow&&) noexcept;
+        ViewerBoardWindow();
+        ViewerBoardWindow(ViewerBoardWindow&&) noexcept;
+        ViewerBoardWindow& operator=(ViewerBoardWindow&&) noexcept;
 
-        virtual ~TournamentBoardWindow();
+        ~ViewerBoardWindow() override;
 
         /**
          * @brief Draw the window.
@@ -79,7 +79,7 @@ namespace QaplaWindows
          * @param active True to activate the window, false to deactivate it.
          */
         void setActive(bool active) { active_ = active; }
-        bool isActive() const { return active_; }
+        [[nodiscard]] bool isActive() const { return active_; }
 
         /**
          * @brief Set the running state of the window.
@@ -87,13 +87,13 @@ namespace QaplaWindows
          * false otherwise.
          */
         void setRunning(bool running) { running_ = running; }
-        bool isRunning() const { return running_; }
+        [[nodiscard]] bool isRunning() const { return running_; }
 
         /**
          * Get the unique identifier "round.game" for this board instance.
          * @return The unique identifier as a string.
          */
-        std::string id() const;
+        [[nodiscard]] std::string id() const;
 
     private:
         bool active_ = false;
