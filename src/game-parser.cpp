@@ -98,17 +98,72 @@ std::optional<GameRecord> parsePGN(const std::string& input) {
     return cleanRecord;
 }
 
+/**
+ * @brief Parses a UCI (Universal Chess Interface) string into a GameRecord.
+ *
+ * position fen <FEN string> moves <move1> <move2> ...
+ * <FEN string> moves ... or just moves ... is also valid
+ * 
+ * @param input The UCI string to parse.
+ * @return std::optional<GameRecord> The parsed GameRecord, or std::nullopt if parsing fails.
+ */
+std::optional<GameRecord> parseUCI(const std::string& input) {
+    // Check that it is not a PGN string
+    if (input.find("[") != std::string::npos && input.find("]") != std::string::npos) {
+        return std::nullopt;
+    }
+    // Note: it will also return std::nullopt, if the move string starts with a number with dot
+    // as the moves scanned here are expected to be in LAN or SAN format without move numbers.
+
+    auto fenGame = parseFen(input);
+    auto movesPos = input.find("moves ");
+    std::string movesString;
+    if (movesPos != std::string::npos) {
+        movesString = input.substr(movesPos + 6);
+    } else {
+        movesString = input;
+    }
+    GameState gameState;
+    GameRecord result;
+    if (fenGame) {
+        gameState.setFen(false, fenGame->getStartFen());
+        result = *fenGame;
+    } else {
+        gameState.setFen(true);
+    }
+    // iterate over moves
+    std::istringstream moveStream(movesString);
+    std::string moveStr;
+    while (moveStream >> moveStr) {
+        auto move = gameState.stringToMove(moveStr, false);
+        if (move.isEmpty()) {
+            break;
+        }
+        MoveRecord moveRecord;
+        moveRecord.lan = move.getLAN();
+        moveRecord.san = gameState.moveToSan(move);
+        moveRecord.original = moveStr;
+        gameState.doMove(move);
+        result.addMove(moveRecord);
+    }
+    if (result.getStartFen().empty() && result.history().empty()) {
+        return std::nullopt;
+    }
+
+    return result;
+}
+
 // ================================================================================================
 // GameParser Implementation
 // ================================================================================================
 
 GameParser::GameParser() {
     // Register default parsers
+    // The ordering is important as first successful parser will be used. E.g. then FEN 
+    // parser is often also successful for UCI or PGN inputs.
+    addParser("UCI", parseUCI);
     addParser("PGN", parsePGN);
     addParser("FEN", parseFen);
-    
-    // Future parsers can be added here:
-    // addParser("UCI", parseUci);
 }
 
 void GameParser::addParser(const std::string& name, const ParserFunction& parser) {
