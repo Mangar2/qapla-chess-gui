@@ -77,10 +77,10 @@ private:
      * @return Parsed EpdEntry structure.
      * @throws std::runtime_error on invalid format.
      */
-    EpdEntry parseEpdLine(const std::string& line);
+    static EpdEntry parseEpdLine(const std::string& line);
 
-    std::pair<std::string, std::string> extractFen(std::istringstream& stream);
+    static std::pair<std::string, std::string> extractFen(std::istringstream& stream);
 
-    void parseOperations(const std::string& input, EpdEntry& result);
+    static void parseOperations(const std::string& input, EpdEntry& result);
 
 };

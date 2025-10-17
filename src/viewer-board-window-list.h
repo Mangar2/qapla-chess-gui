@@ -26,6 +26,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <mutex>
 
 namespace QaplaWindows {
 
@@ -39,8 +40,27 @@ public:
      * @brief Constructor for ViewerBoardWindowList.
      * @param poolAccess Access to the GameManagerPool instance.
      */
-    explicit ViewerBoardWindowList(GameManagerPoolAccess poolAccess = GameManagerPoolAccess())
-        : poolAccess_(std::move(poolAccess)) {}
+    explicit ViewerBoardWindowList(std::string name)
+        : name_(std::move(name)) {
+        std::scoped_lock lock(instancesMutex_);
+        instances_.push_back(this);
+    }
+
+    /**
+     * @brief Destructor for ViewerBoardWindowList.
+     */
+    ~ViewerBoardWindowList() {
+        std::scoped_lock lock(instancesMutex_);
+        std::erase(instances_, this);
+    }
+
+    /**
+     * @brief Sets the GameManagerPoolAccess instance.
+     * @param poolAccess Access to the GameManagerPool instance.
+     */
+    void setPoolAccess(GameManagerPoolAccess poolAccess) {
+        poolAccess_ = std::move(poolAccess);
+    }
 
     /**
      * @brief Populates all viewer windows with current game data.
@@ -101,31 +121,15 @@ public:
     }
 
     /**
-     * @brief Draws the tabs for all viewer windows.
+     * @brief Draws the tabs for all ViewerBoardWindowList instances.
      */
-    void drawTabs() {
-        size_t newIndex = -1;
-        for (size_t index = 0; index < boardWindows_.size(); index++) {
-            auto& window = boardWindows_[index];
-            std::string tabName = window.id();
-            std::string tabId = "###Game" + std::to_string(index);
-            if (!window.isRunning() && index != selectedIndex_) {
-                continue;
-            }
-            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
-                if (window.isActive()) {
-                    window.draw();
-                } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindows_.size())) {
-                    boardWindows_[selectedIndex_].draw();
-                }
-                window.setActive(true);
-                newIndex = index;
-                ImGui::EndTabItem();
-            } else {
-                window.setActive(false);
+    static void drawAllTabs() {
+        std::scoped_lock lock(instancesMutex_);
+        for (auto* instance : instances_) {
+            if (instance != nullptr) {
+                instance->drawTabs();
             }
         }
-        selectedIndex_ = newIndex;
     }
 
     /**
@@ -141,9 +145,13 @@ public:
     [[nodiscard]] const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
 
 private:
+    static inline std::vector<ViewerBoardWindowList*> instances_;
+    static inline std::mutex instancesMutex_;
+
     GameManagerPoolAccess poolAccess_;
     std::vector<ViewerBoardWindow> boardWindows_;
     size_t selectedIndex_ = 0;
+    std::string name_;
 
     /**
      * @brief Ensures that a window exists at the given index.
@@ -163,6 +171,35 @@ private:
             window.setRunning(false);
         }
     }
+
+    /**
+     * @brief Draws the tabs for all viewer windows.
+     */
+    void drawTabs() {
+        size_t newIndex = -1;
+        for (size_t index = 0; index < boardWindows_.size(); index++) {
+            auto& window = boardWindows_[index];
+            std::string tabName = window.id();
+            std::string tabId = std::format("###Game_{}_{}", name_, index);
+            if (!window.isRunning() && index != selectedIndex_) {
+                continue;
+            }
+            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
+                if (window.isActive()) {
+                    window.draw();
+                } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindows_.size())) {
+                    boardWindows_[selectedIndex_].draw();
+                }
+                window.setActive(true);
+                newIndex = index;
+                ImGui::EndTabItem();
+            } else {
+                window.setActive(false);
+            }
+        }
+        selectedIndex_ = newIndex;
+    }
+
 
 };
 

@@ -59,11 +59,11 @@ static void formatInlineResult(std::ostream& os, const EpdTestCase& test) {
         << ", M: " << std::setw(5) << std::left << test.playedMove;
 }
 
-std::string EpdManager::generateResultLine(const EpdTestCase& current, const TestResults& results) const {
+std::string EpdManager::generateResultLine(const EpdTestCase& current, const TestResults& results) {
     std::ostringstream line;
     line << std::setw(20) << std::left << current.id;
     for (const auto& result : results) {
-        const auto it = std::find_if(result.result.begin(), result.result.end(), [&](const EpdTestCase& t) {
+        const auto it = std::ranges::find_if(result.result, [&](const EpdTestCase& t) {
             return t.id == current.id;
             });
         if (it != result.result.end()) {
@@ -92,10 +92,10 @@ void EpdManager::saveResults(std::ostream& os) const {
     if (results.empty()) {
         return;
     }
-    os << generateHeaderLine() << std::endl;
+    os << generateHeaderLine() << "\n" << std::flush;
     for (const auto& testCase : testsRead_) {
-        os << generateResultLine(testCase, results) << std::endl;
-    }    
+        os << generateResultLine(testCase, results) << "\n" << std::flush;
+    }
 }
 
 static uint64_t timeColumnToMs(const std::string& timeStr) {
@@ -126,7 +126,7 @@ static uint64_t timeColumnToMs(const std::string& timeStr) {
         start += 1;
     }
     if (parts.size() - start == 1) {
-        auto secPart = parts[start];
+        const auto& secPart = parts[start];
         size_t dotPos = secPart.find('.');
         auto seconds = 0;
         if (dotPos != std::string::npos) {
@@ -216,7 +216,7 @@ loadTestResults(std::istream& is, const TimeControl& tc, std::vector<EpdTestCase
             continue; // No BM field, invalid line
         }
         const auto& testId = columns[0];
-        auto it = std::find_if(testsRead.begin(), testsRead.end(), [&](const EpdTestCase& t) {
+        auto it = std::ranges::find_if(testsRead, [&](const EpdTestCase& t) {
             return t.id == testId;
             });
         if (it == testsRead.end()) {
@@ -249,7 +249,7 @@ bool EpdManager::loadResults(std::istream& is) {
     for (auto& test : testResults) {
         test.testSetName = epdFileName_;
         // Find existing instance or create new one
-        auto it = std::find_if(testInstances_.begin(), testInstances_.end(), [&](const std::shared_ptr<EpdTest>& instance) {
+        auto it = std::ranges::find_if(testInstances_, [&](const std::shared_ptr<EpdTest>& instance) {
             auto results = instance->getResultsCopy();
             return results.engineName == test.engineName;
             });
@@ -281,7 +281,7 @@ void EpdManager::initializeTestCases(uint64_t maxTimeInS, uint64_t minTimeInS, u
         throw std::runtime_error("EpdReader must be initialized before loading test cases.");
     }
 
-    reader_->reset();
+    (*reader_).reset();
     testInstances_.clear();
 
     while (true) {
@@ -311,13 +311,13 @@ void EpdManager::initialize(const std::string& filepath,
 
 void EpdManager::clear() {
     if (reader_) {
-        reader_->reset();
+        (*reader_).reset();
     }
     testInstances_.clear();
     testsRead_.clear();
 }
 
-void EpdManager::schedule(const EngineConfig& engineConfig) {
+void EpdManager::schedule(const EngineConfig& engineConfig, GameManagerPool& pool) {
     EpdTestResult test;
 	test.tc_ = tc_;
     test.engineName = engineConfig.getName();
@@ -335,7 +335,7 @@ void EpdManager::schedule(const EngineConfig& engineConfig) {
         }
     });
     logHeaderLine();
-    newTest->schedule(newTest, engineConfig);
+    EpdTest::schedule(newTest, engineConfig, pool);
 }
 
 void EpdManager::continueAnalysis() {

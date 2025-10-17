@@ -292,7 +292,7 @@ std::vector<std::string> generateSpinValues(const EngineOption& opt) {
 
 std::vector<std::string> generateComboValues(const EngineOption& opt) {
     std::vector<std::string> values = opt.vars;
-    values.push_back("invalid_option");
+    values.emplace_back("invalid_option");
     return values;
 }
 
@@ -375,7 +375,8 @@ TestResult runEngineOptionTests(const EngineConfig& engineConfig)
                 
                 if (!success) {
                     errors++;
-                    Logger::testLogger().log("Option test failed: " + testName + " - " + message, TraceLevel::error);
+                    Logger::testLogger().log(std::format("Option test failed: {} - {}", testName, message), 
+                        TraceLevel::error);
                 }
 
                 if (errors > 5) {
@@ -396,7 +397,7 @@ TestResult runEngineOptionTests(const EngineConfig& engineConfig)
                 
                 if (!success) {
                     errors++;
-                    Logger::testLogger().log("Option reset test failed: " + testName + " - " + message, TraceLevel::error);
+                    Logger::testLogger().log(std::format("Option reset test failed: {} - {}", testName, message), TraceLevel::error);
                 }
 
                 if (errors > 5) {
@@ -438,8 +439,8 @@ TestResult runAnalyzeTest(const EngineConfig& engineConfig)
         TimeControl t;
         t.setInfinite();
         computeTask->setTimeControl(t);
-        
-        for (auto fen : {
+
+        for (const auto& fen : {
             "r3r1k1/1pq2pp1/2p2n2/1PNn4/2QN2b1/6P1/3RPP2/2R3KB b - - 0 1",
             "r1q2rk1/p2bb2p/1p1p2p1/2pPp2n/2P1PpP1/3B1P2/PP2QR1P/R1B2NK1 b - - 0 1"
             }) {
@@ -600,11 +601,11 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
             
             auto timeStr = testCase.timeControl.toPgnTimeControlString();
             if (!timeStr.empty()) {
-                timeStr = " Time control: " + timeStr;
+                timeStr.insert(0, " Time control: ");
             }
             
             std::string result = success ? "OK" : "Timeout";
-            results.push_back(TestResultEntry(testCase.name, result + timeStr, success));
+            results.emplace_back(TestResultEntry(testCase.name, result + timeStr, success));
         }
         
         Logger::testLogger().logAligned("Testing go limits:", 
@@ -625,7 +626,7 @@ TestResult runEpFromFenTest(const EngineConfig& engineConfig)
         computeTask->initEngines(std::move(engines));
         
         TimeControl timeControl;
-        timeControl.addTimeSegment({0, 1000, 100});
+        timeControl.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 1000, .incrementMs = 100 });
         computeTask->setTimeControl(timeControl);
         computeTask->setPosition(false, "rnbqkb1r/ppp2ppp/8/3pP3/4n3/5N2/PPP2PPP/RNBQKB1R w KQkq d6 0 1",
             std::vector<std::string>{"e5d6"});
@@ -653,8 +654,8 @@ TestResult runComputeGameTest(const EngineConfig& engineConfig, bool logMoves)
         try {
             computeTask->newGame();
             computeTask->setPosition(true);
-            TimeControl t1; t1.addTimeSegment({0, 20000, 100});
-            TimeControl t2; t2.addTimeSegment({0, 10000, 100});
+            TimeControl t1; t1.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 20000, .incrementMs = 100 });
+            TimeControl t2; t2.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 10000, .incrementMs = 100 });
             computeTask->setTimeControls({t1, t2});
             computeTask->autoPlay(logMoves);
             computeTask->getFinishedFuture().wait();
@@ -681,7 +682,7 @@ static void testPonderHit(const GameRecord& gameRecord, EngineWorker* engine,
     engine->newGame(gameRecord, gameRecord.isWhiteToMove());
     
     TimeControl t;
-    t.addTimeSegment({0, 2000, 0});
+    t.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 2000, .incrementMs = 0 });
     GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
     
     engine->allowPonder(gameRecord, goLimits, ponderMove);
@@ -708,7 +709,7 @@ static void testPonderMiss(const GameRecord& gameRecord, EngineWorker* engine,
     engine->newGame(gameRecord, gameRecord.isWhiteToMove());
     
     TimeControl t;
-    t.addTimeSegment({0, 2000, 0});
+    t.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 2000, .incrementMs = 0 });
     GoLimits goLimits = createGoLimits(t, t, 0, 0, 0, true);
     
     engine->allowPonder(gameRecord, goLimits, ponderMove);
@@ -739,7 +740,7 @@ TestResult runUciPonderTest(const EngineConfig& engineConfig)
         const std::string testname = "correct-pondering";
         
         try {
-            std::cout << "Testing pondering:" << std::endl;
+            std::cout << "Testing pondering:\n" << std::flush;
             
             GameRecord gameRecord;
             
@@ -791,8 +792,8 @@ TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves)
             
             computeTask->newGame();
             computeTask->setPosition(true);
-            TimeControl t1; t1.addTimeSegment({0, 20000, 100});
-            TimeControl t2; t2.addTimeSegment({0, 10000, 100});
+            TimeControl t1; t1.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 20000, .incrementMs = 100 });
+            TimeControl t2; t2.addTimeSegment({ .movesToPlay = 0, .baseTimeMs = 10000, .incrementMs = 100 });
             computeTask->setTimeControls({t1, t2});
             computeTask->autoPlay(logMoves);
             computeTask->getFinishedFuture().wait();
@@ -820,7 +821,7 @@ TestResult runEpdTest(const EngineConfig& engineConfig)
             Logger::testLogger().log("Testing positions, this will take a while...", TraceLevel::command);
             
             auto epdManager = std::make_shared<EpdTestManager>(checklist);
-            GameManager gameManager;
+            GameManager gameManager(nullptr);
             gameManager.initUniqueEngine(std::move(engines[0]));
             gameManager.start(epdManager);
             gameManager.getFinishedFuture().wait();

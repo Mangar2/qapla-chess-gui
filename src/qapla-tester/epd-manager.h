@@ -24,6 +24,7 @@
 #include "engine-config.h"
 #include "epd-test.h"
 #include "time-control.h"
+#include "game-manager-pool.h"
 
 #include <memory>
 #include <string>
@@ -73,7 +74,7 @@ public:
      *
 	 * @param engineConfig The configuration for the engine to be used in the analysis.
      */
-    void schedule(const EngineConfig& engineConfig);
+    void schedule(const EngineConfig& engineConfig, GameManagerPool& pool = GameManagerPool::getInstance());
 
 	double getSuccessRate() const;
 
@@ -126,7 +127,7 @@ private:
     std::string generateHeaderLine() const;
     void logHeaderLine() const;
 
-    std::string generateResultLine(const EpdTestCase& current, const TestResults& results) const;
+    static std::string generateResultLine(const EpdTestCase& current, const TestResults& results);
     void logResultLine(const EpdTestCase& current) const;
 
     std::unique_ptr<EpdReader> reader_;

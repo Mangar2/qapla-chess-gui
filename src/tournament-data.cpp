@@ -45,6 +45,7 @@
 namespace QaplaWindows {
 
     TournamentData::TournamentData() : 
+        boardWindowList_("Tournament"),
         tournament_(std::make_unique<Tournament>()),
 		config_(std::make_unique<TournamentConfig>()),
         result_(std::make_unique<TournamentResultIncremental>()),
@@ -142,6 +143,13 @@ namespace QaplaWindows {
                 engineConfigurations_ = configurations;
             }
         );
+
+        // Poll callback to regularly update tournament data
+        pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+		    [this]() {
+    			this->pollData();
+		    }
+    	));
     }
 
     void TournamentData::updateConfiguration() {

@@ -25,8 +25,8 @@
 #include "time-control-window.h"
 #include "epd-window.h"
 #include "epd-data.h"
+#include "viewer-board-window-list.h"
 #include "engine-test-window.h"
-#include "tournament-data.h"
 #include "tournament-window.h"
 #include "imgui-tab-bar.h"
 #include "imgui-game-list.h"
@@ -126,7 +126,7 @@ namespace {
             tb.addTab(title, std::move(instance), ImGuiTabItemFlags_NoAssumedClosure | ImGuiTabItemFlags_SetSelected);
         });
         boardTabBar->setDynamicTabsCallback([&]() {
-            QaplaWindows::TournamentData::instance().drawTabs();
+            QaplaWindows::ViewerBoardWindowList::drawAllTabs();
         });
 
 		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
@@ -209,7 +209,6 @@ namespace {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            QaplaWindows::TournamentData::instance().pollData();
             QaplaWindows::StaticCallbacks::poll().invokeAll();
 
             workspace.draw();

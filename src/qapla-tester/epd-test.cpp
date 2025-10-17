@@ -49,9 +49,10 @@ void EpdTest::initialize(const EpdTestResult& tests)
     oldestIndexInUse_ = 0;
 }
 
-void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine) {
-    GameManagerPool::getInstance().addTaskProvider(self, engine); 
-    GameManagerPool::getInstance().startManagers();
+void EpdTest::schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine, 
+    GameManagerPool& pool) {
+    pool.addTaskProvider(self, engine); 
+    pool.startManagers();
 }
 
 void EpdTest::continueAnalysis() {
@@ -59,7 +60,7 @@ void EpdTest::continueAnalysis() {
 }
 
 std::optional<GameTask> EpdTest::nextTask() {
-    std::lock_guard<std::mutex> lock(testResultMutex_);
+    std::scoped_lock lock(testResultMutex_);
 
 
     GameTask task;
@@ -96,18 +97,22 @@ bool EpdTest::setPV(const std::string& taskId,
         return false;
     }
 
-    const auto index = (std::stoi(taskId));
-    std::lock_guard<std::mutex> lock(testResultMutex_);
+    const auto taskIndex = QaplaHelpers::to_uint32(taskId);
+    std::scoped_lock lock(testResultMutex_);
 
-    if (index < 0 || index >= static_cast<int>(result_.result.size())) return false;
+    if (!taskIndex || *taskIndex >= result_.result.size()) {
+        return false;
+    }
 
-    auto& test = result_.result[static_cast<uint32_t>(index)];
+    auto& test = result_.result[*taskIndex];
     // We may have an info line from the engine after the move was already played
-    if (test.tested) return false; 
+    if (test.tested) {
+        return false; 
+    }
     assert(test.playedMove.empty());
 
     const std::string& firstMove = pv.front();
-    bool found = std::any_of(test.bestMoves.begin(), test.bestMoves.end(),
+    bool found = std::ranges::any_of(test.bestMoves,
         [&](const std::string& bm) {
             return isSameMove(test.fen, firstMove, bm);
         });
@@ -141,31 +146,31 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     const std::string& fen = record.getStartFen();
 
     const auto& moves = record.history();
-    if (moves.empty()) return;
+    if (moves.empty()) {
+        return;
+    }
 
     const auto& move = moves.back();
     const std::string& played = move.san.empty() ? move.lan : move.san;
 
-    int taskIdIndex = -1;
-    try {
-        taskIdIndex = std::stoi(taskId);
-    }
-    catch (...) {
-		throw AppError::make("Invalid taskId: " + taskId + ". Must be a valid integer.");
+    const auto taskIndex = QaplaHelpers::to_uint32(taskId);
+    if (!taskIndex || (*taskIndex >= result_.result.size())) {
+        Logger::testLogger().log(
+            "EpdTest::setGameRecord: Invalid taskId " + taskId,
+            TraceLevel::error);
+		return;
     }
 
     auto recentOldestIndex = oldestIndexInUse_.load();
-    if (taskIdIndex < 0 || taskIdIndex >= static_cast<int>(result_.result.size())) return;
     {
-        std::lock_guard<std::mutex> lock(testResultMutex_);
-        const size_t index = static_cast<size_t>(taskIdIndex);
-        auto& test = result_.result[index];
+        std::scoped_lock lock(testResultMutex_);
+        auto& test = result_.result[*taskIndex];
         assert(test.playedMove.empty());
 
         test.tested = true;
         test.playedMove = played;
-        test.correct = std::any_of(
-            test.bestMoves.begin(), test.bestMoves.end(),
+        test.correct = std::ranges::any_of(
+            test.bestMoves,
             [&](const std::string& bm) {
                 return isSameMove(fen, played, bm);
             }
@@ -189,7 +194,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
         }
 
         // Close gap, if oldest
-        if (index == oldestIndexInUse_) {
+        if (*taskIndex == oldestIndexInUse_) {
             while (oldestIndexInUse_ < result_.result.size() && !result_.result[oldestIndexInUse_].playedMove.empty()) {
                 ++oldestIndexInUse_;
             }
@@ -201,7 +206,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     }
 }
 
-bool EpdTest::isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str) const {
+bool EpdTest::isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str) {
     GameState gameState;
     gameState.setFen(false, fen);
     auto move1 = gameState.stringToMove(move1str, false);

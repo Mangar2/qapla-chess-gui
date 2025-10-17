@@ -34,6 +34,7 @@
 #include <functional>
 
 class GameManager;
+class GameManagerPool;
 
 struct EpdTestCase {
     std::string id;
@@ -80,7 +81,7 @@ public:
 	 * @brief initializes the EpdManager with the specified analysis parameters.
 	 * @param tests The EpdTestResult containing the analysis parameters.
      */
-    void initialize(const EpdTestResult& tets);
+    void initialize(const EpdTestResult& tests);
 
     /**
      * @brief Registers this EpdManager instance as a task provider in the GameManagerPool.
@@ -89,8 +90,10 @@ public:
      *
      * @param self The shared_ptr owning this EpdManager instance.
      * @param engine The engine configuration to use for analysis.
+     * @param pool The GameManagerPool to register with (default is the singleton instance).
      */
-    void schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine);
+    static void schedule(const std::shared_ptr<EpdTest>& self, const EngineConfig& engine, 
+        GameManagerPool& pool);
 
     /**
      * @brief Continues the analysis from the current state.
@@ -162,7 +165,7 @@ public:
 
 private:
 
-    bool isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str) const;
+    static bool isSameMove(const std::string& fen, const std::string& move1str, const std::string& move2str);
 
     TestResultCallback testResultCallback_;
 

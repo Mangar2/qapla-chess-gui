@@ -20,6 +20,7 @@
 #include "epd-reader.h"
 #include "string-helper.h"
 
+#include <array>
 #include <sstream>
 #include <stdexcept>
 #include <cctype>
@@ -35,9 +36,9 @@ EpdReader::EpdReader(const std::string& filePath): filePath_(filePath) {
 
         std::string errMsg;
     #ifdef _WIN32
-        char buf[256]{};
-        strerror_s(buf, sizeof buf, err);
-        errMsg = buf;
+        std::array<char, 256> buf{};
+        strerror_s(buf.data(), buf.size(), err);
+        errMsg = buf.data();
     #else
         std::error_code ec(err, std::generic_category());
         errMsg = ec.message();
@@ -87,15 +88,19 @@ EpdReader::extractFen(std::istringstream& stream) {
     std::ostringstream fenStream;
     std::string token;
 
-    for (int i = 0; i < 4; ++i) {
-        if (!(stream >> token)) throw std::runtime_error("Incomplete FEN in EPD line");
-        if (i) fenStream << ' ';
+    for (int part = 0; part < 4; ++part) {
+        if (!(stream >> token)) {
+            throw std::runtime_error("Incomplete FEN in EPD line");
+        }
+        if (part != 0) {
+            fenStream << ' ';
+        }
         fenStream << token;
     }
 
     for (int i = 0; i < 2; ++i) {
         int v;
-        bool isInt = (stream >> v) ? true : false;
+        bool isInt = static_cast<bool>(stream >> v);
         if (isInt && v >= 0) {
             fenStream << ' ' << v;
         } else {

@@ -33,6 +33,8 @@
 #include "player-context.h"
 #include "game-context.h"
 
+class GameManagerPool;
+
  /**
   * @brief Manages a single chess game between the application and an engine.
   *        Controls the engine's lifecycle and reacts to engine events via FSM logic.
@@ -47,7 +49,7 @@ public:
     };
 
 public:
-	GameManager();
+	explicit GameManager(GameManagerPool* pool);
 	~GameManager();
 
     /**
@@ -331,4 +333,6 @@ private:
     std::mutex queueMutex_;
     std::condition_variable queueCondition_;
     std::queue<EngineEvent> eventQueue_;
+
+    GameManagerPool* pool_;
 };

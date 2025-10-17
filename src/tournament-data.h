@@ -25,6 +25,7 @@
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
+#include "callback-manager.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/engine-option.h"
@@ -254,13 +255,6 @@ namespace QaplaWindows {
          */
         void loadTournament(const std::string& filename);
 
-        /**
-         * @brief Draws tabs for the board windows.
-         */
-        void drawTabs() {
-            boardWindowList_.drawTabs();
-        }
-
 	private:
         bool validateOpenings();
 
@@ -349,6 +343,8 @@ namespace QaplaWindows {
 		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{}; 
+        std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+
         uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games
 

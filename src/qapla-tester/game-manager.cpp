@@ -39,8 +39,8 @@
 #include "input-handler.h"
 #include "adjudication-manager.h"
 
-GameManager::GameManager()
-    : taskProvider_(nullptr)
+GameManager::GameManager(GameManagerPool* pool)
+    : pool_(pool), taskProvider_(nullptr)
 {
     eventThread_ = std::thread(&GameManager::processQueue, this);
     gameContext_.setEventCallback([this](EngineEvent&& event) {
@@ -394,7 +394,10 @@ void GameManager::executeTask(std::optional<GameTask> task) {
 }
 
 std::optional<GameTask> GameManager::assignNewProviderAndTask() {
-    auto extendedTask = GameManagerPool::getInstance().tryAssignNewTask();
+    if (pool_ == nullptr) {
+        return std::nullopt;
+    }
+    auto extendedTask = pool_->tryAssignNewTask();
     if (!extendedTask) {
         return std::nullopt;
     }
@@ -438,7 +441,7 @@ std::optional<GameTask> GameManager::nextAssignment() {
     // require internal synchronization. However, the pool must synchronize the decision-making
     // process across GameManagers to avoid clearing more instances than intended.
     try {
-        if (GameManagerPool::getInstance().maybeDeactivateManager(taskProvider_)) {
+        if (pool_ == nullptr || pool_->maybeDeactivateManager(taskProvider_)) {
             return std::nullopt;
         }
         {

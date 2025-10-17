@@ -44,9 +44,10 @@ namespace QaplaWindows {
                 { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 160.0F },
                 { .name = "Best move", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F }
             }
-        )
+        ),
+        viewerBoardWindows_("EPD")
     { 
-        
+        setGameManagerPool(std::make_shared<GameManagerPool>());
         table_.setClickable(true);
         init();
     }
@@ -170,6 +171,7 @@ namespace QaplaWindows {
                 }
             }
             populateTable();
+            viewerBoardWindows_.populateViews();
 		}
     }
 
@@ -219,7 +221,7 @@ namespace QaplaWindows {
 		poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
-            epdManager_->schedule(engineConfig);
+            epdManager_->schedule(engineConfig, *poolAccess_);
             scheduledEngines_++;
         }
         if (epdConfig_.concurrency == 0) {

@@ -25,6 +25,7 @@
 #include "imgui-engine-select.h"
 #include "autosavable.h"
 #include "game-manager-pool-access.h"
+#include "viewer-board-window-list.h"
 
 #include <memory>
 #include <optional>
@@ -119,6 +120,15 @@ namespace QaplaWindows {
         void updateConcurrency(uint32_t newConcurrency);
 
         /**
+         * @brief Sets the GameManagerPool instance to use.
+         * @param pool Shared pointer to a GameManagerPool instance.
+         */
+        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
+            poolAccess_ = GameManagerPoolAccess(pool);
+            viewerBoardWindows_.setPoolAccess(poolAccess_);
+        }
+
+        /**
          * @brief Sets the engine configurations for EPD analysis
          * @param configurations Vector with all engine configurations
          */
@@ -205,6 +215,7 @@ namespace QaplaWindows {
 
         ImGuiTable table_;
         GameManagerPoolAccess poolAccess_;
+        ViewerBoardWindowList viewerBoardWindows_;
 
     };
 
