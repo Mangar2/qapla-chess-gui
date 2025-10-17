@@ -127,6 +127,12 @@ namespace QaplaWindows {
          */
         void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration> &configurations);
  
+        /**
+         * @brief Sets the GameManagerPool instance to use.
+         * @param pool Shared pointer to a GameManagerPool instance.
+         */
+        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool);
+        
         uint32_t& concurrency() {
             return concurrency_;
 		}

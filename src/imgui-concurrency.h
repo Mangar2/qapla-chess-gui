@@ -50,6 +50,14 @@ public:
     }
 
     /**
+     * @brief Sets the GameManagerPoolAccess instance.
+     * @param poolAccess Access to the GameManagerPool instance.
+     */
+    void setPoolAccess(GameManagerPoolAccess poolAccess) {
+        poolAccess_ = std::move(poolAccess);
+    }
+
+    /**
      * @brief Updates the concurrency value based on user input.
      * @param newConcurrency The new concurrency value from the ImGui slider.
      */

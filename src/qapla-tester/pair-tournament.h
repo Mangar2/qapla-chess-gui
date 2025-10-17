@@ -67,6 +67,8 @@ struct PairTournamentConfig {
     Openings openings;
 };
 
+class GameManagerPool;
+
  /**
   * @brief Represents an autonomous two-engine tournament with defined number of games.
   *
@@ -113,7 +115,7 @@ public:
      *
      * Must be called after initialize(). Adds this pairing to the pool with the configured concurrency limit.
      */
-    void schedule(const std::shared_ptr<PairTournament>& self);
+    void schedule(const std::shared_ptr<PairTournament>& self, GameManagerPool& pool);
 
     void clear() {
         std::lock_guard<std::mutex> lock(mutex_);

@@ -97,6 +97,7 @@ namespace QaplaWindows {
             }
         )
     { 
+        setGameManagerPool(std::make_shared<GameManagerPool>());
         runningTable_.setClickable(true);
         
         // Set up engine select options
@@ -150,6 +151,12 @@ namespace QaplaWindows {
     			this->pollData();
 		    }
     	));
+    }
+
+    void TournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
+        poolAccess_ = GameManagerPoolAccess(pool);
+        boardWindowList_.setPoolAccess(poolAccess_);
+        imguiConcurrency_->setPoolAccess(poolAccess_);
     }
 
     void TournamentData::updateConfiguration() {
@@ -339,7 +346,7 @@ namespace QaplaWindows {
         poolAccess_->clearAll();
         result_->setGamesLeft();
         state_ = State::Starting;
-        tournament_->scheduleAll(0, false);
+        tournament_->scheduleAll(0, false, *poolAccess_);
         eloTable_.clear();
         populateEloTable();
         runningTable_.clear();

@@ -24,6 +24,8 @@
 #include "time-control.h"
 #include "input-handler.h"
 #include "ini-file.h"
+#include "game-manager-pool.h"
+
 #include <vector>
 #include <memory>
 #include <ostream>
@@ -72,14 +74,10 @@ public:
 	 * @param concurrency Number of parallel workers to use.
 	 * @param registerToInputhandler If true, registers the tournament to the InputHandler 
      *  for interactive mode on cli usage.
+     * @param pool GameManagerPool instance to use (default: singleton).
      */
-    void scheduleAll(uint32_t concurrency, bool registerToInputhandler = true);
-
-    /**
-     * @brief Waits for all engines to finish.
-     * @return true if all tasks completed successfully, false if the analysis was stopped prematurely.
-     */
-    static bool wait();
+    void scheduleAll(uint32_t concurrency, bool registerToInputhandler = true, 
+        GameManagerPool& pool = GameManagerPool::getInstance());
 
     /**
      * @brief Returns the state of all pairings as a list of sections.

@@ -31,11 +31,6 @@
 #include "input-handler.h"
 #include "adjudication-manager.h"
 
-bool Tournament::wait() {
-    GameManagerPool::getInstance().waitForTask();
-    return true;
-};
-
 void Tournament::createTournament(const std::vector<EngineConfig>& engines,
     const TournamentConfig& config) {
 
@@ -195,8 +190,8 @@ void Tournament::onGameFinished([[maybe_unused]] PairTournament* sender) {
     }
 }
 
-void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) {
-	GameManagerPool::getInstance().setConcurrency(concurrency, true);
+void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler,  GameManagerPool& pool) {
+	pool.setConcurrency(concurrency, true);
     if (registerToInputhandler) {
         tournamentCallback_ = InputHandler::getInstance().registerCommandCallback(
             {
@@ -215,7 +210,7 @@ void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler) 
             });
     }
 	for (const auto& pairing : pairings_) {
-		pairing->schedule(pairing);
+		pairing->schedule(pairing, pool);
 	}
 }
 
