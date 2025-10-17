@@ -201,9 +201,7 @@ void EpdWindow::drawInput()
 
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency))
     {
-        if (EpdData::instance().state == EpdData::State::Running) {
-            GameManagerPool::getInstance().setConcurrency(config.concurrency, true, true);
-        }
+        EpdData::instance().updateConcurrency(config.concurrency);
         modified = true;
     }
 

@@ -510,7 +510,6 @@ void GameManager::finalizeTaskAndContinue() {
 
 bool GameManager::start(std::shared_ptr<GameTaskProvider> taskProvider) {
     std::optional<GameTask> task;
-    std::cout << "starting game manager\n" << std::flush;
     if (taskProvider == nullptr) {
         task = assignNewProviderAndTask();
     }

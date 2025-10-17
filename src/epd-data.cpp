@@ -26,7 +26,6 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/epd-manager.h"
-#include "qapla-tester/game-manager-pool.h"
 
 #include <imgui.h>
 
@@ -47,6 +46,7 @@ namespace QaplaWindows {
             }
         )
     { 
+        
         table_.setClickable(true);
         init();
     }
@@ -89,6 +89,13 @@ namespace QaplaWindows {
             }
         };
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("epd", "epd", { section });
+    }
+
+    void EpdData::updateConcurrency(uint32_t newConcurrency) {
+        epdConfig_.concurrency = newConcurrency;
+        if (state == State::Running) {
+            poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
+        }
     }
 
     std::optional<std::string> EpdData::getFen(size_t index) const {
@@ -157,7 +164,7 @@ namespace QaplaWindows {
             updateCnt_ = epdManager_->getUpdateCount();
             setModified(); // Notify autosave system about data changes
             if (state == State::Stopping || state == State::Running) {
-                if (GameManagerPool::getInstance().runningGameCount() == 0) {
+                if (poolAccess_->runningGameCount() == 0) {
                     state = State::Stopped;
                     SnackbarManager::instance().showSuccess("Analysis finished.");
                 }
@@ -189,7 +196,7 @@ namespace QaplaWindows {
             }
             return false;
         }
-        if (!GameManagerPool::getInstance().areAllTasksFinished()) {
+        if (!poolAccess_->areAllTasksFinished()) {
             if (sendMessage) {
                 SnackbarManager::instance().showWarning("Some tasks are still running. Please wait until they finish.");
             }
@@ -209,7 +216,7 @@ namespace QaplaWindows {
         }
         epdManager_->continueAnalysis();
         state = State::Starting;
-		GameManagerPool::getInstance().setConcurrency(epdConfig_.concurrency, true, true);
+		poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig);
@@ -231,9 +238,9 @@ namespace QaplaWindows {
         auto oldState = state;
         state = graceful ? State::Stopping : State::Stopped;
         if (!graceful) {
-            GameManagerPool::getInstance().stopAll();
+            poolAccess_->stopAll();
         } else {
-            GameManagerPool::getInstance().setConcurrency(0, true, false);
+            poolAccess_->setConcurrency(0, true, false);
         }
 
         if (oldState == State::Stopping && graceful) {
@@ -249,7 +256,7 @@ namespace QaplaWindows {
     }
 
     void EpdData::clear() {
-        GameManagerPool::getInstance().clearAll();
+        poolAccess_->clearAll();
         epdManager_->clear();
         epdResults_->clear();
         scheduledEngines_ = 0;

@@ -24,6 +24,7 @@
 #include "callback-manager.h"
 #include "imgui-engine-select.h"
 #include "autosavable.h"
+#include "game-manager-pool-access.h"
 
 #include <memory>
 #include <optional>
@@ -112,6 +113,12 @@ namespace QaplaWindows {
         void updateConfiguration() const;
 
         /**
+         * @brief Updates the concurrency setting for the game manager pool.
+         * @param newConcurrency The new concurrency value to set.
+         */
+        void updateConcurrency(uint32_t newConcurrency);
+
+        /**
          * @brief Sets the engine configurations for EPD analysis
          * @param configurations Vector with all engine configurations
          */
@@ -197,6 +204,7 @@ namespace QaplaWindows {
         uint32_t scheduledEngines_ = 0;
 
         ImGuiTable table_;
+        GameManagerPoolAccess poolAccess_;
 
     };
 
