@@ -171,8 +171,8 @@ namespace QaplaWindows {
                 }
             }
             populateTable();
-            viewerBoardWindows_.populateViews();
 		}
+        viewerBoardWindows_.populateViews();
     }
 
     bool EpdData::configChanged() const {
