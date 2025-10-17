@@ -337,8 +337,7 @@ void SprtManager::runMonteCarloTest(const SprtConfig& config) {
 
 			if (!decision) {
 				++noDecisions;
-			}
-            else {
+			} else {
 				numH0 += *decision ? 0 : 1;
 				numH1 += *decision ? 1 : 0;
             }
