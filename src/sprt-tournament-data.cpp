@@ -18,5 +18,46 @@
  */
 
 #include "sprt-tournament-data.h"
+#include "configuration.h"
+
+#include "qapla-tester/ini-file.h"
 
 using namespace QaplaWindows;
+
+SprtTournamentData::SprtTournamentData() : 
+    engineSelect_(std::make_unique<ImGuiEngineSelect>())
+{
+    ImGuiEngineSelect::Options options;
+    options.allowGauntletEdit = true;
+    options.allowPonderEdit = true;
+    options.allowTimeControlEdit = true;
+    options.allowTraceLevelEdit = true;
+    options.allowRestartOptionEdit = true;
+    options.allowMultipleSelection = true;
+    engineSelect_->setOptions(options);
+
+    setupCallbacks();
+    loadEngineSelectionConfig();
+}
+
+SprtTournamentData::~SprtTournamentData() = default;
+
+void SprtTournamentData::setupCallbacks() {
+    engineSelect_->setConfigurationChangedCallback(
+        [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+            engineConfigurations_ = configurations;
+        }
+    );
+}
+
+void SprtTournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+    engineConfigurations_ = configurations;
+}
+
+void SprtTournamentData::loadEngineSelectionConfig() {
+    auto sections = QaplaConfiguration::Configuration::instance()
+        .getConfigData().getSectionList("engineselection", "sprt-tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    engineSelect_->setId("sprt-tournament");
+    engineSelect_->setEngineConfiguration(sections);
+}

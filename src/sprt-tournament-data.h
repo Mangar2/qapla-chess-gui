@@ -19,12 +19,48 @@
 
 #pragma once
 
+#include "imgui-engine-select.h"
+
+#include <memory>
+#include <vector>
+
 namespace QaplaWindows {
 
     class SprtTournamentData {
     public:
-        SprtTournamentData() = default;
-        ~SprtTournamentData() = default;
+        SprtTournamentData();
+        ~SprtTournamentData();
+
+        static SprtTournamentData& instance() {
+            static SprtTournamentData instance;
+            return instance;
+        }
+
+        /**
+         * @brief Returns a reference to the engine selection.
+         * @return Reference to the engine selection.
+         */
+        ImGuiEngineSelect& engineSelect() {
+            return *engineSelect_;
+        }
+
+        const ImGuiEngineSelect& engineSelect() const {
+            return *engineSelect_;
+        }
+
+        /**
+         * @brief Set the Engine Configurations object.
+         * 
+         * @param configurations Vector with all engine configurations 
+         */
+        void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
+
+    private:
+        void setupCallbacks();
+        void loadEngineSelectionConfig();
+
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
     };
 
 }

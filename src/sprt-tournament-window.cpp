@@ -43,18 +43,82 @@
 
 using namespace QaplaWindows;
 
-void SprtTournamentWindow::drawButtons() {
+static void drawSingleButton(
+    ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
+    const std::string &button, bool running, QaplaButton::ButtonState state)
+{
+    if (button == "Run/Grace/Continue")
+    {
+        if (running)
+        {
+            QaplaButton::drawGrace(drawList, topLeft, size, state);
+        }
+        else
+        {
+            QaplaButton::drawPlay(drawList, topLeft, size, state);
+        }
+    }
+    if (button == "Stop")
+    {
+        QaplaButton::drawStop(drawList, topLeft, size, state);
+    }
+    if (button == "Clear")
+    {
+        QaplaButton::drawClear(drawList, topLeft, size, state);
+    }
+    if (button == "Load")
+    {
+        QaplaButton::drawOpen(drawList, topLeft, size, state);
+    }
+    if (button == "Save As")
+    {
+        QaplaButton::drawSave(drawList, topLeft, size, state);
+    }
 }
+
+
+void SprtTournamentWindow::drawButtons() {
+    
+}
+
 
 void SprtTournamentWindow::executeCommand(const std::string &button) {
 }
 
 bool SprtTournamentWindow::drawInput() {
-    return false;
+    constexpr float inputWidth = 200.0F;
+    auto& tournamentData = SprtTournamentData::instance();
+
+    bool changed = false;
+
+    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("engineSettings");
+        ImGui::Indent(10.0F);
+        changed |= tournamentData.engineSelect().draw();
+        ImGui::Unindent(10.0F);
+        ImGui::PopID();
+    }
+
+    ImGui::Spacing();
+
+    return changed;
 }
 
 void SprtTournamentWindow::drawProgress() {
 }
 
 void SprtTournamentWindow::draw() {
+    constexpr float rightBorder = 5.0F;
+    auto& tournamentData = SprtTournamentData::instance();
+    drawButtons();
+
+    ImGui::Indent(10.0F);
+    auto size = ImGui::GetContentRegionAvail();
+    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    if (drawInput()) {
+        
+    }
+
+    ImGui::EndChild();
+    ImGui::Unindent(10.0F);
 }
