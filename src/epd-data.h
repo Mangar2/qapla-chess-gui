@@ -67,6 +67,7 @@ namespace QaplaWindows {
         ~EpdData();
 
         void init();
+        void setCallbacks();
 
         /**
 		 * @brief Polls the EPD data for new entries.
@@ -106,6 +107,14 @@ namespace QaplaWindows {
         EpdConfig& config() {
             return epdConfig_;
 		}
+
+        /**
+         * @brief Returns a reference to the engine selection.
+         * @return Reference to the engine selection.
+         */
+        ImGuiEngineSelect& engineSelect() {
+            return *engineSelect_;
+        }
         
         /**
          * @brief Informs the configuration singleton about the current epd configurations
@@ -177,6 +186,8 @@ namespace QaplaWindows {
          */
         bool configChanged() const;
 
+
+
         State state = State::Cleared;
         size_t totalTests = 0;
         size_t remainingTests = 0;
@@ -211,6 +222,8 @@ namespace QaplaWindows {
 		std::shared_ptr<EpdManager> epdManager_;
 		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
    		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+
         uint32_t scheduledEngines_ = 0;
 
         ImGuiTable table_;

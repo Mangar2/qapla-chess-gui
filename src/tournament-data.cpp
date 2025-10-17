@@ -336,7 +336,7 @@ namespace QaplaWindows {
 
         state_ = State::Starting;
 
-        GameManagerPool::getInstance().clearAll();
+        poolAccess_->clearAll();
         result_->setGamesLeft();
         state_ = State::Starting;
         tournament_->scheduleAll(0, false);
@@ -493,7 +493,7 @@ namespace QaplaWindows {
     void TournamentData::populateRunningTable() {
         runningTable_.clear();
         if (tournament_) {
-            GameManagerPool::getInstance().withGameRecords(
+            poolAccess_->withGameRecords(
                 [&](const GameRecord& game, uint32_t gameIndex) {
                     std::vector<std::string> row;
                     row.push_back(game.getWhiteEngineName());
@@ -590,7 +590,7 @@ namespace QaplaWindows {
         auto oldState = state_;
         state_ = graceful ? State::GracefulStopping : State::Stopped;
         if (!graceful) {
-            GameManagerPool::getInstance().stopAll();
+            poolAccess_->stopAll();
         }
 
         if (oldState == State::Stopped) {
@@ -616,7 +616,7 @@ namespace QaplaWindows {
         }
         imguiConcurrency_->setActive(false);
         state_ = State::Stopped;
-        GameManagerPool::getInstance().clearAll();
+        poolAccess_->clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
         SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");

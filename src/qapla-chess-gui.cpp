@@ -132,23 +132,10 @@ namespace {
 		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(false));
         taskTabBar->addTab("Clock", std::make_unique<QaplaWindows::TimeControlWindow>());
-        
-        auto tournamentWindow = std::make_unique<QaplaWindows::TournamentWindow>();
-        taskTabBar->addTab("Tournament", std::move(tournamentWindow));
-
+        taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
         taskTabBar->addTab("Pgn", std::make_unique<QaplaWindows::ImGuiGameList>());
-        
-        // Setup EPD window with engine configuration callback
-        auto epdWindow = std::make_unique<QaplaWindows::EpdWindow>();
-        epdWindow->setEngineConfigurationCallback([](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {
-            // Update EpdData with engine configurations
-            QaplaWindows::EpdData::instance().setEngineConfigurations(configs);
-        });
-        taskTabBar->addTab("Epd", std::move(epdWindow));
-
-        // Setup Engine Test window
-        auto engineTestWindow = std::make_unique<QaplaWindows::EngineTestWindow>();
-        taskTabBar->addTab("Test", std::move(engineTestWindow));
+        taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
+        taskTabBar->addTab("Test", std::make_unique<QaplaWindows::EngineTestWindow>());
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
             "main", ImGuiWindowFlags_None);

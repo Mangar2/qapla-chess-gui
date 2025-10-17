@@ -25,6 +25,7 @@
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
+#include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
 #include "qapla-tester/ini-file.h"
@@ -336,13 +337,14 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
+        GameManagerPoolAccess poolAccess_;
 
         PgnIO::Options pgnConfig_;
         ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
 		QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
-        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_{}; 
+        std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
         uint32_t concurrency_ = 1;
@@ -354,7 +356,6 @@ namespace QaplaWindows {
         ImGuiTable adjudicationTable_;
 
         State state_ = State::Stopped;
-
         bool loadedTournamentData_ = false;
 
         // List of all section names used

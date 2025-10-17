@@ -37,6 +37,7 @@ namespace QaplaWindows {
         Autosavable("epd-result.qepd", ".bak", 60000, []() { return Autosavable::getConfigDirectory(); }),
         epdManager_(std::make_shared<EpdManager>()),
         epdResults_(std::make_unique<std::vector<EpdTestResult>>()),
+        engineSelect_(std::make_unique<ImGuiEngineSelect>()),
         table_(
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -49,17 +50,27 @@ namespace QaplaWindows {
     { 
         setGameManagerPool(std::make_shared<GameManagerPool>());
         table_.setClickable(true);
+        setCallbacks();
         init();
     }
 
     EpdData::~EpdData() = default;
 
-    void EpdData::init() {
+    void EpdData::setCallbacks() {
         pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
 		    [this]() {
     			this->pollData();
 		    }
     	));
+        
+        engineSelect_->setConfigurationChangedCallback(
+            [this](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {
+                setEngineConfigurations(configs);
+            }
+        );
+    }   
+
+    void EpdData::init() {
         auto sections = QaplaConfiguration::Configuration::instance().
             getConfigData().getSectionList("epd", "epd").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         if (!sections.empty()) {
@@ -74,6 +85,19 @@ namespace QaplaWindows {
                 .seenPlies = QaplaHelpers::to_uint32(section.getValue("seenplies").value_or("")).value_or(3)
             };
         }
+        ImGuiEngineSelect::Options options;
+        options.allowGauntletEdit = false;
+        options.allowPonderEdit = false;
+        options.allowTimeControlEdit = false;
+        options.allowTraceLevelEdit = true;
+        options.allowRestartOptionEdit = false;
+        options.allowMultipleSelection = true;
+        engineSelect_->setOptions(options);
+        auto engineSections = QaplaConfiguration::Configuration::instance().
+            getConfigData().getSectionList("engineselection", "epd").
+            value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+        engineSelect_->setId("epd");
+        engineSelect_->setEngineConfiguration(engineSections);
     }
 
     void EpdData::updateConfiguration() const {

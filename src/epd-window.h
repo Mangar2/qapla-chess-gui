@@ -44,24 +44,12 @@ namespace QaplaWindows
 
         void draw() override;
         
-        /**
-         * @brief Sets the callback that is called when the engine configuration changes.
-         * @param callback The new callback.
-         */
-        void setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback);
-
     private:
         static void drawButtons();
         static void executeCommand(const std::string &button);
-        void drawInput();
+        static void drawInput();
         static void drawProgress();
-        
-        /**
-         * @brief Sets the engine configurations from INI file sections
-         */
-        void setEngineConfiguration();
-        
-        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+
     };
 
 } // namespace QaplaWindows

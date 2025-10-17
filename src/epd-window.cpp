@@ -42,32 +42,8 @@
 
 using namespace QaplaWindows;
 
-EpdWindow::EpdWindow()
-    : engineSelect_(std::make_unique<ImGuiEngineSelect>())
-{
-    setEngineConfiguration();
-    ImGuiEngineSelect::Options options;
-    options.allowGauntletEdit = false;
-    options.allowPonderEdit = false;
-    options.allowTimeControlEdit = false;
-    options.allowTraceLevelEdit = true;
-    options.allowRestartOptionEdit = false;
-    options.allowMultipleSelection = true;
-    engineSelect_->setOptions(options);
-}
-
+EpdWindow::EpdWindow() = default;
 EpdWindow::~EpdWindow() = default;
-
-void EpdWindow::setEngineConfigurationCallback(ImGuiEngineSelect::ConfigurationChangedCallback callback) {
-    engineSelect_->setConfigurationChangedCallback(std::move(callback));
-}
-
-void EpdWindow::setEngineConfiguration() {
-    auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "epd").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    engineSelect_->setId("epd");
-    engineSelect_->setEngineConfiguration(sections);
-}
 
 static std::string getButtonText(const std::string& button, EpdData::State epdState) {
     auto& epdData = EpdData::instance();
@@ -210,7 +186,7 @@ void EpdWindow::drawInput()
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
         ImGui::Indent(10.0F);
-        engineSelect_->draw();
+        EpdData::instance().engineSelect().draw();
         ImGui::Unindent(10.0F);
         ImGui::PopID();
     }
