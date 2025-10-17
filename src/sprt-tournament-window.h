@@ -35,6 +35,9 @@ namespace QaplaWindows {
         SprtTournamentWindow() = default;
         ~SprtTournamentWindow() = default;
 
+        /**
+         * @brief Renders the contents of the SPRT tournament window.
+         */
         void draw() override;
 
     private:
