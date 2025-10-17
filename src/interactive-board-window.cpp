@@ -67,7 +67,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 					   .getTimeControlSettings()
 					   .getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
-	computeTask_->setPosition(true);
+	setPosition(true);
 	initSplitterWindows();
 }
 
@@ -451,7 +451,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 
 	if (command == "New") {
 		computeTask_->newGame();
-		computeTask_->setPosition(true, "");
+		setPosition(true, "");
 	}
 	else if (command == "Stop") {
 		stop();
@@ -474,10 +474,19 @@ void InteractiveBoardWindow::execute(const std::string& command)
 	else if (command == "Invert") {
 		boardWindow_->setInverted(!boardWindow_->isInverted());
 	}
+	else if (command == "Paste") {
+		auto pasted = ImGuiCutPaste::getClipboardString();
+		if (pasted) {
+			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
+			if (gameRecord) {
+				setPosition(*gameRecord);
+			}
+		}
+	}
 	else if (command.starts_with("Position: ")) {
 		computeTask_->newGame();
 		std::string fen = command.substr(std::string("Position: ").size());
-		computeTask_->setPosition(false, fen);
+		setPosition(false, fen);
 	} else {
 		std::cerr << "Unknown command: " << command << '\n';
 	}

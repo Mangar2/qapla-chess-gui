@@ -71,6 +71,10 @@ namespace QaplaWindows
                 {
                     QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
                 }
+                else if (button == "Paste")
+                {
+                    QaplaButton::drawPaste(drawList, topLeft, size, state);
+                } 
                 else if (button == "Now")
                 {
                     QaplaButton::drawNow(drawList, topLeft, size, state);
@@ -103,7 +107,7 @@ namespace QaplaWindows
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"Setup", "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert"})
+        for (const std::string button : {"Setup", "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Paste"})
         {
             ImGui::SetCursorScreenPos(pos);
             auto state = QaplaButton::ButtonState::Normal;
@@ -151,7 +155,7 @@ namespace QaplaWindows
         }
         if (command == "Paste") {
             auto pasted = ImGuiCutPaste::getClipboardString();
-            if (pasted) {
+            if (setupMode_ && pasted) {
                 auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
                 if (gameRecord) {
                     setFromGameRecord(*gameRecord, true);
