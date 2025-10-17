@@ -57,6 +57,8 @@ namespace QaplaInterface {
 
 			if (!error && skipBlank(fen, fenIterator)) {
 				scanFullMoves(fen, fenIterator, position);
+			} else {
+				position.setStartHalfmoves(position.isWhiteToMove() ? 0 : 1);
 			}
 
 			if (!error) {
@@ -241,7 +243,8 @@ namespace QaplaInterface {
 			auto fullmoves = scanInteger(fen, fenIterator);
 			// fullmoves are not 0 indexed
 			if (fullmoves > 0) fullmoves--;
-			chessBoard.setStartHalfmoves(fullmoves * 2 + (!chessBoard.isWhiteToMove()));
+			auto halfmoves = fullmoves * 2 + (chessBoard.isWhiteToMove() ? 0 : 1);
+			chessBoard.setStartHalfmoves(halfmoves);
 		}
 
 		bool isPieceChar(char pieceChar) {
