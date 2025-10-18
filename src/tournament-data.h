@@ -25,6 +25,7 @@
 #include "imgui-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
+#include "imgui-tournament-opening.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
@@ -175,6 +176,14 @@ namespace QaplaWindows {
          */
         const ImGuiEngineGlobalSettings& globalSettings() const {
             return *globalSettings_;
+        }
+
+        ImGuiTournamentOpening& tournamentOpening() {
+            return *tournamentOpening_;
+        }
+
+        const ImGuiTournamentOpening& tournamentOpening() const {
+            return *tournamentOpening_;
         }
 
         const QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
@@ -343,6 +352,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
+        std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         GameManagerPoolAccess poolAccess_;
 
         PgnIO::Options pgnConfig_;

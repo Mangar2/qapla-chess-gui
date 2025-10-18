@@ -205,31 +205,7 @@ bool TournamentWindow::drawInput() {
     }
     if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("opening");
-        ImGui::Indent(10.0F);
-        changed |= ImGuiControls::existingFileInput("Opening file", tournamentData.config().openings.file, fileInputWidth);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("File format", tournamentData.config().openings.format, { "epd", "raw", "pgn" });
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Order", tournamentData.config().openings.order, { "random", "sequential" });
-
-		auto xPos = ImGui::GetCursorPosX();
-        changed |= ImGuiControls::optionalInput<int>(
-            "Set plies",
-            tournamentData.config().openings.plies,
-            [&](int& plies) {
-                ImGui::SetCursorPosX(xPos + 100);
-                ImGui::SetNextItemWidth(inputWidth - 100);
-                return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
-            }
-        );
-       
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("First opening", tournamentData.config().openings.start, 0, 1000);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Random seed", tournamentData.config().openings.seed, 0, 1000);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Switch policy", tournamentData.config().openings.policy, { "default", "encounter", "round" });
-        ImGui::Unindent(10.0F);
+        changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
         ImGui::PopID();
     }
     if (ImGui::CollapsingHeader("Tournament", ImGuiTreeNodeFlags_Selected)) {

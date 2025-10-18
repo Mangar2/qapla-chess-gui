@@ -20,6 +20,7 @@
 #pragma once
 
 #include "imgui-engine-select.h"
+#include "imgui-tournament-opening.h"
 
 #include <memory>
 #include <vector>
@@ -48,11 +49,14 @@ namespace QaplaWindows {
             return *engineSelect_;
         }
 
-        /**
-         * @brief Set the Engine Configurations object.
-         * 
-         * @param configurations Vector with all engine configurations 
-         */
+        ImGuiTournamentOpening& tournamentOpening() {
+            return *tournamentOpening_;
+        }
+
+        const ImGuiTournamentOpening& tournamentOpening() const {
+            return *tournamentOpening_;
+        }
+
         void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
 
     private:
@@ -60,6 +64,7 @@ namespace QaplaWindows {
         void loadEngineSelectionConfig();
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+        std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
     };
 

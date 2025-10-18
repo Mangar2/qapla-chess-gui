@@ -52,6 +52,7 @@ namespace QaplaWindows {
         imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         engineSelect_(std::make_unique<ImGuiEngineSelect>()),
         globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
+        tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -110,6 +111,8 @@ namespace QaplaWindows {
         options.allowMultipleSelection = true;
         engineSelect_->setOptions(options);
         
+        tournamentOpening_->setId("tournament");
+
         // Set up callbacks
         setupCallbacks();
         
@@ -178,26 +181,9 @@ namespace QaplaWindows {
                 }
         }});
 
-        // Opening Config
-        QaplaHelpers::IniFile::KeyValueMap openingEntries{
-            {"id", "tournament"},
-            {"file", config_->openings.file},
-            {"format", config_->openings.format},
-            {"order", config_->openings.order},
-            {"seed", std::to_string(config_->openings.seed)},
-            {"start", std::to_string(config_->openings.start)},
-            {"policy", config_->openings.policy}
-        };
-
-        if (config_->openings.plies) {
-            openingEntries.emplace_back("plies", std::to_string(*config_->openings.plies));
-        }
+        auto openingSections = tournamentOpening_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "opening", "tournament", {{
-                .name = "opening",
-                .entries = openingEntries
-        }});
-
+            "opening", "tournament", openingSections);
         // PGN Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
             "pgnoutput", "tournament", {{
@@ -286,6 +272,8 @@ namespace QaplaWindows {
             return false;
 		}
         try {
+            config_->openings = tournamentOpening_->openings();
+
             std::vector<EngineConfig> selectedEngines;
             config_->type = "round-robin";
             for (auto& tournamentConfig : engineConfigurations_) {
@@ -673,35 +661,8 @@ namespace QaplaWindows {
     }
 
     void TournamentData::loadOpenings() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("opening", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "file") {
-                config_->openings.file = value;
-            }
-            else if (key == "format" && (value == "pgn" || value == "epd" || value == "raw")) {
-                config_->openings.format = value;
-            }
-            else if (key == "order" && (value == "sequential" || value == "random")) {
-                config_->openings.order = value;
-            }
-            else if (key == "seed") {
-                config_->openings.seed = QaplaHelpers::to_uint32(value).value_or(815);
-            }
-            else if (key == "plies") {
-                config_->openings.plies = QaplaHelpers::to_int(value);
-            }
-            else if (key == "start") {
-                config_->openings.start = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "policy" && (value == "default" || value == "encounter" || value == "round")) {
-                config_->openings.policy = value;
-            }
-        }
+        tournamentOpening_->loadConfiguration();
+        config_->openings = tournamentOpening_->openings();
     }
 
     void TournamentData::loadPgnConfig() {

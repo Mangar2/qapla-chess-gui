@@ -25,7 +25,8 @@
 using namespace QaplaWindows;
 
 SprtTournamentData::SprtTournamentData() : 
-    engineSelect_(std::make_unique<ImGuiEngineSelect>())
+    engineSelect_(std::make_unique<ImGuiEngineSelect>()),
+    tournamentOpening_(std::make_unique<ImGuiTournamentOpening>())
 {
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = true;
@@ -36,8 +37,11 @@ SprtTournamentData::SprtTournamentData() :
     options.allowMultipleSelection = true;
     engineSelect_->setOptions(options);
 
+    tournamentOpening_->setId("sprt-tournament");
+
     setupCallbacks();
     loadEngineSelectionConfig();
+    tournamentOpening_->loadConfiguration();
 }
 
 SprtTournamentData::~SprtTournamentData() = default;

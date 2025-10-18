@@ -87,6 +87,7 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
 
 bool SprtTournamentWindow::drawInput() {
     constexpr float inputWidth = 200.0F;
+    constexpr float fileInputWidth = inputWidth + 100.0F;
     auto& tournamentData = SprtTournamentData::instance();
 
     bool changed = false;
@@ -96,6 +97,12 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::Indent(10.0F);
         changed |= tournamentData.engineSelect().draw();
         ImGui::Unindent(10.0F);
+        ImGui::PopID();
+    }
+
+    if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("opening");
+        changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
         ImGui::PopID();
     }
 
