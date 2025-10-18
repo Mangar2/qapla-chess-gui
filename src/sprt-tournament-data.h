@@ -225,12 +225,25 @@ namespace QaplaWindows {
          */
         void drawResultTable(const ImVec2& size);
 
+        /**
+         * @brief Draws the table displaying the SPRT test result.
+         * @param size Size of the table to draw.
+         */
+        void drawSprtTable(const ImVec2& size);
+
     private:
         /**
          * @brief Populates the result table with current duel result data.
          * @details Fills the table with engineA, engineB, rating from engineA's perspective, and game count.
          */
         void populateResultTable();
+
+        /**
+         * @brief Populates the SPRT table with current SPRT test result.
+         * @details Fills the table with engineA, engineB, lowerBound, llr, upperBound, and decision info.
+         */
+        void populateSprtTable();
+
         /**
          * @brief Sets up callbacks for UI component changes.
          * @details Registers callbacks for engine selection changes.
@@ -260,6 +273,7 @@ namespace QaplaWindows {
 
         ViewerBoardWindowList boardWindowList_;
         ImGuiTable resultTable_;
+        ImGuiTable sprtTable_;
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;

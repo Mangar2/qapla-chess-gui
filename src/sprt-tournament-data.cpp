@@ -40,10 +40,19 @@ SprtTournamentData::SprtTournamentData() :
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Engine A", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Engine B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
                 { .name = "Rating", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+            }
+        ),
+    sprtTable_(
+            "SprtResult",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Result", .flags = ImGuiTableColumnFlags_WidthStretch }
             }
         ),
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
@@ -276,6 +285,7 @@ void SprtTournamentData::startTournament() {
 void SprtTournamentData::pollData() {
     if (sprtManager_) {
         populateResultTable();
+        populateSprtTable();
         boardWindowList_.populateViews();
         
         // Update state based on running games
@@ -362,5 +372,28 @@ void SprtTournamentData::drawResultTable(const ImVec2& size) {
         return;
     }
     resultTable_.draw(size, false);
+}
+
+void SprtTournamentData::populateSprtTable() {
+    sprtTable_.clear();
+
+    if (!sprtManager_) {
+        return;
+    }
+
+    SprtResult sprtResult = sprtManager_->computeSprt();
+
+    std::vector<std::string> row;
+    row.push_back(sprtResult.engineA);
+    row.push_back(sprtResult.engineB);
+    row.push_back(sprtResult.info);
+    sprtTable_.push(row);
+}
+
+void SprtTournamentData::drawSprtTable(const ImVec2& size) {
+    if (sprtTable_.size() == 0) {
+        return;
+    }
+    sprtTable_.draw(size, false);
 }
 
