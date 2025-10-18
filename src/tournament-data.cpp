@@ -53,6 +53,7 @@ namespace QaplaWindows {
         engineSelect_(std::make_unique<ImGuiEngineSelect>()),
         globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
         tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
+        tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -112,6 +113,7 @@ namespace QaplaWindows {
         engineSelect_->setOptions(options);
         
         tournamentOpening_->setId("tournament");
+        tournamentPgn_->setId("tournament");
 
         // Set up callbacks
         setupCallbacks();
@@ -184,23 +186,11 @@ namespace QaplaWindows {
         auto openingSections = tournamentOpening_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
             "opening", "tournament", openingSections);
+        
         // PGN Config
+        auto pgnSections = tournamentPgn_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "pgnoutput", "tournament", {{
-                .name = "pgnoutput",
-                .entries = QaplaHelpers::IniFile::KeyValueMap{
-                    {"id", "tournament"},
-                    {"file", pgnConfig_.file},
-                    {"append", pgnConfig_.append ? "true" : "false"},
-                    {"onlyFinishedGames", pgnConfig_.onlyFinishedGames ? "true" : "false"},
-                    {"minimalTags", pgnConfig_.minimalTags ? "true" : "false"},
-                    {"saveAfterMove", pgnConfig_.saveAfterMove ? "true" : "false"},
-                    {"includeClock", pgnConfig_.includeClock ? "true" : "false"},
-                    {"includeEval", pgnConfig_.includeEval ? "true" : "false"},
-                    {"includePv", pgnConfig_.includePv ? "true" : "false"},
-                    {"includeDepth", pgnConfig_.includeDepth ? "true" : "false"}
-                }
-        }});
+            "pgnoutput", "tournament", pgnSections);
 
         // Draw Adjudication Config
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
@@ -305,7 +295,7 @@ namespace QaplaWindows {
             }
 
             if (tournament_) {
-                PgnIO::tournament().setOptions(pgnConfig_);
+                PgnIO::tournament().setOptions(pgnConfig());
                 QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(drawConfig_);
                 QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(resignConfig_);
                 tournament_->createTournament(selectedEngines, *config_);
@@ -666,41 +656,7 @@ namespace QaplaWindows {
     }
 
     void TournamentData::loadPgnConfig() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("pgnoutput", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "file") {
-                pgnConfig_.file = value;
-            }
-            else if (key == "append") {
-                pgnConfig_.append = (value == "true");
-            }
-            else if (key == "onlyFinishedGames") {
-                pgnConfig_.onlyFinishedGames = (value == "true");
-            }
-            else if (key == "minimalTags") {
-                pgnConfig_.minimalTags = (value == "true");
-            }
-            else if (key == "saveAfterMove") {
-                pgnConfig_.saveAfterMove = (value == "true");
-            }
-            else if (key == "includeClock") {
-                pgnConfig_.includeClock = (value == "true");
-            }
-            else if (key == "includeEval") {
-                pgnConfig_.includeEval = (value == "true");
-            }
-            else if (key == "includePv") {
-                pgnConfig_.includePv = (value == "true");
-            }
-            else if (key == "includeDepth") {
-                pgnConfig_.includeDepth = (value == "true");
-            }
-        }
+        tournamentPgn_->loadConfiguration();
     }
 
     void TournamentData::loadDrawAdjudicationConfig() {

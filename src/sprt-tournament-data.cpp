@@ -30,6 +30,7 @@ using namespace QaplaWindows;
 SprtTournamentData::SprtTournamentData() : 
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
+    tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
     globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>())
 {
     ImGuiEngineSelect::Options options;
@@ -42,6 +43,7 @@ SprtTournamentData::SprtTournamentData() :
     engineSelect_->setOptions(options);
 
     tournamentOpening_->setId("sprt-tournament");
+    tournamentPgn_->setId("sprt-tournament");
     globalSettings_->setId("sprt-tournament");
 
     sprtConfig_.eloLower = -5;
@@ -53,6 +55,7 @@ SprtTournamentData::SprtTournamentData() :
     setupCallbacks();
     loadEngineSelectionConfig();
     tournamentOpening_->loadConfiguration();
+    tournamentPgn_->loadConfiguration();
     loadSprtConfig();
     loadGlobalSettingsConfig();
 }
@@ -161,4 +164,8 @@ void SprtTournamentData::updateConfiguration() {
     auto openingSections = tournamentOpening_->getSections();
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
         "opening", "sprt-tournament", openingSections);
+
+    auto pgnSections = tournamentPgn_->getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "pgnoutput", "sprt-tournament", pgnSections);
 }

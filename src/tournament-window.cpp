@@ -236,31 +236,7 @@ bool TournamentWindow::drawInput() {
     
     if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("pgn");
-        ImGui::Indent(10.0F);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::newFileInput("Pgn file", tournamentData.pgnConfig().file, 
-            {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
-
-        ImGui::SetNextItemWidth(inputWidth);
-		std::string append = tournamentData.pgnConfig().append ? "Append" : "Overwrite";
-		changed |= ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
-		tournamentData.pgnConfig().append = (append == "Append");
-
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Save only finished games", tournamentData.pgnConfig().onlyFinishedGames);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Minimal tags", tournamentData.pgnConfig().minimalTags);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Save after each move", tournamentData.pgnConfig().saveAfterMove);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Include clock", tournamentData.pgnConfig().includeClock);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Include eval", tournamentData.pgnConfig().includeEval);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Include PV", tournamentData.pgnConfig().includePv);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Include depth", tournamentData.pgnConfig().includeDepth);
-        ImGui::Unindent(10.0F);
+        changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
         ImGui::PopID();
 	}
     if (ImGui::CollapsingHeader("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {

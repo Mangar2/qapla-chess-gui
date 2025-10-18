@@ -108,6 +108,12 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::PopID();
     }
 
+    if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("pgn");
+        changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
+        ImGui::PopID();
+    }
+
     if (ImGui::CollapsingHeader("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("sprtConfig");
         ImGui::Indent(10.0F);

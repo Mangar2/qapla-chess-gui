@@ -34,6 +34,13 @@ namespace QaplaWindows {
         ImGuiTournamentOpening() = default;
         ~ImGuiTournamentOpening() = default;
 
+        /**
+         * @brief Renders the tournament opening configuration UI.
+         * @param inputWidth Width for input controls.
+         * @param fileInputWidth Width for file input control.
+         * @param indent Indentation level.
+         * @return True if any value was changed, false otherwise.
+         */
         bool draw(float inputWidth, float fileInputWidth, float indent);
 
         void setId(const std::string& id) {

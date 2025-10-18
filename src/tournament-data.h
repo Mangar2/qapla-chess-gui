@@ -26,6 +26,7 @@
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
 #include "imgui-tournament-opening.h"
+#include "imgui-tournament-pgn.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
@@ -138,14 +139,6 @@ namespace QaplaWindows {
             return concurrency_;
 		}
 
-        const PgnIO::Options& pgnConfig() const {
-            return pgnConfig_;
-		}
-
-        PgnIO::Options& pgnConfig() {
-            return pgnConfig_;
-        }
-
         /**
          * @brief Returns a reference to the engine selection.
          * @return Reference to the engine selection.
@@ -184,6 +177,30 @@ namespace QaplaWindows {
 
         const ImGuiTournamentOpening& tournamentOpening() const {
             return *tournamentOpening_;
+        }
+
+        /**
+         * @brief Returns a reference to the PGN output configuration.
+         * @return Reference to the PGN output configuration.
+         */
+        ImGuiTournamentPgn& tournamentPgn() {
+            return *tournamentPgn_;
+        }
+
+        /**
+         * @brief Returns a const reference to the PGN output configuration.
+         * @return Const reference to the PGN output configuration.
+         */
+        const ImGuiTournamentPgn& tournamentPgn() const {
+            return *tournamentPgn_;
+        }
+
+        const PgnIO::Options& pgnConfig() const {
+            return tournamentPgn_->pgnOptions();
+        }
+
+        PgnIO::Options& pgnConfig() {
+            return tournamentPgn_->pgnOptions();
         }
 
         const QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
@@ -353,9 +370,8 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
+        std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         GameManagerPoolAccess poolAccess_;
-
-        PgnIO::Options pgnConfig_;
         ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
