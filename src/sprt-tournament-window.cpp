@@ -251,6 +251,8 @@ void SprtTournamentWindow::draw() {
     if (drawInput()) {
         tournamentData.updateConfiguration();
     }
+    
+    tournamentData.drawResultTable(ImVec2(size.x, 100.0F));
 
     ImGui::EndChild();
     ImGui::Unindent(10.0F);

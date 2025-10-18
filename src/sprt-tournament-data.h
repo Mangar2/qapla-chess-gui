@@ -88,6 +88,12 @@ namespace QaplaWindows {
         void setPoolConcurrency(uint32_t count, bool nice = true);
 
         /**
+         * @brief Sets the GameManagerPool instance to use.
+         * @param pool Shared pointer to a GameManagerPool instance.
+         */
+        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool);
+
+        /**
          * @brief Checks if the SPRT tournament is currently running.
          * @return true if running, false otherwise
          */
@@ -213,7 +219,18 @@ namespace QaplaWindows {
          */
         void updateConfiguration();
 
+        /**
+         * @brief Draws the table displaying the current SPRT duel result.
+         * @param size Size of the table to draw.
+         */
+        void drawResultTable(const ImVec2& size);
+
     private:
+        /**
+         * @brief Populates the result table with current duel result data.
+         * @details Fills the table with engineA, engineB, rating from engineA's perspective, and game count.
+         */
+        void populateResultTable();
         /**
          * @brief Sets up callbacks for UI component changes.
          * @details Registers callbacks for engine selection changes.
@@ -242,6 +259,7 @@ namespace QaplaWindows {
         void loadGlobalSettingsConfig();
 
         ViewerBoardWindowList boardWindowList_;
+        ImGuiTable resultTable_;
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;

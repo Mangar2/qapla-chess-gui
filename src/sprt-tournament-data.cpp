@@ -27,13 +27,25 @@
 #include "qapla-tester/sprt-manager.h"
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/pgn-io.h"
+#include "qapla-tester/game-manager-pool.h"
 
 #include <algorithm>
+#include <format>
 
 using namespace QaplaWindows;
 
 SprtTournamentData::SprtTournamentData() : 
     boardWindowList_("SPRT Tournament"),
+    resultTable_(
+            "TournamentResult",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { .name = "Engine A", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Rating", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+            }
+        ),
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
@@ -67,9 +79,22 @@ SprtTournamentData::SprtTournamentData() :
     tournamentPgn_->loadConfiguration();
     loadSprtConfig();
     loadGlobalSettingsConfig();
+
+    // Register poll callback
+    pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+        [this]() {
+            this->pollData();
+        }
+    ));
 }
 
 SprtTournamentData::~SprtTournamentData() = default;
+
+void SprtTournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
+    poolAccess_ = GameManagerPoolAccess(pool);
+    boardWindowList_.setPoolAccess(poolAccess_);
+    imguiConcurrency_->setPoolAccess(poolAccess_);
+}
 
 void SprtTournamentData::setupCallbacks() {
     engineSelect_->setConfigurationChangedCallback(
@@ -250,7 +275,17 @@ void SprtTournamentData::startTournament() {
 
 void SprtTournamentData::pollData() {
     if (sprtManager_) {
+        populateResultTable();
         boardWindowList_.populateViews();
+        
+        // Update state based on running games
+        bool anyRunning = boardWindowList_.isAnyRunning();
+        if (state_ == State::Starting && anyRunning) {
+            state_ = State::Running;
+        }
+        if (state_ != State::Starting && !anyRunning) {
+            state_ = State::Stopped;
+        }
     }
 }
 
@@ -303,5 +338,29 @@ bool SprtTournamentData::hasTasksScheduled() const {
     // SPRT has tasks scheduled if it has been started (state is not Stopped)
     // or if there are results from the tournament
     return (sprtManager_ != nullptr);
+}
+
+void SprtTournamentData::populateResultTable() {
+    resultTable_.clear();
+
+    if (!sprtManager_) {
+        return;
+    }
+
+    auto duelResult = sprtManager_->getDuelResult();
+
+    std::vector<std::string> row;
+    row.push_back(duelResult.getEngineA());
+    row.push_back(duelResult.getEngineB());
+    row.push_back(std::format("{:.1f}%", duelResult.engineARate() * 100.0));
+    row.push_back(std::to_string(duelResult.total()));
+    resultTable_.push(row);
+}
+
+void SprtTournamentData::drawResultTable(const ImVec2& size) {
+    if (resultTable_.size() == 0) {
+        return;
+    }
+    resultTable_.draw(size, false);
 }
 

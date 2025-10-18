@@ -107,14 +107,13 @@ void SprtManager::setGameRecord(const std::string& taskId, const GameRecord& rec
     auto duel = tournament_.getResult();
 
     auto sprtResult = computeSprt();
-    std::string info = printSprt(sprtResult);
 
     std::ostringstream oss;
     oss << std::left
         << "  match game " << std::setw(4) << record.getRound()
         << " result " << std::setw(7) << to_string(engine1IsWhite ? result : switchGameResult(result))
         << " cause " << std::setw(21) << to_string(cause)
-        << " sprt " << info
+        << " sprt " << sprtResult.info
         << " engines " << duel.toString();
 
     if (!decision_) {
@@ -282,27 +281,25 @@ SprtResult SprtManager::computeSprt(
 
     if (llr >= uBound) { 
         result.decision = true;
-    }
-	else if (llr <= lBound) {
+    } else if (llr <= lBound) {
         result.decision = false;
-	}
-    else {
+	} else {
         result.decision = std::nullopt;
     }
+
+    result.info = computeSprtInfo(result);
     
     return result;
 }
 
-std::string SprtManager::printSprt(const SprtResult& result) {
+std::string SprtManager::computeSprtInfo(const SprtResult& result) {
     if (result.decision.has_value()) {
         if (*result.decision) {
             return "H1 accepted, " + result.engineA + " is at least " + std::to_string(result.eloLower)
                 + " elo stronger than " + result.engineB;
         }
-        else {
-            return "H0 accepted, " + result.engineA + " is not stronger than " + result.engineB
-                + " by at least " + std::to_string(result.eloUpper) + " elo.";
-        }
+        return "H0 accepted, " + result.engineA + " is not stronger than " + result.engineB
+            + " by at least " + std::to_string(result.eloUpper) + " elo.";
     }
     
     std::ostringstream oss;

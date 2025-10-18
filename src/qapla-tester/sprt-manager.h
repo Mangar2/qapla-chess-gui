@@ -44,6 +44,7 @@ struct SprtConfig {
  */
 struct SprtResult {
     std::optional<bool> decision;  // true if H1 accepted, false if H0 accepted, nullopt if inconclusive
+    std::string info;              // Human-readable decision info
     double llr;                    // Log-Likelihood Ratio
     double lowerBound;             // Lower decision boundary
     double upperBound;             // Upper decision boundary
@@ -122,10 +123,24 @@ public:
      */
     void load(const QaplaHelpers::IniFile::Section& section);
 
+    /**
+     * @brief Returns the result of the tournament as a TournamentResult object.
+     * 
+     * @return TournamentResult containing the one duel result as vector.
+     */
     TournamentResult getResult() const {
         TournamentResult t;
 		t.add(tournament_.getResult());
         return t;
+    }
+
+    /**
+     * @brief Returns the result of the engine duel.
+     * 
+     * @return EngineDuelResult containing wins, draws, and losses.
+     */
+    EngineDuelResult getDuelResult() const {
+        return tournament_.getResult();
     }
 
     /**
@@ -136,16 +151,18 @@ public:
      */
     SprtResult computeSprt() const;
 
-    /**
-     * @brief Prints the SPRT result in a formatted way.
-     * @param result The SPRT result to print.
-     * @return A formatted string containing the SPRT decision or bounds.
-     */
-    static std::string printSprt(const SprtResult& result);
+
 
 private:
     PairTournament tournament_;
     std::shared_ptr<StartPositions> startPositions_;
+
+    /**
+     * @brief Computes a human-readable SPRT info string.
+     * @param result The SPRT result to print.
+     * @return A formatted string containing the SPRT decision or bounds.
+     */
+    static std::string computeSprtInfo(const SprtResult& result);
 
     /**
      * @brief Evaluates the current SPRT test state and logs result if decision boundary is reached.
