@@ -21,6 +21,9 @@
 #include "configuration.h"
 
 #include "qapla-tester/ini-file.h"
+#include "qapla-tester/string-helper.h"
+
+#include <algorithm>
 
 using namespace QaplaWindows;
 
@@ -39,9 +42,16 @@ SprtTournamentData::SprtTournamentData() :
 
     tournamentOpening_->setId("sprt-tournament");
 
+    sprtConfig_.eloLower = -5;
+    sprtConfig_.eloUpper = 5;
+    sprtConfig_.alpha = 0.05;
+    sprtConfig_.beta = 0.05;
+    sprtConfig_.maxGames = 100000;
+
     setupCallbacks();
     loadEngineSelectionConfig();
     tournamentOpening_->loadConfiguration();
+    loadSprtConfig();
 }
 
 SprtTournamentData::~SprtTournamentData() = default;
@@ -64,4 +74,63 @@ void SprtTournamentData::loadEngineSelectionConfig() {
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("sprt-tournament");
     engineSelect_->setEngineConfiguration(sections);
+}
+
+void SprtTournamentData::loadSprtConfig() {
+    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    auto sections = configData.getSectionList("sprtconfig", "sprt-tournament");
+    if (!sections || sections->empty()) {
+        return;
+    }
+
+    for (const auto& [key, value] : (*sections)[0].entries) {
+        if (key == "eloLower") {
+            sprtConfig_.eloLower = QaplaHelpers::to_int(value).value_or(-5);
+            sprtConfig_.eloLower = std::clamp(sprtConfig_.eloLower, -1000, 1000);
+        }
+        else if (key == "eloUpper") {
+            sprtConfig_.eloUpper = QaplaHelpers::to_int(value).value_or(5);
+            sprtConfig_.eloUpper = std::clamp(sprtConfig_.eloUpper, -1000, 1000);
+        }
+        else if (key == "alpha") {
+            try {
+                sprtConfig_.alpha = std::stod(value);
+                sprtConfig_.alpha = std::clamp(sprtConfig_.alpha, 0.001, 0.5);
+            } catch (...) {
+                sprtConfig_.alpha = 0.05;
+            }
+        }
+        else if (key == "beta") {
+            try {
+                sprtConfig_.beta = std::stod(value);
+                sprtConfig_.beta = std::clamp(sprtConfig_.beta, 0.001, 0.5);
+            } catch (...) {
+                sprtConfig_.beta = 0.05;
+            }
+        }
+        else if (key == "maxGames") {
+            sprtConfig_.maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
+        }
+    }
+}
+
+void SprtTournamentData::updateConfiguration() {
+    QaplaHelpers::IniFile::KeyValueMap sprtEntries{
+        {"id", "sprt-tournament"},
+        {"eloLower", std::to_string(sprtConfig_.eloLower)},
+        {"eloUpper", std::to_string(sprtConfig_.eloUpper)},
+        {"alpha", std::to_string(sprtConfig_.alpha)},
+        {"beta", std::to_string(sprtConfig_.beta)},
+        {"maxGames", std::to_string(sprtConfig_.maxGames)}
+    };
+
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "sprtconfig", "sprt-tournament", {{
+            .name = "sprtconfig",
+            .entries = sprtEntries
+        }});
+
+    auto openingSections = tournamentOpening_->getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "opening", "sprt-tournament", openingSections);
 }

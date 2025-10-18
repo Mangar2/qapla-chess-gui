@@ -106,6 +106,33 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::PopID();
     }
 
+    if (ImGui::CollapsingHeader("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("sprtConfig");
+        ImGui::Indent(10.0F);
+
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputInt<int>("Elo Lower (H0)", tournamentData.sprtConfig().eloLower, -1000, 1000);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputInt<int>("Elo Upper (H1)", tournamentData.sprtConfig().eloUpper, -1000, 1000);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputPromille("Alpha (‰)", tournamentData.sprtConfig().alpha, 0.001, 0.5, 0.001);
+        ImGui::SameLine();
+        ImGui::Text("(%.3f)", tournamentData.sprtConfig().alpha);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputPromille("Beta (‰)", tournamentData.sprtConfig().beta, 0.001, 0.5, 0.001);
+        ImGui::SameLine();
+        ImGui::Text("(%.3f)", tournamentData.sprtConfig().beta);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputInt<uint32_t>("Max Games", tournamentData.sprtConfig().maxGames, 1, 1000000);
+
+        ImGui::Unindent(10.0F);
+        ImGui::PopID();
+    }
+
     ImGui::Spacing();
 
     return changed;
@@ -123,7 +150,7 @@ void SprtTournamentWindow::draw() {
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
     if (drawInput()) {
-        
+        tournamentData.updateConfiguration();
     }
 
     ImGui::EndChild();

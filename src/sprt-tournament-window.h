@@ -30,6 +30,9 @@ namespace QaplaWindows {
 
     class ImGuiTable;
 
+    /**
+     * @brief Displays the SPRT tournament configuration and execution window.
+     */
     class SprtTournamentWindow: public EmbeddedWindow {
     public:
         SprtTournamentWindow() = default;
@@ -37,13 +40,34 @@ namespace QaplaWindows {
 
         /**
          * @brief Renders the contents of the SPRT tournament window.
+         * @details Draws the window including buttons, input controls, and progress display.
          */
         void draw() override;
 
     private:
+        /**
+         * @brief Draws the control buttons for the SPRT tournament.
+         * @details Renders buttons like Run, Stop, Clear, Load, and Save.
+         */
         static void drawButtons();
+
+        /**
+         * @brief Executes a command based on the button pressed.
+         * @param button The name of the button that was pressed.
+         */
         static void executeCommand(const std::string &button);
+
+        /**
+         * @brief Draws the input controls for SPRT tournament configuration.
+         * @details Renders all configuration sections including engines, opening, and SPRT settings.
+         * @return True if any configuration value was changed, false otherwise.
+         */
         static bool drawInput();
+
+        /**
+         * @brief Draws the progress indicator for the running SPRT tournament.
+         * @details Displays a progress bar showing the current state of the tournament.
+         */
         static void drawProgress();
     };
 

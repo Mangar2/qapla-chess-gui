@@ -22,8 +22,11 @@
 #include "imgui-engine-select.h"
 #include "imgui-tournament-opening.h"
 
+#include "qapla-tester/sprt-manager.h"
+
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 namespace QaplaWindows {
 
@@ -32,6 +35,10 @@ namespace QaplaWindows {
         SprtTournamentData();
         ~SprtTournamentData();
 
+        /**
+         * @brief Returns the singleton instance of SprtTournamentData.
+         * @return Reference to the SprtTournamentData singleton.
+         */
         static SprtTournamentData& instance() {
             static SprtTournamentData instance;
             return instance;
@@ -45,27 +52,85 @@ namespace QaplaWindows {
             return *engineSelect_;
         }
 
+        /**
+         * @brief Returns a const reference to the engine selection.
+         * @return Const reference to the engine selection.
+         */
         const ImGuiEngineSelect& engineSelect() const {
             return *engineSelect_;
         }
 
+        /**
+         * @brief Returns a reference to the tournament opening configuration.
+         * @return Reference to the tournament opening configuration.
+         */
         ImGuiTournamentOpening& tournamentOpening() {
             return *tournamentOpening_;
         }
 
+        /**
+         * @brief Returns a const reference to the tournament opening configuration.
+         * @return Const reference to the tournament opening configuration.
+         */
         const ImGuiTournamentOpening& tournamentOpening() const {
             return *tournamentOpening_;
         }
 
+        /**
+         * @brief Returns a reference to the SPRT configuration.
+         * @return Reference to the SPRT configuration.
+         */
+        SprtConfig& sprtConfig() {
+            return sprtConfig_;
+        }
+
+        /**
+         * @brief Returns a const reference to the SPRT configuration.
+         * @return Const reference to the SPRT configuration.
+         */
+        const SprtConfig& sprtConfig() const {
+            return sprtConfig_;
+        }
+
+        /**
+         * @brief Sets the engine configurations for the SPRT tournament.
+         * @param configurations Vector containing all engine configurations.
+         */
         void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
 
+        /**
+         * @brief Updates the configuration in the Configuration singleton.
+         * @details This method creates Section entries for all SPRT configuration aspects
+         *          and stores them in the Configuration singleton using setSectionList.
+         */
+        void updateConfiguration();
+
     private:
+        /**
+         * @brief Sets up callbacks for UI component changes.
+         * @details Registers callbacks for engine selection changes.
+         */
         void setupCallbacks();
+
+        /**
+         * @brief Loads the engine selection configuration from the configuration file.
+         * @details Retrieves engine selection settings from the "engineselection" section
+         *          with ID "sprt-tournament" and applies them to the engine selector.
+         */
         void loadEngineSelectionConfig();
+
+        /**
+         * @brief Loads the SPRT configuration from the configuration file.
+         * @details Retrieves SPRT settings (elo bounds, alpha, beta, maxGames) from
+         *          the "sprtconfig" section with ID "sprt-tournament".
+         */
+        void loadSprtConfig();
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
+
+        SprtConfig sprtConfig_;
     };
 
 }

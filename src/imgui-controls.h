@@ -130,6 +130,37 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
+     * @brief Input control for selecting and displaying values in promille (‰).
+     * 
+     * @param label Label to display next to the input box.
+     * @param value Reference to the double value to modify.
+     * @param min Minimum allowed value.
+     * @param max Maximum allowed value.
+     * @param step Step size for increment/decrement.
+     * @return True if the value was modified, false otherwise.
+     */
+    inline bool inputPromille(const char* label, double& value, double min, double max, double step = 0.001) {
+        assert(min < max && "Min must be less than max");
+        assert(step > 0.0 && "Step must be positive");
+
+        int32_t promilleValue = static_cast<int32_t>(value * 1000.0);
+        int32_t promilleMin = static_cast<int32_t>(min * 1000.0);
+        int32_t promilleMax = static_cast<int32_t>(max * 1000.0);
+        int32_t promilleStep = static_cast<int32_t>(step * 1000.0);
+
+        bool modified = ImGui::InputInt(label, &promilleValue, promilleStep, promilleStep * 10);
+
+        promilleValue = std::clamp(promilleValue, promilleMin, promilleMax);
+
+        if (modified) {
+            value = static_cast<double>(promilleValue) / 1000.0;
+            value = std::clamp(value, min, max);
+        }
+
+        return modified;
+    }
+
+    /**
      * @brief File input control for selecting and displaying file paths.
      * @param label Label to display next to the input box.
      * @param filePath Reference to the file path string to modify.
