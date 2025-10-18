@@ -24,6 +24,8 @@
 #include <string>
 #include <functional>
 
+class EngineConfig;
+
 namespace QaplaWindows {
 
     /**
@@ -181,6 +183,16 @@ namespace QaplaWindows {
          * @param id The unique identifier
          */
         void setId(const std::string& id) { id_ = id; }
+
+        /**
+         * @brief Applies global settings to an engine configuration
+         * @param engine The engine configuration to modify
+         * @param globalSettings The global settings to apply
+         * @param timeControlSettings The time control settings to apply
+         */
+        static void applyGlobalConfig(EngineConfig& engine, 
+                                      const GlobalSettings& globalSettings, 
+                                      const TimeControlSettings& timeControlSettings);
 
     private:
         /**

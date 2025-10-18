@@ -81,9 +81,10 @@ public:
      */
     void setGameRecord(const std::string& taskId, const GameRecord& record) override;
 
-    void runMonteCarloTest(const SprtConfig& config);
+    void runMonteCarloTest(const SprtConfig &config);
+    void runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames);
 
-	/**
+    /**
 	 * @brief Returns the current decision of the SPRT test.
 	 * @return std::optional<bool> containing true if H1 accepted, false if H0 accepted, or std::nullopt if inconclusive.
 	 */

@@ -19,9 +19,13 @@
 
 #include "sprt-tournament-data.h"
 #include "configuration.h"
+#include "snackbar.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/string-helper.h"
+#include "qapla-tester/sprt-manager.h"
+#include "qapla-tester/engine-option.h"
+#include "qapla-tester/pgn-io.h"
 
 #include <algorithm>
 
@@ -31,7 +35,9 @@ SprtTournamentData::SprtTournamentData() :
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
-    globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>())
+    globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
+    sprtManager_(std::make_unique<SprtManager>()),
+    sprtConfig_(std::make_unique<SprtConfig>())
 {
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = true;
@@ -46,11 +52,11 @@ SprtTournamentData::SprtTournamentData() :
     tournamentPgn_->setId("sprt-tournament");
     globalSettings_->setId("sprt-tournament");
 
-    sprtConfig_.eloLower = -5;
-    sprtConfig_.eloUpper = 5;
-    sprtConfig_.alpha = 0.05;
-    sprtConfig_.beta = 0.05;
-    sprtConfig_.maxGames = 100000;
+    sprtConfig_->eloLower = -5;
+    sprtConfig_->eloUpper = 5;
+    sprtConfig_->alpha = 0.05;
+    sprtConfig_->beta = 0.05;
+    sprtConfig_->maxGames = 100000;
 
     setupCallbacks();
     loadEngineSelectionConfig();
@@ -103,31 +109,31 @@ void SprtTournamentData::loadSprtConfig() {
 
     for (const auto& [key, value] : (*sections)[0].entries) {
         if (key == "eloLower") {
-            sprtConfig_.eloLower = QaplaHelpers::to_int(value).value_or(-5);
-            sprtConfig_.eloLower = std::clamp(sprtConfig_.eloLower, -1000, 1000);
+            sprtConfig_->eloLower = QaplaHelpers::to_int(value).value_or(-5);
+            sprtConfig_->eloLower = std::clamp(sprtConfig_->eloLower, -1000, 1000);
         }
         else if (key == "eloUpper") {
-            sprtConfig_.eloUpper = QaplaHelpers::to_int(value).value_or(5);
-            sprtConfig_.eloUpper = std::clamp(sprtConfig_.eloUpper, -1000, 1000);
+            sprtConfig_->eloUpper = QaplaHelpers::to_int(value).value_or(5);
+            sprtConfig_->eloUpper = std::clamp(sprtConfig_->eloUpper, -1000, 1000);
         }
         else if (key == "alpha") {
             try {
-                sprtConfig_.alpha = std::stod(value);
-                sprtConfig_.alpha = std::clamp(sprtConfig_.alpha, 0.001, 0.5);
+                sprtConfig_->alpha = std::stod(value);
+                sprtConfig_->alpha = std::clamp(sprtConfig_->alpha, 0.001, 0.5);
             } catch (...) {
-                sprtConfig_.alpha = 0.05;
+                sprtConfig_->alpha = 0.05;
             }
         }
         else if (key == "beta") {
             try {
-                sprtConfig_.beta = std::stod(value);
-                sprtConfig_.beta = std::clamp(sprtConfig_.beta, 0.001, 0.5);
+                sprtConfig_->beta = std::stod(value);
+                sprtConfig_->beta = std::clamp(sprtConfig_->beta, 0.001, 0.5);
             } catch (...) {
-                sprtConfig_.beta = 0.05;
+                sprtConfig_->beta = 0.05;
             }
         }
         else if (key == "maxGames") {
-            sprtConfig_.maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
+            sprtConfig_->maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
         }
     }
 }
@@ -148,11 +154,11 @@ void SprtTournamentData::loadGlobalSettingsConfig() {
 void SprtTournamentData::updateConfiguration() {
     QaplaHelpers::IniFile::KeyValueMap sprtEntries{
         {"id", "sprt-tournament"},
-        {"eloLower", std::to_string(sprtConfig_.eloLower)},
-        {"eloUpper", std::to_string(sprtConfig_.eloUpper)},
-        {"alpha", std::to_string(sprtConfig_.alpha)},
-        {"beta", std::to_string(sprtConfig_.beta)},
-        {"maxGames", std::to_string(sprtConfig_.maxGames)}
+        {"eloLower", std::to_string(sprtConfig_->eloLower)},
+        {"eloUpper", std::to_string(sprtConfig_->eloUpper)},
+        {"alpha", std::to_string(sprtConfig_->alpha)},
+        {"beta", std::to_string(sprtConfig_->beta)},
+        {"maxGames", std::to_string(sprtConfig_->maxGames)}
     };
 
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
@@ -169,3 +175,53 @@ void SprtTournamentData::updateConfiguration() {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
         "pgnoutput", "sprt-tournament", pgnSections);
 }
+
+SprtConfig& SprtTournamentData::sprtConfig() {
+    return *sprtConfig_;
+}
+
+const SprtConfig& SprtTournamentData::sprtConfig() const {
+    return *sprtConfig_;
+}
+
+bool SprtTournamentData::createTournament(bool verbose) {
+    try {
+        // Build engine configurations with global settings applied
+        std::vector<EngineConfig> selectedEngines;
+        for (auto& tournamentConfig : engineConfigurations_) {
+            if (!tournamentConfig.selected) {
+                continue;
+            }
+            EngineConfig engine = tournamentConfig.config;
+            
+            // Apply global settings to engine
+            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
+            
+            selectedEngines.push_back(engine);
+        }
+        if (selectedEngines.size() != 2) {
+            throw std::runtime_error("SPRT tournament requires exactly 2 engines.");
+        }
+
+        // Set up SPRT config with openings
+        sprtConfig_->openings = tournamentOpening_->openings();
+        if (sprtConfig_->openings.file.empty()) {
+            throw std::runtime_error("No openings file specified.");
+        }
+
+        // Set PGN output options and create tournament
+        if (sprtManager_) {
+            PgnIO::tournament().setOptions(tournamentPgn_->pgnOptions());
+            sprtManager_->createTournament(selectedEngines[0], selectedEngines[1], *sprtConfig_);
+        } else {
+            throw std::runtime_error("Internal error, SPRT manager not initialized");
+        }
+    } catch (const std::exception& ex) {
+        if (verbose) {
+            SnackbarManager::instance().showError(std::string("Failed to create SPRT tournament:\n ") + ex.what());
+        }
+        return false;
+    }
+    return true;
+}
+

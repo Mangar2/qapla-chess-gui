@@ -21,6 +21,9 @@
 #include "imgui-controls.h"
 #include "configuration.h"
 
+#include "qapla-tester/engine-config.h"
+#include "qapla-tester/engine-option.h"
+
 #include <imgui.h>
 
 using namespace QaplaWindows;
@@ -270,5 +273,27 @@ void ImGuiEngineGlobalSettings::setTimeControlConfiguration(const QaplaHelpers::
             notifyTimeControlChanged();
             break;
         }
+    }
+}
+
+void ImGuiEngineGlobalSettings::applyGlobalConfig(EngineConfig& engine, 
+                                                   const GlobalSettings& globalSettings, 
+                                                   const TimeControlSettings& timeControlSettings) {
+    if (globalSettings.useGlobalPonder) {
+        engine.setPonder(globalSettings.ponder);
+    }
+    
+    engine.setTimeControl(timeControlSettings.timeControl);
+    
+    if (globalSettings.useGlobalRestart) {
+        engine.setRestartOption(parseRestartOption(globalSettings.restart));
+    }
+    
+    if (globalSettings.useGlobalTrace) {
+        engine.setTraceLevel(globalSettings.traceLevel);
+    }
+    
+    if (globalSettings.useGlobalHash) {
+        engine.setOptionValue("Hash", std::to_string(globalSettings.hashSizeMB));
     }
 }

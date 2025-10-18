@@ -24,11 +24,13 @@
 #include "imgui-tournament-pgn.h"
 #include "imgui-engine-global-settings.h"
 
-#include "qapla-tester/sprt-manager.h"
-
 #include <memory>
 #include <vector>
 #include <cstdint>
+
+// Forward declarations
+struct SprtConfig;
+class SprtManager;
 
 namespace QaplaWindows {
 
@@ -114,23 +116,26 @@ namespace QaplaWindows {
          * @brief Returns a reference to the SPRT configuration.
          * @return Reference to the SPRT configuration.
          */
-        SprtConfig& sprtConfig() {
-            return sprtConfig_;
-        }
+        SprtConfig& sprtConfig();
 
         /**
          * @brief Returns a const reference to the SPRT configuration.
          * @return Const reference to the SPRT configuration.
          */
-        const SprtConfig& sprtConfig() const {
-            return sprtConfig_;
-        }
+        const SprtConfig& sprtConfig() const;
 
         /**
          * @brief Sets the engine configurations for the SPRT tournament.
          * @param configurations Vector containing all engine configurations.
          */
         void setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
+
+        /**
+         * @brief Creates the SPRT tournament with the configured engines and settings.
+         * @param verbose Whether to show error messages
+         * @return true if tournament creation was successful, false otherwise
+         */
+        bool createTournament(bool verbose);
 
         /**
          * @brief Updates the configuration in the Configuration singleton.
@@ -171,9 +176,10 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
+        std::unique_ptr<SprtManager> sprtManager_;
+        std::unique_ptr<SprtConfig> sprtConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
 
-        SprtConfig sprtConfig_;
         ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
     };

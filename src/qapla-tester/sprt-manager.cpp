@@ -283,6 +283,64 @@ std::pair<std::optional<bool>, std::string> SprtManager::computeSprt(
     };
 }
 
+void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames)
+{
+    for (int sim = 0; sim < simulationsPerElo; ++sim)
+    {
+        // Reset intern
+        int winsP1 = 0;
+        int winsP2 = 0;
+        int draws = 0;
+        /*
+        if (sim % 1000 == 0) {
+            std::cout << "Simulation " << sim << " for Elo " << elo << std::endl;
+            double avgGames = (sim > 0) ? static_cast<double>(totalGames) / sim : 0.0;
+            std::cout << elo << ", " << correctDecisions << ", " << avgGames << "\n";
+        }
+        */
+        const double trueScore = 1.0 / (1.0 + std::pow(10.0, -elo / 400.0));
+        const double winProb = (1.0 - drawRate) * trueScore;
+
+        std::optional<bool> decision;
+        uint64_t g = 0;
+
+        for (; g < config_.maxGames; ++g)
+        {
+            double r = static_cast<double>(rand()) / RAND_MAX;
+            if (r < winProb)
+            {
+                ++winsP1;
+            }
+            else if (r < winProb + drawRate)
+            {
+                ++draws;
+            }
+            else
+            {
+                ++winsP2;
+            }
+            auto [result, info] = computeSprt(winsP1, draws, winsP2, "P1", "P2");
+            if (result.has_value())
+            {
+                decision = result;
+                break;
+            }
+        }
+
+        if (!decision)
+        {
+            ++noDecisions;
+        }
+        else
+        {
+            numH0 += *decision ? 0 : 1;
+            numH1 += *decision ? 1 : 0;
+        }
+        totalGames += (g + 1);
+    }
+}
+
+
 void SprtManager::runMonteCarloTest(const SprtConfig& config) {
 	config_ = config;
     constexpr int simulationsPerElo = 1000;
@@ -300,49 +358,8 @@ void SprtManager::runMonteCarloTest(const SprtConfig& config) {
         int64_t numH0 = 0;
 		int64_t noDecisions = 0;
         int64_t totalGames = 0;
-                
-        for (int sim = 0; sim < simulationsPerElo; ++sim) {
-            // Reset intern
-            int winsP1 = 0;
-            int winsP2 = 0;
-            int draws = 0;
-            /*
-			if (sim % 1000 == 0) {
-                std::cout << "Simulation " << sim << " for Elo " << elo << std::endl;
-                double avgGames = (sim > 0) ? static_cast<double>(totalGames) / sim : 0.0;
-                std::cout << elo << ", " << correctDecisions << ", " << avgGames << "\n";
-			}
-            */
-            const double trueScore = 1.0 / (1.0 + std::pow(10.0, -elo / 400.0));
-            const double winProb = (1.0 - drawRate) * trueScore;
 
-            std::optional<bool> decision;
-            uint64_t g = 0;
-
-            for (; g < config_.maxGames; ++g) {
-                double r = static_cast<double>(rand()) / RAND_MAX;
-                if (r < winProb) {
-                    ++winsP1;
-                } else if (r < winProb + drawRate) {
-                    ++draws;
-                } else {
-                    ++winsP2;
-                }
-				auto [result, info] = computeSprt(winsP1, draws, winsP2, "P1", "P2");
-                if (result.has_value()) {
-                    decision = result;
-                    break;
-                }
-            }
-
-			if (!decision) {
-				++noDecisions;
-			} else {
-				numH0 += *decision ? 0 : 1;
-				numH1 += *decision ? 1 : 0;
-            }
-            totalGames += (g + 1);
-        }
+        runMonteCarloSingleTest(simulationsPerElo, elo, drawRate, noDecisions, numH0, numH1, totalGames);
 
         double avgGames = (simulationsPerElo > 0) ? static_cast<double>(totalGames) / simulationsPerElo : 0.0;
         std::cout << std::fixed << std::setprecision(1)

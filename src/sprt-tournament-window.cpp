@@ -32,6 +32,7 @@
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-event.h"
 #include "qapla-tester/tournament.h"
+#include "qapla-tester/sprt-manager.h"
 
 #include <imgui.h>
 

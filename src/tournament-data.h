@@ -289,8 +289,7 @@ namespace QaplaWindows {
         void loadTournament(const std::string& filename);
 
 	private:
-        bool validateOpenings();
-
+  
         /**
          * @brief Creates the tournament.
          * @param verbose If true, verbose error messages will be shown.
