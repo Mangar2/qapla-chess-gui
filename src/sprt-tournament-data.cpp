@@ -20,6 +20,7 @@
 #include "sprt-tournament-data.h"
 #include "configuration.h"
 #include "snackbar.h"
+#include "imgui-concurrency.h"
 
 #include "qapla-tester/ini-file.h"
 #include "qapla-tester/string-helper.h"
@@ -32,12 +33,14 @@
 using namespace QaplaWindows;
 
 SprtTournamentData::SprtTournamentData() : 
+    boardWindowList_("SPRT Tournament"),
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
     globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
     sprtManager_(std::make_unique<SprtManager>()),
-    sprtConfig_(std::make_unique<SprtConfig>())
+    sprtConfig_(std::make_unique<SprtConfig>()),
+    imguiConcurrency_(std::make_unique<ImGuiConcurrency>())
 {
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = true;
@@ -223,5 +226,82 @@ bool SprtTournamentData::createTournament(bool verbose) {
         return false;
     }
     return true;
+}
+
+void SprtTournamentData::startTournament() {
+    if (!sprtManager_) {
+        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized");
+        return;
+    }
+    if (!createTournament(true)) {
+        return;
+    }
+
+    state_ = State::Starting;
+
+    poolAccess_->clearAll();
+    state_ = State::Starting;
+    sprtManager_->schedule(sprtManager_, concurrency_);
+    imguiConcurrency_->init();
+    imguiConcurrency_->setActive(true);
+    state_ = State::Starting;
+    SnackbarManager::instance().showSuccess("SPRT tournament started");
+}
+
+void SprtTournamentData::pollData() {
+    if (sprtManager_) {
+        boardWindowList_.populateViews();
+    }
+}
+
+void SprtTournamentData::stopPool(bool graceful) {
+    imguiConcurrency_->update(0);
+    imguiConcurrency_->setActive(false);
+    auto oldState = state_;
+    state_ = graceful ? State::GracefulStopping : State::Stopped;
+    if (!graceful) {
+        poolAccess_->stopAll();
+    }
+
+    if (oldState == State::Stopped) {
+        SnackbarManager::instance().showNote("SPRT tournament is not running.");
+        return;
+    }
+    if (oldState == State::GracefulStopping && graceful) {
+        SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.");
+        return;
+    }
+   
+    SnackbarManager::instance().showSuccess(
+        graceful ? 
+            "SPRT tournament stopped.\nFinishing ongoing games." : 
+            "SPRT tournament stopped"
+    );
+}
+
+void SprtTournamentData::clear() {
+    if (!hasTasksScheduled()) {
+        SnackbarManager::instance().showNote("Nothing to clear.");
+        return;
+    }
+    imguiConcurrency_->setActive(false);
+    state_ = State::Stopped;
+    poolAccess_->clearAll();
+    sprtManager_ = std::make_unique<SprtManager>();
+    SnackbarManager::instance().showSuccess("SPRT tournament stopped.\nAll results have been cleared.");
+}
+
+void SprtTournamentData::setPoolConcurrency(uint32_t count, bool nice) {
+    if (!isRunning()) {
+        return;
+    }
+    imguiConcurrency_->setNiceStop(nice);
+    imguiConcurrency_->update(count);
+}
+
+bool SprtTournamentData::hasTasksScheduled() const {
+    // SPRT has tasks scheduled if it has been started (state is not Stopped)
+    // or if there are results from the tournament
+    return (sprtManager_ != nullptr);
 }
 

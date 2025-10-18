@@ -90,8 +90,8 @@ void SprtManager::schedule(const std::shared_ptr<SprtManager>& self, uint32_t co
 }
 
 std::optional<GameTask> SprtManager::nextTask() {
-    auto result = computeSprt().first;
-    rememberStop_ = rememberStop_ || result.has_value();
+    auto sprtResult = computeSprt();
+    rememberStop_ = rememberStop_ || sprtResult.decision.has_value();
     if (rememberStop_) {
         return std::nullopt;
     }
@@ -106,7 +106,8 @@ void SprtManager::setGameRecord(const std::string& taskId, const GameRecord& rec
     auto [cause, result] = record.getGameResult();
     auto duel = tournament_.getResult();
 
-    auto [decision, info] = computeSprt();
+    auto sprtResult = computeSprt();
+    std::string info = printSprt(sprtResult);
 
     std::ostringstream oss;
     oss << std::left
@@ -119,11 +120,11 @@ void SprtManager::setGameRecord(const std::string& taskId, const GameRecord& rec
     if (!decision_) {
         Logger::testLogger().log(oss.str(), TraceLevel::result);
     }
-    if (decision) {
+    if (sprtResult.decision.has_value()) {
 		if (!decision_) {
             GameManagerPool::getInstance().stopAll();
         }
-        decision_ = decision;
+        decision_ = sprtResult.decision;
     }
 }
 
@@ -247,7 +248,12 @@ static double computeLLR(double wins, double draws, double losses,
 }
 
 
-std::pair<std::optional<bool>, std::string> SprtManager::computeSprt(
+SprtResult SprtManager::computeSprt() const {
+    auto duel = tournament_.getResult();
+    return computeSprt(duel.winsEngineA, duel.draws, duel.winsEngineB, duel.getEngineA(), duel.getEngineB());
+}
+
+SprtResult SprtManager::computeSprt(
     int winsA, int draws, int winsB, const std::string& engineA, const std::string& engineB) const {
 	const double drawElo = computeDrawElo(winsA, draws, winsB);
 
@@ -261,26 +267,48 @@ std::pair<std::optional<bool>, std::string> SprtManager::computeSprt(
     const double llr = computeLLR(winsA, draws, winsB, p0, p1);
     const auto [lBound, uBound] = sprtBounds(config_.alpha, config_.beta);
 
+    SprtResult result;
+    result.llr = llr;
+    result.lowerBound = lBound;
+    result.upperBound = uBound;
+    result.drawElo = drawElo;
+    result.winsA = winsA;
+    result.draws = draws;
+    result.winsB = winsB;
+    result.engineA = engineA;
+    result.engineB = engineB;
+    result.eloLower = config_.eloLower;
+    result.eloUpper = config_.eloUpper;
+
     if (llr >= uBound) { 
-        return {
-            true,
-            "H1 accepted, " + engineA + " is at least " + std::to_string(config_.eloLower)
-            + " elo stronger than " + engineB
-        };
+        result.decision = true;
     }
-	if (llr <= lBound) {
-        return {
-            false,
-            "H0 accepted, " + engineA + " is not stronger than " + engineB
-            + " by at least " + std::to_string(config_.eloUpper) + " elo."
-        };
+	else if (llr <= lBound) {
+        result.decision = false;
 	}
+    else {
+        result.decision = std::nullopt;
+    }
+    
+    return result;
+}
+
+std::string SprtManager::printSprt(const SprtResult& result) {
+    if (result.decision.has_value()) {
+        if (*result.decision) {
+            return "H1 accepted, " + result.engineA + " is at least " + std::to_string(result.eloLower)
+                + " elo stronger than " + result.engineB;
+        }
+        else {
+            return "H0 accepted, " + result.engineA + " is not stronger than " + result.engineB
+                + " by at least " + std::to_string(result.eloUpper) + " elo.";
+        }
+    }
+    
     std::ostringstream oss;
-    oss << "[ " << std::fixed << std::setprecision(2) << lBound << " < " 
-        << std::setw(5) << llr << " < " << uBound << " ]";
-    return { 
-        std::nullopt, oss.str()
-    };
+    oss << "[ " << std::fixed << std::setprecision(2) << result.lowerBound << " < " 
+        << std::setw(5) << result.llr << " < " << result.upperBound << " ]";
+    return oss.str();
 }
 
 void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames)
@@ -319,10 +347,10 @@ void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, 
             {
                 ++winsP2;
             }
-            auto [result, info] = computeSprt(winsP1, draws, winsP2, "P1", "P2");
-            if (result.has_value())
+            auto sprtResult = computeSprt(winsP1, draws, winsP2, "P1", "P2");
+            if (sprtResult.decision.has_value())
             {
-                decision = result;
+                decision = sprtResult.decision;
                 break;
             }
         }

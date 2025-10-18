@@ -19,10 +19,13 @@
 
 #pragma once
 
+#include "viewer-board-window-list.h"
 #include "imgui-engine-select.h"
 #include "imgui-tournament-opening.h"
 #include "imgui-tournament-pgn.h"
 #include "imgui-engine-global-settings.h"
+#include "game-manager-pool-access.h"
+#include "callback-manager.h"
 
 #include <memory>
 #include <vector>
@@ -31,11 +34,19 @@
 // Forward declarations
 struct SprtConfig;
 class SprtManager;
+class ImGuiConcurrency;
 
 namespace QaplaWindows {
 
     class SprtTournamentData {
     public:
+        enum class State {
+            Stopped,
+            Starting,
+            Running,
+            GracefulStopping
+        };
+
         SprtTournamentData();
         ~SprtTournamentData();
 
@@ -46,6 +57,64 @@ namespace QaplaWindows {
         static SprtTournamentData& instance() {
             static SprtTournamentData instance;
             return instance;
+        }
+
+        /**
+         * @brief Starts the SPRT tournament.
+         */
+        void startTournament();
+
+        /**
+         * @brief Polls the SPRT tournament data for new entries.
+         */
+        void pollData();
+
+        /**
+         * @brief Clears the current SPRT tournament results.
+         */
+        void clear();
+
+        /**
+         * @brief Stops all ongoing tasks in the pool.
+         * @param graceful If true, stops tasks gracefully, allowing games to finish.
+         */
+        void stopPool(bool graceful = false);
+
+        /**
+         * @brief Sets the pool concurrency level.
+         * @param count The number of concurrent tasks to allow.
+         * @param nice If true, reduces the number of active managers gradually.
+         */
+        void setPoolConcurrency(uint32_t count, bool nice = true);
+
+        /**
+         * @brief Checks if the SPRT tournament is currently running.
+         * @return true if running, false otherwise
+         */
+        bool isRunning() const {
+            return state_ != State::Stopped;
+        }
+
+        /**
+         * @brief Returns the current state of the SPRT tournament.
+         * @return The current state.
+         */
+        State state() const {
+            return state_;
+        }
+
+        /**
+         * @brief Checks if there are tasks scheduled.
+         * @return true if tasks are scheduled, false otherwise
+         */
+        bool hasTasksScheduled() const;
+
+        /**
+         * @brief Returns a reference to the concurrency level.
+         * @return Reference to the concurrency level.
+         */
+        uint32_t& concurrency() {
+            return concurrency_;
         }
 
         /**
@@ -172,16 +241,24 @@ namespace QaplaWindows {
          */
         void loadGlobalSettingsConfig();
 
+        ViewerBoardWindowList boardWindowList_;
+
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
-        std::unique_ptr<SprtManager> sprtManager_;
+        std::shared_ptr<SprtManager> sprtManager_;
         std::unique_ptr<SprtConfig> sprtConfig_;
+        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
+        GameManagerPoolAccess poolAccess_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
+        std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
         ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
+
+        uint32_t concurrency_ = 1;
+        State state_ = State::Stopped;
     };
 
 }

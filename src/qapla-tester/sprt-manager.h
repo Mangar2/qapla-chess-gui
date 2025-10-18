@@ -39,6 +39,24 @@ struct SprtConfig {
     Openings openings;
 };
 
+/**
+ * @brief Result of a SPRT computation containing all values for display.
+ */
+struct SprtResult {
+    std::optional<bool> decision;  // true if H1 accepted, false if H0 accepted, nullopt if inconclusive
+    double llr;                    // Log-Likelihood Ratio
+    double lowerBound;             // Lower decision boundary
+    double upperBound;             // Upper decision boundary
+    double drawElo;                // Computed drawElo value
+    int winsA;                     // Wins for engine A
+    int draws;                     // Number of draws
+    int winsB;                      // Wins for engine B
+    std::string engineA;           // Name of engine A
+    std::string engineB;           // Name of engine B
+    int eloLower;                  // Lower elo bound from config
+    int eloUpper;                  // Upper elo bound from config
+};
+
  
 /**
   * Manages the analysis of EPD test sets using multiple chess engines in parallel.
@@ -110,6 +128,21 @@ public:
         return t;
     }
 
+    /**
+     * @brief Computes the result of the Sequential Probability Ratio Test (SPRT) using BayesElo model.
+     *
+     * Applies Jeffreys' prior, estimates drawElo, and compares likelihoods under H0 and H1.
+     * Returns SprtResult containing decision, llr, bounds and all relevant values.
+     */
+    SprtResult computeSprt() const;
+
+    /**
+     * @brief Prints the SPRT result in a formatted way.
+     * @param result The SPRT result to print.
+     * @return A formatted string containing the SPRT decision or bounds.
+     */
+    static std::string printSprt(const SprtResult& result);
+
 private:
     PairTournament tournament_;
     std::shared_ptr<StartPositions> startPositions_;
@@ -122,14 +155,9 @@ private:
      /**
       * @brief Computes the result of the Sequential Probability Ratio Test (SPRT) using BayesElo model.
       *
-      * Applies Jeffreys' prior, estimates drawElo, and compares likelihoods under H0 and H1.
-      * Returns std::optional<bool>: true if H1 accepted, false if H0 accepted, nullopt if inconclusive.
+      * Internal version with explicit parameters.
       */
-    std::pair<std::optional<bool>, std::string> computeSprt() const {
-		auto duel = tournament_.getResult();
-		return computeSprt(duel.winsEngineA, duel.draws, duel.winsEngineB, duel.getEngineA(), duel.getEngineB());
-    }
-    std::pair<std::optional<bool>, std::string> computeSprt(
+    SprtResult computeSprt(
         int winsA, int draws, int winsB, const std::string& engineA, const std::string& engineB) const;
 	bool rememberStop_ = false;
 

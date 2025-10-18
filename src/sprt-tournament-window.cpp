@@ -79,17 +79,105 @@ static void drawSingleButton(
 
 
 void SprtTournamentWindow::drawButtons() {
-    
+    constexpr float space = 3.0F;
+    constexpr float topOffset = 5.0F;
+    constexpr float bottomOffset = 8.0F;
+    constexpr float leftOffset = 20.0F;
+    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+
+    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
+    const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
+        ImGui::SetCursorScreenPos(pos);
+        bool running = SprtTournamentData::instance().isRunning();
+        auto label = button;
+        
+        if (label == "Run/Grace/Continue") {
+            label = running ? "Grace" : "Run";
+        } 
+        if (label == "Run/Grace/Continue" && SprtTournamentData::instance().hasTasksScheduled()) {
+            label = "Continue";
+        }
+
+        auto state = QaplaButton::ButtonState::Normal;
+        if (button == "Run/Grace/Continue" && SprtTournamentData::instance().state() == SprtTournamentData::State::GracefulStopping) {
+            state = QaplaButton::ButtonState::Active;
+        }
+        if ((button == "Stop") && !SprtTournamentData::instance().isRunning()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+        if (button == "Clear" && !SprtTournamentData::instance().hasTasksScheduled()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+        if ((button == "Load" || button == "Save As") && SprtTournamentData::instance().isRunning()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+
+        if (QaplaButton::drawIconButton(button, label, buttonSize, state,
+                [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
+                    drawSingleButton(drawList, topLeft, size, button, running, state);
+                }))
+        {
+            executeCommand(button);
+        }
+        pos.x += totalSize.x + space;
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
 
 void SprtTournamentWindow::executeCommand(const std::string &button) {
+    try {
+        if (button == "Run/Grace/Continue") {
+            bool running = SprtTournamentData::instance().isRunning();
+            if (running) {
+                SprtTournamentData::instance().stopPool(true);
+            } else {
+                SprtTournamentData::instance().startTournament();
+            }
+        } else if (button == "Stop") {
+            SprtTournamentData::instance().stopPool();
+        } else if (button == "Clear") {
+            SprtTournamentData::instance().clear();
+        } else if (button == "Load") {
+            auto selectedPath = OsDialogs::openFileDialog();
+            if (!selectedPath.empty() && !selectedPath[0].empty()) {
+                // TODO: Implement loadTournament for SPRT
+                SnackbarManager::instance().showNote("Load functionality not yet implemented for SPRT tournaments.");
+            }
+        } else if (button == "Save As") {
+            auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla SPRT Files", "qsprt"} });
+            if (!selectedPath.empty()) {
+                // TODO: Implement saveTournament for SPRT
+                SnackbarManager::instance().showNote("Save functionality not yet implemented for SPRT tournaments.");
+            }
+        }
+    } catch (const std::exception &e) {
+        SnackbarManager::instance().showError(e.what());
+    }
 }
+
 
 bool SprtTournamentWindow::drawInput() {
     constexpr float inputWidth = 200.0F;
     constexpr float fileInputWidth = inputWidth + 100.0F;
+    constexpr int maxConcurrency = 32;
     auto& tournamentData = SprtTournamentData::instance();
+
+    ImGui::SetNextItemWidth(inputWidth);
+    ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
+    drawProgress();
+    
+    ImGui::Spacing();
+    if (tournamentData.isRunning()) {
+        ImGui::Indent(10.0F);
+        ImGui::Text("SPRT tournament is running");
+        ImGui::Unindent(10.0F);
+        return false;
+    }
 
     bool changed = false;
 
