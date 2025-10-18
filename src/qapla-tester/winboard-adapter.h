@@ -32,6 +32,9 @@
 #include "uci-option.h"
 #include "game-record.h"
 
+
+namespace QaplaTester {
+
  /**
   * @brief Winboard protocol adapter implementing EngineAdapter.
   *        Runs the engine in a dedicated thread, handles Winboard I/O.
@@ -188,3 +191,4 @@ private:
 	GameStruct gameStruct_; 
 };
 
+} // namespace QaplaTester

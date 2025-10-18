@@ -27,6 +27,8 @@
 #include "input-handler.h"
 #include "ini-file.h"
 
+namespace QaplaTester {
+
 /**
  * @brief Configuration parameters for a SPRT test run.
  */
@@ -185,3 +187,4 @@ private:
     std::unique_ptr<InputHandler::CallbackRegistration> sprtCallback_;
 
 };
+} // namespace QaplaTester

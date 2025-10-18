@@ -20,6 +20,8 @@
 
 #include "engine-adapter.h"
 
+namespace QaplaTester {
+
 EngineAdapter::EngineAdapter(std::filesystem::path enginePath,
     const std::optional<std::filesystem::path>& workingDirectory, 
     const std::string& identifier)
@@ -36,3 +38,5 @@ uint64_t EngineAdapter::writeCommand(const std::string& command) {
     logToEngine(command, TraceLevel::command);
     return process_.writeLine(command);
 }
+
+} // namespace QaplaTester

@@ -22,6 +22,8 @@
 #include <utility>
 #include <algorithm>
 
+namespace QaplaTester {
+
 /**
  * @brief Approximates inverse error function using Winitzki's formula.
  */
@@ -72,3 +74,5 @@ inline std::pair<int, int> computeEloWithError(int wins, int losses, int draws) 
 
     return { static_cast<int>(std::round(elo)), static_cast<int>(std::round(error)) };
 }
+
+} // namespace QaplaTester

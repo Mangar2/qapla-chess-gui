@@ -28,6 +28,7 @@
 #include <string>
 #include <sstream>
 
+namespace QaplaTester {
 
 struct EpdTest {
     std::string fen;
@@ -126,3 +127,5 @@ private:
     size_t currentIndex_ = 0;
     EngineReport* checklist_;
 };
+
+} // namespace QaplaTester

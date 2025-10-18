@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <optional>
 
+namespace QaplaTester {
+
 /**
  * Represents the parsed contents of a single EPD line.
  */
@@ -84,3 +86,5 @@ private:
     static void parseOperations(const std::string& input, EpdEntry& result);
 
 };
+
+} // namespace QaplaTester

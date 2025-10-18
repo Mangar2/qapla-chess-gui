@@ -28,6 +28,7 @@
 #include <mutex>
 #include <ostream>
 
+namespace QaplaTester {
 
 class GameTaskProvider;
 
@@ -250,3 +251,5 @@ private:
 	// InputHandler
     std::unique_ptr<InputHandler::CallbackRegistration> inputCallback_;
 };
+
+} // namespace QaplaTester

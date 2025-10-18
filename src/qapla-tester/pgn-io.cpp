@@ -28,6 +28,8 @@
 #include "game-state.h"
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 void PgnIO::initialize(const std::string& event) {
     event_ = event;
     if (!options_.append) {
@@ -738,3 +740,4 @@ GameRecord PgnIO::parseGame(const std::string& pgnString) {
     return game;
 }
 
+} // namespace QaplaTester

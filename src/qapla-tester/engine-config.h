@@ -35,6 +35,7 @@
 #include "engine-option.h"
 #include "logger.h"
 
+namespace QaplaTester {
 
 /**
  * Stores configuration for a chess engine including its executable path,
@@ -281,3 +282,4 @@ private:
     std::unordered_map<std::string, OptionValue> optionValues_;
 };
 
+} // namespace QaplaTester

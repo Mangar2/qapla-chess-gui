@@ -31,6 +31,8 @@
 #include "input-handler.h"
 #include "adjudication-manager.h"
 
+namespace QaplaTester {
+
 void Tournament::createTournament(const std::vector<EngineConfig>& engines,
     const TournamentConfig& config) {
 
@@ -292,3 +294,5 @@ void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections) {
         load(section);
     }
 }
+
+} // namespace QaplaTester

@@ -30,6 +30,8 @@
 #include <functional>
 #include <utility>
 
+namespace QaplaTester {
+
 /**
  * @brief Manages all player contexts and game configuration including time control,
  *        game record, engine wiring and side assignment.
@@ -340,3 +342,5 @@ private:
     std::function<void(EngineEvent &&)> eventCallback_;
     bool switchedSide_ = false;
 };
+
+} // namespace QaplaTester

@@ -35,7 +35,7 @@
 #include "engine-test-functions.h"
 #include "test-tournament.h"
 
-using namespace QaplaTester;
+namespace QaplaTester {
 
 void EngineTestController::createGameManager() {
     computeTask_ = std::make_unique<ComputeTask>();
@@ -352,3 +352,5 @@ void EngineTestController::runPlaceholderTest() {
 		Logger::testLogger().log("Unknown exception during placeholder test.", TraceLevel::error);
     }
 }
+
+} // namespace QaplaTester

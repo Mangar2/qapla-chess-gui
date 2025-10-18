@@ -27,7 +27,7 @@
 #include "app-error.h"
 #include "string-helper.h"
 
-namespace CliSettings {
+namespace QaplaTester::CliSettings {
 
     enum class ValueType { String, Int, UInt, Float, Bool, PathExists, PathParentExists };
     using Value = std::variant<std::string, int, unsigned int, bool, double>;
@@ -325,4 +325,4 @@ namespace CliSettings {
 
         
     };
-}
+} // namespace QaplaTester::CliSettings

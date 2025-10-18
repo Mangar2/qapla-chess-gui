@@ -30,6 +30,8 @@
 #include "engine-process.h"
 #include "logger.h"
 
+namespace QaplaTester {
+
 UciAdapter::UciAdapter(std::filesystem::path enginePath,
     const std::optional<std::filesystem::path>& workingDirectory,
     const std::string& identifier)
@@ -489,3 +491,5 @@ EngineEvent UciAdapter::readEvent() {
     }
     return EngineEvent::createUnknown(identifier_, engineLine.timestampMs, line);
 }
+
+} // namespace QaplaTester

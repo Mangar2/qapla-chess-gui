@@ -31,6 +31,8 @@
 #include <optional>
 #include <functional>
 
+namespace QaplaTester {
+
 /**
  * @brief Thread-safe PGN input/output handler.
  */
@@ -253,3 +255,5 @@ private:
     std::mutex fileMutex_;
     std::string event_ = "";
 };
+
+} // namespace QaplaTester

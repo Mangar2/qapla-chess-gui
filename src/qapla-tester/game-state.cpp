@@ -28,6 +28,8 @@
 #include "game-state.h"
 #include "logger.h"
 
+namespace QaplaTester {
+
 using namespace QaplaBasics;
 using MoveStr = std::string;
 using MoveStrList = std::vector<MoveStr>;
@@ -331,3 +333,4 @@ void GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t
 	} 
 }
 	
+} // namespace QaplaTester

@@ -26,6 +26,8 @@
 #include <random>
 #include <iomanip>
 
+namespace QaplaTester {
+
 void PairTournament::initialize(const EngineConfig& engineA, const EngineConfig& engineB,
 	const PairTournamentConfig& config, std::shared_ptr<StartPositions> startPositions) {
 
@@ -388,3 +390,5 @@ std::string PairTournament::getTournamentInfo() const {
         << "";
     return oss.str();
 }
+
+} // namespace QaplaTester

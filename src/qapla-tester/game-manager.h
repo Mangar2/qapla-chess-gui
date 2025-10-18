@@ -33,6 +33,8 @@
 #include "player-context.h"
 #include "game-context.h"
 
+namespace QaplaTester {
+
 class GameManagerPool;
 
  /**
@@ -336,3 +338,5 @@ private:
 
     GameManagerPool* pool_;
 };
+
+} // namespace QaplaTester

@@ -31,6 +31,8 @@
 #include "engine-config.h"
 #include "cli-settings-manager.h"
 
+namespace QaplaTester {
+
 class EngineConfigManager {
 public:
 
@@ -158,3 +160,5 @@ private:
     std::vector<EngineConfig> configs;
 	std::vector<std::string> errors; // Stores error messages during parsing
 };
+
+} // namespace QaplaTester

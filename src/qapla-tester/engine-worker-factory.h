@@ -27,6 +27,8 @@
 #include "engine-worker.h"
 #include "engine-config-manager.h"
 
+namespace QaplaTester {
+
 using EngineList = std::vector<std::unique_ptr<EngineWorker>>;
 using ActiveEngines = std::vector<EngineConfig>;
  /**
@@ -91,3 +93,5 @@ private:
 
 	static inline bool suppressInfoLines_ = false;
 };
+
+} // namespace QaplaTester

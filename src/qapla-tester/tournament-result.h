@@ -32,6 +32,8 @@
 #include "game-result.h"
 #include "game-record.h"
 
+namespace QaplaTester {
+
 /**
  * @brief Stores result breakdowns per game termination cause.
  */
@@ -41,6 +43,8 @@ struct CauseStats
     int loss = 0; ///< Number of losses by this cause (from engineA's perspective)
     int draw = 0; ///< Number of draws by this cause
 };
+
+using CauseStatsArray = std::array<CauseStats, static_cast<size_t>(GameEndCause::Count)>;
 
 /**
  * @brief Aggregates duel results between two engines, tracking win/draw/loss counts and termination causes.
@@ -57,10 +61,10 @@ public:
     }
     EngineDuelResult() = default;
 
-    int winsEngineA = 0;                                                         ///< Wins by engineA
-    int winsEngineB = 0;                                                         ///< Wins by engineB
-    int draws = 0;                                                               ///< Draw count
-    std::array<CauseStats, static_cast<size_t>(GameEndCause::Count)> causeStats; ///< Stats per end cause
+    int winsEngineA = 0;        ///< Wins by engineA
+    int winsEngineB = 0;        ///< Wins by engineB
+    int draws = 0;              ///< Draw count
+    CauseStatsArray causeStats; ///< Stats per end cause
 
     const std::string &getEngineA() const
     {
@@ -301,3 +305,5 @@ private:
     std::vector<EngineDuelResult> results_;
 	std::vector<Scored> scoredEngines_;
 };
+
+} // namespace QaplaTester

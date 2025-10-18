@@ -24,6 +24,8 @@
 #include "game-record.h"
 #include "engine-report.h"
 
+namespace QaplaTester {
+
 inline thread_local bool isEventQueueThread = false;
 
 class PlayerContext {
@@ -374,3 +376,5 @@ private:
     mutable std::mutex stateMutex_; // protects gameState_ and ponderState_
 	EngineReport* checklist_ = nullptr; 
 };
+
+} // namespace QaplaTester

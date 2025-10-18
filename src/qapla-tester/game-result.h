@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <optional>
 
+namespace QaplaTester {
+
 /**
  * @brief Enumerates all meaningful game termination types.
  *
@@ -119,3 +121,5 @@ inline GameResult switchGameResult(GameResult result) {
 inline std::string to_string(GameResult result) {
 	return gameResultToPgnResult(result);
 }
+
+} // namespace QaplaTester

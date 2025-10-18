@@ -28,6 +28,8 @@
 #include <vector>
 #include <future>
 
+namespace QaplaTester {
+
 /**
  * @brief Executes a single computation task such as move calculation, game play, or position analysis.
  *        Not intended to manage or queue multiple tasks.
@@ -311,3 +313,5 @@ private:
     std::condition_variable queueCondition_;
     std::queue<EngineEvent> eventQueue_;
 };
+
+} // namespace QaplaTester

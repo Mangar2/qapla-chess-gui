@@ -22,6 +22,8 @@
 #include <cstdint>
 #include <utility>
 
+namespace QaplaTester {
+
 class ChangeTracker {
 
 public:
@@ -85,3 +87,5 @@ private:
     int64_t modificationCnt_ = 1;
     int64_t updateCnt_ = 1;
 };
+
+} // namespace QaplaTester

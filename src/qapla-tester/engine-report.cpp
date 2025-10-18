@@ -28,6 +28,8 @@
 #include <algorithm>
 #include "engine-report.h"
 
+namespace QaplaTester {
+
 void EngineReport::addTopic(const CheckTopic& topic) {
     std::lock_guard<std::mutex> lock(statsMutex_);
     auto it = std::find_if(registeredTopics_.begin(), registeredTopics_.end(),
@@ -267,4 +269,4 @@ const bool uciSearchInfoTopicsRegistered = [] {
     return true;
 }();
 
-
+} // namespace QaplaTester

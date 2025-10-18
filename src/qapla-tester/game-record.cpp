@@ -18,8 +18,9 @@
  */
 
 #include "game-record.h"
-
 #include "qapla-engine/move.h"
+
+namespace QaplaTester {
 
 void GameRecord::setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves)
 {
@@ -250,3 +251,5 @@ std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord:
 
 		return out.str();
 	}
+
+} // namespace QaplaTester

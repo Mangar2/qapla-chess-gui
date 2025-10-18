@@ -28,6 +28,8 @@
 #include <iostream>
 #include <chrono>
 
+namespace QaplaTester {
+
 void PlayerContext::checkPV(const EngineEvent& event) {
     if (!event.searchInfo) { return; }
     const auto& searchInfo = *event.searchInfo;
@@ -417,3 +419,4 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
 
 }
 
+} // namespace QaplaTester

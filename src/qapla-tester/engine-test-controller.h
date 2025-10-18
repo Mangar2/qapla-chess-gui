@@ -27,6 +27,8 @@
 #include "compute-task.h"
 #include "engine-worker-factory.h"
 
+namespace QaplaTester {
+
 /**
  * @brief Controls the execution flow of chess engine tests.
  */
@@ -139,3 +141,5 @@ private:
     EngineConfig engineConfig_;
     int numGames_ = 20;
 };
+
+} // namespace QaplaTester

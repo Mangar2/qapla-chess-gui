@@ -31,6 +31,8 @@
 #include "app-error.h"
 #include "tournament-result.h"
 
+namespace QaplaTester {
+
 class EngineReport {
 public:
 
@@ -167,3 +169,5 @@ private:
 
     EngineResult engineResult_;
 };
+
+} // namespace QaplaTester

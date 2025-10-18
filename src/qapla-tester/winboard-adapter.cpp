@@ -30,6 +30,8 @@
 #include "engine-process.h"
 #include "logger.h"
 
+namespace QaplaTester {
+
 WinboardAdapter::WinboardAdapter(std::filesystem::path enginePath,
     const std::optional<std::filesystem::path>& workingDirectory,
     const std::string& identifier)
@@ -748,3 +750,5 @@ EngineEvent WinboardAdapter::readEvent() {
 
     return EngineEvent::createUnknown(identifier_, engineLine.timestampMs, line);
 }
+
+} // namespace QaplaTester

@@ -24,6 +24,8 @@
 
 #include <stdexcept>
 
+namespace QaplaTester {
+
 EngineWorker::EngineWorker(std::unique_ptr<EngineAdapter> adapter, std::string identifier, 
     const EngineConfig& engineConfig)
     : identifier_(identifier), adapter_(std::move(adapter))
@@ -304,3 +306,5 @@ void EngineWorker::readLoop() {
 		}
     }
 }
+
+} // namespace QaplaTester

@@ -22,6 +22,8 @@
 #include <string>
 #include <optional>
 
+namespace QaplaTester {
+
  /**
   * @brief Configuration for loading and selecting opening positions.
   */
@@ -35,3 +37,4 @@ struct Openings {
     std::string policy = "default";
 };
 
+} // namespace QaplaTester

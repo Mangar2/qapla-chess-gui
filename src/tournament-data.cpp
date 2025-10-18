@@ -342,7 +342,8 @@ namespace QaplaWindows {
 		}
     }
 
-    static void addRow(ImGuiTable& table, const std::string& name, const std::string& wdl, const std::string& cause, int count) {
+    namespace {
+    void addRow(ImGuiTable& table, const std::string& name, const std::string& wdl, const std::string& cause, int count) {
         if (count == 0) {
             return;
         }
@@ -353,6 +354,7 @@ namespace QaplaWindows {
         row.push_back(cause);
         table.push(row);
     }
+    } // namespace
 
     void TournamentData::populateCauseTable() {
         causeTable_.clear();

@@ -26,6 +26,8 @@
 #include <iostream>
 #include <sstream>
 
+namespace QaplaTester {
+
 void EngineDuelResult::addResult(const GameRecord &record)
 {
     bool engineAIsWhite = engineA == record.getWhiteEngineName();
@@ -505,3 +507,5 @@ void TournamentResult::printSummary(std::ostream &os) const
     }
     os << "\n" << std::flush;
 }
+
+} // namespace QaplaTester

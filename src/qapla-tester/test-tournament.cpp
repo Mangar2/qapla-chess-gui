@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <algorithm>
 
+namespace QaplaTester {
+
 TestTournament::TestTournament(uint32_t totalGames, EngineReport* checklist)
     : maxGames_(totalGames), current_(0), checklist_(checklist) {
     timePairs_ = {
@@ -178,3 +180,5 @@ void TestTournament::logStatus() {
 
     Logger::testLogger().log(oss.str());
 }
+
+} // namespace QaplaTester

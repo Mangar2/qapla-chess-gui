@@ -24,6 +24,8 @@
 #include "game-state.h"
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 std::string EpdManager::generateHeaderLine() const {
     std::ostringstream header;
     auto formatEngineName = [](const std::string& name) -> std::string {
@@ -385,3 +387,5 @@ double EpdManager::getSuccessRate() const {
 	}
 	return totalTests > 0 ? static_cast<double>(correctTests) / totalTests : 0.0;
 }
+
+} // namespace QaplaTester

@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <iomanip>
 
+namespace QaplaTester {
 
  /**
   * @brief limits for calculating a single move.
@@ -366,3 +367,4 @@ inline GoLimits createGoLimits(
     return limits;
 }
 
+} // namespace QaplaTester

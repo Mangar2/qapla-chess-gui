@@ -36,6 +36,8 @@
 #include "engine-option.h"
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 using OptionValues = std::unordered_map<std::string, std::string>;
 
  /**
@@ -253,3 +255,5 @@ protected:
     bool suppressInfoLines_ = false;
 
 };
+
+} // namespace QaplaTester

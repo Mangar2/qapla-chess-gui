@@ -29,6 +29,8 @@
 #include "engine-report.h"
 #include "game-task.h"
 
+namespace QaplaTester {
+
 /**
  * @brief Manages a test tournament that plays multiple games with different time controls.
  * 
@@ -152,3 +154,5 @@ private:
     std::vector<int> usageCount_;                                    ///< (Currently unused) Could track time control usage
     EngineReport* checklist_;                                        ///< Report handler for test validation results
 };
+
+} // namespace QaplaTester

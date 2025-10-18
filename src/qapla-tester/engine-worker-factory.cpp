@@ -23,6 +23,8 @@
 #include "engine-report.h"
 #include "engine-config-manager.h"
 
+namespace QaplaTester {
+
 void EngineWorkerFactory::assignUniqueDisplayNames() {
     auto& engines = getActiveEnginesMutable();
     EngineConfigManager::assignUniqueDisplayNames(engines);
@@ -162,4 +164,4 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
     return runningEngines;
 }
 
-
+} // namespace QaplaTester

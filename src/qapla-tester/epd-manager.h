@@ -34,6 +34,7 @@
 #include <iostream>
 #include <iomanip>
 
+namespace QaplaTester {
 
 class GameManager;
 using TestResults = std::vector<EpdTestResult>;
@@ -136,3 +137,5 @@ private:
     TimeControl tc_;
     std::string epdFileName_;
 };
+
+} // namespace QaplaTester

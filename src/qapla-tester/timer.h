@@ -22,6 +22,8 @@
 #include <chrono>
 #include <iomanip>
 
+namespace QaplaHelpers {
+
 class Timer {
 public:
     
@@ -81,3 +83,4 @@ private:
     uint64_t end_{};
 };
 
+} // namespace QaplaHelpers

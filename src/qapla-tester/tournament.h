@@ -32,6 +32,8 @@
 #include <istream>
 #include <string>
 
+namespace QaplaTester {
+
  /**
   * @brief Configuration parameters for a tournament.
   */
@@ -199,4 +201,4 @@ private:
     std::unique_ptr<InputHandler::CallbackRegistration> tournamentCallback_;
 };
 
-
+} // namespace QaplaTester

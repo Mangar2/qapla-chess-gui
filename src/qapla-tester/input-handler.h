@@ -27,6 +27,8 @@
 #include <optional>
 #include <variant>
 
+namespace QaplaTester {
+
  /**
   * @brief Handles asynchronous user input for runtime commands.
   *
@@ -117,3 +119,5 @@ private:
     std::vector<CallbackEntry> callbacks_;
     std::mutex callbacksMutex_;
 };
+
+} // namespace QaplaTester

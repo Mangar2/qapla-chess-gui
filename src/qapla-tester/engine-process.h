@@ -31,6 +31,8 @@
 #include <unistd.h>
 #endif
 
+namespace QaplaTester {
+
 struct EngineLine {
     enum class Error {
         NoError,
@@ -204,3 +206,5 @@ private:
     int stderrRead_ = -1;
 #endif
 };
+
+} // namespace QaplaTester

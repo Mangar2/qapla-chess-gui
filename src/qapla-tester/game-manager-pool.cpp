@@ -23,6 +23,8 @@
 #include "app-error.h"
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 GameManagerPool::GameManagerPool() {
     inputCallback_ = InputHandler::getInstance().registerCommandCallback(
 		{ InputHandler::ImmediateCommand::Quit,
@@ -441,3 +443,5 @@ bool GameManagerPool::maybeDeactivateManager(std::shared_ptr<GameTaskProvider>& 
 	}
     return tooMany;
 }
+
+} // namespace QaplaTester

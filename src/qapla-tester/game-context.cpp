@@ -20,6 +20,8 @@
 #include "game-context.h"
 #include "engine-worker-factory.h"
 
+namespace QaplaTester {
+
 GameContext::GameContext() = default;
 
 GameContext::~GameContext() = default;
@@ -470,3 +472,5 @@ EngineRecords GameContext::mkEngineRecords() const
     }
     return records;
 }
+
+} // namespace QaplaTester

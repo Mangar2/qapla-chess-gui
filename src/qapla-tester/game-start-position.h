@@ -22,6 +22,8 @@
 #include <string>
 #include <string_view>
 
+namespace QaplaTester {
+
  /**
   * @brief Type of starting position for a game.
   */
@@ -56,3 +58,5 @@ private:
     GameType type_ = GameType::Classical;
     std::string fen_;
 };
+
+} // namespace QaplaTester

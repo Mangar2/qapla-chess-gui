@@ -22,6 +22,8 @@
 #include <string>
 #include "game-record.h"
 
+namespace QaplaTester {
+
 struct GameTask {
     enum class Type {
         None,
@@ -78,3 +80,5 @@ public:
         return false;
     }
 };
+
+} // namespace QaplaTester

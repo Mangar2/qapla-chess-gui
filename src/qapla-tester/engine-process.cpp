@@ -54,6 +54,8 @@
 #include "timer.h"
 #include "logger.h"
 
+namespace QaplaTester {
+
 #ifdef _WIN32
 struct EngineProcess::Win32IoData {
     OVERLAPPED overlappedRead{};
@@ -746,3 +748,5 @@ bool EngineProcess::isRunning() const
     return waitpid(childPid_, &status, WNOHANG) == 0;
 #endif
 }
+
+} // namespace QaplaTester

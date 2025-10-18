@@ -33,6 +33,8 @@
 #include <iomanip>
 #include <functional>
 
+namespace QaplaTester {
+
 class GameManager;
 class GameManagerPool;
 
@@ -176,3 +178,5 @@ private:
 	std::atomic<uint64_t> updateCnt_ = 0;
 
 };
+
+} // namespace QaplaTester

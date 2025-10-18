@@ -24,6 +24,8 @@
 #include <string>
 #include <filesystem>
 
+namespace QaplaTester {
+
 std::unordered_map<std::string, std::string> EngineConfig::getOptions(const EngineOptions availableOptions) const {
     std::unordered_map<std::string, std::string> filteredOptions;
     for (const auto& option : availableOptions) {
@@ -260,3 +262,5 @@ std::unordered_map<std::string, std::string> EngineConfig::toDisambiguationMap()
 
     return result;
 }
+
+} // namespace QaplaTester

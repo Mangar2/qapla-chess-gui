@@ -25,6 +25,7 @@
 #include "input-handler.h"
 #include "cli-settings-manager.h"
 
+namespace QaplaTester {
 
 InputHandler::CallbackRegistration::CallbackRegistration(InputHandler& handler, size_t id)
     : handler_(&handler), callbackId_(id) {
@@ -151,3 +152,5 @@ void InputHandler::unregisterCallback(size_t id) {
         return e.id == id;
         });
 }
+
+} // namespace QaplaTester

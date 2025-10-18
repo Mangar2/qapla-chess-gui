@@ -26,6 +26,8 @@
 #include "game-result.h"
 #include "game-record.h"
 
+namespace QaplaTester {
+
 using MoveStr = std::string;
 using MoveStrList = std::vector<MoveStr>;
 
@@ -251,3 +253,5 @@ private:
 	GameEndCause gameEndCause_ = GameEndCause::Ongoing; // cause of game end
 	GameResult gameResult_ = GameResult::Unterminated; // result of the game
 };
+
+} // namespace QaplaTester

@@ -23,23 +23,7 @@
 #include "game-state.h"
 #include "string-helper.h"
 
-/*
-inline std::ostream& operator<<(std::ostream& os, const EpdTestCase& test) {
-
-    os << std::setw(20) << std::left << test.id
-        << "|" << std::setw(8) << std::right
-        << (test.correct ? QaplaHelpers::formatMs(test.correctAtTimeInMs, 2) : test.tested ? "-" : "?")
-        << ", D:" << std::setw(3) << std::right
-        << (test.correct ? std::to_string(test.correctAtDepth) : test.tested ? "-" : "?")
-        << ", M: " << std::setw(5) << std::left << test.playedMove
-        << " | BM: ";
-
-    for (const auto& bm : test.bestMoves) {
-        os << bm << " ";
-    }
-    return os;
-}
-*/
+namespace QaplaTester {
 
 void EpdTest::initialize(const EpdTestResult& tests)
 {
@@ -213,3 +197,5 @@ bool EpdTest::isSameMove(const std::string& fen, const std::string& move1str, co
     auto move2 = gameState.stringToMove(move2str, false);
     return move1 == move2;
 }
+
+} // namespace QaplaTester

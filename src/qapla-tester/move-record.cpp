@@ -27,6 +27,8 @@
 #include <sstream>
 #include <iomanip>
 
+namespace QaplaTester {
+
 void MoveRecord::clear() {
     original.clear();
     lan.clear();
@@ -209,3 +211,5 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
 
     return out.str();
 }
+
+} // namespace QaplaTester

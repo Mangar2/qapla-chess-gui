@@ -29,6 +29,8 @@
 #include <string>
 #include <algorithm>
 
+namespace QaplaTester {
+
 EpdReader::EpdReader(const std::string& filePath): filePath_(filePath) {
     std::ifstream file(filePath);
     if (!file) {
@@ -149,3 +151,4 @@ void EpdReader::parseOperations(const std::string& input, EpdEntry& result) {
     }
 }
 
+} // namespace QaplaTester

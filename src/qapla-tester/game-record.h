@@ -35,6 +35,8 @@
 
 #include "../qapla-engine/move.h"
 
+namespace QaplaTester {
+
 struct GameStruct
 {
 	std::string fen;
@@ -494,3 +496,5 @@ private:
 	ChangeTracker changeTracker_;
 	GameEvent gameEvent_ = GameEvent::None;
 };
+
+} // namespace QaplaTester

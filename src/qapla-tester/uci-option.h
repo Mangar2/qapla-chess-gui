@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+namespace QaplaTester {
+
 /**
  * @brief Parses a single UCI option line and returns a UciOption.
  *        Throws std::runtime_error on malformed input.
@@ -116,3 +118,5 @@ inline EngineOption parseUciOptionLine(const std::string& line) {
 
     return opt;
 }
+
+} // namespace QaplaTester

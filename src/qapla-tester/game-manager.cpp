@@ -39,6 +39,8 @@
 #include "input-handler.h"
 #include "adjudication-manager.h"
 
+namespace QaplaTester {
+
 GameManager::GameManager(GameManagerPool* pool)
     : pool_(pool), taskProvider_(nullptr)
 {
@@ -548,3 +550,4 @@ void GameManager::resume() {
     }
 }
 
+} // namespace QaplaTester

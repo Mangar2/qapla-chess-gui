@@ -30,6 +30,8 @@
 #include "engine-adapter.h"
 #include "uci-option.h"
 
+namespace QaplaTester {
+
  /**
   * @brief UCI protocol adapter implementing EngineAdapter.
   *        Runs the engine in a dedicated thread, handles UCI I/O.
@@ -151,3 +153,5 @@ private:
     bool inUciHandshake_ = false;
 
 };
+
+} // namespace QaplaTester

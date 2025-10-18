@@ -24,6 +24,8 @@
 #include <vector>
 #include <optional>
 
+namespace QaplaTester {
+
 struct EngineRecord {
     std::string identifier;
     EngineConfig config;
@@ -48,3 +50,4 @@ struct EngineRecord {
 
 using EngineRecords = std::vector<EngineRecord>;
 
+} // namespace QaplaTester

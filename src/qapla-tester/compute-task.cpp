@@ -19,6 +19,8 @@
 
 #include "compute-task.h"
 
+namespace QaplaTester {
+
 ComputeTask::ComputeTask()
 {
     finishedFuture_ = finishedPromise_.get_future();
@@ -404,6 +406,6 @@ void ComputeTask::markRunning() {
     }
 }
 
-
+} // namespace QaplaTester
 
 

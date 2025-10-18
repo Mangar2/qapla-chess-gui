@@ -24,6 +24,8 @@
 #include <cassert>
 #include "app-error.h"
 
+namespace QaplaTester {
+
 enum class RestartOption {
 	EngineDecides,
 	Always,
@@ -114,3 +116,4 @@ struct EngineOption {
 
 using EngineOptions = std::vector<EngineOption>;
 
+} // namespace QaplaTester

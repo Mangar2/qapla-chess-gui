@@ -21,6 +21,8 @@
 #include "cli-settings-manager.h"
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 void EngineConfigManager::loadFromStream(std::istream& input) {
 
     errors.clear();
@@ -217,4 +219,4 @@ void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& en
     }
 }
 
-
+} // namespace QaplaTester

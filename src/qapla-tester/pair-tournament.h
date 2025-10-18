@@ -40,6 +40,8 @@
 #include <functional>
 #include <atomic>
 
+namespace QaplaTester {
+
 /**
  * @brief Represents a collection of chess openings for a tournament.
  */
@@ -285,3 +287,5 @@ private:
     bool verbose_ = true;
     std::atomic<bool> isFinished_ = false;
 };
+
+} // namespace QaplaTester

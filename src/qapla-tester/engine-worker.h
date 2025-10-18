@@ -31,6 +31,8 @@
 #include "engine-adapter.h"
 #include "engine-config.h"
 
+namespace QaplaTester {
+
 class EngineAdapter;
 
 /**
@@ -314,3 +316,5 @@ private:
 	TraceLevel cliTraceLevel_ = TraceLevel::info;
 
 };
+
+} // namespace QaplaTester

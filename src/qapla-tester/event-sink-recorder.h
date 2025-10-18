@@ -26,6 +26,7 @@
 
 #include "engine-event.h"
 
+namespace QaplaTester {
 
  /**
   * @brief A thread-safe sink that records all EngineEvents for analysis in tests.
@@ -86,3 +87,5 @@ private:
     mutable std::mutex mutex_;
     std::vector<EngineEvent> events_;
 };
+
+} // namespace QaplaTester

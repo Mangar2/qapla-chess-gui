@@ -32,7 +32,7 @@
 #include "app-error.h"
 #include "string-helper.h"
 
-namespace CliSettings
+namespace QaplaTester::CliSettings
 {
 
     std::vector<std::string> Manager::mergeWithSettingsFile(const std::vector<std::string> &originalArgs)
@@ -592,4 +592,4 @@ namespace CliSettings
 
         return lowerValue; // Default case is string;
     }
-}
+} // namespace QaplaTester::CliSettings

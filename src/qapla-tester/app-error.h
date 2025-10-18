@@ -25,6 +25,8 @@
 #include <limits>
 #include "string-helper.h"
 
+namespace QaplaTester {
+
 enum class AppReturnCode {
     NoError = 0,
     GeneralError = 1,
@@ -157,3 +159,5 @@ private:
     std::string internalDetail_;
     static inline std::string defaultInvalidParameterUserHint_ = "Use --help to display all supported parameters.";
 };
+
+} // namespace QaplaTester

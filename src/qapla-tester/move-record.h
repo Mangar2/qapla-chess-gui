@@ -29,6 +29,8 @@
 #include <sstream>
 #include <iomanip>
 
+namespace QaplaTester {
+
 struct MoveRecord {
 
     struct toStringOptions {
@@ -115,3 +117,5 @@ struct MoveRecord {
 };
 
 using MoreRecords = std::vector<std::optional<MoveRecord>>;
+
+} // namespace QaplaTester

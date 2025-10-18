@@ -27,6 +27,8 @@
 #include "pgn-io.h"
 #include "engine-config-manager.h"
 
+namespace QaplaTester {
+
 void SprtManager::createTournament(
     const EngineConfig& engine0, const EngineConfig& engine1, const SprtConfig& config) {
 
@@ -396,3 +398,4 @@ void SprtManager::runMonteCarloTest(const SprtConfig& config) {
     }
 }
 
+} // namespace QaplaTester

@@ -25,6 +25,8 @@
 #include "game-result.h"
 #include "logger.h"
 
+namespace QaplaTester {
+
 struct SearchInfo {
     uint32_t halfMoveNo = 0;
     std::optional<uint32_t> depth;
@@ -175,3 +177,4 @@ private:
 
 };
 
+} // namespace QaplaTester

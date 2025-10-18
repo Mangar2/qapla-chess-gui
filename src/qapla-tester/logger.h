@@ -28,6 +28,8 @@
 #include <iomanip>
 #include <sstream>
 
+namespace QaplaTester {
+
 enum class TraceLevel : int {
     error,
     command,
@@ -183,3 +185,6 @@ private:
 	std::string filename_;
     static inline std::string logPath_ = "";
 };
+
+} // namespace QaplaTester
+
