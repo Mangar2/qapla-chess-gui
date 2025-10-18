@@ -135,7 +135,7 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
         index = 0;
         for (auto& f : futures) {
             EngineReport* checklist;
-            auto& name = configs[index].getName();
+            const auto& name = configs[index].getName();
             try {
                 f.get();
             }

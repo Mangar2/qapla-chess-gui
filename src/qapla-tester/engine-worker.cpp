@@ -26,6 +26,8 @@
 
 namespace QaplaTester {
 
+using QaplaHelpers::Timer;
+
 EngineWorker::EngineWorker(std::unique_ptr<EngineAdapter> adapter, std::string identifier, 
     const EngineConfig& engineConfig)
     : identifier_(identifier), adapter_(std::move(adapter))

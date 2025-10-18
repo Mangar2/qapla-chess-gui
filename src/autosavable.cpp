@@ -26,6 +26,7 @@
 #include <cstdlib>
 
 using namespace QaplaHelpers;
+using namespace QaplaTester;
 
 Autosavable::Autosavable(std::string filename, 
                          std::string backupSuffix,

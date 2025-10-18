@@ -56,6 +56,8 @@
 
 namespace QaplaTester {
 
+using QaplaHelpers::Timer;
+
 #ifdef _WIN32
 struct EngineProcess::Win32IoData {
     OVERLAPPED overlappedRead{};
