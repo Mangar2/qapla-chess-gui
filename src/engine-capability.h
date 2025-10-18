@@ -57,7 +57,7 @@ namespace QaplaConfiguration {
        * @brief Gets the protocol used by the engine.
        * @return The protocol as an EngineProtocol enum.
        */
-      EngineProtocol getProtocol() const {
+      QaplaTester::EngineProtocol getProtocol() const {
           return protocol_;
     }
 
@@ -65,7 +65,7 @@ namespace QaplaConfiguration {
        * @brief Sets the protocol used by the engine.
        * @param protocol The protocol as an EngineProtocol enum.
        */
-      void setProtocol(EngineProtocol protocol) {
+      void setProtocol(QaplaTester::EngineProtocol protocol) {
       protocol_ = protocol;
     }
 
@@ -105,7 +105,7 @@ namespace QaplaConfiguration {
        * @brief Gets the supported options of the engine.
        * @return A vector of EngineOption objects.
        */
-      const EngineOptions& getSupportedOptions() const {
+      const QaplaTester::EngineOptions& getSupportedOptions() const {
           return supportedOptions_;
     }
 
@@ -113,7 +113,7 @@ namespace QaplaConfiguration {
        * @brief Sets the supported options of the engine.
        * @param options A vector of EngineOption objects.
        */
-      void setSupportedOptions(const EngineOptions& options) {
+      void setSupportedOptions(const QaplaTester::EngineOptions& options) {
       supportedOptions_ = options;
     }
 
@@ -133,10 +133,10 @@ namespace QaplaConfiguration {
 
   private:
       std::string path_; ///< Path to the engine executable.
-      EngineProtocol protocol_ = EngineProtocol::Unknown; ///< Protocol used by the engine.
+      QaplaTester::EngineProtocol protocol_ = QaplaTester::EngineProtocol::Unknown; ///< Protocol used by the engine.
       std::string name_;  ///< The name reported by the engine itself.
     std::string author_; ///< The author reported by the engine itself.
-      EngineOptions supportedOptions_; ///< Supported options of the engine.
+      QaplaTester::EngineOptions supportedOptions_; ///< Supported options of the engine.
   };
 
 } // namespace QaplaConfiguration

@@ -427,16 +427,17 @@ namespace QaplaWindows::ImGuiControls {
     * @param inputWidth Optional width for a file Input field.
     * @return True if the value was modified, false otherwise.
     */
-    inline bool engineOptionControl(const EngineOption& option, std::string& value, float fileInputWidth = 400.0F) {
+    inline bool engineOptionControl(const QaplaTester::EngineOption& option, 
+        std::string& value, float fileInputWidth = 400.0F) {
         bool modified = false;
 
         switch (option.type) {
-        case EngineOption::Type::File: {
+        case QaplaTester::EngineOption::Type::File: {
             // File input
             modified = existingFileInput(option.name.c_str(), value, fileInputWidth);
             break;
         }
-        case EngineOption::Type::Check: {
+        case QaplaTester::EngineOption::Type::Check: {
             // Boolean input (converted to "true"/"false")
             bool boolValue = (value == "true");
             if (booleanInput(option.name.c_str(), boolValue)) {
@@ -445,7 +446,7 @@ namespace QaplaWindows::ImGuiControls {
             }
             break;
         }
-        case EngineOption::Type::Spin: {
+        case QaplaTester::EngineOption::Type::Spin: {
             // Integer input with min/max
             int intValue = value.empty() ? option.min.value_or(0) : std::stoi(value);
             if (inputInt(option.name.c_str(), intValue, option.min.value_or(0), option.max.value_or(100))) {
@@ -454,7 +455,7 @@ namespace QaplaWindows::ImGuiControls {
             }
             break;
         }
-        case EngineOption::Type::Slider: {
+        case QaplaTester::EngineOption::Type::Slider: {
             // Slider input with min/max
             int intValue = value.empty() ? option.min.value_or(0) : std::stoi(value);
             if (sliderInt(option.name.c_str(), intValue, option.min.value_or(0), option.max.value_or(100))) {
@@ -463,7 +464,7 @@ namespace QaplaWindows::ImGuiControls {
             }
             break;
         }
-        case EngineOption::Type::Combo: {
+        case QaplaTester::EngineOption::Type::Combo: {
             // Combo box for selecting from predefined options
             int currentIndex = 0;
             auto it = std::find(option.vars.begin(), option.vars.end(), value);
@@ -476,7 +477,7 @@ namespace QaplaWindows::ImGuiControls {
             }
             break;
         }
-        case EngineOption::Type::String: {
+        case QaplaTester::EngineOption::Type::String: {
             // Check if the option name contains "Path" (case insensitive)
             std::string optionNameLower = option.name;
             std::transform(optionNameLower.begin(), optionNameLower.end(), optionNameLower.begin(), ::tolower);
@@ -491,7 +492,7 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         default:
-            ImGui::Text("Unsupported option type: %s", EngineOption::to_string(option.type).c_str());
+            ImGui::Text("Unsupported option type: %s", QaplaTester::EngineOption::to_string(option.type).c_str());
             break;
         }
 
@@ -549,7 +550,7 @@ namespace QaplaWindows::ImGuiControls {
 		uint32_t movesToPlay = 0;
         try {
             // Parse the time control string
-			TimeSegment ts = TimeSegment::fromString(timeControl);
+			QaplaTester::TimeSegment ts = QaplaTester::TimeSegment::fromString(timeControl);
             baseTimeMs = ts.baseTimeMs;
             incrementMs = ts.incrementMs;
             movesToPlay = ts.movesToPlay;
@@ -587,7 +588,7 @@ namespace QaplaWindows::ImGuiControls {
 
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
 		if (!blitz) inputInt<uint32_t>("Moves to Play", movesToPlay, 0, 1000);
-        TimeSegment res;
+        QaplaTester::TimeSegment res;
 		res.movesToPlay = movesToPlay;
         res.baseTimeMs = static_cast<uint64_t>(hours) * 3600000 +
             static_cast<uint64_t>(minutes) * 60000 +

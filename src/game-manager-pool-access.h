@@ -37,22 +37,22 @@ public:
      * @brief Constructor with explicit pool instance.
      * @param pool Shared pointer to a GameManagerPool instance.
      */
-    explicit GameManagerPoolAccess(std::shared_ptr<GameManagerPool> pool)
+    explicit GameManagerPoolAccess(std::shared_ptr<QaplaTester::GameManagerPool> pool)
         : pool_(std::move(pool)) {}
 
     /**
      * @brief Get a raw pointer to the GameManagerPool.
      * @return Pointer to the pool instance (either from shared_ptr or singleton).
      */
-    [[nodiscard]] GameManagerPool* get() const {
-        return pool_ ? pool_.get() : &GameManagerPool::getInstance();
+    [[nodiscard]] QaplaTester::GameManagerPool* get() const {
+        return pool_ ? pool_.get() : &QaplaTester::GameManagerPool::getInstance();
     }
 
     /**
      * @brief Arrow operator for convenient access to pool methods.
      * @return Pointer to the pool instance.
      */
-    [[nodiscard]] GameManagerPool* operator->() const {
+    [[nodiscard]] QaplaTester::GameManagerPool* operator->() const {
         return get();
     }
 
@@ -60,10 +60,10 @@ public:
      * @brief Dereference operator for convenient access.
      * @return Reference to the pool instance.
      */
-    [[nodiscard]] GameManagerPool& operator*() const {
+    [[nodiscard]] QaplaTester::GameManagerPool& operator*() const {
         return *get();
     }
 
 private:
-    std::shared_ptr<GameManagerPool> pool_; ///< Optional pool instance; if nullptr, uses singleton.
+    std::shared_ptr<QaplaTester::GameManagerPool> pool_; ///< Optional pool instance; if nullptr, uses singleton.
 };

@@ -53,7 +53,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the PGN options.
          * @return Reference to the PGN options.
          */
-        PgnIO::Options& pgnOptions() {
+        QaplaTester::PgnIO::Options& pgnOptions() {
             return pgnOptions_;
         }
 
@@ -61,7 +61,7 @@ namespace QaplaWindows {
          * @brief Returns a const reference to the PGN options.
          * @return Const reference to the PGN options.
          */
-        [[nodiscard]] const PgnIO::Options& pgnOptions() const {
+        [[nodiscard]] const QaplaTester::PgnIO::Options& pgnOptions() const {
             return pgnOptions_;
         }
 
@@ -77,7 +77,7 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
-        PgnIO::Options pgnOptions_;
+        QaplaTester::PgnIO::Options pgnOptions_;
         std::string id_;
     };
 

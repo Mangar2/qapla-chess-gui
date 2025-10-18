@@ -56,7 +56,7 @@ namespace QaplaWindows {
          * Applies global settings if enabled.
          * @return Vector of EngineConfig objects representing the active engines.
 		 */
-        std::vector<EngineConfig> getActiveEngines() const;
+        std::vector<QaplaTester::EngineConfig> getActiveEngines() const;
         /**
          * @brief Sets the list of active engine configurations.
          * 
@@ -66,7 +66,7 @@ namespace QaplaWindows {
          * 
          * @param engines Vector of EngineConfig objects to set as active engines.
          */
-        void setMatchingActiveEngines(const std::vector<EngineConfig>& engines);
+        void setMatchingActiveEngines(const std::vector<QaplaTester::EngineConfig>& engines);
 
         /**
          * @brief Gets the global engine settings.
@@ -106,7 +106,7 @@ namespace QaplaWindows {
         void executeCommand(const std::string &button);
         void drawEngineList();
 
-        std::vector<EngineConfig> activeEngines_;
+        std::vector<QaplaTester::EngineConfig> activeEngines_;
         GlobalEngineSettings globalSettings_;
         bool showGlobalControls_ = true;
 

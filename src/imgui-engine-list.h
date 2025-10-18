@@ -68,7 +68,7 @@ namespace QaplaWindows {
          * @brief Sets the engine records for the list.
          * @param engineRecords The engine records to display.
          */
-        void setEngineRecords(const EngineRecords& engineRecords) {
+        void setEngineRecords(const QaplaTester::EngineRecords& engineRecords) {
             engineRecords_ = engineRecords;
         }   
 
@@ -76,7 +76,7 @@ namespace QaplaWindows {
          * @brief Gets the current engine records.
          * @return The current engine records.
          */
-        const EngineRecords& getEngineRecords() const {
+        const QaplaTester::EngineRecords& getEngineRecords() const {
             return engineRecords_;
         }
 
@@ -117,8 +117,8 @@ namespace QaplaWindows {
         std::vector<uint32_t> infoCnt_;
         std::optional<size_t> nextHalfmoveNo_;
    
-        EngineRecords engineRecords_;
-        ChangeTracker gameRecordTracker_;
+        QaplaTester::EngineRecords engineRecords_;
+        QaplaTester::ChangeTracker gameRecordTracker_;
 
         bool allowInput_ = false;
     };

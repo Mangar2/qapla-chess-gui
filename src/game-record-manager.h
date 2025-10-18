@@ -39,13 +39,13 @@ public:
      * @param fileName Name of the PGN file to load.
      * @param gameCallback Optional callback function called for each loaded game.
      */
-    void load(const std::string& fileName, std::function<bool(const GameRecord&, float)> gameCallback = nullptr);
+    void load(const std::string& fileName, std::function<bool(const QaplaTester::GameRecord&, float)> gameCallback = nullptr);
 
     /**
      * @brief Gets the loaded games.
      * @return Const reference to the vector of GameRecords.
      */
-    const std::vector<GameRecord>& getGames() const { return games_; }
+    const std::vector<QaplaTester::GameRecord>& getGames() const { return games_; }
 
     /**
      * @brief Gets the game positions from the last loaded file.
@@ -73,9 +73,9 @@ public:
      * @param loadComments Whether to parse move comments.
      * @return Optional GameRecord if successful.
      */
-    std::optional<GameRecord> loadGameByIndex(size_t index, bool loadComments = true);
+    std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index, bool loadComments = true);
 
 private:
-    std::vector<GameRecord> games_;  // Loaded game records
-    PgnIO pgnIO_;  // PGN I/O handler
+    std::vector<QaplaTester::GameRecord> games_;  // Loaded game records
+    QaplaTester::PgnIO pgnIO_;  // PGN I/O handler
 };

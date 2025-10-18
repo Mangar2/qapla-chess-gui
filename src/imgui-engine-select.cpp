@@ -24,6 +24,12 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/engine-config-manager.h"
 
+using QaplaTester::EngineWorkerFactory;
+using QaplaTester::EngineConfig;
+using QaplaTester::RestartOption;
+using QaplaTester::TraceLevel;
+using QaplaTester::EngineConfigManager;
+
 #include <imgui.h>
 #include <algorithm>
 

@@ -21,6 +21,8 @@
 
 #include "qapla-engine/evalvalue.h"
 
+using QaplaTester::GameRecord;
+
 #include <sstream>
 #include <iomanip>
 

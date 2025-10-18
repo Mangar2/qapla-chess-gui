@@ -266,7 +266,7 @@ namespace QaplaWindows
 
 		std::unique_ptr<GameRecord> gameRecord_;
 		std::unique_ptr<ComputeTask> computeTask_;
-		TimeControl timeControl_;
+		QaplaTester::TimeControl timeControl_;
 
 		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
 		std::unique_ptr<BoardWindow> boardWindow_;

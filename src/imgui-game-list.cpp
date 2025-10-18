@@ -24,6 +24,9 @@
 #include "callback-manager.h"
 #include "qapla-tester/game-result.h"
 
+using QaplaTester::GameRecord;
+using QaplaTester::GameResult;
+
 #include <fstream>
 #include <sstream>
 #include <set>

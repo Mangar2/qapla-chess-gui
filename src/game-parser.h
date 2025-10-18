@@ -33,7 +33,7 @@ namespace QaplaUtils {
  * 
  * A parser function takes a string input and optionally returns a GameRecord
  */
-using ParserFunction = std::function<std::optional<GameRecord>(const std::string&)>;
+using ParserFunction = std::function<std::optional<QaplaTester::GameRecord>(const std::string&)>;
 
 /**
  * @brief Main game parser that manages parser functions
@@ -64,7 +64,7 @@ public:
      * @param input The input string to parse
      * @return std::optional<GameRecord> A GameRecord if any parser succeeded, std::nullopt otherwise
      */
-    std::optional<GameRecord> parse(const std::string& input);
+    std::optional<QaplaTester::GameRecord> parse(const std::string& input);
 
     /**
      * @brief Gets the name of the parser that last successfully parsed input
@@ -86,6 +86,6 @@ private:
  * @param input The input string to parse
  * @return std::optional<GameRecord> A GameRecord if FEN was found and parsed successfully
  */
-std::optional<GameRecord> parseFen(const std::string& input);
+std::optional<QaplaTester::GameRecord> parseFen(const std::string& input);
 
 } // namespace QaplaUtils

@@ -215,8 +215,8 @@ public:
         return instance;
     }    
 
-    static Callback::Manager<const GameRecord&>& gameUpdated() {
-        static Callback::Manager<const GameRecord&> instance;
+    static Callback::Manager<const QaplaTester::GameRecord&>& gameUpdated() {
+        static Callback::Manager<const QaplaTester::GameRecord&> instance;
         return instance;
     }
   

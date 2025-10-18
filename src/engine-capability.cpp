@@ -28,6 +28,10 @@
 
 using namespace QaplaConfiguration;
 
+using QaplaTester::EngineOption;
+using QaplaTester::parseEngineProtocol;
+using QaplaTester::EngineProtocol;
+
  /**
   * @brief Converts an EngineOption to a JSON-Line formatted string.
   * @param option The EngineOption to convert.

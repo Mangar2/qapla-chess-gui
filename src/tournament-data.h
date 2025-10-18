@@ -133,7 +133,7 @@ namespace QaplaWindows {
          * @brief Sets the GameManagerPool instance to use.
          * @param pool Shared pointer to a GameManagerPool instance.
          */
-        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool);
+        void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool);
         
         uint32_t& concurrency() {
             return concurrency_;
@@ -195,11 +195,11 @@ namespace QaplaWindows {
             return *tournamentPgn_;
         }
 
-        const PgnIO::Options& pgnConfig() const {
+        const QaplaTester::PgnIO::Options& pgnConfig() const {
             return tournamentPgn_->pgnOptions();
         }
 
-        PgnIO::Options& pgnConfig() {
+        QaplaTester::PgnIO::Options& pgnConfig() {
             return tournamentPgn_->pgnOptions();
         }
 

@@ -51,7 +51,7 @@ namespace QaplaConfiguration {
             nodesPerMove.setNodes(100000); // Default Nodes per Move: 100,000 nodes
         }
 		bool operator==(const TimeControlSettings& other) const = default;
-        const TimeControl& getSelectedTimeControl() const {
+        const QaplaTester::TimeControl& getSelectedTimeControl() const {
             switch (selected) {
                 case Blitz: return blitzTime;
                 case tcTournament: return tournamentTime;
@@ -63,11 +63,11 @@ namespace QaplaConfiguration {
             }
             throw std::runtime_error("Invalid selected time control");
 		}
-        TimeControl blitzTime;       ///< Time control for Blitz games.
-        TimeControl tournamentTime; ///< Time control for Tournament games.
-        TimeControl timePerMove;    ///< Time control for Time per Move.
-        TimeControl fixedDepth;     ///< Time control for Fixed Depth.
-        TimeControl nodesPerMove;   ///< Time control for Nodes per Move.
+        QaplaTester::TimeControl blitzTime;       ///< Time control for Blitz games.
+        QaplaTester::TimeControl tournamentTime; ///< Time control for Tournament games.
+        QaplaTester::TimeControl timePerMove;    ///< Time control for Time per Move.
+        QaplaTester::TimeControl fixedDepth;     ///< Time control for Fixed Depth.
+        QaplaTester::TimeControl nodesPerMove;   ///< Time control for Nodes per Move.
 		selectedTimeControl selected = Blitz; 
         
         static constexpr std::array<const char*, 5> timeControlStrings{

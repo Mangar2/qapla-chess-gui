@@ -58,7 +58,7 @@ public:
      * 
      * @return std::optional<GameRecord> 
      */
-    static std::optional<GameRecord> getSelectedGame() {
+    static std::optional<QaplaTester::GameRecord> getSelectedGame() {
         return selectedGame_;
     }
 
@@ -133,7 +133,7 @@ private:
      */
     std::mutex gameTableMutex_;
 
-    inline static std::optional<GameRecord> selectedGame_;
+    inline static std::optional<QaplaTester::GameRecord> selectedGame_;
 };
 
 } // namespace QaplaWindows

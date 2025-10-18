@@ -23,6 +23,11 @@
 #include "qapla-tester/game-state.h"
 #include "qapla-tester/pgn-io.h"
 
+using QaplaTester::GameRecord;
+using QaplaTester::GameState;
+using QaplaTester::MoveRecord;
+using QaplaTester::PgnIO;
+
 #include <algorithm>
 
 namespace QaplaUtils {

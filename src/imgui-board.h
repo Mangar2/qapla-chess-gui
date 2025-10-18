@@ -132,7 +132,7 @@ namespace QaplaWindows
         bool isValidPosition() const;
 
     protected:
-        ChangeTracker gameRecordTracker_;
+        QaplaTester::ChangeTracker gameRecordTracker_;
     private:
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;

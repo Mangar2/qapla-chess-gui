@@ -36,7 +36,7 @@ namespace QaplaWindows {
          * @brief Structure for an engine configuration with selection status
          */
         struct EngineConfiguration {
-            EngineConfig config;
+            QaplaTester::EngineConfig config;
             bool selected = false;
             std::string originalName;  ///< Original name from config or user-modified name, used for disambiguation reset
         };
@@ -140,14 +140,14 @@ namespace QaplaWindows {
          * @param engineConfig The engine configuration to search for
          * @return Iterator to the found configuration or end()
          */
-        std::vector<EngineConfiguration>::iterator findEngineConfiguration(const EngineConfig& engineConfig);
+        std::vector<EngineConfiguration>::iterator findEngineConfiguration(const QaplaTester::EngineConfig& engineConfig);
         
         /**
          * @brief Finds the first deselected engine configuration that matches the given base engine
          * @param engineConfig The base engine configuration to match against
          * @return Iterator to the found configuration or end()
          */
-        std::vector<EngineConfiguration>::iterator findDeselectedEngineConfiguration(const EngineConfig& engineConfig);
+        std::vector<EngineConfiguration>::iterator findDeselectedEngineConfiguration(const QaplaTester::EngineConfig& engineConfig);
 
         /**
          * @brief Draws the selected engines section (with checkboxes)

@@ -32,6 +32,7 @@ imgui.ini
 *.sln.docstates
 *.epd
 *.DS_Store
+*.o
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

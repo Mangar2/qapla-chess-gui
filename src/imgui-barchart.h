@@ -103,7 +103,7 @@ namespace QaplaWindows {
          * Extracts centipawn scores from each move and populates the internal values vector.
          * @param gameRecord The GameRecord containing the move history to extract scores from.
          */
-        void setFromGameRecord(const GameRecord& gameRecord);
+        void setFromGameRecord(const QaplaTester::GameRecord& gameRecord);
 
         /**
          * Main drawing function that renders the complete bar chart
@@ -115,7 +115,7 @@ namespace QaplaWindows {
     private:
         std::vector<int32_t> values_;
         BarChartConfig config_;
-        ChangeTracker changeTracker_;
+        QaplaTester::ChangeTracker changeTracker_;
         
         /**
          * Calculates the Y-axis scale based on data values and configuration limits

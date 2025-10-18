@@ -20,6 +20,9 @@
 #include "game-record-manager.h"
 #include <algorithm>
 
+using QaplaTester::GameRecord;
+using QaplaTester::PgnIO;
+
 void GameRecordManager::load(const std::string& fileName, std::function<bool(const GameRecord&, float)> gameCallback) {
     games_ = pgnIO_.loadGames(fileName, false, gameCallback);  // Load without comments
 }

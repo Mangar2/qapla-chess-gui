@@ -61,9 +61,9 @@ void EngineTestWindow::setEngineConfiguration() {
     engineSelect_->setEngineConfiguration(sections);
 }
 
-std::vector<EngineConfig> EngineTestWindow::getSelectedEngineConfigurations() const
+std::vector<QaplaTester::EngineConfig> EngineTestWindow::getSelectedEngineConfigurations() const
 {
-    std::vector<EngineConfig> selectedConfigs;
+    std::vector<QaplaTester::EngineConfig> selectedConfigs;
     const auto& configurations = engineSelect_->getEngineConfigurations();
     
     for (const auto& config : configurations) {
@@ -120,7 +120,7 @@ static void drawButtonIcon(const std::string& button, EngineTests::State testSta
 }
 
 static void handleButtonClick(const std::string& button, EngineTests::State testState, 
-    const std::vector<EngineConfig>& selectedEngines) {
+    const std::vector<QaplaTester::EngineConfig>& selectedEngines) {
     try {
         if (button == "Run/Stop" && testState != EngineTests::State::Running) {
             // Start tests

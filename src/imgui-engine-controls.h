@@ -36,11 +36,11 @@ namespace QaplaWindows::ImGuiEngineControls {
 /**
  * @brief Converts TraceLevel to string representation
  */
-inline std::string to_string(TraceLevel level) {
+inline std::string to_string(QaplaTester::TraceLevel level) {
     switch (level) {
-        case TraceLevel::none: return "none";
-        case TraceLevel::command: return "command";
-        case TraceLevel::info: return "all";
+        case QaplaTester::TraceLevel::none: return "none";
+        case QaplaTester::TraceLevel::command: return "command";
+        case QaplaTester::TraceLevel::info: return "all";
         default: return "command";
     }
 }
@@ -48,10 +48,10 @@ inline std::string to_string(TraceLevel level) {
 /**
  * @brief Converts string to TraceLevel
  */
-inline TraceLevel stringToTrace(const std::string& str) {
-    if (str == "none") return TraceLevel::none;
-    if (str == "all") return TraceLevel::info;
-    return TraceLevel::command;
+inline QaplaTester::TraceLevel stringToTrace(const std::string& str) {
+    if (str == "none") return QaplaTester::TraceLevel::none;
+    if (str == "all") return QaplaTester::TraceLevel::info;
+    return QaplaTester::TraceLevel::command;
 }
 
 /**
@@ -60,7 +60,7 @@ inline TraceLevel stringToTrace(const std::string& str) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineName(EngineConfig& config, bool enabled) {
+inline bool drawEngineName(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string name = config.getName();
@@ -77,7 +77,7 @@ inline bool drawEngineName(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineAuthor(EngineConfig& config, bool enabled) {
+inline bool drawEngineAuthor(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string author = config.getAuthor();
@@ -94,7 +94,7 @@ inline bool drawEngineAuthor(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineCommand(EngineConfig& config, bool enabled) {
+inline bool drawEngineCommand(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string cmd = config.getCmd();
@@ -111,7 +111,7 @@ inline bool drawEngineCommand(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineDirectory(EngineConfig& config, bool enabled) {
+inline bool drawEngineDirectory(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string dir = config.getDir();
@@ -128,20 +128,17 @@ inline bool drawEngineDirectory(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineProtocol(EngineConfig& config, bool enabled) {
+inline bool drawEngineProtocol(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    constexpr std::array protocolOptions = {EngineProtocol::Uci, EngineProtocol::XBoard};
+    constexpr std::array protocolOptions = {QaplaTester::EngineProtocol::Uci, QaplaTester::EngineProtocol::XBoard};
     
-    std::vector<std::string> labels;
-    for (auto option : protocolOptions) {
-        labels.push_back(to_string(option));
-    }
+    std::vector<std::string> labels = {"UCI", "XBoard"};
     
-    auto protocolStr = to_string(config.getProtocol());
+    std::string protocolStr = (config.getProtocol() == QaplaTester::EngineProtocol::Uci) ? "UCI" : "XBoard";
 
     if (ImGuiControls::selectionBox("Protocol", protocolStr, labels)) {
-        config.setProtocol(parseEngineProtocol(protocolStr));
+        config.setProtocol(QaplaTester::parseEngineProtocol(protocolStr));
         return true;
     }
     return false;
@@ -153,10 +150,10 @@ inline bool drawEngineProtocol(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineTraceLevel(EngineConfig& config, bool enabled) {
+inline bool drawEngineTraceLevel(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    constexpr std::array traceOptions = {TraceLevel::none, TraceLevel::command, TraceLevel::info};
+    constexpr std::array traceOptions = {QaplaTester::TraceLevel::none, QaplaTester::TraceLevel::command, QaplaTester::TraceLevel::info};
     
     std::vector<std::string> labels;
     for (auto option : traceOptions) {
@@ -178,20 +175,23 @@ inline bool drawEngineTraceLevel(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineRestartOption(EngineConfig& config, bool enabled) {
+inline bool drawEngineRestartOption(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    constexpr std::array restartOptions = {RestartOption::EngineDecides, RestartOption::Always, RestartOption::Never};
+    constexpr std::array restartOptions = {QaplaTester::RestartOption::EngineDecides, QaplaTester::RestartOption::Always, QaplaTester::RestartOption::Never};
     
-    std::vector<std::string> labels;
-    for (auto option : restartOptions) {
-        labels.push_back(to_string(option));
+    std::vector<std::string> labels = {"Engine decides", "Always", "Never"};
+    
+    std::string restartStr;
+    switch (config.getRestartOption()) {
+        case QaplaTester::RestartOption::EngineDecides: restartStr = "Engine decides"; break;
+        case QaplaTester::RestartOption::Always: restartStr = "Always"; break;
+        case QaplaTester::RestartOption::Never: restartStr = "Never"; break;
+        default: restartStr = "Engine decides"; break;
     }
-    
-    auto restartStr = to_string(config.getRestartOption());
 
     if (ImGuiControls::selectionBox("Restart", restartStr, labels)) {
-        config.setRestartOption(parseRestartOption(restartStr));
+        config.setRestartOption(QaplaTester::parseRestartOption(restartStr));
         return true;
     }
     return false;
@@ -203,7 +203,7 @@ inline bool drawEngineRestartOption(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEnginePonder(EngineConfig& config, bool enabled) {
+inline bool drawEnginePonder(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     bool ponder = config.isPonderEnabled();
@@ -220,7 +220,7 @@ inline bool drawEnginePonder(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineGauntlet(EngineConfig& config, bool enabled) {
+inline bool drawEngineGauntlet(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     return ImGuiControls::checkbox("Gauntlet", config.gauntlet());
@@ -232,7 +232,7 @@ inline bool drawEngineGauntlet(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
-inline bool drawEngineTimeControl(EngineConfig& config, bool enabled) {
+inline bool drawEngineTimeControl(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     std::string tcString = config.getTimeControl().toPgnTimeControlString();
@@ -253,7 +253,7 @@ inline bool drawEngineTimeControl(EngineConfig& config, bool enabled) {
  * @param enabled Whether the control is enabled
  * @return True if any option was changed
  */
-inline bool drawEngineOptions(EngineConfig& config, bool enabled) {
+inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
@@ -285,10 +285,10 @@ inline bool drawEngineOptions(EngineConfig& config, bool enabled) {
  * @param config Engine configuration to display
  * @param full Whether to show full details (directory and author)
  */
-inline void drawEngineReadOnlyInfo(const EngineConfig& config, bool full = false) {
+inline void drawEngineReadOnlyInfo(const QaplaTester::EngineConfig& config, bool full = false) {
     ImGui::Text(full ? "Command: %s" : "%s", config.getCmd().c_str());
     if (full) ImGui::Text("Directory: %s", config.getDir().c_str());
-    ImGui::Text(full ? "Protocol: %s" : "%s", to_string(config.getProtocol()).c_str());
+        ImGui::Text(full ? "Protocol: %s" : "%s", (config.getProtocol() == QaplaTester::EngineProtocol::Uci ? "UCI" : "XBoard"));
     if (full) ImGui::Text("Author: %s", config.getAuthor().c_str());
 }
 

@@ -60,7 +60,7 @@ namespace QaplaWindows
          * @brief Gets the selected engine configurations
          * @return Vector of selected engine configurations
          */
-        std::vector<EngineConfig> getSelectedEngineConfigurations() const;
+        std::vector<QaplaTester::EngineConfig> getSelectedEngineConfigurations() const;
         
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
     };

@@ -69,7 +69,7 @@ namespace QaplaConfiguration {
          * @param path The path to the engine executable.
          * @param protocol The protocol used by the engine.
          */
-        void deleteCapability(const std::string& path, EngineProtocol protocol) {
+        void deleteCapability(const std::string& path, QaplaTester::EngineProtocol protocol) {
             auto key = makeKey(path, protocol);
             capabilities_.erase(key);
         }
@@ -80,7 +80,7 @@ namespace QaplaConfiguration {
          * @param protocol The protocol used by the engine.
          * @return An optional EngineCapability if found.
          */
-        const std::optional<EngineCapability> getCapability(const std::string& path, EngineProtocol protocol) const {
+        const std::optional<EngineCapability> getCapability(const std::string& path, QaplaTester::EngineProtocol protocol) const {
             auto key = makeKey(path, protocol);
             auto it = capabilities_.find(key);
             if (it != capabilities_.end()) {
@@ -128,7 +128,7 @@ namespace QaplaConfiguration {
          * @param protocol The protocol used by the engine.
          * @return A string key combining path and protocol.
          */
-        static std::string makeKey(const std::string& path, EngineProtocol protocol) {
+        static std::string makeKey(const std::string& path, QaplaTester::EngineProtocol protocol) {
             return path + "|" + to_string(protocol);
         }
 

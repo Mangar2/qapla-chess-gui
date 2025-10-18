@@ -49,8 +49,8 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
 }
 EngineSetupWindow::~EngineSetupWindow() = default;
 
-std::vector<EngineConfig> EngineSetupWindow::getActiveEngines() const {
-    std::vector<EngineConfig> engines = activeEngines_;
+std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() const {
+    std::vector<QaplaTester::EngineConfig> engines = activeEngines_;
     
     // Apply global settings if enabled
     for (auto& engine : engines) {
@@ -65,9 +65,9 @@ std::vector<EngineConfig> EngineSetupWindow::getActiveEngines() const {
     return engines;
 }
 
-void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>& engines) {
+void EngineSetupWindow::setMatchingActiveEngines(const std::vector<QaplaTester::EngineConfig>& engines) {
     activeEngines_.clear();
-    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
     for (const auto& engine : engines) {
         auto* matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
@@ -85,7 +85,7 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<EngineConfig>
  * @param inputWidth Width of the input fields for options.
  * @return True if any option was changed, false otherwise.
  */
-static bool drawOptions(EngineConfig& config, float inputWidth) {
+static bool drawOptions(QaplaTester::EngineConfig& config, float inputWidth) {
     auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
     const auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
     if (!capability) { return false; }
@@ -111,7 +111,7 @@ static bool drawOptions(EngineConfig& config, float inputWidth) {
  * @param index Index of the engine, used to generate unique ImGui IDs.
  * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
  */
-static std::tuple<bool, bool> drawEngineConfigSection(EngineConfig& config, int index, bool selected) {
+static std::tuple<bool, bool> drawEngineConfigSection(QaplaTester::EngineConfig& config, int index, bool selected) {
     std::string headerLabel = config.getName().empty()
         ? std::format("Engine {}###engineHeader{}", index + 1, index)
         : std::format("{}###engineHeader{}", config.getName(), index, index);
@@ -241,7 +241,7 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
             auto commands = OsDialogs::openFileDialog(true);
             for (auto &command : commands)
             {
-                EngineWorkerFactory::getConfigManagerMutable().addConfig(EngineConfig::createFromPath(command));
+                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().addConfig(QaplaTester::EngineConfig::createFromPath(command));
             }
             QaplaConfiguration::Configuration::instance().setModified();
         }
@@ -249,7 +249,7 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
         {
             for (auto &active : activeEngines_)
             {
-                EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
+                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
                 QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
                     active.getCmd(), active.getProtocol());
             }
@@ -266,7 +266,7 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
 }
 
 void EngineSetupWindow::drawEngineList() {
-    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
     if (configs.empty()) {
         ImVec2 avail = ImGui::GetContentRegionAvail();
@@ -310,7 +310,7 @@ void EngineSetupWindow::drawEngineList() {
 
 void EngineSetupWindow::draw() {
     constexpr float rightBorder = 5.0F;
-    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
 
     if (configs.empty()) {

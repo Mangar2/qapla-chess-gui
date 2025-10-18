@@ -75,13 +75,13 @@ namespace QaplaWindows
          * @brief Run all tests on selected engines
          * @param engineConfigs Vector of engine configurations to test
          */
-        void runTests(const std::vector<EngineConfig>& engineConfigs);
+        void runTests(const std::vector<QaplaTester::EngineConfig>& engineConfigs);
         
         /**
          * @brief Set the selected engines for testing
          * @param configs Vector of engine configurations
          */
-        void setEngineConfigurations(const std::vector<EngineConfig>& configs);
+        void setEngineConfigurations(const std::vector<QaplaTester::EngineConfig>& configs);
         
         /**
          * @brief Clear all test results and reset state
@@ -146,22 +146,22 @@ namespace QaplaWindows
         void init();
 
         void addResult(const std::string& engineName, const QaplaTester::TestResult& result);
-        void testEngineStartStop(const EngineConfig& engineConfig);
-        void testHashTableMemory(const EngineConfig& engineConfig);
-        void testLowerCaseOption(const EngineConfig& engineConfig);
-        void testEngineOptions(const EngineConfig& engineConfig);
-        void testAnalyze(const EngineConfig& engineConfig);
-        void testImmediateStop(const EngineConfig& engineConfig);
-        void testInfiniteAnalyze(const EngineConfig& engineConfig);
-        void testGoLimits(const EngineConfig& engineConfig);
-        void testEpFromFen(const EngineConfig& engineConfig);
-        void testComputeGame(const EngineConfig& engineConfig);
-        void testPonder(const EngineConfig& engineConfig);
-        void testEpd(const EngineConfig& engineConfig);
-        void testMultipleGames(const EngineConfig& engineConfig);
-        void runTestsThreaded(const std::vector<EngineConfig>& engineConfigs);
+        void testEngineStartStop(const QaplaTester::EngineConfig& engineConfig);
+        void testHashTableMemory(const QaplaTester::EngineConfig& engineConfig);
+        void testLowerCaseOption(const QaplaTester::EngineConfig& engineConfig);
+        void testEngineOptions(const QaplaTester::EngineConfig& engineConfig);
+        void testAnalyze(const QaplaTester::EngineConfig& engineConfig);
+        void testImmediateStop(const QaplaTester::EngineConfig& engineConfig);
+        void testInfiniteAnalyze(const QaplaTester::EngineConfig& engineConfig);
+        void testGoLimits(const QaplaTester::EngineConfig& engineConfig);
+        void testEpFromFen(const QaplaTester::EngineConfig& engineConfig);
+        void testComputeGame(const QaplaTester::EngineConfig& engineConfig);
+        void testPonder(const QaplaTester::EngineConfig& engineConfig);
+        void testEpd(const QaplaTester::EngineConfig& engineConfig);
+        void testMultipleGames(const QaplaTester::EngineConfig& engineConfig);
+        void runTestsThreaded(const std::vector<QaplaTester::EngineConfig>& engineConfigs);
         
-        std::vector<EngineConfig> engineConfigs_;
+        std::vector<QaplaTester::EngineConfig> engineConfigs_;
         std::unique_ptr<ImGuiTable> resultsTable_;
         State state_;
         std::mutex tableMutex_;

@@ -47,11 +47,11 @@ namespace QaplaWindows {
             id_ = id;
         }
 
-        Openings& openings() {
+        QaplaTester::Openings& openings() {
             return openings_;
         }
 
-        [[nodiscard]] const Openings& openings() const {
+        [[nodiscard]] const QaplaTester::Openings& openings() const {
             return openings_;
         }
 
@@ -59,7 +59,7 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
-        Openings openings_;
+        QaplaTester::Openings openings_;
         std::string id_;
     };
 

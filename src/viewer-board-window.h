@@ -58,20 +58,20 @@ namespace QaplaWindows
          * @brief Set data from game record for the window.
          * @param gameRecord The game record to display.
          */
-        void setFromGameRecord(const GameRecord& gameRecord);
+        void setFromGameRecord(const QaplaTester::GameRecord& gameRecord);
 
         /**
          * @brief Set data from engine records for the window.
          * @param engineRecords The engine records to display.
          */
-        void setFromEngineRecords(const EngineRecords& engineRecords);
+        void setFromEngineRecords(const QaplaTester::EngineRecords& engineRecords);
 
         /**
          * @brief Set data from move record for the window.
          * @param moveRecord The move record to display.
          * @param playerIndex The index of the player, 0 is always white, 1 always black.
          */
-        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
+        void setFromMoveRecord(const QaplaTester::MoveRecord& moveRecord, uint32_t playerIndex);
 
         /**
          * @brief Set the active state of the window.

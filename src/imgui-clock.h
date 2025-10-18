@@ -111,13 +111,13 @@ namespace QaplaWindows {
 			std::uint64_t bTimeLeftMs = 0;
             std::uint64_t wTimeCurMove = 0;
 			std::uint64_t bTimeCurMove = 0;
-            Timer wTimer;
-			Timer bTimer;
+            QaplaHelpers::Timer wTimer;
+			QaplaHelpers::Timer bTimer;
 			bool wtm = true; 
 		};
         ClockData clockData_;
         uint32_t nextHalfmoveNo_ = 0;
-        ChangeTracker gameRecordTracker_;
+        QaplaTester::ChangeTracker gameRecordTracker_;
 
         std::vector<uint32_t> infoCnt_{};
         std::vector<uint32_t> displayedMoveNo_{};

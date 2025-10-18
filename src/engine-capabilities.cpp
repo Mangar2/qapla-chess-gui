@@ -27,6 +27,11 @@
 
 #include <thread>
 
+using QaplaTester::EngineConfig;
+using QaplaTester::EngineWorkerFactory;
+using QaplaTester::EngineWorker;
+using QaplaTester::EngineProtocol;
+
 using namespace QaplaConfiguration;
 
 void EngineCapabilities::autoDetect() {

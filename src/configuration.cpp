@@ -33,6 +33,10 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+
+using QaplaTester::Logger;
+using QaplaTester::TraceLevel;
+using QaplaTester::EngineWorkerFactory;
 #include <unordered_map>
 
 
@@ -106,7 +110,7 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
             engineCapabilities_.addOrReplace(section);
         }
         else if (sectionName == "engine") {
-            EngineConfig config;
+            QaplaTester::EngineConfig config;
             config.setValues(section.getUnorderedMap());
             EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
         }

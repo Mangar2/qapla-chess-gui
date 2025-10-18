@@ -26,7 +26,8 @@
 #include <cstdlib>
 
 using namespace QaplaHelpers;
-using namespace QaplaTester;
+using QaplaTester::Logger;
+using QaplaTester::TraceLevel;
 
 Autosavable::Autosavable(std::string filename, 
                          std::string backupSuffix,

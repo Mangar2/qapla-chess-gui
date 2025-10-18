@@ -69,7 +69,7 @@ public:
         clearRunningFlags();
 
         poolAccess_->withGameRecords(
-            [&](const GameRecord& game, uint32_t gameIndex) {
+            [&](const QaplaTester::GameRecord& game, uint32_t gameIndex) {
                 ensureWindowExists(gameIndex);
                 boardWindows_[gameIndex].setFromGameRecord(game);
                 boardWindows_[gameIndex].setRunning(true);
@@ -81,7 +81,7 @@ public:
         );
 
         poolAccess_->withEngineRecords(
-            [&](const EngineRecords& records, uint32_t gameIndex) {
+            [&](const QaplaTester::EngineRecords& records, uint32_t gameIndex) {
                 if (gameIndex >= boardWindows_.size()) {
                     return;
                 }
@@ -96,7 +96,7 @@ public:
         );
 
         poolAccess_->withMoveRecord(
-            [&](const MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) {
+            [&](const QaplaTester::MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) {
                 if (gameIndex >= boardWindows_.size()) {
                     return;
                 }
