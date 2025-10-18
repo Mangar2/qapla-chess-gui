@@ -42,6 +42,10 @@
 
 #include <imgui.h>
 
+
+
+using namespace QaplaTester;
+
 namespace QaplaWindows {
 
     TournamentData::TournamentData() : 

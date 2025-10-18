@@ -26,6 +26,9 @@
 
 using namespace QaplaWindows;
 
+using QaplaTester::EngineConfig;
+using QaplaTester::EngineReport;
+
 EngineTests::EngineTests()
     : state_(State::Cleared)
 {

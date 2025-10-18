@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <format>
 
+using namespace QaplaTester;
 using namespace QaplaWindows;
 
 SprtTournamentData::SprtTournamentData() : 

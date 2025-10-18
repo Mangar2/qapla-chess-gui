@@ -23,14 +23,16 @@
 
 #include <unordered_set>
 
-class Tournament;
+namespace QaplaTester {
+    class Tournament;
+}
 
 namespace QaplaWindows {
 
 
 	class TournamentResultIncremental {
     public: 
-        bool poll(const Tournament& tournament, double baseElo);
+        bool poll(const QaplaTester::Tournament& tournament, double baseElo);
 
         /*
 		 * @brief clears the internal state, removing all results and resetting counters.
@@ -58,7 +60,7 @@ namespace QaplaWindows {
          * 
 		 * It includes both finished and non-finished tournament pairings.
          */ 
-        const TournamentResult& getResult() const {
+        const QaplaTester::TournamentResult& getResult() const {
             return totalResult_;
 		}
 
@@ -67,7 +69,7 @@ namespace QaplaWindows {
          * 
 		 * @return Vector of scored engines with their names, results, and normalized scores.
 		 */
-        const std::vector<TournamentResult::Scored>& getScoredEngines() const {
+        const std::vector<QaplaTester::TournamentResult::Scored>& getScoredEngines() const {
             return totalResult_.scoredEngines();
         }
 
@@ -105,8 +107,8 @@ namespace QaplaWindows {
 
     private:
 
-        TournamentResult finishedResultsAggregate_;
-		TournamentResult totalResult_; ///< total sum of finalized and non finalized results
+        QaplaTester::TournamentResult finishedResultsAggregate_;
+		QaplaTester::TournamentResult totalResult_; ///< total sum of finalized and non finalized results
         std::unordered_set<std::string> engineNames_;
 
 		uint64_t updateCount_ = 0; ///< Number of updates 

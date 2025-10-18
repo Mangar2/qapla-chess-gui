@@ -30,8 +30,11 @@
 #include <vector>
 #include <string>
 
-struct MoveRecord;
-class GameRecord;
+namespace QaplaTester
+{
+    struct MoveRecord;
+    class GameRecord;
+}
 
 namespace QaplaWindows {
 
@@ -57,7 +60,7 @@ namespace QaplaWindows {
          * @brief sets the table content from a GameRecord.
          * @param gameRecord the GameRecord to extract the move list from.
          */
-        void setFromGameRecord(const GameRecord& gameRecord);
+        void setFromGameRecord(const QaplaTester::GameRecord& gameRecord);
 
         /**
          * @brief Sets whether the table rows are clickable.
@@ -69,7 +72,7 @@ namespace QaplaWindows {
         }
 
     private:
-        static std::vector<std::string> mkRow(const std::string& label, const MoveRecord& move, size_t index);
+        static std::vector<std::string> mkRow(const std::string& label, const QaplaTester::MoveRecord& move, size_t index);
 		size_t currentPly_ = 0;
         QaplaTester::ChangeTracker referenceTracker_;
         ImGuiTable table_;

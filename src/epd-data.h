@@ -30,9 +30,11 @@
 #include <memory>
 #include <optional>
 
-class EpdManager;
-struct EpdTestCase;
-struct EpdTestResult;
+namespace QaplaTester {
+    class EpdManager;
+    struct EpdTestCase;
+    struct EpdTestResult;
+}
 
 namespace QaplaWindows {
 
@@ -47,7 +49,7 @@ namespace QaplaWindows {
         };
         struct EpdConfig {
             std::string filepath;
-            std::vector<EngineConfig> engines;
+            std::vector<QaplaTester::EngineConfig> engines;
             uint32_t maxConcurrency = 32;
             uint32_t concurrency;
             uint64_t maxTimeInS;
@@ -132,7 +134,7 @@ namespace QaplaWindows {
          * @brief Sets the GameManagerPool instance to use.
          * @param pool Shared pointer to a GameManagerPool instance.
          */
-        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
+        void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
             poolAccess_ = GameManagerPoolAccess(pool);
             viewerBoardWindows_.setPoolAccess(poolAccess_);
         }
@@ -219,8 +221,8 @@ namespace QaplaWindows {
         void populateTable();
         std::optional<size_t> selectedIndex_;
 
-		std::shared_ptr<EpdManager> epdManager_;
-		std::unique_ptr<std::vector<EpdTestResult>> epdResults_;
+		std::shared_ptr<QaplaTester::EpdManager> epdManager_;
+		std::unique_ptr<std::vector<QaplaTester::EpdTestResult>> epdResults_;
    		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
 

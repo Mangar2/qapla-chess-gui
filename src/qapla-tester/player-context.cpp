@@ -30,6 +30,8 @@
 
 namespace QaplaTester {
 
+using QaplaHelpers::Timer;
+
 void PlayerContext::checkPV(const EngineEvent& event) {
     if (!event.searchInfo) { return; }
     const auto& searchInfo = *event.searchInfo;

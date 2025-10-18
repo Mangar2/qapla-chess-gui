@@ -32,6 +32,10 @@
 #include <memory>
 #include <vector>
 
+using QaplaTester::GameRecord;
+using QaplaTester::EngineRecords;
+using QaplaTester::MoveRecord;
+
 namespace QaplaWindows
 {
 

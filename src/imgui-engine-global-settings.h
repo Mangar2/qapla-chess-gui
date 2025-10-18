@@ -24,7 +24,10 @@
 #include <string>
 #include <functional>
 
-class EngineConfig;
+namespace QaplaTester
+{
+    class EngineConfig;
+}
 
 namespace QaplaWindows {
 
@@ -190,7 +193,7 @@ namespace QaplaWindows {
          * @param globalSettings The global settings to apply
          * @param timeControlSettings The time control settings to apply
          */
-        static void applyGlobalConfig(EngineConfig& engine, 
+        static void applyGlobalConfig(QaplaTester::EngineConfig& engine, 
                                       const GlobalSettings& globalSettings, 
                                       const TimeControlSettings& timeControlSettings);
 

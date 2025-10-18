@@ -22,6 +22,7 @@
 #include "qapla-tester/tournament.h"
 #include "qapla-tester/tournament-result.h"
 
+using QaplaTester::Tournament;
 using namespace QaplaWindows;
 
 bool TournamentResultIncremental::poll(const Tournament& tournament, double baseElo) {

@@ -33,6 +33,11 @@
 
 #include <sstream>
 #include <string>
+
+using QaplaTester::GameRecord;
+using QaplaTester::MoveRecord;
+using QaplaTester::SearchInfo;
+using QaplaTester::EngineRecord;
 #include <format>
 #include <memory>
 #include <algorithm>

@@ -49,7 +49,7 @@ namespace QaplaWindows {
          * @param blitz If true, limits input to minutes and seconds for the base time and seconds/milliseconds for the increment.
          * @return TimeSegment The updated time segment with the new configuration.
          */
-        static TimeSegment editTimeSegment(const TimeSegment& segment, bool blitz);
+        static QaplaTester::TimeSegment editTimeSegment(const QaplaTester::TimeSegment& segment, bool blitz);
 
 
 
@@ -59,7 +59,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static TimeControl drawBlitzTime(const TimeControl& currentTimeControl);
+        static QaplaTester::TimeControl drawBlitzTime(const QaplaTester::TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Tournament time settings.
@@ -67,7 +67,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static TimeControl drawTournamentTime(const TimeControl& currentTimeControl);
+        static QaplaTester::TimeControl drawTournamentTime(const QaplaTester::TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Time per Move settings.
@@ -75,7 +75,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static TimeControl drawTimePerMove(const TimeControl& currentTimeControl);
+        static QaplaTester::TimeControl drawTimePerMove(const QaplaTester::TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Fixed Depth settings.
@@ -83,7 +83,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static TimeControl drawFixedDepth(const TimeControl& currentTimeControl);
+        static QaplaTester::TimeControl drawFixedDepth(const QaplaTester::TimeControl& currentTimeControl);
 
         /**
          * @brief Draws the UI for configuring Nodes per Move settings.
@@ -91,7 +91,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static TimeControl drawNodesPerMove(const TimeControl& currentTimeControl);
+        static QaplaTester::TimeControl drawNodesPerMove(const QaplaTester::TimeControl& currentTimeControl);
 
     };
 

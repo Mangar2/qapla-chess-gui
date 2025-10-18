@@ -47,6 +47,8 @@
 
 #include "GLFW/glfw3.h"
 
+using namespace QaplaTester;
+
 using namespace QaplaWindows;
 
 InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)

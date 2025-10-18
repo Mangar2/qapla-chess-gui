@@ -34,6 +34,8 @@
 #include <cmath>
 #include <string>
 
+using namespace QaplaTester;
+
 namespace QaplaWindows
 {
     using QaplaBasics::Piece;
@@ -106,7 +108,7 @@ namespace QaplaWindows
     constexpr auto BLACK_COLOR = IM_COL32(0, 0, 0, 255);
 
     ImGuiBoard::ImGuiBoard()
-        : gameState_(std::make_unique<GameState>())
+        : gameState_(std::make_unique<QaplaTester::GameState>())
     {
     }
 
@@ -430,7 +432,7 @@ namespace QaplaWindows
             moveInput_ = {};
         } else if (!move.isEmpty()) {
             moveInput_ = {};
-            MoveRecord moveRecord;
+            QaplaTester::MoveRecord moveRecord;
             moveRecord.lan = move.getLAN();
             moveRecord.san = gameState_->moveToSan(move);
             moveRecord.halfmoveNo_ = gameState_->getHalfmovesPlayed() + 1;

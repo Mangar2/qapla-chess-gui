@@ -97,7 +97,7 @@ TestResult runEngineStartStopTest(const EngineConfig& engineConfig)
     // Cannot use runTest() here because we need to measure startup time before engine is ready
     auto* checklist = EngineReport::getChecklist(engineConfig.getName());
     
-    Timer timer;
+    QaplaHelpers::Timer timer;
     timer.start();
     uint64_t startTime = 0;
     uint64_t stopTime = 0;
@@ -160,7 +160,7 @@ TestResult runEngineMultipleStartStopTest(const EngineConfig& engineConfig, uint
 {
     auto* checklist = EngineReport::getChecklist(engineConfig.getName());
     
-    Timer timer;
+    QaplaHelpers::Timer timer;
     timer.start();
     uint64_t startTime = 0;
     uint64_t stopTime = 0;

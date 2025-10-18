@@ -26,12 +26,17 @@
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/epd-manager.h"
+#include "qapla-tester/game-manager-pool.h"
 
 #include <imgui.h>
 
 #include <optional>
 
 namespace QaplaWindows {
+
+    using QaplaTester::GameManagerPool;
+    using QaplaTester::EpdManager;
+    using QaplaTester::EpdTestResult;
 
     EpdData::EpdData() : 
         Autosavable("epd-result.qepd", ".bak", 60000, []() { return Autosavable::getConfigDirectory(); }),

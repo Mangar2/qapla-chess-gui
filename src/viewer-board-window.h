@@ -30,8 +30,11 @@
 #include "imgui-move-list.h"
 #include "imgui-barchart.h"
 
-class MoveRecord;
-class GameRecord;
+namespace QaplaTester
+{
+    class MoveRecord;
+    class GameRecord;
+}
 
 namespace QaplaWindows
 {

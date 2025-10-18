@@ -33,6 +33,10 @@
 #include <format>
 #include <memory>
 
+using QaplaTester::GameRecord;
+using QaplaTester::MoveRecord;
+using QaplaTester::GoLimits;
+
 using namespace QaplaWindows;
 
 ImGuiClock::ImGuiClock() = default;

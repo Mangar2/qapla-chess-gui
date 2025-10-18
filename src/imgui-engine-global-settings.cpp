@@ -276,7 +276,7 @@ void ImGuiEngineGlobalSettings::setTimeControlConfiguration(const QaplaHelpers::
     }
 }
 
-void ImGuiEngineGlobalSettings::applyGlobalConfig(EngineConfig& engine, 
+void ImGuiEngineGlobalSettings::applyGlobalConfig(QaplaTester::EngineConfig& engine, 
                                                    const GlobalSettings& globalSettings, 
                                                    const TimeControlSettings& timeControlSettings) {
     if (globalSettings.useGlobalPonder) {
@@ -286,7 +286,7 @@ void ImGuiEngineGlobalSettings::applyGlobalConfig(EngineConfig& engine,
     engine.setTimeControl(timeControlSettings.timeControl);
     
     if (globalSettings.useGlobalRestart) {
-        engine.setRestartOption(parseRestartOption(globalSettings.restart));
+        engine.setRestartOption(QaplaTester::parseRestartOption(globalSettings.restart));
     }
     
     if (globalSettings.useGlobalTrace) {

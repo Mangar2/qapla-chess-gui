@@ -29,6 +29,9 @@
 #include <limits>
 
 
+using QaplaTester::TimeSegment;
+using QaplaTester::TimeControl;
+
 using namespace QaplaWindows;
 
 constexpr uint64_t millisecondsInMinute = 60000;

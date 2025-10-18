@@ -23,6 +23,11 @@
 #include <imgui.h>
 
 #include <sstream>
+
+using QaplaTester::GameRecord;
+using QaplaTester::MoveRecord;
+using QaplaTester::GameEndCause;
+using QaplaTester::GameResult;
 #include <format>
 #include <string>
 

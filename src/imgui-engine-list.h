@@ -27,9 +27,12 @@
 #include <vector>
 #include <string>
 
-struct GameRecord;
-struct MoveRecord;
-struct SearchInfo;
+namespace QaplaTester
+{
+    struct GameRecord;
+    struct MoveRecord;
+    struct SearchInfo;
+}
 
 namespace QaplaWindows {
 
@@ -85,13 +88,13 @@ namespace QaplaWindows {
          * @param moveRecord The move record to display.
          * @param playerIndex The index of the player (0 or 1).
          */
-        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
+        void setFromMoveRecord(const QaplaTester::MoveRecord& moveRecord, uint32_t playerIndex);
 
         /**
          * @brief Sets the data from a GameRecord.
          * @param gameRecord The game record to extract data from.
          */
-        void setFromGameRecord(const GameRecord& gameRecord);
+        void setFromGameRecord(const QaplaTester::GameRecord& gameRecord);
 
     private:
         void addTables(size_t size);
@@ -110,7 +113,7 @@ namespace QaplaWindows {
         std::string drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, 
             float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);
 
-        void setTable(size_t index, const MoveRecord& moveRecord);
+        void setTable(size_t index, const QaplaTester::MoveRecord& moveRecord);
 
         std::vector<std::unique_ptr<ImGuiTable>> tables_;
         std::vector<uint32_t> displayedMoveNo_;

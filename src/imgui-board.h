@@ -40,9 +40,12 @@ namespace QaplaBasics
     class Move;
 }
 
-class GameRecord;
-class MoveRecord;
-class GameState;
+namespace QaplaTester
+{
+    class GameRecord;
+    class MoveRecord;
+    class GameState;
+}
 
 namespace QaplaWindows
 {
@@ -69,7 +72,7 @@ namespace QaplaWindows
          * @return The move record if a valid move was entered including LAN, SAN and 
          * internal Move, otherwise an empty optional.
          */
-        std::optional<MoveRecord> draw();
+        std::optional<QaplaTester::MoveRecord> draw();
 
         /**
          * Set the board orientation.
@@ -102,7 +105,7 @@ namespace QaplaWindows
          * @param suppressChangeTracking If true, the change tracker is not updated from the game record
          * and the board is set no matter if the record has changed.
          */
-        void setFromGameRecord(const GameRecord &gameRecord, bool suppressChangeTracking = false);
+        void setFromGameRecord(const QaplaTester::GameRecord &gameRecord, bool suppressChangeTracking = false);
 
         /**
          * Does a move.
@@ -145,7 +148,7 @@ namespace QaplaWindows
          *
          * @return The corresponding move if valid, with LAN, SAN and internal Move.
          */
-        std::optional<MoveRecord> checkMove();
+        std::optional<QaplaTester::MoveRecord> checkMove();
 
         std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
             QaplaBasics::File file, QaplaBasics::Rank rank) const;
@@ -224,7 +227,7 @@ namespace QaplaWindows
         float hoveredSquareCellSize_;
 
         MoveInput moveInput_;
-        std::unique_ptr<GameState> gameState_;
+        std::unique_ptr<QaplaTester::GameState> gameState_;
 
         static const std::vector<PopupCell> cells;
     };

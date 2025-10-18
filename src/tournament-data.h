@@ -42,8 +42,11 @@
 #include <optional>
 #include <ostream>
 
-class Tournament;
-struct TournamentConfig;
+namespace QaplaTester
+{
+    class Tournament;
+    struct TournamentConfig;
+}
 
 class ImGuiConcurrency;
 
@@ -121,7 +124,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the tournament configuration.
          * @return A reference to the tournament configuration.
          */
-        TournamentConfig& config();
+        QaplaTester::TournamentConfig& config();
 
         /**
          * @brief Sets the engine configurations for the tournament
@@ -362,8 +365,8 @@ namespace QaplaWindows {
 
         ViewerBoardWindowList boardWindowList_;
 
-        std::unique_ptr<Tournament> tournament_;
-        std::unique_ptr<TournamentConfig> config_;
+        std::unique_ptr<QaplaTester::Tournament> tournament_;
+        std::unique_ptr<QaplaTester::TournamentConfig> config_;
         std::unique_ptr<TournamentResultIncremental> result_;
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;

@@ -51,6 +51,9 @@
 #include "font.h"
 #include "background-renderer.h"
 
+using QaplaTester::Logger;
+using QaplaTester::TraceLevel;
+using QaplaTester::GameManagerPool;
 
 namespace {
 

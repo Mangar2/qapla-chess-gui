@@ -41,11 +41,14 @@ namespace QaplaBasics
 	class Move;
 }
 
-class EngineConfig;
-class GameState;
-class MoveRecord;
-class GameRecord;
-class ComputeTask;
+namespace QaplaTester
+{
+	class EngineConfig;
+	class GameState;
+	class MoveRecord;
+	class GameRecord;
+	class ComputeTask;
+}
 
 namespace QaplaWindows
 {
@@ -109,7 +112,7 @@ namespace QaplaWindows
 		 * @brief Sets the position of the game from a GameRecord.
 		 * @param gameRecord The GameRecord containing the position to set.
 		 */
-		void setPosition(const GameRecord &gameRecord);
+		void setPosition(const QaplaTester::GameRecord &gameRecord);
 
 		/**
 		 * @brief Polls data from several data provider (computeTask, edpData, ...) to provide them for imgui windows.
@@ -146,7 +149,7 @@ namespace QaplaWindows
 		 * @brief Sets the engines to use
 		 * @param engines Vector of EngineConfig objects representing the engines to set.
 		 */
-		void setEngines(const std::vector<EngineConfig> &engines);
+		void setEngines(const std::vector<QaplaTester::EngineConfig> &engines);
 
 		/**
 		 * @brief Loads a board engine configuration from a key-value map.
@@ -206,7 +209,7 @@ namespace QaplaWindows
 		 * @brief Executes a move in the game.
 		 * @param move The move to execute.
 		 */
-		void doMove(const MoveRecord& move);
+		void doMove(const QaplaTester::MoveRecord& move);
 
 		/**
 		 * @brief Sets the current move index.
@@ -264,8 +267,8 @@ namespace QaplaWindows
 
 		void setGlobalEngineConfig();
 
-		std::unique_ptr<GameRecord> gameRecord_;
-		std::unique_ptr<ComputeTask> computeTask_;
+		std::unique_ptr<QaplaTester::GameRecord> gameRecord_;
+		std::unique_ptr<QaplaTester::ComputeTask> computeTask_;
 		QaplaTester::TimeControl timeControl_;
 
 		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
@@ -280,7 +283,7 @@ namespace QaplaWindows
 		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 		std::unique_ptr<Callback::UnregisterHandle> gameUpdateHandle_;
 
-		std::vector<EngineConfig> engineConfigs_;
+		std::vector<QaplaTester::EngineConfig> engineConfigs_;
 
 		uint32_t id_;
 

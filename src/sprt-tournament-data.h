@@ -32,8 +32,11 @@
 #include <cstdint>
 
 // Forward declarations
-struct SprtConfig;
-class SprtManager;
+namespace QaplaTester {
+    struct SprtConfig;
+    class GameManagerPool;
+    class SprtManager;
+}
 class ImGuiConcurrency;
 
 namespace QaplaWindows {
@@ -91,7 +94,7 @@ namespace QaplaWindows {
          * @brief Sets the GameManagerPool instance to use.
          * @param pool Shared pointer to a GameManagerPool instance.
          */
-        void setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool);
+        void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool);
 
         /**
          * @brief Checks if the SPRT tournament is currently running.
@@ -191,13 +194,13 @@ namespace QaplaWindows {
          * @brief Returns a reference to the SPRT configuration.
          * @return Reference to the SPRT configuration.
          */
-        SprtConfig& sprtConfig();
+        QaplaTester::SprtConfig& sprtConfig();
 
         /**
          * @brief Returns a const reference to the SPRT configuration.
          * @return Const reference to the SPRT configuration.
          */
-        const SprtConfig& sprtConfig() const;
+        const QaplaTester::SprtConfig& sprtConfig() const;
 
         /**
          * @brief Sets the engine configurations for the SPRT tournament.
@@ -279,8 +282,8 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
-        std::shared_ptr<SprtManager> sprtManager_;
-        std::unique_ptr<SprtConfig> sprtConfig_;
+        std::shared_ptr<QaplaTester::SprtManager> sprtManager_;
+        std::unique_ptr<QaplaTester::SprtConfig> sprtConfig_;
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         GameManagerPoolAccess poolAccess_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;

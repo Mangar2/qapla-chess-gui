@@ -29,8 +29,11 @@
 #include <memory>
 #include <string>
 
-class GameRecord;
-class MoveRecord;
+namespace QaplaTester
+{
+    class GameRecord;
+    class MoveRecord;
+}
 
 namespace QaplaWindows {
 
@@ -52,7 +55,7 @@ namespace QaplaWindows {
          * @brief Sets the clock data from the game record.
          * @param gameRecord The game record to extract data from.
          */
-        void setFromGameRecord(const GameRecord &gameRecord);
+        void setFromGameRecord(const QaplaTester::GameRecord &gameRecord);
 
 
         /**
@@ -60,7 +63,7 @@ namespace QaplaWindows {
          * @param moveRecord The move record to extract data from.
          * @param playerIndex The index of the player (0 for white, 1 for black).
          */
-        void setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex);
+        void setFromMoveRecord(const QaplaTester::MoveRecord& moveRecord, uint32_t playerIndex);
 
         /**
          * @brief Stops the clock timers.
@@ -102,7 +105,7 @@ namespace QaplaWindows {
          *                     to extract timing information from. Must be less than
          *                     the size of the history vector.
          */
-        void setFromHistoryMove(const MoveRecord& moveRecord);
+        void setFromHistoryMove(const QaplaTester::MoveRecord& moveRecord);
 
         struct ClockData {
             std::string wEngineName;
