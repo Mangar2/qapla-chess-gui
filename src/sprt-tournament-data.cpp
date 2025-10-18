@@ -29,7 +29,8 @@ using namespace QaplaWindows;
 
 SprtTournamentData::SprtTournamentData() : 
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
-    tournamentOpening_(std::make_unique<ImGuiTournamentOpening>())
+    tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
+    globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>())
 {
     ImGuiEngineSelect::Options options;
     options.allowGauntletEdit = true;
@@ -41,6 +42,7 @@ SprtTournamentData::SprtTournamentData() :
     engineSelect_->setOptions(options);
 
     tournamentOpening_->setId("sprt-tournament");
+    globalSettings_->setId("sprt-tournament");
 
     sprtConfig_.eloLower = -5;
     sprtConfig_.eloUpper = 5;
@@ -52,6 +54,7 @@ SprtTournamentData::SprtTournamentData() :
     loadEngineSelectionConfig();
     tournamentOpening_->loadConfiguration();
     loadSprtConfig();
+    loadGlobalSettingsConfig();
 }
 
 SprtTournamentData::~SprtTournamentData() = default;
@@ -60,6 +63,18 @@ void SprtTournamentData::setupCallbacks() {
     engineSelect_->setConfigurationChangedCallback(
         [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
             engineConfigurations_ = configurations;
+        }
+    );
+
+    globalSettings_->setConfigurationChangedCallback(
+        [this](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+            eachEngineConfig_ = settings;
+        }
+    );
+
+    globalSettings_->setTimeControlChangedCallback(
+        [this](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
+            timeControlSettings_ = settings;
         }
     );
 }
@@ -112,6 +127,19 @@ void SprtTournamentData::loadSprtConfig() {
             sprtConfig_.maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
         }
     }
+}
+
+void SprtTournamentData::loadGlobalSettingsConfig() {
+    auto& config = QaplaConfiguration::Configuration::instance();
+    
+    auto globalSections = config.getConfigData().getSectionList("eachengine", "sprt-tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setId("sprt-tournament");
+    globalSettings_->setGlobalConfiguration(globalSections);
+    
+    auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "sprt-tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setTimeControlConfiguration(timeControlSections);
 }
 
 void SprtTournamentData::updateConfiguration() {

@@ -100,6 +100,7 @@ void ImGuiTournamentOpening::loadConfiguration() {
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections() const {
     QaplaHelpers::IniFile::KeyValueMap openingEntries{
+        {"id", id_},
         {"file", openings_.file},
         {"format", openings_.format},
         {"order", openings_.order},

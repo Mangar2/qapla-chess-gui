@@ -21,6 +21,7 @@
 
 #include "imgui-engine-select.h"
 #include "imgui-tournament-opening.h"
+#include "imgui-engine-global-settings.h"
 
 #include "qapla-tester/sprt-manager.h"
 
@@ -77,6 +78,22 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Returns a reference to the global engine settings.
+         * @return Reference to the global engine settings.
+         */
+        ImGuiEngineGlobalSettings& globalSettings() {
+            return *globalSettings_;
+        }
+
+        /**
+         * @brief Returns a const reference to the global engine settings.
+         * @return Const reference to the global engine settings.
+         */
+        const ImGuiEngineGlobalSettings& globalSettings() const {
+            return *globalSettings_;
+        }
+
+        /**
          * @brief Returns a reference to the SPRT configuration.
          * @return Reference to the SPRT configuration.
          */
@@ -126,11 +143,21 @@ namespace QaplaWindows {
          */
         void loadSprtConfig();
 
+        /**
+         * @brief Loads the global engine settings configuration from the configuration file.
+         * @details Retrieves global engine and time control settings from the configuration
+         *          sections with ID "sprt-tournament".
+         */
+        void loadGlobalSettingsConfig();
+
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
+        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
 
         SprtConfig sprtConfig_;
+        ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
+        ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
     };
 
 }

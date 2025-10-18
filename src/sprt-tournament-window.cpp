@@ -92,6 +92,8 @@ bool SprtTournamentWindow::drawInput() {
 
     bool changed = false;
 
+    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
+
     if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
         ImGui::Indent(10.0F);
@@ -132,6 +134,8 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::Unindent(10.0F);
         ImGui::PopID();
     }
+
+    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
 
     ImGui::Spacing();
 
