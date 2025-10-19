@@ -78,6 +78,7 @@ void SprtManager::createTournament(
         tournament_->copyResultsFrom(*savedTournament);
     }
     tournament_->setVerbose(false);
+    tournament_->setPositionName("SPRT");
 }
 
 void SprtManager::schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency, GameManagerPool& pool) {

@@ -160,6 +160,9 @@ std::optional<GameTask> PairTournament::nextTask() {
         auto& white = task.switchSide ? engineB_ : engineA_;
         auto& black = task.switchSide ? engineA_ : engineB_;
         task.gameRecord.setTimeControl(white.getTimeControl(), black.getTimeControl());
+        if (!positionName_.empty()) {
+            task.gameRecord.setPositionName(positionName_ + " " + std::to_string(i + 1));
+        }
 
         results_[i] = GameResult::Unterminated;
         nextIndex_ = i + 1;

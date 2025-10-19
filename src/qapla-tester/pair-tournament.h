@@ -249,6 +249,17 @@ public:
         return config_;
     }
 
+    /**
+     * @brief Sets a custom position name for the pair tournament.
+     *
+     * It is set as position name in each GameRecord created + a number for each game.
+     *
+     * @param name The position name to set.
+     */
+    void setPositionName(const std::string& name) {
+        positionName_ = name;
+    }
+
 private:
 
     /**
@@ -275,6 +286,7 @@ private:
     EngineConfig engineB_;
 	PairTournamentConfig config_;
     std::shared_ptr<StartPositions> startPositions_;
+    std::string positionName_;
 
     // // Results from the engine pairing perspective, not from the white-player view
     GameRecord curRecord_;
