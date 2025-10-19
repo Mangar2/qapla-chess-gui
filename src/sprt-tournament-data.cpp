@@ -214,6 +214,16 @@ void SprtTournamentData::updateConfiguration() {
         "pgnoutput", "sprt-tournament", pgnSections);
 }
 
+void SprtTournamentData::updateTournamentResults() {
+    if (sprtManager_) {
+        auto section = sprtManager_->getSection();
+        if (section.has_value()) {
+            QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+                "round", "sprt-tournament", { *section });
+        }
+    }
+}
+
 SprtConfig& SprtTournamentData::sprtConfig() {
     return *sprtConfig_;
 }
@@ -285,6 +295,7 @@ void SprtTournamentData::startTournament() {
 
 void SprtTournamentData::pollData() {
     if (sprtManager_) {
+        updateTournamentResults();
         populateResultTable();
         populateSprtTable();
         populateCausesTable();

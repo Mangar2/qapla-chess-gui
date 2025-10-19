@@ -291,14 +291,14 @@ void PairTournament::fromString(const std::string& line) {
 
 }
 
-std::optional<QaplaHelpers::IniFile::Section> PairTournament::getSectionIfNotEmpty() const {
+std::optional<QaplaHelpers::IniFile::Section> PairTournament::getSectionIfNotEmpty(const std::string& id) const {
     if (results_.empty()) {
         return std::nullopt;
     }
 
     QaplaHelpers::IniFile::Section section;
     section.name = "round";
-    section.addEntry("id", "tournament");
+    section.addEntry("id", id);
     section.addEntry("round", std::to_string(config_.round + 1));
     section.addEntry("engineA", getEngineA().getName());
     section.addEntry("engineB", getEngineB().getName());

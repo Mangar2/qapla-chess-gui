@@ -120,6 +120,12 @@ public:
     void save(const std::string& filename) const;
 
     /**
+     * @brief Returns the SPRT tournament state as a section if it is not empty.
+     * @return Optional section containing the tournament state, or std::nullopt if empty.
+     */
+    std::optional<QaplaHelpers::IniFile::Section> getSection() const;
+
+    /**
      * @brief Loads the state from a stream - do nothing, if the file cannot be loaded.
 	 * @param filename The file to load the state from.
      */

@@ -224,6 +224,13 @@ namespace QaplaWindows {
         void updateConfiguration();
 
         /**
+         * @brief Updates the tournament results in the Configuration singleton.
+         * @details This method creates Section entries for SPRT tournament result data
+         *          and stores them in the Configuration singleton using setSectionList.
+         */
+        void updateTournamentResults();
+
+        /**
          * @brief Draws the table displaying the current SPRT duel result.
          * @param size Size of the table to draw.
          */

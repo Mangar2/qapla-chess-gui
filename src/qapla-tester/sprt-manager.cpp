@@ -137,10 +137,14 @@ void SprtManager::save(const std::string& filename) const {
 
     out << tournament_.getEngineA() << "\n";
     out << tournament_.getEngineB() << "\n";
-    auto section = tournament_.getSectionIfNotEmpty();
+    auto section = tournament_.getSectionIfNotEmpty("sprt-tournament");
     if (section) {
         QaplaHelpers::IniFile::saveSection(out, *section);
     }   
+}
+
+std::optional<QaplaHelpers::IniFile::Section> SprtManager::getSection() const {
+    return tournament_.getSectionIfNotEmpty("sprt-tournament");
 }
 
 void SprtManager::load(const QaplaHelpers::IniFile::Section& section) {

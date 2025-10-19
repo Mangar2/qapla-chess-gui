@@ -220,7 +220,7 @@ std::vector<QaplaHelpers::IniFile::Section> Tournament::getSections() const {
     std::vector<QaplaHelpers::IniFile::Section> sections;
     
     for (const auto& pairing : pairings_) {
-        auto section = pairing->getSectionIfNotEmpty();
+        auto section = pairing->getSectionIfNotEmpty("tournament");
         if (section.has_value()) {
             sections.push_back(std::move(section.value()));
         }

@@ -254,7 +254,7 @@ void SprtTournamentWindow::draw() {
     
     tournamentData.drawResultTable(ImVec2(size.x, 100.0F));
     tournamentData.drawSprtTable(ImVec2(size.x, 100.0F));
-    tournamentData.drawCauseTable(ImVec2(size.x, 100.0F));
+    tournamentData.drawCauseTable(ImVec2(size.x, 400.0F));
 
     ImGui::EndChild();
     ImGui::Unindent(10.0F);
