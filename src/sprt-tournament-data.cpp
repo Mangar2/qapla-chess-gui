@@ -449,3 +449,84 @@ void SprtTournamentData::drawCauseTable(const ImVec2& size) {
     causesTable_.draw(size);
 }
 
+void SprtTournamentData::saveTournament(const std::string& filename) {
+    if (filename.empty()) {
+        SnackbarManager::instance().showError("No filename specified for saving SPRT tournament.");
+        return;
+    }
+
+    try {
+        std::ofstream out(filename, std::ios::trunc);
+        if (!out) {
+            SnackbarManager::instance().showError("Failed to open file for writing: " + filename);
+            return;
+        }
+
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+
+        // Save each section type (all with id "sprt-tournament")
+        for (const auto& sectionName : sectionNames) {
+            auto sections = configData.getSectionList(sectionName, "sprt-tournament");
+            if (sections && !sections->empty()) {
+                for (const auto& section : *sections) {
+                    QaplaHelpers::IniFile::saveSection(out, section);
+                }
+            }
+        }
+
+        out.close();
+        if (!out) {
+            SnackbarManager::instance().showError("Error while writing to file: " + filename);
+            return;
+        }
+
+        SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename);
+    }
+    catch (const std::exception& e) {
+        SnackbarManager::instance().showError("Failed to save SPRT tournament: " + std::string(e.what()));
+    }
+}
+
+void SprtTournamentData::loadTournament(const std::string& filename) {
+    if (filename.empty()) {
+        SnackbarManager::instance().showError("No filename specified for loading SPRT tournament.");
+        return;
+    }
+
+    try {
+        std::ifstream in(filename);
+        if (!in) {
+            SnackbarManager::instance().showError("Failed to open file for reading: " + filename);
+            return;
+        }
+
+        // Load all sections from the file
+        QaplaHelpers::ConfigData configData;
+        configData.load(in);
+        in.close();
+
+        // Transfer sections to the global configuration
+        for (const auto& sectionName : sectionNames) {
+            auto sections = configData.getSectionList(sectionName, "sprt-tournament");
+            if (sections && !sections->empty()) {
+                QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+                    sectionName, "sprt-tournament", *sections);
+            }
+        }
+
+        // Reload configuration from the updated singleton
+        loadEngineSelectionConfig();
+        tournamentOpening_->loadConfiguration();
+        tournamentPgn_->loadConfiguration();
+        loadSprtConfig();
+        loadGlobalSettingsConfig();
+
+        // Create tournament based on the configuration and load the tournament data
+        loadTournament();
+
+        SnackbarManager::instance().showSuccess("SPRT tournament loaded from: " + filename);
+    }
+    catch (const std::exception& e) {
+        SnackbarManager::instance().showError("Failed to load SPRT tournament: " + std::string(e.what()));
+    }
+}

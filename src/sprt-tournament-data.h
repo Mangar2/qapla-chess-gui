@@ -254,6 +254,18 @@ namespace QaplaWindows {
          */
         void drawCauseTable(const ImVec2& size);
 
+        /**
+         * @brief Saves all SPRT tournament data including configuration and results to a file.
+         * @param filename The file path to save the tournament data to.
+         */
+        static void saveTournament(const std::string& filename);
+
+        /**
+         * @brief Loads all SPRT tournament data from a file.
+         * @param filename The file path to load the tournament data from.
+         */
+        void loadTournament(const std::string& filename);
+
     private:
         /**
          * @brief Populates the result table with current duel result data.
@@ -321,6 +333,17 @@ namespace QaplaWindows {
 
         uint32_t concurrency_ = 1;
         State state_ = State::Stopped;
+
+        // List of all section names used
+        static constexpr std::array<const char*, 7> sectionNames = {
+            "eachengine",
+            "engineselection",
+            "sprtconfig",
+            "opening",
+            "pgnoutput",
+            "timecontroloptions",
+            "round"
+        };
     };
 
 }

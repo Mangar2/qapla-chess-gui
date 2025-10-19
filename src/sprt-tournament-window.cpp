@@ -144,14 +144,12 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
         } else if (button == "Load") {
             auto selectedPath = OsDialogs::openFileDialog();
             if (!selectedPath.empty() && !selectedPath[0].empty()) {
-                // TODO: Implement loadTournament for SPRT
-                SnackbarManager::instance().showNote("Load functionality not yet implemented for SPRT tournaments.");
+                SprtTournamentData::instance().loadTournament(selectedPath[0]);
             }
         } else if (button == "Save As") {
             auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla SPRT Files", "qsprt"} });
             if (!selectedPath.empty()) {
-                // TODO: Implement saveTournament for SPRT
-                SnackbarManager::instance().showNote("Save functionality not yet implemented for SPRT tournaments.");
+                SprtTournamentData::saveTournament(selectedPath);
             }
         }
     } catch (const std::exception &e) {
