@@ -110,6 +110,9 @@ SprtTournamentData::SprtTournamentData() :
     ));
 }
 
+SprtTournamentData::~SprtTournamentData() = default;
+
+
 void SprtTournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
     poolAccess_ = GameManagerPoolAccess(pool);
     boardWindowList_.setPoolAccess(poolAccess_);
@@ -593,6 +596,7 @@ bool SprtTournamentData::runMonteCarloTest() {
         return false;
     }
 
+    SnackbarManager::instance().showNote("Monte Carlo test started.");
     bool started = sprtManager_->runMonteCarloTest(*sprtConfig_);
     
     if (!started) {

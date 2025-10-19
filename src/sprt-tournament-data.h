@@ -53,7 +53,7 @@ namespace QaplaWindows {
         };
 
         SprtTournamentData();
-        ~SprtTournamentData() = default;
+        ~SprtTournamentData();
 
         /**
          * @brief Returns the singleton instance of SprtTournamentData.
