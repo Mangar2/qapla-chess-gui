@@ -56,6 +56,17 @@ SprtTournamentData::SprtTournamentData() :
                 { .name = "Result", .flags = ImGuiTableColumnFlags_WidthStretch }
             }
         ),
+    montecarloTable_(
+            "MonteCarloResult",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            std::vector<ImGuiTable::ColumnDef>{
+                { .name = "Elo Diff", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "No Decision %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "H0 Accepted %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "H1 Accepted %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "Avg Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true }
+            }
+        ),
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
@@ -98,8 +109,6 @@ SprtTournamentData::SprtTournamentData() :
         }
     ));
 }
-
-SprtTournamentData::~SprtTournamentData() = default;
 
 void SprtTournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
     poolAccess_ = GameManagerPoolAccess(pool);
@@ -262,6 +271,9 @@ bool SprtTournamentData::createTournament(bool verbose) {
         if (sprtManager_) {
             PgnIO::tournament().setOptions(tournamentPgn_->pgnOptions());
             sprtManager_->createTournament(selectedEngines[0], selectedEngines[1], *sprtConfig_);
+            
+            // Clear Monte Carlo results when creating new tournament
+            sprtManager_->clearMonteCarloResult();
         } else {
             throw std::runtime_error("Internal error, SPRT manager not initialized");
         }
@@ -313,6 +325,7 @@ void SprtTournamentData::pollData() {
         populateSprtTable();
         populateCausesTable();
         boardWindowList_.populateViews();
+        populateMonteCarloTable();
         
         // Update state based on running games
         bool anyRunning = boardWindowList_.isAnyRunning();
@@ -322,6 +335,7 @@ void SprtTournamentData::pollData() {
         if (state_ != State::Starting && !anyRunning) {
             state_ = State::Stopped;
         }
+
     }
 }
 
@@ -334,20 +348,28 @@ void SprtTournamentData::stopPool(bool graceful) {
         poolAccess_->stopAll();
     }
 
-    if (oldState == State::Stopped) {
+    // Also stop Monte Carlo test if running
+    bool wasMonteCarloRunning = isMonteCarloTestRunning();
+    stopMonteCarloTest();
+
+    if (oldState == State::Stopped && !wasMonteCarloRunning) {
         SnackbarManager::instance().showNote("SPRT tournament is not running.");
         return;
     }
-    if (oldState == State::GracefulStopping && graceful) {
+    if (oldState == State::GracefulStopping && graceful && !wasMonteCarloRunning) {
         SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.");
         return;
     }
    
-    SnackbarManager::instance().showSuccess(
-        graceful ? 
-            "SPRT tournament stopped.\nFinishing ongoing games." : 
-            "SPRT tournament stopped"
-    );
+    if (wasMonteCarloRunning) {
+        SnackbarManager::instance().showSuccess("Monte Carlo test stopped");
+    } else {
+        SnackbarManager::instance().showSuccess(
+            graceful ? 
+                "SPRT tournament stopped.\nFinishing ongoing games." : 
+                "SPRT tournament stopped"
+        );
+    }
 }
 
 void SprtTournamentData::clear() {
@@ -359,6 +381,9 @@ void SprtTournamentData::clear() {
     state_ = State::Stopped;
     poolAccess_->clearAll();
     sprtManager_ = std::make_unique<SprtManager>();
+    
+    montecarloTable_.clear();
+    
     SnackbarManager::instance().showSuccess("SPRT tournament stopped.\nAll results have been cleared.");
 }
 
@@ -374,6 +399,10 @@ bool SprtTournamentData::hasTasksScheduled() const {
     // SPRT has tasks scheduled if it has been started (state is not Stopped)
     // or if there are results from the tournament
     return (sprtManager_ != nullptr);
+}
+
+bool SprtTournamentData::isAnyRunning() const {
+    return isRunning() || isMonteCarloTestRunning();
 }
 
 void SprtTournamentData::populateResultTable() {
@@ -442,11 +471,38 @@ void SprtTournamentData::populateCausesTable() {
     causesTable_.populate(duelResults);
 }
 
+void SprtTournamentData::populateMonteCarloTable() {
+    if (!sprtManager_) {
+        return;
+    }
+
+    montecarloTable_.clear();
+    
+    sprtManager_->withMonteCarloResult([this](const QaplaTester::MonteCarloResult& result) {
+        for (const auto& row : result.rows) {
+            montecarloTable_.push(std::vector<std::string>{
+                std::to_string(row.eloDifference),
+                std::format("{:.1f}", row.noDecisionPercent),
+                std::format("{:.1f}", row.h0AcceptedPercent),
+                std::format("{:.1f}", row.h1AcceptedPercent),
+                std::format("{:.1f}", row.avgGames)
+            });
+        }
+    });
+}
+
 void SprtTournamentData::drawCauseTable(const ImVec2& size) {
     if (causesTable_.size() == 0) {
         return;
     }
     causesTable_.draw(size);
+}
+
+void SprtTournamentData::drawMonteCarloTable(const ImVec2& size) {
+    if (montecarloTable_.size() == 0) {
+        return;
+    }
+    montecarloTable_.draw(size);
 }
 
 void SprtTournamentData::saveTournament(const std::string& filename) {
@@ -531,6 +587,27 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
     }
 }
 
-void SprtTournamentData::montecarloTest() {
-    // Monte Carlo test implementation to be added
+bool SprtTournamentData::runMonteCarloTest() {
+    if (!sprtManager_) {
+        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized");
+        return false;
+    }
+
+    bool started = sprtManager_->runMonteCarloTest(*sprtConfig_);
+    
+    if (!started) {
+        SnackbarManager::instance().showNote("Monte Carlo test is already running.");
+    }
+    
+    return started;
+}
+
+bool SprtTournamentData::isMonteCarloTestRunning() const {
+    return sprtManager_ && sprtManager_->isMonteCarloTestRunning();
+}
+
+void SprtTournamentData::stopMonteCarloTest() {
+    if (sprtManager_) {
+        sprtManager_->stopMonteCarloTest();
+    }
 }

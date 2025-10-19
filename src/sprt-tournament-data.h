@@ -37,6 +37,7 @@ namespace QaplaTester {
     struct SprtConfig;
     class GameManagerPool;
     class SprtManager;
+    class MonteCarloResult;
 }
 class ImGuiConcurrency;
 
@@ -52,7 +53,7 @@ namespace QaplaWindows {
         };
 
         SprtTournamentData();
-        ~SprtTournamentData();
+        ~SprtTournamentData() = default;
 
         /**
          * @brief Returns the singleton instance of SprtTournamentData.
@@ -104,6 +105,12 @@ namespace QaplaWindows {
         bool isRunning() const {
             return state_ != State::Stopped;
         }
+
+        /**
+         * @brief Checks if any operation (SPRT tournament or Monte Carlo test) is currently running.
+         * @return true if SPRT tournament or Monte Carlo test is running, false otherwise
+         */
+        bool isAnyRunning() const;
 
         /**
          * @brief Returns the current state of the SPRT tournament.
@@ -255,6 +262,12 @@ namespace QaplaWindows {
         void drawCauseTable(const ImVec2& size);
 
         /**
+         * @brief Draws the table displaying the Monte Carlo test results.
+         * @param size Size of the table to draw.
+         */
+        void drawMonteCarloTable(const ImVec2& size);
+
+        /**
          * @brief Saves all SPRT tournament data including configuration and results to a file.
          * @param filename The file path to save the tournament data to.
          */
@@ -268,9 +281,20 @@ namespace QaplaWindows {
 
         /**
          * @brief Runs a Monte Carlo test on the current SPRT configuration.
-         * @details This method will be used to test the SPRT configuration with simulated games.
+         * @return true if test was started, false if a test is already running.
          */
-        void montecarloTest();
+        bool runMonteCarloTest();
+
+        /**
+         * @brief Checks if a Monte Carlo test is currently running.
+         * @return true if running, false otherwise.
+         */
+        bool isMonteCarloTestRunning() const;
+
+        /**
+         * @brief Stops any running Monte Carlo test.
+         */
+        void stopMonteCarloTest();
 
     private:
         /**
@@ -290,6 +314,12 @@ namespace QaplaWindows {
          * @details Fills the table with termination causes for both engines in the current duel.
          */
         void populateCausesTable();
+
+        /**
+         * @brief Populates the Monte Carlo table with test results.
+         * @details Fills the table with simulation results from the Monte Carlo test using a callback.
+         */
+        void populateMonteCarloTable();
 
         /**
          * @brief Sets up callbacks for UI component changes.
@@ -322,6 +352,7 @@ namespace QaplaWindows {
         ImGuiTable resultTable_;
         ImGuiTable sprtTable_;
         ImGuiCausesTable causesTable_;
+        ImGuiTable montecarloTable_;
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;

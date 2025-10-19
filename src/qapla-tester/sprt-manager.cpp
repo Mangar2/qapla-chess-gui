@@ -29,6 +29,16 @@
 
 namespace QaplaTester {
 
+SprtManager::~SprtManager() {
+    // Stop any running Monte Carlo test
+    stopMonteCarloTest();
+    
+    // Wait for the thread to finish if it's running
+    if (monteCarloThread_.joinable()) {
+        monteCarloThread_.join();
+    }
+}
+
 void SprtManager::createTournament(
     const EngineConfig& engine0, const EngineConfig& engine1, const SprtConfig& config) {
 
@@ -336,6 +346,11 @@ void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, 
 {
     for (int sim = 0; sim < simulationsPerElo; ++sim)
     {
+        // Check stop flag in outer loop
+        if (monteCarloShouldStop_.load()) {
+            break;
+        }
+
         // Reset intern
         int winsP1 = 0;
         int winsP2 = 0;
@@ -390,11 +405,44 @@ void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, 
 }
 
 
-void SprtManager::runMonteCarloTest(const SprtConfig& config) {
+bool SprtManager::runMonteCarloTest(const SprtConfig& config) {
+    // Try to acquire the test lock
+    if (monteCarloTestRunning_.exchange(true)) {
+        return false;  // Test already running
+    }
+
+    // Join previous thread if it exists
+    if (monteCarloThread_.joinable()) {
+        monteCarloThread_.join();
+    }
+
+    // Clear results before starting new test
+    clearMonteCarloResult();
+
+    // Reset stop flag
+    monteCarloShouldStop_.store(false);
+
+    // Start the test in a background thread
+    monteCarloThread_ = std::thread([this, config]() {
+        runMonteCarloTestInternal(config);
+        // Mark as finished
+        monteCarloTestRunning_.store(false);
+    });
+
+    return true;  // Test started successfully
+}
+
+void SprtManager::runMonteCarloTestInternal(const SprtConfig& config) {
 	config_ = config;
     constexpr int simulationsPerElo = 1000;
     constexpr double drawRate = 0.4;
     constexpr std::array<int, 11> eloDiffs = { -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25 };
+
+    {
+        std::scoped_lock lock(monteCarloResultMutex_);
+        monteCarloResult_ = {};
+        monteCarloResult_.config = config;
+    }
 
     std::srand(static_cast<unsigned>(std::time(nullptr)));
     std::cout << "Running SPRT Monte carlo simulation: "
@@ -403,6 +451,12 @@ void SprtManager::runMonteCarloTest(const SprtConfig& config) {
         << " | maxGames: " << config.maxGames << "\n" << std::flush;
 
     for (int elo : eloDiffs) {
+        // Check if we should stop
+        if (monteCarloShouldStop_.load()) {
+            std::cout << "Monte Carlo test stopped early.\n" << std::flush;
+            break;
+        }
+
         int64_t numH1 = 0;
         int64_t numH0 = 0;
 		int64_t noDecisions = 0;
@@ -411,13 +465,42 @@ void SprtManager::runMonteCarloTest(const SprtConfig& config) {
         runMonteCarloSingleTest(simulationsPerElo, elo, drawRate, noDecisions, numH0, numH1, totalGames);
 
         double avgGames = (simulationsPerElo > 0) ? static_cast<double>(totalGames) / simulationsPerElo : 0.0;
+        double noDecisionPercent = (static_cast<double>(noDecisions) * 100.0) / simulationsPerElo;
+        double h0AcceptedPercent = (static_cast<double>(numH0) * 100.0) / simulationsPerElo;
+        double h1AcceptedPercent = (static_cast<double>(numH1) * 100.0) / simulationsPerElo;
+
+        {
+            std::scoped_lock lock(monteCarloResultMutex_);
+            monteCarloResult_.rows.push_back({
+                elo,
+                noDecisionPercent,
+                h0AcceptedPercent,
+                h1AcceptedPercent,
+                avgGames
+            });
+        }
+
         std::cout << std::fixed << std::setprecision(1)
             << "Simulated elo difference: " << std::setw(6) << elo
-            << "  No Decisions: " << std::setw(6) << (static_cast<double>(noDecisions) * 100.0) / simulationsPerElo << "%"
-            << "  H0 Accepted: " << std::setw(6) << (static_cast<double>(numH0) * 100.0) / simulationsPerElo << "%"
-            << "  H1 Accepted: " << std::setw(6) << (static_cast<double>(numH1) * 100.0) / simulationsPerElo << "%"
+            << "  No Decisions: " << std::setw(6) << noDecisionPercent << "%"
+            << "  H0 Accepted: " << std::setw(6) << h0AcceptedPercent << "%"
+            << "  H1 Accepted: " << std::setw(6) << h1AcceptedPercent << "%"
             << "  Average Games: " << std::setw(6) << avgGames << "\n";
     }
+}
+
+void SprtManager::stopMonteCarloTest() {
+    monteCarloShouldStop_.store(true);
+}
+
+void SprtManager::clearMonteCarloResult() {
+    std::scoped_lock lock(monteCarloResultMutex_);
+    monteCarloResult_.rows.clear();
+}
+
+void SprtManager::withMonteCarloResult(const std::function<void(const MonteCarloResult&)>& callback) {
+    std::scoped_lock lock(monteCarloResultMutex_);
+    callback(monteCarloResult_);
 }
 
 } // namespace QaplaTester
