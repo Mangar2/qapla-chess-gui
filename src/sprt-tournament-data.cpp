@@ -530,3 +530,7 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
         SnackbarManager::instance().showError("Failed to load SPRT tournament: " + std::string(e.what()));
     }
 }
+
+void SprtTournamentData::montecarloTest() {
+    // Monte Carlo test implementation to be added
+}

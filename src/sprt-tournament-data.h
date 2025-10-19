@@ -266,6 +266,12 @@ namespace QaplaWindows {
          */
         void loadTournament(const std::string& filename);
 
+        /**
+         * @brief Runs a Monte Carlo test on the current SPRT configuration.
+         * @details This method will be used to test the SPRT configuration with simulated games.
+         */
+        void montecarloTest();
+
     private:
         /**
          * @brief Populates the result table with current duel result data.

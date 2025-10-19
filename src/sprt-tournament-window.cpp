@@ -75,6 +75,10 @@ static void drawSingleButton(
     {
         QaplaButton::drawSave(drawList, topLeft, size, state);
     }
+    if (button == "Test")
+    {
+        QaplaButton::drawTest(drawList, topLeft, size, state);
+    }
 }
 
 
@@ -88,7 +92,7 @@ void SprtTournamentWindow::drawButtons() {
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
+    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Test", "Load", "Save As" }) {
         ImGui::SetCursorScreenPos(pos);
         bool running = SprtTournamentData::instance().isRunning();
         auto label = button;
@@ -108,6 +112,9 @@ void SprtTournamentWindow::drawButtons() {
             state = QaplaButton::ButtonState::Disabled;
         }
         if (button == "Clear" && !SprtTournamentData::instance().hasTasksScheduled()) {
+            state = QaplaButton::ButtonState::Disabled;
+        }
+        if (button == "Test" && SprtTournamentData::instance().isRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
         if ((button == "Load" || button == "Save As") && SprtTournamentData::instance().isRunning()) {
@@ -141,6 +148,8 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
             SprtTournamentData::instance().stopPool();
         } else if (button == "Clear") {
             SprtTournamentData::instance().clear();
+        } else if (button == "Test") {
+            SprtTournamentData::instance().montecarloTest();
         } else if (button == "Load") {
             auto selectedPath = OsDialogs::openFileDialog();
             if (!selectedPath.empty() && !selectedPath[0].empty()) {

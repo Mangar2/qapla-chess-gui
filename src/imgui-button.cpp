@@ -570,6 +570,43 @@ namespace QaplaButton {
         }
     }
 
+    void drawTest(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        
+        // Non-filled rectangle with 2px thick border
+        constexpr float borderThickness = 2.0F;
+        constexpr float rectReduce = 0.0F;
+
+        ImVec2 rectTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER + rectReduce);
+        ImVec2 rectBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER - rectReduce);
+
+        // Draw rectangle outline
+        list->AddRect(rectTopLeft, rectBottomRight, fgColor, 0.0F, 0, borderThickness);
+
+        // Draw question mark in the middle
+        ImVec2 center = ImVec2((rectTopLeft.x + rectBottomRight.x) / 2.0F, (rectTopLeft.y + rectBottomRight.y) / 2.0F);
+        
+        // Question mark parameters
+        constexpr float questionMarkHeight = 10.0F;
+        constexpr float questionMarkWidth = 6.0F;
+        constexpr float dotRadius = 1.0F;
+        constexpr float dotOffset = 3.0F;
+        
+        // Top arc of question mark
+        ImVec2 arcCenter = ImVec2(center.x, center.y - questionMarkHeight / 2.0F + questionMarkWidth / 2.0F);
+        constexpr float arcRadius = questionMarkWidth / 2.0F;
+        list->AddCircle(arcCenter, arcRadius, fgColor, 12, borderThickness - 0.5F);
+        
+        // Vertical line of question mark
+        ImVec2 lineStart = ImVec2(center.x, arcCenter.y);
+        ImVec2 lineEnd = ImVec2(center.x, center.y + questionMarkHeight / 2.0F - dotOffset);
+        list->AddLine(lineStart, lineEnd, fgColor, borderThickness - 0.5F);
+        
+        // Dot at the bottom
+        ImVec2 dotCenter = ImVec2(center.x, center.y + questionMarkHeight / 2.0F);
+        list->AddCircleFilled(dotCenter, dotRadius, fgColor);
+    }
+
     void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         constexpr float borderThickness = 2.0F;

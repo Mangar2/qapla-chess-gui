@@ -103,8 +103,11 @@ public:
      */
     void setGameRecord(const std::string& taskId, const GameRecord& record) override;
 
+    /**
+     * @brief Runs a Monte Carlo simulation to estimate the SPRT decision boundaries.
+     * @param config The configuration parameters for the SPRT test.
+     */
     void runMonteCarloTest(const SprtConfig &config);
-    void runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames);
 
     /**
 	 * @brief Returns the current decision of the SPRT test.
@@ -194,7 +197,11 @@ private:
       */
     SprtResult computeSprt(
         int winsA, int draws, int winsB, const std::string& engineA, const std::string& engineB) const;
-	bool rememberStop_ = false;
+
+    void runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames);
+
+
+    bool rememberStop_ = false;
 
     SprtConfig config_;
 	std::optional<bool> decision_ = std::nullopt;
