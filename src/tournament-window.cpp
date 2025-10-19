@@ -186,7 +186,7 @@ bool TournamentWindow::drawInput() {
     
     ImGui::Spacing();
     if (tournamentData.isRunning()) {
-		ImGui::Indent(10.0F);
+        ImGui::Indent(10.0F);
         ImGui::Text("Tournament is running");
         ImGui::Unindent(10.0F);
         return false;
@@ -195,19 +195,9 @@ bool TournamentWindow::drawInput() {
     bool changed = false;
 
     changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
+    changed |= tournamentData.engineSelect().draw();
+    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
 
-    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("engineSettings");
-        ImGui::Indent(10.0F);
-        changed |= tournamentData.engineSelect().draw();
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
-    if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("opening");
-        changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
-        ImGui::PopID();
-    }
     if (ImGui::CollapsingHeader("Tournament", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("tournament");
         ImGui::Indent(10.0F);
@@ -231,20 +221,11 @@ bool TournamentWindow::drawInput() {
         ImGui::PopID();
     }
     
-    // Draw time control and global engine settings using the new class
     changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
-    
-    if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("pgn");
-        changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
-        ImGui::PopID();
-	}
-
+    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
-    ImGui::Spacing();
-
-    return changed;
+    ImGui::Spacing();    return changed;
 }
 
 void TournamentWindow::drawProgress()

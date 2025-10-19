@@ -44,6 +44,13 @@ ImGuiEngineSelect::ImGuiEngineSelect(const Options& options, ConfigurationChange
 bool ImGuiEngineSelect::draw() {
     bool modified = false;
     
+    if (!ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        return false;
+    }
+
+    ImGui::PushID("engineSettings");
+    ImGui::Indent(10.0F);
+
     // Clean up engines that are no longer available
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
@@ -95,6 +102,9 @@ bool ImGuiEngineSelect::draw() {
         updateUniqueDisplayNames();
         notifyConfigurationChanged();
     }
+    
+    ImGui::Unindent(10.0F);
+    ImGui::PopID();
     
     return modified;
 }

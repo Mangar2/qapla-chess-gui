@@ -31,37 +31,41 @@ using namespace QaplaWindows;
 bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float indent) {
     bool changed = false;
 
-    ImGui::Indent(indent);
+    if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("opening");
+        ImGui::Indent(indent);
 
-    changed |= ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
-    
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::selectionBox("File format", openings_.format, { "epd", "raw", "pgn" });
-    
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::selectionBox("Order", openings_.order, { "random", "sequential" });
+        changed |= ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::selectionBox("File format", openings_.format, { "epd", "raw", "pgn" });
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::selectionBox("Order", openings_.order, { "random", "sequential" });
 
-    auto xPos = ImGui::GetCursorPosX();
-    changed |= ImGuiControls::optionalInput<int>(
-        "Set plies",
-        openings_.plies,
-        [&](int& plies) {
-            ImGui::SetCursorPosX(xPos + 100);
-            ImGui::SetNextItemWidth(inputWidth - 100);
-            return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
-        }
-    );
-   
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::inputInt<uint32_t>("First opening", openings_.start, 0, 1000);
-    
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::inputInt<uint32_t>("Random seed", openings_.seed, 0, 1000);
-    
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::selectionBox("Switch policy", openings_.policy, { "default", "encounter", "round" });
+        auto xPos = ImGui::GetCursorPosX();
+        changed |= ImGuiControls::optionalInput<int>(
+            "Set plies",
+            openings_.plies,
+            [&](int& plies) {
+                ImGui::SetCursorPosX(xPos + 100);
+                ImGui::SetNextItemWidth(inputWidth - 100);
+                return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
+            }
+        );
+       
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputInt<uint32_t>("First opening", openings_.start, 0, 1000);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::inputInt<uint32_t>("Random seed", openings_.seed, 0, 1000);
+        
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::selectionBox("Switch policy", openings_.policy, { "default", "encounter", "round" });
 
-    ImGui::Unindent(indent);
+        ImGui::Unindent(indent);
+        ImGui::PopID();
+    }
 
     return changed;
 }

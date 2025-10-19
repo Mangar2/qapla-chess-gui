@@ -199,27 +199,8 @@ bool SprtTournamentWindow::drawInput() {
     bool changed = false;
 
     changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
-
-    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("engineSettings");
-        ImGui::Indent(10.0F);
-        changed |= tournamentData.engineSelect().draw();
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
-
-    if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("opening");
-        changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
-        ImGui::PopID();
-    }
-
-    if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("pgn");
-        changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
-        ImGui::PopID();
-    }
-
+    changed |= tournamentData.engineSelect().draw();
+    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
 
     if (ImGui::CollapsingHeader("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("sprtConfig");
@@ -249,8 +230,8 @@ bool SprtTournamentWindow::drawInput() {
     }
 
     changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
+    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
-
 
     ImGui::Spacing();
 

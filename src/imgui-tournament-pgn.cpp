@@ -28,33 +28,37 @@ using namespace QaplaWindows;
 bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float indent) {
     bool changed = false;
 
-    ImGui::Indent(indent);
+    if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
+        ImGui::PushID("pgn");
+        ImGui::Indent(indent);
 
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file, 
-        {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file, 
+            {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
 
-    ImGui::SetNextItemWidth(inputWidth);
-    std::string append = pgnOptions_.append ? "Append" : "Overwrite";
-    changed |= ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
-    pgnOptions_.append = (append == "Append");
+        ImGui::SetNextItemWidth(inputWidth);
+        std::string append = pgnOptions_.append ? "Append" : "Overwrite";
+        changed |= ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
+        pgnOptions_.append = (append == "Append");
 
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Save only finished games", pgnOptions_.onlyFinishedGames);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Minimal tags", pgnOptions_.minimalTags);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
-    ImGui::SetNextItemWidth(inputWidth);
-    changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Save only finished games", pgnOptions_.onlyFinishedGames);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Minimal tags", pgnOptions_.minimalTags);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
+        ImGui::SetNextItemWidth(inputWidth);
+        changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
 
-    ImGui::Unindent(indent);
+        ImGui::Unindent(indent);
+        ImGui::PopID();
+    }
 
     return changed;
 }
