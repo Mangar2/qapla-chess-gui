@@ -121,7 +121,7 @@ public:
 
     void clear() {
         std::lock_guard<std::mutex> lock(mutex_);
-        started_ = false;
+        initialized_ = false;
         results_.clear();
         duelResult_ = EngineDuelResult(engineA_.getName(), engineB_.getName());
         nextIndex_ = 0;
@@ -284,7 +284,7 @@ private:
     mutable std::mutex mutex_;
     std::mt19937 rng_;
     size_t nextIndex_ = 0;
-    bool started_ = false;
+    bool initialized_ = false;
     bool verbose_ = true;
     std::atomic<bool> isFinished_ = false;
 };

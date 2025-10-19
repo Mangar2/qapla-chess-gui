@@ -32,13 +32,13 @@ void PairTournament::initialize(const EngineConfig& engineA, const EngineConfig&
 	const PairTournamentConfig& config, std::shared_ptr<StartPositions> startPositions) {
 
     std::scoped_lock lock(mutex_);
-    if (started_) {
+    if (initialized_) {
         throw std::logic_error("PairTournament already initialized");
     }
     if (!results_.empty()) {
         throw std::logic_error("PairTournament already has result data; call load() only after initialize()");
     }
-    started_ = true;
+    initialized_ = true;
 
     engineA_ = engineA;
     engineB_ = engineB;
@@ -76,7 +76,7 @@ void PairTournament::initialize(const EngineConfig& engineA, const EngineConfig&
 
 void PairTournament::schedule(const std::shared_ptr<PairTournament>& self, GameManagerPool& pool) {
 
-    if (!started_) {
+    if (!initialized_) {
         throw std::logic_error("PairTournament must be initialized before scheduling");
     }
 
@@ -124,7 +124,7 @@ void PairTournament::updateOpening(uint32_t openingIndex) {
 std::optional<GameTask> PairTournament::nextTask() {
     std::scoped_lock lock(mutex_);
 
-    if (!started_ || !startPositions_ || startPositions_->empty()) {
+    if (!initialized_ || !startPositions_ || startPositions_->empty()) {
         return std::nullopt;
     }
 

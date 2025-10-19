@@ -143,17 +143,17 @@ void Tournament::createPairings(const std::vector<EngineConfig>& players, const 
 
         for (size_t i = 0; i < players.size(); ++i) {
             for (size_t j = symmetric ? i + 1 : 0; j < opponents.size(); ++j) {
-                auto pt = std::make_shared<PairTournament>();
+                auto pairTour = std::make_shared<PairTournament>();
                 if (config.openings.policy == "encounter") {
                     ptc.openings.start = openingOffset;
                     openingOffset = (openingOffset + 1) % posSize;
                     ptc.seed = static_cast<uint32_t>(dist(rng));
                 }
-                pt->initialize(players[i], opponents[j], ptc, startPositions_);
-                pt->setGameFinishedCallback([this](PairTournament* sender) {
+                pairTour->initialize(players[i], opponents[j], ptc, startPositions_);
+                pairTour->setGameFinishedCallback([this](PairTournament* sender) {
                     this->onGameFinished(sender);
                 });
-                pairings_.push_back(std::move(pt));
+                pairings_.push_back(std::move(pairTour));
                 ptc.gameNumberOffset += ptc.games;
             }
         }

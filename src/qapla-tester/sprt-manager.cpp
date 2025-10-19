@@ -33,6 +33,9 @@ void SprtManager::createTournament(
     const EngineConfig& engine0, const EngineConfig& engine1, const SprtConfig& config) {
 
 	config_ = config;
+    engine0_ = engine0;
+    engine1_ = engine1;
+    
     PgnIO::tournament().initialize("Sprt");
 
     if (!startPositions_) {
@@ -61,34 +64,40 @@ void SprtManager::createTournament(
             "Unsupported openings format: " + config.openings.format);
     }
 
-    PairTournamentConfig ptc;
-    ptc.games = config.maxGames;
-    ptc.repeat = 2;
-    ptc.round = 0;
-    ptc.swapColors = true;
-    ptc.openings = config.openings;
+    tournamentConfig_.games = config.maxGames;
+    tournamentConfig_.repeat = 2;
+    tournamentConfig_.round = 0;
+    tournamentConfig_.swapColors = true;
+    tournamentConfig_.openings = config.openings;
 
-    tournament_.initialize(engine0, engine1, ptc, startPositions_);
-	tournament_.setVerbose(false);
+    // Re-initialize tournament, preserving previous results if engines match
+    auto savedTournament = std::move(tournament_);
+    tournament_ = std::make_unique<PairTournament>();
+    tournament_->initialize(engine0_, engine1_, tournamentConfig_, startPositions_);
+    if (tournament_->matches(*savedTournament)) {
+        tournament_->copyResultsFrom(*savedTournament);
+    }
+    tournament_->setVerbose(false);
 }
 
-void SprtManager::schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency) {
+void SprtManager::schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency, GameManagerPool& pool) {
+    
     sprtCallback_ = InputHandler::getInstance().registerCommandCallback(
         InputHandler::ImmediateCommand::Info,
         [this](InputHandler::ImmediateCommand, const InputHandler::CommandValue&) {
             auto result = getResult();
             result.printOutcome(std::cout);
         });
-	auto duel = tournament_.getResult();
+	auto duel = tournament_->getResult();
     std::cout << "sprt engines " << duel.getEngineA() << " vs " << duel.getEngineB()
         << " elo [" << config_.eloLower << ", " << config_.eloUpper << "]"
         << " alpha " << config_.alpha << " beta " << config_.beta
         << " maxgames " << config_.maxGames
         << " concurrency " << concurrency << "\n" << std::flush;
 
-    GameManagerPool::getInstance().setConcurrency(concurrency, true);
-    GameManagerPool::getInstance().addTaskProvider(self, tournament_.getEngineA(), tournament_.getEngineB());
-    GameManagerPool::getInstance().startManagers();
+    pool.setConcurrency(concurrency, true);
+    pool.addTaskProvider(self, tournament_->getEngineA(), tournament_->getEngineB());
+    pool.startManagers();
 }
 
 std::optional<GameTask> SprtManager::nextTask() {
@@ -98,15 +107,15 @@ std::optional<GameTask> SprtManager::nextTask() {
         return std::nullopt;
     }
 
-    return tournament_.nextTask();
+    return tournament_->nextTask();
 }
 
 void SprtManager::setGameRecord(const std::string& taskId, const GameRecord& record) {
-	bool engine1IsWhite = tournament_.getEngineA().getName() == record.getWhiteEngineName();
-    tournament_.setGameRecord(taskId, record);
+	bool engine1IsWhite = tournament_->getEngineA().getName() == record.getWhiteEngineName();
+    tournament_->setGameRecord(taskId, record);
 
     auto [cause, result] = record.getGameResult();
-    auto duel = tournament_.getResult();
+    auto duel = tournament_->getResult();
 
     auto sprtResult = computeSprt();
 
@@ -135,21 +144,21 @@ void SprtManager::save(const std::string& filename) const {
         throw std::runtime_error("Failed to open SPRT result file for saving: " + filename);
     }
 
-    out << tournament_.getEngineA() << "\n";
-    out << tournament_.getEngineB() << "\n";
-    auto section = tournament_.getSectionIfNotEmpty("sprt-tournament");
+    out << tournament_->getEngineA() << "\n";
+    out << tournament_->getEngineB() << "\n";
+    auto section = tournament_->getSectionIfNotEmpty("sprt-tournament");
     if (section) {
         QaplaHelpers::IniFile::saveSection(out, *section);
     }   
 }
 
 std::optional<QaplaHelpers::IniFile::Section> SprtManager::getSection() const {
-    return tournament_.getSectionIfNotEmpty("sprt-tournament");
+    return tournament_->getSectionIfNotEmpty("sprt-tournament");
 }
 
 void SprtManager::loadFromSection(const QaplaHelpers::IniFile::Section& section) {
     try {
-        tournament_.fromSection(section);
+        tournament_->fromSection(section);
     } catch (const std::exception& ex) {
         // Ignore invalid section
     }
@@ -262,7 +271,7 @@ static double computeLLR(double wins, double draws, double losses,
 
 
 SprtResult SprtManager::computeSprt() const {
-    auto duel = tournament_.getResult();
+    auto duel = tournament_->getResult();
     return computeSprt(duel.winsEngineA, duel.draws, duel.winsEngineB, duel.getEngineA(), duel.getEngineB());
 }
 

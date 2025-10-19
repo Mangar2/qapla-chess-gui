@@ -84,8 +84,9 @@ public:
      *
      * @param self Shared pointer to this Tournament instance.
      * @param concurrency Number of parallel workers to use.
+     * @param pool Reference to the GameManagerPool to use for scheduling.
      */
-    void schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency);
+    void schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency, GameManagerPool& pool);
 
     /**
      * @brief Provides the next available task.
@@ -144,7 +145,7 @@ public:
      */
     TournamentResult getResult() const {
         TournamentResult t;
-		t.add(tournament_.getResult());
+		t.add(tournament_->getResult());
         return t;
     }
 
@@ -154,7 +155,7 @@ public:
      * @return EngineDuelResult containing wins, draws, and losses.
      */
     EngineDuelResult getDuelResult() const {
-        return tournament_.getResult();
+        return tournament_->getResult();
     }
 
     /**
@@ -168,8 +169,11 @@ public:
 
 
 private:
-    PairTournament tournament_;
+    std::unique_ptr<PairTournament> tournament_ = std::make_unique<PairTournament>();
     std::shared_ptr<StartPositions> startPositions_;
+    EngineConfig engine0_;
+    EngineConfig engine1_;
+    PairTournamentConfig tournamentConfig_;
 
     /**
      * @brief Computes a human-readable SPRT info string.

@@ -299,7 +299,7 @@ void SprtTournamentData::startTournament() {
 
     poolAccess_->clearAll();
     state_ = State::Starting;
-    sprtManager_->schedule(sprtManager_, concurrency_);
+    sprtManager_->schedule(sprtManager_, concurrency_, *poolAccess_);
     imguiConcurrency_->init();
     imguiConcurrency_->setActive(true);
     state_ = State::Starting;
