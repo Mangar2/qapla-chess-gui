@@ -287,6 +287,7 @@ void SprtTournamentData::pollData() {
     if (sprtManager_) {
         populateResultTable();
         populateSprtTable();
+        populateCausesTable();
         boardWindowList_.populateViews();
         
         // Update state based on running games
@@ -369,7 +370,8 @@ void SprtTournamentData::populateResultTable() {
 }
 
 void SprtTournamentData::drawResultTable(const ImVec2& size) {
-    if (resultTable_.size() == 0) {
+    auto duelResult = sprtManager_->getDuelResult();
+    if (duelResult.total() == 0) {
         return;
     }
     resultTable_.draw(size, false);
@@ -392,9 +394,34 @@ void SprtTournamentData::populateSprtTable() {
 }
 
 void SprtTournamentData::drawSprtTable(const ImVec2& size) {
-    if (sprtTable_.size() == 0) {
+    auto duelResult = sprtManager_->getDuelResult();
+    if (duelResult.total() == 0) {
         return;
     }
     sprtTable_.draw(size, false);
+}
+
+void SprtTournamentData::populateCausesTable() {
+    if (!sprtManager_) {
+        return;
+    }
+
+    auto duelResult = sprtManager_->getDuelResult();
+    std::vector<EngineDuelResult> duelResults;
+    
+    // Add result from perspective of engine A
+    duelResults.push_back(duelResult);
+    
+    // Add result from perspective of engine B (switched sides)
+    duelResults.push_back(duelResult.switchedSides());
+    
+    causesTable_.populate(duelResults);
+}
+
+void SprtTournamentData::drawCauseTable(const ImVec2& size) {
+    if (causesTable_.size() == 0) {
+        return;
+    }
+    causesTable_.draw(size);
 }
 

@@ -23,6 +23,7 @@
 #include "viewer-board-window.h"
 #include "viewer-board-window-list.h"
 #include "imgui-table.h"
+#include "imgui-causes-table.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
 #include "imgui-tournament-opening.h"
@@ -386,7 +387,7 @@ namespace QaplaWindows {
 
         ImGuiTable eloTable_;
         ImGuiTable runningTable_;
-        ImGuiTable causeTable_;
+        ImGuiCausesTable causesTable_;
         ImGuiTable adjudicationTable_;
 
         State state_ = State::Stopped;

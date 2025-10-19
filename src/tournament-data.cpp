@@ -80,16 +80,6 @@ namespace QaplaWindows {
                 { .name = "Opening", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F }
             }
 		),
-        causeTable_(
-            "Causes",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
-            std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "WDL", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
-                { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F }
-            }
-        ),
         adjudicationTable_(
             "Adjudication Tests",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -346,37 +336,15 @@ namespace QaplaWindows {
 		}
     }
 
-    namespace {
-    void addRow(ImGuiTable& table, const std::string& name, const std::string& wdl, const std::string& cause, int count) {
-        if (count == 0) {
-            return;
-        }
-        std::vector<std::string> row;
-        row.push_back(name);
-        row.push_back(wdl);
-        row.push_back(std::to_string(count));
-        row.push_back(cause);
-        table.push(row);
-    }
-    } // namespace
-
     void TournamentData::populateCauseTable() {
-        causeTable_.clear();
+        std::vector<EngineDuelResult> duelResults;
+        
         for (const auto& scored : result_->getScoredEngines()) {
             auto aggregate = scored.result.aggregate(scored.engineName);
-            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
-                const auto& stat = aggregate.causeStats[index];
-                addRow(causeTable_, scored.engineName, "win", to_string(static_cast<GameEndCause>(index)), stat.win);
-            }
-            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
-                const auto& stat = aggregate.causeStats[index];
-                addRow(causeTable_, scored.engineName, "draw", to_string(static_cast<GameEndCause>(index)), stat.draw);
-            }
-            for (uint32_t index = 0; index < aggregate.causeStats.size(); index++) {
-                const auto& stat = aggregate.causeStats[index];
-                addRow(causeTable_, scored.engineName, "loss", to_string(static_cast<GameEndCause>(index)), stat.loss);
-            }
+            duelResults.push_back(aggregate);
         }
+        
+        causesTable_.populate(duelResults);
     }
 
     void TournamentData::populateAdjudicationTable() {
@@ -547,10 +515,10 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::drawCauseTable(const ImVec2& size) {
-        if (causeTable_.size() == 0) {
+        if (causesTable_.size() == 0) {
             return;
         }
-        causeTable_.draw(size, true);
+        causesTable_.draw(size);
     }
 
     void TournamentData::drawAdjudicationTable(const ImVec2& size) {

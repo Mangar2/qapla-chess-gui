@@ -24,6 +24,7 @@
 #include "imgui-tournament-opening.h"
 #include "imgui-tournament-pgn.h"
 #include "imgui-engine-global-settings.h"
+#include "imgui-causes-table.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
@@ -234,6 +235,12 @@ namespace QaplaWindows {
          */
         void drawSprtTable(const ImVec2& size);
 
+        /**
+         * @brief Draws the table displaying the causes for game termination.
+         * @param size Size of the table to draw.
+         */
+        void drawCauseTable(const ImVec2& size);
+
     private:
         /**
          * @brief Populates the result table with current duel result data.
@@ -246,6 +253,12 @@ namespace QaplaWindows {
          * @details Fills the table with engineA, engineB, lowerBound, llr, upperBound, and decision info.
          */
         void populateSprtTable();
+
+        /**
+         * @brief Populates the causes table with game termination causes.
+         * @details Fills the table with termination causes for both engines in the current duel.
+         */
+        void populateCausesTable();
 
         /**
          * @brief Sets up callbacks for UI component changes.
@@ -277,6 +290,7 @@ namespace QaplaWindows {
         ViewerBoardWindowList boardWindowList_;
         ImGuiTable resultTable_;
         ImGuiTable sprtTable_;
+        ImGuiCausesTable causesTable_;
 
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
