@@ -126,6 +126,12 @@ public:
     std::optional<QaplaHelpers::IniFile::Section> getSection() const;
 
     /**
+     * @brief Loads tournament results from a configuration section.
+     * @param section The section containing tournament results to load.
+     */
+    void loadFromSection(const QaplaHelpers::IniFile::Section& section);
+
+    /**
      * @brief Loads the state from a stream - do nothing, if the file cannot be loaded.
 	 * @param filename The file to load the state from.
      */

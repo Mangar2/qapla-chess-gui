@@ -89,6 +89,7 @@ SprtTournamentData::SprtTournamentData() :
     tournamentPgn_->loadConfiguration();
     loadSprtConfig();
     loadGlobalSettingsConfig();
+    loadTournament();
 
     // Register poll callback
     pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
@@ -271,6 +272,18 @@ bool SprtTournamentData::createTournament(bool verbose) {
         return false;
     }
     return true;
+}
+
+void SprtTournamentData::loadTournament() {
+    if (createTournament(false)) {
+        auto sections = QaplaConfiguration::Configuration::instance().getConfigData().
+            getSectionList("round", "sprt-tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+
+        if (sprtManager_ && !sections.empty()) {
+            // SPRT typically has only one section (one pairing)
+            sprtManager_->loadFromSection(sections[0]);
+        }
+    }
 }
 
 void SprtTournamentData::startTournament() {

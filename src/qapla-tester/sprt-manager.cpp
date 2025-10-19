@@ -147,6 +147,14 @@ std::optional<QaplaHelpers::IniFile::Section> SprtManager::getSection() const {
     return tournament_.getSectionIfNotEmpty("sprt-tournament");
 }
 
+void SprtManager::loadFromSection(const QaplaHelpers::IniFile::Section& section) {
+    try {
+        tournament_.fromSection(section);
+    } catch (const std::exception& ex) {
+        // Ignore invalid section
+    }
+}
+
 void SprtManager::load(const QaplaHelpers::IniFile::Section& section) {
     std::string engineA;
     std::string engineB;

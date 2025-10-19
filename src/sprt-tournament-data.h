@@ -217,6 +217,12 @@ namespace QaplaWindows {
         bool createTournament(bool verbose);
 
         /**
+         * @brief Loads tournament results from configuration.
+         * @details Creates the tournament and then loads saved results from the configuration.
+         */
+        void loadTournament();
+
+        /**
          * @brief Updates the configuration in the Configuration singleton.
          * @details This method creates Section entries for all SPRT configuration aspects
          *          and stores them in the Configuration singleton using setSectionList.
