@@ -58,6 +58,7 @@ namespace QaplaWindows {
         globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
         tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
         tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
+        tournamentAdjudication_(std::make_unique<ImGuiTournamentAdjudication>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -108,6 +109,7 @@ namespace QaplaWindows {
         
         tournamentOpening_->setId("tournament");
         tournamentPgn_->setId("tournament");
+        tournamentAdjudication_->setId("tournament");
 
         // Set up callbacks
         setupCallbacks();
@@ -186,33 +188,12 @@ namespace QaplaWindows {
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
             "pgnoutput", "tournament", pgnSections);
 
-        // Draw Adjudication Config
+        // Adjudication Config
+        auto adjudicationSections = tournamentAdjudication_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "drawadjudication", "tournament", {{
-                .name = "drawadjudication",
-                .entries = QaplaHelpers::IniFile::KeyValueMap{
-                    {"id", "tournament"},
-                    {"active", drawConfig_.active ? "true" : "false"},
-                    {"minFullMoves", std::to_string(drawConfig_.minFullMoves)},
-                    {"requiredConsecutiveMoves", std::to_string(drawConfig_.requiredConsecutiveMoves)},
-                    {"centipawnThreshold", std::to_string(drawConfig_.centipawnThreshold)},
-                    {"testOnly", drawConfig_.testOnly ? "true" : "false"}
-                }
-        }});
-
-        // Resign Adjudication Config
+            "drawadjudication", "tournament", { adjudicationSections[0] });
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "resignadjudication", "tournament", {{
-                .name = "resignadjudication",
-                .entries = QaplaHelpers::IniFile::KeyValueMap{
-                    {"id", "tournament"},
-                    {"active", resignConfig_.active ? "true" : "false"},
-                    {"requiredConsecutiveMoves", std::to_string(resignConfig_.requiredConsecutiveMoves)},
-                    {"centipawnThreshold", std::to_string(resignConfig_.centipawnThreshold)},
-                    {"twoSided", resignConfig_.twoSided ? "true" : "false"},
-                    {"testOnly", resignConfig_.testOnly ? "true" : "false"}
-                }
-        }});
+            "resignadjudication", "tournament", { adjudicationSections[1] });
 
     }
 
@@ -277,8 +258,8 @@ namespace QaplaWindows {
             }
 
             PgnIO::tournament().setOptions(pgnConfig());
-            QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(drawConfig_);
-            QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(resignConfig_);
+            QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
+            QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             tournament_->createTournament(selectedEngines, *config_);
         } catch (const std::exception& ex) {
             if (verbose) {
@@ -618,58 +599,6 @@ namespace QaplaWindows {
         tournamentPgn_->loadConfiguration();
     }
 
-    void TournamentData::loadDrawAdjudicationConfig() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("drawadjudication", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "active") {
-                drawConfig_.active = (value == "true");
-            }
-            else if (key == "minFullMoves") {
-                drawConfig_.minFullMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "requiredConsecutiveMoves") {
-                drawConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "centipawnThreshold") {
-                drawConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
-            }
-            else if (key == "testOnly") {
-                drawConfig_.testOnly = (value == "true");
-            }
-        }
-    }
-
-    void TournamentData::loadResignAdjudicationConfig() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("resignadjudication", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "active") {
-                resignConfig_.active = (value == "true");
-            }
-            else if (key == "requiredConsecutiveMoves") {
-                resignConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "centipawnThreshold") {
-                resignConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
-            }
-            else if (key == "twoSided") {
-                resignConfig_.twoSided = (value == "true");
-            }
-            else if (key == "testOnly") {
-                resignConfig_.testOnly = (value == "true");
-            }
-        }
-    }
-
      void TournamentData::loadEngineSelectionConfig() {
         auto sections = QaplaConfiguration::Configuration::instance()
             .getConfigData().getSectionList("engineselection", "tournament")
@@ -697,8 +626,7 @@ namespace QaplaWindows {
         loadTournamentConfig();
         loadOpenings();
         loadPgnConfig();
-        loadDrawAdjudicationConfig();
-        loadResignAdjudicationConfig();
+        tournamentAdjudication_->loadConfiguration();
         loadEngineSelectionConfig();
         loadGlobalSettingsConfig();
     }

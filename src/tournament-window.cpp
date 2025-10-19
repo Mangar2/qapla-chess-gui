@@ -239,36 +239,8 @@ bool TournamentWindow::drawInput() {
         changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
         ImGui::PopID();
 	}
-    if (ImGui::CollapsingHeader("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("drawAdjudication");
-        ImGui::Indent(10.0F);
-        ImGui::SetNextItemWidth(inputWidth);
-   		changed |= ImGuiControls::triStateInput("Active", 
-            tournamentData.drawConfig().active, tournamentData.drawConfig().testOnly);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<uint32_t>("Min full moves", tournamentData.drawConfig().minFullMoves, 0, 1000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.drawConfig().requiredConsecutiveMoves, 0, 1000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.drawConfig().centipawnThreshold, -10000, 10000);
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-	}
-    if (ImGui::CollapsingHeader("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("resignAdjudication");
-        ImGui::Indent(10.0F);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::triStateInput("Active", 
-            tournamentData.resignConfig().active, tournamentData.resignConfig().testOnly);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<uint32_t>("Required consecutive moves", tournamentData.resignConfig().requiredConsecutiveMoves, 0, 1000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::inputInt<int>("Centipawn threshold", tournamentData.resignConfig().centipawnThreshold, -10000, 10000);
-		ImGui::SetNextItemWidth(inputWidth);
-		changed |= ImGuiControls::booleanInput("Both side decides", tournamentData.resignConfig().twoSided);
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-	}
+
+    changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
     ImGui::Spacing();
 

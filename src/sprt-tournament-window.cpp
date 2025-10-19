@@ -220,6 +220,7 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::PopID();
     }
 
+
     if (ImGui::CollapsingHeader("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("sprtConfig");
         ImGui::Indent(10.0F);
@@ -248,6 +249,8 @@ bool SprtTournamentWindow::drawInput() {
     }
 
     changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
+    changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
+
 
     ImGui::Spacing();
 

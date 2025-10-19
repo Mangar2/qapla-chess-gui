@@ -28,6 +28,7 @@
 #include "imgui-engine-global-settings.h"
 #include "imgui-tournament-opening.h"
 #include "imgui-tournament-pgn.h"
+#include "imgui-tournament-adjudication.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
@@ -207,17 +208,33 @@ namespace QaplaWindows {
             return tournamentPgn_->pgnOptions();
         }
 
+        /**
+         * @brief Returns a reference to the adjudication configuration.
+         * @return Reference to the adjudication configuration.
+         */
+        ImGuiTournamentAdjudication& tournamentAdjudication() {
+            return *tournamentAdjudication_;
+        }
+
+        /**
+         * @brief Returns a const reference to the adjudication configuration.
+         * @return Const reference to the adjudication configuration.
+         */
+        const ImGuiTournamentAdjudication& tournamentAdjudication() const {
+            return *tournamentAdjudication_;
+        }
+
         const QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() const {
-            return drawConfig_;
+            return tournamentAdjudication_->drawConfig();
         }
         QaplaTester::AdjudicationManager::DrawAdjudicationConfig& drawConfig() {
-            return drawConfig_;
+            return tournamentAdjudication_->drawConfig();
         }
-		const QaplaTester::AdjudicationManager::ResignAdjudicationConfig& resignConfig() const {
-            return resignConfig_;
+        const QaplaTester::AdjudicationManager::ResignAdjudicationConfig& resignConfig() const {
+            return tournamentAdjudication_->resignConfig();
         }
         QaplaTester::AdjudicationManager::ResignAdjudicationConfig& resignConfig() {
-            return resignConfig_;
+            return tournamentAdjudication_->resignConfig();
         }
 
         /**
@@ -332,16 +349,6 @@ namespace QaplaWindows {
         void loadPgnConfig();
 
         /**
-         * @brief Loads the draw adjudication configuration from configuration data.
-         */
-        void loadDrawAdjudicationConfig();
-
-        /**
-         * @brief Loads the resign adjudication configuration from configuration data.
-         */
-        void loadResignAdjudicationConfig();
-
-        /**
          * @brief Loads the engine selection configuration from configuration data.
          */
         void loadEngineSelectionConfig();
@@ -374,11 +381,10 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
+        std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_;
         GameManagerPoolAccess poolAccess_;
         ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
-		QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
-		QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 

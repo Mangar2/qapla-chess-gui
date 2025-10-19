@@ -23,6 +23,7 @@
 #include "imgui-engine-select.h"
 #include "imgui-tournament-opening.h"
 #include "imgui-tournament-pgn.h"
+#include "imgui-tournament-adjudication.h"
 #include "imgui-engine-global-settings.h"
 #include "imgui-causes-table.h"
 #include "game-manager-pool-access.h"
@@ -180,6 +181,22 @@ namespace QaplaWindows {
          */
         const ImGuiTournamentPgn& tournamentPgn() const {
             return *tournamentPgn_;
+        }
+
+        /**
+         * @brief Returns a reference to the adjudication configuration.
+         * @return Reference to the adjudication configuration.
+         */
+        ImGuiTournamentAdjudication& tournamentAdjudication() {
+            return *tournamentAdjudication_;
+        }
+
+        /**
+         * @brief Returns a const reference to the adjudication configuration.
+         * @return Const reference to the adjudication configuration.
+         */
+        const ImGuiTournamentAdjudication& tournamentAdjudication() const {
+            return *tournamentAdjudication_;
         }
 
         /**
@@ -357,6 +374,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
+        std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
         std::shared_ptr<QaplaTester::SprtManager> sprtManager_;
         std::unique_ptr<QaplaTester::SprtConfig> sprtConfig_;
@@ -372,12 +390,14 @@ namespace QaplaWindows {
         State state_ = State::Stopped;
 
         // List of all section names used
-        static constexpr std::array<const char*, 7> sectionNames = {
+        static constexpr std::array<const char*, 9> sectionNames = {
             "eachengine",
             "engineselection",
             "sprtconfig",
             "opening",
             "pgnoutput",
+            "drawadjudication",
+            "resignadjudication",
             "timecontroloptions",
             "round"
         };

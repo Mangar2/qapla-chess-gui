@@ -70,6 +70,7 @@ SprtTournamentData::SprtTournamentData() :
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
     tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
+    tournamentAdjudication_(std::make_unique<ImGuiTournamentAdjudication>()),
     globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
     sprtManager_(std::make_unique<SprtManager>()),
     sprtConfig_(std::make_unique<SprtConfig>()),
@@ -86,6 +87,7 @@ SprtTournamentData::SprtTournamentData() :
 
     tournamentOpening_->setId("sprt-tournament");
     tournamentPgn_->setId("sprt-tournament");
+    tournamentAdjudication_->setId("sprt-tournament");
     globalSettings_->setId("sprt-tournament");
 
     sprtConfig_->eloLower = -5;
@@ -98,6 +100,7 @@ SprtTournamentData::SprtTournamentData() :
     loadEngineSelectionConfig();
     tournamentOpening_->loadConfiguration();
     tournamentPgn_->loadConfiguration();
+    tournamentAdjudication_->loadConfiguration();
     loadSprtConfig();
     loadGlobalSettingsConfig();
     loadTournament();
@@ -225,6 +228,12 @@ void SprtTournamentData::updateConfiguration() {
     auto pgnSections = tournamentPgn_->getSections();
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
         "pgnoutput", "sprt-tournament", pgnSections);
+
+    auto adjudicationSections = tournamentAdjudication_->getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "drawadjudication", "sprt-tournament", { adjudicationSections[0] });
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "resignadjudication", "sprt-tournament", { adjudicationSections[1] });
 }
 
 void SprtTournamentData::updateTournamentResults() {
@@ -273,6 +282,8 @@ bool SprtTournamentData::createTournament(bool verbose) {
         // Set PGN output options and create tournament
         if (sprtManager_) {
             PgnIO::tournament().setOptions(tournamentPgn_->pgnOptions());
+            QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
+            QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             sprtManager_->createTournament(selectedEngines[0], selectedEngines[1], *sprtConfig_);
             
             // Clear Monte Carlo results when creating new tournament
