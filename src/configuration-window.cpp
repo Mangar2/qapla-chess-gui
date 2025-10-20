@@ -21,6 +21,7 @@
 #include "imgui-controls.h"
 #include "snackbar.h"
 #include "configuration.h"
+#include "tutorial.h"
 
 #include <imgui.h>
 
@@ -36,6 +37,14 @@ void ConfigurationWindow::draw()
     if (ImGui::CollapsingHeader("Snackbar Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawSnackbarSettings();
+        ImGui::Unindent(10.0F);
+    }
+    
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0F);
+        drawTutorialSettings();
         ImGui::Unindent(10.0F);
     }
     
@@ -80,5 +89,57 @@ void ConfigurationWindow::drawSnackbarSettings()
 
     if (modified) {
         SnackbarManager::instance().updateConfiguration();
+    }
+}
+
+void ConfigurationWindow::drawTutorialSettings()
+{
+    ImGui::Text("Tutorial Topics:");
+    ImGui::Spacing();
+
+    for (int i = 0; i < static_cast<int>(Tutorial::Topic::Count); ++i) {
+        auto topic = static_cast<Tutorial::Topic>(i);
+        std::string topicName = Tutorial::getTopicName(topic);
+        bool completed = Tutorial::instance().isCompleted(topic);
+        bool previousCompleted = completed;
+
+        ImGui::PushID(i);
+        
+        // Display completion status as a checkbox
+        if (ImGui::Checkbox(("##completed_" + topicName).c_str(), &completed)) {
+            // If checkbox is toggled on (incomplete -> complete), set tutorial to completed
+            if (!previousCompleted && completed) {
+                // Mark tutorial as completed by setting counter to completion threshold
+                auto threshold = Tutorial::getCompletionThreshold(topic);
+                switch (topic) {
+                    case Tutorial::Topic::Snackbar:
+                        for (uint32_t j = SnackbarManager::instance().getTutorialCounter(); j < threshold; ++j) {
+                            SnackbarManager::instance().incrementTutorialCounter();
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to enable restart" : "Tutorial not completed - check to mark as complete");
+        }
+        
+        ImGui::SameLine();
+        ImGui::Text("%s", topicName.c_str());
+        
+        // Add restart button if not completed or if checkbox is unchecked
+        if (!completed || previousCompleted != completed) {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Restart")) {
+                Tutorial::instance().restartTopic(topic);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Restart this tutorial from the beginning");
+            }
+        }
+        
+        ImGui::PopID();
     }
 }

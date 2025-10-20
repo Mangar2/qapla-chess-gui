@@ -51,56 +51,63 @@ public:
         uint32_t successDurationInS = 10;
         uint32_t warningDurationInS = 15;
         uint32_t errorDurationInS = 20;
+        uint32_t snackbarTutorialCounter = 0;
 
         bool operator==(const SnackbarConfig& other) const {
             return noteDurationInS == other.noteDurationInS &&
                    successDurationInS == other.successDurationInS &&
                    warningDurationInS == other.warningDurationInS &&
-                   errorDurationInS == other.errorDurationInS;
+                   errorDurationInS == other.errorDurationInS &&
+                   snackbarTutorialCounter == other.snackbarTutorialCounter;
         }
     };
 
     /**
      * @brief Displays an error message snackbar
      * @param message The error message to display
+     * @param sticky If true, the snackbar will not close automatically
      */
-    void showError(const std::string& message) {
-        show(message, SnackbarType::Error);
+    void showError(const std::string& message, bool sticky = false) {
+        show(message, SnackbarType::Error, sticky);
     }
     
     /**
      * @brief Displays a warning message snackbar
      * @param message The warning message to display
+     * @param sticky If true, the snackbar will not close automatically
      */
-    void showWarning(const std::string& message) {
-        show(message, SnackbarType::Warning);
+    void showWarning(const std::string& message, bool sticky = false) {
+        show(message, SnackbarType::Warning, sticky);
     }
     
     /**
      * @brief Displays a success message snackbar
      * @param message The success message to display
+     * @param sticky If true, the snackbar will not close automatically
      */
-    void showSuccess(const std::string& message) {
-        show(message, SnackbarType::Success);
+    void showSuccess(const std::string& message, bool sticky = false) {
+        show(message, SnackbarType::Success, sticky);
     }
     
     /**
      * @brief Displays an informational note snackbar
      * @param message The note message to display
+     * @param sticky If true, the snackbar will not close automatically
      */
-    void showNote(const std::string& message) {
-        show(message, SnackbarType::Note);
+    void showNote(const std::string& message, bool sticky = false) {
+        show(message, SnackbarType::Note, sticky);
     }
 
     /**
      * @brief Displays a snackbar with the specified message and type
      * @param message The message text to display
      * @param type The type/severity of the snackbar (Note, Success, Warning, Error)
+     * @param sticky If true, the snackbar will not close automatically (default: false)
      * 
      * If a snackbar with the same message and type is already displayed,
      * the display duration will be reset instead of creating a duplicate.
      */
-    void show(const std::string& message, SnackbarType type);
+    void show(const std::string& message, SnackbarType type, bool sticky = false);
 
     /**
      * @brief Returns the singleton instance of the SnackbarManager
@@ -153,12 +160,40 @@ public:
      */
     void updateConfiguration() const;
 
+    /**
+     * @brief Increments the tutorial counter and triggers tutorial progression
+     */
+    void incrementTutorialCounter();
+
+    /**
+     * @brief Resets the tutorial counter to restart the tutorial
+     */
+    void resetTutorialCounter();
+
+    /**
+     * @brief Gets the current tutorial counter value
+     * @return The tutorial counter value
+     */
+    uint32_t getTutorialCounter() const {
+        return config_.snackbarTutorialCounter;
+    }
+
+    /**
+     * @brief Shows a tutorial snackbar (internal method)
+     * @param message The message to display
+     * @param type The snackbar type
+     * @param sticky Whether the snackbar is sticky
+     */
+    void showTutorial(const std::string& message, SnackbarType type, bool sticky);
+
 private:
     struct SnackbarEntry {
         std::string message;
         std::chrono::steady_clock::time_point startTime;
         SnackbarType type;
         float duration;
+        bool sticky;
+        bool isTutorial;
     };
 
     /**

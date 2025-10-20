@@ -24,7 +24,7 @@
 
 #include <imgui.h>
 
-void SnackbarManager::show(const std::string& message, SnackbarType type) {
+void SnackbarManager::show(const std::string& message, SnackbarType type, bool sticky) {
     SnackbarEntry entry;
     
     // Check if the same message with the same type is already at the top of the stack
@@ -45,28 +45,75 @@ void SnackbarManager::show(const std::string& message, SnackbarType type) {
     entry.startTime = std::chrono::steady_clock::now();
     entry.duration = getDuration(type);
     entry.type = type;
+    entry.sticky = sticky;
+    entry.isTutorial = false;
+    
+    snackbarStack_.emplace_back(std::move(entry)); 
+}
+
+void SnackbarManager::showTutorial(const std::string& message, SnackbarType type, bool sticky) {
+    SnackbarEntry entry;
+    
+    entry.message = message;
+    // Remove leading newline if present
+    if (!entry.message.empty() && entry.message[0] == '\n') {
+        entry.message.erase(0, 1); 
+    }
+    
+    entry.startTime = std::chrono::steady_clock::now();
+    entry.duration = getDuration(type);
+    entry.type = type;
+    entry.sticky = sticky;
+    entry.isTutorial = true;
     
     snackbarStack_.emplace_back(std::move(entry)); 
 }
 
 void SnackbarManager::draw() {
-    constexpr ImVec2 snackbarSize = ImVec2(450.0F, 120.0F); 
+    constexpr float snackbarWidth = 450.0F;
+    constexpr float minSnackbarHeight = 120.0F;
+    constexpr float maxSnackbarHeight = 400.0F;
     constexpr float closeButtonRadius = 10.0F;
     constexpr float borderThickness = 2.0F;
+    constexpr float padding = 20.0F;
 
     while (!snackbarStack_.empty()) {
         auto& currentSnackbar = snackbarStack_.back();
         auto now = std::chrono::steady_clock::now();
         float elapsed = std::chrono::duration<float>(now - currentSnackbar.startTime).count();
 
-        // Remove expired snackbars
-        if (elapsed > currentSnackbar.duration) {
+        // Remove expired snackbars (but not sticky ones)
+        if (!currentSnackbar.sticky && elapsed > currentSnackbar.duration) {
+            // If it's a tutorial snackbar, increment counter when it expires
+            if (currentSnackbar.isTutorial && config_.snackbarTutorialCounter < 3) {
+                incrementTutorialCounter();
+            }
             snackbarStack_.pop_back();
             continue;
         }
 
         ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
         ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0F);
+
+        // Calculate required height for text
+        ImGui::PushFont(ImGui::GetFont());
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
+        
+        float availableWidth = snackbarWidth - 2 * padding;
+        float fontSize = ImGui::GetFontSize() * 1.1f;
+        
+        // Calculate text size with wrapping
+        std::string fullText = std::string(typeNames[static_cast<int>(currentSnackbar.type)]) + ":\n" + currentSnackbar.message;
+        ImVec2 textSize = ImGui::CalcTextSize(fullText.c_str(), nullptr, false, availableWidth);
+        
+        // Calculate required height (text + padding + close button space)
+        float requiredHeight = textSize.y + 2 * padding + 20.0F;
+        float snackbarHeight = std::max(minSnackbarHeight, std::min(requiredHeight, maxSnackbarHeight));
+        
+        ImVec2 snackbarSize = ImVec2(snackbarWidth, snackbarHeight);
+        
+        ImGui::PopStyleVar();
+        ImGui::PopFont();
 
         ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0F);
@@ -104,7 +151,13 @@ void SnackbarManager::draw() {
         );
         
         if (drawCloseButton(closeButtonPos, closeButtonRadius)) {
-            snackbarStack_.pop_back(); 
+            bool wasTutorial = currentSnackbar.isTutorial;
+            snackbarStack_.pop_back();
+            
+            // Handle tutorial progression for tutorial snackbars
+            if (wasTutorial && config_.snackbarTutorialCounter < 3) {
+                incrementTutorialCounter();
+            }
         }
 
         ImGui::End();
@@ -165,6 +218,16 @@ void SnackbarManager::loadConfiguration() {
         config_.successDurationInS = QaplaHelpers::to_uint32(section.getValue("successduration").value_or("10")).value_or(10);
         config_.warningDurationInS = QaplaHelpers::to_uint32(section.getValue("warningduration").value_or("15")).value_or(15);
         config_.errorDurationInS = QaplaHelpers::to_uint32(section.getValue("errorduration").value_or("20")).value_or(20);
+        config_.snackbarTutorialCounter = QaplaHelpers::to_uint32(section.getValue("tutorialcounter").value_or("0")).value_or(0);
+    }
+    
+    // Start tutorial if counter is 0
+    if (config_.snackbarTutorialCounter == 0) {
+        showTutorial("Welcome to the Snackbar System!\n\n"
+                     "Snackbars display temporary notifications in the bottom-left corner. "
+                     "They automatically disappear after a few seconds. "
+                     "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
+                     SnackbarType::Note, true);
     }
 }
 
@@ -176,8 +239,44 @@ void SnackbarManager::updateConfiguration() const {
             {"noteduration", std::to_string(config_.noteDurationInS)},
             {"successduration", std::to_string(config_.successDurationInS)},
             {"warningduration", std::to_string(config_.warningDurationInS)},
-            {"errorduration", std::to_string(config_.errorDurationInS)}
+            {"errorduration", std::to_string(config_.errorDurationInS)},
+            {"tutorialcounter", std::to_string(config_.snackbarTutorialCounter)}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
+}
+
+void SnackbarManager::incrementTutorialCounter() {
+    config_.snackbarTutorialCounter++;
+    updateConfiguration();
+    
+    // Trigger next tutorial step
+    if (config_.snackbarTutorialCounter == 1) {
+        showTutorial("Snackbar Types\n\n"
+                     "There are 4 types of snackbars:\n"
+                     "- Note (gray): General information\n"
+                     "- Success (green): Successful operations\n"
+                     "- Warning (yellow): Warnings like this one\n"
+                     "- Error (red): Error messages\n\n"
+                     "Each type has a different display duration.", 
+                     SnackbarType::Warning, false);
+    } else if (config_.snackbarTutorialCounter == 2) {
+        showTutorial("Snackbar Configuration\n\n"
+                     "You can customize the display duration for each snackbar type in the Settings window.\n"
+                     "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n\n"
+                     "After closing this note, the snackbar tutorial is complete!", 
+                     SnackbarType::Note, false);
+    }
+}
+
+void SnackbarManager::resetTutorialCounter() {
+    config_.snackbarTutorialCounter = 0;
+    updateConfiguration();
+    
+    // Start tutorial from beginning
+    showTutorial("Welcome to the Snackbar System!\n\n"
+                 "Snackbars display temporary notifications in the bottom-left corner. "
+                 "They automatically disappear after a few seconds. "
+                 "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
+                 SnackbarType::Note, true);
 }

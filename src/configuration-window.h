@@ -55,6 +55,11 @@ namespace QaplaWindows
          * @brief Draws the snackbar configuration section
          */
         static void drawSnackbarSettings();
+
+        /**
+         * @brief Draws the tutorial configuration section
+         */
+        static void drawTutorialSettings();
     };
 
 } // namespace QaplaWindows
