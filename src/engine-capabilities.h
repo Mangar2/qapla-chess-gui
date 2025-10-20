@@ -121,6 +121,12 @@ namespace QaplaConfiguration {
             return detecting_.load();
         }
 
+        /**
+         * @brief Checks if all configured engines have been detected.
+         * @return True if all engines have capabilities, false otherwise.
+         */
+        bool areAllEnginesDetected() const;
+
     private:
         /**
          * @brief Creates a unique key for the unordered_map based on path and protocol.

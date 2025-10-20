@@ -21,6 +21,7 @@
 
 #include "qapla-tester/engine-config.h"
 #include "embedded-window.h"
+#include "imgui-button.h"
 #include <memory>
 
 namespace QaplaWindows {
@@ -50,6 +51,12 @@ namespace QaplaWindows {
         ~EngineSetupWindow();
 
         void draw() override;
+
+        /**
+         * @brief Indicates whether the window should be highlighted.
+         * @return true if no engines are configured, false otherwise.
+         */
+        bool highlighted() const override;
 
         /**
          * @brief Returns the list of active engine configurations.
@@ -100,15 +107,60 @@ namespace QaplaWindows {
             return showGlobalControls_;
         }
 
+        /**
+         * @brief Gets the current tutorial counter value.
+         * @return The tutorial counter value.
+         */
+        static uint32_t getTutorialCounter();
+
+        /**
+         * @brief Resets the tutorial counter to restart the tutorial.
+         */
+        static void resetTutorialCounter();
+
+        /**
+         * @brief Finishes the tutorial without showing any snackbars.
+         */
+        static void finishTutorial();
+
+        /**
+         * @brief Loads the tutorial configuration from the configuration data.
+         */
+        static void loadTutorialConfiguration();
+
     private:
         void drawButtons();
         bool drawGlobalSettings();
         void executeCommand(const std::string &button);
         void drawEngineList();
+        
+        /**
+         * @brief Gets the button state for a specific button based on current context.
+         * @param button The button identifier ("Add", "Remove", "Detect")
+         * @return The appropriate button state
+         */
+        QaplaButton::ButtonState getButtonState(const std::string& button) const;
+
+        /**
+         * @brief Checks and manages the engine setup tutorial progression.
+         */
+        void checkTutorialProgression();
+
+        /**
+         * @brief Updates the configuration data with the current tutorial counter.
+         */
+        static void updateTutorialConfiguration();
+
+        /**
+         * @brief Increments the tutorial counter.
+         */
+        static void showNextTutorialStep();
 
         std::vector<QaplaTester::EngineConfig> activeEngines_;
         GlobalEngineSettings globalSettings_;
         bool showGlobalControls_ = true;
+
+        static inline uint32_t engineSetupTutorialCounter_ = 0;
 
         constexpr static float controlIndent_ = 10.0F;
     };

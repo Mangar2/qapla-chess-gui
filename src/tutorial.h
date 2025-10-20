@@ -35,6 +35,7 @@ public:
      */
     enum class Topic {
         Snackbar,
+        EngineSetup,
         // Future topics can be added here
         Count
     };

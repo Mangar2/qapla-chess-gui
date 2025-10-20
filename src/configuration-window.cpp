@@ -18,6 +18,7 @@
  */
 
 #include "configuration-window.h"
+#include "engine-setup-window.h"
 #include "imgui-controls.h"
 #include "snackbar.h"
 #include "configuration.h"
@@ -114,6 +115,8 @@ void ConfigurationWindow::drawTutorialSettings()
                     case Tutorial::Topic::Snackbar:
                         SnackbarManager::instance().finishTutorial();
                         break;
+                    case Tutorial::Topic::EngineSetup:
+                        EngineSetupWindow::finishTutorial();
                     default:
                         break;
                 }

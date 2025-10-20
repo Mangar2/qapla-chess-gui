@@ -167,6 +167,7 @@ namespace {
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::EpdData::instance().loadFile();
         SnackbarManager::instance().loadConfiguration();
+        QaplaWindows::EngineSetupWindow::loadTutorialConfiguration();
         QaplaWindows::InteractiveBoardWindow::instance().setEngines();
         auto workspace = initWindows();
 

@@ -163,7 +163,7 @@ public:
     /**
      * @brief Increments the tutorial counter and triggers tutorial progression
      */
-    void incrementTutorialCounter();
+    void showNextTutorialStep();
 
     /**
      * @brief Marks the tutorial as finished without showing snackbars

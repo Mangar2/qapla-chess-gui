@@ -79,3 +79,12 @@ void EngineCapabilities::autoDetect() {
         }).detach();
 }
 
+bool EngineCapabilities::areAllEnginesDetected() const {
+    for (const auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
+        if (!hasAnyCapability(config.getCmd())) {
+            return false;
+        }
+    }
+    return true;
+}
+

@@ -19,11 +19,14 @@
 
 #include "tutorial.h"
 #include "snackbar.h"
+#include "engine-setup-window.h"
 
 bool Tutorial::isCompleted(Topic topic) const {
     switch (topic) {
         case Topic::Snackbar:
             return SnackbarManager::instance().getTutorialCounter() >= getCompletionThreshold(topic);
+        case Topic::EngineSetup:
+            return QaplaWindows::EngineSetupWindow::getTutorialCounter() >= getCompletionThreshold(topic);
         default:
             return false;
     }
@@ -34,6 +37,9 @@ void Tutorial::restartTopic(Topic topic) {
         case Topic::Snackbar:
             SnackbarManager::instance().resetTutorialCounter();
             break;
+        case Topic::EngineSetup:
+            QaplaWindows::EngineSetupWindow::resetTutorialCounter();
+            break;
         default:
             break;
     }
@@ -43,6 +49,8 @@ std::string Tutorial::getTopicName(Topic topic) {
     switch (topic) {
         case Topic::Snackbar:
             return "Snackbar System";
+        case Topic::EngineSetup:
+            return "Engine Setup";
         default:
             return "Unknown";
     }
@@ -51,7 +59,9 @@ std::string Tutorial::getTopicName(Topic topic) {
 uint32_t Tutorial::getCompletionThreshold(Topic topic) {
     switch (topic) {
         case Topic::Snackbar:
-            return 3; // Completed after 3 steps
+            return 4; 
+        case Topic::EngineSetup:
+            return 4; 
         default:
             return 1;
     }

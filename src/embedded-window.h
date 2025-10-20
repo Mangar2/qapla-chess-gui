@@ -33,6 +33,17 @@ public:
      * @brief Renders the contents of the embedded window.
      */
     virtual void draw() = 0;
+
+    /**
+     * @brief Indicates whether the window is highlighted.
+     * 
+     * This can be used to signal special attention or status in the UI.
+     * 
+     * @return true if the window is highlighted, false otherwise
+     */
+    virtual bool highlighted() const {
+        return false;
+    }
 };
 
 /**

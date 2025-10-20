@@ -25,6 +25,7 @@
 #include "os-dialogs.h"
 #include "configuration.h"
 #include "snackbar.h"
+#include "tutorial.h"
 
 #include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-config.h"
@@ -44,10 +45,14 @@ using namespace QaplaWindows;
 EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     : showGlobalControls_(showGlobalControls)
 {
-    //auto& configManager = EngineWorkerFactory::getConfigManager();
-    // activeEngines_ = configManager.getAllConfigs();
 }
 EngineSetupWindow::~EngineSetupWindow() = default;
+
+bool EngineSetupWindow::highlighted() const {
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    return configs.empty();
+}
 
 std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() const {
     std::vector<QaplaTester::EngineConfig> engines = activeEngines_;
@@ -115,35 +120,67 @@ static std::tuple<bool, bool> drawEngineConfigSection(QaplaTester::EngineConfig&
     std::string headerLabel = config.getName().empty()
         ? std::format("Engine {}###engineHeader{}", index + 1, index)
         : std::format("{}###engineHeader{}", config.getName(), index, index);
-    bool changed = false;
     ImGui::PushID(index);
- 
-    ImGui::Checkbox("##select", &selected);
-    ImGui::SameLine(0.0F, 4.0F);
 
-    if (ImGui::CollapsingHeader(headerLabel.c_str(), ImGuiTreeNodeFlags_Selected)) {
-        ImGui::Indent(32.0F);
-        changed |= ImGuiEngineControls::drawEngineName(config, true);
-        changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
-        changed |= ImGuiEngineControls::drawEngineCommand(config, true);
-        changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
-        changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
-        changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
-        changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
-        changed |= ImGuiEngineControls::drawEnginePonder(config, true);
+    bool changed = ImGuiControls::collapsingSelection(
+        headerLabel.c_str(), 
+        selected, 
+        ImGuiTreeNodeFlags_None,
+        [&]()->bool {
+            bool changed = false;
+            changed |= ImGuiEngineControls::drawEngineName(config, true);
+            changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
+            changed |= ImGuiEngineControls::drawEngineCommand(config, true);
+            changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
+            changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
+            changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
+            changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
+            changed |= ImGuiEngineControls::drawEnginePonder(config, true);
 
-        try {
-            changed |= drawOptions(config, 400.0F);
+            try {
+                changed |= drawOptions(config, 400.0F);
+            }
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showError(
+                    std::format("Error in options: {}", e.what()));
+            }
+            return changed;
         }
-        catch (const std::exception& e) {
-            SnackbarManager::instance().showError(
-				std::format("Error in options: {}", e.what()));
-		}
+    );
 
-        ImGui::Unindent(32.0F);
-    }
     ImGui::PopID();
     return { changed, selected };
+}
+
+QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& button) const {
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
+    
+    if (button == "Add") {
+        if (configs.empty()) {
+            return QaplaButton::ButtonState::Highlighted;
+        }
+        return QaplaButton::ButtonState::Normal;
+    }
+    else if (button == "Remove") {
+        if (activeEngines_.empty()) {
+            return QaplaButton::ButtonState::Disabled;
+        }
+        return QaplaButton::ButtonState::Normal;
+    }
+    else if (button == "Detect") {
+        if (detecting) {
+            return QaplaButton::ButtonState::Animated;
+        }
+        const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+        if (!capabilities.areAllEnginesDetected()) {
+            return QaplaButton::ButtonState::Highlighted;
+        }
+        return QaplaButton::ButtonState::Normal;
+    }
+    
+    return QaplaButton::ButtonState::Normal;
 }
 
 void EngineSetupWindow::drawButtons() {
@@ -160,15 +197,9 @@ void EngineSetupWindow::drawButtons() {
     std::vector<std::string> buttons{ "Add", "Remove", "Detect" };
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
-    bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
-
-
 
     for (const auto& button : buttons) {
-        auto state = QaplaButton::ButtonState::Normal;
-        if (button == "Detect" && detecting) {
-            state = QaplaButton::ButtonState::Animated;
-        }
+        auto state = getButtonState(button);
         
         ImGui::SetCursorScreenPos(curPos);
         if (QaplaButton::drawIconButton(button, button, buttonSize, state,
@@ -277,7 +308,12 @@ void EngineSetupWindow::drawEngineList() {
     for (auto& config : configs) {
         bool inSelection = false;
         for (auto& active : activeEngines_) {
-            if (active == config) {
+            if (active.getCmd() == config.getCmd() && 
+                active.getProtocol() == config.getProtocol()) {
+                // Auto-updates active config on any changes
+                if (active != config) {
+                    active = config;
+                }
                 inSelection = true;
                 break;
             }
@@ -287,21 +323,14 @@ void EngineSetupWindow::drawEngineList() {
             configManager.addOrReplaceConfig(config);
             QaplaConfiguration::Configuration::instance().setModified();
         }
-        if (selected) {
-            bool found = false;
-            for (auto & active: activeEngines_) {
-                if (active.getCmd() == config.getCmd() && active.getProtocol() == config.getProtocol()) {
-                    active = config;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                activeEngines_.push_back(config);
-            }
+        if (selected && !inSelection) {
+            activeEngines_.push_back(config);
         }
-        else {
-            std::erase(activeEngines_, config);
+        if (!selected && inSelection) {
+            std::erase_if(activeEngines_, [&config](const QaplaTester::EngineConfig& ec) {
+                return ec.getCmd() == config.getCmd() && 
+                       ec.getProtocol() == config.getProtocol();
+            });
         }
 
         index++;
@@ -313,18 +342,118 @@ void EngineSetupWindow::draw() {
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();
 
-    if (configs.empty()) {
-        constexpr float dotOffsetX = 6.0F;
-        constexpr float dotOffsetY = 10.0F;
-        QaplaWindows::ImGuiControls::drawDot(dotOffsetX, dotOffsetY);
-    }
 	drawButtons();
     drawGlobalSettings();
-        auto size = ImGui::GetContentRegionAvail();
+    auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("EngineList", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
     ImGui::Indent(controlIndent_);
     drawEngineList();
     ImGui::Unindent(controlIndent_);
     ImGui::EndChild();
+    
+    // Check tutorial progression
+    checkTutorialProgression();
+}
+
+uint32_t EngineSetupWindow::getTutorialCounter() {
+    return engineSetupTutorialCounter_;
+}
+
+void EngineSetupWindow::resetTutorialCounter() {
+    engineSetupTutorialCounter_ = 0;
+    updateTutorialConfiguration();
+}
+
+void EngineSetupWindow::loadTutorialConfiguration() {
+    auto sections = QaplaConfiguration::Configuration::instance().
+        getConfigData().getSectionList("enginesetup", "enginesetup").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        engineSetupTutorialCounter_ = QaplaHelpers::to_uint32(section.getValue("tutorialcounter").value_or("0")).value_or(0);
+    }
+}
+
+void EngineSetupWindow::updateTutorialConfiguration() {
+    QaplaHelpers::IniFile::Section section {
+        .name = "enginesetup",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "enginesetup"},
+            {"tutorialcounter", std::to_string(engineSetupTutorialCounter_)}
+        }
+    };
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginesetup", "enginesetup", { section });
+}
+
+void EngineSetupWindow::finishTutorial() {
+    engineSetupTutorialCounter_ = 4;
+    updateTutorialConfiguration();
+}
+
+void EngineSetupWindow::showNextTutorialStep() {
+    engineSetupTutorialCounter_++;
+    updateTutorialConfiguration();
+
+    switch (engineSetupTutorialCounter_) {
+        case 1:
+        SnackbarManager::instance().showTutorial(
+            "Engine Setup - Step 1\n\n"
+            "To use this chess GUI, you need chess engines.\n"
+            "Click the 'Add' button in the engines tab to select engine executables. "
+            "You can select multiple engines at once in the file dialog.\n\n"
+            "Please add 2 or more engines to continue.",
+            SnackbarManager::SnackbarType::Note, false);
+        return;
+        case 2:
+        SnackbarManager::instance().showTutorial(
+            "Engine Setup - Step 2\n\n"
+            "Great! You have added engines.\n"
+            "Now click the 'Detect' button to automatically read all options from your engines.\n"
+            "It runs in parallel for all engines. Still it may take a few seconds.",
+            SnackbarManager::SnackbarType::Note, false);
+        return;
+        case 3:
+        SnackbarManager::instance().showTutorial(
+            "Engine Setup Complete!\n\n"
+            "Excellent! Your engines are now configured and ready to use.\n"
+            "You can select them in other tabs like Tournament or Engine Test.\n\n"
+            "Engine setup tutorial completed!",
+            SnackbarManager::SnackbarType::Success, false);
+        return;
+        default:
+        return;
+    }
+}
+
+void EngineSetupWindow::checkTutorialProgression() {
+    // Only start tutorial if Snackbar tutorial is completed
+    if (!Tutorial::instance().isCompleted(Tutorial::Topic::Snackbar)) {
+        return;
+    }
+
+    switch (engineSetupTutorialCounter_) {
+        case 0:
+        showNextTutorialStep();
+        return;
+        case 1:
+        {
+            const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+            const auto configs = configManager.getAllConfigs();
+            if (configs.size() >= 2) {
+                showNextTutorialStep();
+            }
+        }
+        return;
+        case 2:
+        {
+            const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+            if (capabilities.areAllEnginesDetected()) {
+                showNextTutorialStep();
+            }
+        }
+        return;
+        default:
+        return;
+    }
 }
 

@@ -18,6 +18,7 @@
  */
 
 #include "imgui-tab-bar.h"
+#include "imgui-controls.h"
 #include <algorithm>
 
 namespace QaplaWindows {
@@ -61,7 +62,19 @@ namespace QaplaWindows {
                 it->defaultTabFlags &= ~ImGuiTabItemFlags_SetSelected;
                 bool closable = flags & ImGuiTabItemFlags_NoAssumedClosure;
 
-                if (ImGui::BeginTabItem(it->name.c_str(), closable ? &open : nullptr, flags)) {
+                // Check if window is highlighted
+                bool isHighlighted = it->window && it->window->highlighted();
+
+                bool tabIsActive = ImGui::BeginTabItem(it->name.c_str(), closable ? &open : nullptr, flags);
+                
+                // Draw dot if window is highlighted (after BeginTabItem, independent of whether tab is active)
+                if (isHighlighted) {
+                    constexpr float dotOffsetX = 6.0F;
+                    constexpr float dotOffsetY = 10.0F;
+                    ImGuiControls::drawDot(dotOffsetX, dotOffsetY);
+                }
+                
+                if (tabIsActive) {
                     // Always use callback (which is created for EmbeddedWindows too)
                     if (it->callback) {
                         it->callback();

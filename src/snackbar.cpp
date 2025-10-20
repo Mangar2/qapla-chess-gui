@@ -85,10 +85,10 @@ void SnackbarManager::draw() {
         // Remove expired snackbars (but not sticky ones)
         if (!currentSnackbar.sticky && elapsed > currentSnackbar.duration) {
             // If it's a tutorial snackbar, increment counter when it expires
-            if (currentSnackbar.isTutorial && config_.snackbarTutorialCounter < 3) {
-                incrementTutorialCounter();
-            }
             snackbarStack_.pop_back();
+            if (currentSnackbar.isTutorial) {
+                showNextTutorialStep();
+            }
             continue;
         }
 
@@ -155,8 +155,8 @@ void SnackbarManager::draw() {
             snackbarStack_.pop_back();
             
             // Handle tutorial progression for tutorial snackbars
-            if (wasTutorial && config_.snackbarTutorialCounter < 3) {
-                incrementTutorialCounter();
+            if (wasTutorial) {
+                showNextTutorialStep();
             }
         }
 
@@ -221,14 +221,7 @@ void SnackbarManager::loadConfiguration() {
         config_.snackbarTutorialCounter = QaplaHelpers::to_uint32(section.getValue("tutorialcounter").value_or("0")).value_or(0);
     }
     
-    // Start tutorial if counter is 0
-    if (config_.snackbarTutorialCounter == 0) {
-        showTutorial("Welcome to the Snackbar System!\n\n"
-                     "Snackbars display temporary notifications in the bottom-left corner. "
-                     "They automatically disappear after a few seconds. "
-                     "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
-                     SnackbarType::Note, true);
-    }
+    showNextTutorialStep();
 }
 
 void SnackbarManager::updateConfiguration() const {
@@ -246,42 +239,43 @@ void SnackbarManager::updateConfiguration() const {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
 }
 
-void SnackbarManager::incrementTutorialCounter() {
+void SnackbarManager::showNextTutorialStep() {
     config_.snackbarTutorialCounter++;
     updateConfiguration();
-    
-    // Trigger next tutorial step
-    if (config_.snackbarTutorialCounter == 1) {
-        showTutorial("Snackbar Types\n\n"
-                     "There are 4 types of snackbars:\n"
-                     "- Note (gray): General information\n"
-                     "- Success (green): Successful operations\n"
-                     "- Warning (yellow): Warnings like this one\n"
-                     "- Error (red): Error messages\n\n"
-                     "Each type has a different display duration.", 
-                     SnackbarType::Warning, false);
-    } else if (config_.snackbarTutorialCounter == 2) {
+    switch (config_.snackbarTutorialCounter) {
+        case 1:
+        showTutorial("Welcome to the Snackbar System!\n\n"
+                     "Snackbars display temporary notifications in the bottom-left corner. "
+                     "They automatically disappear after a few seconds. "
+                     "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
+                     SnackbarType::Note, true);
+        return;
+        case 2:
+        showTutorial("This is an example of a warning\n\n"
+                    "There are 4 types of snackbars:\n"
+                    "- Note, Success, Warning, and Error.\n\n"
+                    "Each type has a different display duration.",
+                    SnackbarType::Warning, false);
+        return;
+        case 3:
         showTutorial("Snackbar Configuration\n\n"
                      "You can customize the display duration for each snackbar type in the Settings window.\n"
                      "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n\n"
-                     "After closing this note, the snackbar tutorial is complete!", 
+                     "Red dots show where to click next - setup engines now.", 
                      SnackbarType::Note, false);
+        return;
+        default:
+        return;
     }
 }
 
 void SnackbarManager::finishTutorial() {
-    config_.snackbarTutorialCounter = 3;
+    config_.snackbarTutorialCounter = 4;
     updateConfiguration();
 }
 
 void SnackbarManager::resetTutorialCounter() {
     config_.snackbarTutorialCounter = 0;
+    showNextTutorialStep();
     updateConfiguration();
-    
-    // Start tutorial from beginning
-    showTutorial("Welcome to the Snackbar System!\n\n"
-                 "Snackbars display temporary notifications in the bottom-left corner. "
-                 "They automatically disappear after a few seconds. "
-                 "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
-                 SnackbarType::Note, true);
 }
