@@ -44,6 +44,23 @@ public:
     };
 
     /**
+     * @brief Configuration settings for the SnackbarManager
+     */
+    struct SnackbarConfig {
+        uint32_t noteDurationInS = 10;
+        uint32_t successDurationInS = 10;
+        uint32_t warningDurationInS = 15;
+        uint32_t errorDurationInS = 20;
+
+        bool operator==(const SnackbarConfig& other) const {
+            return noteDurationInS == other.noteDurationInS &&
+                   successDurationInS == other.successDurationInS &&
+                   warningDurationInS == other.warningDurationInS &&
+                   errorDurationInS == other.errorDurationInS;
+        }
+    };
+
+    /**
      * @brief Displays an error message snackbar
      * @param message The error message to display
      */
@@ -102,6 +119,40 @@ public:
      */
     void draw();
 
+    /**
+     * @brief Gets the current snackbar configuration
+     * @return Reference to the current SnackbarConfig
+     */
+    const SnackbarConfig& getConfig() const {
+        return config_;
+    }
+
+    /**
+     * @brief Gets the current snackbar configuration (mutable)
+     * @return Reference to the current SnackbarConfig
+     */
+    SnackbarConfig& getConfig() {
+        return config_;
+    }
+
+    /**
+     * @brief Sets the snackbar configuration
+     * @param config The new configuration to apply
+     */
+    void setConfig(const SnackbarConfig& config) {
+        config_ = config;
+    }
+
+    /**
+     * @brief Loads the snackbar configuration from the configuration data
+     */
+    void loadConfiguration();
+
+    /**
+     * @brief Updates the configuration data with the current snackbar settings
+     */
+    void updateConfiguration() const;
+
 private:
     struct SnackbarEntry {
         std::string message;
@@ -125,13 +176,6 @@ private:
         ImVec4(0.8f, 0.7f, 0.7f, 1.0F)  // Error: Light Red
     };
 
-    static constexpr std::array<float, static_cast<size_t>(SnackbarType::Count)> durations = {
-        10.0F, // Note
-        10.0F, // Success
-        15.0F, // Warning
-        20.0F  // Error
-    };
-
     static constexpr std::array<const char*, static_cast<size_t>(SnackbarType::Count)> typeNames = {
         "Note",    
         "Success", 
@@ -139,5 +183,13 @@ private:
         "Error"    
     };
 
+    /**
+     * @brief Gets the duration for a specific snackbar type based on current configuration
+     * @param type The snackbar type
+     * @return Duration in seconds
+     */
+    float getDuration(SnackbarType type) const;
+
+    SnackbarConfig config_;
     std::deque<SnackbarEntry> snackbarStack_;
 };

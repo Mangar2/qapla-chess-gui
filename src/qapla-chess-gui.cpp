@@ -22,6 +22,7 @@
 #include "qapla-tester/game-manager-pool.h"
 
 #include "configuration.h"
+#include "configuration-window.h"
 #include "time-control-window.h"
 #include "epd-window.h"
 #include "epd-data.h"
@@ -141,6 +142,7 @@ namespace {
         taskTabBar->addTab("Pgn", std::make_unique<QaplaWindows::ImGuiGameList>());
         taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
         taskTabBar->addTab("Test", std::make_unique<QaplaWindows::EngineTestWindow>());
+        taskTabBar->addTab("Settings", std::make_unique<QaplaWindows::ConfigurationWindow>());
 
         auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
             "main", ImGuiWindowFlags_None);
@@ -164,6 +166,7 @@ namespace {
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::EpdData::instance().loadFile();
+        SnackbarManager::instance().loadConfiguration();
         QaplaWindows::InteractiveBoardWindow::instance().setEngines();
         auto workspace = initWindows();
 

@@ -18,6 +18,10 @@
  */
 
 #include "snackbar.h"
+#include "configuration.h"
+
+#include "qapla-tester/string-helper.h"
+
 #include <imgui.h>
 
 void SnackbarManager::show(const std::string& message, SnackbarType type) {
@@ -39,7 +43,7 @@ void SnackbarManager::show(const std::string& message, SnackbarType type) {
     }
     
     entry.startTime = std::chrono::steady_clock::now();
-    entry.duration = durations[static_cast<int>(type)];
+    entry.duration = getDuration(type);
     entry.type = type;
     
     snackbarStack_.emplace_back(std::move(entry)); 
@@ -134,4 +138,46 @@ bool SnackbarManager::drawCloseButton(const ImVec2& position, float radius) {
     ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
     
     return ImGui::IsItemClicked();
+}
+
+float SnackbarManager::getDuration(SnackbarType type) const {
+    switch (type) {
+        case SnackbarType::Note:
+            return static_cast<float>(config_.noteDurationInS);
+        case SnackbarType::Success:
+            return static_cast<float>(config_.successDurationInS);
+        case SnackbarType::Warning:
+            return static_cast<float>(config_.warningDurationInS);
+        case SnackbarType::Error:
+            return static_cast<float>(config_.errorDurationInS);
+        default:
+            return 10.0F;
+    }
+}
+
+void SnackbarManager::loadConfiguration() {
+    auto sections = QaplaConfiguration::Configuration::instance().
+        getConfigData().getSectionList("snackbar", "snackbar").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        config_.noteDurationInS = QaplaHelpers::to_uint32(section.getValue("noteduration").value_or("10")).value_or(10);
+        config_.successDurationInS = QaplaHelpers::to_uint32(section.getValue("successduration").value_or("10")).value_or(10);
+        config_.warningDurationInS = QaplaHelpers::to_uint32(section.getValue("warningduration").value_or("15")).value_or(15);
+        config_.errorDurationInS = QaplaHelpers::to_uint32(section.getValue("errorduration").value_or("20")).value_or(20);
+    }
+}
+
+void SnackbarManager::updateConfiguration() const {
+    QaplaHelpers::IniFile::Section section {
+        .name = "snackbar",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "snackbar"},
+            {"noteduration", std::to_string(config_.noteDurationInS)},
+            {"successduration", std::to_string(config_.successDurationInS)},
+            {"warningduration", std::to_string(config_.warningDurationInS)},
+            {"errorduration", std::to_string(config_.errorDurationInS)}
+        }
+    };
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
 }
