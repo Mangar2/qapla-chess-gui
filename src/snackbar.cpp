@@ -269,6 +269,11 @@ void SnackbarManager::incrementTutorialCounter() {
     }
 }
 
+void SnackbarManager::finishTutorial() {
+    config_.snackbarTutorialCounter = 3;
+    updateConfiguration();
+}
+
 void SnackbarManager::resetTutorialCounter() {
     config_.snackbarTutorialCounter = 0;
     updateConfiguration();

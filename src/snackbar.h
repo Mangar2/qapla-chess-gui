@@ -166,6 +166,11 @@ public:
     void incrementTutorialCounter();
 
     /**
+     * @brief Marks the tutorial as finished without showing snackbars
+     */
+    void finishTutorial();
+
+    /**
      * @brief Resets the tutorial counter to restart the tutorial
      */
     void resetTutorialCounter();

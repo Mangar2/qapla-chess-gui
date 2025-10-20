@@ -109,36 +109,26 @@ void ConfigurationWindow::drawTutorialSettings()
         if (ImGui::Checkbox(("##completed_" + topicName).c_str(), &completed)) {
             // If checkbox is toggled on (incomplete -> complete), set tutorial to completed
             if (!previousCompleted && completed) {
-                // Mark tutorial as completed by setting counter to completion threshold
-                auto threshold = Tutorial::getCompletionThreshold(topic);
+                // Mark tutorial as completed without showing snackbars
                 switch (topic) {
                     case Tutorial::Topic::Snackbar:
-                        for (uint32_t j = SnackbarManager::instance().getTutorialCounter(); j < threshold; ++j) {
-                            SnackbarManager::instance().incrementTutorialCounter();
-                        }
+                        SnackbarManager::instance().finishTutorial();
                         break;
                     default:
                         break;
                 }
             }
+            // If checkbox is toggled off (complete -> incomplete), restart tutorial
+            else if (previousCompleted && !completed) {
+                Tutorial::instance().restartTopic(topic);
+            }
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to enable restart" : "Tutorial not completed - check to mark as complete");
+            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
         }
         
         ImGui::SameLine();
         ImGui::Text("%s", topicName.c_str());
-        
-        // Add restart button if not completed or if checkbox is unchecked
-        if (!completed || previousCompleted != completed) {
-            ImGui::SameLine();
-            if (ImGui::SmallButton("Restart")) {
-                Tutorial::instance().restartTopic(topic);
-            }
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Restart this tutorial from the beginning");
-            }
-        }
         
         ImGui::PopID();
     }
