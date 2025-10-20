@@ -49,26 +49,9 @@ static GLuint compileShader(GLenum type, const char* source) {
 }
 
 /**
- * Initializes background image, quad geometry, and shaders.
- * Must be called after OpenGL context is active.
+ * Common initialization for geometry and shaders after texture is loaded.
  */
-void initBackgroundImage(const char* imagePath) {
-    // Load image
-    int texWidth{}, texHeight{}, channels{};
-    unsigned char* data = stbi_load(imagePath, &texWidth, &texHeight, &channels, 0);
-    if (!data) throw std::runtime_error("Failed to load background image");
-
-    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
-
-    // Upload texture
-    glGenTextures(1, &backgroundTexture);
-    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(data);
-
+static void initBackgroundGeometryAndShaders() {
     // Quad vertex data
     float vertices[] = {
         -1.0F,  1.0F,  0.0F, 1.0F,
@@ -117,6 +100,61 @@ void initBackgroundImage(const char* imagePath) {
     glDeleteShader(fs);
 
     backgroundImageLoaded = true;
+}
+
+/**
+ * Initializes background image from memory array.
+ * Must be called after OpenGL context is active.
+ */
+void initBackgroundImageFromMemory(const void* imageData, unsigned int dataSize) {
+    // Load image from memory
+    int texWidth{}, texHeight{}, channels{};
+    unsigned char* data = stbi_load_from_memory(
+        static_cast<const unsigned char*>(imageData), 
+        static_cast<int>(dataSize), 
+        &texWidth, 
+        &texHeight, 
+        &channels, 
+        0
+    );
+    if (!data) throw std::runtime_error("Failed to load background image from memory");
+
+    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+
+    // Upload texture
+    glGenTextures(1, &backgroundTexture);
+    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    stbi_image_free(data);
+
+    initBackgroundGeometryAndShaders();
+}
+
+/**
+ * Initializes background image from file.
+ * Must be called after OpenGL context is active.
+ */
+void initBackgroundImage(const char* imagePath) {
+    // Load image from file
+    int texWidth{}, texHeight{}, channels{};
+    unsigned char* data = stbi_load(imagePath, &texWidth, &texHeight, &channels, 0);
+    if (!data) throw std::runtime_error("Failed to load background image");
+
+    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+
+    // Upload texture
+    glGenTextures(1, &backgroundTexture);
+    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, texWidth, texHeight, 0, format, GL_UNSIGNED_BYTE, data);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    stbi_image_free(data);
+
+    initBackgroundGeometryAndShaders();
 }
 
 /**

@@ -38,6 +38,7 @@
 #include "engine-setup-window.h"
 #include "snackbar.h"
 #include "callback-manager.h"
+#include "dark-wood-background.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -175,7 +176,8 @@ namespace {
         initGlad();
         initImGui(window);
         try {
-            initBackgroundImage("assets/dark_wood_diff_4k.jpg");
+            // Load embedded background image
+            initBackgroundImageFromMemory(darkwood, darkwoodSize);
         } catch (const std::exception& e) {
             std::cerr << "Warning: Failed to load background image: " << e.what() << "\n";
         }
