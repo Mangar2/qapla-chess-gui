@@ -128,16 +128,15 @@ static std::tuple<bool, bool> drawEngineConfigSection(QaplaTester::EngineConfig&
         ImGuiTreeNodeFlags_None,
         [&]()->bool {
             bool changed = false;
-            changed |= ImGuiEngineControls::drawEngineName(config, true);
-            changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
-            changed |= ImGuiEngineControls::drawEngineCommand(config, true);
-            changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
-            changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
-            changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
-            changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
-            changed |= ImGuiEngineControls::drawEnginePonder(config, true);
-
             try {
+                changed |= ImGuiEngineControls::drawEngineName(config, true);
+                changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
+                changed |= ImGuiEngineControls::drawEngineCommand(config, true);
+                changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
+                changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
+                changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
+                changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
+                changed |= ImGuiEngineControls::drawEnginePonder(config, true);
                 changed |= drawOptions(config, 400.0F);
             }
             catch (const std::exception& e) {

@@ -144,6 +144,7 @@ public:
 
     void setTraceLevel(const std::string& level);
 	TraceLevel getTraceLevel() const { return traceLevel_; }
+    TraceLevel& getTraceLevel() { return traceLevel_; }
 
     /**
      * @brief Returns the configured engine restart option.

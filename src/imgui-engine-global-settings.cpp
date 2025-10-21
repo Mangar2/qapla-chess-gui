@@ -18,6 +18,7 @@
  */
 
 #include "imgui-engine-global-settings.h"
+#include "imgui-engine-controls.h"
 #include "imgui-controls.h"
 #include "configuration.h"
 
@@ -58,8 +59,8 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             ImGui::SameLine();
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
-            modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart, 
-                {"auto", "on", "off"});
+            modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
+                {"Engine decides", "Always", "Never"});
             ImGui::EndDisabled();
         }
         
@@ -70,7 +71,7 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
             modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
-                {"none", "all", "command"});
+                {"None", "All", "Command"});
             ImGui::EndDisabled();
         }
         

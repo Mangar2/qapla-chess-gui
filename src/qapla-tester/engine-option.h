@@ -18,11 +18,13 @@
  */
 #pragma once
 
+#include "app-error.h"
+#include "string-helper.h"
+
 #include <string>
 #include <vector>
 #include <optional>
 #include <cassert>
-#include "app-error.h"
 
 namespace QaplaTester {
 
@@ -41,10 +43,14 @@ inline std::string to_string(RestartOption restart) {
 }
 
 inline RestartOption parseRestartOption(const std::string& value) {
-	if (value == "auto") return RestartOption::EngineDecides;
-	if (value == "on") return RestartOption::Always;
-	if (value == "off") return RestartOption::Never;
-	AppError::throwOnInvalidOption({ "auto", "on", "off" }, value, "restart option");	
+	const auto lowerValue = QaplaHelpers::to_lowercase(value);
+	if (lowerValue == "auto") return RestartOption::EngineDecides;
+	if (lowerValue == "engine decides") return RestartOption::EngineDecides;
+	if (lowerValue == "on") return RestartOption::Always;
+	if (lowerValue == "always") return RestartOption::Always;
+	if (lowerValue == "off") return RestartOption::Never;
+	if (lowerValue == "never") return RestartOption::Never;
+	AppError::throwOnInvalidOption({ "auto", "on", "off" }, value, "restart option");
 	return RestartOption::EngineDecides;
 }
 
@@ -63,13 +69,14 @@ inline std::string to_string(EngineProtocol protocol) {
 }
 
 inline EngineProtocol parseEngineProtocol(const std::string& value) {
-	if (value == "uci") return EngineProtocol::Uci;
-	if (value == "xboard") return EngineProtocol::XBoard;
+	const auto lowerValue = QaplaHelpers::to_lowercase(value);
+	if (lowerValue == "uci") return EngineProtocol::Uci;
+	if (lowerValue == "xboard") return EngineProtocol::XBoard;
 	AppError::throwOnInvalidOption({ "uci", "xboard" }, value, "protocol option");
 	return EngineProtocol::Uci;
 }
 
- /**
+/**
   * Represents an option that can be set for a chess engine.
   */
 struct EngineOption {
@@ -83,16 +90,18 @@ struct EngineOption {
     std::vector<std::string> vars;
 
 	static EngineOption::Type parseType(const std::string& typeStr) {
-		if (typeStr == "button") return EngineOption::Type::Button;
-		if (typeStr == "save") return EngineOption::Type::Save;
-		if (typeStr == "reset") return EngineOption::Type::Reset;
-		if (typeStr == "check")  return EngineOption::Type::Check;
-		if (typeStr == "string") return EngineOption::Type::String;
-		if (typeStr == "file")   return EngineOption::Type::File;
-		if (typeStr == "path")   return EngineOption::Type::Path;
-		if (typeStr == "spin")   return EngineOption::Type::Spin;
-		if (typeStr == "slider") return EngineOption::Type::Spin;
-		if (typeStr == "combo")  return EngineOption::Type::Combo;
+		const auto lowerTypeStr = QaplaHelpers::to_lowercase(typeStr);
+		if (lowerTypeStr == "button") return EngineOption::Type::Button;
+		if (lowerTypeStr == "save") return EngineOption::Type::Save;
+		if (lowerTypeStr == "reset") return EngineOption::Type::Reset;
+		if (lowerTypeStr == "check")  return EngineOption::Type::Check;
+		if (lowerTypeStr == "string") return EngineOption::Type::String;
+		if (lowerTypeStr == "file")   return EngineOption::Type::File;
+		if (lowerTypeStr == "path")   return EngineOption::Type::Path;
+		if (lowerTypeStr == "spin")   return EngineOption::Type::Spin;
+		// Using Spin as Slider is not yet implemented in the GUI
+		if (lowerTypeStr == "slider") return EngineOption::Type::Spin;
+		if (lowerTypeStr == "combo")  return EngineOption::Type::Combo;
 		return EngineOption::Type::Unknown;
 	}
 

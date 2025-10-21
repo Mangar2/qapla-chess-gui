@@ -46,7 +46,7 @@ void EngineCapabilities::autoDetect() {
         auto engines = EngineWorkerFactory::createEngines(configs);
         for (auto& config : configs) {
 			// search matching eninge from the created engines
-            auto matchingEngine = std::find_if(engines.begin(), engines.end(),
+            auto matchingEngine = std::ranges::find_if(engines,
                 [&config](const std::unique_ptr<EngineWorker>& engine) {
                     return engine->getConfig().getCmd() == config.getCmd() &&
                            engine->getConfig().getProtocol() == config.getProtocol();

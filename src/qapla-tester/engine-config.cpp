@@ -171,6 +171,7 @@ void  EngineConfig::setValue(const std::string& key, const std::string& value) {
         else if (value == "false" || value == "0") setPonder(false);
         else throw std::runtime_error("Invalid ponder value: " + value);
     }
+    else if (key == "trace") setTraceLevel(value);
     else if (key == "restart") restart_ = parseRestartOption(value);
     else if (key == "proto") setProtocol(value);
     else if (internalKeys.contains(key)) {
@@ -221,8 +222,9 @@ void EngineConfig::save(std::ostream& out, std::string section) const {
     out << "author=" << author_ << '\n';
     out << "cmd=" << cmd_ << '\n';
     out << "dir=" << dir_ << '\n';
-    out << "restart=" << to_string(restart_) << '\n';
     out << "proto=" << to_string(protocol_) << '\n';
+    out << "trace=" << to_string(traceLevel_) << '\n';
+    out << "restart=" << to_string(restart_) << '\n';
 	auto timeControl = tc_.toPgnTimeControlString();
     if (!timeControl.empty()) {
         out << "tc=" << tc_.toPgnTimeControlString() << '\n';

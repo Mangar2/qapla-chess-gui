@@ -39,6 +39,23 @@ enum class TraceLevel : int {
     none
 };
 
+
+/**
+ * @brief Converts TraceLevel to string representation
+ */
+inline std::string to_string(QaplaTester::TraceLevel level) {
+    switch (level) {
+        case QaplaTester::TraceLevel::error: return "error";
+        case QaplaTester::TraceLevel::command: return "command";
+        case QaplaTester::TraceLevel::result: return "result";
+        case QaplaTester::TraceLevel::warning: return "warning";
+        case QaplaTester::TraceLevel::info: return "all";
+        case QaplaTester::TraceLevel::none: return "none";
+        default: return "command";
+    }
+}
+
+
 /**
  * @brief Thread-safe logger with optional file output and trace filtering.
  */

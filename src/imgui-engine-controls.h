@@ -20,6 +20,7 @@
 #pragma once
 
 #include "imgui-controls.h"
+#include "qapla-tester/string-helper.h"
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/engine-option.h"
 #include "qapla-tester/logger.h"
@@ -34,23 +35,12 @@
 namespace QaplaWindows::ImGuiEngineControls {
 
 /**
- * @brief Converts TraceLevel to string representation
- */
-inline std::string to_string(QaplaTester::TraceLevel level) {
-    switch (level) {
-        case QaplaTester::TraceLevel::none: return "none";
-        case QaplaTester::TraceLevel::command: return "command";
-        case QaplaTester::TraceLevel::info: return "all";
-        default: return "command";
-    }
-}
-
-/**
  * @brief Converts string to TraceLevel
  */
 inline QaplaTester::TraceLevel stringToTrace(const std::string& str) {
-    if (str == "none") return QaplaTester::TraceLevel::none;
-    if (str == "all") return QaplaTester::TraceLevel::info;
+    const auto lowerStr = QaplaHelpers::to_lowercase(str);
+    if (lowerStr == "none") return QaplaTester::TraceLevel::none;
+    if (lowerStr == "all") return QaplaTester::TraceLevel::info;
     return QaplaTester::TraceLevel::command;
 }
 
@@ -146,27 +136,32 @@ inline bool drawEngineProtocol(QaplaTester::EngineConfig& config, bool enabled) 
 
 /**
  * @brief Draws a trace level selection combo box
+ * @param traceLevel Trace level to modify
+ * @param enabled Whether the control is enabled
+ * @return True if the value was changed
+ */
+inline bool drawEngineTraceLevel(QaplaTester::TraceLevel& traceLevel, bool enabled) {
+    if (!enabled) return false;
+    
+    std::vector<std::string> labels = { "None", "All", "Command" };
+    
+    auto traceStr = to_string(traceLevel);
+
+    if (ImGuiControls::selectionBox("Trace", traceStr, labels)) {
+        traceLevel = stringToTrace(traceStr);
+        return true;
+    }
+    return false;
+}
+
+/**
+ * @brief Draws a trace level selection combo box
  * @param config Engine configuration to modify
  * @param enabled Whether the control is enabled
  * @return True if the value was changed
  */
 inline bool drawEngineTraceLevel(QaplaTester::EngineConfig& config, bool enabled) {
-    if (!enabled) return false;
-    
-    constexpr std::array traceOptions = {QaplaTester::TraceLevel::none, QaplaTester::TraceLevel::command, QaplaTester::TraceLevel::info};
-    
-    std::vector<std::string> labels;
-    for (auto option : traceOptions) {
-        labels.push_back(to_string(option));
-    }
-    
-    auto traceStr = to_string(config.getTraceLevel());
-
-    if (ImGuiControls::selectionBox("Trace", traceStr, labels)) {
-        config.setTraceLevel(traceStr);
-        return true;
-    }
-    return false;
+    return drawEngineTraceLevel(config.getTraceLevel(), true);
 }
 
 /**

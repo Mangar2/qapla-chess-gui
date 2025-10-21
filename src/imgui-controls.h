@@ -317,7 +317,13 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool selectionBox(const char* label, std::string& currentItem, const std::vector<std::string>& options) {
 
-        int currentIndex = static_cast<int>(std::find(options.begin(), options.end(), currentItem) - options.begin());
+        int currentIndex = static_cast<int>(std::ranges::find_if(options, 
+            [&](const std::string& option) {
+                const auto lowerOption = QaplaHelpers::to_lowercase(option);
+                const auto lowerCurrent = QaplaHelpers::to_lowercase(currentItem);
+                return lowerOption == lowerCurrent;
+            }
+        ) - options.begin());
         if (std::cmp_equal(currentIndex, options.size())) {
             currentIndex = 0; // default to first item if not found
         }

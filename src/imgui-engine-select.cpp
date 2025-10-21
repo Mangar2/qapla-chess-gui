@@ -23,6 +23,7 @@
 #include "configuration.h"
 #include "qapla-tester/engine-worker-factory.h"
 #include "qapla-tester/engine-config-manager.h"
+#include "qapla-tester/logger.h"
 
 using QaplaTester::EngineWorkerFactory;
 using QaplaTester::EngineConfig;
@@ -307,7 +308,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
         if (config.isPonderEnabled()) { entries.emplace_back("ponder", "true"); }
 
         if (config.getTraceLevel() != TraceLevel::command) {
-            entries.emplace_back("trace", ImGuiEngineControls::to_string(config.getTraceLevel()));
+            entries.emplace_back("trace", QaplaTester::to_string(config.getTraceLevel()));
         }
 
         if (config.getTimeControl().isValid()) {
