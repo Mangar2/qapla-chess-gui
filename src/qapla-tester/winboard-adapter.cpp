@@ -84,6 +84,8 @@ void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) 
     gameStruct_ = gameRecord.createGameStruct();
     sendPosition(gameStruct_);
 	sendTimeControl(gameRecord, engineIsWhite);
+    // Post mode shows thinking output
+    writeCommand("post");
 }
 
 void WinboardAdapter::moveNow() {
@@ -105,12 +107,21 @@ uint64_t WinboardAdapter::allowPonder(
     return 0;
 }
 
+void WinboardAdapter::bestMoveReceived(const std::string& sanMove, const std::string& lanMove) {
+    if (!sanMove.empty()) {
+        gameStruct_.sanMoves += (gameStruct_.sanMoves.empty() ? "" : " ") + sanMove;
+    }
+    if (!lanMove.empty()) {
+        gameStruct_.lanMoves += (gameStruct_.lanMoves.empty() ? "" : " ") + lanMove;
+    }
+}
+
 uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
 
 	auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
 	auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
     if (game.fen != gameStruct_.fen ||
-		newMoves.rfind(oldMoves, 0) == 0) {
+		newMoves.rfind(oldMoves, 0) != 0) {
 		throw std::runtime_error("Different start position or FEN detected in sendMissingMoves");
     }
 	std::string additionalMoves = newMoves.substr(oldMoves.size());
@@ -121,16 +132,8 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
         return writeCommand("go");
     }
 
-    std::istringstream lanStream(newMoves);
+    std::istringstream lanStream(additionalMoves);
     std::string move;
-
-    bool myMoveWasLast = gameStruct_.originalMove == game.originalMove;
-    if (myMoveWasLast) {
-		// Winboard remembers the last move played by the engine, so we skip it
-        // We need an extra check to detect this, because the engines-move notation 
-		// could be different from LAN or SAN.
-        lanStream >> move;
-	}
 
     std::string firstMove;
     lanStream >> firstMove;
@@ -151,10 +154,12 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
 		lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
     }
 
-    if (forceMode_) {
+    bool switchSides = lastTimestamp == 0;
+    if (forceMode_ || switchSides) {
         forceMode_ = false;
         lastTimestamp = writeCommand("go");
     }
+
     gameStruct_ = game;
     return lastTimestamp;
 }

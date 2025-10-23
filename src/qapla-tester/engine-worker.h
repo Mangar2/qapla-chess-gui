@@ -101,10 +101,24 @@ public:
 
 	/**
 	 * @brief Sends a command to the engine to prepare for a new game.
+	 * 
+	 * @param gameRecord The game record containing the starting position and move history.
+	 * @param engineIsWhite True if the engine plays as white, false for black.
 	 */
 	void newGame(const GameRecord& gameRecord, bool engineIsWhite) {
 		post([=](EngineAdapter& adapter) {
 			adapter.newGame(gameRecord, engineIsWhite);
+			});
+	}
+
+	/**
+	 * @brief Notifies the worker that the best move has been received from the engine.
+	 * @param sanMove The best move in SAN notation.
+	 * @param lanMove The best move in LAN notation.
+	 */
+	void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) {
+		post([=](EngineAdapter& adapter) {
+			adapter.bestMoveReceived(sanMove, lanMove);
 			});
 	}
 

@@ -146,6 +146,7 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     // Must be calculated before doMove
     std::string san = gameState_.moveToSan(move);
     gameState_.doMove(move);
+    engine_->bestMoveReceived(san, move.getLAN());
 
     std::scoped_lock curMoveLock(currentMoveMutex_);
     currentMove_.updateFromBestMove(gameState_.getHalfmovesPlayed(), engine_->getIdentifier(),

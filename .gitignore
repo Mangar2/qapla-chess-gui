@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# User-specific files
+game.*
+log.*
+
 # Libraries used
 extern/imgui/
 extern/glfw/

@@ -67,6 +67,7 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
     {
         getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
     }
+    newGame();
 }
 
 void GameContext::ensureStarted()

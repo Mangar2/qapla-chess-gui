@@ -79,6 +79,7 @@ public:
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
+    void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) override;
     void moveNow() override;
     void setPonder(bool enabled) override;
     void ticker() override;

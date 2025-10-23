@@ -82,6 +82,13 @@ public:
     virtual void newGame(const GameRecord& game, bool engineIsWhite) = 0;
 
     /**
+     * @brief Notifies the engine that the best move has been received.
+     * @param sanMove The best move in SAN notation.
+     * @param lanMove The best move in LAN notation.
+     */
+    virtual void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) {};
+
+    /**
      * @brief Immediately requests the engine to produce a move, e.g. in force mode.
      */
     virtual void moveNow() = 0;

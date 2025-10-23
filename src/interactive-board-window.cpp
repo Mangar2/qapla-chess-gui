@@ -452,8 +452,9 @@ void InteractiveBoardWindow::execute(const std::string& command)
 	}
 
 	if (command == "New") {
-		computeTask_->newGame();
+		// Order is important because newGame sets the current position for winboard
 		setPosition(true, "");
+		computeTask_->newGame();
 	}
 	else if (command == "Stop") {
 		stop();
