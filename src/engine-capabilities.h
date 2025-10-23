@@ -27,6 +27,14 @@
 #include <ostream>
 #include <optional>
 #include <atomic>
+#include <vector>
+#include <memory>
+
+namespace QaplaTester {
+    class EngineConfig;
+    class EngineWorker;
+    enum class EngineProtocol;
+}
 
 namespace QaplaConfiguration {
     /**
@@ -110,6 +118,10 @@ namespace QaplaConfiguration {
          * (e.g., supported options, protocol, and other metadata) as well as their names for
          * configurations where the engine name is not set.
          *
+         * The detection process follows this sequence:
+         * 1. Try to start engines with UCI protocol
+         * 2. For failed engines, retry with XBoard protocol
+         * 3. Mark remaining failed engines as NotSupported
          */
         void autoDetect();
 
@@ -128,6 +140,37 @@ namespace QaplaConfiguration {
         bool areAllEnginesDetected() const;
 
     private:
+        /**
+         * @brief Collects all engine configurations that don't have capabilities yet.
+         * @return Vector of engine configurations that need capability detection.
+         */
+        std::vector<QaplaTester::EngineConfig> collectMissingCapabilities() const;
+
+        /**
+         * @brief Attempts to detect engines using the specified protocol.
+         * This method tries to start engines with the given protocol, stores successful
+         * detections, and returns the list of failed configurations.
+         * @param configs Vector of engine configurations to detect.
+         * @param protocol The protocol to use for detection (UCI or XBoard).
+         * @return Vector of configurations that failed to start with the specified protocol.
+         */
+        std::vector<QaplaTester::EngineConfig> detectWithProtocol(
+            std::vector<QaplaTester::EngineConfig>& configs, 
+            QaplaTester::EngineProtocol protocol);
+
+        /**
+         * @brief Stores capabilities for successfully detected engines.
+         * Updates the config manager and adds capabilities to the collection.
+         * @param engines Vector of successfully started engines.
+         */
+        void storeCapabilities(const std::vector<std::unique_ptr<QaplaTester::EngineWorker>>& engines);
+
+        /**
+         * @brief Marks engines as not supported if they failed both UCI and XBoard detection.
+         * @param failedConfigs Vector of configurations that failed detection.
+         */
+        void markAsNotSupported(const std::vector<QaplaTester::EngineConfig>& failedConfigs);
+
         /**
          * @brief Creates a unique key for the unordered_map based on path and protocol.
          * @param path The path to the engine executable.

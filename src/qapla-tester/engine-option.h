@@ -57,6 +57,7 @@ inline RestartOption parseRestartOption(const std::string& value) {
 enum class EngineProtocol {
 	Uci,
 	XBoard,
+	NotSupported,
 	Unknown
 };
 
@@ -64,6 +65,7 @@ inline std::string to_string(EngineProtocol protocol) {
 	switch (protocol) {
 	case EngineProtocol::Uci: return "uci";
 	case EngineProtocol::XBoard: return "xboard";
+	case EngineProtocol::NotSupported: return "not supported";
 	default: return "unknown";
 	}
 }
@@ -72,6 +74,7 @@ inline EngineProtocol parseEngineProtocol(const std::string& value) {
 	const auto lowerValue = QaplaHelpers::to_lowercase(value);
 	if (lowerValue == "uci") return EngineProtocol::Uci;
 	if (lowerValue == "xboard") return EngineProtocol::XBoard;
+	if (lowerValue == "not supported") return EngineProtocol::NotSupported;
 	AppError::throwOnInvalidOption({ "uci", "xboard" }, value, "protocol option");
 	return EngineProtocol::Uci;
 }

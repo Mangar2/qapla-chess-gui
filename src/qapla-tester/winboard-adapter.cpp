@@ -569,6 +569,9 @@ void WinboardAdapter::finalizeFeatures() {
             featureMap_[key] = defaultValue ? "1" : "0";
         }
     }
+    if (featureMap_.find("myname") != featureMap_.end()) {
+        engineName_ = featureMap_["myname"];
+    }
 }
 
 EngineEvent WinboardAdapter::readFeatureSection(const EngineLine& engineLine) {

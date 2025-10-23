@@ -34,49 +34,107 @@ using QaplaTester::EngineProtocol;
 
 using namespace QaplaConfiguration;
 
+std::vector<EngineConfig> EngineCapabilities::collectMissingCapabilities() const {
+    std::vector<EngineConfig> configs;
+    for (auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
+        if (!hasAnyCapability(config.getCmd())) {
+            configs.push_back(config);
+        }
+    }
+    return configs;
+}
+
+std::vector<EngineConfig> EngineCapabilities::detectWithProtocol(
+    std::vector<EngineConfig>& configs,
+    EngineProtocol protocol) 
+{
+    for (auto& config : configs) {
+        auto mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
+            .getConfigMutableByCmdAndProtocol(config.getCmd(), config.getProtocol());
+        config.setProtocol(protocol);
+        mutableConfig->setProtocol(protocol);
+    }
+    
+    auto engines = EngineWorkerFactory::createEngines(configs);
+    
+    std::vector<EngineConfig> failedConfigs;
+    for (const auto& config : configs) {
+        auto matchingEngine = std::ranges::find_if(engines,
+            [&config](const std::unique_ptr<EngineWorker>& engine) {
+                return engine->getConfig().getCmd() == config.getCmd();
+            });
+        
+        if (matchingEngine == engines.end()) {
+            failedConfigs.push_back(config);
+        }
+    }
+    
+    storeCapabilities(engines);
+    
+    return failedConfigs;
+}
+
+void EngineCapabilities::storeCapabilities(const std::vector<std::unique_ptr<EngineWorker>>& engines) {
+    for (auto& engine : engines) {
+        auto& command = engine->getConfig().getCmd();
+        auto protocol = engine->getConfig().getProtocol();
+        
+        // Update the config manager with engine name and author
+        auto config = EngineWorkerFactory::getConfigManagerMutable()
+            .getConfigMutableByCmdAndProtocol(command, protocol);
+        if (config && !engine->getEngineName().empty()) {
+            config->setName(engine->getEngineName());
+            config->setAuthor(engine->getEngineAuthor());
+        }
+        
+        // Create and store capability
+        EngineCapability capability;
+        capability.setPath(command);
+        capability.setProtocol(protocol);
+        capability.setName(engine->getEngineName());
+        capability.setAuthor(engine->getEngineAuthor());
+        capability.setSupportedOptions(engine->getSupportedOptions());
+        addOrReplace(capability);
+    }
+}
+
+void EngineCapabilities::markAsNotSupported(const std::vector<EngineConfig>& failedConfigs) {
+    std::string message = "Auto autodetection completed. Not supported Engine(s):\n";
+    for (const auto& config : failedConfigs) {
+        auto mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
+            .getConfigMutableByCmdAndProtocol(config.getCmd(), config.getProtocol());
+        if (mutableConfig) {
+            mutableConfig->setProtocol(EngineProtocol::NotSupported);
+        }
+        message += " - " + config.getCmd() + "\n";
+    }
+    SnackbarManager::instance().showWarning(message);
+}
+
 void EngineCapabilities::autoDetect() {
     std::thread([this]() {
-		detecting_ = true;
-        std::vector<EngineConfig> configs;
-        for (auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
-            if (!hasAnyCapability(config.getCmd())) {
-                configs.push_back(config);
-			}
+        auto configs = collectMissingCapabilities();
+        if (configs.empty()) {
+            SnackbarManager::instance().showNote("No new engines found.");
+            return;
         }
-        auto engines = EngineWorkerFactory::createEngines(configs);
-        for (auto& config : configs) {
-			// search matching eninge from the created engines
-            auto matchingEngine = std::ranges::find_if(engines,
-                [&config](const std::unique_ptr<EngineWorker>& engine) {
-                    return engine->getConfig().getCmd() == config.getCmd() &&
-                           engine->getConfig().getProtocol() == config.getProtocol();
-                });
-            if (matchingEngine == engines.end()) {
-                SnackbarManager::instance().showError(
-					"Could not start engine: " + config.getCmd() + " using protocol " +
-					to_string(config.getProtocol()));
-			}
-		}
+        detecting_ = true;
+        SnackbarManager::instance().showNote("Starting engine autodetection.\nThis may take a while...");
 
-        for (auto& engine : engines) {
-            auto& command = engine->getConfig().getCmd();
-            auto config = EngineWorkerFactory::getConfigManagerMutable()
-                .getConfigMutableByCmdAndProtocol(command, EngineProtocol::Uci);
-            if (config) {
-                config->setName(engine->getEngineName());
-                config->setAuthor(engine->getEngineAuthor());
+        // Detect using UCI protocol first then xboard as uci is more common
+        for (const auto protocol : {EngineProtocol::Uci, EngineProtocol::XBoard}) {
+            configs = detectWithProtocol(configs, protocol);
+            if (configs.empty()) {
+                break;
             }
-			EngineCapability capability;
-            capability.setPath(command);
-            capability.setProtocol(EngineProtocol::Uci);
-            capability.setName(engine->getEngineName());
-            capability.setAuthor(engine->getEngineAuthor());
-			capability.setSupportedOptions(engine->getSupportedOptions());
-			addOrReplace(capability);
-
         }
-		detecting_ = false;
-        }).detach();
+        if (!configs.empty()) {
+            markAsNotSupported(configs);
+        } else {
+            SnackbarManager::instance().showSuccess("Engine autodetection completed.");
+        }
+        detecting_ = false;
+    }).detach();
 }
 
 bool EngineCapabilities::areAllEnginesDetected() const {

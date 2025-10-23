@@ -385,7 +385,7 @@ void EngineSetupWindow::updateTutorialConfiguration() {
 }
 
 void EngineSetupWindow::finishTutorial() {
-    engineSetupTutorialCounter_ = 4;
+    engineSetupTutorialCounter_ = 3;
     updateTutorialConfiguration();
 }
 

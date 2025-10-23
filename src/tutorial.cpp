@@ -61,7 +61,7 @@ uint32_t Tutorial::getCompletionThreshold(Topic topic) {
         case Topic::Snackbar:
             return 4; 
         case Topic::EngineSetup:
-            return 4; 
+            return 3; 
         default:
             return 1;
     }
