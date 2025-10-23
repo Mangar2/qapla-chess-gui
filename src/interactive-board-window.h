@@ -176,7 +176,7 @@ namespace QaplaWindows
 		 * @param idStr The identifier string for the board (e.g., "board1").
 		 * @param instance Unique pointer to the InteractiveBoardWindow instance to load settings into.
 		 */
-		static void loadGlobalEngineSettings(
+		void loadGlobalEngineSettings(
 			const std::string &idStr, 
 			std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance);
 
@@ -264,8 +264,6 @@ namespace QaplaWindows
 		 */
 		void autoPlay();
 		void checkForGameEnd();
-
-		void setGlobalEngineConfig();
 
 		std::unique_ptr<QaplaTester::GameRecord> gameRecord_;
 		std::unique_ptr<QaplaTester::ComputeTask> computeTask_;

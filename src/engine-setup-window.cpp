@@ -23,6 +23,7 @@
 #include "imgui-controls.h"
 #include "imgui-engine-controls.h"
 #include "imgui-engine-select.h"
+#include "imgui-engine-global-settings.h"
 #include "os-dialogs.h"
 #include "configuration.h"
 #include "snackbar.h"
@@ -58,12 +59,35 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     options.directEditMode = true;  
     
     engineSelect_.setOptions(options);
-    // Setting id to empty to skip saving configuration
     engineSelect_.setId("");
     
+    engineSelect_.setConfigurationChangedCallback(
+        [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+            onEngineSelectionChanged(configurations);
+        }
+    );
+
+    ImGuiEngineGlobalSettings::Options globalOptions;
+    globalOptions.showHash = true;
+    globalOptions.showPonder = true;
+    globalOptions.showTrace = true;
+    globalOptions.showRestart = true;
+    
+    globalSettings_.setOptions(globalOptions);
+    globalSettings_.setId("");
 }
 
 EngineSetupWindow::~EngineSetupWindow() = default;
+
+void EngineSetupWindow::onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    
+    for (const auto& engineConfig : configurations) {
+        configManager.addOrReplaceConfig(engineConfig.config);
+    }
+    
+    QaplaConfiguration::Configuration::instance().setModified();
+}
 
 bool EngineSetupWindow::highlighted() const {
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
@@ -74,21 +98,13 @@ bool EngineSetupWindow::highlighted() const {
 std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() const {
     std::vector<QaplaTester::EngineConfig> engines;
     
-    // Extract selected engines from engineSelect_
     const auto& configurations = engineSelect_.getEngineConfigurations();
     for (const auto& config : configurations) {
         if (config.selected) {
-            engines.push_back(config.config);
-        }
-    }
-    
-    // Apply global settings if enabled
-    for (auto& engine : engines) {
-        if (globalSettings_.useGlobalPonder) {
-            engine.setPonder(globalSettings_.ponder);
-        }
-        if (globalSettings_.useGlobalHash) {
-            engine.setOptionValue("Hash", std::to_string(globalSettings_.hashSizeMB));
+            auto engine = config.config;
+            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, globalSettings_.getGlobalSettings(), 
+                                                         globalSettings_.getTimeControlSettings());
+            engines.push_back(engine);
         }
     }
     
@@ -192,7 +208,6 @@ void EngineSetupWindow::drawButtons() {
 }
 
 bool EngineSetupWindow::drawGlobalSettings() {
-    constexpr float controlWidth = 150.0F;
     if (!showGlobalControls_) {
         return false;
     }
@@ -200,32 +215,8 @@ bool EngineSetupWindow::drawGlobalSettings() {
     ImGui::Separator();
     ImGui::Spacing();
     
-    // Global settings checkbox
-    bool modified = false;
-    ImGui::Indent(controlIndent_);
-
-    if (ImGui::CollapsingHeader("Global Engine Settings")) {
-        ImGui::Indent(controlIndent_);
-        
-        // Ponder control
-        modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(controlWidth);
-        ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
-        modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
-        ImGui::EndDisabled();
-       
-        // Hash size control
-        constexpr uint32_t maxHashMB = 64000;
-        modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(controlWidth);
-        ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
-        modified |= ImGuiControls::inputInt<uint32_t>("Global Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
-        ImGui::EndDisabled();
-        ImGui::Unindent(controlIndent_);
-    }
-    ImGui::Unindent(controlIndent_);
+    bool modified = globalSettings_.drawGlobalSettings(150.0F, controlIndent_);
+    
     ImGui::Spacing();
     ImGui::Separator();
     return modified;
@@ -282,10 +273,10 @@ void EngineSetupWindow::draw() {
     auto configs = configManager.getAllConfigs();
 
 	drawButtons();
-    drawGlobalSettings();
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("EngineList", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
     ImGui::Indent(controlIndent_);
+    drawGlobalSettings();
     drawEngineList();
     ImGui::Unindent(controlIndent_);
     ImGui::EndChild();

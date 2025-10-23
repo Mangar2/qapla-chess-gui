@@ -23,39 +23,39 @@
 #include "embedded-window.h"
 #include "imgui-button.h"
 #include "imgui-engine-select.h"
+#include "imgui-engine-global-settings.h"
 #include <memory>
 
 namespace QaplaWindows {
 
     class ImGuiTable;
 
-    /**
-     * @brief Displays the move list with associated search data for a game.
-     */
     class EngineSetupWindow: public EmbeddedWindow {
     public:
-        /**
-         * @brief Global engine settings structure.
-         */
-        struct GlobalEngineSettings {
-            bool useGlobalPonder = true;
-            bool ponder = false;
-            bool useGlobalHash = true;
-            uint32_t hashSizeMB = 128;
-        };
-
-        /**
-         * @brief Sets the data source for this window.
-         * @param record Shared pointer to the constant game record.
-         */
         explicit EngineSetupWindow(bool showGlobalControls = true);
         ~EngineSetupWindow();
 
+        /**
+         * @brief Renders the contents of the engine setup window.
+         */
         void draw() override;
 
         /**
-         * @brief Indicates whether the window should be highlighted.
-         * @return true if no engines are configured, false otherwise.
+         * @brief Sets the unique identifier to be used to store and load configuration settings.
+         * @param id The unique identifier string.
+         */
+        void setId(const std::string& id) {
+            id_ = id;
+            engineSelect_.setId(id);
+            globalSettings_.setId(id);
+        }
+
+        /**
+         * @brief Indicates whether the tab control of the window should be highlighted.
+         * 
+         * This can be used to signal special attention or status in the UI.
+         * 
+         * @return true if the tab control is highlighted, false otherwise
          */
         bool highlighted() const override;
 
@@ -65,69 +65,71 @@ namespace QaplaWindows {
          * @return Vector of EngineConfig objects representing the active engines.
 		 */
         std::vector<QaplaTester::EngineConfig> getActiveEngines() const;
+        
         /**
-         * @brief Sets the list of active engine configurations.
-         * 
-		 * It searches for matching EngineConfig objects in the EngineConfigManager and
-		 * sets the configurations from the configManager that match the provided engines.
-		 * Matching is done by comparing the command and protocol of each EngineConfig.
-         * 
-         * @param engines Vector of EngineConfig objects to set as active engines.
+         * @brief Sets the active engines based on the provided configurations.
+         * @param engines Vector of EngineConfig objects to set as active.
          */
         void setMatchingActiveEngines(const std::vector<QaplaTester::EngineConfig>& engines);
 
-        /**
+        /** 
          * @brief Gets the global engine settings.
-         * @return The current global engine settings.
+         * @return The current global settings.
          */
-        const GlobalEngineSettings& getGlobalSettings() const {
-            return globalSettings_;
+        const ImGuiEngineGlobalSettings::GlobalSettings& getGlobalSettings() const {
+            return globalSettings_.getGlobalSettings();
         }
 
-        /**
+        /** 
          * @brief Sets the global engine settings.
-         * @param settings The global engine settings to apply.
+         * @param settings The global settings to apply.
          */
-        void setGlobalSettings(const GlobalEngineSettings& settings) {
-            globalSettings_ = settings;
+        void setGlobalSettings(const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+            globalSettings_.setGlobalSettings(settings);
         }
 
-        /**
-         * @brief Enables or disables the global settings controls in the UI.
-         * @param enabled True to show global settings controls, false to hide them.
+        /** 
+         * @brief Sets the global engine settings from INI file sections.
+         * @param sections A list of INI file sections representing the global settings.
+         */
+        void setGlobalSettings(const QaplaHelpers::IniFile::SectionList& sections) {
+             globalSettings_.setGlobalConfiguration(sections);
+         }
+
+        /** 
+         * @brief Sets whether global controls are shown.
+         * @param enabled True to show global controls, false to hide.
          */
         void setGlobalControlsEnabled(bool enabled) {
             showGlobalControls_ = enabled;
         }
 
-        /**
-         * @brief Checks if global settings controls are enabled.
-         * @return True if global settings controls are shown.
+        /** 
+         * @brief Checks if global controls are enabled.
+         * @return True if global controls are shown, false otherwise.
          */
         bool isGlobalControlsEnabled() const {
             return showGlobalControls_;
         }
 
-        /**
+        /** 
          * @brief Sets the direct edit mode for the engine selection.
-         * @param enabled True to enable direct edit mode (no "Engines" header, can expand without selection),
-         *                false for normal mode (with "Engines" header, selection required for expansion).
+         * @param enabled True to enable direct edit mode, false to disable.
          */
         void setDirectEditMode(bool enabled) {
             engineSelect_.getOptions().directEditMode = enabled;
         }
 
         /**
-         * @brief Sets whether multiple selection of the same engine is allowed.
-         * @param enabled True to allow multiple selection (shows "Selected" and "Available" sections),
-         *                false for single selection mode (flat list).
+         * @brief Sets whether multiple engine selection is allowed.
+         * @param enabled True to allow multiple selection, false to disallow.
          */
         void setAllowMultipleSelection(bool enabled) {
             engineSelect_.getOptions().allowMultipleSelection = enabled;
         }
 
         /**
-         * @brief Gets the current tutorial counter value.
+         * @brief Gets the current tutorial counter.
          * @return The tutorial counter value.
          */
         static uint32_t getTutorialCounter();
@@ -175,9 +177,12 @@ namespace QaplaWindows {
          */
         static void showNextTutorialStep();
 
+        void onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
+
         ImGuiEngineSelect engineSelect_;
-        GlobalEngineSettings globalSettings_;
+        ImGuiEngineGlobalSettings globalSettings_;
         bool showGlobalControls_ = true;
+        std::string id_;
 
         static inline uint32_t engineSetupTutorialCounter_ = 0;
 
