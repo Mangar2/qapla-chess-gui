@@ -130,7 +130,7 @@ void SprtTournamentData::setupCallbacks() {
     );
 
     globalSettings_->setConfigurationChangedCallback(
-        [this](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+        [this](const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
             eachEngineConfig_ = settings;
         }
     );

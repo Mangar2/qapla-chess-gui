@@ -97,7 +97,7 @@ void InteractiveBoardWindow::loadGlobalEngineSettings(
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
 	auto globalSettings = config.getSectionList("eachengine", idStr);
 	if (globalSettings) {
-		setupWindow_->content().setGlobalSettings(*globalSettings);
+		setupWindow_->content().setGlobalConfiguration(*globalSettings);
 	}
 }
 
@@ -337,21 +337,6 @@ void InteractiveBoardWindow::drawEngineSelectionPopup() {
     }
 }
 
-QaplaHelpers::IniFile::SectionList InteractiveBoardWindow::getIniSections() const {
-	QaplaHelpers::IniFile::SectionList sections;
-	uint32_t index = 0;
-	for (const auto& engine : engineConfigs_) {
-		QaplaHelpers::IniFile::Section section;
-		section.name = "engineselection";
-		section.addEntry("id", "board" + std::to_string(id_));
-		section.addEntry("name", engine.getName());
-		section.addEntry("index", std::to_string(index));
-		sections.push_back(section);
-		++index;
-	}
-	return sections;
-}
-
 bool InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
 {
     std::optional<std::string> name = section.getValue("name");
@@ -569,12 +554,6 @@ void InteractiveBoardWindow::restartEngine(const std::string &id)
 void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
 {
 	engineConfigs_ = engines;
-	// Inform global configuration about the change
-	QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-		"engineselection",
-		"board" + std::to_string(id_),
-		getIniSections()
-	);
 	if (engines.empty())
 	{
 		computeTask_->initEngines(EngineList{});

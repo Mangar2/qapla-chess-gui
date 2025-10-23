@@ -166,12 +166,6 @@ namespace QaplaWindows
 	private:
 
 		/**
-		 * @brief Retrieves the current configuration as a list of INI file sections.
-		 * @return A list of INI file sections representing the current configuration.
-		 */
-		QaplaHelpers::IniFile::SectionList getIniSections() const;
-
-		/**
 		 * @brief Loads global engine settings from the provided section map into the given InteractiveBoardWindow instance.
 		 * @param idStr The identifier string for the board (e.g., "board1").
 		 * @param instance Unique pointer to the InteractiveBoardWindow instance to load settings into.

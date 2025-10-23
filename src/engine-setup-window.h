@@ -76,7 +76,7 @@ namespace QaplaWindows {
          * @brief Gets the global engine settings.
          * @return The current global settings.
          */
-        const ImGuiEngineGlobalSettings::GlobalSettings& getGlobalSettings() const {
+        const ImGuiEngineGlobalSettings::GlobalConfiguration& getGlobalConfiguration() const {
             return globalSettings_.getGlobalSettings();
         }
 
@@ -84,7 +84,7 @@ namespace QaplaWindows {
          * @brief Sets the global engine settings.
          * @param settings The global settings to apply.
          */
-        void setGlobalSettings(const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+        void setGlobalConfiguration(const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
             globalSettings_.setGlobalSettings(settings);
         }
 
@@ -92,9 +92,17 @@ namespace QaplaWindows {
          * @brief Sets the global engine settings from INI file sections.
          * @param sections A list of INI file sections representing the global settings.
          */
-        void setGlobalSettings(const QaplaHelpers::IniFile::SectionList& sections) {
+        void setGlobalConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
              globalSettings_.setGlobalConfiguration(sections);
          }
+
+        /**
+         * @brief Sets the engine configurations from INI file sections
+         * @param sections A list of INI file sections representing the engine configurations
+         */
+        void setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
+            engineSelect_.setEngineConfiguration(sections);
+        }
 
         /** 
          * @brief Sets whether global controls are shown.
@@ -153,7 +161,6 @@ namespace QaplaWindows {
         void drawButtons();
         bool drawGlobalSettings();
         void executeCommand(const std::string &button);
-        void drawEngineList();
         
         /**
          * @brief Gets the button state for a specific button based on current context.

@@ -43,7 +43,7 @@ namespace QaplaWindows {
         /**
          * @brief Global engine settings data structure
          */
-        struct GlobalSettings {
+        struct GlobalConfiguration {
             bool useGlobalHash = true;      ///< Whether to use a global hash size setting
             uint32_t hashSizeMB = 32;       ///< Hash size in MB (1-64000)
             
@@ -83,7 +83,7 @@ namespace QaplaWindows {
          * @brief Callback type that is called when the configuration changes
          * @param globalSettings The current global settings
          */
-        using ConfigurationChangedCallback = std::function<void(const GlobalSettings&)>;
+        using ConfigurationChangedCallback = std::function<void(const GlobalConfiguration&)>;
 
         /**
          * @brief Callback type that is called when the time control changes
@@ -125,13 +125,13 @@ namespace QaplaWindows {
          * @brief Returns the current global settings
          * @return Reference to the current global settings
          */
-        const GlobalSettings& getGlobalSettings() const { return globalSettings_; }
+        const GlobalConfiguration& getGlobalSettings() const { return globalSettings_; }
 
         /**
          * @brief Sets the global settings
          * @param globalSettings The new global settings
          */
-        void setGlobalSettings(const GlobalSettings& globalSettings);
+        void setGlobalSettings(const GlobalConfiguration& globalSettings);
 
         /**
          * @brief Returns the current time control settings
@@ -194,7 +194,7 @@ namespace QaplaWindows {
          * @param timeControlSettings The time control settings to apply
          */
         static void applyGlobalConfig(QaplaTester::EngineConfig& engine, 
-                                      const GlobalSettings& globalSettings, 
+                                      const GlobalConfiguration& globalSettings, 
                                       const TimeControlSettings& timeControlSettings);
 
     private:
@@ -223,32 +223,32 @@ namespace QaplaWindows {
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
 
         /**
          * @brief Loads ponder settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
 
         /**
          * @brief Loads trace settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
 
         /**
          * @brief Loads restart settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalSettings& settings);
+        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
 
         Options options_;                                       ///< Display options
         std::string id_ = "unset";                              ///< Unique identifier for this instance
-        GlobalSettings globalSettings_;                         ///< Current global settings
+        GlobalConfiguration globalSettings_;                         ///< Current global settings
         TimeControlSettings timeControlSettings_;               ///< Current time control settings
         ConfigurationChangedCallback configurationCallback_;    ///< Callback for changes
         TimeControlChangedCallback timeControlCallback_;        ///< Callback for time control changes

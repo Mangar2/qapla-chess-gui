@@ -211,15 +211,7 @@ bool EngineSetupWindow::drawGlobalSettings() {
     if (!showGlobalControls_) {
         return false;
     }
-
-    ImGui::Separator();
-    ImGui::Spacing();
-    
-    bool modified = globalSettings_.drawGlobalSettings(150.0F, controlIndent_);
-    
-    ImGui::Spacing();
-    ImGui::Separator();
-    return modified;
+    return globalSettings_.drawGlobalSettings(150.0F, controlIndent_);
 }
 
 void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
@@ -262,11 +254,6 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
     }
 }
 
-void EngineSetupWindow::drawEngineList() {
-    // Use ImGuiEngineSelect to draw the engine list
-    engineSelect_.draw();
-}
-
 void EngineSetupWindow::draw() {
     constexpr float rightBorder = 5.0F;
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
@@ -276,8 +263,11 @@ void EngineSetupWindow::draw() {
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("EngineList", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
     ImGui::Indent(controlIndent_);
+    ImGui::Spacing();
     drawGlobalSettings();
-    drawEngineList();
+    ImGui::Spacing();
+    ImGui::Separator();
+    engineSelect_.draw();
     ImGui::Unindent(controlIndent_);
     ImGui::EndChild();
     

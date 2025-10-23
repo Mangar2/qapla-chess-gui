@@ -383,7 +383,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_;
         GameManagerPoolAccess poolAccess_;
-        ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
+        ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;

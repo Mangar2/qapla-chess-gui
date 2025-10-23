@@ -125,7 +125,7 @@ namespace QaplaWindows {
         // It copies the settings from the UI component into eachEngineConfig_, which is later
         // used in createTournament() to apply these global settings to all selected engines
         globalSettings_->setConfigurationChangedCallback(
-            [this](const ImGuiEngineGlobalSettings::GlobalSettings& settings) {
+            [this](const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
                 eachEngineConfig_ = settings;
             }
         );

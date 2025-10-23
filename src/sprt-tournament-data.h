@@ -383,7 +383,7 @@ namespace QaplaWindows {
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 
-        ImGuiEngineGlobalSettings::GlobalSettings eachEngineConfig_;
+        ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 
         uint32_t concurrency_ = 1;
