@@ -45,8 +45,11 @@ ImGuiEngineSelect::ImGuiEngineSelect(const Options& options, ConfigurationChange
 bool ImGuiEngineSelect::draw() {
     bool modified = false;
     
-    if (!ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
-        return false;
+    // In directEditMode, skip the "Engines" collapsing header
+    if (!options_.directEditMode) {
+        if (!ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+            return false;
+        }
     }
 
     ImGui::PushID("engineSettings");
@@ -117,16 +120,14 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     
     ImGui::PushID(index);
     
-    ImGuiTreeNodeFlags flags = config.selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_Leaf;
-    
-    bool changed = ImGuiControls::collapsingSelection(name, config.selected, flags, [this, &config]() -> bool {
+    // Lambda for drawing the engine controls
+    auto drawEngineControls = [this, &config]() -> bool {
         bool configModified = false;
         
         ImGuiEngineControls::drawEngineReadOnlyInfo(config.config);
         ImGui::Separator();
         
         configModified |= ImGuiEngineControls::drawEngineName(config.config, options_.allowNameEdit);
-        // If name was changed by user, update originalName to reflect the new user choice
         if (configModified && options_.allowNameEdit) {
             config.originalName = config.config.getName();
         }
@@ -138,9 +139,18 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         configModified |= ImGuiEngineControls::drawEngineOptions(config.config, options_.allowEngineOptionsEdit);
         
         return configModified;
-    });
+    };
     
-    if (changed) {
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+    if (config.selected) {
+        flags |= ImGuiTreeNodeFlags_Selected;
+    }
+    if (!options_.directEditMode) {
+        // In directEditMode, allow expanding even when not selected (don't use Leaf flag)
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    if (ImGuiControls::collapsingSelection(name, config.selected, flags, drawEngineControls)) {
         modified = true;
     }
     

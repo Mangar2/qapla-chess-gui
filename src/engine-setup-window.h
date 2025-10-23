@@ -22,6 +22,7 @@
 #include "qapla-tester/engine-config.h"
 #include "embedded-window.h"
 #include "imgui-button.h"
+#include "imgui-engine-select.h"
 #include <memory>
 
 namespace QaplaWindows {
@@ -156,7 +157,12 @@ namespace QaplaWindows {
          */
         static void showNextTutorialStep();
 
-        std::vector<QaplaTester::EngineConfig> activeEngines_;
+        /**
+         * @brief Callback handler for when engine selection changes in ImGuiEngineSelect.
+         */
+        void onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
+
+        ImGuiEngineSelect engineSelect_;
         GlobalEngineSettings globalSettings_;
         bool showGlobalControls_ = true;
 

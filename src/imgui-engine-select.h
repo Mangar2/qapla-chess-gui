@@ -48,7 +48,7 @@ namespace QaplaWindows {
             Options() : allowGauntletEdit(true), allowNameEdit(true), allowPonderEdit(true), 
                        allowTimeControlEdit(true), allowTraceLevelEdit(true), 
                        allowRestartOptionEdit(true), allowEngineOptionsEdit(true),
-                       allowMultipleSelection(false) {}
+                       allowMultipleSelection(false), directEditMode(false) {}
             bool allowGauntletEdit;        ///< Allows editing of the gauntlet option
             bool allowNameEdit;            ///< Allows editing of the engine name
             bool allowPonderEdit;          ///< Allows editing of the ponder option
@@ -57,6 +57,7 @@ namespace QaplaWindows {
             bool allowRestartOptionEdit;   ///< Allows editing of the restart option
             bool allowEngineOptionsEdit;   ///< Allows editing of engine-specific options
             bool allowMultipleSelection;   ///< Allows selecting the same engine multiple times
+            bool directEditMode;           ///< Direct edit mode: skips "Engines" header, engines can be edited without prior selection, changes saved via callback
         };
 
         /**

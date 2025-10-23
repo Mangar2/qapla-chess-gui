@@ -22,6 +22,7 @@
 #include "imgui-button.h"
 #include "imgui-controls.h"
 #include "imgui-engine-controls.h"
+#include "imgui-engine-select.h"
 #include "os-dialogs.h"
 #include "configuration.h"
 #include "snackbar.h"
@@ -45,8 +46,41 @@ using namespace QaplaWindows;
 EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     : showGlobalControls_(showGlobalControls)
 {
+    ImGuiEngineSelect::Options options;
+    options.allowGauntletEdit = true;
+    options.allowNameEdit = true;
+    options.allowPonderEdit = true;
+    options.allowTimeControlEdit = true;
+    options.allowTraceLevelEdit = true;
+    options.allowRestartOptionEdit = true;
+    options.allowEngineOptionsEdit = true;
+    options.allowMultipleSelection = false;
+    options.directEditMode = true;  
+    
+    engineSelect_.setOptions(options);
+    engineSelect_.setId("enginesetup");
+    
+    // Set callback to get notified about changes
+    engineSelect_.setConfigurationChangedCallback(
+        [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+            onEngineSelectionChanged(configurations);
+        }
+    );
 }
 EngineSetupWindow::~EngineSetupWindow() = default;
+
+void EngineSetupWindow::onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
+    // Save changes back to ConfigManager
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    
+    for (const auto& engineConfig : configurations) {
+        // Update or add the configuration in the ConfigManager
+        configManager.addOrReplaceConfig(engineConfig.config);
+    }
+    
+    // Mark configuration as modified
+    QaplaConfiguration::Configuration::instance().setModified();
+}
 
 bool EngineSetupWindow::highlighted() const {
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
@@ -55,7 +89,15 @@ bool EngineSetupWindow::highlighted() const {
 }
 
 std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() const {
-    std::vector<QaplaTester::EngineConfig> engines = activeEngines_;
+    std::vector<QaplaTester::EngineConfig> engines;
+    
+    // Extract selected engines from engineSelect_
+    const auto& configurations = engineSelect_.getEngineConfigurations();
+    for (const auto& config : configurations) {
+        if (config.selected) {
+            engines.push_back(config.config);
+        }
+    }
     
     // Apply global settings if enabled
     for (auto& engine : engines) {
@@ -71,84 +113,22 @@ std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() con
 }
 
 void EngineSetupWindow::setMatchingActiveEngines(const std::vector<QaplaTester::EngineConfig>& engines) {
-    activeEngines_.clear();
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    auto configs = configManager.getAllConfigs();
+    
+    std::vector<ImGuiEngineSelect::EngineConfiguration> configurations;
+    
     for (const auto& engine : engines) {
         auto* matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
-		if (matching != nullptr) {
-            if (std::ranges::find(activeEngines_, *matching) == activeEngines_.end()) {
-                activeEngines_.push_back(*matching);
-            }
+        if (matching != nullptr) {
+            ImGuiEngineSelect::EngineConfiguration config;
+            config.config = *matching;
+            config.selected = true;
+            config.originalName = matching->getName();
+            configurations.push_back(config);
         }
     }
-}
-
-/**
- * @brief Draws the options for a given engine configuration.
- * @param config Reference to the engine configuration.
- * @param inputWidth Width of the input fields for options.
- * @return True if any option was changed, false otherwise.
- */
-static bool drawOptions(QaplaTester::EngineConfig& config, float inputWidth) {
-    auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-    const auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
-    if (!capability) { return false; }
-	const auto& options = capability->getSupportedOptions();
-    bool changed = false;
     
-    auto optionMap = config.getOptionValues();
-    for (const auto& option : options) {
-		auto it = optionMap.find(option.name);
-        std::string value = (it != optionMap.end()) ? it->second : option.defaultValue; 
-        if (ImGuiControls::engineOptionControl(option, value, inputWidth)) {
-            changed = true;
-            // Update the capability with the new value
-			config.setOptionValue(option.name, value);
-		}
-    }
-	return changed;
-}
-
-/**
- * @brief Draws a collapsible section for editing a single engine configuration.
- * @param config Reference to the engine configuration to edit.
- * @param index Index of the engine, used to generate unique ImGui IDs.
- * @return first bool indicates if the configuration was changed, second bool indicates if the section was selected.
- */
-static std::tuple<bool, bool> drawEngineConfigSection(QaplaTester::EngineConfig& config, int index, bool selected) {
-    std::string headerLabel = config.getName().empty()
-        ? std::format("Engine {}###engineHeader{}", index + 1, index)
-        : std::format("{}###engineHeader{}", config.getName(), index, index);
-    ImGui::PushID(index);
-
-    bool changed = ImGuiControls::collapsingSelection(
-        headerLabel.c_str(), 
-        selected, 
-        ImGuiTreeNodeFlags_None,
-        [&]()->bool {
-            bool changed = false;
-            try {
-                changed |= ImGuiEngineControls::drawEngineName(config, true);
-                changed |= ImGuiEngineControls::drawEngineAuthor(config, true);
-                changed |= ImGuiEngineControls::drawEngineCommand(config, true);
-                changed |= ImGuiEngineControls::drawEngineDirectory(config, true);
-                changed |= ImGuiEngineControls::drawEngineProtocol(config, true);
-                changed |= ImGuiEngineControls::drawEngineTraceLevel(config, true);
-                changed |= ImGuiEngineControls::drawEngineRestartOption(config, true);
-                changed |= ImGuiEngineControls::drawEnginePonder(config, true);
-                changed |= drawOptions(config, 400.0F);
-            }
-            catch (const std::exception& e) {
-                SnackbarManager::instance().showError(
-                    std::format("Error in options: {}", e.what()));
-            }
-            return changed;
-        }
-    );
-
-    ImGui::PopID();
-    return { changed, selected };
+    engineSelect_.setEngineConfigurations(configurations);
 }
 
 QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& button) const {
@@ -163,7 +143,12 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
         return QaplaButton::ButtonState::Normal;
     }
     else if (button == "Remove") {
-        if (activeEngines_.empty()) {
+        // Check if any engines are selected
+        const auto& configurations = engineSelect_.getEngineConfigurations();
+        bool hasSelection = std::ranges::any_of(configurations, 
+            [](const auto& config) { return config.selected; });
+        
+        if (!hasSelection) {
             return QaplaButton::ButtonState::Disabled;
         }
         return QaplaButton::ButtonState::Normal;
@@ -277,12 +262,19 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
         }
         else if (button == "Remove")
         {
-            for (auto &active : activeEngines_)
-            {
-                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(active);
-                QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
-                    active.getCmd(), active.getProtocol());
+            // Remove selected engines
+            const auto& configurations = engineSelect_.getEngineConfigurations();
+            for (const auto& config : configurations) {
+                if (config.selected) {
+                    QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(config.config);
+                    QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
+                        config.config.getCmd(), config.config.getProtocol());
+                }
             }
+            
+            // Clear selection after removal
+            std::vector<ImGuiEngineSelect::EngineConfiguration> emptyConfigs;
+            engineSelect_.setEngineConfigurations(emptyConfigs);
         }
         else if (button == "Detect")
         {
@@ -296,44 +288,8 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
 }
 
 void EngineSetupWindow::drawEngineList() {
-    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    auto configs = configManager.getAllConfigs();
-    if (configs.empty()) {
-        ImVec2 avail = ImGui::GetContentRegionAvail();
-        ImGui::Dummy(ImVec2(avail.x, avail.y));
-    }
-
-    int index = 0;
-    for (auto& config : configs) {
-        bool inSelection = false;
-        for (auto& active : activeEngines_) {
-            if (active.getCmd() == config.getCmd() && 
-                active.getProtocol() == config.getProtocol()) {
-                // Auto-updates active config on any changes
-                if (active != config) {
-                    active = config;
-                }
-                inSelection = true;
-                break;
-            }
-        }
-        auto [changed, selected] = drawEngineConfigSection(config, index, inSelection);
-        if (changed) {
-            configManager.addOrReplaceConfig(config);
-            QaplaConfiguration::Configuration::instance().setModified();
-        }
-        if (selected && !inSelection) {
-            activeEngines_.push_back(config);
-        }
-        if (!selected && inSelection) {
-            std::erase_if(activeEngines_, [&config](const QaplaTester::EngineConfig& ec) {
-                return ec.getCmd() == config.getCmd() && 
-                       ec.getProtocol() == config.getProtocol();
-            });
-        }
-
-        index++;
-    }
+    // Use ImGuiEngineSelect to draw the engine list
+    engineSelect_.draw();
 }
 
 void EngineSetupWindow::draw() {
