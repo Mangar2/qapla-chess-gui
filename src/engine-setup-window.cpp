@@ -58,29 +58,12 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     options.directEditMode = true;  
     
     engineSelect_.setOptions(options);
-    engineSelect_.setId("enginesetup");
+    // Setting id to empty to skip saving configuration
+    engineSelect_.setId("");
     
-    // Set callback to get notified about changes
-    engineSelect_.setConfigurationChangedCallback(
-        [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-            onEngineSelectionChanged(configurations);
-        }
-    );
 }
-EngineSetupWindow::~EngineSetupWindow() = default;
 
-void EngineSetupWindow::onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-    // Save changes back to ConfigManager
-    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    
-    for (const auto& engineConfig : configurations) {
-        // Update or add the configuration in the ConfigManager
-        configManager.addOrReplaceConfig(engineConfig.config);
-    }
-    
-    // Mark configuration as modified
-    QaplaConfiguration::Configuration::instance().setModified();
-}
+EngineSetupWindow::~EngineSetupWindow() = default;
 
 bool EngineSetupWindow::highlighted() const {
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
@@ -120,10 +103,11 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<QaplaTester::
     for (const auto& engine : engines) {
         auto* matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
         if (matching != nullptr) {
-            ImGuiEngineSelect::EngineConfiguration config;
-            config.config = *matching;
-            config.selected = true;
-            config.originalName = matching->getName();
+            ImGuiEngineSelect::EngineConfiguration config {
+                .config = engine,
+                .selected = true,
+                .originalName = engine.getName()
+            };
             configurations.push_back(config);
         }
     }

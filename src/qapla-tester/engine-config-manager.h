@@ -74,7 +74,9 @@ public:
      * Returns all engine configurations.
      * @return A vector of EngineConfig.
      */
-    std::vector<EngineConfig> getAllConfigs() const;
+    std::vector<EngineConfig> getAllConfigs() const {
+        return configs;
+    }
 
     /**
      * Retrieves a configuration by engine name.

@@ -109,6 +109,24 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Sets the direct edit mode for the engine selection.
+         * @param enabled True to enable direct edit mode (no "Engines" header, can expand without selection),
+         *                false for normal mode (with "Engines" header, selection required for expansion).
+         */
+        void setDirectEditMode(bool enabled) {
+            engineSelect_.getOptions().directEditMode = enabled;
+        }
+
+        /**
+         * @brief Sets whether multiple selection of the same engine is allowed.
+         * @param enabled True to allow multiple selection (shows "Selected" and "Available" sections),
+         *                false for single selection mode (flat list).
+         */
+        void setAllowMultipleSelection(bool enabled) {
+            engineSelect_.getOptions().allowMultipleSelection = enabled;
+        }
+
+        /**
          * @brief Gets the current tutorial counter value.
          * @return The tutorial counter value.
          */
@@ -156,11 +174,6 @@ namespace QaplaWindows {
          * @brief Increments the tutorial counter.
          */
         static void showNextTutorialStep();
-
-        /**
-         * @brief Callback handler for when engine selection changes in ImGuiEngineSelect.
-         */
-        void onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
 
         ImGuiEngineSelect engineSelect_;
         GlobalEngineSettings globalSettings_;

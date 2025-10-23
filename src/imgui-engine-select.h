@@ -114,6 +114,7 @@ namespace QaplaWindows {
          * @return The current options
          */
         const Options& getOptions() const { return options_; }
+        Options& getOptions() { return options_; }
 
         /**
          * @brief Sets the engine configurations from INI file sections
@@ -161,6 +162,12 @@ namespace QaplaWindows {
          * @return true if something changed, false otherwise
          */
         bool drawAvailableEngines();
+
+        /**
+         * @brief Draws all engines in single selection mode
+         * @return true if something changed, false otherwise
+         */
+        bool drawAllEngines();
 
         /**
          * @brief Notifies about changes via callback

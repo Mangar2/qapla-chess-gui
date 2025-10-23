@@ -51,10 +51,6 @@ void EngineConfigManager::saveToFile(const std::string& filePath) const {
     saveToStream(file);
 }
 
-std::vector<EngineConfig> EngineConfigManager::getAllConfigs() const {
-    return configs;
-}
-
 const EngineConfig* EngineConfigManager::getConfig(const std::string& name) const {
     for (const auto& config : configs) {
         if (QaplaHelpers::to_lowercase(config.getName()) == QaplaHelpers::to_lowercase(name)) {

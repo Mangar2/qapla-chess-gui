@@ -59,7 +59,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	  engineWindow_(std::make_unique<EngineWindow>()),
 	  setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
 		ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" },
-		ImVec2(600, 800))
+		ImVec2(600, 600))
 		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
@@ -69,6 +69,8 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 					   .getTimeControlSettings()
 					   .getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
+	setupWindow_->content().setDirectEditMode(false);
+	setupWindow_->content().setAllowMultipleSelection(true);
 	setPosition(true);
 	initSplitterWindows();
 }

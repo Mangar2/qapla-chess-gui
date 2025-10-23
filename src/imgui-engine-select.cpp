@@ -75,31 +75,7 @@ bool ImGuiEngineSelect::draw() {
         ImGui::Separator();
         modified |= drawAvailableEngines();
     } else {
-        // Original single selection mode
-        auto configs = configManager.getAllConfigs();
-        uint32_t index = 0;
-        for (auto& config : configs) {
-            EngineConfiguration engine = {
-                .config = config,
-                .selected = false
-            };
-            
-            auto it = findEngineConfiguration(config);
-            if (it != engineConfigurations_.end()) {
-                engine = *it;
-            }         
-
-            if (drawEngineConfiguration(engine, index)) {
-                modified = true;
-                
-                if (it == engineConfigurations_.end()) {
-                    engineConfigurations_.push_back(engine);
-                } else {
-                    *it = engine;
-                }
-            }
-            index++;
-        }
+        modified |= drawAllEngines();
     }
     
     if (modified) {
@@ -110,6 +86,51 @@ bool ImGuiEngineSelect::draw() {
     ImGui::Unindent(10.0F);
     ImGui::PopID();
     
+    return modified;
+}
+
+bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
+{
+    bool modified = false;
+    // Single section mode: show all engines in a single list
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    uint32_t index = 0;
+    for (auto &config : configs)
+    {
+        EngineConfiguration engine = {
+            .config = config,
+            .selected = false};
+
+        auto it = findEngineConfiguration(config);
+        if (it != engineConfigurations_.end())
+        {
+            engine.selected = it->selected;
+            if (!options_.directEditMode)
+            {
+                engine = *it;
+            }
+        }
+
+        if (drawEngineConfiguration(engine, index))
+        {
+            modified = true;
+
+            if (it == engineConfigurations_.end())
+            {
+                engineConfigurations_.push_back(engine);
+            }
+            else
+            {
+                *it = engine;
+                if (options_.directEditMode)
+                {
+                    configManager.addOrReplaceConfig(engine.config);
+                }
+            }
+        }
+        index++;
+    }
     return modified;
 }
 
@@ -145,7 +166,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     if (config.selected) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
-    if (!options_.directEditMode) {
+    if (!options_.directEditMode && !config.selected) {
         // In directEditMode, allow expanding even when not selected (don't use Leaf flag)
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
@@ -293,6 +314,9 @@ void ImGuiEngineSelect::resetNamesToOriginal() {
 
 void ImGuiEngineSelect::updateConfiguration() const {
     QaplaHelpers::IniFile::SectionList sections;
+    if (id_.empty()) {
+        return; // No ID set, skip saving
+    }
     for (const auto& engine : engineConfigurations_) {
         // Store full configuration instead of just name reference
         QaplaHelpers::IniFile::KeyValueMap entries{
