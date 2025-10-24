@@ -184,6 +184,14 @@ public:
     }
 
     /**
+     * @brief Sets the tutorial counter value
+     * @param value The new counter value
+     */
+    void setTutorialCounter(uint32_t value) {
+        config_.snackbarTutorialCounter = value;
+    }
+
+    /**
      * @brief Shows a tutorial snackbar (internal method)
      * @param message The message to display
      * @param type The snackbar type

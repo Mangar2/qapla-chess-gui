@@ -151,6 +151,12 @@ namespace QaplaWindows {
         static uint32_t getTutorialCounter();
 
         /**
+         * @brief Sets the tutorial counter value.
+         * @param value The new counter value.
+         */
+        static void setTutorialCounter(uint32_t value);
+
+        /**
          * @brief Resets the tutorial counter to restart the tutorial.
          */
         static void resetTutorialCounter();
@@ -159,11 +165,6 @@ namespace QaplaWindows {
          * @brief Finishes the tutorial without showing any snackbars.
          */
         static void finishTutorial();
-
-        /**
-         * @brief Loads the tutorial configuration from the configuration data.
-         */
-        static void loadTutorialConfiguration();
 
     private:
         void drawButtons();
@@ -181,11 +182,6 @@ namespace QaplaWindows {
          * @brief Checks and manages the engine setup tutorial progression.
          */
         void checkTutorialProgression();
-
-        /**
-         * @brief Updates the configuration data with the current tutorial counter.
-         */
-        static void updateTutorialConfiguration();
 
         /**
          * @brief Increments the tutorial counter.

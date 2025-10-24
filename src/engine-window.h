@@ -46,16 +46,53 @@ namespace QaplaWindows {
          */
         std::pair<std::string, std::string> draw() override;
 
+        /**
+         * @brief Gets the current tutorial counter.
+         * @return The tutorial counter value.
+         */
+        static uint32_t getTutorialCounter();
+
+        /**
+         * @brief Sets the tutorial counter value.
+         * @param value The new counter value.
+         */
+        static void setTutorialCounter(uint32_t value);
+
+        /**
+         * @brief Resets the tutorial counter to restart the tutorial.
+         */
+        static void resetTutorialCounter();
+
+        /**
+         * @brief Finishes the tutorial without showing any snackbars.
+         */
+        static void finishTutorial();
+
     private:
 
         static constexpr float areaWidth = 65.0F;
 
         /**
          * @brief Draws the configuration button area for all engines.
-         * @param noEngines Flag indicating if there are no engines available.
+         * @param noEnginesSelected Flag indicating if there are no engines selected.
+         * @param enginesAvailable Flag indicating if there are any engines available.
          * @return The required indent for the button area.
          */
-        static std::string drawConfigButtonArea(bool noEngines);
+        static std::string drawConfigButtonArea(bool noEnginesSelected, bool enginesAvailable);
+
+        /**
+         * @brief Checks and manages the engine window tutorial progression.
+         * @param configCommandIssued Whether the Config button was clicked.
+         * @param activeEngines The currently active engines.
+         */
+        void checkTutorialProgression(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
+
+        /**
+         * @brief Increments the tutorial counter and shows the next tutorial step.
+         */
+        static void showNextTutorialStep();
+
+        static inline uint32_t engineWindowTutorialCounter_ = 0;
 
     };
 

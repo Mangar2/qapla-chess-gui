@@ -267,40 +267,23 @@ uint32_t EngineSetupWindow::getTutorialCounter() {
     return engineSetupTutorialCounter_;
 }
 
+void EngineSetupWindow::setTutorialCounter(uint32_t value) {
+    engineSetupTutorialCounter_ = value;
+}
+
 void EngineSetupWindow::resetTutorialCounter() {
     engineSetupTutorialCounter_ = 0;
-    updateTutorialConfiguration();
-}
-
-void EngineSetupWindow::loadTutorialConfiguration() {
-    auto sections = QaplaConfiguration::Configuration::instance().
-        getConfigData().getSectionList("enginesetup", "enginesetup").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    
-    if (!sections.empty()) {
-        const auto& section = sections[0];
-        engineSetupTutorialCounter_ = QaplaHelpers::to_uint32(section.getValue("tutorialcounter").value_or("0")).value_or(0);
-    }
-}
-
-void EngineSetupWindow::updateTutorialConfiguration() {
-    QaplaHelpers::IniFile::Section section {
-        .name = "enginesetup",
-        .entries = QaplaHelpers::IniFile::KeyValueMap{
-            {"id", "enginesetup"},
-            {"tutorialcounter", std::to_string(engineSetupTutorialCounter_)}
-        }
-    };
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("enginesetup", "enginesetup", { section });
+    Tutorial::instance().saveConfiguration();
 }
 
 void EngineSetupWindow::finishTutorial() {
     engineSetupTutorialCounter_ = 3;
-    updateTutorialConfiguration();
+    Tutorial::instance().saveConfiguration();
 }
 
 void EngineSetupWindow::showNextTutorialStep() {
     engineSetupTutorialCounter_++;
-    updateTutorialConfiguration();
+    Tutorial::instance().saveConfiguration();
 
     switch (engineSetupTutorialCounter_) {
         case 1:

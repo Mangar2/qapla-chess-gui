@@ -21,6 +21,10 @@
 #include "imgui-separator.h"
 #include "imgui-engine-list.h"
 #include "imgui-button.h"
+#include "snackbar.h"
+#include "tutorial.h"
+
+#include "qapla-tester/engine-worker-factory.h"
 
 #include <imgui.h>
 
@@ -28,13 +32,14 @@
 #include <string>
 #include <format>
 #include <memory>
+#include <set>
 
 using namespace QaplaWindows;
 
 EngineWindow::EngineWindow() = default;
 EngineWindow::~EngineWindow() = default;
 
-std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
+std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool enginesAvailable) {
     constexpr float borderX = 20.0F;
     constexpr float borderY = 8.0F;
     constexpr float spacingY = 30.0F;
@@ -46,7 +51,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY));
     auto state = QaplaButton::ButtonState::Normal;
-    if (noEngines) {
+    if (noEnginesSelected && enginesAvailable) {
         state = QaplaButton::ButtonState::Highlighted;
     }
     if (QaplaButton::drawIconButton("Config", "Config", buttonSize, state,
@@ -59,7 +64,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEngines) {
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY + buttonSize.y + spacingY));
     if (QaplaButton::drawIconButton("SwapButton", "Swap", buttonSize, 
-        noEngines ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal,
+        noEnginesSelected ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal,
         [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
         }))
@@ -80,13 +85,110 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     constexpr float rightBorder = 5.0F;
 
     const auto engineRecords = getEngineRecords();
-    auto command = drawConfigButtonArea(engineRecords.empty());
+    const auto engineAvailable = !QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs().empty();
+    auto command = drawConfigButtonArea(engineRecords.empty(), engineAvailable);
     ImGui::Indent(areaWidth);
     auto [id2, command2] = ImGuiEngineList::draw();
     ImGui::Unindent(areaWidth);
+    
+    // Create a list of active engines from the engine records
+    std::vector<QaplaTester::EngineConfig> activeEngines;
+    for (const auto& record : engineRecords) {
+        activeEngines.push_back(record.config);
+    }
+    
+    // Check tutorial progression
+    bool configCommandIssued = (command == "Config");
+    checkTutorialProgression(configCommandIssued, activeEngines);
+    
     if (!command.empty()) { 
         return { "", command };
     }
     return { id2, command2 };
+}
+
+uint32_t EngineWindow::getTutorialCounter() {
+    return engineWindowTutorialCounter_;
+}
+
+void EngineWindow::setTutorialCounter(uint32_t value) {
+    engineWindowTutorialCounter_ = value;
+}
+
+void EngineWindow::resetTutorialCounter() {
+    engineWindowTutorialCounter_ = 0;
+    Tutorial::instance().saveConfiguration();
+}
+
+void EngineWindow::finishTutorial() {
+    engineWindowTutorialCounter_ = 3;
+    Tutorial::instance().saveConfiguration();
+}
+
+void EngineWindow::showNextTutorialStep() {
+    engineWindowTutorialCounter_++;
+    Tutorial::instance().saveConfiguration();
+
+    switch (engineWindowTutorialCounter_) {
+        case 1:
+        SnackbarManager::instance().showTutorial(
+            "Engine Window - Step 1\n\n"
+            "Welcome to the Engine Window!\n"
+            "Here you can select which engines to use for analysis or play.\n\n"
+            "Click the Config button (gear icon) on the left to open the engine selection popup.",
+            SnackbarManager::SnackbarType::Note, false);
+        return;
+        case 2:
+        SnackbarManager::instance().showTutorial(
+            "Engine Window - Step 2\n\n"
+            "Great! You've opened the engine selection.\n"
+            "You can select multiple engines, and the same engine can be selected multiple times.\n\n"
+            "Now please select two different engines to continue.",
+            SnackbarManager::SnackbarType::Note, false);
+        return;
+        case 3:
+        SnackbarManager::instance().showTutorial(
+            "Engine Window Complete!\n\n"
+            "Excellent! You've successfully selected engines for analysis.\n"
+            "These engines will now analyze positions and provide move suggestions.\n\n"
+            "Engine window tutorial completed!",
+            SnackbarManager::SnackbarType::Success, false);
+        return;
+        default:
+        return;
+    }
+}
+
+void EngineWindow::checkTutorialProgression(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
+    // Only start tutorial if EngineSetup tutorial is completed
+    if (!Tutorial::instance().isCompleted(Tutorial::Topic::EngineSetup)) {
+        return;
+    }
+
+    switch (engineWindowTutorialCounter_) {
+        case 0:
+        showNextTutorialStep();
+        return;
+        case 1:
+        // Check if Config button was clicked
+        if (configCommandIssued) {
+            showNextTutorialStep();
+        }
+        return;
+        case 2:
+        {
+            // Check if at least 2 different engines are selected
+            std::set<std::string> uniqueEngines;
+            for (const auto& engine : activeEngines) {
+                uniqueEngines.insert(engine.getCmd());
+            }
+            if (uniqueEngines.size() >= 2) {
+                showNextTutorialStep();
+            }
+        }
+        return;
+        default:
+        return;
+    }
 }
 

@@ -19,6 +19,7 @@
 
 #include "snackbar.h"
 #include "configuration.h"
+#include "tutorial.h"
 
 #include "qapla-tester/string-helper.h"
 
@@ -218,7 +219,6 @@ void SnackbarManager::loadConfiguration() {
         config_.successDurationInS = QaplaHelpers::to_uint32(section.getValue("successduration").value_or("10")).value_or(10);
         config_.warningDurationInS = QaplaHelpers::to_uint32(section.getValue("warningduration").value_or("15")).value_or(15);
         config_.errorDurationInS = QaplaHelpers::to_uint32(section.getValue("errorduration").value_or("20")).value_or(20);
-        config_.snackbarTutorialCounter = QaplaHelpers::to_uint32(section.getValue("tutorialcounter").value_or("0")).value_or(0);
     }
     
     showNextTutorialStep();
@@ -232,8 +232,7 @@ void SnackbarManager::updateConfiguration() const {
             {"noteduration", std::to_string(config_.noteDurationInS)},
             {"successduration", std::to_string(config_.successDurationInS)},
             {"warningduration", std::to_string(config_.warningDurationInS)},
-            {"errorduration", std::to_string(config_.errorDurationInS)},
-            {"tutorialcounter", std::to_string(config_.snackbarTutorialCounter)}
+            {"errorduration", std::to_string(config_.errorDurationInS)}
         }
     };
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
@@ -241,7 +240,8 @@ void SnackbarManager::updateConfiguration() const {
 
 void SnackbarManager::showNextTutorialStep() {
     config_.snackbarTutorialCounter++;
-    updateConfiguration();
+    Tutorial::instance().saveConfiguration();
+    
     switch (config_.snackbarTutorialCounter) {
         case 1:
         showTutorial("Welcome to the Snackbar System!\n\n"
@@ -271,11 +271,11 @@ void SnackbarManager::showNextTutorialStep() {
 
 void SnackbarManager::finishTutorial() {
     config_.snackbarTutorialCounter = 4;
-    updateConfiguration();
+    Tutorial::instance().saveConfiguration();
 }
 
 void SnackbarManager::resetTutorialCounter() {
     config_.snackbarTutorialCounter = 0;
+    Tutorial::instance().saveConfiguration();
     showNextTutorialStep();
-    updateConfiguration();
 }

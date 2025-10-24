@@ -37,6 +37,7 @@
 #include "board-workspace.h"
 #include "engine-setup-window.h"
 #include "snackbar.h"
+#include "tutorial.h"
 #include "callback-manager.h"
 #include "dark-wood-background.h"
 
@@ -168,7 +169,7 @@ namespace {
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::EpdData::instance().loadFile();
         SnackbarManager::instance().loadConfiguration();
-        QaplaWindows::EngineSetupWindow::loadTutorialConfiguration();
+        Tutorial::instance().loadConfiguration();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();

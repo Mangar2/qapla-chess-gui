@@ -36,6 +36,7 @@ public:
     enum class Topic {
         Snackbar,
         EngineSetup,
+        EngineWindow,
         // Future topics can be added here
         Count
     };
@@ -75,6 +76,16 @@ public:
      * @return The counter value at which the topic is considered complete
      */
     static uint32_t getCompletionThreshold(Topic topic);
+
+    /**
+     * @brief Loads all tutorial counters from the configuration file
+     */
+    void loadConfiguration();
+
+    /**
+     * @brief Saves all tutorial counters to the configuration file
+     */
+    void saveConfiguration() const;
 
 private:
     Tutorial() = default;
