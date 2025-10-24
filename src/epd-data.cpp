@@ -102,7 +102,7 @@ namespace QaplaWindows {
             getConfigData().getSectionList("engineselection", "epd").
             value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         engineSelect_->setId("epd");
-        engineSelect_->setEngineConfiguration(engineSections);
+        engineSelect_->setEnginesConfiguration(engineSections);
     }
 
     void EpdData::updateConfiguration() const {

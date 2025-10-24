@@ -100,8 +100,8 @@ namespace QaplaWindows {
          * @brief Sets the engine configurations from INI file sections
          * @param sections A list of INI file sections representing the engine configurations
          */
-        void setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
-            engineSelect_.setEngineConfiguration(sections);
+        void setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
+            engineSelect_.setEnginesConfiguration(sections);
         }
 
         /** 
@@ -183,8 +183,6 @@ namespace QaplaWindows {
          * @brief Increments the tutorial counter.
          */
         static void showNextTutorialStep();
-
-        void onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations);
 
         ImGuiEngineSelect engineSelect_;
         ImGuiEngineGlobalSettings globalSettings_;

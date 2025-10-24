@@ -61,12 +61,6 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     engineSelect_.setOptions(options);
     engineSelect_.setId("");
     
-    engineSelect_.setConfigurationChangedCallback(
-        [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-            onEngineSelectionChanged(configurations);
-        }
-    );
-
     ImGuiEngineGlobalSettings::Options globalOptions;
     globalOptions.showHash = true;
     globalOptions.showPonder = true;
@@ -78,16 +72,6 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
 }
 
 EngineSetupWindow::~EngineSetupWindow() = default;
-
-void EngineSetupWindow::onEngineSelectionChanged(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
-    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    
-    for (const auto& engineConfig : configurations) {
-        configManager.addOrReplaceConfig(engineConfig.config);
-    }
-    
-    QaplaConfiguration::Configuration::instance().setModified();
-}
 
 bool EngineSetupWindow::highlighted() const {
     auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();

@@ -103,9 +103,6 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
         else if (sectionName == "board") {
             parseBoard(section);
         }
-        else if (sectionName == "boardengine") {
-            QaplaWindows::InteractiveBoardWindow::instance().loadBoardEngine(section);
-        }
         else if (sectionName == "enginecapability") {
             engineCapabilities_.addOrReplace(section);
         }

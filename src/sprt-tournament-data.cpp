@@ -151,7 +151,7 @@ void SprtTournamentData::loadEngineSelectionConfig() {
         .getConfigData().getSectionList("engineselection", "sprt-tournament")
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("sprt-tournament");
-    engineSelect_->setEngineConfiguration(sections);
+    engineSelect_->setEnginesConfiguration(sections);
 }
 
 void SprtTournamentData::loadSprtConfig() {

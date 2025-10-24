@@ -58,7 +58,7 @@ void EngineTestWindow::setEngineConfiguration() {
     auto sections = QaplaConfiguration::Configuration::instance().
             getConfigData().getSectionList("engineselection", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("enginetest");
-    engineSelect_->setEngineConfiguration(sections);
+    engineSelect_->setEnginesConfiguration(sections);
 }
 
 std::vector<QaplaTester::EngineConfig> EngineTestWindow::getSelectedEngineConfigurations() const

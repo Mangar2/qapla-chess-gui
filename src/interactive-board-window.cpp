@@ -91,14 +91,20 @@ std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance()
 	return instance;
 }
 
-void InteractiveBoardWindow::loadGlobalEngineSettings(
-	const std::string &idStr, std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance)
+void InteractiveBoardWindow::loadGlobalEngineConfiguration(const std::string &idStr)
 {
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
 	auto globalSettings = config.getSectionList("eachengine", idStr);
 	if (globalSettings) {
 		setupWindow_->content().setGlobalConfiguration(*globalSettings);
 	}
+}
+
+void InteractiveBoardWindow::loadBoardEnginesConfiguration(
+	const QaplaHelpers::IniFile::SectionList &sectionList)
+{
+	setupWindow_->content().setEnginesConfiguration(sectionList);
+	setEngines(setupWindow_->content().getActiveEngines());
 }
 
 std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
@@ -115,17 +121,11 @@ std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loa
 				continue; // Skip static instance
 			}
 			if (!idStr.starts_with("board")) {
-				continue; // Not a board instance
+				continue;
 			}
 			auto instance = createInstance();
-			for (const auto& section : sectionList) {
-				instance->loadBoardEngine(section);
-			}
-			
-			// Load global settings for this board
-            instance->loadGlobalEngineSettings(idStr, instance);
-
-            instance->setEngines();
+			instance->loadBoardEnginesConfiguration(sectionList);
+            instance->loadGlobalEngineConfiguration(idStr);
 			instances.push_back(std::move(instance));
 		} catch (const std::exception& e) {
 			// Ignore invalid entries
@@ -302,14 +302,7 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 	}
 }
 
-void executeBoardCommand(const std::string& command) {
-	
-}
-
 void InteractiveBoardWindow::swapEngines() {
-	if (engineConfigs_.size() < 2) {
-		return;
-	}
 	bool isSwitched = computeTask_->getGameContext().isSideSwitched();
 	computeTask_->getGameContext().setSideSwitched(!isSwitched);
 }
@@ -335,41 +328,6 @@ void InteractiveBoardWindow::drawEngineSelectionPopup() {
         }
         setupWindow_->resetConfirmation();
     }
-}
-
-bool InteractiveBoardWindow::loadBoardEngine(const QaplaHelpers::IniFile::Section &section)
-{
-    std::optional<std::string> name = section.getValue("name");
-	std::optional<std::string> indexStr = section.getValue("index");
-    std::optional<size_t> index;
-
-    if (indexStr) {
-        try {
-            index = std::stoul(*indexStr);
-        } catch (const std::exception& e) {
-            index = std::nullopt; 
-        }
-    }
-
-	if (name && index) {
-		const auto* config = EngineWorkerFactory::getConfigManager().getConfig(*name);
-		if (config == nullptr) {
-			return false;
-		}
-        if (*index >= engineConfigs_.size()) {
-            engineConfigs_.resize(*index + 1);
-        }
-        engineConfigs_[*index] = *config;
-	} else if (name) {
-		const auto* config = EngineWorkerFactory::getConfigManager().getConfig(*name);
-		if (config == nullptr) {
-			return false;
-		}
-        engineConfigs_.push_back(*config);
-    } else {
-		return false;
-	}
-	return true;
 }
 
 void InteractiveBoardWindow::doMove(const MoveRecord& move)
@@ -487,6 +445,33 @@ void InteractiveBoardWindow::setPoolConcurrency(uint32_t count, bool nice, bool 
 	GameManagerPool::getInstance().setConcurrency(count, nice, start);
 }
 
+
+void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
+{
+	computeTask_->setNextMoveIndex(moveIndex);
+}
+
+void InteractiveBoardWindow::stopEngine(const std::string &id)
+{
+	computeTask_->stopEngine(id);
+}
+
+void InteractiveBoardWindow::restartEngine(const std::string &id)
+{
+	computeTask_->restartEngine(id);
+}
+
+void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
+{
+	if (engines.empty())
+	{
+		computeTask_->initEngines(EngineList{});
+		return;
+	}
+	auto created = EngineWorkerFactory::createEngines(engines, true);
+	computeTask_->initEngines(std::move(created));
+}
+
 void InteractiveBoardWindow::pollData()
 {
 	try
@@ -536,32 +521,6 @@ void InteractiveBoardWindow::pollData()
 	}
 }
 
-void InteractiveBoardWindow::setNextMoveIndex(uint32_t moveIndex)
-{
-	computeTask_->setNextMoveIndex(moveIndex);
-}
-
-void InteractiveBoardWindow::stopEngine(const std::string &id)
-{
-	computeTask_->stopEngine(id);
-}
-
-void InteractiveBoardWindow::restartEngine(const std::string &id)
-{
-	computeTask_->restartEngine(id);
-}
-
-void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
-{
-	engineConfigs_ = engines;
-	if (engines.empty())
-	{
-		computeTask_->initEngines(EngineList{});
-		return;
-	}
-	auto created = EngineWorkerFactory::createEngines(engines, true);
-	computeTask_->initEngines(std::move(created));
-}
 
 
 

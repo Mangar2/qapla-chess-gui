@@ -604,7 +604,7 @@ namespace QaplaWindows {
             .getConfigData().getSectionList("engineselection", "tournament")
             .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         engineSelect_->setId("tournament");
-        engineSelect_->setEngineConfiguration(sections);
+        engineSelect_->setEnginesConfiguration(sections);
     }
 
     void TournamentData::loadGlobalSettingsConfig() {

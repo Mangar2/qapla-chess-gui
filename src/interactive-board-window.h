@@ -139,23 +139,10 @@ namespace QaplaWindows
 		static void setPoolConcurrency(uint32_t count, bool nice = true, bool start = false);
 
 		/**
-		 * @brief Starts the engines configured in the board data.
-		 */
-		void setEngines() {
-			setEngines(engineConfigs_);
-		}
-
-		/**
 		 * @brief Sets the engines to use
 		 * @param engines Vector of EngineConfig objects representing the engines to set.
 		 */
 		void setEngines(const std::vector<QaplaTester::EngineConfig> &engines);
-
-		/**
-		 * @brief Loads a board engine configuration from a key-value map.
-		 * @param keyValueMap A map containing key-value pairs representing the engine configuration.
-		 */
-		bool loadBoardEngine(const QaplaHelpers::IniFile::Section &section);
 
 		/**
 		 * @brief Renders the interactive board window and its components.
@@ -168,11 +155,14 @@ namespace QaplaWindows
 		/**
 		 * @brief Loads global engine settings from the provided section map into the given InteractiveBoardWindow instance.
 		 * @param idStr The identifier string for the board (e.g., "board1").
-		 * @param instance Unique pointer to the InteractiveBoardWindow instance to load settings into.
 		 */
-		void loadGlobalEngineSettings(
-			const std::string &idStr, 
-			std::unique_ptr<QaplaWindows::InteractiveBoardWindow> &instance);
+		void loadGlobalEngineConfiguration(const std::string &idStr);
+
+		/**
+		 * @brief Loads board engine configurations from the provided section list.
+		 * @param sectionList A list of INI file sections representing the board engine configurations.
+		 */
+		void loadBoardEnginesConfiguration(const QaplaHelpers::IniFile::SectionList &sectionList);
 
 		/**
 		 * @brief Draws a popup window to select engines using EngineSetupWindow.
@@ -274,8 +264,6 @@ namespace QaplaWindows
 
 		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 		std::unique_ptr<Callback::UnregisterHandle> gameUpdateHandle_;
-
-		std::vector<QaplaTester::EngineConfig> engineConfigs_;
 
 		uint32_t id_;
 

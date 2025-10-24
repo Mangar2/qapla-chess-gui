@@ -116,17 +116,12 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
         {
             modified = true;
 
-            if (it == engineConfigurations_.end())
-            {
+            if (options_.directEditMode) {
+                configManager.addOrReplaceConfig(engine.config);
+            } else if (it == engineConfigurations_.end()) {
                 engineConfigurations_.push_back(engine);
-            }
-            else
-            {
+            } else {
                 *it = engine;
-                if (options_.directEditMode)
-                {
-                    configManager.addOrReplaceConfig(engine.config);
-                }
             }
         }
         index++;
@@ -317,10 +312,12 @@ void ImGuiEngineSelect::updateConfiguration() const {
     if (id_.empty()) {
         return; // No ID set, skip saving
     }
+    uint32_t engineIndex = 0;
     for (const auto& engine : engineConfigurations_) {
         // Store full configuration instead of just name reference
         QaplaHelpers::IniFile::KeyValueMap entries{
             {"id", id_},
+            {"index", std::to_string(engineIndex++)},
             {"selected", engine.selected ? "true" : "false"},
             // Store all engine configuration attributes
             {"name", engine.config.getName()},
@@ -364,7 +361,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", id_, sections);
 }
 
-void ImGuiEngineSelect::setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
+void ImGuiEngineSelect::setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     engineConfigurations_.clear();
     for (const auto& section : sections) {
         if (section.name == "engineselection" && section.getValue("id") == id_) {

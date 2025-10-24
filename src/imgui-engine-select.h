@@ -120,7 +120,7 @@ namespace QaplaWindows {
          * @brief Sets the engine configurations from INI file sections
          * @param sections A list of INI file sections representing the engine configurations
          */
-        void setEngineConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
+        void setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections);
 
         /**
          * @brief Sets a unique identifier for this selection instance

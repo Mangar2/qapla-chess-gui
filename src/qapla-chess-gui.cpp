@@ -169,7 +169,6 @@ namespace {
         QaplaWindows::EpdData::instance().loadFile();
         SnackbarManager::instance().loadConfiguration();
         QaplaWindows::EngineSetupWindow::loadTutorialConfiguration();
-        QaplaWindows::InteractiveBoardWindow::instance().setEngines();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();
