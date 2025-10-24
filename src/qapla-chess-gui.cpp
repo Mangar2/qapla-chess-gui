@@ -168,8 +168,8 @@ namespace {
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaWindows::EpdData::instance().loadFile();
-        SnackbarManager::instance().loadConfiguration();
         Tutorial::instance().loadConfiguration();
+        SnackbarManager::instance().loadConfiguration();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();

@@ -220,8 +220,6 @@ void SnackbarManager::loadConfiguration() {
         config_.warningDurationInS = QaplaHelpers::to_uint32(section.getValue("warningduration").value_or("15")).value_or(15);
         config_.errorDurationInS = QaplaHelpers::to_uint32(section.getValue("errorduration").value_or("20")).value_or(20);
     }
-    
-    showNextTutorialStep();
 }
 
 void SnackbarManager::updateConfiguration() const {
@@ -239,6 +237,9 @@ void SnackbarManager::updateConfiguration() const {
 }
 
 void SnackbarManager::showNextTutorialStep() {
+    if (config_.snackbarTutorialCounter >= 4) {
+        return; // Tutorial already completed
+    }
     config_.snackbarTutorialCounter++;
     Tutorial::instance().saveConfiguration();
     

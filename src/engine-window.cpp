@@ -149,9 +149,8 @@ void EngineWindow::showNextTutorialStep() {
         case 3:
         SnackbarManager::instance().showTutorial(
             "Engine Window Complete!\n\n"
-            "Excellent! You've successfully selected engines for analysis.\n"
-            "These engines will now analyze positions and provide move suggestions.\n\n"
-            "Engine window tutorial completed!",
+            "Excellent! You've successfully selected engines for playing.\n"
+            "Next we will use the engines.",
             SnackbarManager::SnackbarType::Success, false);
         return;
         default:
