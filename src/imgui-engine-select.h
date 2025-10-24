@@ -45,19 +45,17 @@ namespace QaplaWindows {
          * @brief Options to control which engine properties are editable
          */
         struct Options {
-            Options() : allowGauntletEdit(true), allowNameEdit(true), allowPonderEdit(true), 
-                       allowTimeControlEdit(true), allowTraceLevelEdit(true), 
-                       allowRestartOptionEdit(true), allowEngineOptionsEdit(true),
-                       allowMultipleSelection(false), directEditMode(false) {}
-            bool allowGauntletEdit;        ///< Allows editing of the gauntlet option
-            bool allowNameEdit;            ///< Allows editing of the engine name
-            bool allowPonderEdit;          ///< Allows editing of the ponder option
-            bool allowTimeControlEdit;     ///< Allows editing of the time control
-            bool allowTraceLevelEdit;      ///< Allows editing of the trace level
-            bool allowRestartOptionEdit;   ///< Allows editing of the restart option
-            bool allowEngineOptionsEdit;   ///< Allows editing of engine-specific options
-            bool allowMultipleSelection;   ///< Allows selecting the same engine multiple times
-            bool directEditMode;           ///< Direct edit mode: skips "Engines" header, engines can be edited without prior selection, changes saved via callback
+            Options() {};
+            bool allowGauntletEdit = true;        ///< Allows editing of the gauntlet option
+            bool allowNameEdit = true;            ///< Allows editing of the engine name
+            bool allowPonderEdit = true;          ///< Allows editing of the ponder option
+            bool allowTimeControlEdit = true;     ///< Allows editing of the time control
+            bool allowTraceLevelEdit = true;      ///< Allows editing of the trace level
+            bool allowRestartOptionEdit = true;   ///< Allows editing of the restart option
+            bool allowEngineOptionsEdit = true;   ///< Allows editing of engine-specific options
+            bool allowMultipleSelection = false;   ///< Allows selecting the same engine multiple times
+            bool directEditMode = false;           ///< Direct edit mode: skips "Engines" header, engines can be edited without prior selection, changes saved via callback
+            bool enginesDefaultOpen = false;       ///< If true, the "Engines" collapsing header is default open
         };
 
         /**

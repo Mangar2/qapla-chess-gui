@@ -47,7 +47,11 @@ bool ImGuiEngineSelect::draw() {
     
     // In directEditMode, skip the "Engines" collapsing header
     if (!options_.directEditMode) {
-        if (!ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Selected;
+        if (options_.enginesDefaultOpen) {
+            flags |= ImGuiTreeNodeFlags_DefaultOpen;
+        }
+        if (!ImGui::CollapsingHeader("Engines", flags)) {
             return false;
         }
     }
@@ -118,7 +122,8 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
 
             if (options_.directEditMode) {
                 configManager.addOrReplaceConfig(engine.config);
-            } else if (it == engineConfigurations_.end()) {
+            } 
+            if (it == engineConfigurations_.end()) {
                 engineConfigurations_.push_back(engine);
             } else {
                 *it = engine;
@@ -312,12 +317,10 @@ void ImGuiEngineSelect::updateConfiguration() const {
     if (id_.empty()) {
         return; // No ID set, skip saving
     }
-    uint32_t engineIndex = 0;
     for (const auto& engine : engineConfigurations_) {
         // Store full configuration instead of just name reference
         QaplaHelpers::IniFile::KeyValueMap entries{
             {"id", id_},
-            {"index", std::to_string(engineIndex++)},
             {"selected", engine.selected ? "true" : "false"},
             // Store all engine configuration attributes
             {"name", engine.config.getName()},
@@ -329,9 +332,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
 
         // Only store non-default or enabled options to keep the configuration concise
         const auto& config = engine.config;
-        if (engine.config.getDir() != ".") {
-            entries.emplace_back("dir", engine.config.getDir());
-        }
+        entries.emplace_back("dir", engine.config.getDir());
         if (config.getRestartOption() != RestartOption::EngineDecides) {
             entries.emplace_back("restart", to_string(config.getRestartOption()));
         }

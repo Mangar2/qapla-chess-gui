@@ -137,6 +137,14 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Sets whether the action buttons are shown.
+         * @param show True to show buttons, false to hide.
+         */
+        void setShowButtons(bool show) {
+            showButtons_ = show;
+        }
+
+        /**
          * @brief Gets the current tutorial counter.
          * @return The tutorial counter value.
          */
@@ -187,6 +195,7 @@ namespace QaplaWindows {
         ImGuiEngineSelect engineSelect_;
         ImGuiEngineGlobalSettings globalSettings_;
         bool showGlobalControls_ = true;
+        bool showButtons_ = true;
         std::string id_;
 
         static inline uint32_t engineSetupTutorialCounter_ = 0;

@@ -58,7 +58,11 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
 	  setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
-		ImGuiPopup<EngineSetupWindow>::Config{ .title = "Select Engines" },
+		ImGuiPopup<EngineSetupWindow>::Config{ 
+			.title = "Select Engines",
+			.okButton = true,
+			.cancelButton = false
+		},
 		ImVec2(600, 600))
 		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
@@ -71,6 +75,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	computeTask_->setTimeControl(timeControl_);
 	setupWindow_->content().setDirectEditMode(false);
 	setupWindow_->content().setAllowMultipleSelection(true);
+	setupWindow_->content().setShowButtons(false);
 	setupWindow_->content().setId("board" + std::to_string(id_));
 	setPosition(true);
 	initSplitterWindows();
@@ -203,7 +208,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 					stopEngine(id);
 				}
 				else if (command == "Config") {
-					openEngineSelectionPopup();
+					setupWindow_->open();
 				}
 				else if (command == "Swap") {
 					swapEngines();
@@ -305,16 +310,6 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 void InteractiveBoardWindow::swapEngines() {
 	bool isSwitched = computeTask_->getGameContext().isSideSwitched();
 	computeTask_->getGameContext().setSideSwitched(!isSwitched);
-}
-
-void InteractiveBoardWindow::openEngineSelectionPopup() {
-	// Open engine setup window
-	std::vector<EngineConfig> activeEngines;
-	for (const auto& record : engineWindow_->getEngineRecords()) {
-		activeEngines.push_back(record.config);
-	}
-	setupWindow_->content().setMatchingActiveEngines(activeEngines);
-    setupWindow_->open();
 }
 
 void InteractiveBoardWindow::drawEngineSelectionPopup() {

@@ -48,7 +48,7 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     : showGlobalControls_(showGlobalControls)
 {
     ImGuiEngineSelect::Options options;
-    options.allowGauntletEdit = true;
+    options.allowGauntletEdit = false;
     options.allowNameEdit = true;
     options.allowPonderEdit = true;
     options.allowTimeControlEdit = true;
@@ -57,6 +57,7 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     options.allowEngineOptionsEdit = true;
     options.allowMultipleSelection = false;
     options.directEditMode = true;  
+    options.enginesDefaultOpen = true;
     
     engineSelect_.setOptions(options);
     engineSelect_.setId("");
@@ -152,6 +153,9 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
 }
 
 void EngineSetupWindow::drawButtons() {
+    if (!showButtons_) {
+        return;
+    }
     constexpr float space = 3.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;

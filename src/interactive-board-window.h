@@ -170,12 +170,6 @@ namespace QaplaWindows
 		void drawEngineSelectionPopup();
 
 		/**
-		 * @brief Opens the engine selection popup window.
-		 * This sets the flag to open the popup, which will be drawn in the next calls.
-		 */
-		void openEngineSelectionPopup();
-
-		/**
 		 * @brief Copies the given PV (principal variation) to the clipboard.
 		 * @param id The ID of the engine.
 		 * @param pv The PV string to copy.
