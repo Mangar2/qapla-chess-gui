@@ -119,17 +119,15 @@ namespace QaplaWindows {
          * @brief Loads time control configuration from the configuration file.
          * @param id Unique identifier for this instance (e.g., "board1").
          */
-        void init(const std::string& id);
+        void setFromConfiguration(const std::string& id);
         
-        /**
-         * @brief Updates the configuration file with current settings.
-         * @param id Unique identifier for this instance (e.g., "board1").
-         */
-        void updateConfiguration(const std::string& id) const;
-        
-    private:
-        
-        std::string computeActiveButtonId() const;
+    /**
+     * @brief Updates the configuration file with current settings.
+     * @param id Unique identifier for this instance (e.g., "board1").
+     */
+    void updateConfiguration(const std::string& id) const;
+    
+private:        std::string computeActiveButtonId() const;
 
         /**
          * @brief Edits a time segment by providing input fields for its configuration.
@@ -180,9 +178,7 @@ namespace QaplaWindows {
          * @param currentTimeControl The current time control settings.
          * @return TimeControl The updated time control settings after user interaction.
          */
-        static QaplaTester::TimeControl drawNodesPerMove(const QaplaTester::TimeControl& currentTimeControl);
+    static QaplaTester::TimeControl drawNodesPerMove(const QaplaTester::TimeControl& currentTimeControl);
 
-        TimeControlSettings timeControlSettings_;
-    };
-
-} // namespace QaplaWindows
+    TimeControlSettings timeControlSettings_;
+};} // namespace QaplaWindows

@@ -78,7 +78,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
 	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
 {
-	timeControlWindow_->content().init("board" + std::to_string(id_));
+	timeControlWindow_->content().setFromConfiguration("board" + std::to_string(id_));
 	timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
 	setupWindow_->content().setDirectEditMode(false);
@@ -267,6 +267,10 @@ void InteractiveBoardWindow::drawTimeControlPopup() {
 			timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
 			computeTask_->setTimeControl(timeControl_);
 			timeControlWindow_->content().updateConfiguration("board" + std::to_string(id_));
+		}
+		else {
+			// Cancel - reload from configuration (discards changes)
+			timeControlWindow_->content().setFromConfiguration("board" + std::to_string(id_));
 		}
 		timeControlWindow_->resetConfirmation();
 	}

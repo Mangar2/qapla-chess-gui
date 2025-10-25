@@ -49,7 +49,7 @@ TimeControlWindow::TimeControlWindow() {
 
 TimeControlWindow::~TimeControlWindow() = default;
 
-void TimeControlWindow::init(const std::string& id) {
+void TimeControlWindow::setFromConfiguration(const std::string& id) {
     auto sections = QaplaConfiguration::Configuration::instance().
         getConfigData().getSectionList("timecontrol", id).value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     
