@@ -23,24 +23,113 @@
 #include "qapla-tester/time-control.h"
 
 #include <memory>
+#include <array>
 
 namespace QaplaWindows {
 
-
     /**
-     * @brief Displays the move list with associated search data for a game.
+     * @brief Displays time control configuration window.
+     * Each instance holds its own time control settings (not static).
      */
     class TimeControlWindow : public EmbeddedWindow {
     public:
+        
+        enum class SelectedTimeControl {
+            Blitz = 0,
+            Tournament = 1,
+            TimePerMove = 2,
+            FixedDepth = 3,
+            NodesPerMove = 4
+        };
+        
+        struct TimeControlSettings {
+            TimeControlSettings() {
+                blitzTime.addTimeSegment({0, 1 * 60 * 1000, 0}); // Default Blitz: 1 min + 0 sec increment
+                tournamentTime.addTimeSegment({10 * 60 * 1000, 0, 40}); // Default Tournament: 10 min + 0 sec increment + 40 moves
+                timePerMove.setMoveTime(10 * 1000); // Default Time per Move: 10 sec per move
+                fixedDepth.setDepth(10); // Default Fixed Depth: 10 plies
+                nodesPerMove.setNodes(100000); // Default Nodes per Move: 100,000 nodes
+            }
+            
+            QaplaTester::TimeControl blitzTime;       ///< Time control for Blitz games.
+            QaplaTester::TimeControl tournamentTime;  ///< Time control for Tournament games.
+            QaplaTester::TimeControl timePerMove;     ///< Time control for Time per Move.
+            QaplaTester::TimeControl fixedDepth;      ///< Time control for Fixed Depth.
+            QaplaTester::TimeControl nodesPerMove;    ///< Time control for Nodes per Move.
+            SelectedTimeControl selected = SelectedTimeControl::Blitz;
+            
+            const QaplaTester::TimeControl& getSelectedTimeControl() const {
+                switch (selected) {
+                    case SelectedTimeControl::Blitz: return blitzTime;
+                    case SelectedTimeControl::Tournament: return tournamentTime;
+                    case SelectedTimeControl::TimePerMove: return timePerMove;
+                    case SelectedTimeControl::FixedDepth: return fixedDepth;
+                    case SelectedTimeControl::NodesPerMove: return nodesPerMove;
+                    default:
+                        return blitzTime;
+                }
+            }
+            
+            static constexpr std::array<const char*, 5> timeControlStrings{
+                "Blitz", "Tournament", "TimePerMove", "FixedDepth", "NodesPerMove"
+            };
+            
+            std::string getSelectionString() const {
+                return timeControlStrings[static_cast<size_t>(selected)];
+            }
+            
+            void setSelectionFromString(const std::string& selection) {
+                for (size_t i = 0; i < timeControlStrings.size(); ++i) {
+                    if (selection == timeControlStrings[i]) {
+                        selected = static_cast<SelectedTimeControl>(i);
+                        return;
+                    }
+                }
+                throw std::invalid_argument("Invalid time control selection: " + selection);
+            }
+        };
+        
         /**
-         * @brief Sets the data source for this window.
-         * @param BoardData full set of information about the current chess Game
+         * @brief Constructs a TimeControlWindow with default settings.
          */
         TimeControlWindow();
+        
+        /**
+         * @brief Virtual destructor (must be implemented in .cpp for forward declaration).
+         */
+        ~TimeControlWindow() override;
 
-        void draw() override;
-
+        void draw() override;        
+        
+        /**
+         * @brief Gets the currently selected time control.
+         * @return Reference to the selected TimeControl.
+         */
+        const QaplaTester::TimeControl& getSelectedTimeControl() const;
+        
+        /**
+         * @brief Gets the time control settings for this instance.
+         * @return The current TimeControlSettings.
+         */
+        const TimeControlSettings& getTimeControlSettings() const {
+            return timeControlSettings_;
+        }
+        
+        /**
+         * @brief Loads time control configuration from the configuration file.
+         * @param id Unique identifier for this instance (e.g., "board1").
+         */
+        void init(const std::string& id);
+        
+        /**
+         * @brief Updates the configuration file with current settings.
+         * @param id Unique identifier for this instance (e.g., "board1").
+         */
+        void updateConfiguration(const std::string& id) const;
+        
     private:
+        
+        std::string computeActiveButtonId() const;
 
         /**
          * @brief Edits a time segment by providing input fields for its configuration.
@@ -93,6 +182,7 @@ namespace QaplaWindows {
          */
         static QaplaTester::TimeControl drawNodesPerMove(const QaplaTester::TimeControl& currentTimeControl);
 
+        TimeControlSettings timeControlSettings_;
     };
 
 } // namespace QaplaWindows

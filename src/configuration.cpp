@@ -50,7 +50,6 @@ Configuration::Configuration()
 // getConfigDirectory, autosave, saveFile, loadFile are now handled by Autosavable base class
 
 void Configuration::saveData(std::ofstream& out) {
-	saveTimeControls(out);
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
     getConfigData().save(out);
@@ -72,38 +71,11 @@ void Configuration::loadData(std::ifstream& in) {
     }
 }
 
-void Configuration::saveTimeControls(std::ofstream& out) {
-    static uint64_t saveCnt = 0;
-    saveCnt++;
-    try {
-        out << "#" << saveCnt << "\n";
-		out << "[board]\n";
-		out << "timecontrol=" << timeControlSettings_.getSelectionString() << "\n";
-        out << "\n";
-
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.blitzTime.toSection("BlitzTime"));
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.tournamentTime.toSection("TournamentTime"));
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.timePerMove.toSection("TimePerMove"));
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.fixedDepth.toSection("FixedDepth"));
-        QaplaHelpers::IniFile::saveSection(out, timeControlSettings_.nodesPerMove.toSection("NodesPerMove"));
-
-    }
-    catch (const std::exception& e) {
-        throw std::runtime_error(std::string("Error in saveTimeControls: ") + e.what());
-    }
-}
-
 bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section) {
     const auto& sectionName = section.name;
     const auto& entries = section.entries;
     try {
-        if (sectionName == "timecontrol") {
-            parseTimeControl(section);
-        }
-        else if (sectionName == "board") {
-            parseBoard(section);
-        }
-        else if (sectionName == "enginecapability") {
+        if (sectionName == "enginecapability") {
             engineCapabilities_.addOrReplace(section);
         }
         else if (sectionName == "engine") {
@@ -119,51 +91,4 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
         throw std::runtime_error("Error processing section [" + sectionName + "]: " + e.what());
     }
     return true;
-}
-
-void Configuration::parseTimeControl(const QaplaHelpers::IniFile::Section& section) {
-    try {
-        auto nameOpt = section.getValue("name");
-        if (!nameOpt) {
-			Logger::testLogger().log("Missing 'name' in timecontrol section", TraceLevel::error);
-            return;
-        }
-
-        const std::string& name = *nameOpt;
-
-        if (name == "BlitzTime") {
-            timeControlSettings_.blitzTime.fromSection(section);
-        }
-        else if (name == "TournamentTime") {
-            timeControlSettings_.tournamentTime.fromSection(section);
-        }
-        else if (name == "TimePerMove") {
-            timeControlSettings_.timePerMove.fromSection(section);
-        }
-        else if (name == "FixedDepth") {
-            timeControlSettings_.fixedDepth.fromSection(section);
-        }
-        else if (name == "NodesPerMove") {
-            timeControlSettings_.nodesPerMove.fromSection(section);
-        }
-        else {
-            Logger::testLogger().log("Unknown timecontrol name: " + name, TraceLevel::warning);
-        }
-    }
-    catch (const std::exception& e) {
-        throw std::runtime_error(std::string("Error parsing timecontrol: ") + e.what());
-    }
-}
-
-void Configuration::parseBoard(const QaplaHelpers::IniFile::Section& section) {
-    try {
-        auto timeControlOpt = section.getValue("timecontrol");
-        if (!timeControlOpt) {
-            return;
-        }
-        timeControlSettings_.setSelectionFromString(*timeControlOpt);
-    }
-    catch (const std::exception& e) {
-        throw std::runtime_error(std::string("Error parsing board section: ") + e.what());
-    }
 }

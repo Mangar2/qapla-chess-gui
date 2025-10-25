@@ -33,7 +33,7 @@ namespace QaplaWindows {
     class EngineSetupWindow: public EmbeddedWindow {
     public:
         explicit EngineSetupWindow(bool showGlobalControls = true);
-        ~EngineSetupWindow();
+        ~EngineSetupWindow() override;
 
         /**
          * @brief Renders the contents of the engine setup window.

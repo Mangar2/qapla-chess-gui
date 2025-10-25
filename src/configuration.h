@@ -22,7 +22,6 @@
 #include "engine-capabilities.h"
 #include "autosavable.h"
 
-#include "qapla-tester/time-control.h"
 #include "qapla-tester/ini-file.h"
 
 #include <memory>
@@ -31,98 +30,9 @@
 
 namespace QaplaConfiguration {
 
-    enum selectedTimeControl {
-        Blitz = 0,
-        tcTournament = 1,
-        TimePerMove = 2,
-        FixedDepth = 3,
-        NodesPerMove = 4
-	};
-
-	/**
-     * @brief Represents a collection of TimeControl settings for different types.
-     */
-    struct TimeControlSettings {
-        TimeControlSettings() {
-            blitzTime.addTimeSegment({0, 1 * 60 * 1000, 0}); // Default Blitz: 1 min + 0 sec increment
-            tournamentTime.addTimeSegment({10 * 60 * 1000, 0, 40}); // Default Tournament: 10 min + 0 sec increment + 40 moves
-            timePerMove.setMoveTime(10 * 1000); // Default Time per Move: 10 sec per move
-            fixedDepth.setDepth(10); // Default Fixed Depth: 10 plies
-            nodesPerMove.setNodes(100000); // Default Nodes per Move: 100,000 nodes
-        }
-		bool operator==(const TimeControlSettings& other) const = default;
-        const QaplaTester::TimeControl& getSelectedTimeControl() const {
-            switch (selected) {
-                case Blitz: return blitzTime;
-                case tcTournament: return tournamentTime;
-                case TimePerMove: return timePerMove;
-                case FixedDepth: return fixedDepth;
-                case NodesPerMove: return nodesPerMove;
-                default:
-                    return blitzTime;
-            }
-            throw std::runtime_error("Invalid selected time control");
-		}
-        QaplaTester::TimeControl blitzTime;       ///< Time control for Blitz games.
-        QaplaTester::TimeControl tournamentTime; ///< Time control for Tournament games.
-        QaplaTester::TimeControl timePerMove;    ///< Time control for Time per Move.
-        QaplaTester::TimeControl fixedDepth;     ///< Time control for Fixed Depth.
-        QaplaTester::TimeControl nodesPerMove;   ///< Time control for Nodes per Move.
-		selectedTimeControl selected = Blitz; 
-        
-        static constexpr std::array<const char*, 5> timeControlStrings{
-            "Blitz", "Tournament", "TimePerMove", "FixedDepth", "NodesPerMove"
-        };
-
-        std::string getSelectionString() {
-            if (static_cast<size_t>(selected) >= timeControlStrings.size()) {
-                throw std::out_of_range("Invalid selectedTimeControl value");
-            }
-            return timeControlStrings[static_cast<size_t>(selected)];
-        }
-
-        void setSelectionFromString(const std::string& selection) {
-            for (size_t i = 0; i < timeControlStrings.size(); ++i) {
-                if (selection == timeControlStrings[i]) {
-                    selected = static_cast<selectedTimeControl>(i);
-                    return;
-                }
-            }
-            throw std::invalid_argument("Invalid time control selection: " + selection);
-		}
-
-        /**
-         * @brief Checks if the current time control settings are valid.
-         * @return True if the selected time control is valid, false otherwise.
-         */
-        bool isValid() const {
-            return getSelectedTimeControl().isValid();
-        }
-    };
-
     class Configuration : public QaplaHelpers::Autosavable {
     public:
         Configuration();
-
-        /**
-         * @brief Gets the time control settings.
-         * @return Reference to the current time control settings.
-		 */
-        const TimeControlSettings& getTimeControlSettings() const {
-            return timeControlSettings_;
-		}
-        TimeControlSettings& getTimeControlSettings() {
-            return timeControlSettings_;
-        }
-        /**
-         * @brief Sets the time control settings.
-         * @param settings The new time control settings to apply.
-		 */
-        void setTimeControlSettings(const TimeControlSettings& settings) {
-            if (timeControlSettings_ == settings) return;
-            timeControlSettings_ = settings;
-			setModified();
-        }
 
         /**
          * @brief Gets the singleton instance of Configuration.
@@ -187,26 +97,7 @@ namespace QaplaConfiguration {
         */
         bool processSection(const QaplaHelpers::IniFile::Section& section);
 
-        /**
-         * @brief Parses the "timecontrol" section and updates the corresponding TimeControl settings.
-         * @param section The section being processed.
-         * @throws std::runtime_error If an error occurs while parsing the timecontrol section.
-         */
-        void parseTimeControl(const QaplaHelpers::IniFile::Section& section);
-
-        /**
-         * @brief Parses the "board" section and updates the time control settings.
-         * @param keyValueMap A map containing key-value pairs for the "board" section.
-		 */
-        void parseBoard(const QaplaHelpers::IniFile::Section& section);
-
-        /**
-         * @brief Speichert die TimeControl-Einstellungen in den Abschnitt [timecontrol] der Konfigurationsdatei.
-         */
-        void saveTimeControls(std::ofstream& out);
-
         EngineCapabilities engineCapabilities_;
-        TimeControlSettings timeControlSettings_;
         QaplaHelpers::ConfigData configData_;
 
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";

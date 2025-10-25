@@ -23,8 +23,8 @@
 
 #include "imgui-popup.h"
 #include "engine-setup-window.h"
-#include "embedded-window.h"
 #include "callback-manager.h"
+#include "time-control-window.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-tester/time-control.h"
@@ -55,7 +55,6 @@ namespace QaplaWindows
 
 	class BoardWindow;
 	class EngineWindow;
-	class EngineSetupWindow;
 	class ImGuiClock;
 	class ImGuiMoveList;
 	class ImGuiBarChart;
@@ -170,6 +169,11 @@ namespace QaplaWindows
 		void drawEngineSelectionPopup();
 
 		/**
+		 * @brief Draws the time control configuration popup.
+		 */
+		void drawTimeControlPopup();
+
+		/**
 		 * @brief Copies the given PV (principal variation) to the clipboard.
 		 * @param id The ID of the engine.
 		 * @param pv The PV string to copy.
@@ -268,6 +272,7 @@ namespace QaplaWindows
 		std::unique_ptr<BoardWindow> boardWindow_;
 		std::unique_ptr<EngineWindow> engineWindow_;
 		std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
+		std::unique_ptr<ImGuiPopup<TimeControlWindow>> timeControlWindow_;
 
 		std::unique_ptr<ImGuiClock> imGuiClock_;
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;

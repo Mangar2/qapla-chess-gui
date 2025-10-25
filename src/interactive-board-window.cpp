@@ -41,6 +41,7 @@
 #include "board-window.h"
 #include "engine-window.h"
 #include "engine-setup-window.h"
+#include "time-control-window.h"
 #include "imgui-cut-paste.h"
 #include "game-parser.h"
 #include "epd-data.h"
@@ -65,13 +66,20 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 		},
 		ImVec2(600, 600))
 		),
+	  timeControlWindow_(std::make_unique<ImGuiPopup<TimeControlWindow>>(
+		ImGuiPopup<TimeControlWindow>::Config{
+			.title = "Time Control Configuration",
+			.okButton = true,
+			.cancelButton = true
+		},
+		ImVec2(500, 500))
+		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
 	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
 {
-	timeControl_ = QaplaConfiguration::Configuration::instance()
-					   .getTimeControlSettings()
-					   .getSelectedTimeControl();
+	timeControlWindow_->content().init("board" + std::to_string(id_));
+	timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
 	setupWindow_->content().setDirectEditMode(false);
 	setupWindow_->content().setAllowMultipleSelection(true);
@@ -82,6 +90,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 }
 
 InteractiveBoardWindow::~InteractiveBoardWindow() {
+	timeControlWindow_->content().updateConfiguration("board" + std::to_string(id_));
 	QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
 		"engineselection",
 		"board" + std::to_string(id_),
@@ -181,6 +190,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 			[this]() {
 				auto command = boardWindow_->drawButtons(computeTask_->getStatus());
 				execute(command);
+				drawTimeControlPopup();
 				auto move = boardWindow_->draw();
 				if (move) {
 					move->timeMs = imGuiClock_->getCurrentTimerMs();
@@ -229,6 +239,7 @@ void InteractiveBoardWindow::draw() {
 		return;
 	}
 	mainWindow_->draw();
+	
 	pollData();
 
 	// Handle paste only for the active tab
@@ -241,6 +252,23 @@ void InteractiveBoardWindow::draw() {
 				setPosition(*gameRecord);
 			}
 		}
+	}
+}
+
+void InteractiveBoardWindow::drawTimeControlPopup() {
+	if (!timeControlWindow_) {
+		return;
+	}
+	
+	timeControlWindow_->draw("Apply", "Cancel");
+	if (auto confirmed = timeControlWindow_->confirmed()) {
+		if (*confirmed) {
+			// Apply changes
+			timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
+			computeTask_->setTimeControl(timeControl_);
+			timeControlWindow_->content().updateConfiguration("board" + std::to_string(id_));
+		}
+		timeControlWindow_->resetConfirmation();
 	}
 }
 
@@ -383,12 +411,7 @@ void InteractiveBoardWindow::autoPlay()
 
 void InteractiveBoardWindow::openTimeControlDialog()
 {
-	// TODO: Implement time control dialog
-	// This will allow users to configure:
-	// - Base time (e.g., 5 minutes)
-	// - Increment per move (e.g., 10 seconds)
-	// - Different time controls for white and black
-	SnackbarManager::instance().showNote("Time Control dialog - Coming soon!");
+	timeControlWindow_->open();
 }
 
 void InteractiveBoardWindow::execute(const std::string& command)
@@ -533,12 +556,12 @@ void InteractiveBoardWindow::pollData()
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			engineWindow_->setEngineRecords(records);
 		});
-		auto timeControl = QaplaConfiguration::Configuration::instance()
-							   .getTimeControlSettings()
-							   .getSelectedTimeControl();
-		if (timeControl != timeControl_)
+		// Check if time control was changed in the popup
+		auto newTimeControl = timeControlWindow_->content().getSelectedTimeControl();
+		if (newTimeControl != timeControl_)
 		{
-			computeTask_->setTimeControl(timeControl);
+			timeControl_ = newTimeControl;
+			computeTask_->setTimeControl(timeControl_);
 		}
 
 	}

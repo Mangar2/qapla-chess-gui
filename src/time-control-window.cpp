@@ -23,6 +23,7 @@
 #include <imgui.h>
 
 #include "qapla-tester/time-control.h"
+#include "qapla-tester/string-helper.h"
 
 #include <array>
 #include <utility>
@@ -43,30 +44,109 @@ constexpr int fastStep = 10;
 
 
 
-TimeControlWindow::TimeControlWindow() = default;
+TimeControlWindow::TimeControlWindow() {
+};
 
-namespace {
-    std::string computeActiveButtonId() {
-        auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
-        switch (timeControls.selected) {
-        case QaplaConfiguration::selectedTimeControl::Blitz:
-            return "##blitz";
-        case QaplaConfiguration::selectedTimeControl::tcTournament:
-            return "##tournament";
-        case QaplaConfiguration::selectedTimeControl::TimePerMove:
-            return "##timePerMove";
-        case QaplaConfiguration::selectedTimeControl::FixedDepth:
-            return "##fixedDepth";
-        case QaplaConfiguration::selectedTimeControl::NodesPerMove:
-            return "##nodesPerMove";
-        default:
-            return "##blitz";
+TimeControlWindow::~TimeControlWindow() = default;
+
+void TimeControlWindow::init(const std::string& id) {
+    auto sections = QaplaConfiguration::Configuration::instance().
+        getConfigData().getSectionList("timecontrol", id).value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (sections.empty()) {
+        return; // Use default settings
+    }
+    
+    for (const auto& section : sections) {
+        auto nameOpt = section.getValue("name");
+        if (!nameOpt) {
+            continue;
+        }
+        
+        const std::string& name = *nameOpt;
+        
+        if (name == "BlitzTime") {
+            timeControlSettings_.blitzTime.fromSection(section);
+        }
+        else if (name == "TournamentTime") {
+            timeControlSettings_.tournamentTime.fromSection(section);
+        }
+        else if (name == "TimePerMove") {
+            timeControlSettings_.timePerMove.fromSection(section);
+        }
+        else if (name == "FixedDepth") {
+            timeControlSettings_.fixedDepth.fromSection(section);
+        }
+        else if (name == "NodesPerMove") {
+            timeControlSettings_.nodesPerMove.fromSection(section);
+        }
+    }
+    
+    // Load selected time control
+    auto boardSections = QaplaConfiguration::Configuration::instance().
+        getConfigData().getSectionList("board", id).value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!boardSections.empty()) {
+        auto timeControlOpt = boardSections[0].getValue("timecontrol");
+        if (timeControlOpt) {
+            try {
+                timeControlSettings_.setSelectionFromString(*timeControlOpt);
+            } catch (const std::exception&) {
+                // Ignore invalid selection, use default
+            }
         }
     }
 }
 
+void TimeControlWindow::updateConfiguration(const std::string& id) const {
+    // Save time control sections
+    std::vector<QaplaHelpers::IniFile::Section> sections;
+    sections.push_back(timeControlSettings_.blitzTime.toSection("BlitzTime"));
+    sections.push_back(timeControlSettings_.tournamentTime.toSection("TournamentTime"));
+    sections.push_back(timeControlSettings_.timePerMove.toSection("TimePerMove"));
+    sections.push_back(timeControlSettings_.fixedDepth.toSection("FixedDepth"));
+    sections.push_back(timeControlSettings_.nodesPerMove.toSection("NodesPerMove"));
+
+    for (auto& section : sections) {
+        section.insertFirst("id", id);
+    }
+    
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("timecontrol", id, sections);
+    
+    // Save selected time control
+    QaplaHelpers::IniFile::Section boardSection{
+        .name = "board",  // Type name, not instance id
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", id},
+            {"timecontrol", timeControlSettings_.getSelectionString()}
+        }
+    };
+    
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("board", id, { boardSection });
+}
+
+const QaplaTester::TimeControl& TimeControlWindow::getSelectedTimeControl() const {
+    return timeControlSettings_.getSelectedTimeControl();
+}
+
+std::string TimeControlWindow::computeActiveButtonId() const {
+    switch (timeControlSettings_.selected) {
+    case SelectedTimeControl::Blitz:
+        return "##blitz";
+    case SelectedTimeControl::Tournament:
+        return "##tournament";
+    case SelectedTimeControl::TimePerMove:
+        return "##timePerMove";
+    case SelectedTimeControl::FixedDepth:
+        return "##fixedDepth";
+    case SelectedTimeControl::NodesPerMove:
+        return "##nodesPerMove";
+    default:
+        return "##blitz";
+    }
+}
+
 void TimeControlWindow::draw() {
-	auto timeControls = QaplaConfiguration::Configuration::instance().getTimeControlSettings();
     std::string activeButtonId = computeActiveButtonId();
     ImGui::Spacing();
     constexpr float rightBorder = 5.0F;
@@ -79,19 +159,19 @@ void TimeControlWindow::draw() {
         TimeControl& timeControl, auto drawFunction) {
         if (ImGui::RadioButton(radioButtonId, activeButtonId == radioButtonId)) {
             if (std::string(radioButtonId) == "##blitz") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::Blitz;
+                timeControlSettings_.selected = SelectedTimeControl::Blitz;
             }
             else if (std::string(radioButtonId) == "##tournament") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::tcTournament;
+                timeControlSettings_.selected = SelectedTimeControl::Tournament;
             }
             else if (std::string(radioButtonId) == "##timePerMove") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::TimePerMove;
+                timeControlSettings_.selected = SelectedTimeControl::TimePerMove;
             }
             else if (std::string(radioButtonId) == "##fixedDepth") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::FixedDepth;
+                timeControlSettings_.selected = SelectedTimeControl::FixedDepth;
             }
             else if (std::string(radioButtonId) == "##nodesPerMove") {
-                timeControls.selected = QaplaConfiguration::selectedTimeControl::NodesPerMove;
+                timeControlSettings_.selected = SelectedTimeControl::NodesPerMove;
             }
             else {
 				throw(std::runtime_error("Unknown radio button ID: " + std::string(radioButtonId)));
@@ -110,21 +190,19 @@ void TimeControlWindow::draw() {
     };
 
     // Draw each section
-    drawSection("##blitz", "Blitz Time", timeControls.blitzTime,
+    drawSection("##blitz", "Blitz Time", timeControlSettings_.blitzTime,
         [&](const TimeControl& timeControl) { return drawBlitzTime(timeControl); });
-	drawSection("##tournament", "Tournament Time", timeControls.tournamentTime,
+	drawSection("##tournament", "Tournament Time", timeControlSettings_.tournamentTime,
         [&](const TimeControl& timeControl) { return drawTournamentTime(timeControl); });
-	drawSection("##timePerMove", "Time per Move", timeControls.timePerMove,
+	drawSection("##timePerMove", "Time per Move", timeControlSettings_.timePerMove,
         [&](const TimeControl& timeControl) { return drawTimePerMove(timeControl); });
-	drawSection("##fixedDepth", "Fixed Depth", timeControls.fixedDepth,
+	drawSection("##fixedDepth", "Fixed Depth", timeControlSettings_.fixedDepth,
         [&](const TimeControl& timeControl) { return drawFixedDepth(timeControl); });
-	drawSection("##nodesPerMove", "Nodes per Move", timeControls.nodesPerMove,
+	drawSection("##nodesPerMove", "Nodes per Move", timeControlSettings_.nodesPerMove,
         [&](const TimeControl& timeControl) { return drawNodesPerMove(timeControl); });
 
     ImGui::EndChild();
     ImGui::Unindent(baseIndent);
-	QaplaConfiguration::Configuration::instance().setTimeControlSettings(timeControls);
-
 }
 
 TimeSegment TimeControlWindow::editTimeSegment(const TimeSegment& segment, bool blitz) {
