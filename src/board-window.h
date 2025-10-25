@@ -101,6 +101,47 @@ namespace QaplaWindows
         QaplaButton::ButtonState getBoardButtonState(const std::string& button, const std::string& status) const;
 
         /**
+         * @brief Calculates which buttons fit on screen and which go into More menu.
+         * 
+         * @param allButtons All available buttons
+         * @param availableWidth Available screen width
+         * @param buttonWidth Width of a single button including spacing
+         * @param status Current game status for button states
+         * @return Pair of visible buttons and More menu commands
+         */
+        std::pair<std::vector<std::string>, std::vector<QaplaButton::PopupCommand>> 
+        splitButtonsForResponsiveLayout(
+            const std::vector<std::string>& allButtons,
+            float availableWidth,
+            float buttonWidth,
+            const std::string& status) const;
+
+        /**
+         * @brief Draws all visible buttons in the button bar.
+         * 
+         * @param visibleButtons Buttons to display
+         * @param startPos Starting position for drawing
+         * @param buttonSize Size of each button
+         * @param totalSize Total size including label
+         * @param status Current game status
+         * @return The clicked button name or empty string
+         */
+        std::string drawVisibleButtons(
+            const std::vector<std::string>& visibleButtons,
+            ImVec2 startPos,
+            ImVec2 buttonSize,
+            ImVec2 totalSize,
+            const std::string& status);
+
+        /**
+         * @brief Checks if any command in the More menu is highlighted.
+         * 
+         * @param moreCommands Commands in the More menu
+         * @return true if any command is highlighted
+         */
+        bool hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands) const;
+
+        /**
          * @brief Advances the tutorial based on button clicks and game state.
          * 
          * @param clickedButton The button that was clicked

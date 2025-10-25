@@ -22,6 +22,7 @@
 #include <functional>
 #include <imgui.h>
 #include <string>
+#include <vector>
 
 namespace QaplaButton {
 
@@ -31,6 +32,14 @@ namespace QaplaButton {
         Highlighted,
         Disabled,
         Animated
+    };
+
+    /**
+     * @brief Represents a command in a popup menu with its display state.
+     */
+    struct PopupCommand {
+        std::string name;
+        ButtonState state = ButtonState::Normal;
     };
 
     using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
@@ -82,6 +91,18 @@ namespace QaplaButton {
     void drawCopy(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
     void drawPaste(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+
+    void drawMore(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+
+    /**
+     * @brief Shows a popup menu with selectable commands.
+     *
+     * @param popupId   Unique ID for the popup.
+     * @param commands  List of PopupCommand structs containing command name and state.
+     * @return The selected command string, or empty string if nothing was selected.
+     */
+    std::string showCommandPopup(const std::string& popupId, 
+                                 const std::vector<PopupCommand>& commands);
 
     /**
      * @brief Draws a clickable icon-style button with optional icon and label below.

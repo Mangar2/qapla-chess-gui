@@ -107,6 +107,7 @@ void ConfigurationWindow::drawTutorialSettings()
             } else {
                 entry.reset();
             }
+            Tutorial::instance().saveConfiguration();
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");

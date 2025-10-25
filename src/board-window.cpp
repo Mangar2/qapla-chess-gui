@@ -84,6 +84,10 @@ namespace QaplaWindows
                 {
                     QaplaButton::drawSetup(drawList, topLeft, size, state);
                 }
+                else if (button == "More")
+                {
+                    QaplaButton::drawMore(drawList, topLeft, size, state);
+                }
             });
     }
 
@@ -119,28 +123,112 @@ namespace QaplaWindows
         return state;
     }
 
+    std::pair<std::vector<std::string>, std::vector<QaplaButton::PopupCommand>> 
+    BoardWindow::splitButtonsForResponsiveLayout(
+        const std::vector<std::string>& allButtons,
+        float availableWidth,
+        float buttonWidth,
+        const std::string& status) const
+    {
+        int maxVisibleButtons = static_cast<int>(availableWidth / buttonWidth);
+        
+        std::vector<std::string> visibleButtons;
+        std::vector<QaplaButton::PopupCommand> moreCommands = {
+            {"Copy PGN", QaplaButton::ButtonState::Normal},
+            {"Copy FEN", QaplaButton::ButtonState::Normal}
+        };
+        
+        if (maxVisibleButtons >= static_cast<int>(allButtons.size()) + 1) {
+            visibleButtons = allButtons;
+        } else {
+            int numVisibleButtons = std::max(1, maxVisibleButtons - 1);
+            
+            visibleButtons = std::vector<std::string>(
+                allButtons.begin(), 
+                allButtons.begin() + numVisibleButtons
+            );
+            
+            for (int i = static_cast<int>(allButtons.size()) - 1; i >= numVisibleButtons; --i) {
+                auto state = getBoardButtonState(allButtons[i], status);
+                moreCommands.insert(moreCommands.begin(), {allButtons[i], state});
+            }
+        }
+        
+        return {visibleButtons, moreCommands};
+    }
+
+    std::string BoardWindow::drawVisibleButtons(
+        const std::vector<std::string>& visibleButtons,
+        ImVec2 startPos,
+        ImVec2 buttonSize,
+        ImVec2 totalSize,
+        const std::string& status)
+    {
+        constexpr float space = 3.0F;
+        auto pos = startPos;
+        std::string clickedButton;
+        
+        for (const auto& button : visibleButtons) {
+            ImGui::SetCursorScreenPos(pos);
+            auto state = getBoardButtonState(button, status);
+            if (drawBoardButton(button, button, buttonSize, state)) {
+                clickedButton = button;
+            }
+            pos.x += totalSize.x + space;
+        }
+        
+        return clickedButton;
+    }
+
+    bool BoardWindow::hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands) const
+    {
+        return std::any_of(moreCommands.begin(), moreCommands.end(),
+            [](const QaplaButton::PopupCommand& cmd) {
+                return cmd.state == QaplaButton::ButtonState::Highlighted;
+            });
+    }
+
     std::string BoardWindow::drawBoardButtons(const std::string& status)
     {
         constexpr float space = 3.0F;
         constexpr float topOffset = 5.0F;
         constexpr float bottomOffset = 8.0F;
         constexpr float leftOffset = 20.0F;
-        ImVec2 boardPos = ImGui::GetCursorScreenPos();
-
         constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+        
+        ImVec2 boardPos = ImGui::GetCursorScreenPos();
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
-        auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-        std::string clickedButton;
+        
+        std::vector<std::string> allButtons = {
+            "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Setup", "Paste"
+        };
+        
+        float availableWidth = ImGui::GetContentRegionAvail().x - leftOffset;
+        float buttonWidth = totalSize.x + space;
+        
+        auto [visibleButtons, moreCommands] = splitButtonsForResponsiveLayout(
+            allButtons, availableWidth, buttonWidth, status);
+        
+        ImVec2 startPos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        std::string clickedButton = drawVisibleButtons(
+            visibleButtons, startPos, buttonSize, totalSize, status);
+        
+        ImVec2 moreButtonPos = ImVec2(
+            startPos.x + visibleButtons.size() * (totalSize.x + space),
+            startPos.y);
+        ImGui::SetCursorScreenPos(moreButtonPos);
+        
+        auto moreButtonState = hasHighlightedCommand(moreCommands) 
+            ? QaplaButton::ButtonState::Highlighted 
+            : QaplaButton::ButtonState::Normal;
+        
+        if (drawBoardButton("More", "More", buttonSize, moreButtonState)) {
+            ImGui::OpenPopup("MoreCommandsPopup");
+        }
 
-        for (const std::string button : {"Setup", "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Paste"})
-        {
-            ImGui::SetCursorScreenPos(pos);
-            auto state = getBoardButtonState(button, status);
-            if (drawBoardButton(button, button, buttonSize, state))
-            {
-               clickedButton = button;
-            }
-            pos.x += totalSize.x + space;
+        auto popupCommand = QaplaButton::showCommandPopup("MoreCommandsPopup", moreCommands);
+        if (!popupCommand.empty()) {
+            clickedButton = popupCommand;
         }
 
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
@@ -202,7 +290,7 @@ namespace QaplaWindows
         }
     }
 
-        bool BoardWindow::drawSetupButton(
+    bool BoardWindow::drawSetupButton(
         const std::string& button, const std::string& label,
         const ImVec2& buttonSize) const
     {
@@ -305,7 +393,6 @@ namespace QaplaWindows
                   "automatically.",
                   SnackbarManager::SnackbarType::Note },
                 { "Board Controls - Step 8\n\n"
-                  "Excellent! You've learned the basic board controls.\n"
                   "Click 'Stop' one more time to end the auto-play.",
                   SnackbarManager::SnackbarType::Note },
                 { "Board Controls Complete!\n\n"
@@ -327,8 +414,10 @@ namespace QaplaWindows
         switch (tutorialProgress_) {
             case 0:
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightPlay_ = true;
             tutorialSubStep_ = 0;
+            if (tutorialProgress_ == 1) { 
+                highlightPlay_ = true;
+            }
             return;
             
             case 1:
@@ -428,12 +517,7 @@ namespace QaplaWindows
                 return;
             }
             return;
-            
-            case 9:
-            // Step 9: Final message displayed - tutorial complete
-            Tutorial::instance().finishTutorial(topicName);
-            return;
-            
+                                    
             default:
             Tutorial::instance().finishTutorial(topicName);
             return;

@@ -138,17 +138,34 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
     }
 }
 
-void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
-    auto moveNo = moveRecord.halfmoveNo_;
+void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex,
+    const std::string& gameStatus) 
+{
     addTables(playerIndex + 1);
-    size_t displayedMoveNo = 0;
     if (moveRecord.depth == 0 && moveRecord.nodes == 0) {
         // No search info yet, nothing to display
         return;
     }
-    
+
+    bool analyzeMode = (gameStatus == "Analyze");
+    if (!analyzeMode && !shouldDisplayMoveRecord(moveRecord, playerIndex)) {
+        return;
+    }
+
+    infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
+
+    setTable(playerIndex, moveRecord);
+}
+
+bool QaplaWindows::ImGuiEngineList::shouldDisplayMoveRecord(
+    const QaplaTester::MoveRecord &moveRecord, uint32_t playerIndex) 
+{
+    size_t displayedMoveNo = 0;
+    auto moveNo = moveRecord.halfmoveNo_;
+
     // Only update if this is the current move showed in the table or the next move currently calculated
-    if (moveRecord.ponderMove.empty()) {
+    if (moveRecord.ponderMove.empty())
+    {
         auto opponent = playerIndex == 0 && displayedMoveNo_.size() > 1 ? 1 : 0;
         // The last move came from the opponent thus this is the currently displayed move number on the board
         displayedMoveNo = displayedMoveNo_[opponent];
@@ -156,14 +173,18 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
         // When pondering, the last move came from the pondering player thus we use playerIndex
         displayedMoveNo = displayedMoveNo_[playerIndex];
     }
-    if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1) { return; }
+
+    if (moveNo != displayedMoveNo && moveNo != displayedMoveNo + 1)
+    {
+        return false;
+    }
 
     // Only update if there are new info records
-    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex]) { return; }
-
-    infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
-
-    setTable(playerIndex, moveRecord);
+    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex])
+    {
+        return false;
+    }
+    return true;
 }
 
 void ImGuiEngineList::addTables(size_t size) {

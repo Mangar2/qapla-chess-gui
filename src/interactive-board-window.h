@@ -177,6 +177,14 @@ namespace QaplaWindows
 		void copyPv(const std::string& id, const std::string& pv);
 
 		/**
+		 * @brief Converts the current game record to PGN string format.
+		 * @param upToHalfmove Optional parameter to include moves only up to a specific halfmove.
+		 *                     If 0, all moves are included.
+		 * @return PGN string representation of the game.
+		 */
+		std::string computePgn(uint32_t upToHalfmove = 0);
+
+		/**
 		 * @brief Swaps the engines assigned to white and black.
 		 * It uses the GameContext swapPlayers method to perform the swap. It only sets a switched flag
 		 * and will not restart the engines.

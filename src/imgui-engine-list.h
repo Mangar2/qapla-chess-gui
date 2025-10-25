@@ -87,8 +87,11 @@ namespace QaplaWindows {
          * @brief Sets the move record for the list.
          * @param moveRecord The move record to display.
          * @param playerIndex The index of the player (0 or 1).
+         * @param gameStatus The current status of the game.
          */
-        void setFromMoveRecord(const QaplaTester::MoveRecord& moveRecord, uint32_t playerIndex);
+        void setFromMoveRecord(const QaplaTester::MoveRecord &moveRecord, uint32_t playerIndex,
+                               const std::string &gameStatus = "");
+
 
         /**
          * @brief Sets the data from a GameRecord.
@@ -98,6 +101,15 @@ namespace QaplaWindows {
 
     private:
         void addTables(size_t size);
+
+        /**
+         * @brief Determines whether a move record should be displayed.
+         *
+         * @param moveRecord The move record to check.
+         * @param playerIndex The index of the player (0 or 1).
+         * @return true if the move record should be displayed, false otherwise.
+         */
+        bool shouldDisplayMoveRecord(const QaplaTester::MoveRecord &moveRecord, uint32_t playerIndex);
 
         /**
          * @brief Draws the engine space for a given index.

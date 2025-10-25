@@ -129,9 +129,9 @@ public:
 	}
 
 	/**
-	 * @brief Returns the move record at a specific halfmove number.
-	 * @param halfmoveNo The halfmove number to retrieve (starting from 1).
-	 * @return Pointer to the MoveRecord if found, nullptr otherwise.
+	 * @brief Returns the index of the move record for the given halfmove number.
+	 * @param halfmoveNo The halfmove number (1-based).
+	 * @return std::optional<uint32_t> The index of the move record, or std::nullopt if not found.
 	 */
 	std::optional<uint32_t> getHalfmoveIndex(uint32_t halfmoveNo) const {
 		if (halfmoveNo <= startHalfmoves_) return std::nullopt;

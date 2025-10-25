@@ -91,9 +91,12 @@ namespace QaplaInterface {
 					rank--;
 				}
 				else if (isPieceChar(curChar)) {
-					chessBoard.setPiece(
-						computeSquare(static_cast<QaplaBasics::File>(file), static_cast<QaplaBasics::Rank>(rank)), 
-						QaplaBasics::charToPiece(curChar));
+					auto square = computeSquare(static_cast<QaplaBasics::File>(file), static_cast<QaplaBasics::Rank>(rank));	
+					if (square < QaplaBasics::A1 || square > QaplaBasics::H8) {
+						error = true;
+						break;
+					}
+					chessBoard.setPiece(square, QaplaBasics::charToPiece(curChar));
 					file++;
 				}
 				else if (isColChar(curChar)) {

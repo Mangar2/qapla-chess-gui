@@ -705,6 +705,87 @@ namespace QaplaButton {
             fgColor, 1.0F);
     }
 
+    void drawMore(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto fgColor = getFgColor(state);
+        constexpr float dotRadius = 2.0F;
+        constexpr float dotSpacing = 4.5F;
+        
+        // Center the three dots
+        float centerX = topLeft.x + size.x * 0.5F;
+        float centerY = topLeft.y + size.y * 0.5F;
+        
+        // Draw three horizontal dots
+        list->AddCircleFilled(ImVec2(centerX - dotSpacing, centerY), dotRadius, fgColor);
+        list->AddCircleFilled(ImVec2(centerX, centerY), dotRadius, fgColor);
+        list->AddCircleFilled(ImVec2(centerX + dotSpacing, centerY), dotRadius, fgColor);
+    }
+
+    std::string showCommandPopup(const std::string& popupId, const std::vector<PopupCommand>& commands) {
+        constexpr float POPUP_WINDOW_PADDING_Y = 4.0F;
+        constexpr float POPUP_ITEM_SPACING_Y = 1.0F;
+        constexpr float POPUP_ITEM_PADDING_X = 16.0F;
+        constexpr float POPUP_ITEM_PADDING_Y = 8.0F;
+        constexpr float POPUP_MIN_WIDTH = 180.0F;
+        constexpr float HIGHLIGHT_DOT_RADIUS = 4.0F;
+        constexpr float HIGHLIGHT_DOT_OFFSET = 6.0F;
+        
+        std::string selectedCommand;
+        
+        if (ImGui::BeginPopup(popupId.c_str())) {
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0F, POPUP_WINDOW_PADDING_Y));
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0F, POPUP_ITEM_SPACING_Y));
+            
+            for (const auto& command : commands) {
+                // Get the position for this item
+                ImVec2 itemStartPos = ImGui::GetCursorScreenPos();
+                
+                // Calculate item dimensions
+                ImVec2 textSize = ImGui::CalcTextSize(command.name.c_str());
+                float itemWidth = POPUP_MIN_WIDTH;
+                float itemHeight = textSize.y + (POPUP_ITEM_PADDING_Y * 2.0F);
+                
+                // Draw invisible button for the full clickable area
+                ImGui::PushID(command.name.c_str());
+                bool isHovered = false;
+                bool isClicked = ImGui::InvisibleButton("##item", ImVec2(itemWidth, itemHeight));
+                isHovered = ImGui::IsItemHovered();
+                ImGui::PopID();
+                
+                // Draw background highlight if hovered
+                if (isHovered) {
+                    ImDrawList* drawList = ImGui::GetWindowDrawList();
+                    ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
+                    drawList->AddRectFilled(itemStartPos, 
+                        ImVec2(itemStartPos.x + itemWidth, itemStartPos.y + itemHeight), 
+                        bgColor);
+                }
+                
+                // Draw text with padding
+                ImDrawList* drawList = ImGui::GetWindowDrawList();
+                ImVec2 textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
+                                       itemStartPos.y + POPUP_ITEM_PADDING_Y);
+                ImU32 textColor = ImGui::GetColorU32(ImGuiCol_Text);
+                drawList->AddText(textPos, textColor, command.name.c_str());
+                
+                // Draw red highlight dot if command is highlighted
+                if (command.state == ButtonState::Highlighted) {
+                    ImVec2 dotPos = ImVec2(itemStartPos.x + HIGHLIGHT_DOT_OFFSET, 
+                                          itemStartPos.y + itemHeight * 0.5F);
+                    drawList->AddCircleFilled(dotPos, HIGHLIGHT_DOT_RADIUS, IM_COL32(192, 0, 0, 192));
+                }
+                
+                if (isClicked) {
+                    selectedCommand = command.name;
+                }
+            }
+            
+            ImGui::PopStyleVar(2);
+            ImGui::EndPopup();
+        }
+        
+        return selectedCommand;
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();

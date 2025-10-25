@@ -244,6 +244,32 @@ void InteractiveBoardWindow::draw() {
 	}
 }
 
+std::string InteractiveBoardWindow::computePgn(uint32_t upToHalfmove) {
+	std::string pgnString;
+	computeTask_->getGameContext().withGameRecord([&](const GameRecord &gameRecord) {
+		if (!gameRecord.getStartPos() && !gameRecord.getStartFen().empty()) {
+			pgnString = "[FEN \"" + gameRecord.getStartFen() + "\"]\n";
+		}
+		
+		// Determine the last ply to include
+		uint32_t targetHalfmove = upToHalfmove;
+		if (targetHalfmove == 0) {
+			targetHalfmove = gameRecord.nextMoveIndex() + 1;
+		}
+		
+		auto ply = gameRecord.getHalfmoveIndex(targetHalfmove - 1);
+		if (ply) {
+			pgnString += gameRecord.movesToStringUpToPly(*ply, MoveRecord::toStringOptions{
+				.includeClock = true,
+				.includeEval = true,
+				.includePv = true,
+				.includeDepth = true
+			});
+		}
+	});
+	return pgnString;
+}
+
 void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv) {
 	// Expected format produced by encodePV: "pv|<halfmoveNo>|<pv...>"
 
@@ -277,27 +303,7 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 		return; // no number
 	}
 
-	std::string pvString;
-	computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
-		if (!g.getStartPos() && !g.getStartFen().empty()) {
-			pvString = "[FEN \"" + g.getStartFen() + "\"]\n";
-		}
-		if (halfmove == 0) {
-			return;
-		}
-		auto ply = g.getHalfmoveIndex(halfmove - 1);
-		if (!ply) {
-			return;
-		}
-		pvString += g.movesToStringUpToPly(*ply, MoveRecord::toStringOptions{
-			.includeClock = true,
-			.includeEval = true,
-			.includePv = true,
-			.includeDepth = true
-		}) + " ";
-	});
-
-	// convert pvPart to std::string for clipboard
+	std::string pvString = computePgn(halfmove);
 	pvString += std::string(pvPart);
 
 	GLFWwindow* window = glfwGetCurrentContext();
@@ -416,10 +422,23 @@ void InteractiveBoardWindow::execute(const std::string& command)
 			}
 		}
 	}
+	else if (command == "Copy PGN") {
+		auto pgn = computePgn();
+		ImGuiCutPaste::setClipboardString(pgn);
+		SnackbarManager::instance().showNote("PGN copied to clipboard\n" + pgn);
+	}
+	else if (command == "Copy FEN") {
+		auto fen = boardWindow_->getFen();
+		ImGuiCutPaste::setClipboardString(fen);
+		SnackbarManager::instance().showNote("FEN copied to clipboard\n" + fen);
+	}
 	else if (command.starts_with("Position: ")) {
 		computeTask_->newGame();
 		std::string fen = command.substr(std::string("Position: ").size());
 		setPosition(false, fen);
+	}
+	else if (command == "More") {
+		// Handled in board window
 	} else {
 		std::cerr << "Unknown command: " << command << '\n';
 	}
@@ -485,18 +504,18 @@ void InteractiveBoardWindow::pollData()
 			imGuiClock_->setStopped(false);
 		}
 		imGuiClock_->setAnalyze(computeTask_->getStatus() == "Analyze");
-		computeTask_->getGameContext().withGameRecord([&](const GameRecord &g) {
-			imGuiMoveList_->setFromGameRecord(g);
-			imGuiClock_->setFromGameRecord(g);
-			imGuiBarChart_->setFromGameRecord(g);
-			boardWindow_->setFromGameRecord(g);
-			engineWindow_->setFromGameRecord(g);
-			timeControl_ = g.getWhiteTimeControl(); 
+		computeTask_->getGameContext().withGameRecord([&](const GameRecord &gameRecord) {
+			imGuiMoveList_->setFromGameRecord(gameRecord);
+			imGuiClock_->setFromGameRecord(gameRecord);
+			imGuiBarChart_->setFromGameRecord(gameRecord);
+			boardWindow_->setFromGameRecord(gameRecord);
+			engineWindow_->setFromGameRecord(gameRecord);
+			timeControl_ = gameRecord.getWhiteTimeControl(); 
 		});
 		engineWindow_->setAllowInput(true);
-		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &m, uint32_t idx) {
-			engineWindow_->setFromMoveRecord(m, idx);
-			imGuiClock_->setFromMoveRecord(m, idx);
+		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &moveRecord, uint32_t idx) {
+			engineWindow_->setFromMoveRecord(moveRecord, idx, computeTask_->getStatus());
+			imGuiClock_->setFromMoveRecord(moveRecord, idx);
 		});
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			engineWindow_->setEngineRecords(records);
