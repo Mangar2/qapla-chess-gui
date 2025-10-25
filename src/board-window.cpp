@@ -134,6 +134,7 @@ namespace QaplaWindows
         
         std::vector<std::string> visibleButtons;
         std::vector<QaplaButton::PopupCommand> moreCommands = {
+            {"Time Control", QaplaButton::ButtonState::Normal},
             {"Copy PGN", QaplaButton::ButtonState::Normal},
             {"Copy FEN", QaplaButton::ButtonState::Normal}
         };

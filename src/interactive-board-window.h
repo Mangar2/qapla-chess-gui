@@ -249,6 +249,15 @@ namespace QaplaWindows
 		 * @brief Notifies task processor to autoplay the game (both sides).
 		 */
 		void autoPlay();
+		
+		/**
+		 * @brief Opens the time control dialog to configure game time settings.
+		 * 
+		 * Allows user to set time controls such as base time and increment
+		 * (e.g., 5 minutes + 10 seconds per move).
+		 */
+		void openTimeControlDialog();
+		
 		void checkForGameEnd();
 
 		std::unique_ptr<QaplaTester::GameRecord> gameRecord_;

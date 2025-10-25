@@ -776,6 +776,7 @@ namespace QaplaButton {
                 
                 if (isClicked) {
                     selectedCommand = command.name;
+                    ImGui::CloseCurrentPopup();
                 }
             }
             

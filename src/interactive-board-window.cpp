@@ -381,6 +381,16 @@ void InteractiveBoardWindow::autoPlay()
 	}
 }
 
+void InteractiveBoardWindow::openTimeControlDialog()
+{
+	// TODO: Implement time control dialog
+	// This will allow users to configure:
+	// - Base time (e.g., 5 minutes)
+	// - Increment per move (e.g., 10 seconds)
+	// - Different time controls for white and black
+	SnackbarManager::instance().showNote("Time Control dialog - Coming soon!");
+}
+
 void InteractiveBoardWindow::execute(const std::string& command)
 {
 	if (command.empty()) {
@@ -431,6 +441,9 @@ void InteractiveBoardWindow::execute(const std::string& command)
 		auto fen = boardWindow_->getFen();
 		ImGuiCutPaste::setClipboardString(fen);
 		SnackbarManager::instance().showNote("FEN copied to clipboard\n" + fen);
+	}
+	else if (command == "Time Control") {
+		openTimeControlDialog();
 	}
 	else if (command.starts_with("Position: ")) {
 		computeTask_->newGame();
