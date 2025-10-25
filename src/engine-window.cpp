@@ -160,9 +160,9 @@ void EngineWindow::showNextTutorialStep() {
 
 void EngineWindow::checkTutorialProgression(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
     // Only start tutorial if EngineSetup tutorial is completed
-    if (!Tutorial::instance().isCompleted(Tutorial::Topic::EngineSetup)) {
-        return;
-    }
+    //if (!Tutorial::instance().isCompleted(Tutorial::Topic::EngineSetup)) {
+        //return;
+    //}
 
     switch (engineWindowTutorialCounter_) {
         case 0:

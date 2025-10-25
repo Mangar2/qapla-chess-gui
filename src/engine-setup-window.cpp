@@ -260,73 +260,52 @@ void EngineSetupWindow::draw() {
     ImGui::EndChild();
     
     // Check tutorial progression
-    checkTutorialProgression();
+    showNextTutorialStep();
 }
 
-uint32_t EngineSetupWindow::getTutorialCounter() {
-    return engineSetupTutorialCounter_;
-}
-
-void EngineSetupWindow::setTutorialCounter(uint32_t value) {
-    engineSetupTutorialCounter_ = value;
-}
-
-void EngineSetupWindow::resetTutorialCounter() {
-    engineSetupTutorialCounter_ = 0;
-    Tutorial::instance().saveConfiguration();
-}
-
-void EngineSetupWindow::finishTutorial() {
-    engineSetupTutorialCounter_ = 3;
-    Tutorial::instance().saveConfiguration();
-}
+static auto engineSetupTutorialInit = []() {
+    Tutorial::instance().addEntry({
+        .name = "enginesetup",
+        .displayName = "Engine Setup",
+        .dependsOn = "snackbar",
+        .messages = {
+            { "Engine Setup - Step 1\n\n"
+              "To use this chess GUI, you need chess engines.\n"
+              "Click the 'Add' button in the engines tab to select engine executables. "
+              "You can select multiple engines at once in the file dialog.\n\n"
+              "Please add 2 or more engines to continue.",
+              SnackbarManager::SnackbarType::Note },
+            { "Engine Setup - Step 2\n\n"
+              "Great! You have added engines.\n"
+              "Now click the 'Detect' button to automatically read all options from your engines.\n"
+              "It runs in parallel for all engines. Still it may take a few seconds.",
+              SnackbarManager::SnackbarType::Note },
+            { "Engine Setup Complete!\n\n"
+              "Excellent! Your engines are now configured and ready to use.\n"
+              "You can select them in other tabs like Tournament or Engine Test.\n\n"
+              "Engine setup tutorial completed!",
+              SnackbarManager::SnackbarType::Success }
+        },
+        .getProgressCounter = []() -> uint32_t& {
+            return EngineSetupWindow::tutorialProgress_;
+        },
+        .autoStart = false
+    });
+    return true;
+}();
 
 void EngineSetupWindow::showNextTutorialStep() {
-    engineSetupTutorialCounter_++;
-    Tutorial::instance().saveConfiguration();
-
-    switch (engineSetupTutorialCounter_) {
-        case 1:
-        SnackbarManager::instance().showTutorial(
-            "Engine Setup - Step 1\n\n"
-            "To use this chess GUI, you need chess engines.\n"
-            "Click the 'Add' button in the engines tab to select engine executables. "
-            "You can select multiple engines at once in the file dialog.\n\n"
-            "Please add 2 or more engines to continue.",
-            SnackbarManager::SnackbarType::Note, false);
-        return;
-        case 2:
-        SnackbarManager::instance().showTutorial(
-            "Engine Setup - Step 2\n\n"
-            "Great! You have added engines.\n"
-            "Now click the 'Detect' button to automatically read all options from your engines.\n"
-            "It runs in parallel for all engines. Still it may take a few seconds.",
-            SnackbarManager::SnackbarType::Note, false);
-        return;
-        case 3:
-        SnackbarManager::instance().showTutorial(
-            "Engine Setup Complete!\n\n"
-            "Excellent! Your engines are now configured and ready to use.\n"
-            "You can select them in other tabs like Tournament or Engine Test.\n\n"
-            "Engine setup tutorial completed!",
-            SnackbarManager::SnackbarType::Success, false);
-        return;
-        default:
-        return;
-    }
-}
-
-void EngineSetupWindow::checkTutorialProgression() {
-    switch (engineSetupTutorialCounter_) {
+    static const std::string topicName = "enginesetup";
+    switch (tutorialProgress_) {
         case 0:
-        showNextTutorialStep();
+        Tutorial::instance().showNextTutorialStep(topicName);
         return;
         case 1:
         {
             const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
             const auto configs = configManager.getAllConfigs();
             if (configs.size() >= 2) {
-                showNextTutorialStep();
+                Tutorial::instance().showNextTutorialStep(topicName);
             }
         }
         return;
@@ -334,11 +313,13 @@ void EngineSetupWindow::checkTutorialProgression() {
         {
             const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
             if (capabilities.areAllEnginesDetected()) {
-                showNextTutorialStep();
+                Tutorial::instance().showNextTutorialStep(topicName);
             }
         }
         return;
         default:
+        // Required to mark this tutorial as finished so the next one can start
+        Tutorial::instance().finishTutorial(topicName);
         return;
     }
 }

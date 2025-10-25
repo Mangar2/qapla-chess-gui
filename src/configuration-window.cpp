@@ -101,7 +101,7 @@ void ConfigurationWindow::drawTutorialSettings()
     for (int tutorial = 0; tutorial < Tutorial::instance().getEntries().size(); ++tutorial) {
         auto& entry = Tutorial::instance().getEntries()[tutorial];
         bool completed = entry.completed();
-        if (ImGui::Checkbox(entry.name.c_str(), &completed)) {
+        if (ImGui::Checkbox(entry.displayName.c_str(), &completed)) {
             if (completed) {
                 entry.finish();
             } else {
@@ -123,20 +123,7 @@ void ConfigurationWindow::drawTutorialSettings()
         
         // Display completion status as a checkbox
         if (ImGui::Checkbox(("##completed_" + topicName).c_str(), &completed)) {
-            // If checkbox is toggled on (incomplete -> complete), set tutorial to completed
-            if (!previousCompleted && completed) {
-                // Mark tutorial as completed without showing snackbars
-                switch (topic) {
-                    case Tutorial::Topic::EngineSetup:
-                        EngineSetupWindow::finishTutorial();
-                    default:
-                        break;
-                }
-            }
-            // If checkbox is toggled off (complete -> incomplete), restart tutorial
-            else if (previousCompleted && !completed) {
-                Tutorial::instance().restartTopic(topic);
-            }
+
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");

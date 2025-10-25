@@ -144,28 +144,7 @@ namespace QaplaWindows {
             showButtons_ = show;
         }
 
-        /**
-         * @brief Gets the current tutorial counter.
-         * @return The tutorial counter value.
-         */
-        static uint32_t getTutorialCounter();
-
-        /**
-         * @brief Sets the tutorial counter value.
-         * @param value The new counter value.
-         */
-        static void setTutorialCounter(uint32_t value);
-
-        /**
-         * @brief Resets the tutorial counter to restart the tutorial.
-         */
-        static void resetTutorialCounter();
-
-        /**
-         * @brief Finishes the tutorial without showing any snackbars.
-         */
-        static void finishTutorial();
-
+        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for the tutorial
     private:
         void drawButtons();
         bool drawGlobalSettings();
@@ -179,14 +158,9 @@ namespace QaplaWindows {
         QaplaButton::ButtonState getButtonState(const std::string& button) const;
 
         /**
-         * @brief Checks and manages the engine setup tutorial progression.
+         * @brief Checks conditions and shows next tutorial step if applicable.
          */
-        void checkTutorialProgression();
-
-        /**
-         * @brief Increments the tutorial counter.
-         */
-        static void showNextTutorialStep();
+        void showNextTutorialStep();
 
         ImGuiEngineSelect engineSelect_;
         ImGuiEngineGlobalSettings globalSettings_;

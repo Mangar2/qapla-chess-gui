@@ -39,7 +39,6 @@ public:
      * @brief Tutorial topics available in the application
      */
     enum class Topic {
-        EngineSetup,
         EngineWindow,
         // Future topics can be added here
         Count
@@ -52,6 +51,7 @@ public:
 
     struct Entry {
         std::string name;
+        std::string displayName;
         std::string dependsOn;
         std::vector<Message> messages;
         std::function<uint32_t&()> getProgressCounter;
@@ -64,15 +64,18 @@ public:
             showNextMessage();
         }
         void finish() {
-            counter = static_cast<uint32_t>(messages.size());
+            counter = static_cast<uint32_t>(messages.size()) + 1;
         }
         bool completed() const {
-            return counter >= messages.size();
+            return counter > messages.size();
         }
         void showNextMessage() {
             if (counter < messages.size() && counter < getProgressCounter()) {
                 const auto& msg = messages[counter];
                 SnackbarManager::instance().showTutorial(msg.text, msg.type, false);
+            }
+            // Beeing finished is an additional state after all messages shown
+            if (counter < getProgressCounter()) {
                 ++counter;
             }
         }
@@ -83,6 +86,12 @@ public:
      * @param topicName The name of the tutorial topic
      */
     void showNextTutorialStep(const std::string& topicName);
+
+    /**
+     * @brief Finishes a tutorial topic without showing further messages
+     * @param topic The tutorial topic name to finish
+     */
+    void finishTutorial(const std::string& topicName);
 
     /**
      * @brief Adds a new tutorial entry

@@ -229,16 +229,13 @@ void SnackbarManager::updateConfiguration() const {
 }
 
 void SnackbarManager::showNextTutorialStep() {
-    if (tutorialProgress_ >= 3) {
-        return; 
-    }
-    tutorialProgress_++;
-    Tutorial::instance().showNextTutorialStep("Snackbar");
+    Tutorial::instance().showNextTutorialStep("snackbar");
 }
 
 bool SnackbarManager::tutorialInitialized_ = []() {
     Tutorial::instance().addEntry({
-        .name = "Snackbar",
+        .name = "snackbar",
+        .displayName = "Snackbar",
         .dependsOn = "",
         .messages = {
             { "Welcome to the Snackbar System!\n\n"

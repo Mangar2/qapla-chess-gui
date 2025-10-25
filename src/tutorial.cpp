@@ -26,8 +26,6 @@
 
 bool Tutorial::isCompleted(Topic topic) const {
     switch (topic) {
-        case Topic::EngineSetup:
-            return QaplaWindows::EngineSetupWindow::getTutorialCounter() >= getCompletionThreshold(topic);
         case Topic::EngineWindow:
             return QaplaWindows::EngineWindow::getTutorialCounter() >= getCompletionThreshold(topic);
         default:
@@ -37,9 +35,6 @@ bool Tutorial::isCompleted(Topic topic) const {
 
 void Tutorial::restartTopic(Topic topic) {
     switch (topic) {
-        case Topic::EngineSetup:
-            QaplaWindows::EngineSetupWindow::resetTutorialCounter();
-            break;
         case Topic::EngineWindow:
             QaplaWindows::EngineWindow::resetTutorialCounter();
             break;
@@ -51,8 +46,6 @@ void Tutorial::restartTopic(Topic topic) {
 
 std::string Tutorial::getTopicName(Topic topic) {
     switch (topic) {
-        case Topic::EngineSetup:
-            return "Engine Setup";
         case Topic::EngineWindow:
             return "Engine Window";
         default:
@@ -62,8 +55,6 @@ std::string Tutorial::getTopicName(Topic topic) {
 
 uint32_t Tutorial::getCompletionThreshold(Topic topic) {
     switch (topic) {
-        case Topic::EngineSetup:
-            return 3; 
         case Topic::EngineWindow:
             return 3;
         default:
@@ -74,7 +65,28 @@ uint32_t Tutorial::getCompletionThreshold(Topic topic) {
 void Tutorial::showNextTutorialStep(const std::string& topicName) {
     for (auto& entry : entries_) {
         if (entry.name == topicName) {
+            if (entry.completed()) {
+                return;
+            }
+            if (!entry.dependsOn.empty()) {
+                auto it = std::ranges::find_if(entries_,
+                    [&entry](const Entry& e) { return e.name == entry.dependsOn; });
+                if (it != entries_.end() && !it->completed()) {
+                    return;
+                }
+            }
+            entry.getProgressCounter()++;
             entry.showNextMessage();
+            break;
+        }
+    }
+    saveConfiguration();
+}
+
+ void Tutorial::finishTutorial(const std::string& topicName) {
+    for (auto& entry : entries_) {
+        if (entry.name == topicName) {
+            entry.finish();
             break;
         }
     }
@@ -87,8 +99,6 @@ void Tutorial::loadConfiguration() {
     
     if (!sections.empty()) {
         const auto& section = sections[0];
-        QaplaWindows::EngineSetupWindow::setTutorialCounter(
-            QaplaHelpers::to_uint32(section.getValue("enginesetup").value_or("0")).value_or(0));
         QaplaWindows::EngineWindow::setTutorialCounter(
             QaplaHelpers::to_uint32(section.getValue("enginewindow").value_or("0")).value_or(0));
         for (auto& entry: entries_) {
@@ -103,7 +113,6 @@ void Tutorial::saveConfiguration() const {
         .name = "tutorial",
         .entries = QaplaHelpers::IniFile::KeyValueMap{
             {"id", "tutorial"},
-            {"enginesetup", std::to_string(QaplaWindows::EngineSetupWindow::getTutorialCounter())},
             {"enginewindow", std::to_string(QaplaWindows::EngineWindow::getTutorialCounter())}
         }
     };
