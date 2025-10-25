@@ -112,26 +112,4 @@ void ConfigurationWindow::drawTutorialSettings()
             ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
         }
     }
-
-    for (int i = 0; i < static_cast<int>(Tutorial::Topic::Count); ++i) {
-        auto topic = static_cast<Tutorial::Topic>(i);
-        std::string topicName = Tutorial::getTopicName(topic);
-        bool completed = Tutorial::instance().isCompleted(topic);
-        bool previousCompleted = completed;
-
-        ImGui::PushID(i);
-        
-        // Display completion status as a checkbox
-        if (ImGui::Checkbox(("##completed_" + topicName).c_str(), &completed)) {
-
-        }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
-        }
-        
-        ImGui::SameLine();
-        ImGui::Text("%s", topicName.c_str());
-        
-        ImGui::PopID();
-    }
 }

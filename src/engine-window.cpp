@@ -99,7 +99,7 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     
     // Check tutorial progression
     bool configCommandIssued = (command == "Config");
-    checkTutorialProgression(configCommandIssued, activeEngines);
+    showNextTutorialStep(configCommandIssued, activeEngines);
     
     if (!command.empty()) { 
         return { "", command };
@@ -107,86 +107,58 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     return { id2, command2 };
 }
 
-uint32_t EngineWindow::getTutorialCounter() {
-    return engineWindowTutorialCounter_;
-}
+static auto engineWindowTutorialInit = []() {
+    Tutorial::instance().addEntry({
+        .name = "enginewindow",
+        .displayName = "Engine Window",
+        .dependsOn = "enginesetup",
+        .messages = {
+            { "Engine Window - Step 1\n\n"
+              "Welcome to the Engine Window!\n"
+              "Here you can select which engines to use for analysis or play.\n\n"
+              "Click the Config button (gear icon) on the left to open the engine selection popup.",
+              SnackbarManager::SnackbarType::Note },
+            { "Engine Window - Step 2\n\n"
+              "Great! You've opened the engine selection.\n"
+              "You can select multiple engines, and the same engine can be selected multiple times.\n\n"
+              "Now please select two different engines to continue.",
+              SnackbarManager::SnackbarType::Note },
+            { "Engine Window Complete!\n\n"
+              "Excellent! You've successfully selected engines for playing.\n"
+              "Next we will use the engines.",
+              SnackbarManager::SnackbarType::Success }
+        },
+        .getProgressCounter = []() -> uint32_t& {
+            return EngineWindow::tutorialProgress_;
+        },
+        .autoStart = false
+    });
+    return true;
+}();
 
-void EngineWindow::setTutorialCounter(uint32_t value) {
-    engineWindowTutorialCounter_ = value;
-}
-
-void EngineWindow::resetTutorialCounter() {
-    engineWindowTutorialCounter_ = 0;
-    Tutorial::instance().saveConfiguration();
-}
-
-void EngineWindow::finishTutorial() {
-    engineWindowTutorialCounter_ = 3;
-    Tutorial::instance().saveConfiguration();
-}
-
-void EngineWindow::showNextTutorialStep() {
-    engineWindowTutorialCounter_++;
-    Tutorial::instance().saveConfiguration();
-
-    switch (engineWindowTutorialCounter_) {
-        case 1:
-        SnackbarManager::instance().showTutorial(
-            "Engine Window - Step 1\n\n"
-            "Welcome to the Engine Window!\n"
-            "Here you can select which engines to use for analysis or play.\n\n"
-            "Click the Config button (gear icon) on the left to open the engine selection popup.",
-            SnackbarManager::SnackbarType::Note, false);
-        return;
-        case 2:
-        SnackbarManager::instance().showTutorial(
-            "Engine Window - Step 2\n\n"
-            "Great! You've opened the engine selection.\n"
-            "You can select multiple engines, and the same engine can be selected multiple times.\n\n"
-            "Now please select two different engines to continue.",
-            SnackbarManager::SnackbarType::Note, false);
-        return;
-        case 3:
-        SnackbarManager::instance().showTutorial(
-            "Engine Window Complete!\n\n"
-            "Excellent! You've successfully selected engines for playing.\n"
-            "Next we will use the engines.",
-            SnackbarManager::SnackbarType::Success, false);
-        return;
-        default:
-        return;
-    }
-}
-
-void EngineWindow::checkTutorialProgression(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
-    // Only start tutorial if EngineSetup tutorial is completed
-    //if (!Tutorial::instance().isCompleted(Tutorial::Topic::EngineSetup)) {
-        //return;
-    //}
-
-    switch (engineWindowTutorialCounter_) {
+void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
+    switch (tutorialProgress_) {
         case 0:
-        showNextTutorialStep();
+        Tutorial::instance().showNextTutorialStep("enginewindow");
         return;
         case 1:
-        // Check if Config button was clicked
         if (configCommandIssued) {
-            showNextTutorialStep();
+            Tutorial::instance().showNextTutorialStep("enginewindow");
         }
         return;
         case 2:
         {
-            // Check if at least 2 different engines are selected
             std::set<std::string> uniqueEngines;
             for (const auto& engine : activeEngines) {
                 uniqueEngines.insert(engine.getCmd());
             }
             if (uniqueEngines.size() >= 2) {
-                showNextTutorialStep();
+                Tutorial::instance().showNextTutorialStep("enginewindow");
             }
         }
         return;
         default:
+        Tutorial::instance().finishTutorial("enginewindow");
         return;
     }
 }

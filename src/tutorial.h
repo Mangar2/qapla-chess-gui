@@ -29,21 +29,9 @@
 
 /**
  * @brief Manages tutorial progress for different topics in the Chess GUI
- * 
- * The Tutorial class tracks which tutorial topics have been completed
- * and provides methods to check completion status and restart tutorials.
  */
 class Tutorial {
 public:
-    /**
-     * @brief Tutorial topics available in the application
-     */
-    enum class Topic {
-        EngineWindow,
-        // Future topics can be added here
-        Count
-    };
-
     struct Message {
         std::string text;
         SnackbarManager::SnackbarType type;
@@ -109,33 +97,6 @@ public:
         static Tutorial instance;
         return instance;
     }
-
-    /**
-     * @brief Checks if a tutorial topic is completed
-     * @param topic The tutorial topic to check
-     * @return True if the topic is completed, false otherwise
-     */
-    bool isCompleted(Topic topic) const;
-
-    /**
-     * @brief Restarts a tutorial topic from the beginning
-     * @param topic The tutorial topic to restart
-     */
-    void restartTopic(Topic topic);
-
-    /**
-     * @brief Gets the display name for a tutorial topic
-     * @param topic The tutorial topic
-     * @return Display name of the topic
-     */
-    static std::string getTopicName(Topic topic);
-
-    /**
-     * @brief Gets the completion threshold for a specific topic
-     * @param topic The tutorial topic
-     * @return The counter value at which the topic is considered complete
-     */
-    static uint32_t getCompletionThreshold(Topic topic);
 
     /**
      * @brief Loads all tutorial counters from the configuration file

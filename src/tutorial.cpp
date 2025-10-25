@@ -20,47 +20,7 @@
 #include "tutorial.h"
 #include "configuration.h"
 #include "snackbar.h"
-#include "engine-setup-window.h"
-#include "engine-window.h"
 #include "qapla-tester/string-helper.h"
-
-bool Tutorial::isCompleted(Topic topic) const {
-    switch (topic) {
-        case Topic::EngineWindow:
-            return QaplaWindows::EngineWindow::getTutorialCounter() >= getCompletionThreshold(topic);
-        default:
-            return false;
-    }
-}
-
-void Tutorial::restartTopic(Topic topic) {
-    switch (topic) {
-        case Topic::EngineWindow:
-            QaplaWindows::EngineWindow::resetTutorialCounter();
-            break;
-        default:
-            break;
-    }
-    saveConfiguration();
-}
-
-std::string Tutorial::getTopicName(Topic topic) {
-    switch (topic) {
-        case Topic::EngineWindow:
-            return "Engine Window";
-        default:
-            return "Unknown";
-    }
-}
-
-uint32_t Tutorial::getCompletionThreshold(Topic topic) {
-    switch (topic) {
-        case Topic::EngineWindow:
-            return 3;
-        default:
-            return 1;
-    }
-}
 
 void Tutorial::showNextTutorialStep(const std::string& topicName) {
     for (auto& entry : entries_) {
@@ -99,8 +59,6 @@ void Tutorial::loadConfiguration() {
     
     if (!sections.empty()) {
         const auto& section = sections[0];
-        QaplaWindows::EngineWindow::setTutorialCounter(
-            QaplaHelpers::to_uint32(section.getValue("enginewindow").value_or("0")).value_or(0));
         for (auto& entry: entries_) {
             auto valueOpt = sections[0].getValue(entry.name).value_or("0");
             entry.counter = QaplaHelpers::to_uint32(valueOpt).value_or(0);
@@ -112,8 +70,7 @@ void Tutorial::saveConfiguration() const {
     QaplaHelpers::IniFile::Section section {
         .name = "tutorial",
         .entries = QaplaHelpers::IniFile::KeyValueMap{
-            {"id", "tutorial"},
-            {"enginewindow", std::to_string(QaplaWindows::EngineWindow::getTutorialCounter())}
+            {"id", "tutorial"}
         }
     };
     for (const auto& entry: entries_) {

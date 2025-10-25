@@ -46,27 +46,7 @@ namespace QaplaWindows {
          */
         std::pair<std::string, std::string> draw() override;
 
-        /**
-         * @brief Gets the current tutorial counter.
-         * @return The tutorial counter value.
-         */
-        static uint32_t getTutorialCounter();
-
-        /**
-         * @brief Sets the tutorial counter value.
-         * @param value The new counter value.
-         */
-        static void setTutorialCounter(uint32_t value);
-
-        /**
-         * @brief Resets the tutorial counter to restart the tutorial.
-         */
-        static void resetTutorialCounter();
-
-        /**
-         * @brief Finishes the tutorial without showing any snackbars.
-         */
-        static void finishTutorial();
+        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for the tutorial
 
     private:
 
@@ -85,14 +65,7 @@ namespace QaplaWindows {
          * @param configCommandIssued Whether the Config button was clicked.
          * @param activeEngines The currently active engines.
          */
-        void checkTutorialProgression(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
-
-        /**
-         * @brief Increments the tutorial counter and shows the next tutorial step.
-         */
-        static void showNextTutorialStep();
-
-        static inline uint32_t engineWindowTutorialCounter_ = 0;
+        void showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
 
     };
 
