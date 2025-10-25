@@ -47,6 +47,9 @@ namespace QaplaWindows
          * 
          */
         std::string drawButtons(const std::string& status);
+
+        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for the tutorial
+
     private:
         /**
          * @brief Draws the setup mode buttons and executes the associated commands.
@@ -87,8 +90,33 @@ namespace QaplaWindows
          * @param command The command to execute.
          */
         void executeSetupCommand(const std::string& command);
+
+        /**
+         * @brief Determines the button state including tutorial highlights.
+         * 
+         * @param button The button identifier
+         * @param status The current game status
+         * @return The ButtonState for the specified button
+         */
+        QaplaButton::ButtonState getBoardButtonState(const std::string& button, const std::string& status) const;
+
+        /**
+         * @brief Advances the tutorial based on button clicks and game state.
+         * 
+         * @param clickedButton The button that was clicked
+         * @param status The current game status
+         */
+        void showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status);
+
         bool setupMode_ = false;
         
+        // Tutorial highlight flags
+        bool highlightPlay_ = false;
+        bool highlightStop_ = false;
+        bool highlightAnalyze_ = false;
+        bool highlightAuto_ = false;
+
+        uint32_t tutorialSubStep_ = 0; ///< Sub-step counter for more granular tutorial tracking
     };
 
 }

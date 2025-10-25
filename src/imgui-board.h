@@ -136,6 +136,8 @@ namespace QaplaWindows
 
     protected:
         QaplaTester::ChangeTracker gameRecordTracker_;
+        std::unique_ptr<QaplaTester::GameState> gameState_;
+
     private:
         void drawPromotionPopup(float cellSize);
         bool promotionPending_ = false;
@@ -227,7 +229,6 @@ namespace QaplaWindows
         float hoveredSquareCellSize_;
 
         MoveInput moveInput_;
-        std::unique_ptr<QaplaTester::GameState> gameState_;
 
         static const std::vector<PopupCell> cells;
     };
