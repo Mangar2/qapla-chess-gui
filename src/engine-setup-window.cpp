@@ -317,11 +317,6 @@ void EngineSetupWindow::showNextTutorialStep() {
 }
 
 void EngineSetupWindow::checkTutorialProgression() {
-    // Only start tutorial if Snackbar tutorial is completed
-    if (!Tutorial::instance().isCompleted(Tutorial::Topic::Snackbar)) {
-        return;
-    }
-
     switch (engineSetupTutorialCounter_) {
         case 0:
         showNextTutorialStep();

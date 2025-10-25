@@ -25,7 +25,12 @@
 
 #include <imgui.h>
 
-void SnackbarManager::show(const std::string& message, SnackbarType type, bool sticky) {
+SnackbarManager& SnackbarManager::instance() {
+    static SnackbarManager instance;
+    return instance;
+}
+
+void SnackbarManager::show(const std::string& message, SnackbarType type, bool sticky, bool isTutorial) {
     SnackbarEntry entry;
     
     // Check if the same message with the same type is already at the top of the stack
@@ -47,27 +52,13 @@ void SnackbarManager::show(const std::string& message, SnackbarType type, bool s
     entry.duration = getDuration(type);
     entry.type = type;
     entry.sticky = sticky;
-    entry.isTutorial = false;
+    entry.isTutorial = isTutorial;
     
     snackbarStack_.emplace_back(std::move(entry)); 
 }
 
 void SnackbarManager::showTutorial(const std::string& message, SnackbarType type, bool sticky) {
-    SnackbarEntry entry;
-    
-    entry.message = message;
-    // Remove leading newline if present
-    if (!entry.message.empty() && entry.message[0] == '\n') {
-        entry.message.erase(0, 1); 
-    }
-    
-    entry.startTime = std::chrono::steady_clock::now();
-    entry.duration = getDuration(type);
-    entry.type = type;
-    entry.sticky = sticky;
-    entry.isTutorial = true;
-    
-    snackbarStack_.emplace_back(std::move(entry)); 
+    show(message, type, sticky, true);
 }
 
 void SnackbarManager::draw() {
@@ -220,6 +211,7 @@ void SnackbarManager::loadConfiguration() {
         config_.warningDurationInS = QaplaHelpers::to_uint32(section.getValue("warningduration").value_or("15")).value_or(15);
         config_.errorDurationInS = QaplaHelpers::to_uint32(section.getValue("errorduration").value_or("20")).value_or(20);
     }
+    showNextTutorialStep();
 }
 
 void SnackbarManager::updateConfiguration() const {
@@ -237,46 +229,38 @@ void SnackbarManager::updateConfiguration() const {
 }
 
 void SnackbarManager::showNextTutorialStep() {
-    if (config_.snackbarTutorialCounter >= 4) {
-        return; // Tutorial already completed
+    if (tutorialProgress_ >= 3) {
+        return; 
     }
-    config_.snackbarTutorialCounter++;
-    Tutorial::instance().saveConfiguration();
-    
-    switch (config_.snackbarTutorialCounter) {
-        case 1:
-        showTutorial("Welcome to the Snackbar System!\n\n"
-                     "Snackbars display temporary notifications in the bottom-left corner. "
-                     "They automatically disappear after a few seconds. "
-                     "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
-                     SnackbarType::Note, true);
-        return;
-        case 2:
-        showTutorial("This is an example of a warning\n\n"
-                    "There are 4 types of snackbars:\n"
-                    "- Note, Success, Warning, and Error.\n\n"
-                    "Each type has a different display duration.",
-                    SnackbarType::Warning, false);
-        return;
-        case 3:
-        showTutorial("Snackbar Configuration\n\n"
-                     "You can customize the display duration for each snackbar type in the Settings window.\n"
-                     "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n\n"
-                     "Red dots show where to click next - setup engines now.", 
-                     SnackbarType::Note, false);
-        return;
-        default:
-        return;
-    }
+    tutorialProgress_++;
+    Tutorial::instance().showNextTutorialStep("Snackbar");
 }
 
-void SnackbarManager::finishTutorial() {
-    config_.snackbarTutorialCounter = 4;
-    Tutorial::instance().saveConfiguration();
-}
-
-void SnackbarManager::resetTutorialCounter() {
-    config_.snackbarTutorialCounter = 0;
-    Tutorial::instance().saveConfiguration();
-    showNextTutorialStep();
-}
+bool SnackbarManager::tutorialInitialized_ = []() {
+    Tutorial::instance().addEntry({
+        .name = "Snackbar",
+        .dependsOn = "",
+        .messages = {
+            { "Welcome to the Snackbar System!\n\n"
+              "Snackbars display temporary notifications in the bottom-left corner. "
+              "They automatically disappear after a few seconds. "
+              "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
+              SnackbarType::Note },
+            { "This is an example of a warning\n\n"
+              "There are 4 types of snackbars:\n"
+              "- Note, Success, Warning, and Error.\n\n"
+              "Each type has a different display duration.",
+              SnackbarType::Warning },
+            { "Snackbar Configuration\n\n"
+              "You can customize the display duration for each snackbar type in the Settings window.\n"
+              "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n\n"
+              "Red dots show where to click next - setup engines now.", 
+              SnackbarType::Note }
+        },
+        .getProgressCounter = []() -> uint32_t& {
+            return SnackbarManager::instance().tutorialProgress_;
+        },
+        .autoStart = true
+    });
+    return true;
+}();

@@ -51,14 +51,12 @@ public:
         uint32_t successDurationInS = 10;
         uint32_t warningDurationInS = 15;
         uint32_t errorDurationInS = 20;
-        uint32_t snackbarTutorialCounter = 0;
 
         bool operator==(const SnackbarConfig& other) const {
             return noteDurationInS == other.noteDurationInS &&
                    successDurationInS == other.successDurationInS &&
                    warningDurationInS == other.warningDurationInS &&
-                   errorDurationInS == other.errorDurationInS &&
-                   snackbarTutorialCounter == other.snackbarTutorialCounter;
+                   errorDurationInS == other.errorDurationInS;
         }
     };
 
@@ -103,20 +101,20 @@ public:
      * @param message The message text to display
      * @param type The type/severity of the snackbar (Note, Success, Warning, Error)
      * @param sticky If true, the snackbar will not close automatically (default: false)
+     * @param isTutorial If true, indicates this snackbar is part of a tutorial (default: false)
      * 
      * If a snackbar with the same message and type is already displayed,
      * the display duration will be reset instead of creating a duplicate.
      */
-    void show(const std::string& message, SnackbarType type, bool sticky = false);
+    void show(const std::string& message, SnackbarType type, bool sticky = false, bool isTutorial = false);
+
+    void showTutorial(const std::string& message, SnackbarType type, bool sticky = false);
 
     /**
      * @brief Returns the singleton instance of the SnackbarManager
      * @return Reference to the singleton SnackbarManager instance
      */
-    static SnackbarManager& instance() {
-        static SnackbarManager instance;
-        return instance;
-    }
+    static SnackbarManager& instance();
 
     /**
      * @brief Renders and displays active snackbars in the UI
@@ -160,45 +158,6 @@ public:
      */
     void updateConfiguration() const;
 
-    /**
-     * @brief Increments the tutorial counter and triggers tutorial progression
-     */
-    void showNextTutorialStep();
-
-    /**
-     * @brief Marks the tutorial as finished without showing snackbars
-     */
-    void finishTutorial();
-
-    /**
-     * @brief Resets the tutorial counter to restart the tutorial
-     */
-    void resetTutorialCounter();
-
-    /**
-     * @brief Gets the current tutorial counter value
-     * @return The tutorial counter value
-     */
-    uint32_t getTutorialCounter() const {
-        return config_.snackbarTutorialCounter;
-    }
-
-    /**
-     * @brief Sets the tutorial counter value
-     * @param value The new counter value
-     */
-    void setTutorialCounter(uint32_t value) {
-        config_.snackbarTutorialCounter = value;
-    }
-
-    /**
-     * @brief Shows a tutorial snackbar (internal method)
-     * @param message The message to display
-     * @param type The snackbar type
-     * @param sticky Whether the snackbar is sticky
-     */
-    void showTutorial(const std::string& message, SnackbarType type, bool sticky);
-
 private:
     struct SnackbarEntry {
         std::string message;
@@ -208,6 +167,10 @@ private:
         bool sticky;
         bool isTutorial;
     };
+
+    static bool tutorialInitialized_;
+    uint32_t tutorialProgress_ = 0;
+    void showNextTutorialStep();
 
     /**
      * @brief Draws a circular close button with an "X" mark
@@ -240,4 +203,5 @@ private:
 
     SnackbarConfig config_;
     std::deque<SnackbarEntry> snackbarStack_;
+    uint32_t progress = 0;
 };

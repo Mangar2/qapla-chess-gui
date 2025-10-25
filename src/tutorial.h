@@ -19,8 +19,13 @@
 
 #pragma once
 
+#include "snackbar.h"
+
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <functional>
+
 
 /**
  * @brief Manages tutorial progress for different topics in the Chess GUI
@@ -34,12 +39,58 @@ public:
      * @brief Tutorial topics available in the application
      */
     enum class Topic {
-        Snackbar,
         EngineSetup,
         EngineWindow,
         // Future topics can be added here
         Count
     };
+
+    struct Message {
+        std::string text;
+        SnackbarManager::SnackbarType type;
+    };
+
+    struct Entry {
+        std::string name;
+        std::string dependsOn;
+        std::vector<Message> messages;
+        std::function<uint32_t&()> getProgressCounter;
+        bool autoStart = false;
+
+        uint32_t counter = 0;
+        void reset() {
+            counter = 0;
+            getProgressCounter() = autoStart ? 1 : 0;
+            showNextMessage();
+        }
+        void finish() {
+            counter = static_cast<uint32_t>(messages.size());
+        }
+        bool completed() const {
+            return counter >= messages.size();
+        }
+        void showNextMessage() {
+            if (counter < messages.size() && counter < getProgressCounter()) {
+                const auto& msg = messages[counter];
+                SnackbarManager::instance().showTutorial(msg.text, msg.type, false);
+                ++counter;
+            }
+        }
+    };
+
+    /**
+     * @brief Shows the next tutorial step for a given topic
+     * @param topicName The name of the tutorial topic
+     */
+    void showNextTutorialStep(const std::string& topicName);
+
+    /**
+     * @brief Adds a new tutorial entry
+     * @param entry The tutorial entry to add
+     */
+    void addEntry(const Entry& entry) {
+        entries_.push_back(entry);
+    }
 
     /**
      * @brief Gets the singleton instance of the Tutorial manager
@@ -87,6 +138,15 @@ public:
      */
     void saveConfiguration() const;
 
+    /**
+     * @brief Gets all tutorial entries
+     * @return Reference to the vector of tutorial entries
+     */
+    std::vector<Entry>& getEntries() {
+        return entries_;
+    }
+
 private:
     Tutorial() = default;
+    std::vector<Entry> entries_;
 };

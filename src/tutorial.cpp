@@ -26,8 +26,6 @@
 
 bool Tutorial::isCompleted(Topic topic) const {
     switch (topic) {
-        case Topic::Snackbar:
-            return SnackbarManager::instance().getTutorialCounter() >= getCompletionThreshold(topic);
         case Topic::EngineSetup:
             return QaplaWindows::EngineSetupWindow::getTutorialCounter() >= getCompletionThreshold(topic);
         case Topic::EngineWindow:
@@ -39,9 +37,6 @@ bool Tutorial::isCompleted(Topic topic) const {
 
 void Tutorial::restartTopic(Topic topic) {
     switch (topic) {
-        case Topic::Snackbar:
-            SnackbarManager::instance().resetTutorialCounter();
-            break;
         case Topic::EngineSetup:
             QaplaWindows::EngineSetupWindow::resetTutorialCounter();
             break;
@@ -56,8 +51,6 @@ void Tutorial::restartTopic(Topic topic) {
 
 std::string Tutorial::getTopicName(Topic topic) {
     switch (topic) {
-        case Topic::Snackbar:
-            return "Snackbar System";
         case Topic::EngineSetup:
             return "Engine Setup";
         case Topic::EngineWindow:
@@ -69,8 +62,6 @@ std::string Tutorial::getTopicName(Topic topic) {
 
 uint32_t Tutorial::getCompletionThreshold(Topic topic) {
     switch (topic) {
-        case Topic::Snackbar:
-            return 4; 
         case Topic::EngineSetup:
             return 3; 
         case Topic::EngineWindow:
@@ -80,18 +71,30 @@ uint32_t Tutorial::getCompletionThreshold(Topic topic) {
     }
 }
 
+void Tutorial::showNextTutorialStep(const std::string& topicName) {
+    for (auto& entry : entries_) {
+        if (entry.name == topicName) {
+            entry.showNextMessage();
+            break;
+        }
+    }
+    saveConfiguration();
+}
+
 void Tutorial::loadConfiguration() {
     auto sections = QaplaConfiguration::Configuration::instance().
         getConfigData().getSectionList("tutorial", "tutorial").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     
     if (!sections.empty()) {
         const auto& section = sections[0];
-        SnackbarManager::instance().setTutorialCounter(
-            QaplaHelpers::to_uint32(section.getValue("snackbar").value_or("0")).value_or(0));
         QaplaWindows::EngineSetupWindow::setTutorialCounter(
             QaplaHelpers::to_uint32(section.getValue("enginesetup").value_or("0")).value_or(0));
         QaplaWindows::EngineWindow::setTutorialCounter(
             QaplaHelpers::to_uint32(section.getValue("enginewindow").value_or("0")).value_or(0));
+        for (auto& entry: entries_) {
+            auto valueOpt = sections[0].getValue(entry.name).value_or("0");
+            entry.counter = QaplaHelpers::to_uint32(valueOpt).value_or(0);
+        }
     }
 }
 
@@ -100,10 +103,12 @@ void Tutorial::saveConfiguration() const {
         .name = "tutorial",
         .entries = QaplaHelpers::IniFile::KeyValueMap{
             {"id", "tutorial"},
-            {"snackbar", std::to_string(SnackbarManager::instance().getTutorialCounter())},
             {"enginesetup", std::to_string(QaplaWindows::EngineSetupWindow::getTutorialCounter())},
             {"enginewindow", std::to_string(QaplaWindows::EngineWindow::getTutorialCounter())}
         }
     };
+    for (const auto& entry: entries_) {
+        section.entries.push_back({ entry.name, std::to_string(entry.counter) });
+    }
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("tutorial", "tutorial", { section });
 }

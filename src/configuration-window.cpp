@@ -98,6 +98,21 @@ void ConfigurationWindow::drawTutorialSettings()
     ImGui::Text("Tutorial Topics:");
     ImGui::Spacing();
 
+    for (int tutorial = 0; tutorial < Tutorial::instance().getEntries().size(); ++tutorial) {
+        auto& entry = Tutorial::instance().getEntries()[tutorial];
+        bool completed = entry.completed();
+        if (ImGui::Checkbox(entry.name.c_str(), &completed)) {
+            if (completed) {
+                entry.finish();
+            } else {
+                entry.reset();
+            }
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
+        }
+    }
+
     for (int i = 0; i < static_cast<int>(Tutorial::Topic::Count); ++i) {
         auto topic = static_cast<Tutorial::Topic>(i);
         std::string topicName = Tutorial::getTopicName(topic);
@@ -112,9 +127,6 @@ void ConfigurationWindow::drawTutorialSettings()
             if (!previousCompleted && completed) {
                 // Mark tutorial as completed without showing snackbars
                 switch (topic) {
-                    case Tutorial::Topic::Snackbar:
-                        SnackbarManager::instance().finishTutorial();
-                        break;
                     case Tutorial::Topic::EngineSetup:
                         EngineSetupWindow::finishTutorial();
                     default:
