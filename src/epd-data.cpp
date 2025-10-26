@@ -31,6 +31,8 @@
 #include <imgui.h>
 
 #include <optional>
+#include <thread>
+#include <chrono>
 
 namespace QaplaWindows {
 
@@ -199,6 +201,9 @@ namespace QaplaWindows {
                     SnackbarManager::instance().showSuccess("Analysis finished.");
                 }
             }
+            if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
+                state = State::Running;
+            }
             populateTable();
 		}
         viewerBoardWindows_.populateViews();
@@ -257,6 +262,7 @@ namespace QaplaWindows {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
             scheduledConfig_ = epdConfig_;
         }
+
         epdManager_->continueAnalysis();
         state = State::Starting;
 		poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
@@ -268,7 +274,6 @@ namespace QaplaWindows {
         if (epdConfig_.concurrency == 0) {
             epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
         }
-        state = State::Running;
         SnackbarManager::instance().showSuccess("Epd analysis started");
     }
 
