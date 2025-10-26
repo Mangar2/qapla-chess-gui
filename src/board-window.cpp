@@ -39,6 +39,26 @@
 namespace QaplaWindows
 {
 
+    BoardWindow::BoardWindow() {
+        if (tutorialInstance_ == nullptr) {
+            tutorialInstance_ = this;
+        } else if (secondaryTutorialInstance_ == nullptr) {
+            secondaryTutorialInstance_ = this;
+            // Notify primary instance that secondary instance was created
+            if (tutorialInstance_ != nullptr) {
+                tutorialInstance_->showNextCutPasteTutorialStep("new instance");
+            }
+        }
+    }
+
+    BoardWindow::~BoardWindow() {
+        if (this == tutorialInstance_) {
+            tutorialInstance_ = nullptr;
+        } else if (this == secondaryTutorialInstance_) {
+            secondaryTutorialInstance_ = nullptr;
+        }
+    }
+
     static bool drawBoardButton(
         const std::string& button, const std::string& label,
         const ImVec2& buttonSize,
@@ -93,9 +113,17 @@ namespace QaplaWindows
 
     QaplaButton::ButtonState BoardWindow::getSetupButtonState(const std::string& button) const {
         auto state = QaplaButton::ButtonState::Normal;
+        
+        // Tutorial highlight
+        if (button == highlightedButton_) {
+            state = QaplaButton::ButtonState::Highlighted;
+        }
+        
         if (button == "Ok") {
-            return isValidPosition() ? QaplaButton::ButtonState::Normal : QaplaButton::ButtonState::Disabled;
-        } 
+            // Only highlight if valid position, otherwise show disabled
+            return isValidPosition() ? state : QaplaButton::ButtonState::Disabled;
+        }
+        
         return state;
     }
 
@@ -106,17 +134,8 @@ namespace QaplaWindows
             state = QaplaButton::ButtonState::Active;
         }
         
-        // Tutorial highlights
-        if (button == "Play" && highlightPlay_) {
-            state = QaplaButton::ButtonState::Highlighted;
-        }
-        if (button == "Stop" && highlightStop_) {
-            state = QaplaButton::ButtonState::Highlighted;
-        }
-        if (button == "Analyze" && highlightAnalyze_) {
-            state = QaplaButton::ButtonState::Highlighted;
-        }
-        if (button == "Auto" && highlightAuto_) {
+        // Tutorial highlight
+        if (button == highlightedButton_) {
             state = QaplaButton::ButtonState::Highlighted;
         }
         
@@ -133,8 +152,14 @@ namespace QaplaWindows
         int maxVisibleButtons = static_cast<int>(availableWidth / buttonWidth);
         
         std::vector<std::string> visibleButtons;
+        
+        // More menu commands with tutorial highlights
+        auto timeControlState = highlightedButton_ == "Time Control"
+            ? QaplaButton::ButtonState::Highlighted 
+            : QaplaButton::ButtonState::Normal;
+            
         std::vector<QaplaButton::PopupCommand> moreCommands = {
-            {"Time Control", QaplaButton::ButtonState::Normal},
+            {"Time Control", timeControlState},
             {"Copy PGN", QaplaButton::ButtonState::Normal},
             {"Copy FEN", QaplaButton::ButtonState::Normal}
         };
@@ -219,7 +244,7 @@ namespace QaplaWindows
             startPos.y);
         ImGui::SetCursorScreenPos(moreButtonPos);
         
-        auto moreButtonState = hasHighlightedCommand(moreCommands) 
+        auto moreButtonState = hasHighlightedCommand(moreCommands)
             ? QaplaButton::ButtonState::Highlighted 
             : QaplaButton::ButtonState::Normal;
         
@@ -236,6 +261,7 @@ namespace QaplaWindows
         
         if (!clickedButton.empty()) {
             showNextBoardTutorialStep(clickedButton, status);
+            showNextCutPasteTutorialStep(clickedButton);  
         }
         
         if (clickedButton == "Setup") {
@@ -339,6 +365,9 @@ namespace QaplaWindows
             pos.x += totalSize.x + space;
         }
         executeSetupCommand(clickedButton);
+        if (!clickedButton.empty()) {
+            showNextCutPasteTutorialStep(clickedButton);
+        }
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 
         // Setup here means we deactivated the setup mode and thus we inform the caller to update its fen
@@ -350,6 +379,7 @@ namespace QaplaWindows
         if (setupMode_) {
             return drawSetupButtons();
         } 
+        showNextCutPasteTutorialStep("");
         showNextBoardTutorialStep("", status);
         return drawBoardButtons(status);
     }
@@ -409,7 +439,63 @@ namespace QaplaWindows
         return true;
     }();
 
+    static auto boardWindowCutPasteTutorialInit = []() {
+        Tutorial::instance().addEntry({
+            .name = "boardcutpaste",
+            .displayName = "Board Cut & Paste",
+            .dependsOn = "boardwindow",
+            .messages = {
+                { "Cut & Paste - Step 1\n\n"
+                  "Learn to manage positions and multiple boards.\n\n"
+                  "First, click 'More' and select 'Time Control' to set the game time.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 2\n\n"
+                  "Set the time to 5 minutes and confirm with 'Apply'.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 3\n\n"
+                  "Good! Now click 'Setup' to enter setup mode.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 4\n\n"
+                  "Click 'Clear' to remove all pieces from the board.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 5\n\n"
+                  "Place two kings and a queen on the board.\n\n"
+                  "Then click 'Ok' to return to play mode.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 6\n\n"
+                  "Click 'Analyze' to start engine analysis.\n"
+                  "Wait a moment for the engine to calculate.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 7\n\n"
+                  "In the Engine List window, click on the top row.\n"
+                  "This copies the position including the calculated variation (PV).",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 8\n\n"
+                  "Click the '+' tab at the top to create a second board.\n"
+                  "A new tab (Board 2) will appear. You can switch between boards using the tabs.",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste - Step 9\n\n"
+                  "Switch to the Board 2 tab and click 'Paste'.\n"
+                  "The position and PV will be pasted. Navigate to see the calculated line.\n\n"
+                  "Tip: Hover over Board 2 tab to see the close button (×).",
+                  SnackbarManager::SnackbarType::Note },
+                { "Cut & Paste Complete!\n\n"
+                  "You've learned Cut & Paste and multi-board management!\n"
+                  "You can copy FEN, PGN, PGN+PV, and paste various formats.\n\n"
+                  "Use tabs to manage multiple boards. Board 1 cannot be closed.",
+                  SnackbarManager::SnackbarType::Success }
+            },
+            .getProgressCounter = []() -> uint32_t& {
+                return BoardWindow::tutorialCutPasteProgress_;
+            },
+            .autoStart = false
+        });
+        return true;
+    }();
+
     void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status) {
+        if (this != tutorialInstance_) return;
+        
         static const std::string topicName = "boardwindow";
         
         switch (tutorialProgress_) {
@@ -417,14 +503,14 @@ namespace QaplaWindows
             Tutorial::instance().showNextTutorialStep(topicName);
             tutorialSubStep_ = 0;
             if (tutorialProgress_ == 1) { 
-                highlightPlay_ = true;
+                highlightedButton_ = "Play";
             }
             return;
             
             case 1:
             // Step 1: User clicks play and engine makes a move
             if (tutorialSubStep_ == 0 && clickedButton == "Play") {
-                highlightPlay_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
@@ -441,7 +527,7 @@ namespace QaplaWindows
             if (gameState_->getHalfmovesPlayed() > 2) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightPlay_ = true;
+                highlightedButton_ = "Play";
                 return;
             }
             return;
@@ -449,14 +535,14 @@ namespace QaplaWindows
             case 3:
             // Step 3: User clicks Play again - engine switches to the other side
             if (tutorialSubStep_ == 0 && clickedButton == "Play") {
-                highlightPlay_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 3) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightStop_ = true;
+                highlightedButton_ = "Stop";
                 return;
             }
             return;
@@ -464,14 +550,14 @@ namespace QaplaWindows
             case 4:
             // Step 4: User clicks Stop and makes a manual move without engine playing
             if (tutorialSubStep_ == 0 && clickedButton == "Stop") {
-                highlightStop_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 4) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightAnalyze_ = true;
+                highlightedButton_ = "Analyze";
                 return;
             }
             return;
@@ -479,10 +565,10 @@ namespace QaplaWindows
             case 5:
             // Step 5: User clicks Analyze - both engines analyze without making moves
             if (clickedButton == "Analyze") {
-                highlightAnalyze_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightStop_ = true;
+                highlightedButton_ = "Stop";
                 return;
             }
             return;
@@ -490,10 +576,10 @@ namespace QaplaWindows
             case 6:
             // Step 6: User clicks Stop to end the analysis
             if (clickedButton == "Stop") {
-                highlightStop_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightAuto_ = true;
+                highlightedButton_ = "Auto";
                 return;
             }
             return;
@@ -501,10 +587,10 @@ namespace QaplaWindows
             case 7:
             // Step 7: User clicks Auto - both engines play against each other automatically
             if (clickedButton == "Auto") {
-                highlightAuto_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
-                highlightStop_ = true;
+                highlightedButton_ = "Stop";
                 return;
             }
             return;
@@ -512,7 +598,7 @@ namespace QaplaWindows
             case 8:
             // Step 8: User clicks Stop to end auto-play
             if (clickedButton == "Stop") {
-                highlightStop_ = false;
+                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().showNextTutorialStep(topicName);
                 return;
@@ -524,4 +610,125 @@ namespace QaplaWindows
             return;
         }
     }
+
+    namespace {
+    bool hasValidStringInClipboard() {
+        auto clipboardStr = ImGuiCutPaste::getClipboardString();
+        if (!clipboardStr || clipboardStr->empty()) {
+            return false;
+        }
+        QaplaUtils::GameParser parser;
+        auto parsed = parser.parse(*clipboardStr);
+        return static_cast<bool>(parsed);
+    }
+    }
+
+    void BoardWindow::showNextCutPasteTutorialStep(const std::string& clickedButton) {
+        static const std::string topicName = "boardcutpaste";
+        
+        bool twoBoardsStep = (tutorialCutPasteProgress_ == 9 || tutorialCutPasteProgress_ == 10);
+           
+        // Special handling for two board instances in steps 9 and 10
+        if (this != tutorialInstance_ && (!twoBoardsStep || this != secondaryTutorialInstance_)) return;
+        
+        switch (tutorialCutPasteProgress_) {
+            case 0:
+            // Initial step - show first message
+            Tutorial::instance().showNextTutorialStep(topicName);
+            if (tutorialCutPasteProgress_ == 1) { 
+                highlightedButton_ = "Time Control";
+            }
+            return;
+            
+            case 1:
+            // Step 1: User clicks Time Control in More menu
+            if (clickedButton == "Time Control") {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                return;
+            }
+            return;
+            
+            case 2:
+            // Step 2: User confirms Time Control popup
+            if (clickedButton == "Time Control Confirmed") {
+                Tutorial::instance().showNextTutorialStep(topicName);
+                highlightedButton_ = "Setup";
+                return;
+            }
+            return;
+            
+            case 3:
+            // Step 3: User clicks Setup to enter setup mode
+            if (clickedButton == "Setup") {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                highlightedButton_ = "Clear";
+                return;
+            }
+            return;
+            
+            case 4:
+            // Step 4: User clicks Clear to remove all pieces
+            if (clickedButton == "Clear") {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                highlightedButton_ = "Ok";
+                return;
+            }
+            return;
+            
+            case 5:
+            // Step 5: User places pieces and clicks Ok
+            if (clickedButton == "Ok" && !setupMode_) {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                highlightedButton_ = "Analyze";
+                return;
+            }
+            return;
+            
+            case 6:
+            // Step 6: User clicks Analyze and waits
+            if (clickedButton == "Analyze") {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                return;
+            }
+            return;
+            
+            case 7:
+            // Step 7: User clicks on engine list row to copy PV
+            if (hasValidStringInClipboard()) {
+                Tutorial::instance().showNextTutorialStep(topicName);
+                return;
+            }
+            return;
+            
+            case 8:
+            // Step 8: Second board instance created (triggered from constructor)
+            if (clickedButton == "new instance") {
+                Tutorial::instance().showNextTutorialStep(topicName);
+                // Highlight Paste button in the SECONDARY instance
+                if (secondaryTutorialInstance_ != nullptr) {
+                    secondaryTutorialInstance_->highlightedButton_ = "Paste";
+                }
+                return;
+            }
+            return;
+            
+            case 9:
+            if (this == secondaryTutorialInstance_ && clickedButton == "Paste") {
+                highlightedButton_ = "";
+                Tutorial::instance().showNextTutorialStep(topicName);
+                return;
+            }
+            return;
+           
+            default:
+            Tutorial::instance().finishTutorial(topicName);
+            return;
+        }
+    }
 }
+

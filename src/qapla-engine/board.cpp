@@ -502,7 +502,9 @@ void Board::setupAddPiece(Square square, Piece piece) {
 	auto pieceColor = getPieceColor(piece);
 	// auto enabling castling rights if king or rook is placed on its starting square
 	if (pieceType == KING) {
-		setupRemovePiece(kingSquares[pieceColor]);
+		if (kingSquares[pieceColor] != square && _board[kingSquares[pieceColor]] == piece) {
+			setupRemovePiece(kingSquares[pieceColor]);
+		}
 		kingSquares[pieceColor] = square;
 		if (square == _kingStartSquare[pieceColor]) {
 			if (_board[_kingRookStartSquare[pieceColor]] == piece) {

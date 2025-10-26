@@ -36,8 +36,8 @@ namespace QaplaWindows
     class BoardWindow : public ImGuiBoard
     {
     public:
-        explicit BoardWindow() {}
-        ~BoardWindow() override = default;
+        explicit BoardWindow();
+        ~BoardWindow() override;
         
         /**
          * @brief Draws the control buttons for the board.
@@ -48,9 +48,36 @@ namespace QaplaWindows
          */
         std::string drawButtons(const std::string& status);
 
-        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for the tutorial
+        /**
+         * @brief Sets the unique identifier for the board.
+         * 
+         * @param id The unique identifier string.
+         */
+        void setBoardId(const std::string& id) { boardId_ = id; }
+
+        /**
+         * @brief Advances the tutorial based on button clicks and game state.
+         * 
+         * @param clickedButton The button that was clicked
+         * @param status The current game status
+         */
+        void showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status);
+
+        /**
+         * @brief Advances the cut&paste tutorial based on button clicks and state.
+         * 
+         * @param clickedButton The button that was clicked
+         */
+        void showNextCutPasteTutorialStep(const std::string& clickedButton);
+
+        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for board controls tutorial
+        static inline uint32_t tutorialCutPasteProgress_ = 0; ///< Progress counter for cut&paste tutorial
 
     private:
+        // Tutorial instance management - primary and secondary instance pointers
+        static inline BoardWindow* tutorialInstance_ = nullptr;
+        static inline BoardWindow* secondaryTutorialInstance_ = nullptr;
+
         /**
          * @brief Draws the setup mode buttons and executes the associated commands.
          */
@@ -141,23 +168,12 @@ namespace QaplaWindows
          */
         bool hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands) const;
 
-        /**
-         * @brief Advances the tutorial based on button clicks and game state.
-         * 
-         * @param clickedButton The button that was clicked
-         * @param status The current game status
-         */
-        void showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status);
-
         bool setupMode_ = false;
+        std::string boardId_;
         
-        // Tutorial highlight flags
-        bool highlightPlay_ = false;
-        bool highlightStop_ = false;
-        bool highlightAnalyze_ = false;
-        bool highlightAuto_ = false;
-
-        uint32_t tutorialSubStep_ = 0; ///< Sub-step counter for more granular tutorial tracking
+        // Tutorial state - single highlighted button name for all tutorials
+        std::string highlightedButton_;
+        uint32_t tutorialSubStep_ = 0;
     };
 
 }

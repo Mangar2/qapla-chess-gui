@@ -62,6 +62,7 @@ void Tutorial::loadConfiguration() {
         for (auto& entry: entries_) {
             auto valueOpt = sections[0].getValue(entry.name).value_or("0");
             entry.counter = QaplaHelpers::to_uint32(valueOpt).value_or(0);
+            entry.getProgressCounter() = entry.counter;
         }
     }
 }

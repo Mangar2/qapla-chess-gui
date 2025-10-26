@@ -267,6 +267,10 @@ void InteractiveBoardWindow::drawTimeControlPopup() {
 			timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
 			computeTask_->setTimeControl(timeControl_);
 			timeControlWindow_->content().updateConfiguration("board" + std::to_string(id_));
+			// Notify tutorial that Time Control popup was confirmed
+			if (boardWindow_) {
+				boardWindow_->showNextCutPasteTutorialStep("Time Control Confirmed");
+			}
 		}
 		else {
 			// Cancel - reload from configuration (discards changes)
