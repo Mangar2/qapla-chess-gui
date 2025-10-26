@@ -51,10 +51,10 @@ namespace QaplaWindows {
             std::string filepath;
             std::vector<QaplaTester::EngineConfig> engines;
             uint32_t maxConcurrency = 32;
-            uint32_t concurrency;
-            uint64_t maxTimeInS;
-            uint64_t minTimeInS;
-            uint32_t seenPlies;
+            uint32_t concurrency = 1;
+            uint64_t maxTimeInS = 10;
+            uint64_t minTimeInS = 1;
+            uint32_t seenPlies = 3;
             bool operator==(const EpdConfig& other) const {
                 return filepath == other.filepath &&
                        engines == other.engines &&

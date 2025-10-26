@@ -85,11 +85,11 @@ namespace QaplaWindows {
                 .engines = {},
                 .maxConcurrency = QaplaHelpers::to_uint32(section.getValue("maxconcurrency").value_or("")).value_or(32),
                 .concurrency = QaplaHelpers::to_uint32(section.getValue("concurrency").value_or("")).value_or(1),
-                .maxTimeInS = QaplaHelpers::to_uint32(section.getValue("maxtime").value_or("")).value_or(5),
+                .maxTimeInS = QaplaHelpers::to_uint32(section.getValue("maxtime").value_or("")).value_or(10),
                 .minTimeInS = QaplaHelpers::to_uint32(section.getValue("mintime").value_or("")).value_or(1),
                 .seenPlies = QaplaHelpers::to_uint32(section.getValue("seenplies").value_or("")).value_or(3)
             };
-        }
+        } 
         ImGuiEngineSelect::Options options;
         options.allowGauntletEdit = false;
         options.allowPonderEdit = false;
@@ -209,6 +209,18 @@ namespace QaplaWindows {
     }
 
     bool EpdData::mayAnalyze(bool sendMessage) const {
+        if (epdConfig_.filepath.empty()) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("No EPD or RAW position file selected.");
+            }
+            return false;
+        }
+        if (epdConfig_.maxTimeInS == 0) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("Max time must be greater than 0.");
+            }
+            return false;
+        }
         if (epdConfig_.engines.empty()) {
             if (sendMessage) {
                 SnackbarManager::instance().showWarning("No engines selected for analysis.");
