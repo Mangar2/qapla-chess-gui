@@ -112,5 +112,9 @@ void ConfigurationWindow::drawTutorialSettings()
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
         }
+        ImGui::SameLine();
+        auto messageCount = entry.messages.size();
+        auto progress = std::min<uint32_t>(entry.getProgressCounter(), messageCount);
+        ImGui::TextDisabled("(Progress: %u/%zu)", progress, messageCount);
     }
 }
