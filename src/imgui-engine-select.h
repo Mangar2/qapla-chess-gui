@@ -79,9 +79,10 @@ namespace QaplaWindows {
 
         /**
          * @brief Draws the engine selection interface
+         * @param highlight Whether to highlight the "Engines" collapsing header with a red dot
          * @return true if something changed, false otherwise
          */
-        bool draw();
+        bool draw(bool highlight = false);
 
         /**
          * @brief Returns the currently configured engine configurations

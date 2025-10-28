@@ -28,44 +28,87 @@
 
 using namespace QaplaWindows;
 
-bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float indent) {
+bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float indent, bool highlight) {
     bool changed = false;
 
-    if (ImGui::CollapsingHeader("Opening", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("opening");
-        ImGui::Indent(indent);
-
-        changed |= ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("File format", openings_.format, { "epd", "raw", "pgn" });
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Order", openings_.order, { "random", "sequential" });
-
-        auto xPos = ImGui::GetCursorPosX();
-        changed |= ImGuiControls::optionalInput<int>(
-            "Set plies",
-            openings_.plies,
-            [&](int& plies) {
-                ImGui::SetCursorPosX(xPos + 100);
-                ImGui::SetNextItemWidth(inputWidth - 100);
-                return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
-            }
-        );
-       
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("First opening", openings_.start, 0, 1000);
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Random seed", openings_.seed, 0, 1000);
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Switch policy", openings_.policy, { "default", "encounter", "round" });
-
-        ImGui::Unindent(indent);
-        ImGui::PopID();
+    if (!ImGuiControls::CollapsingHeaderWithDot("Opening", ImGuiTreeNodeFlags_Selected, highlight)) {
+        return false;
     }
+    
+    ImGui::PushID("opening");
+    ImGui::Indent(indent);
+
+    changed |= ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Path to opening file (.epd, .pgn, or raw FEN text)");
+    }
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    changed |= ImGuiControls::selectionBox("File format", openings_.format, { "epd", "raw", "pgn" });
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip(
+            "Format of the opening file:\n"
+            "  epd - Standard .epd file with optional tags\n"
+            "  pgn - Games (last position extracted, not yet implemented)\n"
+            "  raw - Plain text FEN strings (one per line)"
+        );
+    }
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    changed |= ImGuiControls::selectionBox("Order", openings_.order, { "random", "sequential" });
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip(
+            "How positions are picked from the file:\n"
+            "  sequential - Use positions in order\n"
+            "  random - Shuffle the order"
+        );
+    }
+
+    auto xPos = ImGui::GetCursorPosX();
+    changed |= ImGuiControls::optionalInput<int>(
+        "Set plies",
+        openings_.plies,
+        [&](int& plies) {
+            ImGui::SetCursorPosX(xPos + 100);
+            ImGui::SetNextItemWidth(inputWidth - 100);
+            return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
+        }
+    );
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip(
+            "Maximum plies to play from PGN opening before engines take over.\n"
+            "Only applicable for PGN input.\n"
+            "  all - Play full PGN sequence\n"
+            "  0 - Engines start from PGN start position\n"
+            "  N - Play N plies, then engines continue"
+        );
+    }
+   
+    ImGui::SetNextItemWidth(inputWidth);
+    changed |= ImGuiControls::inputInt<uint32_t>("First opening", openings_.start, 0, 1000);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Index of the first position to use (1-based).\nUseful for splitting test segments.");
+    }
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    changed |= ImGuiControls::inputInt<uint32_t>("Random seed", openings_.seed, 0, 1000);
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Seed for random number generator when order is 'random'");
+    }
+    
+    ImGui::SetNextItemWidth(inputWidth);
+    changed |= ImGuiControls::selectionBox("Switch policy", openings_.policy, { "default", "encounter", "round" });
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip(
+            "When a new opening position is selected:\n"
+            "  default - Fresh sequence per round, reused across pairings\n"
+            "  encounter - New opening per engine pair (colors don't matter)\n"
+            "  round - Same opening for all games in the round"
+        );
+    }
+
+    ImGui::Unindent(indent);
+    ImGui::PopID();
 
     return changed;
 }

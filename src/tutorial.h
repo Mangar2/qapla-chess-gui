@@ -52,7 +52,10 @@ public:
             showNextMessage();
         }
         void finish() {
-            counter = static_cast<uint32_t>(messages.size()) + 1;
+            if (!completed()) {
+                counter = static_cast<uint32_t>(messages.size()) + 1;
+                getProgressCounter() = counter;
+            }
         }
         bool completed() const {
             return counter > messages.size();

@@ -42,7 +42,7 @@ ImGuiEngineSelect::ImGuiEngineSelect(const Options& options, ConfigurationChange
 {
 }
 
-bool ImGuiEngineSelect::draw() {
+bool ImGuiEngineSelect::draw(bool highlight) {
     bool modified = false;
     
     // In directEditMode, skip the "Engines" collapsing header
@@ -51,7 +51,7 @@ bool ImGuiEngineSelect::draw() {
         if (options_.enginesDefaultOpen) {
             flags |= ImGuiTreeNodeFlags_DefaultOpen;
         }
-        if (!ImGui::CollapsingHeader("Engines", flags)) {
+        if (!ImGuiControls::CollapsingHeaderWithDot("Engines", flags, highlight)) {
             return false;
         }
     }

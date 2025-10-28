@@ -39,9 +39,10 @@ namespace QaplaWindows {
          * @param inputWidth Width for input controls.
          * @param fileInputWidth Width for file input control.
          * @param indent Indentation level.
+         * @param highlight Whether to highlight the "Opening" collapsing header with a red dot.
          * @return True if any value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent);
+        bool draw(float inputWidth, float fileInputWidth, float indent, bool highlight = false);
 
         void setId(const std::string& id) {
             id_ = id;

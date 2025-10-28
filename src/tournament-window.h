@@ -62,6 +62,12 @@ namespace QaplaWindows {
         static void executeCommand(const std::string &button);
         static bool drawInput();
         static void drawProgress();
+        
+        /**
+         * @brief Checks if two engines with same originalName are selected and one has ponder enabled
+         * @return true if tutorial condition is met
+         */
+        static bool hasTwoSameEnginesWithPonder();
     };
 
 } // namespace QaplaWindows

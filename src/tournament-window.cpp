@@ -213,28 +213,66 @@ bool TournamentWindow::drawInput() {
 
     const bool highlightGlobalSettings = (highlightedSection_ == "GlobalSettings");
     changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F, highlightGlobalSettings);
-    changed |= tournamentData.engineSelect().draw();
-    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
+    
+    const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
+    changed |= tournamentData.engineSelect().draw(highlightEngineSelect);
+    
+    const bool highlightOpening = (highlightedSection_ == "Opening");
+    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F, highlightOpening);
 
-    if (ImGui::CollapsingHeader("Tournament", ImGuiTreeNodeFlags_Selected)) {
+    const bool highlightTournament = (highlightedSection_ == "Tournament");
+    if (ImGuiControls::CollapsingHeaderWithDot("Tournament", ImGuiTreeNodeFlags_Selected, highlightTournament)) {
         ImGui::PushID("tournament");
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputText("Event", tournamentData.config().event);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Optional event name for PGN or logging");
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Type", tournamentData.config().type, { "gauntlet", "round-robin" });
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Tournament type:\n"
+                "  gauntlet - One engine plays against all others\n"
+                "  round-robin - Every engine plays against every other engine"
+            );
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData.config().rounds, 1, 1000);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Repeat all pairings this many times");
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData.config().games, 1, 1000);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Number of games per pairing.\nTotal games = games × rounds");
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Same opening", tournamentData.config().repeat, 1, 1000);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Number of consecutive games played per opening.\n"
+                "Commonly set to 2 to alternate colors with the same line"
+            );
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("No color swap", tournamentData.config().noSwap);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Disable automatic color swap after each game");
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<int>("Average Elo", tournamentData.config().averageElo, 1000, 5000);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Save interval (s)", tournamentData.config().saveInterval, 0, 1000);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Average Elo level for scaling rating output");
+        }
+        
         ImGui::Unindent(10.0F);
         ImGui::PopID();
     }
@@ -294,6 +332,30 @@ bool TournamentWindow::highlighted() const {
     return tutorialProgress_ == 1;
 }
 
+bool TournamentWindow::hasTwoSameEnginesWithPonder() {
+    auto& configs = TournamentData::instance().engineSelect().getEngineConfigurations();
+    
+    // Check if we have at least 2 selected engines with same originalName
+    size_t index = 0;
+    for (const auto& config: configs) {
+        if (config.selected) {
+            auto it = std::ranges::find_if(configs.begin() + index + 1, configs.end(), 
+                [&config](const ImGuiEngineSelect::EngineConfiguration& otherConfig) {
+                    bool ponderCondition = config.config.isPonderEnabled() || otherConfig.config.isPonderEnabled();
+                    return otherConfig.selected && (config.originalName == otherConfig.originalName) && 
+                        ponderCondition;
+                });
+            
+            if (it != configs.end()) {
+                return true;
+            }
+        }
+        index++;
+    }
+    
+    return false;
+}
+
 void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     static const std::string topicName = "tournamentwindow";
     
@@ -313,6 +375,38 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if hash is 64 MB and global ponder is disabled
         if (tournamentData.globalSettings().getGlobalSettings().hashSizeMB == 64 && 
             !tournamentData.globalSettings().getGlobalSettings().useGlobalPonder) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+            highlightedSection_ = "EngineSelect";
+        }
+        return;
+        
+        case 3:
+        // Step 2: Select two engines with the same originalName and ponder enabled
+        if (hasTwoSameEnginesWithPonder()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+            highlightedSection_ = "Opening";
+        }
+        return;
+        
+        case 4:
+        // Step 3: Configure opening file
+        // Check if opening file is set (ignore format check as requested)
+        if (!tournamentData.tournamentOpening().openings().file.empty()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+            highlightedSection_ = "Tournament";
+        }
+        return;
+        
+        case 5:
+        // Step 4: Configure tournament settings
+        // Check: type=round-robin, rounds=2, games=2, repeat=2
+        if (tournamentData.config().type == "round-robin" &&
+            tournamentData.config().rounds == 2 &&
+            tournamentData.config().games == 2 &&
+            tournamentData.config().repeat == 2) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "";
             highlightedSection_ = "";
@@ -344,9 +438,27 @@ static auto tournamentWindowTutorialInit = []() {
               "Disable 'Engine decides' for Ponder.\n\n"
               "This ensures consistent memory usage.",
               SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 3\n\n"
+              "Select engines for the tournament.\n"
+              "Choose the same engine twice.\n"
+              "Enable 'Ponder' for one of them.\n\n"
+              "Names will auto-disambiguate with [ponder].",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 4\n\n"
+              "Configure opening positions.\n"
+              "Select an opening file (.epd, .pgn, or raw FEN).\n"
+              "Choose the appropriate file format.\n\n"
+              "Hover over options for detailed tooltips.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 5\n\n"
+              "Configure tournament settings.\n"
+              "Type: round-robin, Rounds: 2\n"
+              "Games per pairing: 2, Same opening: 2\n\n"
+              "Hover over options for explanations.",
+              SnackbarManager::SnackbarType::Note },
             { "Tournament Complete!\n\n"
-              "Global settings configured!\n\n"
-              "More tutorial steps coming soon!",
+              "Tournament configured!\n\n"
+              "Ready to start your first tournament!",
               SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
