@@ -639,6 +639,25 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
+     * @brief Custom CollapsingHeader that can display a red dot in the upper right corner.
+     * @param label Label of the collapsing header.
+     * @param flags Optional ImGuiTreeNodeFlags.
+     * @param showDot If true, a red dot is displayed in the upper right corner.
+     * @return True if the header is open, false otherwise.
+     */
+    inline bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false) {
+        bool result = ImGui::CollapsingHeader(label, flags);
+        
+        if (showDot) {
+            constexpr float dotOffsetX = 20.0F;  // More offset for CollapsingHeader arrow
+            constexpr float dotOffsetY = 10.0F;
+            drawDot(dotOffsetX, dotOffsetY);
+        }
+        
+        return result;
+    }
+
+    /**
      * @brief Custom TabItem that can display a red dot in the upper right corner.
      * @param label Label of the tab item.
      * @param p_open Optional pointer to a boolean that indicates if the tab is open.

@@ -36,10 +36,10 @@ ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, Con
 {
 }
 
-bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent) {
+bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent, bool highlight) {
     bool modified = false;
     
-    if (ImGui::CollapsingHeader("Global Engine Settings")) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", 0, highlight)) {
         ImGui::Indent(controlIndent);
         
         // Hash size control
@@ -95,10 +95,10 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz) {
+bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz, bool highlight) {
     bool modified = false;
     
-    if (ImGui::CollapsingHeader("Time Control")) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Time Control", 0, highlight)) {
         ImGui::Indent(controlIndent);
         
         // Both controls work with the SAME variable (timeControlSettings_.timeControl)

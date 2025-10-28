@@ -70,6 +70,18 @@ void Tutorial::loadConfiguration() {
             entry.getProgressCounter() = entry.counter;
         }
     }
+    for (auto& entry : entries_) {
+        const auto& dependsOn = entry.dependsOn;
+        if (dependsOn.empty()) {
+            continue;
+        }
+        // find topic with the name dependsOn
+        auto it = std::ranges::find_if(entries_,
+            [&dependsOn](const Entry& e) { return e.name == dependsOn; });
+        if (it != entries_.end() && it->completed() && entry.autoStart && entry.getProgressCounter() == 0) {
+            entry.getProgressCounter() = 1;
+        }
+    }
 }
 
 void Tutorial::saveConfiguration() const {

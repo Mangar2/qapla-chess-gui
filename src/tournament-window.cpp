@@ -22,6 +22,7 @@
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "snackbar.h"
+#include "tutorial.h"
 #include "os-dialogs.h"
 #include "imgui-controls.h"
 #include "imgui-engine-global-settings.h"
@@ -76,8 +77,32 @@ static void drawSingleButton(
     }
 }
 
+static QaplaButton::ButtonState getButtonState(const std::string& button) {
+    // Tutorial highlighting
+    if (!TournamentWindow::highlightedButton_.empty() && button == TournamentWindow::highlightedButton_) {
+        return QaplaButton::ButtonState::Highlighted;
+    }
+    
+    if (button == "Run/Grace/Continue" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
+        return QaplaButton::ButtonState::Active;
+    }
+    
+    if ((button == "Stop") && !TournamentData::instance().isRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if (button == "Clear" && !TournamentData::instance().hasTasksScheduled()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if ((button == "Load" || button == "Save As") && TournamentData::instance().isRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    return QaplaButton::ButtonState::Normal;
+}
 
-void TournamentWindow::drawButtons() {
+std::string TournamentWindow::drawButtons() {
     constexpr float space = 3.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
@@ -87,6 +112,9 @@ void TournamentWindow::drawButtons() {
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    
+    std::string clickedButton = "";
+    
     for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
         ImGui::SetCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
@@ -99,31 +127,20 @@ void TournamentWindow::drawButtons() {
             label = "Continue";
         }
 
-        auto state = QaplaButton::ButtonState::Normal;
-        if (button == "Run/Grace/Continue" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
-            state = QaplaButton::ButtonState::Active;
-        }
-        if ((button == "Stop") && !TournamentData::instance().isRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if (button == "Clear" && !TournamentData::instance().hasTasksScheduled()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if ((button == "Load" || button == "Save As") && TournamentData::instance().isRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
+        auto state = getButtonState(button);
 
         if (QaplaButton::drawIconButton(button, label, buttonSize, state,
                 [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
                     drawSingleButton(drawList, topLeft, size, button, running, state);
                 }))
         {
-            executeCommand(button);
+            clickedButton = button;
         }
         pos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    return clickedButton;
 }
 
 
@@ -194,7 +211,8 @@ bool TournamentWindow::drawInput() {
 
     bool changed = false;
 
-    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
+    const bool highlightGlobalSettings = (highlightedSection_ == "GlobalSettings");
+    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F, highlightGlobalSettings);
     changed |= tournamentData.engineSelect().draw();
     changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
 
@@ -246,7 +264,11 @@ void TournamentWindow::drawProgress()
 void TournamentWindow::draw() {
     constexpr float rightBorder = 5.0F;
     auto& tournamentData = TournamentData::instance();
-    drawButtons();
+    auto clickedButton = drawButtons();
+    
+    if (!clickedButton.empty()) {
+        executeCommand(clickedButton);
+    }
 
     ImGui::Indent(10.0F);
     auto size = ImGui::GetContentRegionAvail();
@@ -263,5 +285,75 @@ void TournamentWindow::draw() {
 
     ImGui::EndChild();
     ImGui::Unindent(10.0F);
+    
+    showNextTournamentTutorialStep(clickedButton);
 }
+
+bool TournamentWindow::highlighted() const {
+    // Highlight tab when tutorial is waiting for user to open it
+    return tutorialProgress_ == 1;
+}
+
+void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
+    static const std::string topicName = "tournamentwindow";
+    
+    auto& tournamentData = TournamentData::instance();
+    
+    switch (tutorialProgress_) {
+        case 1:
+        // Step 0 (autoStart): Tutorial started, tab is highlighted
+        // When draw() is called, the tab is open -> advance to next step
+        Tutorial::instance().showNextTutorialStep(topicName);
+        highlightedButton_ = "";
+        highlightedSection_ = "GlobalSettings";
+        return;
+        
+        case 2:
+        // Step 1: Configure global settings
+        // Check if hash is 64 MB and global ponder is disabled
+        if (tournamentData.globalSettings().getGlobalSettings().hashSizeMB == 64 && 
+            !tournamentData.globalSettings().getGlobalSettings().useGlobalPonder) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+            highlightedSection_ = "";
+        }
+        return;
+                                
+        default:
+        highlightedButton_ = "";
+        highlightedSection_ = "";
+        Tutorial::instance().finishTutorial(topicName);
+        return;
+    }
+}
+
+static auto tournamentWindowTutorialInit = []() {
+    Tutorial::instance().addEntry({
+        .name = "tournamentwindow",
+        .displayName = "Tournament",
+        .dependsOn = "epdwindow",
+        .messages = {
+            { "Tournament - Step 1\n\n"
+              "Start engine tournaments here.\n"
+              "Compare multiple engines in round-robin matches.\n\n"
+              "Click the 'Tournament' tab to open.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 2\n\n"
+              "Configure global engine settings.\n"
+              "Set Hash to 64 MB.\n"
+              "Disable 'Engine decides' for Ponder.\n\n"
+              "This ensures consistent memory usage.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament Complete!\n\n"
+              "Global settings configured!\n\n"
+              "More tutorial steps coming soon!",
+              SnackbarManager::SnackbarType::Success }
+        },
+        .getProgressCounter = []() -> uint32_t& {
+            return TournamentWindow::tutorialProgress_;
+        },
+        .autoStart = true
+    });
+    return true;
+}();
 

@@ -39,9 +39,26 @@ namespace QaplaWindows {
         ~TournamentWindow() = default;
 
         void draw() override;
+        
+        /**
+         * @brief Indicates whether the Tournament tab should be highlighted for tutorial.
+         * @return true if tutorial is active and not completed
+         */
+        bool highlighted() const override;
+
+        /**
+         * @brief Advances the Tournament tutorial based on user actions.
+         * @param clickedButton The button that was clicked (empty string for state checks)
+         */
+        void showNextTournamentTutorialStep(const std::string& clickedButton);
+
+        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for Tournament tutorial
+        static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial
+        static inline std::string highlightedSection_ = ""; ///< Section to highlight for tutorial
 
     private:
-        static void drawButtons();
+
+        static std::string drawButtons();
         static void executeCommand(const std::string &button);
         static bool drawInput();
         static void drawProgress();

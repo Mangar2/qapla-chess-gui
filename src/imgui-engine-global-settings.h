@@ -108,18 +108,20 @@ namespace QaplaWindows {
          * @brief Draws the global engine settings interface
          * @param controlWidth Width of the input controls
          * @param controlIndent Indentation for controls (default: 10.0)
+         * @param highlight If true, shows a red dot indicator for tutorial highlighting
          * @return true if any setting was changed, false otherwise
          */
-        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F);
+        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F, bool highlight = false);
 
         /**
          * @brief Draws the time control interface
          * @param controlWidth Width of the input controls
          * @param controlIndent Indentation for controls (default: 10.0)
          * @param blitz Whether to use blitz mode (no hours in time input)
+         * @param highlight If true, shows a red dot indicator for tutorial highlighting
          * @return true if any setting was changed, false otherwise
          */
-        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false);
+        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false, bool highlight = false);
 
         /**
          * @brief Returns the current global settings
