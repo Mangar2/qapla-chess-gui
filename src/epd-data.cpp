@@ -195,17 +195,18 @@ namespace QaplaWindows {
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt_ = epdManager_->getUpdateCount();
             setModified(); // Notify autosave system about data changes
-            if (state == State::Stopping || state == State::Running) {
-                if (poolAccess_->runningGameCount() == 0) {
-                    state = State::Stopped;
-                    SnackbarManager::instance().showSuccess("Analysis finished.");
-                }
-            }
-            if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
-                state = State::Running;
-            }
             populateTable();
 		}
+        if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
+            state = State::Running;
+        }
+        if (state == State::Stopping || state == State::Running) {
+            if (poolAccess_->runningGameCount() == 0) {
+                state = State::Stopped;
+                SnackbarManager::instance().showSuccess("Analysis finished.");
+            }
+        }
+
         viewerBoardWindows_.populateViews();
     }
 

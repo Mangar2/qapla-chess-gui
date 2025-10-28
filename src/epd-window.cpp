@@ -21,6 +21,7 @@
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "snackbar.h"
+#include "tutorial.h"
 #include "os-dialogs.h"
 #include "imgui-controls.h"
 #include "epd-data.h"
@@ -59,6 +60,11 @@ static std::string getButtonText(const std::string& button, EpdData::State epdSt
 }
 
 static QaplaButton::ButtonState getButtonState(const std::string& button, EpdData::State epdState) {
+    // Tutorial highlighting
+    if (!EpdWindow::highlightedButton_.empty() && button == EpdWindow::highlightedButton_) {
+        return QaplaButton::ButtonState::Highlighted;
+    }
+    
     if (button == "Run/Stop")
     {
         auto& epdData = EpdData::instance();
@@ -89,7 +95,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
     return QaplaButton::ButtonState::Normal;
 }
 
-void EpdWindow::drawButtons()
+std::string EpdWindow::drawButtons()
 {
     constexpr float space = 3.0F;
     constexpr float paddingTop = 5.0F;
@@ -100,6 +106,9 @@ void EpdWindow::drawButtons()
     constexpr ImVec2 buttonSize = {25.0F, 25.0F};
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
+    
+    std::string clickedButton = "";
+    
     for (const std::string button : {"Run/Stop", "Grace", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
@@ -129,12 +138,13 @@ void EpdWindow::drawButtons()
                 } 
             }))
         {
-            executeCommand(button);
+            clickedButton = button;
         }
         pos.x += totalSize.x + space;
     }
 
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
+    return clickedButton;
 }
 
 void QaplaWindows::EpdWindow::executeCommand(const std::string &button)
@@ -182,14 +192,7 @@ void EpdWindow::drawInput()
     }
 
     ImGui::Spacing();
-    
-    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("engineSettings");
-        ImGui::Indent(10.0F);
-        EpdData::instance().engineSelect().draw();
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
+    EpdData::instance().engineSelect().draw();
 
     if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
     {
@@ -230,7 +233,11 @@ void EpdWindow::drawProgress()
 void EpdWindow::draw()
 {
     constexpr float rightBorder = 5.0F;
-    drawButtons();
+    auto clickedButton = drawButtons();
+    
+    if (!clickedButton.empty()) {
+        executeCommand(clickedButton);
+    }
 
     ImGui::Indent(10.0F);
     auto size = ImGui::GetContentRegionAvail();
@@ -245,4 +252,179 @@ void EpdWindow::draw()
     ImGui::Unindent(10.0F);
 
     EpdData::instance().setSelectedIndex(clickedRow);
+    
+    showNextEpdTutorialStep(clickedButton);
 }
+
+bool EpdWindow::highlighted() const {
+    // Show highlight after tutorial start message only
+    return tutorialProgress_ == 1;
+}
+
+void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clickedButton) {
+    static const std::string topicName = "epdwindow";
+    
+    auto& epdData = EpdData::instance();
+    auto& config = epdData.config();
+    auto epdState = epdData.state;
+    
+    switch (tutorialProgress_) {
+        case 1:
+        // Step 0 (autoStart): Tutorial started, tab is highlighted
+        // When draw() is called, the tab is open -> advance to next step
+        Tutorial::instance().showNextTutorialStep(topicName);
+        highlightedButton_ = "";
+        return;
+        
+        case 2:
+        // Step 1: Tab opened - explain EPD and ask to select two engines
+        if (config.engines.size() >= 2) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+        }
+        return;
+        
+        case 3:
+        // Step 2: Two engines selected - configure parameters
+        if (config.seenPlies == 3 && 
+            config.maxTimeInS == 10 && 
+            config.minTimeInS == 1 && 
+            !config.filepath.empty()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "Run/Stop";
+        }
+        return;
+        
+        case 4:
+        // Step 3: Configuration complete - wait for analysis to start
+        if (epdState == EpdData::State::Running) {
+            highlightedButton_ = "Run/Stop";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 5:
+        // Step 4: Analysis running - wait for it to stop
+        if (epdState == EpdData::State::Stopped) {
+            highlightedButton_ = "Run/Stop";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 6:
+        // Step 5: Stopped - wait for Continue (Running again)
+        if (epdState == EpdData::State::Running) {
+            highlightedButton_ = "Grace";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 7:
+        // Step 6: Running again - wait for Grace (Stopping state)
+        if (epdState == EpdData::State::Stopping) {
+            highlightedButton_ = "";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 8:
+        // Step 7: Grace active - wait for fully stopped, then highlight Clear
+        if (epdState == EpdData::State::Stopped) {
+            highlightedButton_ = "Clear";
+        }
+        if (epdState == EpdData::State::Cleared) {
+            highlightedButton_ = "Run/Stop";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 9:
+        // Step 8: Cleared - wait for Analyze again (Running)
+        if (epdState == EpdData::State::Running) {
+            highlightedButton_ = "";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+        
+        case 10:
+        // Step 9: Running - wait for concurrency to be set to 10
+        if (config.concurrency == 10) {
+            highlightedButton_ = "";
+            Tutorial::instance().showNextTutorialStep(topicName);
+        }
+        return;
+                                
+        default:
+        highlightedButton_ = "";
+        Tutorial::instance().finishTutorial(topicName);
+        return;
+    }
+}
+
+static auto epdWindowTutorialInit = []() {
+    Tutorial::instance().addEntry({
+        .name = "epdwindow",
+        .displayName = "EPD Analysis",
+        .dependsOn = "boardcutpaste",
+        .messages = {
+            { "EPD Analysis - Step 1\n\n"
+              "Run engine position tests with EPD files.\n"
+              "These tests evaluate engine strength on tactical positions.\n\n"
+              "Click the 'EPD' tab to open this window.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 2\n\n"
+              "EPD window is now open.\n\n"
+              "Open 'Engines' section and select two engines.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 3\n\n"
+              "Configure test parameters in 'Configuration':\n"
+              "• Seen plies: 3\n"
+              "• Max time: 10s, Min time: 1s\n"
+              "• Select an EPD or RAW file",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 4\n\n"
+              "Configuration complete!\n\n"
+              "Click 'Analyze' to start the test.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 5\n\n"
+              "Analysis is running!\n\n"
+              "Click 'Stop' to pause. Progress is auto-saved.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 6\n\n"
+              "Stopped. Button now shows 'Continue'.\n\n"
+              "Click 'Continue' to resume.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 7\n\n"
+              "Analysis resumed!\n\n"
+              "Click 'Grace' for graceful stop.\n"
+              "Finishes current tests, skips new ones.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 8\n\n"
+              "Grace mode! Tests finishing.\n\n"
+              "Board tabs show parallel analyses.\n"
+              "When stopped, click 'Clear' to delete results.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 9\n\n"
+              "Results cleared!\n\n"
+              "Click 'Analyze' to restart.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis - Step 10\n\n"
+              "Analysis running!\n\n"
+              "Move 'Concurrency' slider to 10.\n"
+              "Creates 10 parallel analyses with board tabs.",
+              SnackbarManager::SnackbarType::Note },
+            { "EPD Analysis Complete!\n\n"
+              "Well done!\n\n"
+              "• Results auto-save on exit\n"
+              "• Cannot resume after restart\n"
+              "• Progress bar shows completion",
+              SnackbarManager::SnackbarType::Success }
+        },
+        .getProgressCounter = []() -> uint32_t& {
+            return EpdWindow::tutorialProgress_;
+        },
+        .autoStart = true
+    });
+    return true;
+}();
+

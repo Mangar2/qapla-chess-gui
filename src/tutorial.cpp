@@ -50,6 +50,11 @@ void Tutorial::showNextTutorialStep(const std::string& topicName) {
             break;
         }
     }
+    for (auto& entry : entries_) {
+        if (entry.dependsOn == topicName && entry.autoStart && entry.getProgressCounter() == 0) {
+            entry.getProgressCounter() = 1;
+        }
+    }
     saveConfiguration();
 }
 
