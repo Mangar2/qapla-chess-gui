@@ -578,22 +578,53 @@ namespace QaplaWindows::ImGuiControls {
 
         // Input fields for base time
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
-        if (!blitz) inputInt<uint32_t>("Hours", hours, 0, 10000);
+        if (!blitz) {
+            inputInt<uint32_t>("Hours", hours, 0, 10000);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Hours of base time for the moves to play");
+            }
+        }
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
         inputInt<uint32_t>("Minutes", minutes, 0, 59);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Minutes of base time for the moves to play");
+        }
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Seconds", seconds, 0, 59);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Seconds of base time for the moves to play");
+        }
 
         // Input fields for increment
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
-		if (!blitz) inputInt<uint32_t>("Increment Minutes", incrementMinutes, 0, 59);
+		if (!blitz) {
+            inputInt<uint32_t>("Increment Minutes", incrementMinutes, 0, 59);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Minutes added per move");
+            }
+        }
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Increment Seconds", incrementSeconds, 0, 59);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Seconds added per move");
+        }
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Increment Milliseconds", incrementMilliseconds, 0, 999, 10, 100);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Milliseconds added per move");
+        }
 
         if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
-		if (!blitz) inputInt<uint32_t>("Moves to Play", movesToPlay, 0, 1000);
+		if (!blitz) {
+            inputInt<uint32_t>("Moves to Play", movesToPlay, 0, 1000);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip(
+                    "Moves to play before time resets.\n"
+                    "0 = no reset (entire game)\n"
+                    "e.g., 40 = add base time after 40 moves"
+                );
+            }
+        }
         QaplaTester::TimeSegment res;
 		res.movesToPlay = movesToPlay;
         res.baseTimeMs = static_cast<uint64_t>(hours) * 3600000 +

@@ -72,6 +72,7 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
 
 void GameContext::ensureStarted()
 {
+    std::lock_guard lock(engineMutex_);
     for (auto &player : players_)
     {
         if (player->getEngine()->isStopped())
@@ -100,6 +101,7 @@ void GameContext::restartPlayer(uint32_t index)
 
 void GameContext::restartPlayer(const std::string &id)
 {
+    std::lock_guard lock(engineMutex_);
     for (auto &player : players_)
     {
         if (player->getIdentifier() == id)
@@ -115,6 +117,7 @@ void GameContext::restartPlayer(const std::string &id)
 
 void GameContext::stopEngine(const std::string &id)
 {
+    std::lock_guard lock(engineMutex_);
     for (auto &player : players_)
     {
         if (player->getIdentifier() == id)
@@ -126,9 +129,12 @@ void GameContext::stopEngine(const std::string &id)
 
 void GameContext::setTimeControl(const TimeControl &timeControl)
 {
-    for (auto &player : players_)
     {
-        player->setTimeControl(timeControl);
+        std::lock_guard lock(engineMutex_);
+        for (auto &player : players_)
+        {
+            player->setTimeControl(timeControl);
+        }
     }
     std::scoped_lock lock(gameRecordMutex_);
     gameRecord_.setTimeControl(timeControl, timeControl);
@@ -400,6 +406,7 @@ MoreRecords GameContext::getMoveInfos() const
 
 void GameContext::withMoveRecord(std::function<void(const MoveRecord&, uint32_t)> accessFn) const {
     uint32_t index = 0;
+    std::lock_guard lock(engineMutex_);
     for (const auto &player : players_)
     {
         uint32_t adjustedIndex = index;

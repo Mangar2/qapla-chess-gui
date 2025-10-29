@@ -109,6 +109,14 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
         ImGui::SetNextItemWidth(controlWidth);
         modified |= ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.timeControl, 
                                         timeControlSettings_.predefinedOptions);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Quick selection for common time controls.\n"
+                "Selecting an option automatically fills the input fields above.\n"
+                "Example: '20.0+0.02' sets Seconds=20, Increment Ms=20"
+            );
+        }
+        
         ImGui::Unindent(controlIndent);
     }
     

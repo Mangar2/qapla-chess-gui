@@ -122,9 +122,9 @@ std::string TournamentWindow::drawButtons() {
         
         if (label == "Run/Grace/Continue") {
             label = running ? "Grace" : "Run";
-        } 
-        if (label == "Run/Grace/Continue" && TournamentData::instance().hasTasksScheduled()) {
-            label = "Continue";
+            if (!running && TournamentData::instance().hasTasksScheduled()) {
+                label = "Continue";
+            }
         }
 
         auto state = getButtonState(button);
@@ -178,6 +178,7 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
                 {
                     TournamentData::saveTournament(selectedPath);
                 }
+                showNextTournamentTutorialStep(button);
             }
         }
         catch (const std::exception &e)
@@ -277,7 +278,9 @@ bool TournamentWindow::drawInput() {
         ImGui::PopID();
     }
     
-    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
+    const bool highlightTimeControl = (highlightedSection_ == "TimeControl");
+    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false, highlightTimeControl);
+    
     changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
@@ -376,7 +379,6 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         if (tournamentData.globalSettings().getGlobalSettings().hashSizeMB == 64 && 
             !tournamentData.globalSettings().getGlobalSettings().useGlobalPonder) {
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightedButton_ = "";
             highlightedSection_ = "EngineSelect";
         }
         return;
@@ -385,7 +387,6 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 2: Select two engines with the same originalName and ponder enabled
         if (hasTwoSameEnginesWithPonder()) {
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightedButton_ = "";
             highlightedSection_ = "Opening";
         }
         return;
@@ -395,7 +396,6 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if opening file is set (ignore format check as requested)
         if (!tournamentData.tournamentOpening().openings().file.empty()) {
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightedButton_ = "";
             highlightedSection_ = "Tournament";
         }
         return;
@@ -404,11 +404,83 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 4: Configure tournament settings
         // Check: type=round-robin, rounds=2, games=2, repeat=2
         if (tournamentData.config().type == "round-robin" &&
-            tournamentData.config().rounds == 2) {
+            tournamentData.config().rounds == 2 &&
+            tournamentData.config().games == 2 &&
+            tournamentData.config().repeat == 2) {
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightedButton_ = "";
+            highlightedSection_ = "TimeControl";
+        }
+        return;
+        
+        case 6:
+        // Step 5: Configure time control
+        // Check if time control is set to "20.0+0.02"
+        if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
+            Tutorial::instance().showNextTutorialStep(topicName);
             highlightedSection_ = "";
         }
+        return;
+        
+        case 7:
+        // Step 6: Set concurrency to 4
+        if (tournamentData.concurrency() == 4) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "Run/Grace/Continue";
+        }
+        return;
+        
+        case 8:
+        // Step 7: Start tournament - check if running
+        if (tournamentData.isRunning()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+        }
+        return;
+        
+        case 9:
+        // Step 8: Wait for tournament to finish - check if NOT running and has results
+        if (!tournamentData.isRunning() && tournamentData.hasTasksScheduled()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "Save As";
+        }
+        return;
+        
+        case 10:
+        // Step 9: Save tournament - advance when "Save As" button is clicked
+        if (clickedButton == "Save As") {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+        }
+        return;
+        
+        case 11:
+        // Step 10: Add third engine - check if at least 3 engines are selected
+        {
+            auto& configs = tournamentData.engineSelect().getEngineConfigurations();
+            int selectedCount = 0;
+            for (const auto& engineConfig : configs) {
+                if (engineConfig.selected) {
+                    selectedCount++;
+                }
+            }
+            if (selectedCount >= 3) {
+                Tutorial::instance().showNextTutorialStep(topicName);
+                highlightedButton_ = "Run/Grace/Continue";
+            }
+        }
+        return;
+        
+        case 12:
+        // Step 11: Continue tournament - check if running
+        if (tournamentData.isRunning()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedButton_ = "";
+        }
+        return;
+        
+        case 13:
+        // Step 12: Final step - tournament running or finished
+        Tutorial::instance().showNextTutorialStep(topicName);
         return;
                                 
         default:
@@ -450,13 +522,55 @@ static auto tournamentWindowTutorialInit = []() {
               SnackbarManager::SnackbarType::Note },
             { "Tournament - Step 5\n\n"
               "Configure tournament settings.\n"
-              "Set Type to: round-robin and,\n"
-              "Set Rounds to 2\n"
+              "Type: round-robin, Rounds: 2\n"
+              "Games per pairing: 2, Same opening: 2\n\n"
               "Hover over options for explanations.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament Complete!\n\n"
-              "Tournament configured!\n\n"
-              "Ready to start your first tournament!",
+            { "Tournament - Step 6\n\n"
+              "Select time control.\n"
+              "Choose '20.0+0.02' from predefined options.\n"
+              "(20 seconds + 20 milliseconds per move)\n\n"
+              "Hover over fields for format help.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 7\n\n"
+              "Set Concurrency to 4.\n"
+              "This runs 4 games in parallel.\n\n"
+              "You'll see 4 board tabs during the tournament.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 8\n\n"
+              "Start your first tournament!\n"
+              "Click 'Run' to begin.\n\n"
+              "Input controls hide while running.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 9\n\n"
+              "Tournament is running!\n"
+              "Click a board tab to watch games.\n\n"
+              "Wait for the tournament to finish...",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 10\n\n"
+              "Tournament finished!\n"
+              "Results are auto-saved.\n\n"
+              "Click 'Save As' to save manually.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 11\n\n"
+              "Save dialog completed!\n\n"
+              "Now let's extend the tournament.\n"
+              "Add a third engine to the selection.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 12\n\n"
+              "Third engine added!\n"
+              "Tournament will include new pairings.\n\n"
+              "Click 'Continue' to resume.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 13\n\n"
+              "Extended tournament is running!\n\n"
+              "Let it finish or click 'Stop' to pause.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament Tutorial Complete!\n\n"
+              "You've mastered tournament basics!\n\n"
+              "• Configure engines and settings\n"
+              "• Run tournaments with concurrency\n"
+              "• Save and extend tournaments",
               SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
