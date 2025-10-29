@@ -404,9 +404,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 4: Configure tournament settings
         // Check: type=round-robin, rounds=2, games=2, repeat=2
         if (tournamentData.config().type == "round-robin" &&
-            tournamentData.config().rounds == 2 &&
-            tournamentData.config().games == 2 &&
-            tournamentData.config().repeat == 2) {
+            tournamentData.config().rounds == 2) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "";
             highlightedSection_ = "";
@@ -452,8 +450,8 @@ static auto tournamentWindowTutorialInit = []() {
               SnackbarManager::SnackbarType::Note },
             { "Tournament - Step 5\n\n"
               "Configure tournament settings.\n"
-              "Type: round-robin, Rounds: 2\n"
-              "Games per pairing: 2, Same opening: 2\n\n"
+              "Set Type to: round-robin and,\n"
+              "Set Rounds to 2\n"
               "Hover over options for explanations.",
               SnackbarManager::SnackbarType::Note },
             { "Tournament Complete!\n\n"

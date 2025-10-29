@@ -45,8 +45,11 @@ bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float inde
         changed |= ImGuiControls::booleanInput("Save only finished games", pgnOptions_.onlyFinishedGames);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Minimal tags", pgnOptions_.minimalTags);
+        /*
+        Not yet supported in PGN IO
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
+        */
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
         ImGui::SetNextItemWidth(inputWidth);

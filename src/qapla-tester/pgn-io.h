@@ -47,10 +47,10 @@ public:
         bool onlyFinishedGames = true;
         bool minimalTags = false;
         bool saveAfterMove = false;
-        bool includeClock = false;
-        bool includeEval = false;
-        bool includePv = false;
-        bool includeDepth = false;
+        bool includeClock = true;
+        bool includeEval = true;
+        bool includePv = true;
+        bool includeDepth = true;
     };
 
     PgnIO() = default;
