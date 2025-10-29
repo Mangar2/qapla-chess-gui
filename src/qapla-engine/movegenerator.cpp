@@ -739,7 +739,7 @@ std::array<bitBoard_t, Piece::PIECE_AMOUNT / 2> MoveGenerator::computeCheckBitma
 	return computeCheckBitmaps<WHITE>();
 }
 
-bool MoveGenerator::isCheckMove(Move move, const std::array<bitBoard_t, Piece::PIECE_AMOUNT / 2>& checkBitmaps) {
+bool MoveGenerator::isCheckMove(Move move, const std::array<bitBoard_t, Piece::PIECE_AMOUNT / 2>& checkBitmaps) const {
 	const auto piece = move.getMovingPiece();
 	const auto destinationBit = squareToBB(move.getDestination());
 	// First, check if the target position of the move is a check square for the piece
@@ -799,32 +799,44 @@ bool MoveGenerator::isCheckMove(Move move, const std::array<bitBoard_t, Piece::P
 	return false;
 }
 
+namespace {
+	std::string moveToCastleSan(Move move) {
+		switch (move.getActionAndMovingPiece())
+		{
+		case Move::WHITE_CASTLES_KING_SIDE:
+		case Move::BLACK_CASTLES_KING_SIDE:
+			return "O-O";
+		case Move::WHITE_CASTLES_QUEEN_SIDE:
+		case Move::BLACK_CASTLES_QUEEN_SIDE:
+			return "O-O-O";
+		default:
+			return "";
+		}
+	}
+}
+
 std::string MoveGenerator::moveToSan(Move move) const
 {
 	std::string san;
 	auto piece = (*this)[move.getDeparture()];
 	auto capture = (*this)[move.getDestination()];
 	auto action = move.getActionAndMovingPiece();
-	switch (action)
-	{
-	case Move::WHITE_EP:
-		capture = BLACK_PAWN;
-		break;
-	case Move::BLACK_EP:
-		capture = WHITE_PAWN;
-		break;
-	case Move::WHITE_CASTLES_KING_SIDE:
-		return "O-O";
-	case Move::BLACK_CASTLES_KING_SIDE:
-		return "O-O";
-	case Move::WHITE_CASTLES_QUEEN_SIDE:
-		return "O-O-O";
-	case Move::BLACK_CASTLES_QUEEN_SIDE:
-		return "O-O-O";
-	default:
-		// Nothing to do
-		break;
+	
+	// Handle castling moves early (they need special handling for check/mate)
+	san = moveToCastleSan(move);
+	bool isCastling = !san.empty();
+	if (action == Move::WHITE_EP || action == Move::BLACK_EP) {
+		capture = action == Move::WHITE_EP ? BLACK_PAWN : WHITE_PAWN;
 	}
+	auto checkBitmaps = computeCheckBitmapsForMovingColor();
+	if (isCastling) {
+		if (isCheckMove(move, checkBitmaps)) {
+			san += "+";
+		}
+		return san;
+	}
+
+	
 	san = pieceToSan(piece);
 	// Add start position (column, row or both) if ambigous
 	if (!isPawn(piece)) {
@@ -866,7 +878,9 @@ std::string MoveGenerator::moveToSan(Move move) const
 	{
 		san += static_cast<std::string>("=") + pieceToSan(move.getPromotion());
 	}
-	return san;
+	if (isCheckMove(move, checkBitmaps)) {
+		san += "+";
+	}
 }
 
 template void MoveGenerator::genMoves<WHITE>(MoveList&);

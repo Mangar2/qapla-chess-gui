@@ -281,7 +281,9 @@ bool TournamentWindow::drawInput() {
     const bool highlightTimeControl = (highlightedSection_ == "TimeControl");
     changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false, highlightTimeControl);
     
-    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
+    const bool highlightPgn = (highlightedSection_ == "Pgn");
+    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F, highlightPgn);
+    
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
     ImGui::Spacing();    return changed;
@@ -417,44 +419,52 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if time control is set to "20.0+0.02"
         if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
             Tutorial::instance().showNextTutorialStep(topicName);
-            highlightedSection_ = "";
+            highlightedSection_ = "Pgn";
         }
         return;
         
         case 7:
-        // Step 6: Set concurrency to 4
+        // Step 6: Set PGN output file
+        if (!tournamentData.tournamentPgn().pgnOptions().file.empty()) {
+            Tutorial::instance().showNextTutorialStep(topicName);
+            highlightedSection_ = "";
+        }
+        return;
+        
+        case 8:
+        // Step 7: Set concurrency to 4
         if (tournamentData.concurrency() == 4) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "Run/Grace/Continue";
         }
         return;
         
-        case 8:
-        // Step 7: Start tournament - check if running
+        case 9:
+        // Step 8: Start tournament - check if running
         if (tournamentData.isRunning()) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
         
-        case 9:
-        // Step 8: Wait for tournament to finish - check if NOT running and has results
+        case 10:
+        // Step 9: Wait for tournament to finish - check if NOT running and has results
         if (!tournamentData.isRunning() && tournamentData.hasTasksScheduled()) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "Save As";
         }
         return;
         
-        case 10:
-        // Step 9: Save tournament - advance when "Save As" button is clicked
+        case 11:
+        // Step 10: Save tournament - advance when "Save As" button is clicked
         if (clickedButton == "Save As") {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
         
-        case 11:
-        // Step 10: Add third engine - check if at least 3 engines are selected
+        case 12:
+        // Step 11: Add third engine - check if at least 3 engines are selected
         {
             auto& configs = tournamentData.engineSelect().getEngineConfigurations();
             int selectedCount = 0;
@@ -470,16 +480,16 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         }
         return;
         
-        case 12:
-        // Step 11: Continue tournament - check if running
+        case 13:
+        // Step 12: Continue tournament - check if running
         if (tournamentData.isRunning()) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
         
-        case 13:
-        // Step 12: Final step - tournament running or finished
+        case 14:
+        // Step 13: Final step - tournament running or finished
         Tutorial::instance().showNextTutorialStep(topicName);
         return;
                                 
@@ -533,36 +543,41 @@ static auto tournamentWindowTutorialInit = []() {
               "Hover over fields for format help.",
               SnackbarManager::SnackbarType::Note },
             { "Tournament - Step 7\n\n"
+              "Set PGN output file.\n"
+              "All games will be saved to this file.\n\n"
+              "Hover over options for detailed tooltips.",
+              SnackbarManager::SnackbarType::Note },
+            { "Tournament - Step 8\n\n"
               "Set Concurrency to 4.\n"
               "This runs 4 games in parallel.\n\n"
               "You'll see 4 board tabs during the tournament.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 8\n\n"
+            { "Tournament - Step 9\n\n"
               "Start your first tournament!\n"
               "Click 'Run' to begin.\n\n"
               "Input controls hide while running.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 9\n\n"
+            { "Tournament - Step 10\n\n"
               "Tournament is running!\n"
               "Click a board tab to watch games.\n\n"
               "Wait for the tournament to finish...",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 10\n\n"
+            { "Tournament - Step 11\n\n"
               "Tournament finished!\n"
               "Results are auto-saved.\n\n"
               "Click 'Save As' to save manually.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 11\n\n"
+            { "Tournament - Step 12\n\n"
               "Save dialog completed!\n\n"
               "Now let's extend the tournament.\n"
               "Add a third engine to the selection.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 12\n\n"
+            { "Tournament - Step 13\n\n"
               "Third engine added!\n"
               "Tournament will include new pairings.\n\n"
               "Click 'Continue' to resume.",
               SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 13\n\n"
+            { "Tournament - Step 14\n\n"
               "Extended tournament is running!\n\n"
               "Let it finish or click 'Stop' to pause.",
               SnackbarManager::SnackbarType::Note },

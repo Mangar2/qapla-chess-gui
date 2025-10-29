@@ -136,7 +136,8 @@ namespace QaplaMoveGenerator {
 		*/
 
 
-		std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> computeCheckBitmapsForMovingColor() const;
+		std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> 
+			computeCheckBitmapsForMovingColor() const;
 
 		/**
 		 * Determines if a move results in check. This includes:
@@ -147,7 +148,7 @@ namespace QaplaMoveGenerator {
 		 * Uses the precomputed checkBitmaps from computeCheckBitmaps().
 		 */
 		bool isCheckMove(QaplaBasics::Move move, const std::array<QaplaBasics::bitBoard_t, 
-			QaplaBasics::Piece::PIECE_AMOUNT / 2>& checkBitmaps);
+			QaplaBasics::Piece::PIECE_AMOUNT / 2>& checkBitmaps) const;
 
 		/**
 		 * Generates all legal moves that evade a check for the side to move.

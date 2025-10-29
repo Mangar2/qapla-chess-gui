@@ -25,39 +25,91 @@
 
 using namespace QaplaWindows;
 
-bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float indent) {
+bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float indent, bool highlight) {
     bool changed = false;
 
-    if (ImGui::CollapsingHeader("Pgn", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Pgn", ImGuiTreeNodeFlags_Selected, highlight)) {
         ImGui::PushID("pgn");
         ImGui::Indent(indent);
 
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file, 
             {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Path to the PGN file where all games will be saved.\n"
+                "The file will be created if it doesn't exist"
+            );
+        }
 
         ImGui::SetNextItemWidth(inputWidth);
         std::string append = pgnOptions_.append ? "Append" : "Overwrite";
         changed |= ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
         pgnOptions_.append = (append == "Append");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "If enabled, new games will be appended to the existing PGN file.\n"
+                "If disabled, the file is overwritten at the start of each run"
+            );
+        }
 
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Save only finished games", pgnOptions_.onlyFinishedGames);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Save only games that were finished (i.e. not crashed or aborted).\n"
+                "If disabled, all games are written regardless of status"
+            );
+        }
+
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Minimal tags", pgnOptions_.minimalTags);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "If enabled, saves a minimal PGN with only essential headers and moves —\n"
+                "omits metadata and annotations"
+            );
+        }
+
         /*
         Not yet supported in PGN IO
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
         */
+
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Include time spend for the move\n"
+                "(if available from engine output)"
+            );
+        }
+
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Include the engine's evaluation score in PGN comments for each move"
+            );
+        }
+
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Include the full principal variation (PV) in PGN comments.\n"
+                "Useful for debugging or engine analysis"
+            );
+        }
+
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip(
+                "Include the search depth reached when the move was selected"
+            );
+        }
 
         ImGui::Unindent(indent);
         ImGui::PopID();

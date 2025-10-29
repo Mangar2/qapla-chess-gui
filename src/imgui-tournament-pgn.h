@@ -37,9 +37,10 @@ namespace QaplaWindows {
          * @param inputWidth Width of the input controls.
          * @param fileInputWidth Width of the file input control.
          * @param indent Indentation to apply to the controls.
+         * @param highlight Whether to show a red dot next to the header for tutorial purposes.
          * @return True if any configuration value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent);
+        bool draw(float inputWidth, float fileInputWidth, float indent, bool highlight = false);
 
         /**
          * @brief Sets the ID for this PGN configuration.
