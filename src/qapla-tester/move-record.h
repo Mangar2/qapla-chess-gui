@@ -62,6 +62,7 @@ struct MoveRecord {
 	std::vector<SearchInfo> info; ///> List of info records received during search
     uint32_t infoUpdateCount = 0;
     uint32_t halfmoveNo_ = 0;
+    bool book = false; ///> Indicates if the move was played from book
 
     GameEndCause endCause_ = GameEndCause::Ongoing; ///> Cause of game end after this move
     GameResult result_ = GameResult::Unterminated; ///> Result of the game after this move

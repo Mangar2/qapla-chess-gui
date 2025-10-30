@@ -261,22 +261,47 @@ std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord:
 		uint32_t firstHalfmove = halfmoveNoAtPly(0);
 		bool wtm = isWhiteToMoveAtStart_;
 		uint32_t moveNumber = (firstHalfmove + 1) / 2;
-		std::string spacer;
+		
+		std::string currentLine;
 		if (!wtm) {
-			out << moveNumber << "...";
-			spacer = " ";
+			currentLine = std::to_string(moveNumber) + "...";
 		}
 
 		for (uint32_t i = 0; i <= maxIndex; ++i) {
-
+			std::ostringstream moveStream;
+			
+			// Build the complete move string (number + move + comment)
 			if (wtm) {
-				out << spacer << moveNumber << ".";
+				moveStream << moveNumber << ". ";
 				moveNumber++;
 			}
-			spacer = " ";
-			// append the move string (SAN + optional comment)
-			out << " " << moves_[i].toString(opts);
+			moveStream << moves_[i].toString(opts);
+			
+			std::string moveStr = moveStream.str();
+			
+			// Check if adding this move would exceed 80 characters
+			// Account for space separator between moves
+			size_t spaceNeeded = currentLine.empty() ? 0 : 1;
+			size_t neededLength = currentLine.length() + spaceNeeded + moveStr.length();
+			
+			if (!currentLine.empty() && neededLength > 80) {
+				// Write current line and start a new one
+				out << currentLine << "\n";
+				currentLine = moveStr;
+			} else {
+				// Add to current line
+				if (!currentLine.empty()) {
+					currentLine += " ";
+				}
+				currentLine += moveStr;
+			}
+			
 			wtm = !wtm;
+		}
+		
+		// Write any remaining content
+		if (!currentLine.empty()) {
+			out << currentLine;
 		}
 
 		return out.str();
