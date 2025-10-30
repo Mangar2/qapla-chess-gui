@@ -30,9 +30,12 @@
 
 namespace QaplaTester {
 
-void PgnIO::initialize(const std::string& event) {
+void PgnIO::initialize(const std::string& event, bool isResumingTournament) {
     event_ = event;
-    if (!options_.append) {
+    // Only truncate the file if:
+    // - append mode is disabled (overwrite mode)
+    // - AND we're starting a fresh tournament (not resuming)
+    if (!options_.append && !isResumingTournament) {
         std::lock_guard<std::mutex> lock(fileMutex_);
         std::ofstream out(options_.file, std::ios::trunc);
     }

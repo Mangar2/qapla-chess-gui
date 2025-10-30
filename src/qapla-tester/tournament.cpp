@@ -70,7 +70,9 @@ void Tournament::createTournament(const std::vector<EngineConfig>& engines,
 			"No valid openings found in file: " + config.openings.file);
     }
 
-    PgnIO::tournament().initialize(config.event);
+    // Check if we're resuming an existing tournament (has previous results)
+    bool isResumingTournament = !pairings_.empty();
+    PgnIO::tournament().initialize(config.event, isResumingTournament);
     AppError::throwOnInvalidOption({ "gauntlet", "round-robin" }, config.type, "Unsupported tournament type");
     auto savedPairings = std::move(pairings_);
     pairings_.clear();

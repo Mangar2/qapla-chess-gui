@@ -57,9 +57,12 @@ public:
 
     /**
      * @brief Initializes the PGN output file depending on append mode.
-     *        Clears file if append is false.
+     *        Clears file if append is false and not resuming an existing tournament.
+     * @param event Event name for the tournament.
+     * @param isResumingTournament If true, never truncates the file even in overwrite mode.
+     *                            This should be true when loading existing tournament results.
      */
-    void initialize(const std::string& event = "");
+    void initialize(const std::string& event = "", bool isResumingTournament = false);
 
     /**
      * @brief Saves the given game record to the PGN file.

@@ -46,7 +46,9 @@ void SprtManager::createTournament(
     engine0_ = engine0;
     engine1_ = engine1;
     
-    PgnIO::tournament().initialize("Sprt");
+    // Check if we're resuming an existing SPRT tournament
+    bool isResumingTournament = tournament_ && tournament_->matches(0, engine0.getName(), engine1.getName());
+    PgnIO::tournament().initialize("Sprt", isResumingTournament);
 
     if (!startPositions_) {
         startPositions_ = std::make_shared<StartPositions>();
