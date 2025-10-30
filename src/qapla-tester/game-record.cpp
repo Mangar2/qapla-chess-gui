@@ -248,63 +248,65 @@ GameRecord GameRecord::createMinimalCopy() const
 }
 
 std::string GameRecord::movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts) const {
-		std::ostringstream out;
-		if (moves_.empty()) {
-            return "";
+
+    constexpr size_t MAX_LINE_LENGTH = 80;
+    std::ostringstream out;
+    if (moves_.empty()) {
+        return "";
+    }
+
+    uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
+
+    // If the game started with Black to move, PGN may print an initial "N... " prefix
+    // where N is the fullmove number of the first printed halfmove when that halfmove is Black.
+    // Compute the absolute halfmove number of the first printed ply and decide.
+    uint32_t firstHalfmove = halfmoveNoAtPly(0);
+    bool wtm = isWhiteToMoveAtStart_;
+    uint32_t moveNumber = (firstHalfmove + 1) / 2;
+    
+    std::string currentLine;
+    if (!wtm) {
+        currentLine = std::to_string(moveNumber) + "...";
+    }
+
+    for (uint32_t i = 0; i <= maxIndex; ++i) {
+        std::ostringstream moveStream;
+        
+        // Build the complete move string (number + move + comment)
+        if (wtm) {
+            moveStream << moveNumber << ". ";
+            moveNumber++;
         }
+        moveStream << moves_[i].toString(opts);
+        
+        std::string moveStr = moveStream.str();
+        
+        // Check if adding this move would exceed 80 characters
+        // Account for space separator between moves
+        size_t spaceNeeded = currentLine.empty() ? 0 : 1;
+        size_t neededLength = currentLine.length() + spaceNeeded + moveStr.length();
+        
+        if (!currentLine.empty() && neededLength > MAX_LINE_LENGTH) {
+            // Write current line and start a new one
+            out << currentLine << "\n";
+            currentLine = moveStr;
+        } else {
+            // Add to current line
+            if (!currentLine.empty()) {
+                currentLine += " ";
+            }
+            currentLine += moveStr;
+        }
+        
+        wtm = !wtm;
+    }
+    
+    // Write any remaining content
+    if (!currentLine.empty()) {
+        out << currentLine;
+    }
 
-    	uint32_t maxIndex = std::min<uint32_t>(lastPly, static_cast<uint32_t>(moves_.size() - 1));
-
-		// If the game started with Black to move, PGN may print an initial "N... " prefix
-		// where N is the fullmove number of the first printed halfmove when that halfmove is Black.
-		// Compute the absolute halfmove number of the first printed ply and decide.
-		uint32_t firstHalfmove = halfmoveNoAtPly(0);
-		bool wtm = isWhiteToMoveAtStart_;
-		uint32_t moveNumber = (firstHalfmove + 1) / 2;
-		
-		std::string currentLine;
-		if (!wtm) {
-			currentLine = std::to_string(moveNumber) + "...";
-		}
-
-		for (uint32_t i = 0; i <= maxIndex; ++i) {
-			std::ostringstream moveStream;
-			
-			// Build the complete move string (number + move + comment)
-			if (wtm) {
-				moveStream << moveNumber << ". ";
-				moveNumber++;
-			}
-			moveStream << moves_[i].toString(opts);
-			
-			std::string moveStr = moveStream.str();
-			
-			// Check if adding this move would exceed 80 characters
-			// Account for space separator between moves
-			size_t spaceNeeded = currentLine.empty() ? 0 : 1;
-			size_t neededLength = currentLine.length() + spaceNeeded + moveStr.length();
-			
-			if (!currentLine.empty() && neededLength > 80) {
-				// Write current line and start a new one
-				out << currentLine << "\n";
-				currentLine = moveStr;
-			} else {
-				// Add to current line
-				if (!currentLine.empty()) {
-					currentLine += " ";
-				}
-				currentLine += moveStr;
-			}
-			
-			wtm = !wtm;
-		}
-		
-		// Write any remaining content
-		if (!currentLine.empty()) {
-			out << currentLine;
-		}
-
-		return out.str();
-	}
+    return out.str();
+}
 
 } // namespace QaplaTester

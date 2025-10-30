@@ -183,6 +183,10 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
         || (opts.includePv && !pv.empty())
         || (result_ != GameResult::Unterminated);
 
+    if (!hasComment && book) {
+        out << " {book}";
+    }
+
     if (hasComment) {
         out << " {";
         std::string sep = "";
