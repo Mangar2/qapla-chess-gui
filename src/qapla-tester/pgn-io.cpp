@@ -225,7 +225,7 @@ void PgnIO::saveGameToStream(std::ostream& out, const GameRecord& game) {
         out << movesStr;
     }
 
-    out << to_string(std::get<1>(game.getGameResult())) << "\n\n";
+    out << " " << to_string(std::get<1>(game.getGameResult())) << "\n\n";
 }
 
 std::optional<GameRecord> PgnIO::loadGameAtIndex(size_t index) {

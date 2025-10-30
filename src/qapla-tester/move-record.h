@@ -20,6 +20,7 @@
 #pragma once
 
 #include "engine-event.h"
+#include "game-result.h"
 
 #include "../qapla-engine/move.h"
 
@@ -58,11 +59,14 @@ struct MoveRecord {
     uint32_t multipv = 1;
     uint64_t nodes = 0;
     std::string pv{};
-	std::vector<SearchInfo> info; 
+	std::vector<SearchInfo> info; ///> List of info records received during search
     uint32_t infoUpdateCount = 0;
-
     uint32_t halfmoveNo_ = 0;
-    std::string engineId_{};
+
+    GameEndCause endCause_ = GameEndCause::Ongoing; ///> Cause of game end after this move
+    GameResult result_ = GameResult::Unterminated; ///> Result of the game after this move
+
+    std::string engineId_{}; ///> Id of the engine computing this move
     std::string engineName_{}; ///> Name of the engine computing this move
 
 	MoveRecord() = default;

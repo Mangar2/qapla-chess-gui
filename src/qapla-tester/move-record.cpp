@@ -180,7 +180,8 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
     bool hasComment = (opts.includeEval && (scoreCp || scoreMate))
         || (opts.includeDepth && depth > 0)
         || (opts.includeClock && timeMs > 0)
-        || (opts.includePv && !pv.empty());
+        || (opts.includePv && !pv.empty())
+        || (result_ != GameResult::Unterminated);
 
     if (hasComment) {
         out << " {";
@@ -204,6 +205,44 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
 
         if (opts.includePv && !pv.empty()) {
             out << sep << pv;
+            sep = " ";
+        }
+
+        // Add game-end information (cute-chess-cli style)
+        if (result_ != GameResult::Unterminated) {
+            // Add comma and space separator if there was previous content
+            if (!sep.empty()) {
+                out << ",";
+            }
+            out << " ";
+
+            // Generate the game-end text
+            if (endCause_ == GameEndCause::Checkmate) {
+                // For checkmate, specify which side won
+                if (result_ == GameResult::WhiteWins) {
+                    out << "White mates";
+                } else if (result_ == GameResult::BlackWins) {
+                    out << "Black mates";
+                }
+            } else if (result_ == GameResult::Draw) {
+                // For draws, use "Draw by" + termination string
+                out << "Draw by " << gameEndCauseToPgnTermination(endCause_);
+            } else if (result_ == GameResult::WhiteWins || result_ == GameResult::BlackWins) {
+                // For other wins (resignation, timeout, etc.), specify winner
+                std::string winner = (result_ == GameResult::WhiteWins) ? "White" : "Black";
+                std::string cause = gameEndCauseToPgnTermination(endCause_);
+                
+                // Special handling for common cases
+                if (endCause_ == GameEndCause::Resignation) {
+                    out << winner << " wins by resignation";
+                } else if (endCause_ == GameEndCause::Timeout) {
+                    out << winner << " wins on time";
+                } else if (endCause_ == GameEndCause::Forfeit) {
+                    out << winner << " wins by forfeit";
+                } else {
+                    out << winner << " wins by " << cause;
+                }
+            }
         }
 
         out << "}";

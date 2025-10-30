@@ -881,6 +881,7 @@ std::string MoveGenerator::moveToSan(Move move) const
 	if (isCheckMove(move, checkBitmaps)) {
 		san += "+";
 	}
+	return san;
 }
 
 template void MoveGenerator::genMoves<WHITE>(MoveList&);

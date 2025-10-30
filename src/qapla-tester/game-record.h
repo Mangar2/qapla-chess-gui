@@ -155,15 +155,12 @@ public:
 
 	/**
 	 * @brief Sets the game end cause and result.
+	 * Also updates the last move (if any) to reflect checkmate in SAN notation
+	 * and stores the end cause and result in the move record.
 	 * @param cause The cause of the game end.
 	 * @param result The result of the game.
 	 */
-	void setGameEnd(GameEndCause cause, GameResult result)
-	{
-		changeTracker_.trackModification();
-		gameEndCause_ = cause;
-		gameResult_ = result;
-	}
+	void setGameEnd(GameEndCause cause, GameResult result);
 	/**
 	 * @brief Returns the game end cause and result.
 	 * @return A pair of GameEndCause and GameResult.

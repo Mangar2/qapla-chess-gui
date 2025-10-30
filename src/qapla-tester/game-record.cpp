@@ -91,6 +91,36 @@ bool GameRecord::updateMove(const MoveRecord &move)
     return true;
 }
 
+void GameRecord::setGameEnd(GameEndCause cause, GameResult result)
+{
+    changeTracker_.trackModification();
+    gameEndCause_ = cause;
+    gameResult_ = result;
+
+    // Update the last move if there is one
+    if (currentPly_ > 0 && currentPly_ <= moves_.size())
+    {
+        auto& lastMove = moves_[currentPly_ - 1];
+        lastMove.endCause_ = cause;
+        lastMove.result_ = result;
+
+        // If this is checkmate, change '+' to '#' in SAN notation
+        if (cause == GameEndCause::Checkmate && !lastMove.san.empty())
+        {
+            if (lastMove.san.back() == '+')
+            {
+                lastMove.san.back() = '#';
+            }
+            else if (lastMove.san.find('+') != std::string::npos)
+            {
+                // Handle cases like "Qxf7+" or similar
+                size_t pos = lastMove.san.find('+');
+                lastMove.san[pos] = '#';
+            }
+        }
+    }
+}
+
 uint32_t GameRecord::nextMoveIndex() const
 {
     return currentPly_;
