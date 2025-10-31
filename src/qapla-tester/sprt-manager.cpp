@@ -45,10 +45,6 @@ void SprtManager::createTournament(
 	config_ = config;
     engine0_ = engine0;
     engine1_ = engine1;
-    
-    // Check if we're resuming an existing SPRT tournament
-    bool isResumingTournament = tournament_ && tournament_->matches(0, engine0.getName(), engine1.getName());
-    PgnIO::tournament().initialize("Sprt", isResumingTournament);
 
     if (!startPositions_) {
         startPositions_ = std::make_shared<StartPositions>();
@@ -95,6 +91,10 @@ void SprtManager::createTournament(
 
 void SprtManager::schedule(const std::shared_ptr<SprtManager>& self, uint32_t concurrency, GameManagerPool& pool) {
     
+	// Initialize PGN output - at this point all tournament data is loaded
+	bool isResumingTournament = tournament_ && tournament_->hasResults();
+	PgnIO::tournament().initialize("Sprt", isResumingTournament);
+	
     sprtCallback_ = InputHandler::getInstance().registerCommandCallback(
         InputHandler::ImmediateCommand::Info,
         [this](InputHandler::ImmediateCommand, const InputHandler::CommandValue&) {

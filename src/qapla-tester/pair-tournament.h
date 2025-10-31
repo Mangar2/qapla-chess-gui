@@ -240,6 +240,15 @@ public:
         return isFinished_.load();
 	}
 
+	/**
+	 * @brief Checks if this tournament has any results (finished or unfinished games).
+	 *
+	 * @return true if there are any game results recorded, false if tournament is fresh.
+	 */
+	bool hasResults() const {
+		return !results_.empty();
+	}
+
     /**
      * @brief Returns the tournament configuration.
      *

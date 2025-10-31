@@ -70,9 +70,6 @@ void Tournament::createTournament(const std::vector<EngineConfig>& engines,
 			"No valid openings found in file: " + config.openings.file);
     }
 
-    // Check if we're resuming an existing tournament (has previous results)
-    bool isResumingTournament = !pairings_.empty();
-    PgnIO::tournament().initialize(config.event, isResumingTournament);
     AppError::throwOnInvalidOption({ "gauntlet", "round-robin" }, config.type, "Unsupported tournament type");
     auto savedPairings = std::move(pairings_);
     pairings_.clear();
@@ -195,6 +192,17 @@ void Tournament::onGameFinished([[maybe_unused]] PairTournament* sender) {
 }
 
 void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler,  GameManagerPool& pool) {
+	// Initialize PGN output - at this point all tournament data is loaded
+	// Check if we're resuming by seeing if any pairing has existing results
+	bool isResumingTournament = false;
+	for (const auto& pairing : pairings_) {
+		if (pairing->hasResults()) {
+			isResumingTournament = true;
+			break;
+		}
+	}
+	PgnIO::tournament().initialize(config_.event, isResumingTournament);
+	
 	pool.setConcurrency(concurrency, true);
     if (registerToInputhandler) {
         tournamentCallback_ = InputHandler::getInstance().registerCommandCallback(
