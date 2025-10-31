@@ -174,13 +174,6 @@ private:
     static std::pair<std::vector<MoveRecord>, std::optional<GameResult>> parseMoveLine(const std::vector<std::string>& tokens, bool loadComments = true);
 
     /**
-     * @brief Tokenizes a single PGN line into semantic PGN tokens.
-     * @param line A trimmed line of PGN input.
-     * @return List of tokens according to PGN token rules.
-     */
-    static std::vector<std::string> tokenize(const std::string& line);
-
-    /**
      * @brief Skips a move-number indication like 12. or 23... starting at position.
      * @param tokens Token list from PGN input.
      * @param start Position to begin checking.
@@ -232,10 +225,9 @@ private:
      * @brief Parses a centipawn score from a token and updates the MoveRecord.
      * 
      * @param token the token containing the centipawn score
-     * @param factor factor (+1 or -1)
      * @param move 
      */
-    static void parseCpScore(std::string token, int32_t factor, MoveRecord& move);
+    static void parseCpScore(std::string token, MoveRecord& move);
 
     /**
      * @brief Skips a comment block following a SAN move without parsing.

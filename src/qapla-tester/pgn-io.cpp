@@ -17,16 +17,18 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include <chrono>
-#include <ctime>
-
-#include "qapla-tester/game-result.h"
+#include "pgn-io.h"
 
 #include "timer.h"
-#include "pgn-io.h"
+#include "pgn-tokenizer.h"
 #include "time-control.h"
 #include "game-state.h"
 #include "string-helper.h"
+
+#include "qapla-tester/game-result.h"
+
+#include <chrono>
+#include <ctime>
 
 namespace QaplaTester {
 
@@ -303,109 +305,6 @@ void PgnIO::saveGame(const std::string& fileName, const GameRecord& game) {
     saveGameToStream(out, game);
 }
 
-std::vector<std::string> PgnIO::tokenize(const std::string& line) {
-    std::vector<std::string> tokens;
-    std::string token;
-    size_t i = 0;
-    while (i < line.size()) {
-        char c = line[i];
-
-        // Skip whitespace
-        if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-            ++i;
-            continue;
-        }
-
-        // Single-character self-delimiting tokens
-        if (std::string{ "/{}[]().*<>" }.find(c) != std::string::npos) {
-            tokens.emplace_back(1, c);
-            ++i;
-            continue; 
-        }
-
-        // String token
-        if (c == '"') {
-            token.clear();
-            token += '"';
-            ++i;
-            while (i < line.size()) {
-                char ch = line[i++];
-                token += ch;
-                if (ch == '\\' && i < line.size()) {
-                    token += line[i++]; // escaped char
-                }
-                else if (ch == '"') {
-                    break;
-                }
-            }
-            tokens.push_back(token);
-            continue;
-        }
-
-        // NAG ($123)
-        if (c == '$') {
-            token = "$";
-            ++i;
-            while (i < line.size() && std::isdigit(line[i])) {
-                token += line[i++];
-            }
-            tokens.push_back(token);
-            continue;
-        }
-
-        // Numbers
-        if (std::isdigit(c)) {
-            token.clear();
-            token += c;
-            ++i;
-            while (i < line.size()) {
-                char ch = line[i];
-                if (std::isdigit(ch) || ch == '.') {
-                    token += ch;
-                    ++i;
-                }
-                else {
-                    break;
-                }
-            }
-            tokens.push_back(token);
-            continue;
-        }
-
-        // Integer or symbol (starts with digit or letter)
-        if (std::isalpha(c) || c == '_') {
-            token.clear();
-            token += c;
-            ++i;
-            while (i < line.size()) {
-                char ch = line[i];
-                // - needed for casteling (O-O).
-                if (std::isalnum(ch) || ch == '_' || ch == '#' ||
-                    ch == '=' || ch == ':' || ch == '-') {
-                    token += ch;
-                    ++i;
-                }
-                else {
-                    break;
-                }
-            }
-            tokens.push_back(token);
-            continue;
-        }
-
-        // Period (special self-delimiting token)
-        if (c == '.') {
-            tokens.emplace_back(1, '.');
-            ++i;
-            continue;
-        }
-
-        // Unknown or unsupported character -> skip
-        ++i;
-    }
-    return tokens;
-}
-
 size_t PgnIO::skipMoveNumber(const std::vector<std::string>& tokens, size_t start) {
     if (start >= tokens.size()) return start;
 
@@ -506,11 +405,11 @@ void PgnIO::parseMateScore(std::string token, int32_t factor, MoveRecord& move) 
     catch (...) {}
 }
 
-void PgnIO::parseCpScore(std::string token, int32_t factor, MoveRecord& move) {
+void PgnIO::parseCpScore(std::string token, MoveRecord& move) {
     // Centipawn score, e.g. +0.21 or -1.5
     try {
         double cp = std::stod(token);
-        move.scoreCp = static_cast<int>(cp * 100.0 * factor);
+        move.scoreCp = static_cast<int>(cp * 100.0);
     }
     catch (...) {}
 }
@@ -541,21 +440,19 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
 
     while (pos < tokens.size() && tokens[pos] != "}") {
         const std::string& tok = tokens[pos];
+        if (tok.empty()) {
+            ++pos;
+            continue;
+        }
 
         if (tok[0] == 'M' || tok[0] == '#') {
             parseMateScore(tok, 1, move);
         }
-        else if (tok == "+" || tok == "-") {
-            // Could be part of a centipawn score
-            pos++;
-            if (pos >= tokens.size()) continue;
-            const std::string& cpTok = tokens[pos];
-            if (cpTok[0] == 'M' || cpTok[0] == '#') {
-                parseMateScore(cpTok, tok == "+" ? 1 : -1, move);
-            }
-            else {
-                parseCpScore(tok + cpTok, tok == "+" ? 1 : -1, move);
-            }
+        else if (tok.length() >= 2 && (tok[1] == 'M' || tok[1] == '#')) {
+            parseMateScore(tok, tok[0] == '+' ? 1 : -1, move);
+        }
+        else if (tok[0] == '+' || tok[0] == '-') {
+            parseCpScore(tok, move);
         }
         else if (tok == "/") {
             try {
@@ -660,7 +557,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
     gamePositions_.push_back(inFile.tellg());
 
     while ((currentPos = inFile.tellg()), std::getline(inFile, line)) {
-        auto tokens = tokenize(line);
+        auto tokens = PgnTokenizer::tokenize(line);
         if (tokens.size() == 0) continue;
 
         if (tokens[0] == "[") {
@@ -708,7 +605,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
 
 GameRecord PgnIO::parseGame(const std::string& pgnString) {
     GameRecord game;
-    auto tokens = tokenize(pgnString);
+    auto tokens = PgnTokenizer::tokenize(pgnString);
     size_t pos = 0;
 
     while (pos < tokens.size()) {
