@@ -80,8 +80,8 @@ void Tournament::createTournament(const std::vector<EngineConfig>& engines,
         createRoundRobinPairings(engines, config);
     }
     restoreResults(savedPairings);
+    updateCnt_ ++;
 }
-
 
 void Tournament::createGauntletPairings(const std::vector<EngineConfig>& engines,
     const TournamentConfig& config) {

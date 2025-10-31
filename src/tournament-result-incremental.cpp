@@ -33,7 +33,9 @@ bool TournamentResultIncremental::poll(const Tournament& tournament, double base
 	constexpr size_t extraChecks = 10; // Number of extra results to fetch
 	tournamentUpdateCount_ = tournament.getUpdateCount();
 
-	if (totalScheduledGames_ == 0) {
+	if (totalScheduledGames_ == 0 || pairTournaments_ != tournament.pairTournamentCount()) {
+		pairTournaments_ = tournament.pairTournamentCount();
+		totalScheduledGames_ = 0;
 		// Count all games (both finished and scheduled) from all pair tournaments
 		for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
 			totalScheduledGames_ += (*pairTournament)->getConfig().games;

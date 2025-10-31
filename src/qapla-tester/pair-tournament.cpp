@@ -381,6 +381,7 @@ void PairTournament::fromSection(const QaplaHelpers::IniFile::Section& section) 
             parseEndCauses(value, duelResult_, &CauseStats::loss);
         }
     }
+    isFinished_ = std::cmp_greater_equal(duelResult_.total(), config_.games);
 }
 
 std::string PairTournament::getTournamentInfo() const {

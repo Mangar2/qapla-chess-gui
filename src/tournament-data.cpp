@@ -278,11 +278,15 @@ namespace QaplaWindows {
         if (!createTournament(true)) {
             return;
         }
+        if (isFinished()) {
+            SnackbarManager::instance().showNote("Tournament already finished");
+            return;
+        }
 
         state_ = State::Starting;
 
         poolAccess_->clearAll();
-        result_->setGamesLeft();
+        // result_->setGamesLeft();
         state_ = State::Starting;
         tournament_->scheduleAll(0, false, *poolAccess_);
         eloTable_.clear();
@@ -472,6 +476,13 @@ namespace QaplaWindows {
             return 0;
         }
         return result_->getTotalScheduledGames();
+    }
+
+    bool TournamentData::isFinished() const {
+        if (!result_) {
+            return false;
+        }
+        return !result_->hasGamesLeft();
     }
 
     uint32_t TournamentData::getPlayedGames() const {

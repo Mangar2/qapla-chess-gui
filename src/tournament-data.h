@@ -292,6 +292,12 @@ namespace QaplaWindows {
         uint32_t getTotalScheduledGames() const;
 
         /**
+         * @brief Checks if the tournament is finished (all games played).
+         * @return True if the tournament is finished, false otherwise.
+         */
+        bool isFinished() const;
+
+        /**
          * @brief Returns the number of games that have been completed.
          * @return Number of finished games.
          */

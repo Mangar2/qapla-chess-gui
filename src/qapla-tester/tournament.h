@@ -141,6 +141,19 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Returns the number of pair tournaments in this tournament.
+     */
+    size_t pairTournamentCount() const {
+        return pairings_.size();
+    }
+
+    /**
+     * @brief Returns the current update count of the tournament.
+     * 
+     * This count is incremented each time a game result is recorded.
+     * @return Current update count.
+     */
     uint64_t getUpdateCount() const {
         return updateCnt_;
 	}

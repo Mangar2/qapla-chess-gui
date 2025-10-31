@@ -117,6 +117,7 @@ namespace QaplaWindows {
 		bool gamesLeft_ = false; ///< Flag to indicate if the tournament is currently running
         
         uint32_t totalScheduledGames_ = 0; ///< Total number of games scheduled in the tournament
+        uint32_t pairTournaments_ = 0; ///< Number of pair tournaments in the overall tournament
         uint32_t playedGamesFromCompletedPairs_ = 0; ///< Number of games that have been completed
         uint32_t playedGamesFromPartialPairs_ = 0; ///< Number of games that have been completed in pairs not fully completed
     };
