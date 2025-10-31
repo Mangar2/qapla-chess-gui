@@ -296,7 +296,7 @@ bool TournamentWindow::drawInput() {
 void TournamentWindow::drawProgress()
 {
     auto& tournamentData = TournamentData::instance();
-    auto totalGames = tournamentData.getTotalScheduledGames();
+    auto totalGames = tournamentData.getTotalGames();
     auto playedGames = tournamentData.getPlayedGames();
     
     if (totalGames == 0) {

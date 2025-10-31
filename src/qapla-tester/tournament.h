@@ -166,6 +166,17 @@ public:
         return !pairings_.empty();
     }
 
+    /**
+     * @brief Calculates the total number of games in a tournament based on configuration and engines.
+     *
+     * This calculation matches the actual scheduling logic to ensure consistency.
+     *
+     * @param engines List of participating engines.
+     * @param config Tournament configuration.
+     * @return Total number of games that will be scheduled.
+     */
+    static uint32_t calculateTotalGames(const std::vector<EngineConfig>& engines, const TournamentConfig& config);
+
 private:
     TournamentResult result_;
     uint64_t updateCnt_ = 1;

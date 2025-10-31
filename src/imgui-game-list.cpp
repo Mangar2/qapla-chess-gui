@@ -267,13 +267,14 @@ void ImGuiGameList::drawGameTable() {
     const auto& games = gameRecordManager_.getGames();
     if (games.empty()) return;
 
-    auto size = ImGui::GetContentRegionAvail();
-
+    // Use a child window to ensure proper scrolling
+    auto availSize = ImGui::GetContentRegionAvail();
+    
     // Only draw if we can acquire the lock without blocking
     if (gameTableMutex_.try_lock()) {
         std::lock_guard<std::mutex> lock(gameTableMutex_, std::adopt_lock);
         
-        auto clickedIndex = gameTable_.draw(ImVec2(0, size.y)); 
+        auto clickedIndex = gameTable_.draw(ImVec2(0, availSize.y)); 
         if (clickedIndex) {
             gameTable_.setCurrentRow(*clickedIndex);
             selectedGame_ = gameRecordManager_.loadGameByIndex(*clickedIndex);

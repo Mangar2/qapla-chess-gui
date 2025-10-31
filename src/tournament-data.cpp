@@ -229,6 +229,26 @@ namespace QaplaWindows {
         }
     }
 
+    std::vector<EngineConfig> TournamentData::getSelectedEngines() const {
+        std::vector<EngineConfig> selectedEngines;
+        config_->type = "round-robin";
+        
+        for (const auto& tournamentConfig : engineConfigurations_) {
+            if (!tournamentConfig.selected) {
+                continue;
+            }
+            auto engine = tournamentConfig.config;
+            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
+            
+            if (engine.gauntlet()) {
+                config_->type = "gauntlet";
+            }
+            selectedEngines.push_back(engine);
+        }
+        
+        return selectedEngines;
+    }
+
     bool TournamentData::createTournament(bool verbose) {
         try {
             if (engineConfigurations_.empty()) {
@@ -242,20 +262,7 @@ namespace QaplaWindows {
                 throw std::runtime_error("No openings file specified.");
             }
 
-            std::vector<EngineConfig> selectedEngines;
-            config_->type = "round-robin";
-            for (auto& tournamentConfig : engineConfigurations_) {
-                if (!tournamentConfig.selected) {
-                    continue;
-                }
-                EngineConfig engine = tournamentConfig.config;
-                ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
-                
-                if (engine.gauntlet()) {
-                    config_->type = "gauntlet";
-                }
-                selectedEngines.push_back(engine);
-            }
+            auto selectedEngines = getSelectedEngines();
 
             PgnIO::tournament().setOptions(pgnConfig());
             QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
@@ -275,13 +282,14 @@ namespace QaplaWindows {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
         }
-        if (!createTournament(true)) {
-            return;
-        }
         if (isFinished()) {
             SnackbarManager::instance().showNote("Tournament already finished");
             return;
         }
+        if (!createTournament(true)) {
+            return;
+        }
+
 
         state_ = State::Starting;
 
@@ -471,18 +479,17 @@ namespace QaplaWindows {
         return tournament_ && tournament_->hasTasksScheduled();
     }
 
-    uint32_t TournamentData::getTotalScheduledGames() const {
-        if (!result_) {
+    uint32_t TournamentData::getTotalGames() const {
+        if (!config_) {
             return 0;
         }
-        return result_->getTotalScheduledGames();
+
+        std::vector<QaplaTester::EngineConfig> selectedEngines = getSelectedEngines();
+        return QaplaTester::Tournament::calculateTotalGames(selectedEngines, *config_);
     }
 
     bool TournamentData::isFinished() const {
-        if (!result_) {
-            return false;
-        }
-        return !result_->hasGamesLeft();
+        return getPlayedGames() >= getTotalGames();
     }
 
     uint32_t TournamentData::getPlayedGames() const {

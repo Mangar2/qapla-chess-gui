@@ -305,4 +305,53 @@ void Tournament::load(const QaplaHelpers::IniFile::SectionList& sections) {
     }
 }
 
+uint32_t Tournament::calculateTotalGames(const std::vector<EngineConfig>& engines, const TournamentConfig& config) {
+    if (engines.empty()) {
+        return 0;
+    }
+
+    // Separate gauntlets from opponents
+    std::vector<EngineConfig> gauntlets;
+    std::vector<EngineConfig> opponents;
+    
+    for (const auto& e : engines) {
+        (e.isGauntlet() ? gauntlets : opponents).push_back(e);
+    }
+
+    // Determine tournament type and player/opponent counts
+    size_t playerCount = 0;
+    size_t opponentCount = 0;
+    bool isSymmetric = false;
+
+    if (config.type == "gauntlet") {
+        if (gauntlets.empty() || opponents.empty()) {
+            return 0; // Invalid gauntlet configuration
+        }
+        playerCount = gauntlets.size();
+        opponentCount = opponents.size();
+        isSymmetric = false;
+    } else { // round-robin
+        if (engines.size() < 2) {
+            return 0; // Invalid round-robin configuration
+        }
+        playerCount = engines.size();
+        opponentCount = engines.size();
+        isSymmetric = true;
+    }
+
+    // Calculate number of pairings
+    uint32_t pairingsPerRound = 0;
+    if (isSymmetric) {
+        // Round-robin: each player plays against each other player once per round
+        // This is playerCount * (playerCount - 1) / 2
+        pairingsPerRound = static_cast<uint32_t>(playerCount * (opponentCount - 1) / 2);
+    } else {
+        // Gauntlet: each gauntlet plays against each opponent
+        pairingsPerRound = static_cast<uint32_t>(playerCount * opponentCount);
+    }
+
+    // Total games = pairings * rounds * games per pairing
+    return pairingsPerRound * config.rounds * config.games;
+}
+
 } // namespace QaplaTester

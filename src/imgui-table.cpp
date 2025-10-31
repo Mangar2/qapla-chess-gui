@@ -192,7 +192,11 @@ namespace QaplaWindows {
         std::optional<size_t> keyboardRow;
         indexManager_.updateSize(rows_.size());
         if (filterable_) {
+            float cursorYBefore = ImGui::GetCursorPosY();
             auto changed = filter_.draw();
+            float cursorYAfter = ImGui::GetCursorPosY();
+            float filterHeight = cursorYAfter - cursorYBefore;
+            tableSize.y = std::max(0.0F, tableSize.y - filterHeight);
             handleFiltering(changed);
         }
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {

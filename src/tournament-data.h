@@ -292,6 +292,13 @@ namespace QaplaWindows {
         uint32_t getTotalScheduledGames() const;
 
         /**
+         * @brief Calculates the total number of games based on current configuration.
+         * This works even before the tournament is scheduled.
+         * @return Total number of games that would be played with current settings.
+         */
+        uint32_t getTotalGames() const;
+
+        /**
          * @brief Checks if the tournament is finished (all games played).
          * @return True if the tournament is finished, false otherwise.
          */
@@ -323,6 +330,12 @@ namespace QaplaWindows {
          * @return True if the tournament was created successfully, false otherwise.
          */
         bool createTournament(bool verbose);
+
+        /**
+         * @brief Builds a list of selected engines with global settings applied.
+         * @return Vector of EngineConfig for all selected engines.
+         */
+        std::vector<QaplaTester::EngineConfig> getSelectedEngines() const;
 
         /**
         * @brief Creates a tournament and loads it from the current configuration and engine settings.
