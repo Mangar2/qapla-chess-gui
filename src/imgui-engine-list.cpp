@@ -153,6 +153,10 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
     }
 
     infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
+    // Update the displayed move number to the move that is being shown
+    // setFromGameRecord will set the halfmoveNumber of already played moves while
+    // Here we also show moves currently being calculated
+    displayedMoveNo_[playerIndex] = moveRecord.halfmoveNo_;
 
     setTable(playerIndex, moveRecord);
 }
