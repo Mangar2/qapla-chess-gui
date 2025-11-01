@@ -21,7 +21,10 @@
 
 #include "embedded-window.h"
 #include "game-record-manager.h"
+#include "game-filter-data.h"
+#include "game-filter-window.h"
 #include "imgui-table.h"
+#include "imgui-popup.h"
 #include <thread>
 #include <atomic>
 #include <string>
@@ -47,6 +50,11 @@ class ImGuiGameList : public EmbeddedWindow {
 public:
     ImGuiGameList();
     ~ImGuiGameList();
+
+    /**
+     * @brief Initializes the game list (loads filter configuration).
+     */
+    void init();
 
     /**
      * @brief Draws the game list window.
@@ -87,6 +95,21 @@ private:
      * @brief Opens a file dialog and loads the selected PGN file in a background thread.
      */
     void openFile();
+
+    /**
+     * @brief Updates the filter configuration.
+     */
+    void updateFilterConfiguration();
+
+    /**
+     * @brief Extracts unique values from loaded games for filter options.
+     */
+    void updateFilterOptions();
+
+    /**
+     * @brief Applies the current filter to determine which games to display.
+     */
+    bool passesFilter(const QaplaTester::GameRecord& game) const;
 
     /**
      * @brief Background loading function.
@@ -132,6 +155,16 @@ private:
      * @brief Mutex for synchronizing access to the game table.
      */
     std::mutex gameTableMutex_;
+
+    /**
+     * @brief Filter data for game list.
+     */
+    GameFilterData filterData_;
+
+    /**
+     * @brief Popup window for filter configuration.
+     */
+    ImGuiPopup<GameFilterWindow> filterPopup_;
 
     inline static std::optional<QaplaTester::GameRecord> selectedGame_;
 };

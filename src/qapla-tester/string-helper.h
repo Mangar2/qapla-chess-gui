@@ -153,4 +153,102 @@ namespace QaplaHelpers {
         return dp[m][n];
     };
 
+    /**
+     * @brief Splits a string by a delimiter character.
+     * @param str The string to split.
+     * @param delimiter The delimiter character.
+     * @return Vector of substrings.
+     */
+    inline std::vector<std::string> split(const std::string& str, char delimiter) {
+        std::vector<std::string> result;
+        if (str.empty()) return result;
+        
+        size_t start = 0;
+        size_t end = str.find(delimiter);
+        
+        while (end != std::string::npos) {
+            result.push_back(str.substr(start, end - start));
+            start = end + 1;
+            end = str.find(delimiter, start);
+        }
+        
+        result.push_back(str.substr(start));
+        return result;
+    }
+
+    /**
+     * @brief Escapes a delimiter character in a string.
+     * @param str The string to escape.
+     * @param delimiter The delimiter to escape.
+     * @return Escaped string.
+     */
+    inline std::string escapeDelimiter(const std::string& str, char delimiter) {
+        std::string result;
+        result.reserve(str.size());
+        
+        for (char ch : str) {
+            if (ch == delimiter || ch == '\\') {
+                result += '\\';
+            }
+            result += ch;
+        }
+        
+        return result;
+    }
+
+    /**
+     * @brief Unescapes a delimiter character in a string.
+     * @param str The string to unescape.
+     * @return Unescaped string.
+     */
+    inline std::string unescapeDelimiter(const std::string& str) {
+        std::string result;
+        result.reserve(str.size());
+        
+        bool escaped = false;
+        for (char ch : str) {
+            if (escaped) {
+                result += ch;
+                escaped = false;
+            } else if (ch == '\\') {
+                escaped = true;
+            } else {
+                result += ch;
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * @brief Splits a string by delimiter with proper unescaping.
+     * @param str The string to split.
+     * @param delimiter The delimiter character.
+     * @return Vector of unescaped substrings.
+     */
+    inline std::vector<std::string> splitWithUnescape(const std::string& str, char delimiter) {
+        std::vector<std::string> result;
+        if (str.empty()) return result;
+        
+        std::string current;
+        bool escaped = false;
+        
+        for (char ch : str) {
+            if (escaped) {
+                current += ch;
+                escaped = false;
+            } else if (ch == '\\') {
+                escaped = true;
+            } else if (ch == delimiter) {
+                result.push_back(current);
+                current.clear();
+            } else {
+                current += ch;
+            }
+        }
+        
+        result.push_back(current);
+        return result;
+    }
+
 } // namespace QaplaHelpers

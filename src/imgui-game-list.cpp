@@ -30,11 +30,29 @@ using QaplaTester::GameResult;
 #include <fstream>
 #include <sstream>
 #include <set>
+#include <algorithm>
 
 using namespace QaplaWindows;
 
 ImGuiGameList::ImGuiGameList()
+    : filterPopup_(
+        ImGuiPopup<GameFilterWindow>::Config{
+            .title = "Filter Games",
+            .okButton = true,
+            .cancelButton = true
+        },
+        ImVec2(550, 700)  // Increased height for better fit
+    )
 {
+    init();
+}
+
+void ImGuiGameList::init() {
+    filterData_.init("gamelist");
+    filterPopup_.content().setFilterData(&filterData_);
+    filterPopup_.content().setOnFilterChangedCallback([this]() {
+        updateFilterConfiguration();
+    });
 }
 
 ImGuiGameList::~ImGuiGameList() {
@@ -52,6 +70,21 @@ ImGuiGameList::~ImGuiGameList() {
 void ImGuiGameList::draw() {
     drawButtons();
     drawLoadingStatus();
+    
+    // Draw filter popup if open
+    filterPopup_.draw();
+    
+    // Check if filter was confirmed or cancelled
+    auto confirmed = filterPopup_.confirmed();
+    if (confirmed.has_value()) {
+        if (*confirmed) {
+            // OK was clicked - apply filter and recreate table
+            updateFilterConfiguration();
+            createTable();
+        }
+        filterPopup_.resetConfirmation();
+    }
+    
     ImGui::Indent(10.0F);
     drawGameTable();
     ImGui::Unindent(10.0F);
@@ -78,6 +111,11 @@ void ImGuiGameList::drawButtons() {
             bool isLoading = operationState_.load() == OperationState::Loading;
             state = isLoading ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal;
             text = isLoading ? "Stop" : "Open";
+        } else if (button == "Filter") {
+            bool isLoading = operationState_.load() == OperationState::Loading;
+            bool filterActive = filterData_.isActive() && filterData_.hasFilters();
+            state = isLoading ? QaplaButton::ButtonState::Disabled : 
+                   (filterActive ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal);
         } else {
             bool isLoading = operationState_.load() == OperationState::Loading;
             state = isLoading ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
@@ -107,7 +145,9 @@ void ImGuiGameList::drawButtons() {
                 if (button == "Save As") {
                     SnackbarManager::instance().showNote("Save As button clicked - functionality not yet implemented");
                 } else if (button == "Filter") {
-                    SnackbarManager::instance().showNote("Filter button clicked - functionality not yet implemented");
+                    // Open filter popup and update options from loaded games
+                    updateFilterOptions();
+                    filterPopup_.open();
                 }
             }
         }
@@ -178,8 +218,15 @@ void ImGuiGameList::createTable() {
     gameTable_.setSortable(true);
     gameTable_.setFilterable(true);
 
-    // Fill table with game data
+    // Fill table with game data (applying filter)
+    size_t filteredCount = 0;
     for (const auto& game : games) {
+        // Apply filter
+        if (!passesFilter(game)) {
+            continue;
+        }
+        filteredCount++;
+        
         const std::map<std::string, std::string>& tags = game.getTags();
         
         // Get fixed column data
@@ -206,6 +253,13 @@ void ImGuiGameList::createTable() {
         gameTable_.push(rowData);
     }
     gameTable_.setAutoScroll(true);
+    
+    // Show filter status in snackbar if filter is active
+    if (filterData_.isActive() && filterData_.hasFilters()) {
+        SnackbarManager::instance().showNote(
+            "Filter active: showing " + std::to_string(filteredCount) + 
+            " of " + std::to_string(games.size()) + " games");
+    }
 
 }
 
@@ -279,4 +333,137 @@ void ImGuiGameList::drawGameTable() {
             selectedGame_ = std::nullopt;
         }
     }
+}
+
+void ImGuiGameList::updateFilterConfiguration() {
+    filterData_.updateConfiguration("gamelist");
+}
+
+void ImGuiGameList::updateFilterOptions() {
+    const auto& games = gameRecordManager_.getGames();
+    if (games.empty()) return;
+
+    // Extract unique player names (both White and Black)
+    std::set<std::string> uniquePlayers;
+    std::set<QaplaTester::GameResult> uniqueResults;
+    std::set<QaplaTester::GameEndCause> uniqueTerminations;
+
+    for (const auto& game : games) {
+        const auto& tags = game.getTags();
+        
+        // Extract both White and Black player names
+        auto whiteIt = tags.find("White");
+        if (whiteIt != tags.end() && !whiteIt->second.empty()) {
+            uniquePlayers.insert(whiteIt->second);
+        }
+        
+        auto blackIt = tags.find("Black");
+        if (blackIt != tags.end() && !blackIt->second.empty()) {
+            uniquePlayers.insert(blackIt->second);
+        }
+        
+        // Extract game result
+        auto [cause, result] = game.getGameResult();
+        uniqueResults.insert(result);
+        
+        // Extract termination cause (only if game ended)
+        if (cause != QaplaTester::GameEndCause::Ongoing) {
+            uniqueTerminations.insert(cause);
+        }
+    }
+
+    // Convert sets to vectors for player lists
+    std::vector<std::string> playerVec(uniquePlayers.begin(), uniquePlayers.end());
+    
+    // Sort alphabetically
+    std::sort(playerVec.begin(), playerVec.end());
+
+    // Update filter window options (same list for both players and opponents)
+    filterPopup_.content().setAvailablePlayers(playerVec);
+    filterPopup_.content().setAvailableOpponents(playerVec);
+    filterPopup_.content().setAvailableResults(uniqueResults);
+    filterPopup_.content().setAvailableTerminations(uniqueTerminations);
+}
+
+bool ImGuiGameList::passesFilter(const QaplaTester::GameRecord& game) const {
+    if (!filterData_.isActive()) {
+        return true; // No filtering when inactive
+    }
+
+    const auto& tags = game.getTags();
+    
+    // Get White and Black player names
+    auto whiteIt = tags.find("White");
+    std::string white = (whiteIt != tags.end()) ? whiteIt->second : "";
+    
+    auto blackIt = tags.find("Black");
+    std::string black = (blackIt != tags.end()) ? blackIt->second : "";
+    
+    // Filter by Player vs Opponent (color-independent)
+    const auto& selectedPlayers = filterData_.getSelectedPlayers();
+    const auto& selectedOpponents = filterData_.getSelectedOpponents();
+    
+    if (!selectedPlayers.empty() || !selectedOpponents.empty()) {
+        bool playerMatch = false;
+        bool opponentMatch = false;
+        
+        // Check if we have a player filter
+        if (!selectedPlayers.empty()) {
+            // Check if either White or Black is in the selected players
+            playerMatch = (selectedPlayers.find(white) != selectedPlayers.end()) ||
+                         (selectedPlayers.find(black) != selectedPlayers.end());
+        } else {
+            playerMatch = true; // No player filter, so any player is ok
+        }
+        
+        // Check if we have an opponent filter
+        if (!selectedOpponents.empty()) {
+            // Check if either White or Black is in the selected opponents
+            opponentMatch = (selectedOpponents.find(white) != selectedOpponents.end()) ||
+                           (selectedOpponents.find(black) != selectedOpponents.end());
+        } else {
+            opponentMatch = true; // No opponent filter, so any opponent is ok
+        }
+        
+        // If both filters are active, check proper pairing
+        if (!selectedPlayers.empty() && !selectedOpponents.empty()) {
+            // Check if White is player and Black is opponent, OR Black is player and White is opponent
+            bool whitePlayerBlackOpponent = 
+                (selectedPlayers.find(white) != selectedPlayers.end()) &&
+                (selectedOpponents.find(black) != selectedOpponents.end());
+            
+            bool blackPlayerWhiteOpponent = 
+                (selectedPlayers.find(black) != selectedPlayers.end()) &&
+                (selectedOpponents.find(white) != selectedOpponents.end());
+            
+            if (!whitePlayerBlackOpponent && !blackPlayerWhiteOpponent) {
+                return false;
+            }
+        } else {
+            // Only one filter active, just check if it matches
+            if (!playerMatch || !opponentMatch) {
+                return false;
+            }
+        }
+    }
+    
+    // Filter by result
+    const auto& selectedResults = filterData_.getSelectedResults();
+    if (!selectedResults.empty()) {
+        auto [cause, result] = game.getGameResult();
+        if (selectedResults.find(result) == selectedResults.end()) {
+            return false;
+        }
+    }
+    
+    // Filter by termination
+    const auto& selectedTerminations = filterData_.getSelectedTerminations();
+    if (!selectedTerminations.empty()) {
+        auto [cause, result] = game.getGameResult();
+        if (selectedTerminations.find(cause) == selectedTerminations.end()) {
+            return false;
+        }
+    }
+    
+    return true;
 }
