@@ -787,6 +787,44 @@ namespace QaplaButton {
         return selectedCommand;
     }
 
+    void drawTimeClock(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto color = getFgColor(state);
+        
+        // Clock circle center and radius
+        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
+        
+        // Draw clock circle
+        list->AddCircle(center, radius, color, 32, 1.5F);
+        
+        // Clock showing 10 to 12 (11:50)
+        // Hour hand pointing at 11:50 (between 11 and 12)
+        // Minute hand pointing at 10 (50 minutes)
+        
+        // Hour hand (shorter, thicker) - pointing to 11:50
+        // 11:50 = 11.833 hours, angle = (11.833/12) * 360 - 90 = 264.65 degrees
+        float hourAngle = (11.833F / 12.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
+        float hourLength = radius * 0.5F;
+        ImVec2 hourEnd = ImVec2(
+            center.x + cos(hourAngle) * hourLength,
+            center.y + sin(hourAngle) * hourLength
+        );
+        list->AddLine(center, hourEnd, color, 2.0F);
+        
+        // Minute hand (longer, thinner) - pointing to 10 (50 minutes)
+        // 50 minutes = (50/60) * 360 - 90 = 210 degrees
+        float minuteAngle = (50.0F / 60.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
+        float minuteLength = radius * 0.7F;
+        ImVec2 minuteEnd = ImVec2(
+            center.x + cos(minuteAngle) * minuteLength,
+            center.y + sin(minuteAngle) * minuteLength
+        );
+        list->AddLine(center, minuteEnd, color, 1.5F);
+        
+        // Center dot
+        list->AddCircleFilled(center, 1.5F, color);
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();

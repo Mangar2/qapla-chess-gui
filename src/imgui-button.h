@@ -94,6 +94,8 @@ namespace QaplaButton {
 
     void drawMore(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
 
+    void drawTimeClock(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+
     /**
      * @brief Shows a popup menu with selectable commands.
      *

@@ -108,6 +108,10 @@ namespace QaplaWindows
                 {
                     QaplaButton::drawMore(drawList, topLeft, size, state);
                 }
+                else if (button == "Time")
+                {
+                    QaplaButton::drawTimeClock(drawList, topLeft, size, state);
+                }
             });
     }
 
@@ -154,12 +158,7 @@ namespace QaplaWindows
         std::vector<std::string> visibleButtons;
         
         // More menu commands with tutorial highlights
-        auto timeControlState = highlightedButton_ == "Time Control"
-            ? QaplaButton::ButtonState::Highlighted 
-            : QaplaButton::ButtonState::Normal;
-            
         std::vector<QaplaButton::PopupCommand> moreCommands = {
-            {"Time Control", timeControlState},
             {"Copy PGN", QaplaButton::ButtonState::Normal},
             {"Copy FEN", QaplaButton::ButtonState::Normal}
         };
@@ -226,7 +225,7 @@ namespace QaplaWindows
         const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         
         std::vector<std::string> allButtons = {
-            "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Setup", "Paste"
+            "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Time", "Setup", "Paste"
         };
         
         float availableWidth = ImGui::GetContentRegionAvail().x - leftOffset;
@@ -447,7 +446,7 @@ namespace QaplaWindows
             .messages = {
                 { "Cut & Paste - Step 1\n\n"
                   "Learn to manage positions and multiple boards.\n\n"
-                  "First, click 'More' and select 'Time Control' to set the game time.",
+                  "First, click the 'Time' button to set the game time.",
                   SnackbarManager::SnackbarType::Note },
                 { "Cut & Paste - Step 2\n\n"
                   "Set the time to 5 minutes and confirm with 'Apply'.",
@@ -636,13 +635,13 @@ namespace QaplaWindows
             // Initial step - show first message
             Tutorial::instance().showNextTutorialStep(topicName);
             if (tutorialCutPasteProgress_ == 1) { 
-                highlightedButton_ = "Time Control";
+                highlightedButton_ = "Time";
             }
             return;
             
             case 1:
-            // Step 1: User clicks Time Control in More menu
-            if (clickedButton == "Time Control") {
+            // Step 1: User clicks Time button
+            if (clickedButton == "Time") {
                 highlightedButton_ = "";
                 Tutorial::instance().showNextTutorialStep(topicName);
                 return;

@@ -473,7 +473,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 		ImGuiCutPaste::setClipboardString(fen);
 		SnackbarManager::instance().showNote("FEN copied to clipboard\n" + fen);
 	}
-	else if (command == "Time Control") {
+	else if (command == "Time") {
 		openTimeControlDialog();
 	}
 	else if (command.starts_with("Position: ")) {
