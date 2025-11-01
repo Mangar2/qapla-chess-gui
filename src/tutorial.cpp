@@ -43,9 +43,31 @@ void Tutorial::showNextTutorialStep(const std::string& topicName) {
     saveConfiguration();
 }
 
- void Tutorial::finishTutorial(const std::string& topicName) {
+bool Tutorial::mayStart(uint32_t entryIndex) const {
+    if (entryIndex < entries_.size()) {
+        const auto& entry = entries_[entryIndex];
+        if (entry.autoStart && entry.getProgressCounter() == 0) {
+            const auto& dependsOn = entry.dependsOn;
+            if (dependsOn.empty()) {
+                return true;
+            } else {
+                auto it = std::ranges::find_if(entries_,
+                    [&dependsOn](const Entry& e) { return e.name == dependsOn; });
+                if (it != entries_.end() && it->completed()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void Tutorial::finishTutorial(const std::string& topicName) {
     for (auto& entry : entries_) {
         if (entry.name == topicName) {
+            if (entry.completed()) {
+                return;
+            }
             entry.finish();
             break;
         }
@@ -53,9 +75,22 @@ void Tutorial::showNextTutorialStep(const std::string& topicName) {
     for (auto& entry : entries_) {
         if (entry.dependsOn == topicName && entry.autoStart && entry.getProgressCounter() == 0) {
             entry.getProgressCounter() = 1;
+            entry.showNextMessage();
         }
     }
     saveConfiguration();
+}
+
+void Tutorial::restartTutorial(const uint32_t index) {
+    if (index < entries_.size()) {
+        auto& entry = entries_[index];
+        entry.reset();
+        if (mayStart(index)) {
+            entry.getProgressCounter() = 1;
+            entry.showNextMessage();
+        }
+        saveConfiguration();
+    }
 }
 
 void Tutorial::loadConfiguration() {

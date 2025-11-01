@@ -103,11 +103,10 @@ void ConfigurationWindow::drawTutorialSettings()
         bool completed = entry.completed();
         if (ImGui::Checkbox(entry.displayName.c_str(), &completed)) {
             if (completed) {
-                entry.finish();
+                Tutorial::instance().finishTutorial(entry.name);
             } else {
-                entry.reset();
+                Tutorial::instance().restartTutorial(tutorial);
             }
-            Tutorial::instance().saveConfiguration();
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");

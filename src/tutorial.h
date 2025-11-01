@@ -48,8 +48,7 @@ public:
         uint32_t counter = 0;
         void reset() {
             counter = 0;
-            getProgressCounter() = autoStart ? 1 : 0;
-            showNextMessage();
+            getProgressCounter() = 0;
         }
         void finish() {
             if (!completed()) {
@@ -83,6 +82,12 @@ public:
      * @param topic The tutorial topic name to finish
      */
     void finishTutorial(const std::string& topicName);
+
+    /**
+     * @brief Restarts a tutorial topic from the beginning
+     * @param index The index of the tutorial topic to restart
+     */
+    void restartTutorial(const uint32_t index);
 
     /**
      * @brief Adds a new tutorial entry
@@ -122,4 +127,6 @@ public:
 private:
     Tutorial() = default;
     std::vector<Entry> entries_;
+
+    bool mayStart(uint32_t entryIndex) const;
 };
