@@ -212,22 +212,26 @@ private:
     static size_t parseCauseAnnotation(const std::vector<std::string>& tokens, size_t start, 
         std::optional<GameEndCause>& cause);
 
-    /**
-     * @brief Parses a mate score from a token and updates the MoveRecord.
-     * 
-     * @param token the token containing the mate score
-     * @param factor factor (+1 or -1)
-     * @param move 
-     */
     static void parseMateScore(std::string token, int32_t factor, MoveRecord& move);
-
-    /**
-     * @brief Parses a centipawn score from a token and updates the MoveRecord.
-     * 
-     * @param token the token containing the centipawn score
-     * @param move 
-     */
     static void parseCpScore(std::string token, MoveRecord& move);
+    
+    /**
+     * @brief Parses game-end information from comment tokens.
+     *        Recognizes patterns like "White mates", "Black wins by resignation", "Draw by stalemate".
+     * @param tokens Token list from PGN comment.
+     * @param pos Current position in token list.
+     * @param move MoveRecord to update with result and end cause.
+     * @return Next position if pattern recognized, otherwise unchanged position.
+     */
+    static size_t parseGameEndInfo(const std::vector<std::string>& tokens, size_t pos, MoveRecord& move);
+    
+    /**
+     * @brief Collects tokens forming a game termination cause until delimiter.
+     * @param tokens Token list from PGN comment.
+     * @param pos Current position, updated to position after cause.
+     * @return Concatenated cause string (e.g. "time forfeit", "50-move rule").
+     */
+    static std::string collectTerminationCause(const std::vector<std::string>& tokens, size_t& pos);
 
     /**
      * @brief Skips a comment block following a SAN move without parsing.

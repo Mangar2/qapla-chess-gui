@@ -136,17 +136,19 @@ void PgnIO::finalizeParsedTags(GameRecord& game) {
         }
     }
     if (auto it = tags.find("Round"); it != tags.end()) {
-        try {
-            game.setGameInRound(static_cast<uint32_t>(std::stoi(it->second)));
+        if (auto round = QaplaHelpers::to_uint32(it->second)) {
+            game.setGameInRound(*round);
         }
-        catch (...) {}
     }
     if (auto it = tags.find("Result"); it != tags.end()) {
-        GameResult result = GameResult::Unterminated;
-        if (it->second == "1-0") result = GameResult::WhiteWins;
-        else if (it->second == "0-1") result = GameResult::BlackWins;
-        else if (it->second == "1/2-1/2") result = GameResult::Draw;
-        game.setGameEnd(GameEndCause::Ongoing, result);
+        auto [cause, result] = game.getGameResult();
+        // We prefer game end information (1-0) over the Result tag, if both are conflicting.
+        if (result  == GameResult::Unterminated) {
+            if (it->second == "1-0") result = GameResult::WhiteWins;
+            else if (it->second == "0-1") result = GameResult::BlackWins;
+            else if (it->second == "1/2-1/2") result = GameResult::Draw;
+            game.setGameEnd(GameEndCause::Ongoing, result);
+        }
     }
     if (auto it = tags.find("TimeControl"); it != tags.end()) {
         TimeControl tc;
@@ -396,13 +398,12 @@ std::pair<std::string, std::string> PgnIO::parseTag(const std::vector<std::strin
 }
 
 void PgnIO::parseMateScore(std::string token, int32_t factor, MoveRecord& move) {
-    // Mate score, e.g. M3 or #3
-    try {
-        int i = 0;
-        for (; i < token.size() && !std::isdigit(token[i]); i++);
-        move.scoreMate = std::stoi(token.substr(i)) * factor;
+    size_t i = 0;
+    while (i < token.size() && !std::isdigit(token[i])) ++i;
+    
+    if (auto mateValue = QaplaHelpers::to_int(std::string_view(token).substr(i))) {
+        move.scoreMate = *mateValue * factor;
     }
-    catch (...) {}
 }
 
 void PgnIO::parseCpScore(std::string token, MoveRecord& move) {
@@ -431,17 +432,78 @@ size_t PgnIO::parseCauseAnnotation(const std::vector<std::string>& tokens, size_
     return start;
 }
 
+std::string PgnIO::collectTerminationCause(const std::vector<std::string>& tokens, size_t& pos) {
+    std::string causeStr;
+    while (pos < tokens.size() && tokens[pos] != "}" && tokens[pos] != ",") {
+        if (!causeStr.empty()) causeStr += " ";
+        causeStr += tokens[pos];
+        ++pos;
+    }
+    return causeStr;
+}
+
+size_t PgnIO::parseGameEndInfo(const std::vector<std::string>& tokens, size_t pos, MoveRecord& move) {
+    const std::string& tok = tokens[pos];
+    
+    if (tok == "White" && pos + 1 < tokens.size()) {
+        const std::string& nextTok = tokens[pos + 1];
+        if (nextTok == "mates") {
+            move.result_ = GameResult::WhiteWins;
+            move.endCause_ = GameEndCause::Checkmate;
+            return pos + 2;
+        }
+        if (nextTok == "wins" && pos + 2 < tokens.size() && tokens[pos + 2] == "by") {
+            move.result_ = GameResult::WhiteWins;
+            size_t causePos = pos + 3;
+            auto cause = tryParseGameEndCause(collectTerminationCause(tokens, causePos));
+            if (cause) move.endCause_ = *cause;
+            return causePos;
+        }
+    }
+    else if (tok == "Black" && pos + 1 < tokens.size()) {
+        const std::string& nextTok = tokens[pos + 1];
+        if (nextTok == "mates") {
+            move.result_ = GameResult::BlackWins;
+            move.endCause_ = GameEndCause::Checkmate;
+            return pos + 2;
+        }
+        if (nextTok == "wins" && pos + 2 < tokens.size() && tokens[pos + 2] == "by") {
+            move.result_ = GameResult::BlackWins;
+            size_t causePos = pos + 3;
+            auto cause = tryParseGameEndCause(collectTerminationCause(tokens, causePos));
+            if (cause) move.endCause_ = *cause;
+            return causePos;
+        }
+    }
+    else if (tok == "Draw" && pos + 1 < tokens.size() && tokens[pos + 1] == "by") {
+        move.result_ = GameResult::Draw;
+        size_t causePos = pos + 2;
+        auto cause = tryParseGameEndCause(collectTerminationCause(tokens, causePos));
+        if (cause) move.endCause_ = *cause;
+        return causePos;
+    }
+    
+    return pos;
+}
+
 size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t start, MoveRecord& move) {
     if (tokens[start] != "{") return start;
 
     std::string pv;
-    std::string sep;
     size_t pos = start + 1;
 
+    // PGN comment format: {eval/depth time pv, game-end-info}
+    // Example: {+0.31/14 0.89s e2e4 d7d5, White mates}
     while (pos < tokens.size() && tokens[pos] != "}") {
         const std::string& tok = tokens[pos];
         if (tok.empty()) {
             ++pos;
+            continue;
+        }
+
+        size_t nextPos = parseGameEndInfo(tokens, pos, move);
+        if (nextPos != pos) {
+            pos = nextPos;
             continue;
         }
 
@@ -455,14 +517,16 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
             parseCpScore(tok, move);
         }
         else if (tok == "/") {
-            try {
-                if (pos + 1 < tokens.size()) {
-                    int depth = std::stoi(tokens[pos + 1]);
-                    move.depth = static_cast<uint32_t>(depth < 0 ? 0 : depth);
+            if (pos + 1 < tokens.size()) {
+                if (auto depth = QaplaHelpers::to_int(tokens[pos + 1])) {
+                    move.depth = static_cast<uint32_t>(*depth < 0 ? 0 : *depth);
                     ++pos;
                 }
             }
-            catch (...) {}
+        }
+        else if (tok == ",") {
+            // Ignore commas (we use one as separator before game-end info, 
+            // but accept them anywhere for robustness)
         }
         else if (tok.ends_with("s")) {
             try {
@@ -472,6 +536,7 @@ size_t PgnIO::parseMoveComment(const std::vector<std::string>& tokens, size_t st
             catch (...) {}
         }
         else {
+            // All remaining tokens in a comment are PV moves until we either hit } or ","
             if (!pv.empty()) pv += " ";
             pv += tok;
         }
@@ -589,6 +654,13 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
             auto [cause, curResult] = currentGame.getGameResult();
             currentGame.setGameEnd(curResult == *result ? cause: GameEndCause::Ongoing, *result);
         }
+        // We prefer game end information (1-0) over the Result tag, if both are conflicting.
+        if (!moves.empty() && moves.back().result_ != GameResult::Unterminated) {
+            auto [cause, curResult] = currentGame.getGameResult();
+            if (curResult == GameResult::Unterminated || curResult == moves.back().result_) {
+                currentGame.setGameEnd(moves.back().endCause_, moves.back().result_);
+            }
+        }
         inMoveSection = true;
     }
 
@@ -620,7 +692,6 @@ GameRecord PgnIO::parseGame(const std::string& pgnString) {
                 pos++; // Skip invalid
             }
         } else {
-            // Parse moves from current position to end
             std::vector<std::string> moveTokens(tokens.begin() + pos, tokens.end());
             auto [moves, result] = parseMoveLine(moveTokens, true);
             for (const auto& move : moves) {
@@ -630,8 +701,14 @@ GameRecord PgnIO::parseGame(const std::string& pgnString) {
                 auto [cause, curResult] = game.getGameResult();
                 game.setGameEnd(curResult == *result ? cause : GameEndCause::Ongoing, *result);
             }
-            pos = tokens.size(); // All remaining tokens processed
-            // Prevent overly long games
+            // We prefer game end information (1-0) over the Result tag, if both are conflicting.
+            if (!moves.empty() && moves.back().result_ != GameResult::Unterminated) {
+                auto [cause, curResult] = game.getGameResult();
+                if (curResult == GameResult::Unterminated || curResult == moves.back().result_) {
+                    game.setGameEnd(moves.back().endCause_, moves.back().result_);
+                }
+            }
+            pos = tokens.size();
             if (game.nextMoveIndex() > 2000) break;
         }
     }
