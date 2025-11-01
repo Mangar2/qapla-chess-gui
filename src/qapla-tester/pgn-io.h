@@ -234,6 +234,16 @@ private:
     static std::string collectTerminationCause(const std::vector<std::string>& tokens, size_t& pos);
 
     /**
+     * @brief Sets game result from parsed result token and move comments.
+     * @param moves List of parsed moves.
+     * @param result Optional result from PGN result token (1-0, 0-1, etc.).
+     * @param game GameRecord to update with final result and end cause.
+     */
+    static void setGameResultFromParsedData(const std::vector<MoveRecord>& moves, 
+                                           std::optional<GameResult> result, 
+                                           GameRecord& game);
+
+    /**
      * @brief Skips a comment block following a SAN move without parsing.
      * @param tokens Token list from PGN input.
      * @param start Position of the opening "{" token.

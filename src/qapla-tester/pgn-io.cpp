@@ -353,7 +353,8 @@ size_t PgnIO::skipRecursiveVariation(const std::vector<std::string>& tokens, siz
 	return pos; 
 }
 
-std::pair<MoveRecord, size_t> PgnIO::parseMove(const std::vector<std::string>& tokens, size_t start, bool loadComments) {
+std::pair<MoveRecord, size_t> PgnIO::parseMove(
+    const std::vector<std::string>& tokens, size_t start, bool loadComments) {
     
     size_t pos = skipMoveNumber(tokens, start);
     if (pos >= tokens.size()) return { {}, pos };
@@ -440,6 +441,22 @@ std::string PgnIO::collectTerminationCause(const std::vector<std::string>& token
         ++pos;
     }
     return causeStr;
+}
+
+void PgnIO::setGameResultFromParsedData(const std::vector<MoveRecord>& moves, 
+                                        std::optional<GameResult> result, 
+                                        GameRecord& game) {
+    if (result) {
+        auto [cause, curResult] = game.getGameResult();
+        game.setGameEnd(curResult == *result ? cause : GameEndCause::Ongoing, *result);
+    }
+    // Game-end info in move comment is more specific than Result tag
+    if (!moves.empty() && moves.back().result_ != GameResult::Unterminated) {
+        auto [cause, curResult] = game.getGameResult();
+        if (curResult == GameResult::Unterminated || curResult == moves.back().result_) {
+            game.setGameEnd(moves.back().endCause_, moves.back().result_);
+        }
+    }
 }
 
 size_t PgnIO::parseGameEndInfo(const std::vector<std::string>& tokens, size_t pos, MoveRecord& move) {
@@ -650,17 +667,7 @@ std::vector<GameRecord> PgnIO::loadGames(const std::string& fileName, bool loadC
         for (const auto& move : moves) {
             currentGame.addMove(move);
         }
-        if (result) {
-            auto [cause, curResult] = currentGame.getGameResult();
-            currentGame.setGameEnd(curResult == *result ? cause: GameEndCause::Ongoing, *result);
-        }
-        // We prefer game end information (1-0) over the Result tag, if both are conflicting.
-        if (!moves.empty() && moves.back().result_ != GameResult::Unterminated) {
-            auto [cause, curResult] = currentGame.getGameResult();
-            if (curResult == GameResult::Unterminated || curResult == moves.back().result_) {
-                currentGame.setGameEnd(moves.back().endCause_, moves.back().result_);
-            }
-        }
+        setGameResultFromParsedData(moves, result, currentGame);
         inMoveSection = true;
     }
 
@@ -697,10 +704,7 @@ GameRecord PgnIO::parseGame(const std::string& pgnString) {
             for (const auto& move : moves) {
                 game.addMove(move);
             }
-            if (result) {
-                auto [cause, curResult] = game.getGameResult();
-                game.setGameEnd(curResult == *result ? cause : GameEndCause::Ongoing, *result);
-            }
+            setGameResultFromParsedData(moves, result, game);
             // We prefer game end information (1-0) over the Result tag, if both are conflicting.
             if (!moves.empty() && moves.back().result_ != GameResult::Unterminated) {
                 auto [cause, curResult] = game.getGameResult();
