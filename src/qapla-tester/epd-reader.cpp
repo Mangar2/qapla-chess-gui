@@ -117,7 +117,11 @@ EpdReader::extractFen(std::istringstream& stream) {
 }
 
 void EpdReader::parseOperations(const std::string& input, EpdEntry& result) {
-    std::istringstream stream(input);
+    // Remove all carriage returns from input before parsing
+    std::string cleanedInput = input;
+    std::erase(cleanedInput, '\r');
+    
+    std::istringstream stream(cleanedInput);
     std::string token;
     std::string opCode;
 

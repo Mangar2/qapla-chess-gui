@@ -33,6 +33,7 @@
 #include <optional>
 #include <thread>
 #include <chrono>
+#include <string>
 
 namespace QaplaWindows {
 
@@ -151,12 +152,13 @@ namespace QaplaWindows {
         totalTests = 0;
         remainingTests = 0;
         for (auto& result : *epdResults_) {
-            size_t row = 0;
-            auto& engineName = result.engineName;
+            size_t rowIndex = 0;
+            auto& engineName = result.engineName;            
             for (auto& test : result.result) {
                 if (col == 0) {
                     std::vector<std::string> row{};
-                    row.push_back(test.id);
+                    std::string id = test.id.empty() ? std::to_string(rowIndex) : test.id;
+                    row.push_back(id);
                     std::string bestMoves;
                     for (auto& move : test.bestMoves) {
                         if (!bestMoves.empty()) {
@@ -175,16 +177,16 @@ namespace QaplaWindows {
 					});
                 totalTests++;
                 if (test.correct) {
-                    table_.extend(row, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
+                    table_.extend(rowIndex, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
                 }
                 else if (!test.playedMove.empty()) {
-                    table_.extend(row, "- (" + test.playedMove + ")");
+                    table_.extend(rowIndex, "- (" + test.playedMove + ")");
                 }
                 else {
                     remainingTests++;
-                    table_.extend(row, "?");
+                    table_.extend(rowIndex, "?");
                 }
-                row++;
+                rowIndex++;
             }
             col++;
         }
