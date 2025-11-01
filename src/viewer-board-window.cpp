@@ -194,8 +194,9 @@ namespace QaplaWindows
         if (letters.size() > effectiveMaxLetters) {
             letters = letters.substr(0, effectiveMaxLetters);
         }
-        
-        // Step 6: Combine
+        if (letters.empty()) {
+            return numbers;
+        }
         if (!numbers.empty()) {
             return letters + separator + numbers;
         } 

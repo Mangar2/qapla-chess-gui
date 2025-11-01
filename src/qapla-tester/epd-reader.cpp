@@ -51,9 +51,17 @@ EpdReader::EpdReader(const std::string& filePath): filePath_(filePath) {
         );
     }
     std::string line;
+    size_t lineNumber = 0;
     while (std::getline(file, line)) {
         if (!line.empty()) {
-            entries_.emplace_back(parseEpdLine(line));
+            ++lineNumber;
+            auto entry = parseEpdLine(line);
+            // Add auto-generated ID if not present
+            if (entry.operations.find("id") == entry.operations.end() || 
+                entry.operations["id"].empty()) {
+                entry.operations["id"] = { std::to_string(lineNumber) };
+            }
+            entries_.emplace_back(std::move(entry));
         }
     }
     currentIndex_ = 0;
