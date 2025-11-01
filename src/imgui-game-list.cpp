@@ -148,13 +148,16 @@ void ImGuiGameList::createTable() {
 
     // Define fixed columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        {"White", ImGuiTableColumnFlags_WidthFixed, 120.0F},
-        {"Black", ImGuiTableColumnFlags_WidthFixed, 120.0F},
-        {"Result", ImGuiTableColumnFlags_WidthFixed, 80.0F},
-        {"PlyCount", ImGuiTableColumnFlags_WidthFixed, 65.0F, true}
+        { .name = "White", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
+        { .name = "Black", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
+        { .name = "Result", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F },
+        { .name = "PlyCount", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 65.0F, .alignRight = true }
     };
 
-    auto knownTags = std::set<std::string>{"White", "Black", "Result", "PlyCount"};
+    auto knownTags = std::set<std::string>{};
+    for (const auto& col : columns) {
+        knownTags.insert(col.name);
+    }
 
     // Add common tag columns
     for (const auto& tag : commonTags) {
@@ -184,17 +187,11 @@ void ImGuiGameList::createTable() {
         std::string black = tags.count("Black") ? tags.at("Black") : "";
         
         auto [cause, result] = game.getGameResult();
-        std::string resultStr;
-        switch (result) {
-            case GameResult::WhiteWins: resultStr = "1-0"; break;
-            case GameResult::BlackWins: resultStr = "0-1"; break;
-            case GameResult::Draw: resultStr = "1/2-1/2"; break;
-            case GameResult::Unterminated: resultStr = "*"; break;
-        }
+        std::string resultStr = gameResultToPgnResult(result);
+        // Cause is not set in load games for speed reasons and cannot be used here
         
         std::string moves = std::to_string(game.history().size());
         
-        // Start building row data
         std::vector<std::string> rowData = {white, black, resultStr, moves};
         
         for (const std::string& tag : commonTags) {

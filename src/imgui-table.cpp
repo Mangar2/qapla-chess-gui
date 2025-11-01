@@ -21,8 +21,79 @@
 #include <imgui.h>
 #include <iostream>
 #include <algorithm>
+#include <cctype>
 
 namespace QaplaWindows {
+
+    /**
+     * @brief Natural sort comparison for strings containing numbers.
+     * Compares strings in a human-friendly way: "1" < "2" < "10" instead of "1" < "10" < "2".
+     * @param a First string to compare
+     * @param b Second string to compare
+     * @return true if a should come before b in natural sort order
+     */
+    static bool naturalCompare(const std::string& a, const std::string& b) {
+        size_t i = 0, j = 0;
+        
+        while (i < a.size() && j < b.size()) {
+            if (std::isdigit(static_cast<unsigned char>(a[i])) && 
+                std::isdigit(static_cast<unsigned char>(b[j]))) {
+                
+                // Extract the full number from both strings
+                size_t numStartA = i;
+                size_t numStartB = j;
+                
+                while (i < a.size() && a[i] == '0') ++i;
+                while (j < b.size() && b[j] == '0') ++j;
+                
+                // Find the end of the number
+                size_t numEndA = i;
+                size_t numEndB = j;
+                while (numEndA < a.size() && std::isdigit(static_cast<unsigned char>(a[numEndA]))) ++numEndA;
+                while (numEndB < b.size() && std::isdigit(static_cast<unsigned char>(b[numEndB]))) ++numEndB;
+                
+                // Compare by length first (longer number = larger)
+                size_t lenA = numEndA - i;
+                size_t lenB = numEndB - j;
+                
+                if (lenA != lenB) {
+                    return lenA < lenB;
+                }
+                
+                // Same length: compare digit by digit
+                while (i < numEndA && j < numEndB) {
+                    if (a[i] != b[j]) {
+                        return a[i] < b[j];
+                    }
+                    ++i;
+                    ++j;
+                }
+                
+                // If numbers are equal, compare leading zeros count
+                if (i == numEndA && j == numEndB) {
+                    size_t zerosA = numStartA;
+                    size_t zerosB = numStartB;
+                    while (zerosA < a.size() && a[zerosA] == '0') ++zerosA;
+                    while (zerosB < b.size() && b[zerosB] == '0') ++zerosB;
+                    size_t zeroCountA = zerosA - numStartA;
+                    size_t zeroCountB = zerosB - numStartB;
+                    if (zeroCountA != zeroCountB) {
+                        return zeroCountA < zeroCountB;
+                    }
+                }
+            } else {
+                // Non-digit characters: compare directly
+                if (a[i] != b[j]) {
+                    return a[i] < b[j];
+                }
+                ++i;
+                ++j;
+            }
+        }
+        
+        // One string is a prefix of the other
+        return a.size() < b.size();
+    }
 
     ImGuiTable::ImGuiTable(const std::string& tableId,
         ImGuiTableFlags tableFlags,
@@ -276,8 +347,8 @@ namespace QaplaWindows {
                     if (column >= static_cast<int>(columns_.size())) return false;
                     std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
                     std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
-                    if (ascending) return valA < valB;
-                    else return valA > valB;
+                    if (ascending) return naturalCompare(valA, valB);
+                    else return naturalCompare(valB, valA);
                 });
             }
             specs->SpecsDirty = false;
