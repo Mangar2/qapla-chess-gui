@@ -138,8 +138,8 @@ std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loa
 				continue;
 			}
 			auto instance = createInstance();
-			instance->loadBoardEnginesConfiguration(sectionList);
             instance->loadGlobalEngineConfiguration(idStr);
+			instance->loadBoardEnginesConfiguration(sectionList);
 			instances.push_back(std::move(instance));
 		} catch (const std::exception& e) {
 			// Ignore invalid entries

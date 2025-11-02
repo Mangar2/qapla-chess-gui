@@ -30,15 +30,22 @@
 
 namespace QaplaTester {
 
+/**
+ * @brief Trace levels for logging control.
+ * IMPORTANT: Order and numeric values matter for comparison logic!
+ * Lower enum values = higher priority (more restrictive filtering).
+ * Comparison logic: if (messageLevel <= threshold) -> message is logged
+ * 
+ * Example: If threshold is 'command', only 'none', 'error' and 'command' messages are logged.
+ */
 enum class TraceLevel : int {
-    error,
-    command,
-    result,
-    warning,
-    info,
-    none
+    none = 0,    // Log nothing (most restrictive)
+    error = 1,   // Log only errors
+    command = 2, // Log errors + commands
+    result = 3,  // Log errors + commands + results
+    warning = 4, // Log errors + commands + results + warnings
+    info = 5     // Log everything (least restrictive)
 };
-
 
 /**
  * @brief Converts TraceLevel to string representation
