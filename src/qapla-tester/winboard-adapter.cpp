@@ -144,13 +144,14 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game, bool isInfin
 
 	auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
 	auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
-    if (game.fen != gameStruct_.fen ||
-		newMoves.rfind(oldMoves, 0) != 0) {
-		throw std::runtime_error("Different start position or FEN detected in sendMissingMoves");
+    
+    if (game.fen != gameStruct_.fen || newMoves.rfind(oldMoves, 0) != 0) {
+        sendPosition(game);
+        return go(isInfinite);
     }
 	std::string additionalMoves = newMoves.substr(oldMoves.size());
 
-    if (newMoves.empty()) {
+    if (additionalMoves.empty()) {
         return go(isInfinite);
     }
 
