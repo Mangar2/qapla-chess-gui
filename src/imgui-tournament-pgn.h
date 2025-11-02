@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "tutorial.h"
+
 #include "qapla-tester/pgn-io.h"
 #include "qapla-tester/ini-file.h"
 
