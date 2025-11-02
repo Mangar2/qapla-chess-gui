@@ -121,7 +121,7 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
             modified = true;
 
             if (options_.directEditMode) {
-                configManager.addOrReplaceConfig(engine.config);
+                configManager.addOrReplaceConfig(engine.config, options_.allowProtocolEdit);
             } 
             if (it == engineConfigurations_.end()) {
                 engineConfigurations_.push_back(engine);
@@ -145,10 +145,11 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     auto drawEngineControls = [this, &config]() -> bool {
         bool configModified = false;
         
-        ImGuiEngineControls::drawEngineReadOnlyInfo(config.config);
+        ImGuiEngineControls::drawEngineReadOnlyInfo(config.config, false, !options_.allowProtocolEdit);
         ImGui::Separator();
         
         configModified |= ImGuiEngineControls::drawEngineName(config.config, options_.allowNameEdit);
+        configModified |= ImGuiEngineControls::drawEngineProtocol(config.config, options_.allowProtocolEdit);
         if (configModified && options_.allowNameEdit) {
             config.originalName = config.config.getName();
         }

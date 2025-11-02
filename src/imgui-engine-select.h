@@ -46,6 +46,7 @@ namespace QaplaWindows {
          */
         struct Options {
             Options() {};
+            bool allowProtocolEdit = false;      ///< Allows editing of the engine protocol
             bool allowGauntletEdit = true;        ///< Allows editing of the gauntlet option
             bool allowNameEdit = true;            ///< Allows editing of the engine name
             bool allowPonderEdit = true;          ///< Allows editing of the ponder option

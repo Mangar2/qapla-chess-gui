@@ -37,7 +37,7 @@ using namespace QaplaConfiguration;
 std::vector<EngineConfig> EngineCapabilities::collectMissingCapabilities() const {
     std::vector<EngineConfig> configs;
     for (auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
-        if (!hasAnyCapability(config.getCmd())) {
+        if (!hasAnyCapability(config.getCmd(), config.getProtocol())) {
             configs.push_back(config);
         }
     }
@@ -139,7 +139,7 @@ void EngineCapabilities::autoDetect() {
 
 bool EngineCapabilities::areAllEnginesDetected() const {
     for (const auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
-        if (!hasAnyCapability(config.getCmd())) {
+        if (!hasAnyCapability(config.getCmd(), config.getProtocol())) {
             return false;
         }
     }

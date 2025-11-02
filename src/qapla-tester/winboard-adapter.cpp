@@ -88,8 +88,19 @@ void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) 
     writeCommand("post");
 }
 
+void WinboardAdapter::setForceMode() {
+    writeCommand("force");
+    forceMode_ = true;
+}
+
 void WinboardAdapter::moveNow() {
-    writeCommand("?");
+    if (isAnalyzeMode_) {
+        writeCommand("exit");
+        isAnalyzeMode_ = false;
+    } else {
+        writeCommand("?");
+    }
+    setForceMode();
 }
 
 void WinboardAdapter::setPonder(bool enabled) {
@@ -116,7 +127,20 @@ void WinboardAdapter::bestMoveReceived(const std::string& sanMove, const std::st
     }
 }
 
-uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
+uint64_t WinboardAdapter::go(bool isInfinite) {
+    if (isAnalyzeMode_) {
+        return 0;
+    }
+    if (isInfinite) {
+        isAnalyzeMode_ = true;
+        return writeCommand("analyze");
+    } else {
+        forceMode_ = false;
+        return writeCommand("go");
+    }
+}
+
+uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game, bool isInfinite) {
 
 	auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
 	auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
@@ -126,10 +150,8 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
     }
 	std::string additionalMoves = newMoves.substr(oldMoves.size());
 
-    // We need either a move command or a go command to tell the engine to play a move
     if (newMoves.empty()) {
-        forceMode_ = false;
-        return writeCommand("go");
+        return go(isInfinite);
     }
 
     std::istringstream lanStream(additionalMoves);
@@ -143,10 +165,9 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
         if (!firstMove.empty()) {
 			// If we have more than one move, we need to set winboard to force mode to prevent the engine
 			// from playing its own move immediately.
-            writeCommand("force");
+            setForceMode();
             writeCommand((isEnabled("usermove") ? "usermove " : "") + firstMove);
 			firstMove.clear();
-            forceMode_ = true;
         }
         lastTimestamp = writeCommand((isEnabled("usermove") ? "usermove " : "") + move);
 	}
@@ -155,9 +176,9 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
     }
 
     bool switchSides = lastTimestamp == 0;
-    if (forceMode_ || switchSides) {
-        forceMode_ = false;
-        lastTimestamp = writeCommand("go");
+    // Check for isInfinite is redundant as isInfinite sets forceMode_ to true, but clearer
+    if (forceMode_ || switchSides || isInfinite) {
+        lastTimestamp = go(isInfinite);
     }
 
     gameStruct_ = game;
@@ -166,8 +187,12 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game) {
 
 uint64_t WinboardAdapter::computeMove(const GameStruct& game,
     const GoLimits& limits,
-    [[maybe_unused]] bool ponderHit) {
-    if (isEnabled("time")) {
+    [[maybe_unused]] bool ponderHit) 
+{
+    if (limits.infinite) {
+        setForceMode();
+        return catchupMovesAndGo(game, true);
+    } else if (isEnabled("time")) {
         uint64_t time = game.isWhiteToMove ? limits.wtimeMs : limits.btimeMs;
         uint64_t otim = game.isWhiteToMove ? limits.btimeMs : limits.wtimeMs;
         writeCommand("time " + std::to_string(time / 10));
@@ -219,8 +244,7 @@ void WinboardAdapter::sendTimeControl(const GameRecord& gameRecord, bool engineI
 void WinboardAdapter::sendPosition(const GameStruct& game) {
     writeCommand("new");
     writeCommand("easy");
-    writeCommand("force");
-	forceMode_ = true;
+    setForceMode();
 
     if (!game.fen.empty()) {
         writeCommand("setboard " + game.fen);

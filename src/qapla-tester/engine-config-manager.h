@@ -91,7 +91,7 @@ public:
      * Adds a new configuration or replaces the existing one with the same name.
      * @param config The EngineConfig to add or update.
      */
-    void addOrReplaceConfig(const EngineConfig& config);
+    void addOrReplaceConfig(const EngineConfig& config, bool replaceOnDifferentProtocol = false);
 
     /**
      * Adds a new configuration without checking for duplicates.

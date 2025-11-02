@@ -160,8 +160,22 @@ private:
      *        Skips the last own move if it matches the stored original move string.
      *
      * @param game The current game state with full move history.
+     * @param isInfinite If true, enable analyze mode if not already enabled.
+     * @return Timestamp when the 'go' or 'analyze' command was sent.
      */
-    uint64_t catchupMovesAndGo(const GameStruct& game);
+    uint64_t catchupMovesAndGo(const GameStruct& game, bool isInfinite = false);
+
+    /**
+     * @brief Sends a 'go' or 'analyze' command to the engine based on current mode.
+     * @param isInfinite If true, sends 'analyze' command - if not in analyzeMode; otherwise, sends 'go'.
+     * @return Timestamp when the command was sent or 0, if nothing has been sent.
+     */
+    uint64_t go(bool isInfinite);
+
+    /**
+     * @brief Sets the engine into force mode and remember this in forceMode_.
+     */
+    void setForceMode();
 
     /**
      * Ensures all known boolean features are present in featureMap_ with correct defaults.
@@ -188,6 +202,7 @@ private:
     std::map<std::string, std::string> featureMap_;
 	uint64_t pingCounter_ = 0;
     bool forceMode_ = false;
+    bool isAnalyzeMode_ = false;
 
 	GameStruct gameStruct_; 
 };

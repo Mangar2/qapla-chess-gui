@@ -78,11 +78,13 @@ EngineConfig* EngineConfigManager::getConfigMutableByCmdAndProtocol(
     return nullptr;
 }
 
-void EngineConfigManager::addOrReplaceConfig(const EngineConfig& config) {
+void EngineConfigManager::addOrReplaceConfig(const EngineConfig& config, bool replaceOnDifferentProtocol) {
     for (auto& existing : configs) {
-        if (existing.getCmd() == config.getCmd() && existing.getProtocol() == config.getProtocol()) {
-            existing = config;
-            return;
+        if (existing.getCmd() == config.getCmd()) {
+            if (existing.getProtocol() == config.getProtocol() || replaceOnDifferentProtocol) {
+                existing = config;
+                return;
+            }
         }
     }
     configs.push_back(config);

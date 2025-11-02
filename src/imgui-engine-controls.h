@@ -280,11 +280,18 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
  * @param config Engine configuration to display
  * @param full Whether to show full details (directory and author)
  */
-inline void drawEngineReadOnlyInfo(const QaplaTester::EngineConfig& config, bool full = false) {
+inline void drawEngineReadOnlyInfo(const QaplaTester::EngineConfig& config, bool full = false, bool protocol = true) {
     ImGui::Text(full ? "Command: %s" : "%s", config.getCmd().c_str());
-    if (full) ImGui::Text("Directory: %s", config.getDir().c_str());
-        ImGui::Text(full ? "Protocol: %s" : "%s", (config.getProtocol() == QaplaTester::EngineProtocol::Uci ? "UCI" : "XBoard"));
-    if (full) ImGui::Text("Author: %s", config.getAuthor().c_str());
+    if (full) {
+        ImGui::Text("Directory: %s", config.getDir().c_str());
+    }
+    if (protocol) {
+        ImGui::Text("Protocol: %s", 
+            (config.getProtocol() == QaplaTester::EngineProtocol::Uci ? "UCI" : "XBoard"));
+    }
+    if (full) {
+        ImGui::Text("Author: %s", config.getAuthor().c_str());
+    }
 }
 
 } // namespace QaplaWindows::ImGuiEngineControls

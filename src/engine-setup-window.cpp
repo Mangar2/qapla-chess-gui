@@ -48,6 +48,8 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     : showGlobalControls_(showGlobalControls)
 {
     ImGuiEngineSelect::Options options;
+    // Hack, the use-case showing globalcontrols assumes protocol is not editable and vice versa
+    options.allowProtocolEdit = !showGlobalControls;
     options.allowGauntletEdit = false;
     options.allowNameEdit = true;
     options.allowPonderEdit = true;

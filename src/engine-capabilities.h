@@ -100,11 +100,12 @@ namespace QaplaConfiguration {
         /**
          * @brief Checks if any capability exists for a given path.
          * @param path The path to check for capabilities.
-         * @return True if any capability exists for the given path, false otherwise.
+         * @param protocol The protocol used by the engine.
+         * @return True if any capability exists for path and protocol, false otherwise.
          */
-        const bool hasAnyCapability(const std::string& path) const {
+        const bool hasAnyCapability(const std::string& path, QaplaTester::EngineProtocol protocol) const {
             for (const auto& [key, capability] : capabilities_) {
-                if (capability.getPath() == path) {
+                if (capability.getPath() == path && capability.getProtocol() == protocol) {
                     return true;
                 }
             }
