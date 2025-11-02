@@ -21,6 +21,7 @@
 
 #include "embedded-window.h"
 #include "imgui-engine-select.h"
+#include "tutorial.h"
 
 #include "qapla-tester/engine-config.h"
 
@@ -55,6 +56,11 @@ namespace QaplaWindows {
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for Tournament tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial
         static inline std::string highlightedSection_ = ""; ///< Section to highlight for tutorial
+        static inline Tutorial::TutorialContext globalSettingsTutorial_; ///< Tutorial context for Global Engine Settings
+        static inline Tutorial::TutorialContext openingTutorial_; ///< Tutorial context for Opening section
+        static inline Tutorial::TutorialContext tournamentTutorial_; ///< Tutorial context for Tournament section
+        static inline Tutorial::TutorialContext timeControlTutorial_; ///< Tutorial context for Time Control section
+        static inline Tutorial::TutorialContext pgnTutorial_; ///< Tutorial context for PGN section
 
     private:
 

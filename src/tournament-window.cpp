@@ -216,17 +216,17 @@ bool TournamentWindow::drawInput() {
 
     bool changed = false;
 
-    const bool highlightGlobalSettings = (highlightedSection_ == "GlobalSettings");
-    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F, highlightGlobalSettings);
+    globalSettingsTutorial_.highlight = (highlightedSection_ == "GlobalSettings");
+    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F, globalSettingsTutorial_);
     
     const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
     changed |= tournamentData.engineSelect().draw(highlightEngineSelect);
     
-    const bool highlightOpening = (highlightedSection_ == "Opening");
-    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F, highlightOpening);
+    openingTutorial_.highlight = (highlightedSection_ == "Opening");
+    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F, openingTutorial_);
 
-    const bool highlightTournament = (highlightedSection_ == "Tournament");
-    if (ImGuiControls::CollapsingHeaderWithDot("Tournament", ImGuiTreeNodeFlags_Selected, highlightTournament)) {
+    tournamentTutorial_.highlight = (highlightedSection_ == "Tournament");
+    if (ImGuiControls::CollapsingHeaderWithDot("Tournament", ImGuiTreeNodeFlags_Selected, tournamentTutorial_.highlight)) {
         ImGui::PushID("tournament");
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
@@ -245,16 +245,34 @@ bool TournamentWindow::drawInput() {
             );
         }
         
+        // Show tutorial annotation if present
+        auto it = tournamentTutorial_.annotations.find("Type");
+        if (it != tournamentTutorial_.annotations.end()) {
+            ImGuiControls::annotate(it->second);
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData.config().rounds, 1, 1000);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Repeat all pairings this many times");
         }
         
+        // Show tutorial annotation if present
+        it = tournamentTutorial_.annotations.find("Rounds");
+        if (it != tournamentTutorial_.annotations.end()) {
+            ImGuiControls::annotate(it->second);
+        }
+        
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData.config().games, 1, 1000);
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Number of games per pairing.\nTotal games = games × rounds");
+        }
+        
+        // Show tutorial annotation if present
+        it = tournamentTutorial_.annotations.find("Games per pairing");
+        if (it != tournamentTutorial_.annotations.end()) {
+            ImGuiControls::annotate(it->second);
         }
         
         ImGui::SetNextItemWidth(inputWidth);
@@ -264,6 +282,12 @@ bool TournamentWindow::drawInput() {
                 "Number of consecutive games played per opening.\n"
                 "Commonly set to 2 to alternate colors with the same line"
             );
+        }
+        
+        // Show tutorial annotation if present
+        it = tournamentTutorial_.annotations.find("Same opening");
+        if (it != tournamentTutorial_.annotations.end()) {
+            ImGuiControls::annotate(it->second);
         }
         
         ImGui::SetNextItemWidth(inputWidth);
@@ -282,11 +306,11 @@ bool TournamentWindow::drawInput() {
         ImGui::PopID();
     }
     
-    const bool highlightTimeControl = (highlightedSection_ == "TimeControl");
-    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false, highlightTimeControl);
+    timeControlTutorial_.highlight = (highlightedSection_ == "TimeControl");
+    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false, timeControlTutorial_);
     
-    const bool highlightPgn = (highlightedSection_ == "Pgn");
-    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F, highlightPgn);
+    pgnTutorial_.highlight = (highlightedSection_ == "Pgn");
+    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F, pgnTutorial_);
     
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
@@ -377,6 +401,9 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         Tutorial::instance().showNextTutorialStep(topicName);
         highlightedButton_ = "";
         highlightedSection_ = "GlobalSettings";
+        globalSettingsTutorial_.highlight = true;
+        globalSettingsTutorial_.annotations["Hash (MB)"] = "Set to: 64";
+        globalSettingsTutorial_.annotations["Ponder"] = "Uncheck 'Engine decides'";
         return;
         
         case 2:
@@ -385,6 +412,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         if (tournamentData.globalSettings().getGlobalSettings().hashSizeMB == 64 && 
             !tournamentData.globalSettings().getGlobalSettings().useGlobalPonder) {
             Tutorial::instance().showNextTutorialStep(topicName);
+            globalSettingsTutorial_.clear();
             highlightedSection_ = "EngineSelect";
         }
         return;
@@ -394,6 +422,8 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         if (hasTwoSameEnginesWithPonder()) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedSection_ = "Opening";
+            openingTutorial_.highlight = true;
+            openingTutorial_.annotations["Opening file"] = "Select any opening file";
         }
         return;
         
@@ -402,7 +432,13 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if opening file is set (ignore format check as requested)
         if (!tournamentData.tournamentOpening().openings().file.empty()) {
             Tutorial::instance().showNextTutorialStep(topicName);
+            openingTutorial_.clear();
             highlightedSection_ = "Tournament";
+            tournamentTutorial_.highlight = true;
+            tournamentTutorial_.annotations["Type"] = "Set to: round-robin";
+            tournamentTutorial_.annotations["Rounds"] = "Set to: 2";
+            tournamentTutorial_.annotations["Games per pairing"] = "Set to: 2";
+            tournamentTutorial_.annotations["Same opening"] = "Set to: 2";
         }
         return;
         
@@ -414,7 +450,10 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             tournamentData.config().games == 2 &&
             tournamentData.config().repeat == 2) {
             Tutorial::instance().showNextTutorialStep(topicName);
+            tournamentTutorial_.clear();
             highlightedSection_ = "TimeControl";
+            timeControlTutorial_.highlight = true;
+            timeControlTutorial_.annotations["Predefined time control"] = "Select: 20.0+0.02";
         }
         return;
         
@@ -423,7 +462,10 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if time control is set to "20.0+0.02"
         if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
             Tutorial::instance().showNextTutorialStep(topicName);
+            timeControlTutorial_.clear();
             highlightedSection_ = "Pgn";
+            pgnTutorial_.highlight = true;
+            pgnTutorial_.annotations["Pgn file"] = "Select output file";
         }
         return;
         
@@ -431,6 +473,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 6: Set PGN output file
         if (!tournamentData.tournamentPgn().pgnOptions().file.empty()) {
             Tutorial::instance().showNextTutorialStep(topicName);
+            pgnTutorial_.clear();
             highlightedSection_ = "";
         }
         return;
@@ -500,6 +543,11 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         default:
         highlightedButton_ = "";
         highlightedSection_ = "";
+        globalSettingsTutorial_.clear();
+        openingTutorial_.clear();
+        tournamentTutorial_.clear();
+        timeControlTutorial_.clear();
+        pgnTutorial_.clear();
         Tutorial::instance().finishTutorial(topicName);
         return;
     }

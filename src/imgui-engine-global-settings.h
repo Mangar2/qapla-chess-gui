@@ -19,10 +19,14 @@
 
 #pragma once
 
+#include "tutorial.h"
+
 #include "qapla-tester/ini-file.h"
 
 #include <string>
 #include <functional>
+
+class Tutorial;
 
 namespace QaplaTester
 {
@@ -108,20 +112,22 @@ namespace QaplaWindows {
          * @brief Draws the global engine settings interface
          * @param controlWidth Width of the input controls
          * @param controlIndent Indentation for controls (default: 10.0)
-         * @param highlight If true, shows a red dot indicator for tutorial highlighting
+         * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F, bool highlight = false);
+        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F, 
+            const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
          * @brief Draws the time control interface
          * @param controlWidth Width of the input controls
          * @param controlIndent Indentation for controls (default: 10.0)
          * @param blitz Whether to use blitz mode (no hours in time input)
-         * @param highlight If true, shows a red dot indicator for tutorial highlighting
+         * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false, bool highlight = false);
+        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false, 
+            const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
          * @brief Returns the current global settings

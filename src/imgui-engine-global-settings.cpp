@@ -21,6 +21,7 @@
 #include "imgui-engine-controls.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "tutorial.h"
 
 #include "qapla-tester/engine-config.h"
 #include "qapla-tester/engine-option.h"
@@ -36,10 +37,10 @@ ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, Con
 {
 }
 
-bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent, bool highlight) {
+bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", 0, highlight)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", 0, tutorialContext.highlight)) {
         ImGui::Indent(controlIndent);
         
         // Hash size control
@@ -51,6 +52,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
             modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
             ImGui::EndDisabled();
+            
+            // Show tutorial annotation if present
+            auto it = tutorialContext.annotations.find("Hash (MB)");
+            if (it != tutorialContext.annotations.end()) {
+                ImGuiControls::annotate(it->second);
+            }
         }
         
         // Restart option control
@@ -62,6 +69,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
                 {"Engine decides", "Always", "Never"});
             ImGui::EndDisabled();
+            
+            // Show tutorial annotation if present
+            auto it = tutorialContext.annotations.find("Restart");
+            if (it != tutorialContext.annotations.end()) {
+                ImGuiControls::annotate(it->second);
+            }
         }
         
         // Trace level control
@@ -73,6 +86,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
                 {"None", "All", "Command"});
             ImGui::EndDisabled();
+            
+            // Show tutorial annotation if present
+            auto it = tutorialContext.annotations.find("Trace");
+            if (it != tutorialContext.annotations.end()) {
+                ImGuiControls::annotate(it->second);
+            }
         }
         
         // Ponder control
@@ -83,6 +102,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
             ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
             modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
             ImGui::EndDisabled();
+            
+            // Show tutorial annotation if present
+            auto it = tutorialContext.annotations.find("Ponder");
+            if (it != tutorialContext.annotations.end()) {
+                ImGuiControls::annotate(it->second);
+            }
         }
         
         ImGui::Unindent(controlIndent);
@@ -95,10 +120,10 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz, bool highlight) {
+bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Time Control", 0, highlight)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Time Control", 0, tutorialContext.highlight)) {
         ImGui::Indent(controlIndent);
         
         // Both controls work with the SAME variable (timeControlSettings_.timeControl)
@@ -115,6 +140,12 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
                 "Selecting an option automatically fills the input fields above.\n"
                 "Example: '20.0+0.02' sets Seconds=20, Increment Ms=20"
             );
+        }
+        
+        // Show tutorial annotation if present
+        auto it = tutorialContext.annotations.find("Predefined time control");
+        if (it != tutorialContext.annotations.end()) {
+            ImGuiControls::annotate(it->second);
         }
         
         ImGui::Unindent(controlIndent);

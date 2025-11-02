@@ -20,6 +20,7 @@
 #include "imgui-tournament-opening.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "tutorial.h"
 
 #include "qapla-tester/string-helper.h"
 
@@ -28,10 +29,10 @@
 
 using namespace QaplaWindows;
 
-bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float indent, bool highlight) {
+bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float indent, const Tutorial::TutorialContext& tutorialContext) {
     bool changed = false;
 
-    if (!ImGuiControls::CollapsingHeaderWithDot("Opening", ImGuiTreeNodeFlags_Selected, highlight)) {
+    if (!ImGuiControls::CollapsingHeaderWithDot("Opening", ImGuiTreeNodeFlags_Selected, tutorialContext.highlight)) {
         return false;
     }
     
@@ -41,6 +42,12 @@ bool ImGuiTournamentOpening::draw(float inputWidth, float fileInputWidth, float 
     changed |= ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Path to opening file (.epd, .pgn, or raw FEN text)");
+    }
+    
+    // Show tutorial annotation if present
+    auto it = tutorialContext.annotations.find("Opening file");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
     }
     
     ImGui::SetNextItemWidth(inputWidth);

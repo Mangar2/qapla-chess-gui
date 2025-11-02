@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <vector>
 
+class Tutorial;
+
 namespace QaplaWindows {
 
     class ImGuiTournamentOpening {
@@ -39,10 +41,11 @@ namespace QaplaWindows {
          * @param inputWidth Width for input controls.
          * @param fileInputWidth Width for file input control.
          * @param indent Indentation level.
-         * @param highlight Whether to highlight the "Opening" collapsing header with a red dot.
+         * @param tutorialContext Tutorial context with highlighting and annotations
          * @return True if any value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent, bool highlight = false);
+        bool draw(float inputWidth, float fileInputWidth, float indent, 
+            const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         void setId(const std::string& id) {
             id_ = id;

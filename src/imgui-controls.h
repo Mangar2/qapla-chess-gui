@@ -34,6 +34,23 @@
 namespace QaplaWindows::ImGuiControls {
 
     /**
+     * @brief Displays an annotation text on the same line with optional red highlighting.
+     * @param text The annotation text to display.
+     * @param red If true, displays in red; if false, displays in disabled text color.
+     */
+    inline void annotate(const std::string& text, bool red = true) {
+        if (text.empty()) {
+            return;
+        }
+        ImGui::SameLine();
+        if (red) {
+            ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", text.c_str());
+        } else {
+            ImGui::TextDisabled("%s", text.c_str());
+        }
+    }
+
+    /**
      * @brief Wrapper around ImGui::InputText for std::string input.
      * @param label Label to display next to the input box.
      * @param value Initial value as const string.

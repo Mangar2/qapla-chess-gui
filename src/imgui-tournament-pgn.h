@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+class Tutorial;
+
 namespace QaplaWindows {
 
     class ImGuiTournamentPgn {
@@ -37,10 +39,11 @@ namespace QaplaWindows {
          * @param inputWidth Width of the input controls.
          * @param fileInputWidth Width of the file input control.
          * @param indent Indentation to apply to the controls.
-         * @param highlight Whether to show a red dot next to the header for tutorial purposes.
+         * @param tutorialContext Tutorial context with highlighting and annotations
          * @return True if any configuration value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent, bool highlight = false);
+        bool draw(float inputWidth, float fileInputWidth, float indent, 
+            const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
          * @brief Sets the ID for this PGN configuration.

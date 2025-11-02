@@ -32,6 +32,19 @@
  */
 class Tutorial {
 public:
+    /**
+     * @brief Tutorial context for UI elements with highlighting and input annotations
+     */
+    struct TutorialContext {
+        bool highlight = false;                             ///< Whether to highlight the section
+        std::unordered_map<std::string, std::string> annotations; ///< Input line annotations (key=label, value=hint text)
+        
+        void clear() {
+            highlight = false;
+            annotations.clear();
+        }
+    };
+
     struct Message {
         std::string text;
         SnackbarManager::SnackbarType type;
