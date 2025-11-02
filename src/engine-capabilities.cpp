@@ -46,13 +46,15 @@ std::vector<EngineConfig> EngineCapabilities::collectMissingCapabilities() const
 
 std::vector<EngineConfig> EngineCapabilities::detectWithProtocol(
     std::vector<EngineConfig>& configs,
-    EngineProtocol protocol) 
+    std::optional<EngineProtocol> protocol) 
 {
     for (auto& config : configs) {
         auto mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
             .getConfigMutableByCmdAndProtocol(config.getCmd(), config.getProtocol());
-        config.setProtocol(protocol);
-        mutableConfig->setProtocol(protocol);
+        if (protocol) {
+            config.setProtocol(*protocol);
+            mutableConfig->setProtocol(*protocol);
+        }
     }
     
     auto engines = EngineWorkerFactory::createEngines(configs);
@@ -120,6 +122,9 @@ void EngineCapabilities::autoDetect() {
         }
         detecting_ = true;
         SnackbarManager::instance().showNote("Starting engine autodetection.\nThis may take a while...");
+
+        // First try with the protocol already set in the config
+        configs = detectWithProtocol(configs, std::nullopt);
 
         // Detect using UCI protocol first then xboard as uci is more common
         for (const auto protocol : {EngineProtocol::Uci, EngineProtocol::XBoard}) {

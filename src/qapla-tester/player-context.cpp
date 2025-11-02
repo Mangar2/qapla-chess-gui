@@ -300,7 +300,8 @@ void PlayerContext::cancelCompute() {
     if (!engine_) { return; }
     constexpr auto readyTimeout = std::chrono::seconds{ 1 };
     if (computeState_ != ComputeState::Idle) {
-        engine_->moveNow(true);
+        bool waitForBestMove = !isAnalyzing_;
+        engine_->moveNow(waitForBestMove);
         checkReady(readyTimeout);
     }
     computeState_ = ComputeState::Idle;

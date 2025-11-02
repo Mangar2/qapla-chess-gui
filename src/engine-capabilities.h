@@ -152,12 +152,12 @@ namespace QaplaConfiguration {
          * This method tries to start engines with the given protocol, stores successful
          * detections, and returns the list of failed configurations.
          * @param configs Vector of engine configurations to detect.
-         * @param protocol The protocol to use for detection (UCI or XBoard).
+         * @param protocol Pprotocol to use for detection; if not provided, uses the protocol from each config.
          * @return Vector of configurations that failed to start with the specified protocol.
          */
         std::vector<QaplaTester::EngineConfig> detectWithProtocol(
             std::vector<QaplaTester::EngineConfig>& configs, 
-            QaplaTester::EngineProtocol protocol);
+            std::optional<QaplaTester::EngineProtocol> protocol);
 
         /**
          * @brief Stores capabilities for successfully detected engines.
