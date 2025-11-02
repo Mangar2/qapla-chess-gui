@@ -39,6 +39,8 @@ using QaplaTester::GoLimits;
 
 using namespace QaplaWindows;
 
+constexpr float MIN_ENGINE_NAME_FONT_SIZE = 10.0F;
+
 ImGuiClock::ImGuiClock() = default;
 ImGuiClock::~ImGuiClock() = default;
 
@@ -151,12 +153,151 @@ void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
     }
 }
 
-auto textSizeAt = [](ImFont* font, float size, const std::string& str) -> ImVec2 {
+namespace {
+
+/**
+ * @brief Calculates the text size at a given font size.
+ */
+ImVec2 textSizeAt(ImFont* font, float size, const std::string& str) {
     return font->CalcTextSizeA(size, FLT_MAX, 0.0F, str.c_str(), str.c_str() + str.size());
-};
-auto textWidthAt = [](ImFont* font, float size, const std::string& str) -> float {
+}
+
+/**
+ * @brief Calculates the text width at a given font size.
+ */
+float textWidthAt(ImFont* font, float size, const std::string& str) {
     return textSizeAt(font, size, str).x;
-};
+}
+
+/**
+ * @brief Prepares the time strings for display.
+ * @param totalMs Total remaining time in milliseconds.
+ * @param moveMs Time for the current move in milliseconds.
+ * @param analyze Whether in analyze mode.
+ * @return Pair of formatted time strings (total, move).
+ */
+std::pair<std::string, std::string> prepareTimeStrings(uint64_t totalMs, uint64_t moveMs, bool analyze) {
+    uint64_t adjustedTotal = totalMs - std::min(totalMs, moveMs);
+    if (!analyze) {
+        adjustedTotal += 999; // Add 999ms to compensate for formatMs truncating to full seconds
+    } else {
+        adjustedTotal = moveMs;
+    }
+    return {
+        QaplaHelpers::formatMs(adjustedTotal, 0),
+        QaplaHelpers::formatMs(moveMs, 0)
+    };
+}
+
+/**
+ * @brief Draws the king icon if it's the side to move.
+ */
+void drawKingIcon(ImDrawList* drawList, const ImVec2& topLeft, bool white, bool wtm) {
+    if (wtm == white) {
+        font::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
+            ImVec2(topLeft.x + 5, topLeft.y + 5), 30);
+    }
+}
+
+/**
+ * @brief Draws centered time text with colon alignment.
+ */
+void drawCenteredTimeText(ImDrawList* drawList, ImFont* font, float size, 
+                          const std::string& text, float xCenter, float& y, 
+                          const ImGuiStyle& style) {
+    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
+    const size_t colonIdx = text.find_last_of(':');
+    float x;
+    
+    if (colonIdx == std::string::npos) {
+        // Fallback: center entire text
+        const float w = textWidthAt(font, size, text);
+        x = xCenter - w * 0.5F;
+    } else {
+        // Center at the colon's visual midpoint
+        const float leftWidth = textWidthAt(font, size, text.substr(0, colonIdx));
+        const float colonWidth = textWidthAt(font, size, ":");
+        x = xCenter - (leftWidth + colonWidth * 0.5F);
+    }
+    
+    const ImVec2 ext = textSizeAt(font, size, text);
+    drawList->AddText(font, size, ImVec2(x, y), textCol,
+        text.c_str(), text.c_str() + text.size());
+    y += ext.y + style.ItemSpacing.y * 0.5F;
+}
+
+/**
+ * @brief Draws the engine name with automatic font size adjustment and truncation.
+ * 
+ * This function ensures the engine name fits within the available width by:
+ * 1. Reducing font size down to MIN_ENGINE_NAME_FONT_SIZE
+ * 2. Truncating text from the right if it still doesn't fit
+ * 
+ * @param drawList ImGui draw list
+ * @param font Current ImGui font
+ * @param engineName Name of the chess engine
+ * @param initialSize Initial font size to try
+ * @param xCenter Horizontal center position
+ * @param y Vertical position
+ * @param availableWidth Available width for the text
+ */
+void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font, 
+                          std::string_view engineName, float initialSize,
+                          float xCenter, float y, float availableWidth) {
+    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
+    constexpr float minFontSize = MIN_ENGINE_NAME_FONT_SIZE;
+    
+    std::string nameStr(engineName);
+    float fontSize = initialSize;
+    
+    // Step 1: Try to fit by reducing font size
+    while (fontSize >= minFontSize) {
+        float textWidth = textWidthAt(font, fontSize, nameStr);
+        if (textWidth <= availableWidth) {
+            // Fits! Draw it centered
+            const float nameX = xCenter - textWidth * 0.5F;
+            drawList->AddText(font, fontSize, ImVec2(nameX, y), textCol,
+                nameStr.c_str(), nameStr.c_str() + nameStr.size());
+            return;
+        }
+        fontSize -= 1.0F;
+    }
+    
+    // Step 2: At minimum font size, truncate text if needed
+    fontSize = minFontSize;
+    float textWidth = textWidthAt(font, fontSize, nameStr);
+    
+    if (textWidth > availableWidth) {
+        // Need to truncate - binary search for the right length
+        size_t left = 0;
+        size_t right = nameStr.size();
+        size_t bestLen = 0;
+        
+        while (left <= right && right > 0) {
+            size_t mid = (left + right) / 2;
+            std::string truncated = nameStr.substr(0, mid);
+            float width = textWidthAt(font, fontSize, truncated);
+            
+            if (width <= availableWidth) {
+                bestLen = mid;
+                left = mid + 1;
+            } else {
+                if (mid == 0) break;
+                right = mid - 1;
+            }
+        }
+        
+        nameStr = nameStr.substr(0, bestLen);
+        textWidth = textWidthAt(font, fontSize, nameStr);
+    }
+    
+    // Draw the (possibly truncated) text
+    const float nameX = xCenter - textWidth * 0.5F;
+    drawList->AddText(font, fontSize, ImVec2(nameX, y), textCol,
+        nameStr.c_str(), nameStr.c_str() + nameStr.size());
+}
+
+} // anonymous namespace
 
 /**
  * Draws a single-side chess clock (engine name, total time, current move time).
@@ -169,13 +310,13 @@ auto textWidthAt = [](ImFont* font, float size, const std::string& str) -> float
  * @param engineName Name of the chess engine.
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
+ * @param analyze   True if in analyze mode.
  */
-static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight, 
+static void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
     uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
-    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
     const ImGuiStyle& style = ImGui::GetStyle();
 
     const float baseSize = ImGui::GetFontSize();
@@ -184,76 +325,41 @@ static void drawClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const float moveSize = baseSize * 1.0F;
 
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
+    const float availableWidth = bottomRight.x - topLeft.x - 10.0F; // 5px margin on each side
     float y = topLeft.y + 7.0F;
 
-    totalMs -= std::min(totalMs, moveMs);
-    totalMs += 999; // Add 999ms to compensate for formatMs truncating to full seconds
-    if (analyze) {
-        totalMs = moveMs;
-    }
-
-    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
-    const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
-
-
-    auto startXForColonCenter = [&](const std::string& s, float size) -> float {
-        const size_t colonIdx = s.find_last_of(':'); // aligns at MM:SS colon
-        if (colonIdx == std::string::npos) {
-            const float w = textWidthAt(font, size, s);
-            return xCenter - w * 0.5F; // safety fallback
-        }
-
-        const float leftWidth = textWidthAt(font, size, s.substr(0, colonIdx));
-        const std::string colonChar = ":";
-        const float colonWidth = textWidthAt(font, size, colonChar);
-        // Center at the colon's visual midpoint to keep different digit widths aligned.
-        return xCenter - (leftWidth + colonWidth * 0.5F);
-    };
-    auto writeText = [&](float size, const std::string& text, float& y) {
-        const float x = startXForColonCenter(text, size);
-        const ImVec2 ext = textSizeAt(font, size, text);
-        drawList->AddText(font, size, ImVec2(x, y), textCol,
-            text.c_str(), text.c_str() + text.size());
-        y += ext.y + style.ItemSpacing.y * 0.5F;
-		};
+    auto [totalStr, moveStr] = prepareTimeStrings(totalMs, moveMs, analyze);
 
     ImGuiControls::drawBoxWithShadow(topLeft, bottomRight);
-    if (wtm == white) {
-        font::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
-            ImVec2(topLeft.x + 5, topLeft.y + 5), 30);
-    }
+    drawKingIcon(drawList, topLeft, white, wtm);
+    
     // Total time (bigger)
-	writeText(totalSize, totalStr, y);
+    drawCenteredTimeText(drawList, font, totalSize, totalStr, xCenter, y, style);
     // Current move time (smaller, colon vertically under total's colon)
-	writeText(moveSize, moveStr, y);
+    drawCenteredTimeText(drawList, font, moveSize, moveStr, xCenter, y, style);
 
-    // Engine name (centered as label)
-    {
-        const ImVec2 nameExtent = textSizeAt(font, nameSize, std::string(engineName));
-        const float nameX = xCenter - nameExtent.x * 0.5F;
-        drawList->AddText(font, nameSize, ImVec2(nameX, y), textCol,
-            engineName.data(), engineName.data() + engineName.size());
-    }
+    // Engine name (centered, with auto-sizing and truncation)
+    drawEngineNameWithFit(drawList, font, engineName, nameSize, xCenter, y, availableWidth);
 }
 
 /**
- * Draws a single-side chess clock (engine name, total time, current move time).
+ * Draws a single-side chess clock in compact mode (no engine name).
  * The MM:SS colon of both time strings is horizontally centered within the given width.
  *
  * @param topLeft   Top-left anchor of the clock area.
  * @param bottomRight Bottom-right anchor of the clock area. 
  * @param totalMs   Total remaining time in milliseconds.
  * @param moveMs    Time for the current move in milliseconds.
- * @param engineName Name of the chess engine.
+ * @param engineName Name of the chess engine (unused in small mode).
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
+ * @param analyze   True if in analyze mode.
  */
-static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight, 
+static void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
     uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
-    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
     const ImGuiStyle& style = ImGui::GetStyle();
 
     const float baseSize = ImGui::GetFontSize();
@@ -263,43 +369,14 @@ static void drawSmallClock(const ImVec2& topLeft, ImVec2& bottomRight,
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
     float y = topLeft.y + 7.0F;
 
-    totalMs -= std::min(totalMs, moveMs);
-    if (analyze) { 
-        totalMs = moveMs;
-    }
+    auto [totalStr, moveStr] = prepareTimeStrings(totalMs, moveMs, analyze);
 
-    const std::string totalStr = QaplaHelpers::formatMs(totalMs, 0);
-    const std::string moveStr = QaplaHelpers::formatMs(moveMs, 0);
-
-    auto startXForColonCenter = [&](const std::string& s, float size) -> float {
-        const size_t colonIdx = s.find_last_of(':'); // aligns at MM:SS colon
-        if (colonIdx == std::string::npos) {
-            const float w = textWidthAt(font, size, s);
-            return xCenter - w * 0.5F; // safety fallback
-        }
-
-        const float leftWidth = textWidthAt(font, size, s.substr(0, colonIdx));
-        const std::string colonChar = ":";
-        const float colonWidth = textWidthAt(font, size, colonChar);
-        // Center at the colon's visual midpoint to keep different digit widths aligned.
-        return xCenter - (leftWidth + colonWidth * 0.5F);
-        };
-    auto writeText = [&](float size, const std::string& text, float& y) {
-        const float x = startXForColonCenter(text, size);
-        const ImVec2 ext = textSizeAt(font, size, text);
-        drawList->AddText(font, size, ImVec2(x, y), textCol,
-            text.c_str(), text.c_str() + text.size());
-        y += ext.y + style.ItemSpacing.y * 0.5F;
-		};
-
-    if (wtm == white) {
-        font::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
-            ImVec2(topLeft.x + 5, topLeft.y + 5), 30);
-    }
+    drawKingIcon(drawList, topLeft, white, wtm);
+    
     // Total time (bigger)
-	writeText(totalSize, totalStr, y);
+    drawCenteredTimeText(drawList, font, totalSize, totalStr, xCenter, y, style);
     // Current move time (smaller, colon vertically under total's colon)
-	writeText(moveSize, moveStr, y);
+    drawCenteredTimeText(drawList, font, moveSize, moveStr, xCenter, y, style);
 }
 
 void ImGuiClock::draw() const {
