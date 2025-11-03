@@ -387,7 +387,7 @@ void storeBoundedInt(
  * @return true if the next non-whitespace character is a tab, false otherwise.
  */
 static bool comesTab(std::istream& stream) {
-    while (std::isspace(stream.peek()) && stream.peek() != '\t') {
+    while (std::isspace(static_cast<unsigned char>(stream.peek())) && stream.peek() != '\t') {
         stream.get();
     }
     return stream.peek() == '\t';
@@ -437,7 +437,7 @@ static void parsePV(const std::vector<std::string>& pv, EngineEvent& event) {
             inParens = false;
         }
         if (inParens) continue;
-        if (std::isalpha(token[0]) || token == "0-0" || token == "0-0-0") {
+        if (std::isalpha(static_cast<unsigned char>(token[0])) || token == "0-0" || token == "0-0-0") {
 			event.searchInfo->pv.push_back(token);
         }
     }

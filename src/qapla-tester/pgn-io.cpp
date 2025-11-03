@@ -315,7 +315,7 @@ size_t PgnIO::skipMoveNumber(const std::vector<std::string>& tokens, size_t star
 
     // Check if it starts with digits
     size_t i = 0;
-    while (i < first.size() && std::isdigit(first[i])) {
+    while (i < first.size() && std::isdigit(static_cast<unsigned char>(first[i]))) {
         ++i;
     }
     if (i == 0) return start; // Doesn't start with digit
@@ -367,7 +367,7 @@ std::pair<MoveRecord, size_t> PgnIO::parseMove(
         const std::string& tok = tokens[pos];
 
         if (tok[0] == '$') {
-            if (tok.size() > 1 && std::isdigit(tok[1])) move.nag = tok;
+            if (tok.size() > 1 && std::isdigit(static_cast<unsigned char>(tok[1]))) move.nag = tok;
             ++pos;
         }
         else if (tok == "{") {
@@ -400,7 +400,7 @@ std::pair<std::string, std::string> PgnIO::parseTag(const std::vector<std::strin
 
 void PgnIO::parseMateScore(std::string token, int32_t factor, MoveRecord& move) {
     size_t i = 0;
-    while (i < token.size() && !std::isdigit(token[i])) ++i;
+    while (i < token.size() && !std::isdigit(static_cast<unsigned char>(token[i]))) ++i;
     
     if (auto mateValue = QaplaHelpers::to_int(std::string_view(token).substr(i))) {
         move.scoreMate = *mateValue * factor;

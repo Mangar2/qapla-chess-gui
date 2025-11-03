@@ -164,7 +164,7 @@ namespace QaplaWindows
         std::string numbers;
         size_t lastDigitEnd = cleaned.size();
         for (size_t j = cleaned.size(); j > 0; --j) {
-            if (std::isdigit(cleaned[j - 1]) != 0) {
+            if (std::isdigit(static_cast<unsigned char>(cleaned[j - 1])) != 0) {
                 if (numbers.empty()) {
                     lastDigitEnd = j;
                 }
