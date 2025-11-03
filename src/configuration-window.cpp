@@ -98,14 +98,17 @@ void ConfigurationWindow::drawTutorialSettings()
     ImGui::Text("Tutorial Topics:");
     ImGui::Spacing();
 
-    for (int tutorial = 0; tutorial < Tutorial::instance().getEntries().size(); ++tutorial) {
-        auto& entry = Tutorial::instance().getEntries()[tutorial];
+    // Loop in TutorialName enum Reihenfolge (garantiert sortiert)
+    for (size_t i = 0; i < static_cast<size_t>(Tutorial::TutorialName::Count); ++i) {
+        auto tutorialName = static_cast<Tutorial::TutorialName>(i);
+        auto& entry = Tutorial::instance().getEntry(tutorialName);
+        
         bool completed = entry.completed();
         if (ImGui::Checkbox(entry.displayName.c_str(), &completed)) {
             if (completed) {
-                Tutorial::instance().finishTutorial(entry.name);
+                Tutorial::instance().finishTutorial(tutorialName);
             } else {
-                Tutorial::instance().restartTutorial(tutorial);
+                Tutorial::instance().restartTutorial(tutorialName);
             }
         }
         if (ImGui::IsItemHovered()) {

@@ -22,75 +22,81 @@
 #include "snackbar.h"
 #include "qapla-tester/string-helper.h"
 
-void Tutorial::showNextTutorialStep(const std::string& topicName) {
-    for (auto& entry : entries_) {
-        if (entry.name == topicName) {
-            if (entry.completed()) {
-                return;
-            }
-            if (!entry.dependsOn.empty()) {
-                auto it = std::ranges::find_if(entries_,
-                    [&entry](const Entry& e) { return e.name == entry.dependsOn; });
-                if (it != entries_.end() && !it->completed()) {
-                    return;
-                }
-            }
-            entry.getProgressCounter()++;
-            entry.showNextMessage();
-            break;
+#include <optional>
+
+bool Tutorial::allPrecedingCompleted(TutorialName name) const {
+    const size_t currentIndex = toIndex(name);
+    
+    // Alle Tutorials vor dem aktuellen müssen beendet sein
+    for (size_t i = 0; i < currentIndex; ++i) {
+        if (!entries_[i].completed()) {
+            return false;
         }
     }
+    return true;
+}
+
+bool Tutorial::mayStart(TutorialName name) const {
+    const auto& entry = entries_[toIndex(name)];
+    
+    // Kann nur starten, wenn autoStart gesetzt ist und noch nicht begonnen wurde
+    if (!entry.autoStart || entry.getProgressCounter() != 0) {
+        return false;
+    }
+    
+    // Alle vorhergehenden Tutorials müssen abgeschlossen sein
+    return allPrecedingCompleted(name);
+}
+
+void Tutorial::showNextTutorialStep(TutorialName name) {
+    auto& entry = entries_[toIndex(name)];
+    
+    if (entry.completed()) {
+        return;
+    }
+    
+    // Prüfe, ob alle vorhergehenden Tutorials beendet sind
+    if (!allPrecedingCompleted(name)) {
+        return;
+    }
+    
+    entry.getProgressCounter()++;
+    entry.showNextMessage();
     saveConfiguration();
 }
 
-bool Tutorial::mayStart(uint32_t entryIndex) const {
-    if (entryIndex < entries_.size()) {
-        const auto& entry = entries_[entryIndex];
-        if (entry.autoStart && entry.getProgressCounter() == 0) {
-            const auto& dependsOn = entry.dependsOn;
-            if (dependsOn.empty()) {
-                return true;
-            } else {
-                auto it = std::ranges::find_if(entries_,
-                    [&dependsOn](const Entry& e) { return e.name == dependsOn; });
-                if (it != entries_.end() && it->completed()) {
-                    return true;
-                }
-            }
+void Tutorial::finishTutorial(TutorialName name) {
+    auto& entry = entries_[toIndex(name)];
+    
+    if (entry.completed()) {
+        return;
+    }
+    
+    entry.finish();
+    
+    // Prüfe, ob nachfolgende auto-start Tutorials nun starten können
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+        auto tutorialName = static_cast<TutorialName>(i);
+        if (mayStart(tutorialName)) {
+            auto& autoStartEntry = entries_[i];
+            autoStartEntry.getProgressCounter() = 1;
+            autoStartEntry.showNextMessage();
         }
     }
-    return false;
-}
-
-void Tutorial::finishTutorial(const std::string& topicName) {
-    for (auto& entry : entries_) {
-        if (entry.name == topicName) {
-            if (entry.completed()) {
-                return;
-            }
-            entry.finish();
-            break;
-        }
-    }
-    for (auto& entry : entries_) {
-        if (entry.dependsOn == topicName && entry.autoStart && entry.getProgressCounter() == 0) {
-            entry.getProgressCounter() = 1;
-            entry.showNextMessage();
-        }
-    }
+    
     saveConfiguration();
 }
 
-void Tutorial::restartTutorial(const uint32_t index) {
-    if (index < entries_.size()) {
-        auto& entry = entries_[index];
-        entry.reset();
-        if (mayStart(index)) {
-            entry.getProgressCounter() = 1;
-            entry.showNextMessage();
-        }
-        saveConfiguration();
+void Tutorial::restartTutorial(TutorialName name) {
+    auto& entry = entries_[toIndex(name)];
+    entry.reset();
+    
+    if (mayStart(name)) {
+        entry.getProgressCounter() = 1;
+        entry.showNextMessage();
     }
+    
+    saveConfiguration();
 }
 
 void Tutorial::loadConfiguration() {
@@ -99,22 +105,26 @@ void Tutorial::loadConfiguration() {
     
     if (!sections.empty()) {
         const auto& section = sections[0];
-        for (auto& entry: entries_) {
-            auto valueOpt = sections[0].getValue(entry.name).value_or("0");
+        
+        // Lade alle Tutorial-Counter aus der Konfiguration
+        for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+            auto name = static_cast<TutorialName>(i);
+            auto& entry = entries_[i];
+            
+            // Nutze displayName + Index als Config-Key für Uniqueness
+            auto configName = entry.displayName + std::to_string(i);
+            
+            auto valueOpt = section.getValue(configName).value_or("0");
             entry.counter = QaplaHelpers::to_uint32(valueOpt).value_or(0);
             entry.getProgressCounter() = entry.counter;
         }
     }
-    for (auto& entry : entries_) {
-        const auto& dependsOn = entry.dependsOn;
-        if (dependsOn.empty()) {
-            continue;
-        }
-        // find topic with the name dependsOn
-        auto it = std::ranges::find_if(entries_,
-            [&dependsOn](const Entry& e) { return e.name == dependsOn; });
-        if (it != entries_.end() && it->completed() && entry.autoStart && entry.getProgressCounter() == 0) {
-            entry.getProgressCounter() = 1;
+    
+    // Prüfe, ob auto-start Tutorials nun starten können
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+        auto name = static_cast<TutorialName>(i);
+        if (mayStart(name)) {
+            entries_[i].getProgressCounter() = 1;
         }
     }
 }
@@ -126,8 +136,16 @@ void Tutorial::saveConfiguration() const {
             {"id", "tutorial"}
         }
     };
-    for (const auto& entry: entries_) {
-        section.entries.push_back({ entry.name, std::to_string(entry.counter) });
+    
+    // Speichere alle Tutorial-Counter
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+        const auto& entry = entries_[i];
+        
+        // Nutze displayName + Index als Config-Key für Uniqueness
+        auto configName = entry.displayName + std::to_string(i);
+        
+        section.entries.push_back({ configName, std::to_string(entry.counter) });
     }
+    
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("tutorial", "tutorial", { section });
 }

@@ -229,14 +229,17 @@ void SnackbarManager::updateConfiguration() const {
 }
 
 void SnackbarManager::showNextTutorialStep() {
-    Tutorial::instance().showNextTutorialStep("snackbar");
+    if (tutorialProgress_ == 3) {
+        Tutorial::instance().finishTutorial(Tutorial::TutorialName::Snackbar);
+        return; 
+    }
+    Tutorial::instance().showNextTutorialStep(Tutorial::TutorialName::Snackbar);
 }
 
 bool SnackbarManager::tutorialInitialized_ = []() {
-    Tutorial::instance().addEntry({
-        .name = "snackbar",
+    Tutorial::instance().setEntry({
+        .name = Tutorial::TutorialName::Snackbar,
         .displayName = "Snackbar",
-        .dependsOn = "",
         .messages = {
             { "Welcome to the Snackbar System!\n\n"
               "Snackbars display temporary notifications in the bottom-left corner. "

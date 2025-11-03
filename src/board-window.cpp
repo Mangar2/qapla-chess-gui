@@ -384,10 +384,9 @@ namespace QaplaWindows
     }
 
     static auto boardWindowTutorialInit = []() {
-        Tutorial::instance().addEntry({
-            .name = "boardwindow",
+        Tutorial::instance().setEntry({
+            .name = Tutorial::TutorialName::BoardWindow,
             .displayName = "Board Window",
-            .dependsOn = "enginewindow",
             .messages = {
                 { "Board Controls - Step 1\n\n"
                   "Welcome to the Board Window!\n"
@@ -439,10 +438,9 @@ namespace QaplaWindows
     }();
 
     static auto boardWindowCutPasteTutorialInit = []() {
-        Tutorial::instance().addEntry({
-            .name = "boardcutpaste",
+        Tutorial::instance().setEntry({
+            .name = Tutorial::TutorialName::BoardCutPaste,
             .displayName = "Board Cut & Paste",
-            .dependsOn = "boardwindow",
             .messages = {
                 { "Cut & Paste - Step 1\n\n"
                   "Learn to manage positions and multiple boards.\n\n"
@@ -495,11 +493,11 @@ namespace QaplaWindows
     void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status) {
         if (this != tutorialInstance_) return;
         
-        static const std::string topicName = "boardwindow";
+        constexpr auto tutorialName = Tutorial::TutorialName::BoardWindow;
         
         switch (tutorialProgress_) {
             case 0:
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().showNextTutorialStep(tutorialName);
             tutorialSubStep_ = 0;
             if (tutorialProgress_ == 1) { 
                 highlightedButton_ = "Play";
@@ -516,7 +514,7 @@ namespace QaplaWindows
             // We compare with > 0 and not == 1 to continue the tutorial, even if the user made more moves.
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 0) {
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
@@ -525,7 +523,7 @@ namespace QaplaWindows
             // Step 2: User makes a move and engine replies automatically. 
             if (gameState_->getHalfmovesPlayed() > 2) {
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Play";
                 return;
             }
@@ -540,7 +538,7 @@ namespace QaplaWindows
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 3) {
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Stop";
                 return;
             }
@@ -555,7 +553,7 @@ namespace QaplaWindows
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 4) {
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Analyze";
                 return;
             }
@@ -566,7 +564,7 @@ namespace QaplaWindows
             if (clickedButton == "Analyze") {
                 highlightedButton_ = "";
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Stop";
                 return;
             }
@@ -577,7 +575,7 @@ namespace QaplaWindows
             if (clickedButton == "Stop") {
                 highlightedButton_ = "";
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Auto";
                 return;
             }
@@ -588,7 +586,7 @@ namespace QaplaWindows
             if (clickedButton == "Auto") {
                 highlightedButton_ = "";
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Stop";
                 return;
             }
@@ -599,13 +597,13 @@ namespace QaplaWindows
             if (clickedButton == "Stop") {
                 highlightedButton_ = "";
                 tutorialSubStep_ = 0;
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
                                     
             default:
-            Tutorial::instance().finishTutorial(topicName);
+            Tutorial::instance().finishTutorial(tutorialName);
             return;
         }
     }
@@ -623,7 +621,7 @@ namespace QaplaWindows
     }
 
     void BoardWindow::showNextCutPasteTutorialStep(const std::string& clickedButton) {
-        static const std::string topicName = "boardcutpaste";
+        constexpr auto tutorialName = Tutorial::TutorialName::BoardCutPaste;
         
         bool twoBoardsStep = (tutorialCutPasteProgress_ == 9 || tutorialCutPasteProgress_ == 10);
            
@@ -633,7 +631,7 @@ namespace QaplaWindows
         switch (tutorialCutPasteProgress_) {
             case 0:
             // Initial step - show first message
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().showNextTutorialStep(tutorialName);
             if (tutorialCutPasteProgress_ == 1) { 
                 highlightedButton_ = "Time";
             }
@@ -643,7 +641,7 @@ namespace QaplaWindows
             // Step 1: User clicks Time button
             if (clickedButton == "Time") {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
@@ -651,7 +649,7 @@ namespace QaplaWindows
             case 2:
             // Step 2: User confirms Time Control popup
             if (clickedButton == "Time Control Confirmed") {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Setup";
                 return;
             }
@@ -661,7 +659,7 @@ namespace QaplaWindows
             // Step 3: User clicks Setup to enter setup mode
             if (clickedButton == "Setup") {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Clear";
                 return;
             }
@@ -671,7 +669,7 @@ namespace QaplaWindows
             // Step 4: User clicks Clear to remove all pieces
             if (clickedButton == "Clear") {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Ok";
                 return;
             }
@@ -681,7 +679,7 @@ namespace QaplaWindows
             // Step 5: User places pieces and clicks Ok
             if (clickedButton == "Ok" && !setupMode_) {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 highlightedButton_ = "Analyze";
                 return;
             }
@@ -691,7 +689,7 @@ namespace QaplaWindows
             // Step 6: User clicks Analyze and waits
             if (clickedButton == "Analyze") {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
@@ -699,7 +697,7 @@ namespace QaplaWindows
             case 7:
             // Step 7: User clicks on engine list row to copy PV
             if (hasValidStringInClipboard()) {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
@@ -707,7 +705,7 @@ namespace QaplaWindows
             case 8:
             // Step 8: Second board instance created (triggered from constructor)
             if (clickedButton == "new instance") {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 // Highlight Paste button in the SECONDARY instance
                 if (secondaryTutorialInstance_ != nullptr) {
                     secondaryTutorialInstance_->highlightedButton_ = "Paste";
@@ -719,13 +717,13 @@ namespace QaplaWindows
             case 9:
             if (this == secondaryTutorialInstance_ && clickedButton == "Paste") {
                 highlightedButton_ = "";
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
            
             default:
-            Tutorial::instance().finishTutorial(topicName);
+            Tutorial::instance().finishTutorial(tutorialName);
             return;
         }
     }

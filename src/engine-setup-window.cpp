@@ -266,10 +266,9 @@ void EngineSetupWindow::draw() {
 }
 
 static auto engineSetupTutorialInit = []() {
-    Tutorial::instance().addEntry({
-        .name = "enginesetup",
+    Tutorial::instance().setEntry({
+        .name = Tutorial::TutorialName::EngineSetup,
         .displayName = "Engine Setup",
-        .dependsOn = "snackbar",
         .messages = {
             { "Engine Setup - Step 1\n\n"
               "To use this chess GUI, you need chess engines.\n"
@@ -297,17 +296,17 @@ static auto engineSetupTutorialInit = []() {
 }();
 
 void EngineSetupWindow::showNextTutorialStep() {
-    static const std::string topicName = "enginesetup";
+    constexpr auto tutorialName = Tutorial::TutorialName::EngineSetup;
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().showNextTutorialStep(topicName);
+        Tutorial::instance().showNextTutorialStep(tutorialName);
         return;
         case 1:
         {
             const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
             const auto configs = configManager.getAllConfigs();
             if (configs.size() >= 2) {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
             }
         }
         return;
@@ -315,13 +314,13 @@ void EngineSetupWindow::showNextTutorialStep() {
         {
             const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
             if (capabilities.areAllEnginesDetected()) {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().showNextTutorialStep(tutorialName);
             }
         }
         return;
         default:
         // Required to mark this tutorial as finished so the next one can start
-        Tutorial::instance().finishTutorial(topicName);
+        Tutorial::instance().finishTutorial(tutorialName);
         return;
     }
 }

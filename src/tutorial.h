@@ -21,6 +21,7 @@
 
 #include "snackbar.h"
 
+#include <array>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,10 +51,20 @@ public:
         SnackbarManager::SnackbarType type;
     };
 
+    enum class TutorialName {
+        Snackbar,
+        EngineSetup,
+        BoardEngines,
+        BoardWindow,
+        BoardCutPaste,
+        Epd,
+        Tournament,
+        Count
+    };
+
     struct Entry {
-        std::string name;
+        TutorialName name;
         std::string displayName;
-        std::string dependsOn;
         std::vector<Message> messages;
         std::function<uint32_t&()> getProgressCounter;
         bool autoStart = false;
@@ -88,26 +99,26 @@ public:
      * @brief Shows the next tutorial step for a given topic
      * @param topicName The name of the tutorial topic
      */
-    void showNextTutorialStep(const std::string& topicName);
+    void showNextTutorialStep(TutorialName name);
 
     /**
      * @brief Finishes a tutorial topic without showing further messages
      * @param topic The tutorial topic name to finish
      */
-    void finishTutorial(const std::string& topicName);
+    void finishTutorial(TutorialName name);
 
     /**
      * @brief Restarts a tutorial topic from the beginning
-     * @param index The index of the tutorial topic to restart
+     * @param name The tutorial topic to restart
      */
-    void restartTutorial(const uint32_t index);
+    void restartTutorial(TutorialName name);
 
     /**
-     * @brief Adds a new tutorial entry
-     * @param entry The tutorial entry to add
+     * @brief Sets a tutorial entry at the specified position
+     * @param entry The tutorial entry to set
      */
-    void addEntry(const Entry& entry) {
-        entries_.push_back(entry);
+    void setEntry(const Entry& entry) {
+        entries_[toIndex(entry.name)] = entry;
     }
 
     /**
@@ -131,15 +142,51 @@ public:
 
     /**
      * @brief Gets all tutorial entries
-     * @return Reference to the vector of tutorial entries
+     * @return Reference to the array of tutorial entries
      */
-    std::vector<Entry>& getEntries() {
+    auto& getEntries() {
         return entries_;
+    }
+
+    /**
+     * @brief Gets a specific tutorial entry
+     * @param name The tutorial name
+     * @return Reference to the entry
+     */
+    Entry& getEntry(TutorialName name) {
+        return entries_[toIndex(name)];
+    }
+
+    const Entry& getEntry(TutorialName name) const {
+        return entries_[toIndex(name)];
     }
 
 private:
     Tutorial() = default;
-    std::vector<Entry> entries_;
+    
+    // Verwende std::array statt std::vector für O(1) Zugriff über enum
+    std::array<Entry, static_cast<size_t>(TutorialName::Count)> entries_;
 
-    bool mayStart(uint32_t entryIndex) const;
+    /**
+     * @brief Converts TutorialName enum to array index
+     * @param name The tutorial name
+     * @return The corresponding array index
+     */
+    static constexpr size_t toIndex(TutorialName name) {
+        return static_cast<size_t>(name);
+    }
+
+    /**
+     * @brief Checks if all tutorials before the given one are completed
+     * @param name The tutorial name to check
+     * @return true if all preceding tutorials are completed, false otherwise
+     */
+    bool allPrecedingCompleted(TutorialName name) const;
+
+    /**
+     * @brief Checks if a tutorial may start (auto-start logic)
+     * @param name The tutorial name to check
+     * @return true if the tutorial may start, false otherwise
+     */
+    bool mayStart(TutorialName name) const;
 };

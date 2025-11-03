@@ -108,10 +108,9 @@ std::pair<std::string, std::string> EngineWindow::draw() {
 }
 
 static auto engineWindowTutorialInit = []() {
-    Tutorial::instance().addEntry({
-        .name = "enginewindow",
+    Tutorial::instance().setEntry({
+        .name = Tutorial::TutorialName::BoardEngines,
         .displayName = "Engine Window",
-        .dependsOn = "enginesetup",
         .messages = {
             { "Engine Window - Step 1\n\n"
               "Welcome to the Engine Window!\n"
@@ -137,13 +136,14 @@ static auto engineWindowTutorialInit = []() {
 }();
 
 void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
+    constexpr auto tutorialName = Tutorial::TutorialName::BoardEngines;
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().showNextTutorialStep("enginewindow");
+        Tutorial::instance().showNextTutorialStep(tutorialName);
         return;
         case 1:
         if (configCommandIssued) {
-            Tutorial::instance().showNextTutorialStep("enginewindow");
+            Tutorial::instance().showNextTutorialStep(tutorialName);
         }
         return;
         case 2:
@@ -153,12 +153,12 @@ void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vec
                 uniqueEngines.insert(engine.getCmd());
             }
             if (uniqueEngines.size() >= 2) {
-                Tutorial::instance().showNextTutorialStep("enginewindow");
+                Tutorial::instance().showNextTutorialStep(tutorialName);
             }
         }
         return;
         default:
-        Tutorial::instance().finishTutorial("enginewindow");
+        Tutorial::instance().finishTutorial(tutorialName);
         return;
     }
 }

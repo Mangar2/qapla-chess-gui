@@ -390,7 +390,7 @@ bool TournamentWindow::hasTwoSameEnginesWithPonder() {
 }
 
 void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
-    static const std::string topicName = "tournamentwindow";
+    auto topicName = Tutorial::TutorialName::Tournament;
     
     auto& tournamentData = TournamentData::instance();
     
@@ -554,10 +554,9 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
 }
 
 static auto tournamentWindowTutorialInit = []() {
-    Tutorial::instance().addEntry({
-        .name = "tournamentwindow",
+    Tutorial::instance().setEntry({
+        .name = Tutorial::TutorialName::Tournament,
         .displayName = "Tournament",
-        .dependsOn = "epdwindow",
         .messages = {
             { "Tournament - Step 1\n\n"
               "Start engine tournaments here.\n"
