@@ -291,7 +291,7 @@ static auto engineSetupTutorialInit = []() {
         .getProgressCounter = []() -> uint32_t& {
             return EngineSetupWindow::tutorialProgress_;
         },
-        .autoStart = false
+        .autoStart = true
     });
     return true;
 }();

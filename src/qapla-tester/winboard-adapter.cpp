@@ -446,14 +446,20 @@ static void parsePV(const std::vector<std::string>& pv, EngineEvent& event) {
 EngineEvent WinboardAdapter::parseSearchInfo(std::string depthStr, std::istringstream& iss, 
     uint64_t timestamp, const std::string& originalLine) {
     EngineEvent event = EngineEvent::createInfo(identifier_, timestamp, originalLine);
+    constexpr int32_t MATE_VALUE = 100000;
+    constexpr int32_t MAX_SCORE = MATE_VALUE + 10000;
 
     event.searchInfo->depth = std::stoi(depthStr);
 
-	if (!readBoundedInt<int32_t>(iss, "score", -110000, 110000, event.searchInfo->scoreCp, event.errors)) {
+	if (!readBoundedInt<int32_t>(iss, "score", -MAX_SCORE, MAX_SCORE, event.searchInfo->scoreCp, event.errors)) {
         return event;
 	}
-    if (*event.searchInfo->scoreCp <= -10000) event.searchInfo->scoreMate = *event.searchInfo->scoreCp + 10000;
-	if (*event.searchInfo->scoreCp >= 10000) event.searchInfo->scoreMate = *event.searchInfo->scoreCp - 10000;
+    if (*event.searchInfo->scoreCp <= -MATE_VALUE) {
+        event.searchInfo->scoreMate = *event.searchInfo->scoreCp + MATE_VALUE;
+    }
+    else if (*event.searchInfo->scoreCp >= MATE_VALUE) {
+        event.searchInfo->scoreMate = *event.searchInfo->scoreCp - MATE_VALUE;
+    }
 
 	if (!readBoundedInt<uint64_t>(iss, "time", 0, std::numeric_limits<int64_t>::max() / 10, event.searchInfo->timeMs, event.errors)) {
 		return event;
