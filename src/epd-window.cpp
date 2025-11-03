@@ -353,10 +353,15 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
             Tutorial::instance().showNextTutorialStep(tutorialName);
         }
         return;
+        
+        case 11:
+        if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+            highlightedButton_ = "";
+            Tutorial::instance().finishTutorial(tutorialName);
+        }
+        return;
                                 
         default:
-        highlightedButton_ = "";
-        Tutorial::instance().finishTutorial(tutorialName);
         return;
     }
 }

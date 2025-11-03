@@ -157,8 +157,12 @@ void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vec
             }
         }
         return;
+        case 3:
+        if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+            Tutorial::instance().finishTutorial(tutorialName);
+        }
+        return;
         default:
-        Tutorial::instance().finishTutorial(tutorialName);
         return;
     }
 }

@@ -158,6 +158,12 @@ public:
      */
     void updateConfiguration() const;
 
+    /**
+     * @brief Checks if a tutorial message is currently visible
+     * @return true if a tutorial message is currently displayed, false otherwise
+     */
+    bool isTutorialMessageVisible() const;
+
 private:
     struct SnackbarEntry {
         std::string message;

@@ -61,6 +61,14 @@ void SnackbarManager::showTutorial(const std::string& message, SnackbarType type
     show(message, type, sticky, true);
 }
 
+bool SnackbarManager::isTutorialMessageVisible() const {
+    // Prüfe, ob aktuell eine Tutorial-Message im Stack ist
+    if (!snackbarStack_.empty()) {
+        return snackbarStack_.back().isTutorial;
+    }
+    return false;
+}
+
 void SnackbarManager::draw() {
     constexpr float snackbarWidth = 450.0F;
     constexpr float minSnackbarHeight = 120.0F;

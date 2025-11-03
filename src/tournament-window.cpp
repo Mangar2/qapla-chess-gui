@@ -539,16 +539,21 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 13: Final step - tournament running or finished
         Tutorial::instance().showNextTutorialStep(topicName);
         return;
+        
+        case 15:
+        if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+            highlightedButton_ = "";
+            highlightedSection_ = "";
+            globalSettingsTutorial_.clear();
+            openingTutorial_.clear();
+            tournamentTutorial_.clear();
+            timeControlTutorial_.clear();
+            pgnTutorial_.clear();
+            Tutorial::instance().finishTutorial(topicName);
+        }
+        return;
                                 
         default:
-        highlightedButton_ = "";
-        highlightedSection_ = "";
-        globalSettingsTutorial_.clear();
-        openingTutorial_.clear();
-        tournamentTutorial_.clear();
-        timeControlTutorial_.clear();
-        pgnTutorial_.clear();
-        Tutorial::instance().finishTutorial(topicName);
         return;
     }
 }

@@ -318,9 +318,13 @@ void EngineSetupWindow::showNextTutorialStep() {
             }
         }
         return;
+        case 3:
+        if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+            Tutorial::instance().finishTutorial(tutorialName);
+        }
+        return;
         default:
-        // Required to mark this tutorial as finished so the next one can start
-        Tutorial::instance().finishTutorial(tutorialName);
+        // No other case defined, intentionally left blank
         return;
     }
 }

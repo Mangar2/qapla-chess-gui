@@ -601,9 +601,14 @@ namespace QaplaWindows
                 return;
             }
             return;
+            
+            case 9:
+            if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+                Tutorial::instance().finishTutorial(tutorialName);
+            }
+            return;
                                     
             default:
-            Tutorial::instance().finishTutorial(tutorialName);
             return;
         }
     }
@@ -721,9 +726,15 @@ namespace QaplaWindows
                 return;
             }
             return;
+            
+            case 10:
+            // Letzte Message wurde angezeigt - warte bis User sie schließt
+            if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+                Tutorial::instance().finishTutorial(tutorialName);
+            }
+            return;
            
             default:
-            Tutorial::instance().finishTutorial(tutorialName);
             return;
         }
     }
