@@ -79,6 +79,7 @@ public:
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
+    void setTimeControl(const TimeControl& timeControl) override;
     void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) override;
     void moveNow() override;
     void setPonder(bool enabled) override;
@@ -147,7 +148,7 @@ private:
      * @param gameRecord GameRecord with time control settings.
      * @param engineIsWhite True if engine is playing white.
      */
-    void sendTimeControl(const GameRecord& gameRecord, bool engineIsWhite);
+    void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite);
 
     /**
      * @brief Sends the current position to the engine.

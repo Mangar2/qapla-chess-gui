@@ -83,9 +83,41 @@ void WinboardAdapter::startProtocol() {
 void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) {
     gameStruct_ = gameRecord.createGameStruct();
     sendPosition(gameStruct_);
-	sendTimeControl(gameRecord, engineIsWhite);
+	setTimeControl(gameRecord, engineIsWhite);
     // Post mode shows thinking output
     writeCommand("post");
+}
+
+void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
+    if (!timeControl.isValid()) return;
+
+    const auto& segments = timeControl.timeSegments();
+    if (!segments.empty()) {
+        const auto& seg = segments[0];
+        int moves = seg.movesToPlay > 0 ? seg.movesToPlay : 0;
+        int baseSeconds = static_cast<int>(seg.baseTimeMs / 1000);
+		int baseMinutes = baseSeconds / 60;
+		baseSeconds %= 60;
+        int incSeconds = static_cast<int>(seg.incrementMs / 1000);
+        std::ostringstream oss;
+        oss << "level " << moves << " "
+            << baseMinutes << ":"
+            << baseSeconds << " "
+			<< incSeconds;
+        writeCommand(oss.str());
+    }
+
+    if (timeControl.moveTimeMs()) {
+        writeCommand("st " + std::to_string(static_cast<int>(*timeControl.moveTimeMs() / 1000)));
+    }
+
+    if (timeControl.depth()) {
+        writeCommand("sd " + std::to_string(*timeControl.depth()));
+    }
+
+    if (timeControl.nodes()) {
+        writeCommand("nps " + std::to_string(*timeControl.nodes()));
+    }
 }
 
 void WinboardAdapter::setForceMode() {
@@ -193,7 +225,7 @@ uint64_t WinboardAdapter::computeMove(const GameStruct& game,
     if (limits.infinite) {
         setForceMode();
         return catchupMovesAndGo(game, true);
-    } else if (isEnabled("time")) {
+    } else if (isEnabled("time") && !limits.mateIn && !limits.depth && !limits.nodes && !limits.moveTimeMs) {
         uint64_t time = game.isWhiteToMove ? limits.wtimeMs : limits.btimeMs;
         uint64_t otim = game.isWhiteToMove ? limits.btimeMs : limits.wtimeMs;
         writeCommand("time " + std::to_string(time / 10));
@@ -207,39 +239,11 @@ void WinboardAdapter::askForReady() {
     writeCommand("ping " + std::to_string(pingCounter_));
 }
 
-void WinboardAdapter::sendTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
+void WinboardAdapter::setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
     const TimeControl& tc = engineIsWhite ? gameRecord.getWhiteTimeControl()
         : gameRecord.getBlackTimeControl();
 
-    if (!tc.isValid()) return;
-
-    const auto& segments = tc.timeSegments();
-    if (!segments.empty()) {
-        const auto& seg = segments[0];
-        int moves = seg.movesToPlay > 0 ? seg.movesToPlay : 0;
-        int baseSeconds = static_cast<int>(seg.baseTimeMs / 1000);
-		int baseMinutes = baseSeconds / 60;
-		baseSeconds %= 60;
-        int incSeconds = static_cast<int>(seg.incrementMs / 1000);
-        std::ostringstream oss;
-        oss << "level " << moves << " "
-            << baseMinutes << ":"
-            << baseSeconds << " "
-			<< incSeconds;
-        writeCommand(oss.str());
-    }
-
-    if (tc.moveTimeMs()) {
-        writeCommand("st " + std::to_string(static_cast<int>(*tc.moveTimeMs() / 1000)));
-    }
-
-    if (tc.depth()) {
-        writeCommand("sd " + std::to_string(*tc.depth()));
-    }
-
-    if (tc.nodes()) {
-        writeCommand("nps " + std::to_string(*tc.nodes()));
-    }
+    setTimeControl(tc);
 }
 
 void WinboardAdapter::sendPosition(const GameStruct& game) {

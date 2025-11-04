@@ -112,6 +112,16 @@ public:
 	}
 
 	/**
+	 * @brief Sets the time control for the engine.
+	 * @param timeControl The time control to set.
+	 */
+	void setTimeControl(const TimeControl& timeControl) {
+		post([=](EngineAdapter& adapter) {
+			adapter.setTimeControl(timeControl);
+			});
+	}
+
+	/**
 	 * @brief Notifies the worker that the best move has been received from the engine.
 	 * @param sanMove The best move in SAN notation.
 	 * @param lanMove The best move in LAN notation.

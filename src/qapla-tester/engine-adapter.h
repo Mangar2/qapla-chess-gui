@@ -82,6 +82,12 @@ public:
     virtual void newGame(const GameRecord& game, bool engineIsWhite) = 0;
 
     /**
+     * @brief Sets the time control for the engine.
+     * @param timeControl The time control to set.
+     */
+    virtual void setTimeControl(const TimeControl& timeControl) = 0;
+
+    /**
      * @brief Notifies the engine that the best move has been received.
      * @param sanMove The best move in SAN notation.
      * @param lanMove The best move in LAN notation.

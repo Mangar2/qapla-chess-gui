@@ -125,7 +125,7 @@ uint64_t UciAdapter::computeMove(const GameStruct& game, const GoLimits& limits,
 std::string UciAdapter::computeGoOptions(const GoLimits& limits) const {
     std::ostringstream oss;
     if (limits.infinite) oss << " infinite";
-    if (limits.movetimeMs) oss << " movetime " << *limits.movetimeMs;
+    if (limits.moveTimeMs) oss << " movetime " << *limits.moveTimeMs;
     if (limits.depth) oss << " depth " << *limits.depth;
     if (limits.nodes) oss << " nodes " << *limits.nodes;
     if (limits.mateIn) oss << " mate " << *limits.mateIn;

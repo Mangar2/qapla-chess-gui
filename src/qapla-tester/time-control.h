@@ -45,7 +45,7 @@ struct GoLimits {
     std::optional<uint32_t> depth;
     std::optional<uint64_t> nodes;
     std::optional<uint32_t> mateIn;
-    std::optional<uint64_t> movetimeMs;
+    std::optional<uint64_t> moveTimeMs;
     // List of moves to limit the search to (if supported by engine)
     std::optional<std::vector<std::string>> limitMoves;
     bool infinite = false;
@@ -303,13 +303,13 @@ inline GoLimits createGoLimits(
     }
 
     GoLimits limits;
-    limits.movetimeMs = white.moveTimeMs();
+    limits.moveTimeMs = white.moveTimeMs();
     limits.depth = white.depth();
     limits.nodes = white.nodes();
     limits.mateIn = white.mateIn();
     limits.infinite = white.infinite();
 
-    if (limits.movetimeMs || limits.depth || limits.nodes || limits.infinite) {
+    if (limits.moveTimeMs || limits.depth || limits.nodes || limits.infinite) {
         limits.hasTimeControl = false;
         return limits;
     }

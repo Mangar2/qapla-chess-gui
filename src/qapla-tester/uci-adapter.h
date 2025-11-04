@@ -76,6 +76,9 @@ public:
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
+    void setTimeControl(const TimeControl& timeControl) override {
+        // Nothing to do for UCI, time control is sent with 'go' command
+    }
     void moveNow() override;
     void setPonder(bool enabled) override;
     void ticker() override;

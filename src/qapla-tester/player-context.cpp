@@ -167,7 +167,7 @@ void PlayerContext::checkTime(const EngineEvent& event) {
 
     const uint64_t timeLeft = white ? goLimits_.wtimeMs : goLimits_.btimeMs;
     int numLimits = static_cast<int>(goLimits_.hasTimeControl) 
-        + static_cast<int>(goLimits_.movetimeMs.has_value()) 
+        + static_cast<int>(goLimits_.moveTimeMs.has_value()) 
         + static_cast<int>(goLimits_.depth.has_value()) 
         + static_cast<int>(goLimits_.nodes.has_value());
 
@@ -180,13 +180,13 @@ void PlayerContext::checkTime(const EngineEvent& event) {
         }
     }
 
-    if (goLimits_.movetimeMs.has_value()) {
-        checklist_->logReport("no-move-time-overrun", moveElapsedMs < *goLimits_.movetimeMs + GRACE_MS,
-            std::format("took {} ms, limit is {} ms", moveElapsedMs, *goLimits_.movetimeMs), 
+    if (goLimits_.moveTimeMs.has_value()) {
+        checklist_->logReport("no-move-time-overrun", moveElapsedMs < *goLimits_.moveTimeMs + GRACE_MS,
+            std::format("took {} ms, limit is {} ms", moveElapsedMs, *goLimits_.moveTimeMs), 
             TraceLevel::warning);
         if (numLimits == 1 && EngineReport::reportUnderruns) {
-            checklist_->logReport("no-move-time-underrun", moveElapsedMs > *goLimits_.movetimeMs * 99 / 100,
-                "The engine should use EXACTLY " + std::to_string(*goLimits_.movetimeMs) +
+            checklist_->logReport("no-move-time-underrun", moveElapsedMs > *goLimits_.moveTimeMs * 99 / 100,
+                "The engine should use EXACTLY " + std::to_string(*goLimits_.moveTimeMs) +
                 " ms but took " + std::to_string(moveElapsedMs), 
                 TraceLevel::info);
         }
@@ -250,8 +250,8 @@ bool PlayerContext::checkEngineTimeout() {
             Logger::engineLogger().log(engine_->getIdentifier() + " Engine timeout or disconnect", 
                 TraceLevel::warning);
 		}
-	} else if ((goLimits_.movetimeMs.has_value() && *goLimits_.movetimeMs < moveElapsedMs)) {
-        overrun = moveElapsedMs > *goLimits_.movetimeMs + OVERRUN_TIMEOUT;
+	} else if ((goLimits_.moveTimeMs.has_value() && *goLimits_.moveTimeMs < moveElapsedMs)) {
+        overrun = moveElapsedMs > *goLimits_.moveTimeMs + OVERRUN_TIMEOUT;
         engine_->moveNow();
         restarted = restartIfNotReady();
     }

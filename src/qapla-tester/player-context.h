@@ -44,6 +44,9 @@ public:
      */
     void setTimeControl(const TimeControl& timeControl) {
         timeControl_ = timeControl;
+        if (engine_) {
+            engine_->setTimeControl(timeControl_);
+        }
     }
 
     /**
