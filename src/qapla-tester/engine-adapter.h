@@ -82,10 +82,15 @@ public:
     virtual void newGame(const GameRecord& game, bool engineIsWhite) = 0;
 
     /**
-     * @brief Sets the time control for the engine.
-     * @param timeControl The time control to set.
+     * @brief Sets the time control for the engine. 
+     * 
+     * Depending on protocol it might do nothing or send a new game command 
+     * and then the new time control
+     * 
+     * @param game Current game state.
+	 * @param engineIsWhite True if the engine plays as white, false for black.
      */
-    virtual void setTimeControl(const TimeControl& timeControl) = 0;
+    virtual void setTimeControl(const GameRecord& game, bool engineIsWhite) = 0;
 
     /**
      * @brief Notifies the engine that the best move has been received.
@@ -108,6 +113,12 @@ public:
      * @brief Called once per second. Useful for time-based monitoring or updates.
      */
     virtual void ticker() = 0;
+
+    /**
+     * @brief Is called after a moveNow command with wait=true. Runs handshake steps if needed.
+     * @returns The event to wait for completing the handshake.
+     */
+    virtual EngineEvent::Type waitAfterMoveNowHandshake() = 0;
 
     /**
      * @brief Informs the engine that pondering is permitted.

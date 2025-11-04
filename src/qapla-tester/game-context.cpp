@@ -62,11 +62,6 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
         }
     }
     updateEngineNames();
-    setTimeControl(gameRecord_.getWhiteTimeControl());
-    if (getBlack() != nullptr && getWhite() != getBlack())
-    {
-        getBlack()->setTimeControl(gameRecord_.getBlackTimeControl());
-    }
     newGame();
 }
 
@@ -130,14 +125,40 @@ void GameContext::stopEngine(const std::string &id)
 void GameContext::setTimeControl(const TimeControl &timeControl)
 {
     {
-        std::lock_guard lock(engineMutex_);
-        for (auto &player : players_)
+        std::scoped_lock lock(gameRecordMutex_);
+        gameRecord_.setTimeControl(timeControl, timeControl);
+    }
+    {
+        std::scoped_lock lock(engineMutex_);
+        for (size_t i = 0; i < players_.size(); ++i)
         {
-            player->setTimeControl(timeControl);
+            bool isWhite = (i == 0 && !switchedSide_) || (i == 1 && switchedSide_);
+            players_[i]->setTimeControl(gameRecord_, isWhite);
         }
     }
-    std::scoped_lock lock(gameRecordMutex_);
-    gameRecord_.setTimeControl(timeControl, timeControl);
+}
+
+void GameContext::setTimeControls(const std::vector<TimeControl> &timeControls)
+{
+    {
+        std::scoped_lock lock(gameRecordMutex_);
+        if (timeControls.size() >= 2)
+        {
+            gameRecord_.setTimeControl(timeControls[0], timeControls[1]);
+        }
+        else if (timeControls.size() == 1)
+        {
+            gameRecord_.setTimeControl(timeControls[0], timeControls[0]);
+        }
+    }
+    {
+        std::scoped_lock lock(engineMutex_);
+        for (size_t i = 0; i < players_.size(); ++i)
+        {
+            bool isWhite = (i == 0 && !switchedSide_) || (i == 1 && switchedSide_);
+            players_[i]->setTimeControl(gameRecord_, isWhite);
+        }
+    }
 }
 
 void GameContext::newGame()

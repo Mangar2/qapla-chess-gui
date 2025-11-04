@@ -199,7 +199,8 @@ void ComputeTask::moveNow() {
     if (player == nullptr) {
         return;
     }
-    player->checkReady();
+    // Check Ready is ok in UCI, but not in Winboard mode, I do not know why it is here and if it is needed for uci.
+    // player->checkReady();
     player->moveNow();
 }
 

@@ -40,12 +40,13 @@ public:
     /**
      * @brief Sets the time control for this player.
      *
-     * @param timeControl The time control to apply.
+     * @param gameRecord The current game state including time controls.
+     * @param engineIsWhite True if the engine plays as white, false for black.
      */
-    void setTimeControl(const TimeControl& timeControl) {
-        timeControl_ = timeControl;
+    void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
+        timeControl_ = engineIsWhite ? gameRecord.getWhiteTimeControl() : gameRecord.getBlackTimeControl();
         if (engine_) {
-            engine_->setTimeControl(timeControl_);
+            engine_->setTimeControl(gameRecord, engineIsWhite);
         }
     }
 
@@ -346,6 +347,7 @@ private:
     enum class ComputeState {
         Idle,
         ComputingMove,
+        StoppingMove,
         Pondering,
         PonderHit,
         PonderMiss

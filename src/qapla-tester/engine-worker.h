@@ -115,9 +115,9 @@ public:
 	 * @brief Sets the time control for the engine.
 	 * @param timeControl The time control to set.
 	 */
-	void setTimeControl(const TimeControl& timeControl) {
+	void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
 		post([=](EngineAdapter& adapter) {
-			adapter.setTimeControl(timeControl);
+			adapter.setTimeControl(gameRecord, engineIsWhite);
 			});
 	}
 

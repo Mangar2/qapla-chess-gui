@@ -178,7 +178,10 @@ bool EngineWorker::requestReady(std::chrono::milliseconds timeout) {
 
 bool EngineWorker::moveNow(bool wait, std::chrono::milliseconds timeout) {
     post([this, wait](EngineAdapter& adapter) {
-        waitForHandshake_ = wait ? EngineEvent::Type::BestMove : EngineEvent::Type::None;
+        waitForHandshake_ = EngineEvent::Type::None;
+        if (wait) {
+            waitForHandshake_ = adapter.waitAfterMoveNowHandshake();
+        }
         adapter.moveNow();
         });
     if (!wait) return true;

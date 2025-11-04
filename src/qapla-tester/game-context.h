@@ -80,20 +80,7 @@ public:
      * @brief Sets the time controls for each player based on the provided vector.
      * @param timeControls A vector of TimeControl objects for each player.
      */
-    void setTimeControls(const std::vector<TimeControl> &timeControls)
-    {
-        for (size_t i = 0; i < players_.size(); ++i)
-        {
-            if (i < timeControls.size())
-            {
-                players_[i]->setTimeControl(timeControls[i]);
-            }
-            else
-            {
-                players_[i]->setTimeControl(TimeControl());
-            }
-        }
-    }
+    void setTimeControls(const std::vector<TimeControl> &timeControls);
 
     /**
      * @brief Sets the trace level to print on the terminal (std::out) for all players' engines.

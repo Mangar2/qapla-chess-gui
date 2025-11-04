@@ -83,9 +83,18 @@ void WinboardAdapter::startProtocol() {
 void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) {
     gameStruct_ = gameRecord.createGameStruct();
     sendPosition(gameStruct_);
-	setTimeControl(gameRecord, engineIsWhite);
+    const auto& timeControl = engineIsWhite ? 
+        gameRecord.getWhiteTimeControl() : 
+        gameRecord.getBlackTimeControl();
+
+	setTimeControl(timeControl);
+    lastOwnMove_.clear();
     // Post mode shows thinking output
     writeCommand("post");
+}
+
+void WinboardAdapter::setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
+    newGame(gameRecord, engineIsWhite);
 }
 
 void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
@@ -121,11 +130,18 @@ void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
 }
 
 void WinboardAdapter::setForceMode() {
+    if (forceMode_) {
+        return;
+    }
     writeCommand("force");
     forceMode_ = true;
 }
 
 void WinboardAdapter::moveNow() {
+    if (forceMode_) {
+        // If we are in force mode, the engine is not doing anything and cannot move now.
+        return;
+    }
     if (isAnalyzeMode_) {
         writeCommand("exit");
         isAnalyzeMode_ = false;
@@ -133,6 +149,10 @@ void WinboardAdapter::moveNow() {
         writeCommand("?");
     }
     setForceMode();
+}
+
+EngineEvent::Type WinboardAdapter::waitAfterMoveNowHandshake() {
+    return isAnalyzeMode_ ? EngineEvent::Type::None : EngineEvent::Type::BestMove;
 }
 
 void WinboardAdapter::setPonder(bool enabled) {
@@ -157,6 +177,8 @@ void WinboardAdapter::bestMoveReceived(const std::string& sanMove, const std::st
     if (!lanMove.empty()) {
         gameStruct_.lanMoves += (gameStruct_.lanMoves.empty() ? "" : " ") + lanMove;
     }
+    // The last own move is now in the move list
+    lastOwnMove_.clear();
 }
 
 uint64_t WinboardAdapter::go(bool isInfinite) {
@@ -180,6 +202,13 @@ uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game, bool isInfin
     if (game.fen != gameStruct_.fen || newMoves.rfind(oldMoves, 0) != 0) {
         sendPosition(game);
         return go(isInfinite);
+    }
+    // If we have a last own move that was not reflected by "bestMoveReceived", the engine has made
+    // an additional move (e.g. in force mode). We need to undo it first as the position is now out of sync.
+    if (!lastOwnMove_.empty()) {
+        setForceMode();
+        writeCommand("undo");
+        lastOwnMove_.clear();
     }
 	std::string additionalMoves = newMoves.substr(oldMoves.size());
 
@@ -239,15 +268,10 @@ void WinboardAdapter::askForReady() {
     writeCommand("ping " + std::to_string(pingCounter_));
 }
 
-void WinboardAdapter::setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
-    const TimeControl& tc = engineIsWhite ? gameRecord.getWhiteTimeControl()
-        : gameRecord.getBlackTimeControl();
-
-    setTimeControl(tc);
-}
-
 void WinboardAdapter::sendPosition(const GameStruct& game) {
     writeCommand("new");
+    // The new command leaves force mode and sets white to move
+    forceMode_ = false;
     writeCommand("easy");
     setForceMode();
 
@@ -745,6 +769,9 @@ EngineEvent WinboardAdapter::readEvent() {
         std::string move;
 		iss >> move;
         gameStruct_.originalMove = move;
+        // lastOwnMove is used to remember that the engine is one move ahead until bestMoveReceived is called
+        // reflecting that the move is now known to the game management
+        lastOwnMove_ = move;
 		return EngineEvent::createBestMove(identifier_, engineLine.timestampMs, line, move, "");
     }
 

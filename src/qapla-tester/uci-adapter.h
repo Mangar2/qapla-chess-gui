@@ -73,10 +73,18 @@ public:
      */
     void terminateEngine() override;
 
+    /**
+     * @brief Is called after a moveNow command with wait=true. Runs handshake steps if needed.
+     * @returns The event to wait for completing the handshake.
+     */
+    EngineEvent::Type waitAfterMoveNowHandshake() override {
+        return EngineEvent::Type::BestMove;
+    }
+
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
-    void setTimeControl(const TimeControl& timeControl) override {
+    void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) override {
         // Nothing to do for UCI, time control is sent with 'go' command
     }
     void moveNow() override;

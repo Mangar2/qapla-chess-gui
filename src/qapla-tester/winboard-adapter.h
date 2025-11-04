@@ -78,8 +78,35 @@ public:
 
     EngineEvent readEvent() override;
 
+    /**
+     * @brief Is called after a moveNow command with wait=true. Runs handshake steps if needed.
+     * @returns The event to wait for completing the handshake.
+     */
+    EngineEvent::Type waitAfterMoveNowHandshake() override;
+
+    /**
+     * @brief Starts a new game with the given parameters.
+     * 
+     * @param gameRecord Current game state.
+     * @param engineIsWhite True if the engine plays as white, false for black.
+     */
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
-    void setTimeControl(const TimeControl& timeControl) override;
+    
+    /**
+     * @brief Sets the time control for the engine. 
+     * 
+     * This will start a new game and then send the time control according to Winboard protocol.
+     * Supports asymmetric time controls and all xboard-compliant formats:
+     *  - level (classical, increment)
+     *  - st (movetime)
+     *  - sd (depth)
+     *  - nps (nodes-per-second)
+     * 
+     * @param game Current game state.
+	 * @param engineIsWhite True if the engine plays as white, false for black.
+     */
+    void setTimeControl(const GameRecord& game, bool engineIsWhite) override;
+
     void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) override;
     void moveNow() override;
     void setPonder(bool enabled) override;
@@ -138,19 +165,6 @@ private:
     std::vector<ProtocolError> protocolErrors_;
 
     /**
-     * @brief Sends time control to the engine according to Winboard protocol.
-     *        Supports asymmetric time controls and all xboard-compliant formats:
-     *        - level (classical, increment)
-     *        - st (movetime)
-     *        - sd (depth)
-     *        - nps (nodes-per-second)
-     *
-     * @param gameRecord GameRecord with time control settings.
-     * @param engineIsWhite True if engine is playing white.
-     */
-    void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite);
-
-    /**
      * @brief Sends the current position to the engine.
      * @param game The current game structure containing the position and moves played.
      */
@@ -165,6 +179,20 @@ private:
      * @return Timestamp when the 'go' or 'analyze' command was sent.
      */
     uint64_t catchupMovesAndGo(const GameStruct& game, bool isInfinite = false);
+
+    /**
+     * @brief Sets the time control for the engine.
+     * 
+     * This will send the time control according to Winboard protocol.
+     * Supports asymmetric time controls and all xboard-compliant formats:
+     *  - level (classical, increment)
+     *  - st (movetime)
+     *  - sd (depth)
+     *  - nps (nodes-per-second)
+     * 
+     * @param timeControl The time control to set.
+     */
+    void setTimeControl(const TimeControl& timeControl);
 
     /**
      * @brief Sends a 'go' or 'analyze' command to the engine based on current mode.
@@ -204,6 +232,8 @@ private:
 	uint64_t pingCounter_ = 0;
     bool forceMode_ = false;
     bool isAnalyzeMode_ = false;
+
+    std::string lastOwnMove_; ///> The last move made by the engine in original format.
 
 	GameStruct gameStruct_; 
 };
