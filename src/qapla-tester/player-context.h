@@ -225,7 +225,8 @@ public:
         }
 		// I expect this to never happen. Let us see in debug mode. If this happens this should be a race condition.
         // But it still make sense to check, if this is a bug in the code
-        assert(timestamp >= computeMoveStartTimestamp_);
+        // timestamp = 0 indicates that the command could not be fulfilled by the adapter what is a valid case
+        assert(timestamp == 0 || timestamp >= computeMoveStartTimestamp_);
     }
 
     /**

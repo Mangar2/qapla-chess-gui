@@ -213,11 +213,11 @@ uint64_t WinboardAdapter::go(bool isInfinite) {
     if (isAnalyzeMode_) {
         return 0;
     }
+    forceMode_ = false;
     if (isInfinite) {
         isAnalyzeMode_ = true;
         return writeCommand("analyze");
     } else {
-        forceMode_ = false;
         return writeCommand("go");
     }
 }
