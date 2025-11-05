@@ -76,15 +76,6 @@ public:
         return gameContext_.getEngine(index);
     }
 
-    /**
-     * @brief Restarts the engine at the specified index.
-     * @param index The index of the engine to restart.
-     */
-    void restartEngine(uint32_t index)
-    {
-        gameContext_.restartPlayer(index);
-    }
-
     void restartEngine(const std::string &id)
     {
         stop();
@@ -113,10 +104,11 @@ public:
     /**
      * @brief Sets the time controls for each player.
      * @param timeControls A vector of TimeControl objects for each player.
+     * @param informEngines If true, informs each player's engine of the new time control.
      */
-    void setTimeControls(const std::vector<TimeControl> &timeControls)
+    void setTimeControls(const std::vector<TimeControl> &timeControls, bool informEngines = true)
     {
-        gameContext_.setTimeControls(timeControls);
+        gameContext_.setTimeControls(timeControls, informEngines);
     }
 
     /**

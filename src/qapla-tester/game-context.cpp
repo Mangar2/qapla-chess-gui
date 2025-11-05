@@ -38,6 +38,17 @@ void GameContext::updateEngineNames()
     gameRecord_.setBlackEngineName(blackName);
 }
 
+void GameContext::playerRestartEngine(PlayerContext* player, bool differentThread)
+{
+    player->restartEngine(differentThread);
+    if (eventCallback_)
+    {
+        player->getEngine()->setEventSink(eventCallback_);
+    }
+    bool isWhite = getWhite()->getIdentifier() == player->getIdentifier();
+    player->newGame(gameRecord_, isWhite);
+}
+
 void GameContext::tearDown()
 {
     std::scoped_lock lock(engineMutex_);
@@ -49,6 +60,7 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
     {
         std::scoped_lock lock(engineMutex_);
         players_.clear();
+        bool isWhite = !switchedSide_;
         for (auto &engine : engines)
         {
             if (eventCallback_)
@@ -58,6 +70,9 @@ void GameContext::initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines
             auto player = std::make_unique<PlayerContext>();
             player->setEngine(std::move(engine));
             player->setStartPosition(gameRecord_);
+            player->setTimeControl(gameRecord_, isWhite);
+            // it does not matter for engines with index > 1 if its white or not as it will never play a move
+            isWhite = switchedSide_;
             players_.emplace_back(std::move(player));
         }
     }
@@ -72,25 +87,8 @@ void GameContext::ensureStarted()
     {
         if (player->getEngine()->isStopped())
         {
-            player->restartEngine(true);
-            if (eventCallback_)
-            {
-                player->getEngine()->setEventSink(eventCallback_);
-            }
+            playerRestartEngine(player.get(), true);
         }
-    }
-}
-
-void GameContext::restartPlayer(uint32_t index)
-{
-    if (index >= players_.size())
-    {
-        return;
-    }
-    players_[index]->restartEngine();
-    if (eventCallback_)
-    {
-        players_[index]->getEngine()->setEventSink(eventCallback_);
     }
 }
 
@@ -101,11 +99,7 @@ void GameContext::restartPlayer(const std::string &id)
     {
         if (player->getIdentifier() == id)
         {
-            player->restartEngine(true);
-            if (eventCallback_)
-            {
-                player->getEngine()->setEventSink(eventCallback_);
-            }
+            playerRestartEngine(player.get(), true);
         }
     }
 }
@@ -138,7 +132,7 @@ void GameContext::setTimeControl(const TimeControl &timeControl)
     }
 }
 
-void GameContext::setTimeControls(const std::vector<TimeControl> &timeControls)
+void GameContext::setTimeControls(const std::vector<TimeControl> &timeControls, bool informEngines)
 {
     {
         std::scoped_lock lock(gameRecordMutex_);
@@ -150,6 +144,9 @@ void GameContext::setTimeControls(const std::vector<TimeControl> &timeControls)
         {
             gameRecord_.setTimeControl(timeControls[0], timeControls[0]);
         }
+    }
+    if (!informEngines) {
+        return;
     }
     {
         std::scoped_lock lock(engineMutex_);
@@ -385,6 +382,7 @@ PlayerContext *GameContext::findPlayerByEngineId(const std::string &identifier)
 
 void GameContext::restartIfConfigured()
 {
+    std::scoped_lock lock(engineMutex_);
     for (auto &player : players_)
     {
         if (player->getEngine() == nullptr)
@@ -394,11 +392,7 @@ void GameContext::restartIfConfigured()
 
         if (player->getEngine()->getConfig().getRestartOption() == RestartOption::Always)
         {
-            player->restartEngine();
-            if (eventCallback_)
-            {
-                player->getEngine()->setEventSink(eventCallback_);
-            }
+            playerRestartEngine(player.get(), false);
         }
     }
 }

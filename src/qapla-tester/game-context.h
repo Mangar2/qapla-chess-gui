@@ -49,12 +49,6 @@ public:
     void initPlayers(std::vector<std::unique_ptr<EngineWorker>> engines);
 
     /**
-     * @brief Restarts the engine of the given player index.
-     * @param index Index of the player to restart.
-     */
-    void restartPlayer(uint32_t index);
-
-    /**
      * @brief Restarts the player with the given identifier.
      * @param id The unique identifier of the player to restart.
      */
@@ -79,8 +73,9 @@ public:
     /**
      * @brief Sets the time controls for each player based on the provided vector.
      * @param timeControls A vector of TimeControl objects for each player.
+     * @param informEngines If true, informs each player's engine of the new time control.
      */
-    void setTimeControls(const std::vector<TimeControl> &timeControls);
+    void setTimeControls(const std::vector<TimeControl> &timeControls, bool informEngines = true);
 
     /**
      * @brief Sets the trace level to print on the terminal (std::out) for all players' engines.
@@ -314,6 +309,14 @@ public:
 
 private:
     void updateEngineNames();
+    /**
+     * @brief Restarts the engine for the given player.
+     *
+     * @param player The player whose engine should be restarted.
+     * @param differentThread If true, the restart is triggered from a different thread.
+     */
+    void playerRestartEngine(PlayerContext* player, bool differentThread = true);
+
     mutable std::mutex engineMutex_;
     std::vector<std::unique_ptr<PlayerContext>> players_;
 

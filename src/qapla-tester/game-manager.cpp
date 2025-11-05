@@ -376,7 +376,10 @@ void GameManager::executeTask(std::optional<GameTask> task) {
 
     // Also sets the engines names, Switched side must be set before
     setFromGameRecord(gameRecord);
-    gameContext_.setTimeControls({ gameRecord.getWhiteTimeControl(), gameRecord.getBlackTimeControl() });
+    // We dont inform engines about time control as it is part of newGame too.
+    bool informEngines = false;
+    gameContext_.setTimeControls(
+        { gameRecord.getWhiteTimeControl(), gameRecord.getBlackTimeControl() }, informEngines);
     {
         // We protect taskType_ against race conditions between calls of stop() restarting the game based on a new task
         // that had been fetched before stop().

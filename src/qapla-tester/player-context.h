@@ -112,6 +112,7 @@ public:
 	 * @brief Informs the engine that a new game is starting.
      */
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) {
+        timeControl_ = engineIsWhite ? gameRecord.getWhiteTimeControl() : gameRecord.getBlackTimeControl();
         if (engine_) {
             engine_->newGame(gameRecord, engineIsWhite);
         }
