@@ -181,6 +181,14 @@ bool EngineWorker::moveNow(bool wait, std::chrono::milliseconds timeout) {
         waitForHandshake_ = EngineEvent::Type::None;
         if (wait) {
             waitForHandshake_ = adapter.waitAfterMoveNowHandshake();
+            if (waitForHandshake_ == EngineEvent::Type::None) {
+                // Notify for handshake right away
+                {
+                    std::lock_guard<std::mutex> lock(handshakeMutex_);
+                    handshakeReceived_ = true;
+                }
+                handshakeCv_.notify_all();
+            }
         }
         adapter.moveNow();
         });
