@@ -155,6 +155,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         }
         configModified |= ImGuiEngineControls::drawEngineGauntlet(config.config, options_.allowGauntletEdit);
         configModified |= ImGuiEngineControls::drawEnginePonder(config.config, options_.allowPonderEdit);
+        configModified |= ImGuiEngineControls::drawEngineScoreFromWhitePov(config.config, options_.allowScoreFromWhitePovEdit);
         configModified |= ImGuiEngineControls::drawEngineTimeControl(config.config, options_.allowTimeControlEdit);
         configModified |= ImGuiEngineControls::drawEngineTraceLevel(config.config, options_.allowTraceLevelEdit);
         configModified |= ImGuiEngineControls::drawEngineRestartOption(config.config, options_.allowRestartOptionEdit);

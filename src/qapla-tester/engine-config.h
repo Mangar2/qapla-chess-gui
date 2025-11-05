@@ -139,6 +139,10 @@ public:
 	bool isGauntlet() const { return gauntlet_; }
     bool& gauntlet() { return gauntlet_; }
 
+	void setScoreFromWhitePov(bool enabled) { scoreFromWhitePov_ = enabled; }
+	bool isScoreFromWhitePov() const { return scoreFromWhitePov_; }
+    bool& scoreFromWhitePov() { return scoreFromWhitePov_; }
+
     void setTimeControl(const std::string& tc);
 	const TimeControl& getTimeControl() const { return tc_; }
 
@@ -279,6 +283,7 @@ private:
     RestartOption restart_ = RestartOption::EngineDecides;
     bool ponder_ = false;
 	bool gauntlet_ = false;
+	bool scoreFromWhitePov_ = false;
     std::unordered_map<std::string, std::string> internalKeys_;
     std::unordered_map<std::string, OptionValue> optionValues_;
 };

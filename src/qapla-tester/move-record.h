@@ -93,8 +93,9 @@ struct MoveRecord {
     /**
 	 * @brief Updates the move record with search information from an EngineEvent.
 	 * @param info SearchInfo containing various search metrics.
+     * @param whitePovCorrection Indicates if the score is from White's point of view.
      */
-    void updateFromSearchInfo(const SearchInfo& info);
+    void updateFromSearchInfo(const SearchInfo& info, bool whitePovCorrection = false);
 
 	/**
 	 * @brief Returns a string representation of the score.

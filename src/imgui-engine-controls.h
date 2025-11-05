@@ -221,6 +221,12 @@ inline bool drawEngineGauntlet(QaplaTester::EngineConfig& config, bool enabled) 
     return ImGuiControls::checkbox("Gauntlet", config.gauntlet());
 }
 
+inline bool drawEngineScoreFromWhitePov(QaplaTester::EngineConfig& config, bool enabled) {
+    if (!enabled) return false;
+    
+    return ImGuiControls::checkbox("Score from White POV", config.scoreFromWhitePov());
+}
+
 /**
  * @brief Draws a time control input control
  * @param config Engine configuration to modify

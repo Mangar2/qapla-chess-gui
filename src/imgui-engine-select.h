@@ -50,6 +50,7 @@ namespace QaplaWindows {
             bool allowGauntletEdit = true;        ///< Allows editing of the gauntlet option
             bool allowNameEdit = true;            ///< Allows editing of the engine name
             bool allowPonderEdit = true;          ///< Allows editing of the ponder option
+            bool allowScoreFromWhitePovEdit = true;///< Allows editing of the score from white POV option
             bool allowTimeControlEdit = true;     ///< Allows editing of the time control
             bool allowTraceLevelEdit = true;      ///< Allows editing of the trace level
             bool allowRestartOptionEdit = true;   ///< Allows editing of the restart option

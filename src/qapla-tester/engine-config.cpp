@@ -98,6 +98,7 @@ void EngineConfig::setCommandLineOptions(const ValueMap& values, bool update) {
         if (key == "ponder") setPonder(std::get<bool>(value));
         else if (key == "tc") setTimeControl(std::get<std::string>(value));
         else if (key == "gauntlet") setGauntlet(std::get<bool>(value));
+        else if (key == "whitepov") setScoreFromWhitePov(std::get<bool>(value));
         else if (key == "trace") setTraceLevel(std::get<std::string>(value));
         else if (key == "name") {
             if (!update) setName(std::get<std::string>(value));
@@ -109,10 +110,10 @@ void EngineConfig::setCommandLineOptions(const ValueMap& values, bool update) {
         else if (key.starts_with("option.")) setOptionValue(key.substr(7), toString(value));
         else {
             AppError::throwOnInvalidOption(
-                { "name", "cmd", "dir", "tc", "ponder", "gauntlet", "trace", "restart", "proto", "option."},
+                { "name", "cmd", "dir", "tc", "ponder", "gauntlet", "whitepov", "trace", "restart", "proto", "option."},
                 key, 
 				"Invalid engine option key: " + key + 
-                ". Supported keys are: name, cmd, dir, tc, ponder, gauntlet, trace, restart, proto, option.[name] ."
+                ". Supported keys are: name, cmd, dir, tc, ponder, gauntlet, whitepov, trace, restart, proto, option.[name] ."
             );
         }
     }
@@ -155,6 +156,7 @@ bool operator==(const EngineConfig& lhs, const EngineConfig& rhs) {
         && lhs.tc_ == rhs.tc_
         && lhs.protocol_ == rhs.protocol_
         && lhs.ponder_ == rhs.ponder_
+        && lhs.scoreFromWhitePov_ == rhs.scoreFromWhitePov_
         // && lhs.gauntlet_ == rhs.gauntlet_ decided to not compare gauntlet setting
         && lhs.optionValues_ == rhs.optionValues_;
 }
@@ -170,6 +172,11 @@ void  EngineConfig::setValue(const std::string& key, const std::string& value) {
         if (value == "true" || value == "1" || value == "") setPonder(true);
         else if (value == "false" || value == "0") setPonder(false);
         else throw std::runtime_error("Invalid ponder value: " + value);
+    }
+    else if (key == "whitepov") {
+        if (value == "true" || value == "1" || value == "") setScoreFromWhitePov(true);
+        else if (value == "false" || value == "0") setScoreFromWhitePov(false);
+        else throw std::runtime_error("Invalid whitepov value: " + value);
     }
     else if (key == "trace") setTraceLevel(value);
     else if (key == "restart") restart_ = parseRestartOption(value);
@@ -230,6 +237,7 @@ void EngineConfig::save(std::ostream& out, std::string section) const {
         out << "tc=" << tc_.toPgnTimeControlString() << '\n';
     }
 	if (ponder_) out << "ponder=" << (ponder_ ? "true" : "false") << '\n';
+	if (scoreFromWhitePov_) out << "whitepov=" << (scoreFromWhitePov_ ? "true" : "false") << '\n';
     for (const auto& [key, value] : internalKeys_) {
         out << key << "=" << value << '\n';
     }
@@ -257,6 +265,7 @@ std::unordered_map<std::string, std::string> EngineConfig::toDisambiguationMap()
 
     if (ponder_) result["ponder"] = "";
 	if (gauntlet_) result["gauntlet"] = "";
+	if (scoreFromWhitePov_) result["whitepov"] = "";
 
     for (const auto& [_, value] : optionValues_) {
         result[value.originalName] = value.value;

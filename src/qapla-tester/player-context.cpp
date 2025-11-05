@@ -76,10 +76,10 @@ void PlayerContext::handleInfo(const EngineEvent& event) {
         return;
     }
     const auto& searchInfo = *event.searchInfo;
-    
+    bool whitePovCorrection = !gameState_.isWhiteToMove() && engine_->getConfig().isScoreFromWhitePov();
     {
         std::scoped_lock lock(currentMoveMutex_);
-        currentMove_.updateFromSearchInfo(searchInfo);
+        currentMove_.updateFromSearchInfo(searchInfo, whitePovCorrection);
     }
 
     uint64_t moveElapsedMs = Timer::getCurrentTimeMs() - computeMoveStartTimestamp_;

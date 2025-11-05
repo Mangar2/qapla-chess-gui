@@ -75,18 +75,18 @@ void MoveRecord::updateFromBestMove(uint32_t halfmoveNo, const std::string& engi
  * @brief Updates the move record with search information from an EngineEvent.
  * @param info SearchInfo containing various search metrics.
  */
-void MoveRecord::updateFromSearchInfo(const SearchInfo& info) {
+void MoveRecord::updateFromSearchInfo(const SearchInfo& info, bool whitePovCorrection) {
     if (info.depth) depth = *info.depth;
     if (info.selDepth) seldepth = *info.selDepth;
     if (info.multipv) multipv = *info.multipv;
     if (info.nodes) nodes = static_cast<uint64_t>(*info.nodes);
 
     if (info.scoreCp) {
-        scoreCp = *info.scoreCp;
+        scoreCp = whitePovCorrection ? -(*info.scoreCp) : *info.scoreCp;
         scoreMate.reset();
     }
     else if (info.scoreMate) {
-        scoreMate = *info.scoreMate;
+        scoreMate = whitePovCorrection ? -(*info.scoreMate) : *info.scoreMate;
         scoreCp.reset();
     }
 
