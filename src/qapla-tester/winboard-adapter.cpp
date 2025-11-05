@@ -94,11 +94,16 @@ void WinboardAdapter::newGame(const GameRecord& gameRecord, bool engineIsWhite) 
 }
 
 void WinboardAdapter::setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) {
-    newGame(gameRecord, engineIsWhite);
+    const auto& timeControl = engineIsWhite ? 
+        gameRecord.getWhiteTimeControl() : 
+        gameRecord.getBlackTimeControl();
+
+	setTimeControl(timeControl);
 }
 
 void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
     if (!timeControl.isValid()) return;
+
 
     const auto& segments = timeControl.timeSegments();
     if (!segments.empty()) {
@@ -109,23 +114,46 @@ void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
 		baseSeconds %= 60;
         int incSeconds = static_cast<int>(seg.incrementMs / 1000);
         std::ostringstream oss;
+        if (!clearTimeControlCommand_.empty()) {
+            writeCommand(clearTimeControlCommand_);
+            clearTimeControlCommand_.clear();
+        }
         oss << "level " << moves << " "
             << baseMinutes << ":"
             << baseSeconds << " "
 			<< incSeconds;
         writeCommand(oss.str());
+        return;
     }
 
     if (timeControl.moveTimeMs()) {
+        if (!clearTimeControlCommand_.empty() && clearTimeControlCommand_ != "st 0") {
+            writeCommand(clearTimeControlCommand_);
+            clearTimeControlCommand_.clear();
+        }
+        clearTimeControlCommand_ = "st 0";
         writeCommand("st " + std::to_string(static_cast<int>(*timeControl.moveTimeMs() / 1000)));
+        return;
     }
 
     if (timeControl.depth()) {
+        if (!clearTimeControlCommand_.empty() && clearTimeControlCommand_ != "sd 0") {
+            writeCommand(clearTimeControlCommand_);
+            clearTimeControlCommand_.clear();
+        }
+        clearTimeControlCommand_ = "sd 0";
         writeCommand("sd " + std::to_string(*timeControl.depth()));
+        return;
     }
 
     if (timeControl.nodes()) {
+        if (!clearTimeControlCommand_.empty() && clearTimeControlCommand_ != "nps 0") {
+            writeCommand(clearTimeControlCommand_);
+            clearTimeControlCommand_.clear();
+        }
+        clearTimeControlCommand_ = "nps 0";
         writeCommand("nps " + std::to_string(*timeControl.nodes()));
+        return;
     }
 }
 

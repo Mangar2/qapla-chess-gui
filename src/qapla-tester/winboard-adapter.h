@@ -234,6 +234,7 @@ private:
     bool isAnalyzeMode_ = false;
 
     std::string lastOwnMove_; ///> The last move made by the engine in original format.
+    std::string clearTimeControlCommand_; ///> The command to clear the time control before setting a new one.
 
 	GameStruct gameStruct_; 
 };

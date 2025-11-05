@@ -564,14 +564,6 @@ void InteractiveBoardWindow::pollData()
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			engineWindow_->setEngineRecords(records);
 		});
-		// Check if time control was changed in the popup
-		auto newTimeControl = timeControlWindow_->content().getSelectedTimeControl();
-		if (newTimeControl != timeControl_)
-		{
-			timeControl_ = newTimeControl;
-			computeTask_->setTimeControl(timeControl_);
-		}
-
 	}
 	catch (const std::exception &ex)
 	{
