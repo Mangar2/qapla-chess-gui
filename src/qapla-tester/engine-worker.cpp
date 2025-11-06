@@ -71,6 +71,7 @@ void EngineWorker::asyncStartup(const OptionValues& optionValues) {
                     throw std::runtime_error("Engine " + getEngineName() + " failed ready ok handshake after setoptions");
                 }
             }
+            adapter.setPonder(engineConfig_.isPonderEnabled());
             startupPromise_.set_value(); 
 			workerState_ = WorkerState::running;
         }

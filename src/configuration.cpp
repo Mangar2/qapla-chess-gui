@@ -53,6 +53,7 @@ void Configuration::saveData(std::ofstream& out) {
 	engineCapabilities_.save(out);
 	EngineWorkerFactory::getConfigManager().saveToStream(out);
     getConfigData().save(out);
+    out.flush();
 }
 
 void Configuration::loadData(std::ifstream& in) {

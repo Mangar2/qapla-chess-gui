@@ -81,28 +81,11 @@ void Autosavable::saveFile() {
             throw std::ios_base::failure("Failed to open file for writing: " + filePath_);
         }
 
-        // Save the data using the derived class implementation
         saveData(outFile);
-        
-        // Ensure all data is written to disk
-        outFile.flush();
-        
-        // Check if the write operation was successful
         if (!outFile.good()) {
             throw std::ios_base::failure("Failed to write data to file: " + filePath_);
         }
-        
         outFile.close();
-        
-        // Verify file exists and has content before removing backup
-        if (!fs::exists(filePath_)) {
-            throw std::ios_base::failure("File does not exist after writing: " + filePath_);
-        }
-        
-        // Check if file has reasonable size (not empty)
-        if (fs::file_size(filePath_) == 0) {
-            throw std::ios_base::failure("File is empty after writing: " + filePath_);
-        }
         
         // Only now remove the backup file since saving was successful
         if (fs::exists(backupFilePath_)) {

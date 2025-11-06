@@ -300,7 +300,7 @@ void WinboardAdapter::sendPosition(const GameStruct& game) {
     writeCommand("new");
     // The new command leaves force mode and sets white to move
     forceMode_ = false;
-    writeCommand("easy");
+    writeCommand(ponderMode_ ? "hard" : "easy");
     setForceMode();
 
     if (!game.fen.empty()) {
@@ -357,7 +357,16 @@ void WinboardAdapter::setOptionValues(const OptionValues& optionValues) {
 					continue;
 				}
 			}
-            std::string command = "setoption name " + supportedOption.name + " value " + value;
+            // XBoard protocol: special mappings for UCI-compatible options
+            std::string command;
+            if (supportedOption.name == "Hash" && isEnabled("memory")) {
+                command = "memory " + value;
+            } else if (supportedOption.name == "Threads" && isEnabled("smp")) {
+                command = "cores " + value;
+            } else {
+                // XBoard protocol: options are set with "option <name>=<value>"
+                command = "option " + supportedOption.name + "=" + value;
+            }
             writeCommand(command);
         }
         catch (...) {
@@ -659,6 +668,30 @@ void WinboardAdapter::finalizeFeatures() {
     if (featureMap_.find("myname") != featureMap_.end()) {
         engineName_ = featureMap_["myname"];
     }
+
+    // XBoard protocol: if feature memory=1, add a Hash option for UCI compatibility (once)
+    if (isEnabled("memory") && !getSupportedOption("Hash")) {
+        EngineOption hashOption = {
+            .name = "Hash",
+            .type = EngineOption::Type::Spin,
+            .defaultValue = "32",
+            .min = 1,
+            .max = 131072
+        };
+        supportedOptions_.push_back(std::move(hashOption));
+    }
+
+    // XBoard protocol: if feature smp=1, add a Threads option
+    if (isEnabled("smp") && !getSupportedOption("Threads")) {
+        EngineOption threadsOption = {
+            .name = "Threads",
+            .type = EngineOption::Type::Spin,
+            .defaultValue = "1",
+            .min = 1,
+            .max = 512
+        };
+        supportedOptions_.push_back(std::move(threadsOption));
+    }
 }
 
 EngineEvent WinboardAdapter::readFeatureSection(const EngineLine& engineLine) {
@@ -761,15 +794,21 @@ EngineEvent WinboardAdapter::readEvent() {
     if (inFeatureSection_) {
         return readFeatureSection(engineLine);
     }
-	/* Timeout test code, uncomment to use
-    static int64_t count = 0;
-    count++;
-    if (count == 100) {
-		std::cout << identifier_ << " WinboardAdapter: readEvent() called 100 times, sleeping for 200 seconds" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(200));
-		std::cout << identifier_ << " WinboardAdapter: resuming after sleep" << std::endl;
+
+    // XBoard protocol: engines with "feature debug=1" may send lines starting with '#' for debugging
+    // These lines should be ignored when debug mode is enabled, but trigger an error otherwise
+    if (!line.empty() && line[0] == '#') {
+        if (isEnabled("debug")) {
+            logFromEngine(line, TraceLevel::info);
+            return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+        }
+        else {
+            logFromEngine(line, TraceLevel::error);
+            return EngineEvent::createError(identifier_, engineLine.timestampMs, 
+                "Engine sent debug output without debug mode enabled");
+        }
     }
-    */
+
     std::istringstream iss(line);
     std::string command;
     iss >> command;
