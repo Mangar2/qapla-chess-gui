@@ -91,12 +91,20 @@ void PgnIO::saveTags(std::ostream& out, const GameRecord& game) {
 			    termination = "adjudication";
 			    break;
             case GameEndCause::Disconnected:
+            case GameEndCause::IllegalMove:
+            case GameEndCause::Forfeit:
                 termination = "rules infraction";
                 break;
             case GameEndCause::Timeout:
 			    termination = "time forfeit";
 			    break;
-
+            case GameEndCause::Checkmate:
+            case GameEndCause::Stalemate:
+            case GameEndCause::DrawByRepetition:
+            case GameEndCause::DrawByFiftyMoveRule:
+            case GameEndCause::DrawByInsufficientMaterial:
+                termination = "normal";
+                break;
             default:
                 termination = "normal";
                 break;
