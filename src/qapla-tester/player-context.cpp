@@ -39,16 +39,21 @@ void PlayerContext::checkPV(const EngineEvent& event) {
     if (searchInfo.pv.empty()) { return; }
 
     std::scoped_lock lock(stateMutex_);
+    // if we are pondering but we do not know the ponder move we lack information to check the ponder PV
+    // Usually happening for winboard engines as they choose themselves what move they ponder on.
+    if (computeState_ != ComputeState::ComputingMove && ponderMove_.empty()) {
+        return;
+    }
     auto& state = computeState_ == ComputeState::ComputingMove ? gameState_ : ponderState_;
-    std::vector<QaplaBasics::Move> pvMoves;
-    pvMoves.reserve(searchInfo.pv.size());
+    uint32_t pvCount = 0;
 
     for (const auto& moveStr : searchInfo.pv) {
         const auto move = state.stringToMove(moveStr, requireLan_);
         if (move.isEmpty()) {
             std::string fullPv;
             for (const auto& move : searchInfo.pv) {
-                fullPv += move + " ";
+                fullPv += move;
+                fullPv += " ";
             }
             if (!fullPv.empty()) { 
                 fullPv.pop_back(); 
@@ -59,13 +64,13 @@ void PlayerContext::checkPV(const EngineEvent& event) {
             
             Logger::engineLogger().log(std::format("{} Illegal move in PV: {} while {} in raw info line \"{}\"", 
                 engine_->getIdentifier(), moveStr, stateStr, event.rawLine), TraceLevel::info);
-            return;
+            break;
         }
         state.doMove(move);
-        pvMoves.push_back(move);
+        pvCount++;
     }
 
-    for (size_t i = 0; i < pvMoves.size(); ++i) {
+    for (size_t i = 0; i < pvCount; ++i) {
         state.undoMove();
     }
 }
