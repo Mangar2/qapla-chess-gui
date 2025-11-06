@@ -88,6 +88,17 @@ public:
     EngineConfig* getConfigMutableByCmdAndProtocol(const std::string& cmd, EngineProtocol proto);
 
     /**
+     * Sets the configuration at the specified index.
+     * @param index The index of the configuration to set.
+     * @param config The new EngineConfig to set.
+     */
+    void setConfig(uint32_t index, const EngineConfig& config) {
+        if (index < configs.size()) {
+            configs[index] = config;
+        }
+    }
+
+    /**
      * Adds a new configuration or replaces the existing one with the same name.
      * @param config The EngineConfig to add or update.
      */

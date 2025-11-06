@@ -121,7 +121,7 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
             modified = true;
 
             if (options_.directEditMode) {
-                configManager.addOrReplaceConfig(engine.config, options_.allowProtocolEdit);
+                configManager.setConfig(index, engine.config);
             } 
             if (it == engineConfigurations_.end()) {
                 engineConfigurations_.push_back(engine);

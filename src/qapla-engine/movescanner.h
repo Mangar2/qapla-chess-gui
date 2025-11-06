@@ -148,12 +148,13 @@ namespace QaplaInterface {
         void scanMove(const std::string& move) {
             int32_t curIndex = static_cast<int32_t>(move.size()) - 1;
 
-            while (curIndex >= 0 && move[static_cast<size_t>(curIndex)] == ' ') {
+            // Skips trailing whitespaces and any move annotation like check '+' or mate '#'
+            while (curIndex >= 0 && !std::isalnum(static_cast<unsigned char>(move[static_cast<size_t>(curIndex)]))) {
                 --curIndex;
             }
+
             legal = true;
             if (!handleCastleNotation(move)) {
-                skipCheckAndMateSigns(move, curIndex);
                 promote = getPiece(move, curIndex);
                 skipEPInfo(move, curIndex);
                 skipCaptureChar(move, curIndex);

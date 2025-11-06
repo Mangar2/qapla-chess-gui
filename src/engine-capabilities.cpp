@@ -63,7 +63,8 @@ std::vector<EngineConfig> EngineCapabilities::detectWithProtocol(
     for (const auto& config : configs) {
         auto matchingEngine = std::ranges::find_if(engines,
             [&config](const std::unique_ptr<EngineWorker>& engine) {
-                return engine->getConfig().getCmd() == config.getCmd();
+                return engine->getConfig().getCmd() == config.getCmd() &&
+                       engine->getConfig().getProtocol() == config.getProtocol();
             });
         
         if (matchingEngine == engines.end()) {

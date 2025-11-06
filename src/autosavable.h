@@ -161,6 +161,26 @@ namespace QaplaHelpers {
          */
         static std::string getConfigDirectory();
 
+        /**
+         * @brief Helper method to attempt loading data from a specific file.
+         * @param filepath The file path to load from.
+         * @return True if loading was successful, false otherwise.
+         */
+        bool tryLoadFromFile(const std::string& filepath);
+
+        /**
+         * @brief Determines if backup file should be preferred over main file.
+         * Checks if backup exists and if main file is missing, empty, or suspiciously small.
+         * @return True if backup should be used, false otherwise.
+         */
+        bool shouldPreferBackup() const;
+
+        /**
+         * @brief Restores backup file to main file and attempts to load it.
+         * @return True if backup was successfully restored and loaded, false otherwise.
+         */
+        bool restoreAndLoadBackup();
+
     private:
         std::string filename_;                      ///< Base filename without path
         std::string backupSuffix_;                  ///< Suffix for backup files
@@ -172,6 +192,13 @@ namespace QaplaHelpers {
         uint64_t autosaveIntervalMs_;               ///< Auto-save interval in milliseconds
         
         std::function<std::string()> directoryProvider_;  ///< Function to get the directory path
+
+        /**
+         * @brief Minimum file size ratio to consider main file valid.
+         * If main file is smaller than (backup size * this ratio), use backup instead.
+         * Default is 0.5 (50%) - adjust to 0.9 for stricter validation (90%).
+         */
+        static constexpr double MIN_VALID_FILE_SIZE_RATIO = 0.9;
 
         /**
          * @brief Default directory provider that returns the current directory.

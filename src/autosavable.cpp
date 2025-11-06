@@ -83,10 +83,29 @@ void Autosavable::saveFile() {
 
         // Save the data using the derived class implementation
         saveData(outFile);
+        
+        // Ensure all data is written to disk
+        outFile.flush();
+        
+        // Check if the write operation was successful
+        if (!outFile.good()) {
+            throw std::ios_base::failure("Failed to write data to file: " + filePath_);
+        }
+        
         outFile.close();
-
-        // Remove the backup file if saving was successful
-        if (fs::exists(filePath_)) {
+        
+        // Verify file exists and has content before removing backup
+        if (!fs::exists(filePath_)) {
+            throw std::ios_base::failure("File does not exist after writing: " + filePath_);
+        }
+        
+        // Check if file has reasonable size (not empty)
+        if (fs::file_size(filePath_) == 0) {
+            throw std::ios_base::failure("File is empty after writing: " + filePath_);
+        }
+        
+        // Only now remove the backup file since saving was successful
+        if (fs::exists(backupFilePath_)) {
             fs::remove(backupFilePath_);
         }
     }
@@ -100,46 +119,120 @@ void Autosavable::saveFile() {
     }
 }
 
+bool Autosavable::tryLoadFromFile(const std::string& filepath) {
+    namespace fs = std::filesystem;
+    
+    try {
+        std::ifstream inFile(filepath, std::ios::in);
+        if (!inFile.is_open()) {
+            return false;
+        }
+        
+        loadData(inFile);
+        inFile.close();
+        
+        lastSaveTimestamp_ = Timer::getCurrentTimeMs();
+        modified_ = false;
+        return true;
+    }
+    catch (const std::exception& e) {
+        Logger::testLogger().log(std::string("Failed to load from ") + filepath + ": " + e.what(),
+            TraceLevel::error);
+        return false;
+    }
+}
+
+bool Autosavable::shouldPreferBackup() const {
+    namespace fs = std::filesystem;
+    
+    if (!fs::exists(backupFilePath_)) {
+        return false;
+    }
+    
+    Logger::testLogger().log("Warning: Backup file exists, indicating potential save failure: " + backupFilePath_, 
+        TraceLevel::warning);
+    
+    if (!fs::exists(filePath_)) {
+        Logger::testLogger().log("Main file missing, using backup", TraceLevel::warning);
+        return true;
+    }
+    
+    // Both exist: check if main file is suspiciously small/empty
+    auto mainSize = fs::file_size(filePath_);
+    auto backupSize = fs::file_size(backupFilePath_);
+    
+    if (mainSize == 0) {
+        Logger::testLogger().log("Main file is empty, using backup", TraceLevel::warning);
+        return true;
+    }
+    
+    if (mainSize < static_cast<uintmax_t>(backupSize * MIN_VALID_FILE_SIZE_RATIO)) {
+        Logger::testLogger().log("Main file is significantly smaller than backup (ratio: " + 
+            std::to_string(MIN_VALID_FILE_SIZE_RATIO) + "), using backup", TraceLevel::warning);
+        return true;
+    }
+    
+    Logger::testLogger().log("Main file size looks valid, attempting to load it (backup available as fallback)", 
+        TraceLevel::info);
+    return false;
+}
+
+bool Autosavable::restoreAndLoadBackup() {
+    namespace fs = std::filesystem;
+    
+    if (!fs::exists(backupFilePath_)) {
+        return false;
+    }
+    
+    Logger::testLogger().log("Restoring from backup: " + backupFilePath_, TraceLevel::info);
+    
+    // Remove corrupted main file if it exists
+    if (fs::exists(filePath_)) {
+        fs::remove(filePath_);
+    }
+    
+    // Rename backup to main file
+    fs::rename(backupFilePath_, filePath_);
+    
+    // Try to load
+    return tryLoadFromFile(filePath_);
+}
+
 void Autosavable::loadFile() {
     namespace fs = std::filesystem;
 
-    try {
-        std::string directory = getDirectory();
-
-        if (!directory.empty()) {
-            // Update file paths in case directory changed
-            updateFilePaths();
-        }
-
-        std::ifstream inFile;
-
-        if (fs::exists(filePath_)) {
-            inFile.open(filePath_, std::ios::in);
-        }
-        else if (fs::exists(backupFilePath_)) {
-            // Restore from backup if main file doesn't exist
-            fs::rename(backupFilePath_, filePath_);
-            inFile.open(filePath_, std::ios::in);
-        }
-        else {
-            throw std::ios_base::failure("No file found: " + filePath_);
-        }
-
-        if (!inFile.is_open()) {
-            throw std::ios_base::failure("Failed to open file for reading: " + filePath_);
-        }
-
-        // Load the data using the derived class implementation
-        loadData(inFile);
-        inFile.close();
-
-        lastSaveTimestamp_ = Timer::getCurrentTimeMs();
-        modified_ = false;
+    std::string directory = getDirectory();
+    if (!directory.empty()) {
+        updateFilePaths();
     }
-    catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Cannot load file: ") + e.what(),
-            TraceLevel::error);
+
+    // Decide which file to try first based on file state
+    if (shouldPreferBackup()) {
+        // Backup looks better than main file
+        if (restoreAndLoadBackup()) {
+            return; 
+        }
+        Logger::testLogger().log("Backup load failed", TraceLevel::error);
+        return;
     }
+
+    if (fs::exists(filePath_)) {
+        if (tryLoadFromFile(filePath_)) {
+            return; 
+        }
+        
+        Logger::testLogger().log("Main file failed to load, attempting backup recovery", TraceLevel::warning);
+        if (restoreAndLoadBackup()) {
+            Logger::testLogger().log("Successfully recovered from backup", TraceLevel::info);
+            return;
+        }
+        
+        Logger::testLogger().log("Backup recovery also failed, no ini file loaded", TraceLevel::error);
+        return;
+    }
+    
+    // Neither main file nor backup exists
+    Logger::testLogger().log("No file found: " + filePath_, TraceLevel::error);
 }
 
 std::string Autosavable::getDirectory() const {
