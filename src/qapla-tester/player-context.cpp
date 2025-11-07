@@ -42,38 +42,66 @@ void PlayerContext::checkPV(const EngineEvent& event) {
     // if we are pondering but we do not know the ponder move we lack information to check the ponder PV
     // Usually happening for winboard engines as they choose themselves what move they ponder on.
     if (computeState_ != ComputeState::ComputingMove && ponderMove_.empty()) {
-        // Should not be neccessary, see how engines behave maybe activate it again.
+        // Should not be necessary, see how engines behave maybe activate it again.
+        // New Xboard documentation sais the engine should either send the full pv including ponder move
+        // or a Hint: move that we use as ponder move.
         // return;
     }
-    auto& state = isAssumedPondering() ? ponderState_ : gameState_;
-    uint32_t pvCount = 0;
 
-    for (const auto& moveStr : searchInfo.pv) {
+    bool pvValid = false;
+
+    if (isAssumedPondering()) {
+        // If failed, try ponder state. We do not receive a handshake from xboard engines when pondering is stopped.
+        pvValid = validatePVAgainstState(ponderState_, searchInfo.pv);
+    } else {
+        pvValid = validatePVAgainstState(gameState_, searchInfo.pv);
+        
+        // If failed, try ponder state. We do not receive a handshake from xboard engines when pondering is stopped.
+        // Thus we might have race conditions. 
+        if (!pvValid) {
+            pvValid = validatePVAgainstState(ponderState_, searchInfo.pv);
+        }
+    }
+
+    if (!pvValid) {
+        // Build full PV string for error reporting
+        std::string fullPv;
+        for (const auto& move : searchInfo.pv) {
+            fullPv += move;
+            fullPv += " ";
+        }
+        if (!fullPv.empty()) { 
+            fullPv.pop_back(); 
+        }
+        std::string stateStr = toString(computeState_);
+        checklist_->logReport("pv", false,
+            std::format("Encountered illegal move in pv while {}: {}", stateStr, fullPv));
+        
+        Logger::engineLogger().log(std::format("{} Illegal move in PV while {} in raw info line \"{}\"", 
+            engine_->getIdentifier(), stateStr, event.rawLine), TraceLevel::info);
+    }
+}
+
+bool PlayerContext::validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) {
+    uint32_t pvCount = 0;
+    for (const auto& moveStr : pv) {
         const auto move = state.stringToMove(moveStr, requireLan_);
         if (move.isEmpty()) {
-            std::string fullPv;
-            for (const auto& move : searchInfo.pv) {
-                fullPv += move;
-                fullPv += " ";
+            // Undo all moves we applied
+            for (uint32_t i = 0; i < pvCount; ++i) {
+                state.undoMove();
             }
-            if (!fullPv.empty()) { 
-                fullPv.pop_back(); 
-            }
-            std::string stateStr = toString(computeState_);
-            checklist_->logReport("pv", false,
-                std::format("Encountered illegal move {} while {} in pv {}", moveStr, stateStr, fullPv));
-            
-            Logger::engineLogger().log(std::format("{} Illegal move in PV: {} while {} in raw info line \"{}\"", 
-                engine_->getIdentifier(), moveStr, stateStr, event.rawLine), TraceLevel::info);
-            break;
+            return false;
         }
         state.doMove(move);
         pvCount++;
     }
 
-    for (size_t i = 0; i < pvCount; ++i) {
+    // Undo all moves
+    for (uint32_t i = 0; i < pvCount; ++i) {
         state.undoMove();
     }
+    return true;
 }
 
 

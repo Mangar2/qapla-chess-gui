@@ -378,6 +378,12 @@ private:
     bool restartIfNotReady();
 
     /**
+     * @brief Validates a PV against a game state.
+     * @return true if all moves in PV are legal, false if any move is illegal.
+     */
+    bool validatePVAgainstState(GameState& state, const std::vector<std::string>& pv);
+
+    /**
      * @brief Sets up ponder state with the given move if valid.
      * @param move The ponder move string to validate and apply.
      * @param rawLine The raw engine output line for error reporting.
