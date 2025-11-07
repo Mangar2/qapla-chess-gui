@@ -160,6 +160,23 @@ QaplaBasics::Move PlayerContext::handleBestMove(const EngineEvent& event) {
     return move;
 }
 
+void PlayerContext::handlePonderMove(const EngineEvent& event) {
+    if (!event.ponderMove) {
+        return;
+    }
+
+    std::scoped_lock lock(stateMutex_);
+    ponderMove_ = *event.ponderMove;
+
+    // Validate that the ponder move is legal in the current position
+    const auto move = gameState_.stringToMove(ponderMove_, requireLan_);
+    if (!checklist_->logReport("legal-pondermove", !move.isEmpty(),
+        std::format(R"(Received illegal ponder move hint "{}" from engine, raw line "{}")", 
+            ponderMove_, event.rawLine))) {
+        ponderMove_.clear();
+    }
+}
+
 void PlayerContext::checkTime(const EngineEvent& event) {
 
     if (isAnalyzing_) { return; }
@@ -309,7 +326,7 @@ void PlayerContext::cancelCompute() {
         checkReady(readyTimeout);
     }
     computeState_ = ComputeState::Idle;
-    ponderMove_ = "";
+    ponderMove_.clear();
 }
 
 void PlayerContext::doMove(const MoveRecord& moveRecord) {
@@ -329,7 +346,7 @@ void PlayerContext::doMove(QaplaBasics::Move move) {
     if (computeState_ == ComputeState::Pondering && !ponderMove_.empty()) {
         computeState_ = ponderMove_ == lanMove ? ComputeState::PonderHit : ComputeState::PonderMiss;
     }
-    ponderMove_ = "";  
+    ponderMove_.clear();  
 
     if (computeState_ == ComputeState::PonderMiss) {
         // moveNow with option true will wait until bestmove received and consider the bestmove as

@@ -321,6 +321,11 @@ void ComputeTask::processEvent(const EngineEvent & event) {
         return;
     }
 
+    if (event.type == EngineEvent::Type::PonderMove) {
+        handlePonderMove(event);
+        return;
+    }
+
     if (event.type == EngineEvent::Type::Info) {
         player->handleInfo(event);
     }
@@ -352,6 +357,15 @@ void ComputeTask::handleBestMove(const EngineEvent& event) {
             opponent->doMove(move);
         }
     }
+}
+
+void ComputeTask::handlePonderMove(const EngineEvent& event) {
+    // XBoard engines send hint (ponder move) via "Hint: <move>" to tell on what move it will ponder
+    PlayerContext* sendingPlayer = gameContext_.findPlayerByEngineId(event.engineIdentifier);
+    if (sendingPlayer == nullptr) {
+        return;
+    }
+    sendingPlayer->handlePonderMove(event);
 }
 
 void ComputeTask::nextMove(const EngineEvent& event) {

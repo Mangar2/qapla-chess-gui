@@ -288,6 +288,7 @@ private:
     void processQueue();
     void processEvent(const EngineEvent &event);
     void handleBestMove(const EngineEvent &event);
+    void handlePonderMove(const EngineEvent &event);
 
     bool checkGameOver(bool verbose = false);
 

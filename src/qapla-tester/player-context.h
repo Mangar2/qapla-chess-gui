@@ -281,6 +281,17 @@ public:
      */
     QaplaBasics::Move handleBestMove(const EngineEvent& event);
 
+    /**
+     * @brief Handles a ponder move hint from the engine.
+     *
+     * XBoard engines may send "Hint: <move>" before thinking lines when pondering in post mode.
+     * The hint indicates which opponent move the engine assumes and is pondering on.
+     * This stores the hint internally for tracking the ponder state.
+     *
+     * @param event The EngineEvent containing the ponder move hint.
+     */
+    void handlePonderMove(const EngineEvent& event);
+
 	/**
 	 * @brief Handles a disconnect event.
 	 *

@@ -97,6 +97,12 @@ struct MoveRecord {
      */
     void updateFromSearchInfo(const SearchInfo& info, bool whitePovCorrection = false);
 
+    /**
+     * @brief Updates the move record with a ponder move hint.
+     * @param ponderMove The ponder move in SAN or LAN notation.
+     */
+    void updateFromHint(const std::string& ponderMove);
+
 	/**
 	 * @brief Returns a string representation of the score.
 	 *

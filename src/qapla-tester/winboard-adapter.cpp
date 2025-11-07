@@ -812,6 +812,7 @@ EngineEvent WinboardAdapter::readEvent() {
     std::istringstream iss(line);
     std::string command;
     iss >> command;
+    command = QaplaHelpers::to_lowercase(command);
 
     if (QaplaHelpers::isInteger(command)) {
         if (suppressInfoLines_) {
@@ -849,8 +850,13 @@ EngineEvent WinboardAdapter::readEvent() {
         return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
 
-    if (command == "hint") {
-        logFromEngine(line, TraceLevel::info);
+    if (command == "hint:") {
+        logFromEngine(line, TraceLevel::command);
+        std::string hintMove;
+        iss >> hintMove;
+        if (!hintMove.empty()) {
+            return EngineEvent::createPonderMove(identifier_, engineLine.timestampMs, line, hintMove);
+        }
         return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
 

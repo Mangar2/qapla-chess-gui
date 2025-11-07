@@ -137,6 +137,10 @@ void MoveRecord::updateFromSearchInfo(const SearchInfo& info, bool whitePovCorre
     }
 }
 
+void MoveRecord::updateFromHint(const std::string& ponderMove) {
+    this->ponderMove = ponderMove;
+}
+
 /**
  * @brief Returns a string representation of the score.
  *
