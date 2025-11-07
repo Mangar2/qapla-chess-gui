@@ -47,8 +47,10 @@ struct GameStruct
 	bool isWhiteToMove;
 };
 
-enum class GameEvent
-{
+/**
+ * @brief Event type for a game (used for tournament, EPD, SPRT, etc.)
+ */
+enum class GameEvent : std::uint8_t {
 	None,
 	Tournament,
 	Epd,
@@ -63,7 +65,23 @@ enum class GameEvent
 class GameRecord
 {
 public:
+	/**
+	 * @brief Sets the starting position of the game.
+	 * @param startPos True if starting from standard position, false for custom FEN.
+	 * @param startFen The starting FEN string if not standard.
+	 * @param isWhiteToMove True if white to move at start.
+	 * @param startHalfmoves The halfmove clock at start.
+	 */
 	void setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves);
+	/**
+	 * @brief Sets the starting position of the game with engine names.
+	 * @param startPos True if starting from standard position, false for custom FEN.
+	 * @param startFen The starting FEN string if not standard.
+	 * @param isWhiteToMove True if white to move at start.
+	 * @param startHalfmoves The halfmove clock at start.
+	 * @param whiteEngineName Name of the white engine.
+	 * @param blackEngineName Name of the black engine.
+	 */
 	void setStartPosition(bool startPos, const std::string& startFen, bool isWhiteToMove, uint32_t startHalfmoves,
 						  const std::string& whiteEngineName, const std::string& blackEngineName);
 
@@ -88,7 +106,10 @@ public:
 		startPos_ = false;
 	}
 
-	/** Adds a move at the current ply position, overwriting any future moves. */
+	/**
+	 * @brief Adds a move at the current ply position, overwriting any future moves.
+	 * @param move The move record to add.
+	 */
 	void addMove(const MoveRecord &move);
 
 	/** 
@@ -96,33 +117,51 @@ public:
 	 * Note: the chess move itself (move.move) must not be changed.
 	 * 
 	 * @param move The move to update.
+	 * @return True if the update was successful, false otherwise.
 	 */
 	bool updateMove(const MoveRecord &move);
 
-	/** Returns the current ply index. */
-	uint32_t nextMoveIndex() const;
+	/**
+	 * @brief Returns the current ply index.
+	 * @return Index of the next move (0 = before first move)
+	 */
+	[[nodiscard]] uint32_t nextMoveIndex() const;
 
-	/** Sets the current ply (0 = before first move). */
+	/**
+	 * @brief Sets the current ply (0 = before first move).
+	 * @param ply The ply index to set.
+	 */
 	void setNextMoveIndex(uint32_t ply);
 
-	/** Advances to the next ply if possible. */
+	/**
+	 * @brief Advances to the next ply if possible.
+	 */
 	void advance();
 
-	/** Rewinds to the previous ply if possible. */
+	/**
+	 * @brief Rewinds to the previous ply if possible.
+	 */
 	void rewind();
 
 	/**
-	 * Returns the total time used by each side up to the current ply.
-	 *
+	 * @brief Returns the total time used by each side up to the current ply.
 	 * @return A pair of milliseconds used: {whiteTime, blackTime}
 	 */
-	std::pair<uint64_t, uint64_t> timeUsed() const;
+	[[nodiscard]] std::pair<uint64_t, uint64_t> timeUsed() const;
 
-	/** Returns const reference to move history. */
-	const std::vector<MoveRecord> &history() const
+	/**
+	 * @brief Returns const reference to move history.
+	 * @return Reference to move history vector
+	 */
+	[[nodiscard]] const std::vector<MoveRecord> &history() const
 	{
 		return moves_;
 	}
+
+	/**
+	 * @brief Returns non-const reference to move history.
+	 * @return Reference to move history vector
+	 */
 	std::vector<MoveRecord> &history()
 	{
 		return moves_;
@@ -133,8 +172,8 @@ public:
 	 * @param halfmoveNo The halfmove number (1-based).
 	 * @return std::optional<uint32_t> The index of the move record, or std::nullopt if not found.
 	 */
-	std::optional<uint32_t> getHalfmoveIndex(uint32_t halfmoveNo) const {
-		if (halfmoveNo <= startHalfmoves_) return std::nullopt;
+	[[nodiscard]] std::optional<uint32_t> getHalfmoveIndex(uint32_t halfmoveNo) const {
+		if (halfmoveNo <= startHalfmoves_) { return std::nullopt; }
 		auto index = halfmoveNo - startHalfmoves_ - 1;
 		if (index < moves_.size()) {
 			return index;
@@ -143,15 +182,16 @@ public:
 	}
 
 	/**
-	 * @brief returns true if the game started with the standard starting position.
+	 * @brief Returns true if the game started with the standard starting position.
+	 * @return True if standard position, false otherwise.
 	 */
-	bool getStartPos() const { return startPos_; }
+	[[nodiscard]] bool getStartPos() const { return startPos_; }
 
 	/**
 	 * @brief Returns the starting position in FEN format.
 	 * @return The starting position as a FEN string.
 	 */
-	std::string getStartFen() const { return startFen_; }
+	[[nodiscard]] std::string getStartFen() const { return startFen_; }
 
 	/**
 	 * @brief Sets the game end cause and result.
@@ -161,25 +201,29 @@ public:
 	 * @param result The result of the game.
 	 */
 	void setGameEnd(GameEndCause cause, GameResult result);
+
 	/**
 	 * @brief Returns the game end cause and result.
 	 * @return A pair of GameEndCause and GameResult.
 	 */
-	std::tuple<GameEndCause, GameResult> getGameResult() const
+	[[nodiscard]] std::tuple<GameEndCause, GameResult> getGameResult() const
 	{
 		return {gameEndCause_, gameResult_};
 	}
 
 	/**
 	 * @brief Returns true if the game has ended (not unterminated).
+	 * @return True if the game is over, false otherwise.
 	 */
-	bool isGameOver() const
+	[[nodiscard]] bool isGameOver() const
 	{
 		return gameResult_ != GameResult::Unterminated && currentPly_ == moves_.size();
 	}
 
 	/**
 	 * @brief Sets the time control for the game.
+	 * @param whiteTimeControl Time control for white.
+	 * @param blackTimeControl Time control for black.
 	 */
 	void setTimeControl(const TimeControl &whiteTimeControl, const TimeControl &blackTimeControl)
 	{
@@ -187,13 +231,20 @@ public:
 		whiteTimeControl_ = whiteTimeControl;
 		blackTimeControl_ = blackTimeControl;
 	}
+
 	/**
 	 * @brief Returns the white side's time control.
+	 * @return Const reference to white time control.
 	 */
-	const TimeControl &getWhiteTimeControl() const
+	[[nodiscard]] const TimeControl &getWhiteTimeControl() const
 	{
 		return whiteTimeControl_;
 	}
+
+	/**
+	 * @brief Returns non-const reference to white time control.
+	 * @return Reference to white time control.
+	 */
 	TimeControl &getWhiteTimeControl()
 	{
 		return whiteTimeControl_;
@@ -201,11 +252,17 @@ public:
 
 	/**
 	 * @brief Returns the black side's time control.
+	 * @return Const reference to black time control.
 	 */
-	const TimeControl &getBlackTimeControl() const
+	[[nodiscard]] const TimeControl &getBlackTimeControl() const
 	{
 		return blackTimeControl_;
 	}
+
+	/**
+	 * @brief Returns non-const reference to black time control.
+	 * @return Reference to black time control.
+	 */
 	TimeControl &getBlackTimeControl()
 	{
 		return blackTimeControl_;
@@ -213,47 +270,65 @@ public:
 
 	/**
 	 * @brief Returns the current side to move.
+	 * @return True if white to move, false if black.
 	 */
-	bool isWhiteToMove() const
+	[[nodiscard]] bool isWhiteToMove() const
 	{
 		return wtmAtPly(currentPly_);
 	}
 
 	/**
 	 * @brief Determines who was to move at the start of the game.
-	 * @param game The game record.
+	 * @param ply The ply number.
 	 * @return True if white was to move at ply 0, false if black.
 	 */
-	bool wtmAtPly(size_t ply) const
+	[[nodiscard]] bool wtmAtPly(size_t ply) const
 	{
 		return ply % 2 == 0 ? isWhiteToMoveAtStart_ : !isWhiteToMoveAtStart_;
 	}
 
 	/**
 	 * @brief Returns the halfmove number at a specific ply.
-	 *
 	 * @param ply The ply number to check.
 	 * @return uint32_t The halfmove number at the specified ply.
 	 */
-	uint32_t halfmoveNoAtPly(size_t ply) const
+	[[nodiscard]] uint32_t halfmoveNoAtPly(size_t ply) const
 	{
 		return startHalfmoves_ + ply + 1;
 	}
 
-	const std::string &getWhiteEngineName() const
+	/**
+	 * @brief Gets the name of the white engine.
+	 * @return Reference to white engine name string
+	 */
+	[[nodiscard]] const std::string &getWhiteEngineName() const
 	{
 		return whiteEngineName_;
 	}
+
+	/**
+	 * @brief Sets the name of the white engine.
+	 * @param name The engine name.
+	 */
 	void setWhiteEngineName(const std::string &name)
 	{
 		changeTracker_.trackModification();
 		whiteEngineName_ = name;
 	}
 
-	const std::string &getBlackEngineName() const
+	/**
+	 * @brief Gets the name of the black engine.
+	 * @return Reference to black engine name string
+	 */
+	[[nodiscard]] const std::string &getBlackEngineName() const
 	{
 		return blackEngineName_;
 	}
+
+	/**
+	 * @brief Sets the name of the black engine.
+	 * @param name The engine name.
+	 */
 	void setBlackEngineName(const std::string &name)
 	{
 		changeTracker_.trackModification();
@@ -276,16 +351,18 @@ public:
 
 	/**
 	 * @brief Gets the round number of the game.
+	 * @return The round number.
 	 */
-	uint32_t getRound() const
+	[[nodiscard]] uint32_t getRound() const
 	{
 		return round_;
 	}
 
 	/**
 	 * @brief Gets the opening number used as start position for the game.
+	 * @return The opening number.
 	 */
-	uint32_t getOpeningNo() const
+	[[nodiscard]] uint32_t getOpeningNo() const
 	{
 		return opening_;
 	}
@@ -304,7 +381,7 @@ public:
 	 * @brief Gets the name of the starting position (e.g. ECO code, opening name or epd name)
 	 * @return The name of the starting position.
 	 */
-	const std::string &getPositionName() const
+	[[nodiscard]] const std::string &getPositionName() const
 	{
 		return positionName_;
 	}
@@ -313,7 +390,7 @@ public:
 	 * @brief Gets the game number of the current round
 	 * @return The game number within the current round.
 	 */
-	uint32_t getGameInRound() const
+	[[nodiscard]] uint32_t getGameInRound() const
 	{
 		return gameInRound_;
 	}
@@ -346,7 +423,7 @@ public:
 	 * @brief Gets the total game number
 	 * @return The 1-indexed number of total games played in the tournament so far
 	 */
-	uint32_t getTotalGameNo() const
+	[[nodiscard]] uint32_t getTotalGameNo() const
 	{
 		return totalGameNo_;
 	}
@@ -374,7 +451,7 @@ public:
 	 * @param key The tag name.
 	 * @return Tag value or empty string if not found.
 	 */
-	std::string getTag(const std::string &key) const
+	[[nodiscard]] std::string getTag(const std::string &key) const
 	{
 		auto it = tags_.find(key);
 		return it != tags_.end() ? it->second : "";
@@ -383,7 +460,7 @@ public:
 	 * @brief Gets all stored PGN tags.
 	 * @return Map of all tag key-value pairs.
 	 */
-	const std::map<std::string, std::string> &getTags() const
+	[[nodiscard]] const std::map<std::string, std::string> &getTags() const
 	{
 		return tags_;
 	}
@@ -393,14 +470,14 @@ public:
 	 * @param other The other game record to compare with.
 	 * @return True if the records differ, false if they are the same.
 	 */
-	bool isUpdate(const GameRecord &other) const;
+	[[nodiscard]] bool isUpdate(const GameRecord &other) const;
 
 	/**
 	 * @brief Checks if this game record is different from another.
 	 * @param other The other game record to compare with.
 	 * @return True if the records differ, false if they are the same.
 	 */
-	bool isDifferent(const GameRecord &other) const;
+	[[nodiscard]] bool isDifferent(const GameRecord &other) const;
 
 	/**
 	 * @brief Creates a GameStruct containing the essential game data.
@@ -411,12 +488,11 @@ public:
 	 *
 	 * @return A `GameStruct` object
 	 */
-	GameStruct createGameStruct() const;
+	[[nodiscard]] GameStruct createGameStruct() const;
 
 	/**
-	 * Render all moves up to and including the given ply index into a single
-	 * PGN-compatible string. The numbering is based on halfmove numbers
-	 * (uses halfmoveNoAtPly) and the provided MoveRecord::toString options
+	 * @brief Render all moves up to and including the given ply index into a single PGN-compatible string.
+	 * The numbering is based on halfmove numbers (uses halfmoveNoAtPly) and the provided MoveRecord::toString options
 	 * are forwarded for move annotations.
 	 * Note: it will not include any PGN tags or result indication especially no start fen.
 	 *
@@ -424,7 +500,7 @@ public:
 	 * @param opts formatting options forwarded to MoveRecord::toString
 	 * @return concatenated move string (SANs with optional comments)
 	 */
-	std::string movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts = {}) const;
+	[[nodiscard]] std::string movesToStringUpToPly(uint32_t lastPly, const MoveRecord::toStringOptions& opts = {}) const;
 
 	/**
 	 * @brief Reserves memory for the move history to avoid repeated reallocations.
@@ -460,7 +536,7 @@ public:
 	 *
 	 * @return A new `GameRecord` object with reduced data.
 	 */
-	GameRecord createMinimalCopy() const;
+	[[nodiscard]] GameRecord createMinimalCopy() const;
 
 
 	/**
@@ -468,7 +544,7 @@ public:
 	 * 
 	 * @return const ChangeTracker& 
 	 */
-	const ChangeTracker& getChangeTracker() const { return changeTracker_; }
+	[[nodiscard]] const ChangeTracker& getChangeTracker() const { return changeTracker_; }
 
 private:
 	std::map<std::string, std::string> tags_;

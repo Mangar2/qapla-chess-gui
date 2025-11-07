@@ -56,27 +56,56 @@ struct SearchInfo {
 inline std::ostream& operator<<(std::ostream& outs, const SearchInfo& info) {
     outs << "info";
 
-    if (info.depth)          outs << " depth " << *info.depth;
-    if (info.selDepth)       outs << " seldepth " << *info.selDepth;
-    if (info.multipv)        outs << " multipv " << *info.multipv;
+    if (info.depth) {
+        outs << " depth " << *info.depth;
+    }
+    if (info.selDepth) {
+        outs << " seldepth " << *info.selDepth;
+    }
+    if (info.multipv) {
+        outs << " multipv " << *info.multipv;
+    }
 
     if (info.scoreCp || info.scoreMate) {
         outs << " score";
-        if (info.scoreCp)    outs << " cp " << *info.scoreCp;
-        else if (info.scoreMate) outs << " mate " << *info.scoreMate;
+        if (info.scoreCp) {
+            outs << " cp " << *info.scoreCp;
+        } else if (info.scoreMate) {
+            outs << " mate " << *info.scoreMate;
+        }
 
-        if (info.scoreLowerbound && *info.scoreLowerbound) outs << " lowerbound";
-        if (info.scoreUpperbound && *info.scoreUpperbound) outs << " upperbound";
+        if (info.scoreLowerbound && *info.scoreLowerbound) { outs << " lowerbound";
+            outs << " lowerbound";
+        }
+        if (info.scoreUpperbound && *info.scoreUpperbound) {
+            outs << " upperbound";
+        }
     }
 
-    if (info.timeMs)         outs << " time " << *info.timeMs;
-    if (info.nodes)          outs << " nodes " << *info.nodes;
-    if (info.nps)            outs << " nps " << *info.nps;
-    if (info.hashFull)       outs << " hashfull " << *info.hashFull;
-    if (info.tbhits)         outs << " tbhits " << *info.tbhits;
-    if (info.cpuload)        outs << " cpuload " << *info.cpuload;
-    if (info.currMove)       outs << " currmove " << *info.currMove;
-    if (info.currMoveNumber) outs << " currmovenumber " << *info.currMoveNumber;
+    if (info.timeMs) {
+        outs << " time " << *info.timeMs;
+    }
+    if (info.nodes) {
+        outs << " nodes " << *info.nodes;
+    }
+    if (info.nps) {
+        outs << " nps " << *info.nps;
+    }
+    if (info.hashFull) {
+        outs << " hashfull " << *info.hashFull;
+    }
+    if (info.tbhits) {
+        outs << " tbhits " << *info.tbhits;
+    }
+    if (info.cpuload) {
+        outs << " cpuload " << *info.cpuload;
+    }
+    if (info.currMove) {
+        outs << " currmove " << *info.currMove;
+    }
+    if (info.currMoveNumber) {
+        outs << " currmovenumber " << *info.currMoveNumber;
+    }
 
     if (!info.pv.empty()) {
         outs << " pv";
@@ -89,7 +118,7 @@ inline std::ostream& operator<<(std::ostream& outs, const SearchInfo& info) {
 }
 
 struct EngineEvent {
-    enum class Type {
+    enum class Type : std::int8_t {
         None,
         SendingComputeMove,
         ComputeMoveSent,
@@ -124,12 +153,12 @@ struct EngineEvent {
 	}
     static EngineEvent createError(const std::string& eid, uint64_t timestamp, const std::string& rawLine) {
         EngineEvent event = create(Type::Error, eid, timestamp, rawLine);
-        event.errors.push_back({ "no-engine-error-report", rawLine });
+        event.errors.push_back({ .name = "no-engine-error-report", .detail = rawLine });
         return event;
 	}
 	static EngineEvent createEngineDisconnected(const std::string& eid, uint64_t timestamp, const std::string& errorMessage) {
         EngineEvent event = create(Type::EngineDisconnected, eid, timestamp, "");
-		event.errors.push_back({ "no-disconnect", errorMessage });
+		event.errors.push_back({ .name = "no-disconnect", .detail = errorMessage });
 		return event;
 	}
 	static EngineEvent createNoData(const std::string& eid, uint64_t timestamp) {

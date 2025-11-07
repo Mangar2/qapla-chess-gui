@@ -41,13 +41,13 @@ struct MoveRecord {
         bool includeDepth = false;
     };
     
-    std::string original{};
-    std::string lan{};
-    std::string san{};
-    std::string ponderMove{};
-    QaplaBasics::Move move{};
-    std::string comment{};
-    std::string nag{};
+    std::string original;
+    std::string lan;
+    std::string san;
+    std::string ponderMove;
+    QaplaBasics::Move move;
+    std::string comment;
+    std::string nag;
     uint64_t timeMs = 0;
 
     std::optional<int> scoreCp = std::nullopt;
@@ -58,7 +58,7 @@ struct MoveRecord {
     uint32_t seldepth = 0;
     uint32_t multipv = 1;
     uint64_t nodes = 0;
-    std::string pv{};
+    std::string pv;
 	std::vector<SearchInfo> info; ///> List of info records received during search
     uint32_t infoUpdateCount = 0;
     uint32_t halfmoveNo_ = 0;
@@ -67,14 +67,17 @@ struct MoveRecord {
     GameEndCause endCause_ = GameEndCause::Ongoing; ///> Cause of game end after this move
     GameResult result_ = GameResult::Unterminated; ///> Result of the game after this move
 
-    std::string engineId_{}; ///> Id of the engine computing this move
-    std::string engineName_{}; ///> Name of the engine computing this move
+    std::string engineId_; ///> Id of the engine computing this move
+    std::string engineName_; ///> Name of the engine computing this move
 
 	MoveRecord() = default;
-    MoveRecord(uint32_t halfmoveNo, const std::string& id = "")
-		: halfmoveNo_(halfmoveNo), engineId_(id) {
+    MoveRecord(uint32_t halfmoveNo, std::string id = "")
+		: halfmoveNo_(halfmoveNo), engineId_(std::move(id)) {
 	}
 
+    /**
+     * @brief Clears all data in the move record.
+     */
     void clear();
 
     /**
@@ -108,7 +111,7 @@ struct MoveRecord {
 	 *
 	 * @return A string representing the score in centipawns or mate value.
 	 */
-    std::string evalString() const;
+    [[nodiscard]] std::string evalString() const;
 
     /**
      * @brief Creates a minimal copy of the current MoveRecord object.
@@ -118,14 +121,16 @@ struct MoveRecord {
      *
      * @return A `MoveRecord` object with reduced data.
      */
-    MoveRecord createMinimalCopy() const;
+    [[nodiscard]] MoveRecord createMinimalCopy() const;
 
     /**
      * Convert this MoveRecord into a string containing the move (SAN) and
      * an optional comment constructed from the provided options. Does NOT
      * include the move number.
+     * @param opts Options for what to include in the string.
+     * @return The string representation of the move.
      */
-    std::string toString(const toStringOptions& opts = {false, false, false, false}) const;
+    [[nodiscard]] std::string toString(const toStringOptions& opts = {.includeClock=false, .includeEval=false, .includePv=false, .includeDepth=false}) const;
 };
 
 using MoreRecords = std::vector<std::optional<MoveRecord>>;

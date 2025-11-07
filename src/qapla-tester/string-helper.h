@@ -30,37 +30,64 @@
 
 namespace QaplaHelpers {
 
+    /**
+     * @brief Converts a string to lowercase.
+     * @param input The input string.
+     * @return The lowercase version of the input.
+     */
     inline std::string to_lowercase(const std::string& input) {
         std::string result = input;
-        std::transform(result.begin(), result.end(), result.begin(),
+        std::ranges::transform(result, result.begin(),
             [](char c) { return static_cast<char>(std::tolower(c)); });
         return result;
     }
 
+    /**
+     * @brief Extracts alphanumeric characters from a string.
+     * @param input The input string.
+     * @return A string containing only alphanumeric characters.
+     */
     inline std::string to_alphanum(const std::string& input) {
         std::string result;
         result.reserve(input.size());
         for (char ch : input) {
-            if (std::isalnum(static_cast<unsigned char>(ch))) {
+            if (std::isalnum(static_cast<unsigned char>(ch)) != 0) {
                 result += ch;
             }
         }
         return result;
     }
 
+    /**
+     * @brief Trims whitespace from both ends of a string.
+     * @param line The input string.
+     * @return The trimmed string.
+     */
     inline std::string trim(const std::string& line) {
         auto start = line.find_first_not_of(" \t\r\n");
-        if (start == std::string::npos) return {};
+        if (start == std::string::npos) {
+            return {};
+        }
         auto end = line.find_last_not_of(" \t\r\n");
         return line.substr(start, end - start + 1);
     }
 
+    /**
+     * @brief Checks if a string represents a valid integer.
+     * @param s The string to check.
+     * @return True if the string is a valid integer, false otherwise.
+     */
     inline bool isInteger(const std::string& s) {
         int value;
         auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
         return ec == std::errc() && ptr == s.data() + s.size();
     }
 
+    /**
+     * @brief Converts a string view to an optional integer.
+     * @param s The string view to convert.
+     * @return Optional integer if conversion succeeds, nullopt otherwise.
+     */
     auto to_int = [](std::string_view s) -> std::optional<int> {
         int value;
         auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
@@ -70,19 +97,35 @@ namespace QaplaHelpers {
         return std::nullopt;
     };
 
+    /**
+     * @brief Checks if a string represents a valid unsigned integer.
+     * @param s The string to check.
+     * @return True if the string is a valid unsigned integer, false otherwise.
+     */
     inline bool isUnsignedInteger(const std::string& s) {
         auto trimmed = trim(s);
-        if (trimmed.empty()) return false;
-        if (trimmed[0] == '-') return false; 
+        if (trimmed.empty()) {
+            return false;
+        }
+        if (trimmed[0] == '-') {
+            return false;
+        }
 
         int value;
         auto [ptr, ec] = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), value);
         return ec == std::errc() && ptr == trimmed.data() + trimmed.size();
     }
 
+    /**
+     * @brief Converts a string view to an optional uint32_t.
+     * @param s The string view to convert.
+     * @return Optional uint32_t if conversion succeeds, nullopt otherwise.
+     */
     auto to_uint32 = [](std::string_view s) -> std::optional<uint32_t> {
         auto trimmed = trim(std::string(s));
-        if (trimmed.empty() || trimmed[0] == '-') return std::nullopt;
+        if (trimmed.empty() || trimmed[0] == '-') {
+            return std::nullopt;
+        }
 
         unsigned int value;
         auto [ptr, ec] = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), value);
@@ -92,6 +135,11 @@ namespace QaplaHelpers {
         return std::nullopt;
     };
 
+    /**
+     * @brief Parses a section header from a line.
+     * @param line The line to parse.
+     * @return Optional section name if valid, nullopt otherwise.
+     */
     inline std::optional<std::string> parseSection(const std::string& line) {
         if (line.size() > 2 && line.front() == '[' && line.back() == ']') {
             return trim(line.substr(1, line.size() - 2));
@@ -99,11 +147,18 @@ namespace QaplaHelpers {
         return std::nullopt;
     }
 
+    /**
+     * @brief Reads the next section header from an input stream.
+     * @param in The input stream.
+     * @return Optional section name if found, nullopt otherwise.
+     */
     inline std::optional<std::string> readSectionHeader(std::istream& in) {
         std::string line;
         while (in && std::getline(in, line)) {
             std::string trimmedLine = trim(line);
-            if (trimmedLine.empty() || trimmedLine[0] == '#' || trimmedLine[0] == ';') continue;
+            if (trimmedLine.empty() || trimmedLine[0] == '#' || trimmedLine[0] == ';') {
+                continue;
+            }
             auto section = parseSection(trimmedLine);
             if (section) {
                 return *section;
@@ -112,15 +167,30 @@ namespace QaplaHelpers {
         return std::nullopt;
     }
 
+    /**
+     * @brief Parses a key-value pair from a line.
+     * @param line The line to parse.
+     * @return Optional pair of key and value if valid, nullopt otherwise.
+     */
     inline std::optional<std::pair<std::string, std::string>> parseKeyValue(const std::string& line) {
         auto eq = line.find('=');
-        if (eq == std::string::npos) return std::nullopt;
+        if (eq == std::string::npos) {
+            return std::nullopt;
+        }
         std::string key = trim(line.substr(0, eq));
         std::string value = trim(line.substr(eq + 1));
-        if (key.empty()) return std::nullopt;
+        if (key.empty()) {
+            return std::nullopt;
+        }
         return std::make_pair(key, value);
     }
 
+    /**
+     * @brief Formats milliseconds into a time string.
+     * @param ms The milliseconds to format.
+     * @param mdigits The number of decimal digits for seconds (default 3).
+     * @return Formatted time string.
+     */
     inline std::string formatMs(uint64_t ms, uint32_t mdigits = 3) {
         std::ostringstream oss;
         uint64_t seconds = ms / 1000;
@@ -142,14 +212,27 @@ namespace QaplaHelpers {
         return oss.str();
     }
 
+    /**
+     * @brief Calculates the Levenshtein distance between two strings.
+     * @param a The first string.
+     * @param b The second string.
+     * @return The edit distance.
+     */
     inline size_t levenshteinDistance(const std::string& a, const std::string& b) {
-        const size_t m = a.size(), n = b.size();
+        const size_t m = a.size();
+        const size_t n = b.size();
         std::vector<std::vector<size_t>> dp(m + 1, std::vector<size_t>(n + 1));
-        for (size_t i = 0; i <= m; ++i) dp[i][0] = i;
-        for (size_t j = 0; j <= n; ++j) dp[0][j] = j;
-        for (size_t i = 1; i <= m; ++i)
-            for (size_t j = 1; j <= n; ++j)
-                dp[i][j] = std::min({ dp[i - 1][j - 1] + (a[i - 1] != b[j - 1]), dp[i - 1][j] + 1, dp[i][j - 1] + 1 });
+        for (size_t i = 0; i <= m; ++i) {
+            dp[i][0] = i;
+        }
+        for (size_t j = 0; j <= n; ++j) {
+            dp[0][j] = j;
+        }
+        for (size_t i = 1; i <= m; ++i) {
+            for (size_t j = 1; j <= n; ++j) {
+                dp[i][j] = std::min({ dp[i - 1][j - 1] + static_cast<size_t>(a[i - 1] != b[j - 1]), dp[i - 1][j] + 1, dp[i][j - 1] + 1 });
+            }
+        }
         return dp[m][n];
     };
 
@@ -161,7 +244,9 @@ namespace QaplaHelpers {
      */
     inline std::vector<std::string> split(const std::string& str, char delimiter) {
         std::vector<std::string> result;
-        if (str.empty()) return result;
+        if (str.empty()) {
+            return result;
+        }
         
         size_t start = 0;
         size_t end = str.find(delimiter);
@@ -228,7 +313,9 @@ namespace QaplaHelpers {
      */
     inline std::vector<std::string> splitWithUnescape(const std::string& str, char delimiter) {
         std::vector<std::string> result;
-        if (str.empty()) return result;
+        if (str.empty()) {
+            return result;
+        }
         
         std::string current;
         bool escaped = false;

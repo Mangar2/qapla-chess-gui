@@ -38,7 +38,7 @@ namespace QaplaTester {
  * 
  * Example: If threshold is 'command', only 'none', 'error' and 'command' messages are logged.
  */
-enum class TraceLevel : int {
+enum class TraceLevel : std::uint8_t {
     none = 0,    // Log nothing (most restrictive)
     error = 1,   // Log only errors
     command = 2, // Log errors + commands
@@ -66,8 +66,7 @@ public:
     /**
      * @brief Constructs a logger with default error-level threshold.
      */
-    Logger() : cliThreshold_(TraceLevel::error) {
-    }
+    Logger() = default;
 
     /**
      * @brief Destructor - closes the log file if open.
@@ -129,7 +128,7 @@ public:
      * @brief Returns the current log filename.
      * @return The full path and name of the log file.
      */
-    std::string getFilename() const {
+    [[nodiscard]] std::string getFilename() const {
         return filename_;
     }
 
@@ -176,7 +175,7 @@ public:
      * @brief Returns the current console trace level threshold.
      * @return The trace level threshold for console output.
      */
-    TraceLevel getCliThreshold() const {
+    [[nodiscard]] TraceLevel getCliThreshold() const {
         return cliThreshold_;
     }
 
@@ -196,7 +195,7 @@ private:
     TraceLevel cliThreshold_ = TraceLevel::error;  ///< Console output threshold
     TraceLevel fileThreshold_ = TraceLevel::info;  ///< File output threshold
     std::string filename_;                      ///< Current log filename
-    static inline std::string logPath_ = "";    ///< Directory path for log files
+    static inline std::string logPath_;    ///< Directory path for log files
 };
 
 } // namespace QaplaTester

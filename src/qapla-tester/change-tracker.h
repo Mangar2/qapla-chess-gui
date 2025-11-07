@@ -28,8 +28,8 @@ class ChangeTracker {
 
 public:
     ChangeTracker() = default;
-    ChangeTracker(const ChangeTracker&) 
-    :id_(nextId_++), modificationCnt_(1), updateCnt_(1)
+    ChangeTracker(const ChangeTracker& tracker) 
+    :id_(nextId_++)
     {}
 
     void trackModification() {
@@ -60,7 +60,7 @@ public:
      * @param other
      * @return std::pair<bool, bool>, first: modification changed, second: update changed
      */
-    std::pair<bool, bool> checkModification(const ChangeTracker& other) const {
+    [[nodiscard]] std::pair<bool, bool> checkModification(const ChangeTracker& other) const {
         return { modificationCnt_ != other.modificationCnt_ || id_ != other.id_, 
             updateCnt_ != other.updateCnt_ || id_ != other.id_ };
     }

@@ -250,7 +250,6 @@ void PlayerContext::checkTime(const EngineEvent& event) {
         + static_cast<int>(goLimits_.nodes.has_value());
 
     if (goLimits_.hasTimeControl) {
-		timeControl_.toPgnTimeControlString();
         if (!checklist_->logReport("no-loss-on-time", moveElapsedMs <= timeLeft,
             std::format("Timecontrol: {} Used time: {} ms. Available Time: {} ms", 
                 timeControl_.toPgnTimeControlString(), moveElapsedMs, timeLeft))) {

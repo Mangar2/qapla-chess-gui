@@ -24,6 +24,7 @@
 #include <vector>
 #include "game-record.h"
 #include "game-result.h"
+#include "logger.h"
 
 namespace QaplaTester {
 
@@ -118,34 +119,36 @@ public:
      * @param game The complete game record to evaluate.
      * @return Pair containing the result and cause 
      */
-    std::pair<GameEndCause, GameResult> adjudicateDraw(const GameRecord& game) const;
+    [[nodiscard]] std::pair<GameEndCause, GameResult> adjudicateDraw(const GameRecord& game) const;
     void testAdjudicate(const GameRecord& game) const {
         if (drawConfig_.active && !drawConfig_.testOnly) {
             auto [cause, result] = adjudicateDraw(game);
             auto index = findDrawAdjudicationIndex(game);
             if ((result == GameResult::Unterminated) == index.has_value()) {
-                std::cerr << "Draw adjudication test failed: "
-                    << "Expected result: " << gameResultToPgnResult(result)
-                    << ", but index was: " << (index ? std::to_string(*index) : "none") << std::endl;
+                QaplaTester::Logger::testLogger().log(
+                    std::format("Draw adjudication test failed: Expected result: {}, but index was: {}",
+                                gameResultToPgnResult(result),
+                                index ? std::to_string(*index) : "none"));
             }
         }
         if (resignConfig_.active && !resignConfig_.testOnly) {
             auto [cause, result] = adjudicateResign(game);
             auto [resResult, resIndex] = findResignAdjudicationIndex(game);
             if (result != resResult) {
-                std::cerr << "Resign adjudication test failed: "
-                    << "Expected result: " << gameResultToPgnResult(result)
-                    << ", but result was: " << gameResultToPgnResult(resResult) << std::endl;
+                QaplaTester::Logger::testLogger().log(
+                    std::format("Resign adjudication test failed: Expected result: {}, but result was: {}",
+                                gameResultToPgnResult(result),
+                                gameResultToPgnResult(resResult)));
             }
-		}
-	}
+        }
+    }
 
     /**
      * @brief Evaluates whether the game should be adjudicated as a resignation.
      * @param game The complete game record to evaluate.
      * @return Pair containing the result and cause 
      */
-    std::pair<GameEndCause, GameResult> adjudicateResign(const GameRecord& game) const;
+   [[nodiscard]] std::pair<GameEndCause, GameResult> adjudicateResign(const GameRecord& game) const;
 
     /**
      * @brief Informs the adjudicator at game end for test-mode analysis.
@@ -157,7 +160,7 @@ public:
      * @brief Computes the test results for both draw and resign adjudication.
      * @return TestResults structure containing formatted test results.
      */
-    TestResults computeTestResults() const;
+    [[nodiscard]] TestResults computeTestResults() const;
 
     /**
      * @brief Prints adjudication test statistics to the given output stream.
@@ -167,8 +170,8 @@ public:
 
 
 private:
-    std::optional<size_t> findDrawAdjudicationIndex(const GameRecord& game) const;
-    std::pair<GameResult, size_t> findResignAdjudicationIndex(const GameRecord& game) const;
+    [[nodiscard]] std::optional<size_t> findDrawAdjudicationIndex(const GameRecord& game) const;
+    [[nodiscard]] std::pair<GameResult, size_t> findResignAdjudicationIndex(const GameRecord& game) const;
 
     AdjudicationManager() = default;
 
