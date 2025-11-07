@@ -197,6 +197,20 @@ bool EngineWorker::moveNow(bool wait, std::chrono::milliseconds timeout) {
     return waitForHandshake(timeout);
 }
 
+bool EngineWorker::handlePonderMiss(std::chrono::milliseconds timeout) {
+    post([this](EngineAdapter& adapter) {
+        waitForHandshake_ = adapter.handlePonderMiss();
+        if (waitForHandshake_ == EngineEvent::Type::None) {
+            // Notify for handshake right away (XBoard case)
+            {
+                std::lock_guard<std::mutex> lock(handshakeMutex_);
+                handshakeReceived_ = true;
+            }
+            handshakeCv_.notify_all();
+        }
+        });
+    return waitForHandshake(timeout);
+}
 
 bool EngineWorker::setOption(const std::string& name, const std::string& value) {
     post([this, name, value](EngineAdapter& adapter) {

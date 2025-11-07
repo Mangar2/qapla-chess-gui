@@ -142,6 +142,13 @@ public:
 	bool moveNow(bool wait = false, std::chrono::milliseconds timeout = BestMoveTimeout);
 
 	/**
+	 * @brief Handles a ponder miss (opponent played different move than expected).
+	 * @param timeout The maximum time to wait for the engine response.
+	 * @return true if the engine responded correctly, false if timeout or error.
+	 */
+	bool handlePonderMiss(std::chrono::milliseconds timeout = BestMoveTimeout);
+
+	/**
 	 * @brief Sets the event sink for engine events.
 	 *
 	 * The event sink is a callback function that will be called with engine events.

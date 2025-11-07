@@ -183,6 +183,12 @@ EngineEvent::Type WinboardAdapter::waitAfterMoveNowHandshake() {
     return isAnalyzeMode_ ? EngineEvent::Type::None : EngineEvent::Type::BestMove;
 }
 
+EngineEvent::Type WinboardAdapter::handlePonderMiss() {
+    // XBoard engines don't send bestmove when stopping pondering
+    // We just stop pondering silently, no handshake possible
+    return EngineEvent::Type::None;
+}
+
 void WinboardAdapter::setPonder(bool enabled) {
 	EngineAdapter::setPonder(enabled);
 }

@@ -142,7 +142,7 @@ public:
      * @return True if the engine is pondering, false otherwise.
      */
     bool isPondering() const {
-        return computeState_ == ComputeState::Pondering;
+        return computeState_ == ComputeState::PonderingOrIdle;
     }
 
 	/**
@@ -361,14 +361,14 @@ private:
         Idle,
         ComputingMove,
         StoppingMove,
-        Pondering,
+        PonderingOrIdle,
         PonderHit,
         PonderMiss
     };
     static const char* toString(ComputeState state) {
         switch (state) {
             case ComputeState::ComputingMove:return "ComputingMove";
-            case ComputeState::Pondering:    return "Pondering";
+            case ComputeState::PonderingOrIdle: return "Pondering or idle";
             case ComputeState::PonderHit:    return "PonderHit";
             case ComputeState::PonderMiss:   return "PonderMiss";
 			default: return "Idle";
@@ -376,6 +376,29 @@ private:
     }
 
     bool restartIfNotReady();
+
+    /**
+     * @brief Sets up ponder state with the given move if valid.
+     * @param move The ponder move string to validate and apply.
+     * @param rawLine The raw engine output line for error reporting.
+     * @return true if ponder state was set up successfully, false otherwise.
+     */
+    bool setupPonderState(const std::string& move, const std::string& rawLine);
+
+    /**
+     * @brief Checks if the GUI assumes the engine is pondering on a specific move.
+     * 
+     * Returns true only when both conditions are met:
+     * - computeState_ == PonderingOrIdle (engine was allowed to ponder)
+     * - ponderMove_ is not empty (we know which move to ponder on)
+     * 
+     * This is an assumption because:
+     * - Engines may choose not to ponder or have no pondering implemented even.
+     * - We treat the state as "pondering" for PV validation and ponder hit/miss logic
+     */
+    bool isAssumedPondering() const {
+        return computeState_ == ComputeState::PonderingOrIdle && !ponderMove_.empty();
+    }
 
 
     std::unique_ptr<EngineWorker> engine_;

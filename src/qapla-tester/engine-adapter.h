@@ -121,6 +121,12 @@ public:
     virtual EngineEvent::Type waitAfterMoveNowHandshake() = 0;
 
     /**
+     * @brief Handles a ponder miss (opponent played a different move than expected).
+     * @returns The event type to wait for as handshake (BestMove for UCI, None for XBoard).
+     */
+    virtual EngineEvent::Type handlePonderMiss() = 0;
+
+    /**
      * @brief Informs the engine that pondering is permitted.
      * @param game        Current game state.
      * @param limits      Calculation limits (time, depth, etc.).

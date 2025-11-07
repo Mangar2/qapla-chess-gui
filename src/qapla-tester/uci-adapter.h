@@ -81,6 +81,14 @@ public:
         return EngineEvent::Type::BestMove;
     }
 
+    /**
+     * @brief Handles a ponder miss by sending 'stop' and waiting for bestmove.
+     */
+    EngineEvent::Type handlePonderMiss() override {
+        moveNow();
+        return EngineEvent::Type::BestMove;
+    }
+
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;

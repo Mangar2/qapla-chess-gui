@@ -42,9 +42,10 @@ void PlayerContext::checkPV(const EngineEvent& event) {
     // if we are pondering but we do not know the ponder move we lack information to check the ponder PV
     // Usually happening for winboard engines as they choose themselves what move they ponder on.
     if (computeState_ != ComputeState::ComputingMove && ponderMove_.empty()) {
-        return;
+        // Should not be neccessary, see how engines behave maybe activate it again.
+        // return;
     }
-    auto& state = computeState_ == ComputeState::ComputingMove ? gameState_ : ponderState_;
+    auto& state = isAssumedPondering() ? ponderState_ : gameState_;
     uint32_t pvCount = 0;
 
     for (const auto& moveStr : searchInfo.pv) {
@@ -168,13 +169,40 @@ void PlayerContext::handlePonderMove(const EngineEvent& event) {
     std::scoped_lock lock(stateMutex_);
     ponderMove_ = *event.ponderMove;
 
-    // Validate that the ponder move is legal in the current position
-    const auto move = gameState_.stringToMove(ponderMove_, requireLan_);
-    if (!checklist_->logReport("legal-pondermove", !move.isEmpty(),
-        std::format(R"(Received illegal ponder move hint "{}" from engine, raw line "{}")", 
-            ponderMove_, event.rawLine))) {
+    if (setupPonderState(ponderMove_, event.rawLine)) {
+        computeState_ = ComputeState::PonderingOrIdle;
+        // Update currentMove so GUI can display ponder move before PV (e.g., "e4 e5 Nc3...")
+        {
+            std::scoped_lock lock(currentMoveMutex_);
+            currentMove_.ponderMove = ponderMove_;
+        }
+    } else {        
         ponderMove_.clear();
     }
+}
+
+bool PlayerContext::setupPonderState(const std::string& move, const std::string& rawLine) {
+    // Validate that the ponder move is legal in the current position
+    const auto parsedMove = gameState_.stringToMove(move, requireLan_);
+    if (!checklist_->logReport("legal-pondermove", !parsedMove.isEmpty(),
+        std::format(R"(Received illegal ponder move "{}" from engine, raw line "{}")", 
+            move, rawLine))) {
+        return false;
+    }
+
+    // Create speculative ponder state
+    ponderState_.synchronizeIncrementalFrom(gameState_);
+    ponderState_.doMove(parsedMove);
+
+    // Check if the game would be over after the ponder move
+    auto [cause, result] = ponderState_.getGameResult();
+    if (result != GameResult::Unterminated) {
+        // Game would be over, cannot ponder
+        ponderState_.undoMove();
+        return false;
+    }
+
+    return true;
 }
 
 void PlayerContext::checkTime(const EngineEvent& event) {
@@ -343,19 +371,17 @@ void PlayerContext::doMove(QaplaBasics::Move move) {
 	}
     // This method is only called with a checked move thus beeing empty should never happen
     std::string lanMove = move.getLAN();
-    if (computeState_ == ComputeState::Pondering && !ponderMove_.empty()) {
+    if (isAssumedPondering()) {
         computeState_ = ponderMove_ == lanMove ? ComputeState::PonderHit : ComputeState::PonderMiss;
     }
     ponderMove_.clear();  
 
     if (computeState_ == ComputeState::PonderMiss) {
-        // moveNow with option true will wait until bestmove received and consider the bestmove as
-        // handshake. The bestmove is then not send to the GameManager
-		auto success = engine_->moveNow(true);
+		auto success = engine_->handlePonderMiss();
         const auto& eid = engine_->getIdentifier();
         if (!checklist_->logReport("correct-pondering", success,
-            std::format("stop command to engine {} did not return a bestmove while in pondermode in time", eid))) {
-			Logger::engineLogger().log(eid + " Stop on ponder-miss did not return a bestmove in time", TraceLevel::error);
+            std::format("handling of ponder miss to engine (uci = stop) {} did not complete successfully", eid))) {
+			Logger::engineLogger().log(eid + " handlePonderMiss did not complete in time", TraceLevel::error);
 			// Try to heal the situation by requesting a ready state from the engine
             engine_->requestReady();
         }
@@ -396,6 +422,13 @@ void PlayerContext::computeMove(const GameRecord& gameRecord, const GoLimits& go
 void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& goLimits, 
     const std::optional<EngineEvent>& event) 
 {
+    // Sets computeState_ = PonderingOrIdle in both UCI and XBoard cases, even though we have no ponder move
+    // and the engine may not ponder at all.
+    // XBoard never has a ponder move in the bestmove command, so we always send an empty ponder move
+    // and the engine can only ignore this call.
+    // We set ponderMove_, if we have a pondermove and we will clear it, if we have not.
+    // Only computeState_ == PonderingOrIdle AND a non-empty ponderMove_ indicates that we actually ponder on a move.
+
 	if (!engine_) {
 		throw AppError::make("PlayerContext::allowPonder; Cannot allow pondering without an engine.");
 	}
@@ -411,6 +444,7 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
 	goLimits_ = goLimits;
     std::scoped_lock lock(stateMutex_);
     ponderMove_ = event->ponderMove ? *event->ponderMove : "";
+    // Update currentMove so GUI can display ponder move before PV (e.g., "e4 e5 Nc3...")
     {
         std::scoped_lock lock(currentMoveMutex_);
         currentMove_.clear();
@@ -420,25 +454,16 @@ void PlayerContext::allowPonder(const GameRecord& gameRecord, const GoLimits& go
     }
 
     if (!ponderMove_.empty()) {
-        const auto move = gameState_.stringToMove(ponderMove_, requireLan_);
-        if (checklist_->logReport("legal-pondermove", !move.isEmpty(),
-            std::format(R"(Encountered illegal ponder move "{}" in currMove, raw info line "{}")", 
-                ponderMove_, event->rawLine))) {
-            ponderState_.synchronizeIncrementalFrom(gameState_);
-            ponderState_.doMove(move);
-			auto [cause, result] = ponderState_.getGameResult();
-			if (result != GameResult::Unterminated) {
-				// If the game is already over, we cannot ponder
-				ponderMove_.clear();
-                ponderState_.undoMove();
-			} else {
-                computeState_ = ComputeState::Pondering;
-                engine_->allowPonder(gameRecord, goLimits, ponderMove_);
-            }
+        if (setupPonderState(ponderMove_, event->rawLine)) {
+            computeState_ = ComputeState::PonderingOrIdle;
+            engine_->allowPonder(gameRecord, goLimits, ponderMove_);
+        } else {
+            // Setup failed (illegal move or game over), clear ponder move
+            ponderMove_.clear();
         }
     }
     else {
-        computeState_ = ComputeState::Pondering;
+        computeState_ = ComputeState::PonderingOrIdle;
 		engine_->allowPonder(gameRecord, goLimits, ponderMove_);
     }
 
