@@ -217,6 +217,16 @@ private:
 	 */
 	void handleBestMove(const EngineEvent& event);
 
+    /**
+     * @brief Handles the ponder move event from the engine.
+     * 
+     * Received if an engine sends an information about the move it will ponder on. (xboard protocol)
+     * It is usually sent in the format "Hint: <move>".
+     * 
+     * @param event The engine event containing the ponder move information.
+     */
+    void handlePonderMove(const EngineEvent &event);
+
 	/**
 	 * Informs the task provider about the event, allowing it to react to engine information.
 	 * This is called for events of type EngineEvent::Type::Info.

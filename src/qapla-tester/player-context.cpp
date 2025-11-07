@@ -48,22 +48,22 @@ void PlayerContext::checkPV(const EngineEvent& event) {
         // return;
     }
 
-    bool pvValid = false;
+    std::string invalidMove;
 
     if (isAssumedPondering()) {
         // If failed, try ponder state. We do not receive a handshake from xboard engines when pondering is stopped.
-        pvValid = validatePVAgainstState(ponderState_, searchInfo.pv);
+        invalidMove = validatePVAgainstState(ponderState_, searchInfo.pv);
     } else {
-        pvValid = validatePVAgainstState(gameState_, searchInfo.pv);
+        invalidMove = validatePVAgainstState(gameState_, searchInfo.pv);
         
         // If failed, try ponder state. We do not receive a handshake from xboard engines when pondering is stopped.
         // Thus we might have race conditions. 
-        if (!pvValid) {
-            pvValid = validatePVAgainstState(ponderState_, searchInfo.pv);
+        if (!invalidMove.empty()) {
+            invalidMove = validatePVAgainstState(ponderState_, searchInfo.pv);
         }
     }
 
-    if (!pvValid) {
+    if (!invalidMove.empty()) {
         // Build full PV string for error reporting
         std::string fullPv;
         for (const auto& move : searchInfo.pv) {
@@ -75,14 +75,14 @@ void PlayerContext::checkPV(const EngineEvent& event) {
         }
         std::string stateStr = toString(computeState_);
         checklist_->logReport("pv", false,
-            std::format("Encountered illegal move in pv while {}: {}", stateStr, fullPv));
+            std::format("Encountered illegal move '{}' in pv while {}: {}", invalidMove, stateStr, fullPv));
         
-        Logger::engineLogger().log(std::format("{} Illegal move in PV while {} in raw info line \"{}\"", 
-            engine_->getIdentifier(), stateStr, event.rawLine), TraceLevel::info);
+        Logger::engineLogger().log(std::format("{} Illegal move '{}' in PV while {} in raw info line \"{}\"", 
+            engine_->getIdentifier(), invalidMove, stateStr, event.rawLine), TraceLevel::info);
     }
 }
 
-bool PlayerContext::validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) {
+std::string PlayerContext::validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) {
     uint32_t pvCount = 0;
     for (const auto& moveStr : pv) {
         const auto move = state.stringToMove(moveStr, requireLan_);
@@ -91,7 +91,7 @@ bool PlayerContext::validatePVAgainstState(GameState& state, const std::vector<s
             for (uint32_t i = 0; i < pvCount; ++i) {
                 state.undoMove();
             }
-            return false;
+            return moveStr;  // Return the invalid move
         }
         state.doMove(move);
         pvCount++;
@@ -101,7 +101,7 @@ bool PlayerContext::validatePVAgainstState(GameState& state, const std::vector<s
     for (uint32_t i = 0; i < pvCount; ++i) {
         state.undoMove();
     }
-    return true;
+    return "";  // Empty string means all moves valid
 }
 
 

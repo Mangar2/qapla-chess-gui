@@ -209,9 +209,15 @@ void GameManager::processEvent(const EngineEvent& event) {
             }
         }
 
+        if (event.type == EngineEvent::Type::PonderMove) {
+           handlePonderMove(event);
+           return;
+        }
+
         if (event.type == EngineEvent::Type::Info) {
             informTask(event, player);
             player->handleInfo(event);
+            return;
         }
 
         if (taskType_ == GameTask::Type::PlayGame) {
@@ -252,6 +258,14 @@ void GameManager::handleBestMove(const EngineEvent& event) {
 		}
 	}
 
+}
+
+void GameManager::handlePonderMove(const EngineEvent& event) {
+    // XBoard engines send hint (ponder move) via "Hint: <move>" to tell on what move it will ponder
+    PlayerContext* sendingPlayer = gameContext_.findPlayerByEngineId(event.engineIdentifier);
+    if (sendingPlayer != nullptr) {
+        sendingPlayer->handlePonderMove(event);
+    }
 }
 
 void GameManager::informTask(const EngineEvent& event, const PlayerContext* player) {

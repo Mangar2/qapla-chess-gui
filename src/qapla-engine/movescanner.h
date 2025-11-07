@@ -154,7 +154,7 @@ namespace QaplaInterface {
             }
 
             legal = true;
-            if (!handleCastleNotation(move)) {
+            if (!handleCastleNotation(move.substr(0, static_cast<size_t>(curIndex + 1)) )) {
                 promote = getPiece(move, curIndex);
                 skipEPInfo(move, curIndex);
                 skipCaptureChar(move, curIndex);

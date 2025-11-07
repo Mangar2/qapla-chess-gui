@@ -379,9 +379,9 @@ private:
 
     /**
      * @brief Validates a PV against a game state.
-     * @return true if all moves in PV are legal, false if any move is illegal.
+     * @return Empty string if all moves valid, otherwise the invalid move string.
      */
-    bool validatePVAgainstState(GameState& state, const std::vector<std::string>& pv);
+    std::string validatePVAgainstState(GameState& state, const std::vector<std::string>& pv);
 
     /**
      * @brief Sets up ponder state with the given move if valid.
