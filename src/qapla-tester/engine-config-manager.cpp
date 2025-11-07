@@ -73,7 +73,9 @@ EngineConfig* EngineConfigManager::getConfigMutableByCmdAndProtocol(
     const std::string& cmd, EngineProtocol proto) 
 {
     for (auto& config : configs) {
-        if (config.getCmd() == cmd && config.getProtocol() == proto) return &config;
+        if (config.getCmd() == cmd && config.getProtocol() == proto) {
+            return &config;
+        }
     }
     return nullptr;
 }
@@ -111,13 +113,16 @@ std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::
     // Collect only keys that actually differentiate from other engines
     for (const auto &[key, value] : disambiguationMaps[index])
     {
-        if (key == "name" || key == "trace" || key == "selected" || key == "gauntlet" )
+        if (key == "name" || key == "trace" || key == "selected" || key == "gauntlet" ) {
             continue;
+        }
 
         // Check if this key helps distinguish from any other engine
         for (std::size_t i : indices)
         {
-            if (i == index) continue; // Skip self
+            if (i == index) {
+                continue; // Skip self
+            }
             
             const auto &map = disambiguationMaps[i];
             auto it = map.find(key);
@@ -211,7 +216,7 @@ void EngineConfigManager::assignUniqueDisplayNames(std::vector<EngineConfig>& en
             std::string name = "[" + computeUnifiedName(disambiguationMaps, index, indices) + "]";
 
             if (name != "[]") {
-                engines[index].setName(baseName + " " + name);
+                engines[index].setName(std::format("{} {}", baseName, name));
             }
         }
     }

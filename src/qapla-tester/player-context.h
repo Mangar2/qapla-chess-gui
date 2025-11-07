@@ -72,7 +72,9 @@ public:
 	 * It is typically called when the engine is no longer needed.
 	 */
     void stopEngine() {
-		if (!engine_) return;
+		if (!engine_) {
+            return;
+        }
 		engine_->stop();
         computeState_ = ComputeState::Idle;
 	}
@@ -159,7 +161,9 @@ public:
      * @param timeout Maximum time to wait for readyok response.
      */
     void checkReady(std::chrono::milliseconds timeout = std::chrono::seconds{1}) {
-        if (!engine_) return;
+        if (!engine_) {
+            return;
+        }
         engine_->requestReady(timeout);
     }
 
@@ -167,7 +171,9 @@ public:
 	 * @brief Tells the engine to stop computing and return the best move.
      */
     void moveNow() {
-        if (!engine_) return;
+        if (!engine_) {
+            return;
+        }
         if (computeState_ == ComputeState::ComputingMove) {
             engine_->moveNow();
         }
@@ -192,7 +198,7 @@ public:
 	 * @brief Returns a thread save copy of the current move record.
      */
     MoveRecord getCurrentMoveCopy() const {
-        std::lock_guard lock(currentMoveMutex_);
+        std::scoped_lock lock(currentMoveMutex_);
         return currentMove_;
 	}
 
@@ -201,7 +207,7 @@ public:
      * @param accessFn A callable that takes a const MoveRecord&.
      */
     void withCurrentMove(std::function<void(const MoveRecord&)> accessFn) const {
-        std::lock_guard lock(currentMoveMutex_);
+        std::scoped_lock lock(currentMoveMutex_);
         accessFn(currentMove_);
     }
 
@@ -220,9 +226,7 @@ public:
      * @param timestamp Milliseconds since epoch.
      */
     void setComputeMoveStartTimestamp(uint64_t timestamp) {
-        if (timestamp > computeMoveStartTimestamp_) {
-            computeMoveStartTimestamp_ = timestamp;
-        }
+        computeMoveStartTimestamp_ = std::max(computeMoveStartTimestamp_, timestamp);
 		// I expect this to never happen. Let us see in debug mode. If this happens this should be a race condition.
         // But it still make sense to check, if this is a bug in the code
         // timestamp = 0 indicates that the command could not be fulfilled by the adapter what is a valid case
@@ -335,7 +339,7 @@ public:
 	 * @param startPosition The GameRecord to set the game state from.
      */
     void setStartPosition(const GameRecord& startPosition) {
-        std::lock_guard<std::mutex> lock(stateMutex_);
+        std::scoped_lock lock(stateMutex_);
         gameState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
         ponderState_.setFromGameRecord(startPosition, startPosition.nextMoveIndex());
     }
@@ -347,7 +351,7 @@ public:
      * @param fen The FEN string representing the new position.
      */
     void setStartPosition(bool startPosition, const std::string& fen) {
-        std::lock_guard<std::mutex> lock(stateMutex_);
+        std::scoped_lock lock(stateMutex_);
         gameState_.setFen(startPosition, fen);
         ponderState_.setFen(startPosition, fen);
     }
@@ -357,7 +361,7 @@ public:
 	}
 
 private:
-    enum class ComputeState {
+    enum class ComputeState: std::uint8_t {
         Idle,
         ComputingMove,
         StoppingMove,
@@ -381,7 +385,7 @@ private:
      * @brief Validates a PV against a game state.
      * @return Empty string if all moves valid, otherwise the invalid move string.
      */
-    std::string validatePVAgainstState(GameState& state, const std::vector<std::string>& pv);
+    std::string validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) const;
 
     /**
      * @brief Sets up ponder state with the given move if valid.
@@ -417,7 +421,7 @@ private:
     std::atomic<ComputeState> computeState_ = ComputeState::Idle;
 	bool isAnalyzing_ = false;
 
-    std::string ponderMove_ = "";
+    std::string ponderMove_;
     MoveRecord currentMove_;
     mutable std::mutex currentMoveMutex_;
     mutable std::mutex stateMutex_; // protects gameState_ and ponderState_

@@ -39,7 +39,7 @@ public:
     /**
      * @brief Classification of a check topic based on its relevance.
      */
-    enum class CheckSection { Important, Missbehaviour, Notes, Report };
+    enum class CheckSection : std::uint8_t { Important, Missbehaviour, Notes, Report };
 
     /**
      * @brief Metadata describing a single logical check topic.
@@ -84,7 +84,7 @@ public:
      * @param engineName The name of the engine to retrieve the checklist for.
      * @return Pointer to the corresponding Checklist instance.
      */
-    static inline EngineReport* getChecklist(const std::string& engineName) {
+    [[nodiscard]] static EngineReport* getChecklist(const std::string& engineName) {
         auto& ptr = checklists_[engineName];
         if (!ptr) {
             ptr = std::make_unique<EngineReport>();
@@ -99,10 +99,10 @@ public:
      * @param passed True if the check passed, false if it failed.
      */
     void report(const std::string& topicId, bool passed) {
-        std::lock_guard<std::mutex> lock(statsMutex_);
+        std::scoped_lock<std::mutex> lock(statsMutex_);
         auto& stat = entries_[topicId];
         ++stat.total;
-        if (!passed) ++stat.failures;
+        if (!passed) { ++stat.failures; }
     }
 
     /**
@@ -137,17 +137,25 @@ public:
 	 * @param result The TournamentResult containing all engine results.
      * @return The most severe AppReturnCode encountered across all engines.
      */
-    static AppReturnCode logAll(TraceLevel traceLevel, const std::optional<TournamentResult>& result = std::nullopt);
+    [[nodiscard]] static AppReturnCode logAll(TraceLevel traceLevel, const std::optional<TournamentResult>& result = std::nullopt);
 
+	/**
+	 * @brief Sets the author of the engine.
+	 * @param author The author name.
+	 */
 	void setAuthor(const std::string& author) {
-        std::lock_guard<std::mutex> lock(statsMutex_);
+        std::scoped_lock<std::mutex> lock(statsMutex_);
 		engineAuthor_ = author;
 	}
 
 	static inline bool reportUnderruns = false;
 
+    /**
+     * @brief Sets the tournament result for the engine.
+     * @param result The engine result.
+     */
     void setTournamentResult(const EngineResult& result) {
-        std::lock_guard<std::mutex> lock(statsMutex_);
+        std::scoped_lock<std::mutex> lock(statsMutex_);
         engineResult_ = result;
     }
 private:

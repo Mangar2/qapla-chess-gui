@@ -30,7 +30,7 @@ struct EngineRecord {
     std::string identifier;
     EngineConfig config;
     std::optional<EngineOptions> supportedOptions;
-    enum class Status {
+    enum class Status: std::uint8_t {
         NotStarted,
         Starting,
         Running,

@@ -170,7 +170,7 @@ public:
      */
     void setGameRecord(const GameRecord &record)
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         gameRecord_ = record;
     }
 
@@ -180,7 +180,7 @@ public:
      */
     void addMove(const MoveRecord &move)
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         gameRecord_.addMove(move);
     }
 
@@ -190,7 +190,7 @@ public:
      */
     void updateMove(const MoveRecord &move)
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         gameRecord_.updateMove(move);
     }
 
@@ -202,7 +202,7 @@ public:
      */
     void setGameEnd(GameEndCause cause, GameResult result)
     {
-        std::lock_guard lock(gameRecordMutex_);
+        std::scoped_lock lock(gameRecordMutex_);
         gameRecord_.setGameEnd(cause, result);
     }
 
@@ -264,7 +264,7 @@ public:
      * @return A vector of EngineRecords containing engine information for each player.
      */
     EngineRecords getEngineRecords() const {
-        std::lock_guard lock(engineMutex_);
+        std::scoped_lock lock(engineMutex_);
         return mkEngineRecords();
     }
 
@@ -274,13 +274,13 @@ public:
      */
     void withEngineRecords(std::function<void(const EngineRecords&)> accessFn) const
     {
-        std::lock_guard lock(engineMutex_);
+        std::scoped_lock lock(engineMutex_);
         accessFn(mkEngineRecords());
     }
 
     std::pair<std::string, std::string> getEngineNames() const
     {
-        std::lock_guard lock(engineMutex_);
+        std::scoped_lock lock(engineMutex_);
         if (!getWhite() || !getBlack())
         {
             return {"", ""};

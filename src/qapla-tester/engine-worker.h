@@ -26,7 +26,6 @@
 #include <functional>
 #include <optional>
 #include <future>
-#include <thread>
 #include "game-record.h"
 #include "engine-adapter.h"
 #include "engine-config.h"
@@ -251,7 +250,7 @@ public:
 		return engineConfig_;
 	}
 
-	enum class EventFilter {
+	enum class EventFilter: uint8_t {
 		None = 0,
 		EmptyEvent = 1,
 		InfoEvent = 2
@@ -266,7 +265,7 @@ public:
 	}
 
 
-	enum class WorkerState {
+	enum class WorkerState: std::uint8_t {
 		notStarted,
 		starting,
 		running,

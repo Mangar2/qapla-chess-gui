@@ -80,15 +80,15 @@ public:
 	 * @param fullmoves The fullmove number from the starting position FEN.
 	 */
 	void setSetupFullmoveNumber(uint32_t fullmoves) {
-		if (fullmoves == 0) fullmoves = 1;
+		if (fullmoves == 0) {
+			fullmoves = 1;
+		}
 		uint32_t halfmoves = (fullmoves - 1) * 2;
 		if (!position_.isWhiteToMove()) {
 			halfmoves += 1;
 		}
-		uint32_t currentHalfmoves = static_cast<uint32_t>(moveList_.size());
-		if (halfmoves < currentHalfmoves) {
-			halfmoves = currentHalfmoves;
-		}
+		auto currentHalfmoves = static_cast<uint32_t>(moveList_.size());
+		halfmoves = std::max(halfmoves, currentHalfmoves);
 		position_.setStartHalfmoves(halfmoves - currentHalfmoves);
 	}
 
@@ -139,7 +139,7 @@ public:
 	 * @brief Returns a move as San notation. The move must be a legal move in the current position.
 	 * @param move The move to convert to San notation.
 	 */
-	std::string moveToSan(const QaplaBasics::Move& move) const;
+	[[nodiscard]] std::string moveToSan(const QaplaBasics::Move& move) const;
 
 	/**
 	 * @brief Checks if the game is over and returns the result.
@@ -153,7 +153,7 @@ public:
 	 * 
 	 * @return the total number of half moves without pawn move or capture
 	 */
-	uint32_t getHalfmoveClock() const {
+	[[nodiscard]] uint32_t getHalfmoveClock() const {
 		return position_.getTotalHalfmovesWithoutPawnMoveOrCapture();
 	}
 
@@ -174,7 +174,7 @@ public:
 	 * 
 	 * @return The total number of half moves played.
 	 */ 
-	uint32_t getHalfmovesPlayed() const {
+	[[nodiscard]]uint32_t getHalfmovesPlayed() const {
 		return position_.getStartHalfmoves() + static_cast<uint32_t>(moveList_.size());
 	}
 
@@ -228,7 +228,7 @@ public:
 	 * 
 	 * @return The current board position.
 	 */
-	const QaplaMoveGenerator::MoveGenerator& position() const {
+	[[nodiscard]] const QaplaMoveGenerator::MoveGenerator& position() const {
 		return position_;
 	}
 	QaplaMoveGenerator::MoveGenerator& position() {
@@ -243,7 +243,7 @@ private:
 	std::tuple<GameEndCause, GameResult> computeGameResult();
     QaplaMoveGenerator::MoveGenerator position_;
 
-	bool isThreefoldRepetition() const;
+	[[nodiscard]] bool isThreefoldRepetition() const;
 
 	QaplaBasics::MoveList legalMoves_; // legalMoves of the current position
 	bool moveListOutdated = true;

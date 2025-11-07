@@ -40,7 +40,7 @@ public:
     ComputeTask();
     ~ComputeTask();
 
-    enum class Status
+    enum class Status: std::uint8_t
     {
         Stopped,
         Play,
@@ -245,11 +245,11 @@ public:
         {
             return "Auto";
         }
-        else if (taskType_ == ComputeTaskType::Analyze)
+        if (taskType_ == ComputeTaskType::Analyze)
         {
             return "Analyze";
         }
-        else if (taskType_ == ComputeTaskType::PlaySide)
+        if (taskType_ == ComputeTaskType::PlaySide)
         {
             return "Play";
         }
@@ -267,7 +267,7 @@ private:
     /**
      * @brief Defines the currently active automated task mode.
      */
-    enum class ComputeTaskType
+    enum class ComputeTaskType : std::uint8_t
     {
         None,
         Analyze,

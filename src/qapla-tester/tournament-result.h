@@ -55,8 +55,8 @@ private:
     std::string engineA; ///< First engine name
     std::string engineB; ///< Second engine name
 public:
-    EngineDuelResult(const std::string &a, const std::string &b)
-        : engineA(a), engineB(b), causeStats{}
+    EngineDuelResult(std::string a, std::string b)
+        : engineA(std::move(a)), engineB(std::move(b)  ), causeStats{}
     {
     }
     EngineDuelResult() = default;
@@ -66,27 +66,29 @@ public:
     int draws = 0;              ///< Draw count
     CauseStatsArray causeStats; ///< Stats per end cause
 
-    const std::string &getEngineA() const
+    [[nodiscard]] const std::string &getEngineA() const
     {
         return engineA;
     }
-    const std::string &getEngineB() const
+    [[nodiscard]] const std::string &getEngineB() const
     {
         return engineB;
     }
+
     /**
      * @brief Resets all counters to zero.
      */
-    inline void clear()
+    void clear()
     {
         winsEngineA = 0;
         winsEngineB = 0;
         draws = 0;
-        for (auto &cs : causeStats)
+        for (auto &cs : causeStats) {
             cs = {};
+        }
     }
 
-    int total() const
+    [[nodiscard]] int total() const
     {
         return winsEngineA + winsEngineB + draws;
     }
@@ -95,7 +97,7 @@ public:
      * @brief Computes the normalized score for engineA.
      * @return Score between 0.0 and 1.0
      */
-    inline double engineARate() const
+    [[nodiscard]] double engineARate() const
     {
         double totalGames = winsEngineA + winsEngineB + draws;
         return totalGames > 0 ? (winsEngineA * 1.0 + draws * 0.5) / totalGames : 0.0;
@@ -105,7 +107,7 @@ public:
      * @brief Computes the normalized score for engineB.
      * @return Score between 0.0 and 1.0
      */
-    inline double engineBRate() const
+    [[nodiscard]] double engineBRate() const
     {
         double totalGames = winsEngineA + winsEngineB + draws;
         return totalGames > 0 ? (winsEngineB * 1.0 + draws * 0.5) / totalGames : 0.0;
@@ -121,13 +123,13 @@ public:
      * @brief Returns a version of this result with sides switched.
      * @return Reversed EngineDuelResult
      */
-    EngineDuelResult switchedSides() const;
+    [[nodiscard]] EngineDuelResult switchedSides() const;
 
     /**
      * @brief Produces a string summary including player names and score.
      * @return Human-readable result string
      */
-    inline std::string toString() const
+    [[nodiscard]] std::string toString() const
     {
         std::ostringstream oss;
         oss << engineA << " vs " << engineB
@@ -139,7 +141,7 @@ public:
      * @brief Returns a compact string with only the score portion.
      * @return Result string with W/D/L only
      */
-    inline std::string toResultString() const
+    [[nodiscard]] std::string toResultString() const
     {
         std::ostringstream oss;
         oss << std::fixed << std::setprecision(2)
@@ -153,7 +155,7 @@ public:
      * @param other The other duel result to compare against
      * @return True if engine names match, false otherwise
 	 */
-    bool engineNamesMatch(const EngineDuelResult& other) const
+    [[nodiscard]] bool engineNamesMatch(const EngineDuelResult& other) const
     {
         return (engineA == other.engineA && (engineB == other.engineB || engineB == ANY_ENGINE)) ||
 			(engineA == other.engineB && (engineB == other.engineA || engineB == ANY_ENGINE));
@@ -164,9 +166,9 @@ public:
      * @param other The result to accumulate
      * @return Reference to this object
      */
-    EngineDuelResult &operator+=(const EngineDuelResult &other);
+    [[nodiscard]] EngineDuelResult &operator+=(const EngineDuelResult &other);
 
-    static constexpr std::string_view ANY_ENGINE = "";
+    static constexpr std::string_view ANY_ENGINE;
 };
 
 /**
@@ -182,7 +184,7 @@ struct EngineResult
      *        engineA is set, engineB is empty.
      * @param targetEngine The name of the engine to aggregate results for.
      */
-    EngineDuelResult aggregate(const std::string &targetEngine) const;
+    [[nodiscard]] EngineDuelResult aggregate(const std::string &targetEngine) const;
 
     void printResults(std::ostream &os) const;
     void printOutcome(std::ostream &os) const;
@@ -222,16 +224,16 @@ public:
      * @brief Returns the names of all engines for which results have been recorded.
      * @return A vector of unique engine names.
      */
-    std::vector<std::string> engineNames() const;
+    [[nodiscard]] std::vector<std::string> engineNames() const;
 
     /**
      * @brief Computes and returns all duel results for the given engine.
      * @param name The engine name.
      * @return An EngineResult object with individual duels and aggregate data, or std::nullopt if unknown.
      */
-    std::optional<EngineResult> forEngine(const std::string &name) const;
+    [[nodiscard]] std::optional<EngineResult> forEngine(const std::string &name) const;
 
-    std::vector<std::vector<std::string>> getSummary() const;
+    [[nodiscard]] std::vector<std::vector<std::string>> getSummary() const;
     void printSummary(std::ostream &os) const;
     
 
@@ -278,7 +280,7 @@ public:
 	 * @brief Returns the engines with their scores and Elo ratings.
 	 * @return Vector of Scored entries with aggregated results and normalized scores.
 	 */
-    const std::vector<Scored>& scoredEngines() const
+    [[nodiscard]] const std::vector<Scored>& scoredEngines() const
     {
         return scoredEngines_;
 	}

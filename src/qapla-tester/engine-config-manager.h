@@ -74,7 +74,7 @@ public:
      * Returns all engine configurations.
      * @return A vector of EngineConfig.
      */
-    std::vector<EngineConfig> getAllConfigs() const {
+    [[nodiscard]] std::vector<EngineConfig> getAllConfigs() const {
         return configs;
     }
 
@@ -83,8 +83,21 @@ public:
      * @param name The name of the engine.
      * @return A pointer to the EngineConfig or nullptr if not found.
      */
-    const EngineConfig* getConfig(const std::string& name) const;
+    [[nodiscard]] const EngineConfig* getConfig(const std::string& name) const;
+
+    /**
+     * Retrieves a mutable configuration by engine name.
+     * @param name The name of the engine.
+     * @return A pointer to the EngineConfig or nullptr if not found.
+     */
     EngineConfig* getConfigMutable(const std::string& name);
+
+    /**
+     * Retrieves a mutable configuration by command and protocol.
+     * @param cmd The command.
+     * @param proto The protocol.
+     * @return A pointer to the EngineConfig or nullptr if not found.
+     */
     EngineConfig* getConfigMutableByCmdAndProtocol(const std::string& cmd, EngineProtocol proto);
 
     /**
@@ -112,20 +125,16 @@ public:
         configs.push_back(config);
 	}
 
-    /**
+	/**
 	 * @brief Removes a configuration by value.
      */
     void removeConfig(const EngineConfig& remove) {
-        auto it = std::remove(configs.begin(), configs.end(), remove);
-        if (it != configs.end()) {
-            configs.erase(it, configs.end());
-        }
-    }
-
-	/**
+        auto [first, last] = std::ranges::remove(configs, remove);
+        configs.erase(first, last);
+    }	/**
 	 * @brief Returns a list of error messages encountered during parsing.
 	 */
-	const std::vector<std::string>& getErrors() const {
+	[[nodiscard]] const std::vector<std::string>& getErrors() const {
 		return errors;
 	}
 
@@ -137,7 +146,7 @@ public:
      */
     void addOrReplaceConfig(const CliSettings::GroupInstances& instances) {
         for (const auto& instance : instances) {
-			CliSettings::ValueMap map = instance.getValues();
+			const auto& map = instance.getValues();
             EngineConfig config = EngineConfig::createFromValueMap(map);
             addOrReplaceConfig(config);
         }
@@ -145,7 +154,7 @@ public:
 
 	/**
 	 * @brief Add or replaces a single EngineConfig instance from a GroupInstance.
-	 * @param valueMap The values for the configuraiton.
+	 * @param valueMap The values for the configuration.
 	 */
     void addOrReplaceConfig(const CliSettings::ValueMap& valueMap) {
 		EngineConfig config = EngineConfig::createFromValueMap(valueMap);
@@ -158,7 +167,7 @@ public:
      * @param reference Reference list of known engine configs.
      * @return Set of engine names that exist identically in both sets.
      */
-    std::unordered_set<std::string> findMatchingNames(const std::vector<EngineConfig>& reference) const;
+    [[nodiscard]] std::unordered_set<std::string> findMatchingNames(const std::vector<EngineConfig>& reference) const;
 
     /**
      * @brief Assigns unique display names to engines with identical base names.

@@ -82,7 +82,7 @@ void PlayerContext::checkPV(const EngineEvent& event) {
     }
 }
 
-std::string PlayerContext::validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) {
+std::string PlayerContext::validatePVAgainstState(GameState& state, const std::vector<std::string>& pv) const {
     uint32_t pvCount = 0;
     for (const auto& moveStr : pv) {
         const auto move = state.stringToMove(moveStr, requireLan_);

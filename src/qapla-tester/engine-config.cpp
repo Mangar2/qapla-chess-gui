@@ -26,7 +26,7 @@
 
 namespace QaplaTester {
 
-std::unordered_map<std::string, std::string> EngineConfig::getOptions(const EngineOptions availableOptions) const {
+std::unordered_map<std::string, std::string> EngineConfig::getOptions(EngineOptions availableOptions) const {
     std::unordered_map<std::string, std::string> filteredOptions;
     for (const auto& option : availableOptions) {
 		auto it = optionValues_.find(QaplaHelpers::to_lowercase(option.name));
