@@ -250,6 +250,14 @@ namespace QaplaTester::CliSettings {
             std::optional<std::string> value;   // optional value part
         };
 
+        static Value parseBool(const ParsedParameter& arg);
+        static Value parseInt(const ParsedParameter& arg);
+        static Value parseUInt(const ParsedParameter& arg);
+        static Value parseFloat(const ParsedParameter& arg);
+        static Value parseString(const ParsedParameter& arg);
+        static Value parsePathExists(const ParsedParameter& arg);
+        static Value parsePathParentExists(const ParsedParameter& arg);
+
         /**
          * @brief Splits a raw command line argument into syntactic parts.
          * Does not perform semantic interpretation.

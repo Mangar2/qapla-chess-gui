@@ -61,7 +61,7 @@ public:
      */
     EngineProcess(const std::filesystem::path& executablePath,
         const std::optional<std::filesystem::path>& workingDirectory,
-        const std::string& identifier);
+        std::string identifier);
 
     /**
      * @brief Destructor ensures the process is safely terminated.

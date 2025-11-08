@@ -136,6 +136,20 @@ namespace QaplaHelpers {
     };
 
     /**
+     * @brief Converts a string view to an optional double.
+     * @param s The string view to convert.
+     * @return Optional double if conversion succeeds, nullopt otherwise.
+     */
+    auto to_double = [](std::string_view s) -> std::optional<double> {
+        double value;
+        auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
+        if (ec == std::errc() && ptr == s.data() + s.size()) {
+            return value;
+        }
+        return std::nullopt;
+    };
+
+    /**
      * @brief Parses a section header from a line.
      * @param line The line to parse.
      * @return Optional section name if valid, nullopt otherwise.

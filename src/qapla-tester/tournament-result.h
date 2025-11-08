@@ -166,7 +166,7 @@ public:
      * @param other The result to accumulate
      * @return Reference to this object
      */
-    [[nodiscard]] EngineDuelResult &operator+=(const EngineDuelResult &other);
+    EngineDuelResult &operator+=(const EngineDuelResult &other);
 
     static constexpr std::string_view ANY_ENGINE;
 };

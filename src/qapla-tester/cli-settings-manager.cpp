@@ -17,6 +17,8 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "app-error.h"
+#include "string-helper.h"
 #include "cli-settings-manager.h"
 
 #include <cstring>
@@ -29,11 +31,104 @@
 #include <unordered_map>
 #include <cassert>
 
-#include "app-error.h"
-#include "string-helper.h"
 
 namespace QaplaTester::CliSettings
 {
+
+    Value Manager::parseBool(const ParsedParameter& arg)
+    {
+        auto lowerValue = arg.value ? QaplaHelpers::to_lowercase(*arg.value) : std::string();
+        if (!arg.value) {
+            return true;
+        }
+        if (lowerValue == "true" || lowerValue == "1")
+        {
+            return true;
+        }
+        if (lowerValue == "false" || lowerValue == "0")
+        {
+            return false;
+        }
+        throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected true, false, 1 or 0");
+    }
+
+    Value Manager::parseInt(const ParsedParameter& arg)
+    {
+        if (!arg.value)
+        {
+            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
+        }
+        auto result = QaplaHelpers::to_int(*arg.value);
+        if (!result)
+        {
+            throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected integer");
+        }
+        return *result;
+    }
+
+    Value Manager::parseUInt(const ParsedParameter& arg)
+    {
+        if (!arg.value)
+        {
+            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
+        }
+        auto result = QaplaHelpers::to_uint32(*arg.value);
+        if (!result)
+        {
+            throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected positive integer");
+        }
+        return *result;
+    }
+
+    Value Manager::parseFloat(const ParsedParameter& arg)
+    {
+        if (!arg.value)
+        {
+            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
+        }
+        auto result = QaplaHelpers::to_double(*arg.value);
+        if (!result)
+        {
+            throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected double");
+        }
+        return *result;
+    }
+
+    Value Manager::parseString(const ParsedParameter& arg)
+    {
+        return arg.value ? QaplaHelpers::to_lowercase(*arg.value) : std::string();
+    }
+
+    Value Manager::parsePathExists(const ParsedParameter& arg)
+    {
+        if (!arg.value)
+        {
+            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
+        }
+        if (!std::filesystem::exists(*arg.value))
+        {
+            throw AppError::makeInvalidParameters("The path in \"" + arg.original + "\" does not exist");
+        }
+        return *arg.value;
+    }
+
+    Value Manager::parsePathParentExists(const ParsedParameter& arg)
+    {
+        if (!arg.value)
+        {
+            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
+        }
+        std::filesystem::path path(*arg.value);
+        std::filesystem::path parent = path.parent_path();
+        if (parent.empty()) {
+            parent = std::filesystem::current_path();
+        }
+        if (!std::filesystem::exists(parent))
+        {
+            throw AppError::makeInvalidParameters("The parent directory of \"" + arg.original + "\" does not exist");
+        }
+        return *arg.value;
+    }
 
     std::vector<std::string> Manager::mergeWithSettingsFile(const std::vector<std::string> &originalArgs)
     {
@@ -153,8 +248,9 @@ namespace QaplaTester::CliSettings
             }
             break;
         default:
-            if (!std::holds_alternative<std::string>(value))
+            if (!std::holds_alternative<std::string>(value)) {
                 typeMismatch("string");
+            }
             break;
         }
     }
@@ -212,7 +308,7 @@ namespace QaplaTester::CliSettings
         auto it = groupInstances_.find(key);
         if (it == groupInstances_.end() || it->second.empty())
         {
-            return std::vector<GroupInstance>();
+            return {};
         }
         return it->second;
     }
@@ -239,7 +335,7 @@ namespace QaplaTester::CliSettings
 
         std::string working = raw;
 
-        result.hasPrefix = working.rfind("--", 0) == 0;
+        result.hasPrefix = working.starts_with("--");
         if (result.hasPrefix)
         {
             working = working.substr(2);
@@ -276,7 +372,7 @@ namespace QaplaTester::CliSettings
 
             if (!arg.hasPrefix)
             {
-                throw AppError::makeInvalidParameters("\"" + arg.original + "\" must start with \"--\"");
+                throw AppError::makeInvalidParameters(R"(")" + arg.original + R"(" must start with "--")");
             }
 
             if (groupDefs_.contains(arg.name))
@@ -356,8 +452,9 @@ namespace QaplaTester::CliSettings
         index++;
 
         auto defIt = groupDefs_.find(groupArg.name);
-        if (defIt == groupDefs_.end())
+        if (defIt == groupDefs_.end()) {
             throw AppError::makeInvalidParameters("\"" + groupArg.name + "\" is not a valid parameter");
+        }
 
         const auto &groupDefinition = defIt->second;
         ValueMap group;
@@ -372,11 +469,12 @@ namespace QaplaTester::CliSettings
             auto arg = parseParameter(args[index]);
 
             // this is not a parameter of the group, so we stop parsing
-            if (arg.hasPrefix)
+            if (arg.hasPrefix) {
                 break;
+            }
 
             const Definition *def = resolveGroupedKey(groupDefinition, arg.name);
-            if (!def) {
+            if (def == nullptr) {
                 AppError::throwOnInvalidOption(groupDefinition.keyNames(), arg.name,
                     "Unknown parameter in section \"" + groupArg.name + "\"");
             }
@@ -387,15 +485,19 @@ namespace QaplaTester::CliSettings
 
         for (const auto &[key, def] : groupDefinition.keys)
         {
-            if (key.ends_with(".[name]"))
+            if (key.ends_with(".[name]")) {
                 continue;
-            if (group.contains(key))
+            }
+            if (group.contains(key)) {
                 continue;
-            if (def.isRequired)
+            }
+            if (def.isRequired) {
                 throw AppError::makeInvalidParameters(
                     "Missing required parameter \"" + key + "\" in section \"" + groupArg.name + "\"");
-            if (def.defaultValue)
+            }
+            if (def.defaultValue) {
                 group[key] = *def.defaultValue;
+            }
         }
 
         groupInstances_[groupArg.name].emplace_back(group, groupDefinition);
@@ -406,8 +508,9 @@ namespace QaplaTester::CliSettings
     {
         for (const auto &[key, def] : definitions_)
         {
-            if (values_.contains(key))
+            if (values_.contains(key)) {
                 continue;
+            }
 
             if (def.isRequired && !def.defaultValue)
             {
@@ -465,8 +568,9 @@ namespace QaplaTester::CliSettings
             std::cout << std::left << std::setw(nameWidth) << line.str();
 
             std::cout << def.description;
-            if (def.isRequired)
+            if (def.isRequired) {
                 std::cout << " [required]";
+            }
             else if (def.defaultValue)
             {
                 bool isEmptyString = std::holds_alternative<std::string>(*def.defaultValue) && std::get<std::string>(*def.defaultValue).empty();
@@ -501,8 +605,9 @@ namespace QaplaTester::CliSettings
                 std::cout << std::left << std::setw(nameWidth) << line.str();
 
                 std::cout << meta.description;
-                if (meta.isRequired)
+                if (meta.isRequired) {
                     std::cout << " [required]";
+                }
                 else if (meta.defaultValue)
                 {
                     bool isEmptyString = std::holds_alternative<std::string>(*meta.defaultValue) && std::get<std::string>(*meta.defaultValue).empty();
@@ -521,88 +626,21 @@ namespace QaplaTester::CliSettings
 
     Value Manager::parseValue(const ParsedParameter &arg, const Definition &def)
     {
-        auto lowerValue = arg.value ? QaplaHelpers::to_lowercase(*arg.value) : std::string();
-        if (def.type == ValueType::Bool)
-        {
-            if (!arg.value)
-                return true;
-            if (lowerValue == "true" || lowerValue == "1")
-            {
-                return true;
-            }
-            else if (lowerValue == "false" || lowerValue == "0")
-            {
-                return false;
-            }
-            else
-            {
-                throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected true, false, 1 or 0");
-            }
+        switch (def.type) {
+            case ValueType::Bool:
+                return parseBool(arg);
+            case ValueType::Int:
+                return parseInt(arg);
+            case ValueType::UInt:
+                return parseUInt(arg);
+            case ValueType::Float:
+                return parseFloat(arg);
+            case ValueType::PathExists:
+                return parsePathExists(arg);
+            case ValueType::PathParentExists:
+                return parsePathParentExists(arg);
+            default:
+                return parseString(arg);
         }
-        if (!arg.value)
-        {
-            throw AppError::makeInvalidParameters("Missing value for \"" + arg.original + "\"");
-        }
-        if (def.type == ValueType::Int)
-        {
-            try
-            {
-                return stoi(*arg.value);
-            }
-            catch (...)
-            {
-                throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected integer");
-            }
-        }
-        if (def.type == ValueType::UInt)
-        {
-            try
-            {
-                int value = stoi(*arg.value);
-                if (value < 0)
-                {
-					throw "expected positive integer";
-				}
-                return static_cast<uint32_t>(value);
-            }
-            catch (...)
-            {
-                throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected positive integer");
-            }
-        }
-        if (def.type == ValueType::Float)
-        {
-            try
-            {
-                return std::stof(*arg.value);
-            }
-            catch (...)
-            {
-                throw AppError::makeInvalidParameters("\"" + arg.original + "\" is invalid: expected double");
-            }
-        }
-        if (def.type == ValueType::PathExists)
-        {
-            if (!std::filesystem::exists(*arg.value))
-            {
-                throw AppError::makeInvalidParameters("The path in \"" + arg.original + "\" does not exist");
-            }
-            return *arg.value;
-        }
-        if (def.type == ValueType::PathParentExists)
-        {
-            std::filesystem::path path(*arg.value);
-            std::filesystem::path parent = path.parent_path();
-            if (parent.empty()) {
-                parent = std::filesystem::current_path();
-            }
-            if (!std::filesystem::exists(parent))
-            {
-                throw AppError::makeInvalidParameters("The parent directory of \"" + arg.original + "\" does not exist");
-            }
-            return *arg.value;
-        }
-
-        return lowerValue; // Default case is string;
     }
 } // namespace QaplaTester::CliSettings
