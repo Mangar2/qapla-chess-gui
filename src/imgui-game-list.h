@@ -25,6 +25,7 @@
 #include "game-filter-window.h"
 #include "imgui-table.h"
 #include "imgui-popup.h"
+#include "imgui-button.h"
 #include <thread>
 #include <atomic>
 #include <string>
@@ -167,6 +168,13 @@ private:
     ImGuiPopup<GameFilterWindow> filterPopup_;
 
     inline static std::optional<QaplaTester::GameRecord> selectedGame_;
+
+private:
+    std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;
+    void executeCommand(const std::string& button, bool isLoading);
+    static bool passesPlayerNamesFilter(const std::string& white, const std::string& black, const std::set<std::string>& selectedPlayers, const std::set<std::string>& selectedOpponents);
+    static bool passesResultFilter(QaplaTester::GameResult result, const std::set<QaplaTester::GameResult>& selectedResults);
+    static bool passesTerminationFilter(QaplaTester::GameEndCause cause, const std::set<QaplaTester::GameEndCause>& selectedTerminations);
 };
 
 } // namespace QaplaWindows

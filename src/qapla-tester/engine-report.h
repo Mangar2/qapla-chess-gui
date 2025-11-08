@@ -176,6 +176,7 @@ private:
     std::unordered_map<std::string, CheckEntry> entries_;
 
     EngineResult engineResult_;
+    static void logSections(const std::vector<ReportLine>& lines, size_t maxTopicLength, TraceLevel traceLevel, const std::map<CheckSection, AppReturnCode>& sectionCodes, CheckSection section, AppReturnCode& result);
 };
 
 } // namespace QaplaTester

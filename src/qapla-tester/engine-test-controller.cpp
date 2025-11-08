@@ -75,9 +75,9 @@ EngineList EngineTestController::startEngines(uint32_t count) {
             }));
     }
 
-    bool allReady = std::all_of(results.begin(), results.end(), [](auto& f) {
+    bool allReady = std::ranges::all_of(results, [](auto& f) {
         return f.get();
-        });
+    });
 
     checklist_->logReport("starts-and-stops-cleanly", allReady, "  one or more engines did not respond to isReady in time");
     if (!allReady) {
@@ -152,7 +152,7 @@ void EngineTestController::runTest(
 			Logger::testLogger().log("ComputeTask not initialized", TraceLevel::error);
             return;
         }
-        if (!computeTask_->getEngine()) {
+        if (computeTask_->getEngine() == nullptr) {
             startEngine();
         }
 		bool isComputeReady = computeTask_->getEngine()->requestReady(timeout);
@@ -161,7 +161,7 @@ void EngineTestController::runTest(
 		}
 
         const auto [success, errorMessage] = testCallback();
-        if (testName != "") {
+        if (!testName.empty()) {
             checklist_->logReport(testName, success, errorMessage);
         }
     }

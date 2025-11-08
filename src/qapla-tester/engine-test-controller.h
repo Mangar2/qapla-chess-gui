@@ -55,7 +55,7 @@ private:
 
 	void runMultipleStartStopTest(uint32_t numEngines);
 
-    void runPlaceholderTest();
+    static void runPlaceholderTest();
 
     void runEpFromFenTest();
 

@@ -328,7 +328,7 @@ static std::pair<bool, std::string> testSetOption(EngineWorker* engine, const st
     return { false, "Engine timed out after setting option '" + name + "' to '" + value + "'" };
 }
 
-TestResult runEngineOptionTests(const EngineConfig& engineConfig)
+TestResult runEngineOptionTests(const EngineConfig& engineConfig) // NOLINT(readability-function-cognitive-complexity)
 {
     return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
@@ -572,11 +572,16 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
         };
         
         std::vector<TestCase> testCases = {
-            {"no-loss-on-time", [] { TimeControl t; t.addTimeSegment({0, 1000, 500}); return t; }()},
-            {"no-loss-on-time", [] { TimeControl t; t.addTimeSegment({0, 100, 2000}); return t; }()},
-            {"supports-movetime", [] { TimeControl t; t.setMoveTime(1000); return t; }()},
-            {"supports-depth-limit", [] { TimeControl t; t.setDepth(4); return t; }()},
-            {"supports-node-limit", [] { TimeControl t; t.setNodes(10000); return t; }()}
+            {.name="no-loss-on-time", 
+                .timeControl=[] { TimeControl t; t.addTimeSegment({.movesToPlay=0, .baseTimeMs=1000, .incrementMs=500}); return t; }()},
+            {.name="no-loss-on-time", 
+                .timeControl=[] { TimeControl t; t.addTimeSegment({.movesToPlay=0, .baseTimeMs=100, .incrementMs=2000}); return t; }()},
+            {.name="supports-movetime", 
+                .timeControl=[] { TimeControl t; t.setMoveTime(1000); return t; }()},
+            {.name="supports-depth-limit", 
+                .timeControl=[] { TimeControl t; t.setDepth(4); return t; }()},
+            {.name="supports-node-limit", 
+                .timeControl=[] { TimeControl t; t.setNodes(10000); return t; }()}
         };
         
         TestResult results;
@@ -605,7 +610,7 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
             }
             
             std::string result = success ? "OK" : "Timeout";
-            results.emplace_back(TestResultEntry(testCase.name, result + timeStr, success));
+            results.emplace_back(testCase.name, result + timeStr, success);
         }
         
         Logger::testLogger().logAligned("Testing go limits:", 
