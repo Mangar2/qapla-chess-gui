@@ -25,7 +25,7 @@
 namespace QaplaTester {
 
 TestTournament::TestTournament(uint32_t totalGames, EngineReport* checklist)
-    : maxGames_(totalGames), current_(0), checklist_(checklist) {
+    : maxGames_(totalGames), checklist_(checklist) {
     timePairs_ = {
         {{0, 20000, 500}, {0, 10000, 100}},
         {{0, 10000, 500}, {0,  5000, 100}},
@@ -125,8 +125,8 @@ void TestTournament::timeUsageReasonable(uint64_t usedTimeMs, const TimeControl&
 
     double usageRatio = static_cast<double>(usedTimeMs) / static_cast<double>(availableTime);
     auto [minRatio, maxRatio] = expectedUsageRatioRange(moveCount);
-    double incMs = static_cast<double>(seg.incrementMs);
-    double baseMs = static_cast<double>(seg.baseTimeMs);
+    auto incMs = static_cast<double>(seg.incrementMs);
+    auto baseMs = static_cast<double>(seg.baseTimeMs);
     minRatio += (1.0 - minRatio) * std::min(1.0, incMs * 20.0 / (baseMs + 1));
     maxRatio += (1.0 - maxRatio) * std::min(1.0, incMs * 100.0 / (baseMs + 1));
 
@@ -153,7 +153,9 @@ void TestTournament::logStatus() {
     std::string whiteTimeControl = lastWhiteTimeControl.toPgnTimeControlString();
     std::string blackTimeControl = lastBlackTimeControl.toPgnTimeControlString();
 
-    int whiteWins = 0, blackWins = 0, draws = 0;
+    int whiteWins = 0;
+    int blackWins = 0;
+    int draws = 0;
     std::map<GameEndCause, int> causeCounts;
 
     for (const auto& game : gameRecords_) {
@@ -164,8 +166,9 @@ void TestTournament::logStatus() {
         case GameResult::Draw: ++draws; break;
         default: break;
         }
-        if (cause != GameEndCause::Ongoing)
+        if (cause != GameEndCause::Ongoing) {
             ++causeCounts[cause];
+        }
     }
 
     std::ostringstream oss;
@@ -175,8 +178,9 @@ void TestTournament::logStatus() {
         << " B:" << std::setw(3) << blackWins
         << " | ";
     oss << whiteTimeControl << " vs. " << blackTimeControl << " | ";
-    for (const auto& [cause, count] : causeCounts)
+    for (const auto& [cause, count] : causeCounts) {
         oss << to_string(cause) << ":" << count << " ";
+    }
 
     Logger::testLogger().log(oss.str());
 }

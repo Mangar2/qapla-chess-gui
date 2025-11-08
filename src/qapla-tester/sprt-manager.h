@@ -93,7 +93,7 @@ struct MonteCarloResult {
 class SprtManager : public GameTaskProvider {
 public:
     SprtManager() = default;
-    ~SprtManager();
+    ~SprtManager() override;
 
     /**
      * @brief Initializes and starts the SPRT testing procedure between two engines.
@@ -249,7 +249,8 @@ private:
     SprtResult computeSprt(
         int winsA, int draws, int winsB, const std::string& engineA, const std::string& engineB) const;
 
-    void runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames);
+    void runMonteCarloSingleTest(int simulationsPerElo, int elo, double drawRate, 
+        int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames);
 
     /**
      * @brief Internal method that performs the actual Monte Carlo test computation.

@@ -31,8 +31,8 @@ namespace QaplaTester {
 
 void MoveRecord::clear() {
     original.clear();
-    lan.clear();
-    san.clear();
+    lan_.clear();
+    san_.clear();
     comment.clear();
     nag.clear();
     timeMs = 0;
@@ -64,8 +64,8 @@ void MoveRecord::updateFromBestMove(uint32_t halfmoveNo, const std::string& engi
     engineId_ = engineId;
     if (event.bestMove) {
         original = *event.bestMove;
-        lan = lanMove;
-        san = sanMove;
+        lan_ = std::move(lanMove);
+        san_ = std::move(sanMove);
     }
     halfmoveClock = halfmoveClk;
     timeMs = event.timestampMs - computeStartTimestamp;
@@ -75,65 +75,75 @@ void MoveRecord::updateFromBestMove(uint32_t halfmoveNo, const std::string& engi
  * @brief Updates the move record with search information from an EngineEvent.
  * @param info SearchInfo containing various search metrics.
  */
-void MoveRecord::updateFromSearchInfo(const SearchInfo& info, bool whitePovCorrection) {
-    if (info.depth) depth = *info.depth;
-    if (info.selDepth) seldepth = *info.selDepth;
-    if (info.multipv) multipv = *info.multipv;
-    if (info.nodes) nodes = static_cast<uint64_t>(*info.nodes);
+void MoveRecord::updateFromSearchInfo(const SearchInfo& searchInfo, bool whitePovCorrection) {  // NOLINT(readability-function-cognitive-complexity)
+    if (searchInfo.depth) {
+        depth = *searchInfo.depth;
+    }
+    if (searchInfo.selDepth) {
+        seldepth = *searchInfo.selDepth;
+    }
+    if (searchInfo.multipv) {
+        multipv = *searchInfo.multipv;
+    }
+    if (searchInfo.nodes) {
+        nodes = static_cast<uint64_t>(*searchInfo.nodes);
+    }
 
-    if (info.scoreCp) {
-        scoreCp = whitePovCorrection ? -(*info.scoreCp) : *info.scoreCp;
+    if (searchInfo.scoreCp) {
+        scoreCp = whitePovCorrection ? -(*searchInfo.scoreCp) : *searchInfo.scoreCp;
         scoreMate.reset();
     }
-    else if (info.scoreMate) {
-        scoreMate = whitePovCorrection ? -(*info.scoreMate) : *info.scoreMate;
+    else if (searchInfo.scoreMate) {
+        scoreMate = whitePovCorrection ? -(*searchInfo.scoreMate) : *searchInfo.scoreMate;
         scoreCp.reset();
     }
 
-    if (!info.pv.empty()) {
+    if (!searchInfo.pv.empty()) {
         pv.clear();
-        for (size_t i = 0; i < info.pv.size(); ++i) {
-            if (i > 0) pv += ' ';
-            pv += info.pv[i];
+        for (size_t i = 0; i < searchInfo.pv.size(); ++i) {
+            if (i > 0) {
+                pv += ' ';
+            }
+            pv += searchInfo.pv[i];
         }
     }
     infoUpdateCount++;
     // We keep the pv history, but everything else is overwritten
-    if (!this->info.empty() && this->info.back().pv.empty()) {
-        this->info.back().depth = depth;
-        this->info.back().selDepth = seldepth;
-        this->info.back().multipv = multipv;
-        this->info.back().nodes = nodes;
-        this->info.back().scoreCp = scoreCp;
-        this->info.back().scoreMate = scoreMate;
-        this->info.back().pv = info.pv;
-        if (info.timeMs) {
-            this->info.back().timeMs = info.timeMs;
+    if (!info.empty() && info.back().pv.empty()) {
+        info.back().depth = depth;
+        info.back().selDepth = seldepth;
+        info.back().multipv = multipv;
+        info.back().nodes = nodes;
+        info.back().scoreCp = scoreCp;
+        info.back().scoreMate = scoreMate;
+        info.back().pv = searchInfo.pv;
+        if (searchInfo.timeMs) {
+            info.back().timeMs = searchInfo.timeMs;
         }
-        if (info.hashFull) {
-            this->info.back().hashFull = info.hashFull;
+        if (searchInfo.hashFull) {
+            info.back().hashFull = searchInfo.hashFull;
         }
-        if (info.tbhits) {
-            this->info.back().tbhits = info.tbhits;
+        if (searchInfo.tbhits) {
+            info.back().tbhits = searchInfo.tbhits;
         }
-        if (info.cpuload) {
-            this->info.back().cpuload = info.cpuload;
+        if (searchInfo.cpuload) {
+            info.back().cpuload = searchInfo.cpuload;
         }
-        if (info.currMove) {
-            this->info.back().currMove = info.currMove;
+        if (searchInfo.currMove) {
+            info.back().currMove = searchInfo.currMove;
         }
-        if (info.currMoveNumber) {
-            this->info.back().currMoveNumber = info.currMoveNumber;
+        if (searchInfo.currMoveNumber) {
+            info.back().currMoveNumber = searchInfo.currMoveNumber;
         }
-        if (info.refutationIndex) {
-            this->info.back().refutationIndex = info.refutationIndex;
+        if (searchInfo.refutationIndex) {
+            info.back().refutationIndex = searchInfo.refutationIndex;
         }
-        if (!info.refutation.empty()) {
-            this->info.back().refutation = info.refutation;
+        if (!searchInfo.refutation.empty()) {
+            info.back().refutation = searchInfo.refutation;
         }
     }
     else {
-        this->info.push_back(info);
+        info.push_back(searchInfo);
     }
 }
 
@@ -162,7 +172,7 @@ std::string MoveRecord::evalString() const {
 
 MoveRecord MoveRecord::createMinimalCopy() const {
     MoveRecord result;
-    result.lan = lan;
+    result.lan_ = lan_;
     result.timeMs = timeMs;
     result.scoreCp = scoreCp;
     result.scoreMate = scoreMate;
@@ -177,9 +187,41 @@ MoveRecord MoveRecord::createMinimalCopy() const {
     return result;
 }
 
-std::string MoveRecord::toString(const toStringOptions& opts) const {
+std::string MoveRecord::getGameEndText() const {
     std::ostringstream out;
-    out << (san.empty() ? lan : san);
+    // Generate the game-end text
+    if (endCause_ == GameEndCause::Checkmate) {
+        // For checkmate, specify which side won
+        if (result_ == GameResult::WhiteWins) {
+            out << "White mates";
+        } else if (result_ == GameResult::BlackWins) {
+            out << "Black mates";
+        }
+    } else if (result_ == GameResult::Draw) {
+        // For draws, use "Draw by" + termination string
+        out << "Draw by " << gameEndCauseToPgnTermination(endCause_);
+    } else if (result_ == GameResult::WhiteWins || result_ == GameResult::BlackWins) {
+        // For other wins (resignation, timeout, etc.), specify winner
+        std::string winner = (result_ == GameResult::WhiteWins) ? "White" : "Black";
+        std::string cause = gameEndCauseToPgnTermination(endCause_);
+        
+        // Special handling for common cases
+        if (endCause_ == GameEndCause::Resignation) {
+            out << winner << " wins by resignation";
+        } else if (endCause_ == GameEndCause::Timeout) {
+            out << winner << " wins on time";
+        } else if (endCause_ == GameEndCause::Forfeit) {
+            out << winner << " wins by forfeit";
+        } else {
+            out << winner << " wins by " << cause;
+        }
+    }
+    return out.str();
+}
+
+std::string MoveRecord::toString(const toStringOptions& opts) const { // NOLINT(readability-function-cognitive-complexity)
+    std::ostringstream out;
+    out << (san_.empty() ? lan_ : san_);
 
     bool hasComment = (opts.includeEval && (scoreCp || scoreMate))
         || (opts.includeDepth && depth > 0)
@@ -193,7 +235,7 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
 
     if (hasComment) {
         out << " {";
-        std::string sep = "";
+        std::string sep;
 
         if (opts.includeEval && (scoreCp || scoreMate)) {
             out << evalString();
@@ -218,39 +260,10 @@ std::string MoveRecord::toString(const toStringOptions& opts) const {
 
         // Add game-end information (cute-chess-cli style)
         if (result_ != GameResult::Unterminated) {
-            // Add comma and space separator if there was previous content
             if (!sep.empty()) {
                 out << ",";
             }
-            out << " ";
-
-            // Generate the game-end text
-            if (endCause_ == GameEndCause::Checkmate) {
-                // For checkmate, specify which side won
-                if (result_ == GameResult::WhiteWins) {
-                    out << "White mates";
-                } else if (result_ == GameResult::BlackWins) {
-                    out << "Black mates";
-                }
-            } else if (result_ == GameResult::Draw) {
-                // For draws, use "Draw by" + termination string
-                out << "Draw by " << gameEndCauseToPgnTermination(endCause_);
-            } else if (result_ == GameResult::WhiteWins || result_ == GameResult::BlackWins) {
-                // For other wins (resignation, timeout, etc.), specify winner
-                std::string winner = (result_ == GameResult::WhiteWins) ? "White" : "Black";
-                std::string cause = gameEndCauseToPgnTermination(endCause_);
-                
-                // Special handling for common cases
-                if (endCause_ == GameEndCause::Resignation) {
-                    out << winner << " wins by resignation";
-                } else if (endCause_ == GameEndCause::Timeout) {
-                    out << winner << " wins on time";
-                } else if (endCause_ == GameEndCause::Forfeit) {
-                    out << winner << " wins by forfeit";
-                } else {
-                    out << winner << " wins by " << cause;
-                }
-            }
+            out << " " << getGameEndText();
         }
 
         out << "}";

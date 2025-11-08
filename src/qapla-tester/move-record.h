@@ -42,8 +42,8 @@ struct MoveRecord {
     };
     
     std::string original;
-    std::string lan;
-    std::string san;
+    std::string lan_;
+    std::string san_;
     std::string ponderMove;
     QaplaBasics::Move move;
     std::string comment;
@@ -95,10 +95,10 @@ struct MoveRecord {
     
     /**
 	 * @brief Updates the move record with search information from an EngineEvent.
-	 * @param info SearchInfo containing various search metrics.
+	 * @param searchInfo SearchInfo containing various search metrics.
      * @param whitePovCorrection Indicates if the score is from White's point of view.
      */
-    void updateFromSearchInfo(const SearchInfo& info, bool whitePovCorrection = false);
+    void updateFromSearchInfo(const SearchInfo& searchInfo, bool whitePovCorrection = false);
 
     /**
      * @brief Updates the move record with a ponder move hint.
@@ -131,6 +131,12 @@ struct MoveRecord {
      * @return The string representation of the move.
      */
     [[nodiscard]] std::string toString(const toStringOptions& opts = {.includeClock=false, .includeEval=false, .includePv=false, .includeDepth=false}) const;
+
+    /**
+     * @brief Generates the game-end text for the comment.
+     * @return The game-end text string.
+     */
+    [[nodiscard]] std::string getGameEndText() const;
 };
 
 using MoreRecords = std::vector<std::optional<MoveRecord>>;

@@ -128,7 +128,7 @@ std::optional<size_t> ImGuiMoveList::draw() {
 
 std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
     std::vector<std::string> row;
-    row.push_back(label + move.san);
+    row.push_back(label + move.san_);
     if (!label.empty() && label[0] == '.') {
     }
 

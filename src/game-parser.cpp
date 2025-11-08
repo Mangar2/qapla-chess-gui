@@ -145,8 +145,8 @@ std::optional<GameRecord> parseUCI(const std::string& input) {
             break;
         }
         MoveRecord moveRecord;
-        moveRecord.lan = move.getLAN();
-        moveRecord.san = gameState.moveToSan(move);
+        moveRecord.lan_ = move.getLAN();
+        moveRecord.san_ = gameState.moveToSan(move);
         moveRecord.original = moveStr;
         gameState.doMove(move);
         result.addMove(moveRecord);

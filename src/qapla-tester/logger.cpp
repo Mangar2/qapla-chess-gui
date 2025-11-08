@@ -55,11 +55,13 @@ void Logger::log(std::string_view prefix, std::string_view message, bool isOutpu
 
     std::scoped_lock lock(mutex_);
     if (level <= fileThreshold && fileStream_.is_open()) {
-        fileStream_ << prefix << (isOutput ? " -> " : " <- ") << message << std::endl;
+        fileStream_ << prefix << (isOutput ? " -> " : " <- ") << message << "\n" << std::flush;
     }
     
-    if (level > cliThreshold) return;
-    std::cout << prefix << (isOutput ? " -> " : " <- ") << message << std::endl;
+    if (level > cliThreshold) {
+        return;
+    }
+    std::cout << prefix << (isOutput ? " -> " : " <- ") << message << "\n" << std::flush;
 }
 
 /**
@@ -71,11 +73,13 @@ void Logger::log(std::string_view message, TraceLevel level) {
 
     std::scoped_lock lock(mutex_);
     if (level <= fileThreshold_ && fileStream_.is_open()) {
-        fileStream_ << message << std::endl;
+        fileStream_ << message << "\n" << std::flush;
     }
 
-    if (level > cliThreshold_) return;
-    std::cout << message << std::endl;
+    if (level > cliThreshold_) {
+        return;
+    }
+    std::cout << message << "\n" << std::flush;
 }
 
 /**

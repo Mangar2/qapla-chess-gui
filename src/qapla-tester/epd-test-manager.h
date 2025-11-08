@@ -112,11 +112,11 @@ public:
 
         if (!history.empty()) {
             const auto& lastMove = history.back();
-            bool success = (lastMove.lan == test.expectedMove);
+            bool success = (lastMove.lan_ == test.expectedMove);
             std::ostringstream oss;
             oss << test.fen << " topic " << test.topic  
                 << " | Expected: " << test.expectedMove
-                << ", Got: " << lastMove.lan
+                << ", Got: " << lastMove.lan_
                 << ", Depth: " << lastMove.depth
                 << ", Time: " << lastMove.timeMs << "ms\n";
             

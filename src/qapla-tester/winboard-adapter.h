@@ -47,7 +47,7 @@ public:
      * @param workingDirectory Optional working directory for the engine.
      * @param identifier Unique identifier for this engine instance.
      */
-    explicit WinboardAdapter(std::filesystem::path enginePath,
+    explicit WinboardAdapter(const std::filesystem::path& enginePath,
         const std::optional<std::filesystem::path>& workingDirectory,
         const std::string& identifier);
     /**

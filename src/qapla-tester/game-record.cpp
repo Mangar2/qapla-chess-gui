@@ -105,17 +105,17 @@ void GameRecord::setGameEnd(GameEndCause cause, GameResult result)
         lastMove.result_ = result;
 
         // If this is checkmate, change '+' to '#' in SAN notation
-        if (cause == GameEndCause::Checkmate && !lastMove.san.empty())
+        if (cause == GameEndCause::Checkmate && !lastMove.san_.empty())
         {
-            if (lastMove.san.back() == '+')
+            if (lastMove.san_.back() == '+')
             {
-                lastMove.san.back() = '#';
+                lastMove.san_.back() = '#';
             }
-            else if (lastMove.san.find('+') != std::string::npos)
+            else if (lastMove.san_.find('+') != std::string::npos)
             {
                 // Handle cases like "Qxf7+" or similar
-                size_t pos = lastMove.san.find('+');
-                lastMove.san[pos] = '#';
+                size_t pos = lastMove.san_.find('+');
+                lastMove.san_[pos] = '#';
             }
         }
     }
@@ -213,8 +213,8 @@ GameStruct GameRecord::createGameStruct() const
         }
         index++;
 
-        gs.lanMoves += spacer + move.lan;
-        gs.sanMoves += spacer + move.san;
+        gs.lanMoves += spacer + move.lan_;
+        gs.sanMoves += spacer + move.san_;
         spacer = " ";
     }
     gs.isWhiteToMove = isWhiteToMove();

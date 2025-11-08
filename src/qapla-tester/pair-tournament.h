@@ -48,10 +48,10 @@ namespace QaplaTester {
 struct StartPositions {
     std::vector<std::string> fens;
     std::vector<GameRecord> games;
-	uint32_t size() const {
+	[[nodiscard]] uint32_t size() const {
 		return std::max(static_cast<uint32_t>(fens.size()), static_cast<uint32_t>(games.size()));
 	}
-	bool empty() const {
+	[[nodiscard]] bool empty() const {
 		return fens.empty() && games.empty();
 	}
 };

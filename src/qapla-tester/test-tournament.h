@@ -147,7 +147,7 @@ private:
     void logStatus();
 
     uint32_t maxGames_;                                              ///< Total number of games in the tournament
-    uint32_t current_;                                               ///< Number of games assigned so far
+    uint32_t current_{};                                             ///< Number of games assigned so far
     std::mutex mutex_;                                               ///< Protects concurrent access to tournament state
     std::vector<GameRecord> gameRecords_;                            ///< Complete results of all finished games
     std::vector<std::pair<TimeSegment, TimeSegment>> timePairs_;     ///< Time control pairs for white and black

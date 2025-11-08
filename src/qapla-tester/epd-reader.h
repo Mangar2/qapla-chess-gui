@@ -61,9 +61,9 @@ public:
      *
      * @return const reference to the vector of all entries.
      */
-    const std::vector<EpdEntry>& all() const;
+    [[nodiscard]] const std::vector<EpdEntry>& all() const;
 
-	const std::string getFilePath() const {
+	[[nodiscard]] const std::string& getFilePath() const {
 		return filePath_;
 	}
 

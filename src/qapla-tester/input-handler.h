@@ -98,9 +98,9 @@ private:
 
     InputHandler() = default;
 
-    void handleSetCommand(const std::vector<std::string>& args);
+    static void handleSetCommand(const std::vector<std::string>& args);
     void handleLine(const std::string& line);
-    void showHelp();
+    static void showHelp();
 
 
     std::atomic<bool> started{ false };

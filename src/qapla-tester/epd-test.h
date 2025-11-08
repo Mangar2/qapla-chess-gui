@@ -76,7 +76,6 @@ class EpdTest : public GameTaskProvider {
 public:
     using TestResultCallback = std::function<void(EpdTest*, size_t fromIndex, size_t toIndex)>;
 
-public:
     EpdTest() = default;
 
     /**

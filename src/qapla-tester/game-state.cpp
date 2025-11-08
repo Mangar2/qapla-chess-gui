@@ -277,7 +277,7 @@ GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::opti
 	copy.reserveMoves(maxPly);
 	for (uint32_t i = 0; i < maxPly; ++i) {
 		MoveRecord move = moves[i];
-		auto& moveStr = move.original.empty() ? move.san : move.original;
+		auto& moveStr = move.original.empty() ? move.san_ : move.original;
 		auto parsed = stringToMove(moveStr, false);
 		if (parsed.isEmpty()) {
 			if (verbose) {
@@ -286,8 +286,8 @@ GameRecord GameState::setFromGameRecordAndCopy(const GameRecord& game, std::opti
 			}
 			return copy;
 		}
-		move.lan = parsed.getLAN();
-		move.san = moveToSan(parsed);
+		move.lan_ = parsed.getLAN();
+		move.san_ = moveToSan(parsed);
 		copy.addMove(move);
 		doMove(parsed);
 	}
@@ -315,7 +315,7 @@ void GameState::setFromGameRecord(const GameRecord& game, std::optional<uint32_t
 		maxPly = std::min(maxPly, *plies);
 	}
 	for (uint32_t i = 0; i < maxPly; ++i) {
-		std::string moveStr = moves[i].lan.empty() ? moves[i].san : moves[i].lan;
+		std::string moveStr = moves[i].lan_.empty() ? moves[i].san_ : moves[i].lan_;
 		auto parsed = stringToMove(moveStr, false);
 		if (parsed.isEmpty()) {
 			Logger::testLogger().log("Illegal move in game record: " + moveStr + " pos: " + getFen(),

@@ -188,7 +188,7 @@ private:
      * @param baseName The base name for the file.
      * @return Complete filename with timestamp and .log extension.
      */
-    std::string generateTimestampedFilename(const std::string& baseName);
+    static std::string generateTimestampedFilename(const std::string& baseName);
 
     std::mutex mutex_;                          ///< Mutex for thread-safe logging
     std::ofstream fileStream_;                  ///< Output file stream for log file

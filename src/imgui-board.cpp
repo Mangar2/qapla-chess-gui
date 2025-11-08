@@ -433,8 +433,8 @@ namespace QaplaWindows
         } else if (!move.isEmpty()) {
             moveInput_ = {};
             QaplaTester::MoveRecord moveRecord;
-            moveRecord.lan = move.getLAN();
-            moveRecord.san = gameState_->moveToSan(move);
+            moveRecord.lan_ = move.getLAN();
+            moveRecord.san_ = gameState_->moveToSan(move);
             moveRecord.halfmoveNo_ = gameState_->getHalfmovesPlayed() + 1;
             moveRecord.move = move;
             return moveRecord;

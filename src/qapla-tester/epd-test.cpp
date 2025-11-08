@@ -135,7 +135,7 @@ void EpdTest::setGameRecord(const std::string& taskId, const GameRecord& record)
     }
 
     const auto& move = moves.back();
-    const std::string& played = move.san.empty() ? move.lan : move.san;
+    const std::string& played = move.san_.empty() ? move.lan_ : move.san_;
 
     const auto taskIndex = QaplaHelpers::to_uint32(taskId);
     if (!taskIndex || (*taskIndex >= result_.result.size())) {

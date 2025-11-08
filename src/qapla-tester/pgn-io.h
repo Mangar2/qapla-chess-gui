@@ -94,13 +94,13 @@ public:
      * @return Vector of parsed GameRecord instances.
      */
     std::vector<GameRecord> loadGames(const std::string& fileName, bool loadComments = true,
-                                     std::function<bool(const GameRecord&, float)> gameCallback = nullptr);
+        const std::function<bool(const GameRecord&, float)>& gameCallback = nullptr);
 
     /**
      * @brief Gets the positions of games in the last loaded file.
      * @return Vector of stream positions for each game.
      */
-    const std::vector<std::streampos>& getGamePositions() const { return gamePositions_; }
+    [[nodiscard]] const std::vector<std::streampos>& getGamePositions() const { return gamePositions_; }
 
     /**
      * @brief Loads a specific game from the previously loaded file by index.
@@ -212,8 +212,8 @@ private:
     static size_t parseCauseAnnotation(const std::vector<std::string>& tokens, size_t start, 
         std::optional<GameEndCause>& cause);
 
-    static void parseMateScore(std::string token, int32_t factor, MoveRecord& move);
-    static void parseCpScore(std::string token, MoveRecord& move);
+    static void parseMateScore(const std::string& token, int32_t factor, MoveRecord& move);
+    static void parseCpScore(const std::string& token, MoveRecord& move);
     
     /**
      * @brief Parses game-end information from comment tokens.
@@ -257,12 +257,30 @@ private:
      */
     static void finalizeParsedTags(GameRecord& game);
 
+    /**
+     * @brief Processes the lines of the PGN file in the while loop.
+     * @param inFile The input file stream.
+     * @param fileSize Size of the file for progress calculation.
+     * @param games Vector to store parsed games.
+     * @param currentGame Current game being parsed.
+     * @param inMoveSection Flag indicating if we are in the move section.
+     * @param gameCallback Optional callback for progress.
+     * @param loadComments Whether to load comments.
+     */
+    void processFileLines(std::ifstream& inFile, 
+        std::streamsize fileSize, 
+        std::vector<GameRecord>& games, 
+        GameRecord& currentGame, 
+        bool& inMoveSection, 
+        const std::function<bool(const GameRecord&, float)>& gameCallback, 
+        bool loadComments);
+
     Options options_;
     std::vector<std::streampos> gamePositions_;  // Positions of games in the last loaded file
     std::string currentFileName_;  // Name of the last loaded file
     std::mutex mutex_;  // For thread safety
     std::mutex fileMutex_;
-    std::string event_ = "";
+    std::string event_;
 };
 
 } // namespace QaplaTester

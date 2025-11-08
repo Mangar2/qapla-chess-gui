@@ -178,31 +178,8 @@ void SprtManager::loadFromSection(const QaplaHelpers::IniFile::Section& section)
 }
 
 void SprtManager::load(const QaplaHelpers::IniFile::Section& section) {
-    std::string engineA;
-    std::string engineB;
-    uint32_t round = 0;
-    std::string games;
-    // updateCnt_++;
     try {
-        for (const auto& [key, value]: section.entries) {
-            if (key == "engineA") {
-                engineA = value;
-            } else if (key == "engineB") {
-                engineB = value;
-            } else if (key == "round") {
-                round = std::stoul(value) - 1;
-            } else if (key == "games") {
-                games = value;
-            }
-        }
-        /*
-        for (const auto& pairing : pairings_) {
-            if (!games.empty() && pairing->matches(round, engineA, engineB)) {
-                pairing->fromSection(section);
-                break;
-            }
-        }
-        */
+        tournament_->fromSection(section);
     } catch (const std::exception& ex) {
         // Ignore invalid section
     }
@@ -344,7 +321,7 @@ std::string SprtManager::computeSprtInfo(const SprtResult& result) {
     return oss.str();
 }
 
-void SprtManager::runMonteCarloSingleTest(const int simulationsPerElo, int elo, const double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames)
+void SprtManager::runMonteCarloSingleTest(int simulationsPerElo, int elo, double drawRate, int64_t &noDecisions, int64_t &numH0, int64_t &numH1, int64_t &totalGames)
 {
     for (int sim = 0; sim < simulationsPerElo; ++sim)
     {
@@ -474,11 +451,11 @@ void SprtManager::runMonteCarloTestInternal(const SprtConfig& config) {
         {
             std::scoped_lock lock(monteCarloResultMutex_);
             monteCarloResult_.rows.push_back({
-                elo,
-                noDecisionPercent,
-                h0AcceptedPercent,
-                h1AcceptedPercent,
-                avgGames
+                .eloDifference = elo,
+                .noDecisionPercent = noDecisionPercent,
+                .h0AcceptedPercent = h0AcceptedPercent,
+                .h1AcceptedPercent = h1AcceptedPercent,
+                .avgGames = avgGames
             });
         }
 

@@ -62,7 +62,7 @@ size_t PgnTokenizer::estimateTokenCount(size_t pgnSize) {
 
 void PgnTokenizer::skipWhitespace(const std::string& pgn, size_t& pos) {
     const size_t length = pgn.size();
-    while (pos < length && std::isspace(static_cast<unsigned char>(pgn[pos]))) {
+    while (pos < length && std::isspace(static_cast<unsigned char>(pgn[pos])) != 0) {
         ++pos;
     }
 }
@@ -85,7 +85,7 @@ std::string PgnTokenizer::extractQuotedString(const std::string& pgn, size_t& po
         }
     }
 
-    return std::string(pgn, start, pos - start);
+    return { pgn, start, pos - start };
 }
 
 std::string PgnTokenizer::extractLineComment(const std::string& pgn, size_t& pos) {
@@ -96,7 +96,7 @@ std::string PgnTokenizer::extractLineComment(const std::string& pgn, size_t& pos
         ++pos;
     }
 
-    return std::string(pgn, start, pos - start);
+    return { pgn, start, pos - start };
 }
 
 std::string PgnTokenizer::extractWord(const std::string& pgn, size_t& pos) {
@@ -112,7 +112,7 @@ std::string PgnTokenizer::extractWord(const std::string& pgn, size_t& pos) {
         }
     }
 
-    return std::string(pgn, start, pos - start);
+    return { pgn, start, pos - start };
 }
 
 bool PgnTokenizer::isWordStart(char c) {
@@ -121,7 +121,7 @@ bool PgnTokenizer::isWordStart(char c) {
     // "+" for positive numbers
     // "_" we allow words to start with underscore as well
     
-    return std::isalnum(static_cast<unsigned char>(c)) || 
+    return std::isalnum(static_cast<unsigned char>(c)) != 0 || 
            c == '-' || c == '$' || c == '+' || c == '_';
 }
 
@@ -132,7 +132,7 @@ bool PgnTokenizer::isWordChar(char c) {
     // "#" for checkmate notation
     // "=" for e8=Q promotions
     // "_" for NAGs like $6_1
-    return std::isalnum(static_cast<unsigned char>(c)) || 
+    return std::isalnum(static_cast<unsigned char>(c)) != 0 || 
            c == '-' || c == '.' || c == '+' || c == '#' || 
            c == '=' || c == '_';
 }

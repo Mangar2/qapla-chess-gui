@@ -185,7 +185,7 @@ void GameContext::setPosition(bool useStartPosition, const std::string &fen,
             {
                 MoveRecord moveRecord(gameRecord_.nextMoveIndex(), "#gui");
                 moveRecord.original = move;
-                moveRecord.lan = move;
+                moveRecord.lan_ = move;
                 gameRecord_.addMove(moveRecord);
             }
         }

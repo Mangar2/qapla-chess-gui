@@ -266,9 +266,9 @@ static bool isLanMoveToken(const std::string& token) {
 	return true;
 }
 
-EngineEvent UciAdapter::parseSearchInfo(std::istringstream& iss, uint64_t timestamp, const std::string& rawLine) {
+EngineEvent UciAdapter::parseSearchInfo(std::istringstream& iss, uint64_t timestamp, const std::string& originalLine) {
     SearchInfo info;
-    EngineEvent event = EngineEvent::create(EngineEvent::Type::Info, identifier_, timestamp, rawLine);
+    EngineEvent event = EngineEvent::create(EngineEvent::Type::Info, identifier_, timestamp, originalLine);
     std::string token;
     std::string parent;
 
