@@ -141,12 +141,12 @@ namespace QaplaHelpers {
      * @return Optional double if conversion succeeds, nullopt otherwise.
      */
     auto to_double = [](std::string_view s) -> std::optional<double> {
-        double value;
-        auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
-        if (ec == std::errc() && ptr == s.data() + s.size()) {
+        try {
+            double value = std::stod(std::string(s));
             return value;
+        } catch (...) {
+            return std::nullopt;
         }
-        return std::nullopt;
     };
 
     /**

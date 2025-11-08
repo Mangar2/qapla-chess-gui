@@ -19,11 +19,12 @@
 
 #pragma once
 
+#include "string-helper.h"
+
 #include <stdexcept>
 #include <string>
 #include <algorithm>
 #include <limits>
-#include "string-helper.h"
 
 namespace QaplaTester {
 
