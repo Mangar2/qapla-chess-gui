@@ -18,10 +18,6 @@
  */
 #pragma once
 
-#include <memory>
-#include <future>
-#include <mutex>
-
 #include "engine-report.h"
 #include "engine-worker.h"
 #include "timer.h"
@@ -32,6 +28,10 @@
 #include "game-record.h"
 #include "player-context.h"
 #include "game-context.h"
+
+#include <memory>
+#include <future>
+#include <mutex>
 
 namespace QaplaTester {
 
@@ -50,7 +50,6 @@ public:
         std::unique_ptr<EngineWorker> black;
     };
 
-public:
 	explicit GameManager(GameManagerPool* pool);
 	~GameManager();
 
@@ -126,14 +125,14 @@ public:
 	 *
 	 * @return A reference to the used GameTaskProvider.
 	 */
-    const std::shared_ptr<GameTaskProvider> getTaskProvider() {
+    std::shared_ptr<GameTaskProvider> getTaskProvider() {
 		return taskProvider_;
     }
 
     /**
 	 * @brief Returns information about the engine players.
      */
-    const EngineRecords getEngineRecords() const {
+    EngineRecords getEngineRecords() const {
         return gameContext_.getEngineRecords();
 	}
 
@@ -156,7 +155,7 @@ public:
     /**
      * @brief Returns true, if the game manager is running. 
      */
-    bool isRunning() {
+    [[nodiscard]] bool isRunning() const {
         return finishedPromiseValid_;
     }
 
@@ -171,8 +170,8 @@ public:
      *
      * @param accessFn A callable that takes a const GameRecord&.
      */
-    void withGameRecord(std::function<void(const GameRecord&)> accessFn) const {
-        gameContext_.withGameRecord(std::move(accessFn));
+    void withGameRecord(const std::function<void(const GameRecord&)>& accessFn) const {
+        gameContext_.withGameRecord(accessFn);
     }
 
 

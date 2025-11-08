@@ -126,7 +126,7 @@ public:
 
     std::pair<uint64_t, std::optional<TournamentResult>> pollResult(uint64_t updateCnt) {
         if (updateCnt != updateCnt_) {
-			std::lock_guard<std::mutex> lock(stateMutex_);
+			std::scoped_lock lock(stateMutex_);
             return { updateCnt_, result_ };
 		}
         return { updateCnt_, std::nullopt };

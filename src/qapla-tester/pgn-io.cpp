@@ -38,7 +38,7 @@ void PgnIO::initialize(const std::string& event, bool isResumingTournament) {
     // - append mode is disabled (overwrite mode)
     // - AND we're starting a fresh tournament (not resuming)
     if (!options_.append && !isResumingTournament) {
-        std::lock_guard<std::mutex> lock(fileMutex_);
+        std::scoped_lock lock(fileMutex_);
         std::ofstream out(options_.file, std::ios::trunc);
     }
 }
@@ -297,7 +297,7 @@ void PgnIO::saveGame(const GameRecord& game) {
         throw std::runtime_error("saveAfterMove not yet supported");
     }
 
-    std::lock_guard<std::mutex> lock(fileMutex_);
+    std::scoped_lock lock(fileMutex_);
     std::ofstream out(options_.file, std::ios::app);
     if (!out) {
         throw std::runtime_error("Failed to open PGN file: " + options_.file);

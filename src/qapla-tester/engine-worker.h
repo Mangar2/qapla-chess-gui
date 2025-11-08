@@ -96,7 +96,7 @@ public:
 	 * @param limits The time limits for the next move.
 	 * @param ponderMove The move to ponder, if any.
 	 */
-	void allowPonder(const GameRecord& game, const GoLimits& limits, std::string ponderMove);
+	void allowPonder(const GameRecord& game, const GoLimits& limits, const std::string& ponderMove);
 
 	/**
 	 * @brief Sends a command to the engine to prepare for a new game.

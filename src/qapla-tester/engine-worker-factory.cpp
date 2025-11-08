@@ -34,7 +34,6 @@ void EngineWorkerFactory::assignUniqueDisplayNames() {
 std::unique_ptr<EngineWorker> EngineWorkerFactory::createEngine(const EngineConfig& config) {
     auto executablePath = config.getCmd();
     auto workingDirectory = config.getDir();
-    auto name = config.getName();
     auto identifierStr = "#" + std::to_string(identifier_);
     std::unique_ptr<EngineAdapter> adapter;
     if (config.getProtocol() == EngineProtocol::Uci) {
@@ -56,12 +55,52 @@ std::unique_ptr<EngineWorker> EngineWorkerFactory::restart(const EngineWorker& w
 	return createEngine(worker.getConfig());
 }
 
+void EngineWorkerFactory::waitUntilAllEnginesStarted(std::vector<std::future<void>>& futures, 
+    const EngineConfig& config) {
+    auto* checklist = EngineReport::getChecklist(config.getName());
+    for (auto& f : futures) {
+        try {
+            f.get();
+        }
+        catch (const std::exception& error) {
+            checklist->logReport("starts-and-stops-cleanly", false, std::string(error.what()));
+        }
+        catch (...) {
+            checklist->logReport("starts-and-stops-cleanly", false, "Unknown error");
+        }
+    }
+}
+
+void EngineWorkerFactory::waitUntilAllEnginesStarted(std::vector<std::future<void>>& futures, 
+    const std::vector<EngineConfig>& configs) {
+    uint32_t index = 0;
+    for (auto& f : futures) {
+        EngineReport* checklist;
+        const auto& name = configs[index].getName();
+        try {
+            f.get();
+        }
+        catch (const std::exception& error) {
+            if (!name.empty()) {
+                checklist = EngineReport::getChecklist(name);
+                checklist->logReport("starts-and-stops-cleanly", false, std::string(error.what()));
+            }
+        }
+        catch (...) {
+            if (!name.empty()) {
+                checklist = EngineReport::getChecklist(name);
+                checklist->logReport("starts-and-stops-cleanly", false, "Unknown error");
+            }
+        }
+        index++;
+    }
+}
+
 EngineList EngineWorkerFactory::createEngines(const EngineConfig& config, std::size_t count) {
     EngineList engines;
     std::vector<std::future<void>> futures;
     engines.reserve(count);
     constexpr int RETRY = 3;
-	EngineReport* checklist = EngineReport::getChecklist(config.getName());
     for (int retry = 0; retry < RETRY; retry++) {
         futures.clear();
         for (std::size_t i = 0; i < count; ++i) {
@@ -77,17 +116,7 @@ EngineList EngineWorkerFactory::createEngines(const EngineConfig& config, std::s
             }
         }
         // Wait for all newly created engines.
-        for (auto& f : futures) {
-            try {
-                f.get();
-            }
-            catch (const std::exception& e) {
-                checklist->logReport("starts-and-stops-cleanly", false, std::string(e.what()));
-            }
-            catch (...) {
-                checklist->logReport("starts-and-stops-cleanly", false, "Unknown error");
-            }
-        }
+        waitUntilAllEnginesStarted(futures, config);
     }
 
     EngineList runningEngines;
@@ -107,16 +136,16 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
     for (int retry = 0; retry < RETRY; retry++) {
         futures.clear();
         uint32_t index = 0;
-        for (auto& config: configs) {
+        for (const auto& config: configs) {
             // We initialize all engines in the first loop
             if (engines.size() <= index) {
                 try {
                     engines.push_back(createEngine(config));
                     futures.push_back(engines.back()->getStartupFuture());
                 } 
-                catch (const std::exception& e) {
+                catch (const std::exception& error) {
                     EngineReport::getChecklist(config.getName())
-                        ->logReport("starts-and-stops-cleanly", false, std::string(e.what()));
+                        ->logReport("starts-and-stops-cleanly", false, std::string(error.what()));
                 }
             }
             else if (engines[index]->failure()) {
@@ -130,31 +159,10 @@ EngineList EngineWorkerFactory::createEngines(const std::vector<EngineConfig>& c
             // If noWait is true, we skip waiting for the startup futures.
             // This allows engines to start asynchronously.
             continue;
-		}
-        // Wait for all newly created engines.
-        index = 0;
-        for (auto& f : futures) {
-            EngineReport* checklist;
-            const auto& name = configs[index].getName();
-            try {
-                f.get();
-            }
-            catch (const std::exception& e) {
-                if (!name.empty()) {
-                    checklist = EngineReport::getChecklist(name);
-                    checklist->logReport("starts-and-stops-cleanly", false, std::string(e.what()));
-                }
-            }
-            catch (...) {
-                if (!name.empty()) {
-                    checklist = EngineReport::getChecklist(name);
-                    checklist->logReport("starts-and-stops-cleanly", false, "Unknown error");
-                }
-            }
-            index++;
         }
-    }
-
+        // Wait for all newly created engines.
+        waitUntilAllEnginesStarted(futures, configs);
+    }    
     EngineList runningEngines;
     for (auto& engine : engines) {
         if (noWait || !engine->failure()) {

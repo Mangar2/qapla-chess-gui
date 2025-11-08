@@ -117,7 +117,7 @@ public:
         CallbackId id = nextId_.fetch_add(1);
 
         {
-            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            std::scoped_lock lock(callbacks_mutex_);
             callbacks_[id] = std::move(callback);
         }
 
@@ -130,7 +130,7 @@ public:
      * @return true if the callback was found and removed, false otherwise
      */
     bool unregister(CallbackId id) override {
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        std::scoped_lock lock(callbacks_mutex_);
         auto it = callbacks_.find(id);
         if (it != callbacks_.end()) {
             callbacks_.erase(it);
@@ -152,7 +152,7 @@ public:
         std::vector<Callback> callbacksCopy;
 
         {
-            std::lock_guard<std::mutex> lock(callbacks_mutex_);
+            std::scoped_lock lock(callbacks_mutex_);
             callbacksCopy.reserve(callbacks_.size());
 
             for (const auto& pair : callbacks_) {
@@ -180,7 +180,7 @@ public:
      * @return Number of callbacks in the list
      */
     size_t size() const {
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        std::scoped_lock lock(callbacks_mutex_);
         return callbacks_.size();
     }
 
@@ -189,7 +189,7 @@ public:
      * @return true if no callbacks are registered, false otherwise
      */
     bool empty() const {
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        std::scoped_lock lock(callbacks_mutex_);
         return callbacks_.empty();
     }
 
@@ -201,7 +201,7 @@ public:
      * cleanup or testing scenarios.
      */
     void clear() {
-        std::lock_guard<std::mutex> lock(callbacks_mutex_);
+        std::scoped_lock lock(callbacks_mutex_);
         callbacks_.clear();
     }
 };

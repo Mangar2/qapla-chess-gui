@@ -178,7 +178,7 @@ void ImGuiGameList::createTable() {
     const auto& games = gameRecordManager_.getGames();
     if (games.empty()) return;
 
-    std::lock_guard<std::mutex> lock(gameTableMutex_);
+    std::scoped_lock lock(gameTableMutex_);
 
     auto commonTagPairs = gameRecordManager_.getMostCommonTags(10); 
     std::vector<std::string> commonTags;
@@ -323,7 +323,7 @@ void ImGuiGameList::drawGameTable() {
     
     // Only draw if we can acquire the lock without blocking
     if (gameTableMutex_.try_lock()) {
-        std::lock_guard<std::mutex> lock(gameTableMutex_, std::adopt_lock);
+        std::lock_guard lock(gameTableMutex_, std::adopt_lock); // NOLINT(modernize-use-scoped-lock)
         
         auto clickedIndex = gameTable_.draw(ImVec2(0, availSize.y)); 
         if (clickedIndex) {

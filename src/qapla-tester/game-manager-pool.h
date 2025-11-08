@@ -156,8 +156,7 @@ public:
      *
      * @return The count of active GameManager instances.
 	 */
-    size_t runningGameCount() const;
-
+    [[nodiscard]] size_t runningGameCount() const;
 
     /**
      * @brief Executes a provided function on the GameRecord of all active GameManagers in a thread-safe manner.
@@ -226,7 +225,7 @@ private:
 	 *
 	 * @return The number of currently active managers.
 	 */
-    uint32_t countActiveManagers() const;
+    [[nodiscard]] uint32_t countActiveManagers() const;
 
     /**
      * @brief Ensures that there are at least count managers.

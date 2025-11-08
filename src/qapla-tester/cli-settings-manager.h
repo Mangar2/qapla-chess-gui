@@ -85,7 +85,7 @@ namespace QaplaTester::CliSettings {
          * @throws std::runtime_error if the key is undefined or has invalid type.
          */
         template<typename T>
-        T get(const std::string& name) const {
+        [[nodiscard]] T get(const std::string& name) const {
             std::string key = QaplaHelpers::to_lowercase(name);
             auto it = values_.find(key);
 			const auto& keyDefs = definition_.keys;

@@ -34,7 +34,7 @@ uint64_t EngineAdapter::writeCommand(const std::string& command) {
 		// The engine is probably not running anymore, so we cannot write commands.
         return 0; 
     }
-    std::scoped_lock<std::mutex> lock(commandMutex_);
+    std::scoped_lock lock(commandMutex_);
     logToEngine(command, TraceLevel::command);
     return process_.writeLine(command);
 }

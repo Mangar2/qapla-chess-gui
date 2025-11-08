@@ -37,7 +37,7 @@ TestTournament::TestTournament(uint32_t totalGames, EngineReport* checklist)
 }
 
 std::optional<GameTask> TestTournament::nextTask() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     if (current_ >= maxGames_) return std::nullopt;
 
     size_t numPairs = timePairs_.size();
@@ -58,7 +58,7 @@ void TestTournament::setGameRecord(
     [[maybe_unused]] const std::string& taskId,
     const GameRecord& record) {
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::scoped_lock lock(mutex_);
         gameRecords_.push_back(record);
     }
     checkTimeManagement(record);
@@ -147,7 +147,7 @@ void TestTournament::timeUsageReasonable(uint64_t usedTimeMs, const TimeControl&
 }
 
 void TestTournament::logStatus() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     auto& lastWhiteTimeControl = gameRecords_.back().getWhiteTimeControl();
     auto& lastBlackTimeControl = gameRecords_.back().getBlackTimeControl();
     std::string whiteTimeControl = lastWhiteTimeControl.toPgnTimeControlString();

@@ -47,7 +47,7 @@ public:
         }
     }
 
-    enum class ImmediateCommand {
+    enum class ImmediateCommand: std::uint8_t {
         Abort,
         Concurrency,
         Info,

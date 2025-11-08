@@ -99,7 +99,7 @@ public:
      * @param passed True if the check passed, false if it failed.
      */
     void report(const std::string& topicId, bool passed) {
-        std::scoped_lock<std::mutex> lock(statsMutex_);
+        std::scoped_lock lock(statsMutex_);
         auto& stat = entries_[topicId];
         ++stat.total;
         if (!passed) { ++stat.failures; }
@@ -144,7 +144,7 @@ public:
 	 * @param author The author name.
 	 */
 	void setAuthor(const std::string& author) {
-        std::scoped_lock<std::mutex> lock(statsMutex_);
+        std::scoped_lock lock(statsMutex_);
 		engineAuthor_ = author;
 	}
 
@@ -155,7 +155,7 @@ public:
      * @param result The engine result.
      */
     void setTournamentResult(const EngineResult& result) {
-        std::scoped_lock<std::mutex> lock(statsMutex_);
+        std::scoped_lock lock(statsMutex_);
         engineResult_ = result;
     }
 private:

@@ -120,7 +120,7 @@ public:
     void schedule(const std::shared_ptr<PairTournament>& self, GameManagerPool& pool);
 
     void clear() {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::scoped_lock lock(mutex_);
         initialized_ = false;
         results_.clear();
         duelResult_ = EngineDuelResult(engineA_.getName(), engineB_.getName());

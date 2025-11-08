@@ -26,6 +26,7 @@
 
 #include "engine-worker.h"
 #include "engine-config-manager.h"
+#include "engine-report.h"
 
 namespace QaplaTester {
 
@@ -121,6 +122,20 @@ private:
 	 * @return A unique pointer to the created EngineWorker.
 	 */
 	static std::unique_ptr<EngineWorker> createEngine(const EngineConfig& config);
+
+	/**
+	 * @brief Waits for all newly created engines to complete their startup.
+	 * @param futures The futures to wait for.
+	 * @param config The engine configuration.
+	 */
+	static void waitUntilAllEnginesStarted(std::vector<std::future<void>>& futures, const EngineConfig& config);
+
+	/**
+	 * @brief Waits for all newly created engines to complete their startup, using config names for checklists.
+	 * @param futures The futures to wait for.
+	 * @param configs The engine configs corresponding to the futures.
+	 */
+	static void waitUntilAllEnginesStarted(std::vector<std::future<void>>& futures, const std::vector<EngineConfig>& configs);
 
 	static inline uint32_t identifier_ = 0; ///> Unique identifier for engine workers
 	static inline EngineConfigManager configManager_; ///> Engine configuration manager

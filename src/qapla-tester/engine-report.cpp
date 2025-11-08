@@ -31,7 +31,7 @@
 namespace QaplaTester {
 
 void EngineReport::addTopic(const CheckTopic& topic) {
-    std::lock_guard<std::mutex> lock(statsMutex_);
+    std::scoped_lock lock(statsMutex_);
     auto it = std::find_if(registeredTopics_.begin(), registeredTopics_.end(),
         [&](const CheckTopic& t) { return t.id == topic.id; });
 
@@ -78,7 +78,7 @@ bool EngineReport::logReport(const std::string& topicId, bool passed, std::strin
 }
 
 EngineReport::ReportData EngineReport::createReportData() {
-    std::lock_guard<std::mutex> lock(statsMutex_);
+    std::scoped_lock lock(statsMutex_);
     
     ReportData data;
     

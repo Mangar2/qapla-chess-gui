@@ -53,7 +53,7 @@ std::string to_string(QaplaTester::TraceLevel level) {
 void Logger::log(std::string_view prefix, std::string_view message, bool isOutput, 
     TraceLevel cliThreshold, TraceLevel fileThreshold, TraceLevel level) {
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     if (level <= fileThreshold && fileStream_.is_open()) {
         fileStream_ << prefix << (isOutput ? " -> " : " <- ") << message << std::endl;
     }
@@ -69,7 +69,7 @@ void Logger::log(std::string_view prefix, std::string_view message, bool isOutpu
  */
 void Logger::log(std::string_view message, TraceLevel level) {
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     if (level <= fileThreshold_ && fileStream_.is_open()) {
         fileStream_ << message << std::endl;
     }
@@ -102,7 +102,7 @@ void Logger::logAligned(std::string_view topic, std::string_view message, TraceL
  * @param basename Base name for the log file (timestamp will be appended).
  */
 void Logger::setLogFile(const std::string& basename) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::scoped_lock lock(mutex_);
     namespace fs = std::filesystem;
     fs::path path = logPath_.empty() ? "" : fs::path(logPath_);
     filename_ = (path / generateTimestampedFilename(basename)).string();

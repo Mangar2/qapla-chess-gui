@@ -41,9 +41,9 @@ struct TestResultEntry {
     std::string testName;
     std::string result;
     bool success;
-    
-    TestResultEntry(const std::string& name, const std::string& res, bool succ)
-        : testName(name), result(res), success(succ) {}
+
+    TestResultEntry(std::string name, std::string res, bool succ)
+        : testName(std::move(name)), result(std::move(res)), success(succ) {}
 };
 
 /**

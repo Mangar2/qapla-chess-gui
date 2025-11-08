@@ -157,7 +157,7 @@ public:
      * @return A copy of the current test results.
      */
     EpdTestResult getResultsCopy() const {
-		std::lock_guard<std::mutex> lock(testResultMutex_);
+		std::scoped_lock lock(testResultMutex_);
         return result_;
 	}
 

@@ -30,7 +30,7 @@ using QaplaHelpers::Timer;
 
 EngineWorker::EngineWorker(std::unique_ptr<EngineAdapter> adapter, std::string identifier, 
     const EngineConfig& engineConfig)
-    : identifier_(identifier), adapter_(std::move(adapter))
+    : identifier_(std::move(identifier)), adapter_(std::move(adapter))
 {
     cliTraceLevel_ = Logger::engineLogger().getCliThreshold();
     if (!adapter_) {
@@ -116,7 +116,9 @@ void EngineWorker::stop(bool wait) {
  * @brief Main execution loop for the worker thread.
  */
 void EngineWorker::writeLoop() {
-    if (workerState_ == WorkerState::stopped) return;
+    if (workerState_ == WorkerState::stopped) {
+        return;
+    }
     while (true) {
         std::optional<std::function<void(EngineAdapter&)>> task;
 
@@ -151,7 +153,7 @@ void EngineWorker::writeLoop() {
 
 void EngineWorker::post(std::optional<std::function<void(EngineAdapter&)>> task) {
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::scoped_lock lock(mutex_);
         writeQueue_.push(std::move(task));
     }
     cv_.notify_one();
@@ -185,7 +187,7 @@ bool EngineWorker::moveNow(bool wait, std::chrono::milliseconds timeout) {
             if (waitForHandshake_ == EngineEvent::Type::None) {
                 // Notify for handshake right away
                 {
-                    std::lock_guard<std::mutex> lock(handshakeMutex_);
+                    std::scoped_lock lock(handshakeMutex_);
                     handshakeReceived_ = true;
                 }
                 handshakeCv_.notify_all();
@@ -193,7 +195,9 @@ bool EngineWorker::moveNow(bool wait, std::chrono::milliseconds timeout) {
         }
         adapter.moveNow();
         });
-    if (!wait) return true;
+    if (!wait) {
+        return true;
+    }
     return waitForHandshake(timeout);
 }
 
@@ -203,7 +207,7 @@ bool EngineWorker::handlePonderMiss(std::chrono::milliseconds timeout) {
         if (waitForHandshake_ == EngineEvent::Type::None) {
             // Notify for handshake right away (XBoard case)
             {
-                std::lock_guard<std::mutex> lock(handshakeMutex_);
+                std::scoped_lock lock(handshakeMutex_);
                 handshakeReceived_ = true;
             }
             handshakeCv_.notify_all();
@@ -272,7 +276,8 @@ void EngineWorker::computeMove(const GameRecord& gameRecord, const GoLimits& lim
         });
 }
 
-void EngineWorker::allowPonder(const GameRecord& gameRecord, const GoLimits& limits, std::string ponderMove) {
+void EngineWorker::allowPonder(const GameRecord& gameRecord, const GoLimits& limits, 
+    const std::string& ponderMove) {
     GameStruct game = gameRecord.createGameStruct();
     post([this, game, limits, ponderMove](EngineAdapter& adapter) {
         try {
@@ -283,10 +288,10 @@ void EngineWorker::allowPonder(const GameRecord& gameRecord, const GoLimits& lim
         }
         catch (...) {
             if (eventSink_) {
-                auto e = EngineEvent::create(EngineEvent::Type::PonderMoveSent, identifier_, 
+                auto error = EngineEvent::create(EngineEvent::Type::PonderMoveSent, identifier_, 
                     Timer::getCurrentTimeMs());
-                e.errors.push_back({ "I/O Error", "Failed to send go ponder command" });
-                eventSink_(std::move(e));
+                error.errors.push_back({ .name = "I/O Error", .detail = "Failed to send go ponder command" });
+                eventSink_(std::move(error));
             }
         }
         });
@@ -301,7 +306,7 @@ void EngineWorker::readLoop() {
 
             if (event.type == waitForHandshake_) {
                 {
-                    std::lock_guard<std::mutex> lock(handshakeMutex_);
+                    std::scoped_lock lock(handshakeMutex_);
                     // We wait for a single handshake. waitForHandshake_ must be set
                     // again for each new handshake request.
                     waitForHandshake_ = EngineEvent::Type::None;
