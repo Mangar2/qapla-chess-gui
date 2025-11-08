@@ -46,7 +46,7 @@ using OptionValues = std::unordered_map<std::string, std::string>;
   */
 class EngineAdapter {
 public:
-    EngineAdapter(std::filesystem::path enginePath,
+    EngineAdapter(const std::filesystem::path& enginePath,
         const std::optional<std::filesystem::path>& workingDirectory,
         const std::string& identifier);
     virtual ~EngineAdapter() = default;

@@ -19,7 +19,7 @@
 
 #include "cli-settings-manager.h"
 
-#include <string.h>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -41,15 +41,16 @@ namespace QaplaTester::CliSettings
         for (size_t i = 1; i < originalArgs.size(); ++i)
         {
             const std::string &arg = originalArgs[i];
-            if (arg.rfind("--settingsfile=", 0) == 0)
+            if (arg.starts_with("--settingsfile="))
             {
                 filePath = arg.substr(15);
                 break;
             }
         }
 
-        if (filePath.empty())
+        if (filePath.empty()) {
             return originalArgs;
+        }
 
         std::ifstream file(filePath);
         if (!file.is_open())
@@ -67,15 +68,17 @@ namespace QaplaTester::CliSettings
     std::vector<std::string> Manager::parseStreamToArgv(std::istream &input)
     {
         std::vector<std::string> args;
-        std::string line, section;
+        std::string line;
+        std::string section;
         int lineNumber = 0;
 
         while (std::getline(input, line))
         {
             ++lineNumber;
             line = QaplaHelpers::trim(line);
-            if (line.empty() || line[0] == '#')
+            if (line.empty() || line[0] == '#') {
                 continue;
+            }
 
             if (auto maybeSection = QaplaHelpers::parseSection(line))
             {
@@ -87,18 +90,19 @@ namespace QaplaTester::CliSettings
             auto kv = QaplaHelpers::parseKeyValue(line);
             if (!kv)
             {
-                throw AppError::makeInvalidParameters("Invalid setting in line " + std::to_string(lineNumber) +
-                                                      ": '" + line + "'. Expected 'key=value' format.");
+                throw AppError::makeInvalidParameters(std::format("Invalid setting in line {}: '{}'. Expected 'key=value' format.", lineNumber, line));
             }
 
             const auto &[key, value] = *kv;
             if (!section.empty())
             {
-                args.push_back(key + "=" + value);
+                std::string arg = std::format("{}={}", key, value);
+                args.push_back(arg);
             }
             else
             {
-                args.push_back("--" + key + "=" + value);
+                std::string arg = std::format("--{}={}", key, value);
+                args.push_back(arg);
             }
         }
 
@@ -109,26 +113,30 @@ namespace QaplaTester::CliSettings
     {
         auto typeMismatch = [&](const std::string &expected)
         {
-            throw AppError::makeInvalidParameters("Default value for setting \"" + name + "\" must be of type " + expected + ".");
+            throw AppError::makeInvalidParameters(std::format("Default value for setting \"{}\" must be of type {}.", name, expected));
         };
 
         switch (type)
         {
         case ValueType::Int:
-            if (!std::holds_alternative<int>(value))
+            if (!std::holds_alternative<int>(value)) {
                 typeMismatch("int");
+            }
             break;
         case ValueType::UInt:
-            if (!std::holds_alternative<unsigned int>(value))
+            if (!std::holds_alternative<unsigned int>(value)) {
                 typeMismatch("unsigned int");
+            }
             break;
         case ValueType::Float:
-            if (!std::holds_alternative<double>(value))
+            if (!std::holds_alternative<double>(value)) {
                 typeMismatch("double");
+            }
             break;
         case ValueType::Bool:
-            if (!std::holds_alternative<bool>(value))
+            if (!std::holds_alternative<bool>(value)) {
                 typeMismatch("bool");
+            }
             break;
         case ValueType::PathExists:
             if (!std::holds_alternative<std::string>(value) ||
@@ -169,7 +177,7 @@ namespace QaplaTester::CliSettings
         }
 
         std::string key = QaplaHelpers::to_lowercase(name);
-        definitions_[key] = {description, isRequired, defaultValue, type};
+        definitions_[key] = {.description = description, .isRequired = isRequired, .defaultValue = defaultValue, .type = type};
     }
 
     void Manager::registerGroup(const std::string &groupName,
@@ -180,12 +188,13 @@ namespace QaplaTester::CliSettings
 
 
         std::string key = QaplaHelpers::to_lowercase(groupName);
-        groupDefs_[key] = GroupDefinition{groupDescription, unique, keys};
+        groupDefs_[key] = {.description = groupDescription, .unique = unique, .keys = keys};
 
         for (auto& [name, def] : groupDefs_[key].keys)
         {
-            if (!def.defaultValue)
+            if (!def.defaultValue) {
                 continue;
+            }
 			auto type = def.type;
 			auto& defaultValue = def.defaultValue;
             if (type == ValueType::UInt && std::holds_alternative<int>(*defaultValue)
@@ -197,7 +206,7 @@ namespace QaplaTester::CliSettings
         }
     }
 
-    const GroupInstances Manager::getGroupInstances(const std::string &groupName)
+    GroupInstances Manager::getGroupInstances(const std::string &groupName)
     {
         std::string key = QaplaHelpers::to_lowercase(groupName);
         auto it = groupInstances_.find(key);
@@ -216,7 +225,7 @@ namespace QaplaTester::CliSettings
         {
             return std::nullopt;
         }
-        if (it->second.size() == 0)
+        if (it->second.empty())
         {
             return std::nullopt;
         }
@@ -270,7 +279,7 @@ namespace QaplaTester::CliSettings
                 throw AppError::makeInvalidParameters("\"" + arg.original + "\" must start with \"--\"");
             }
 
-            if (groupDefs_.find(arg.name) != groupDefs_.end())
+            if (groupDefs_.contains(arg.name))
             {
                 index = parseGroupedParameter(index, args);
             }
@@ -287,12 +296,14 @@ namespace QaplaTester::CliSettings
     {
         auto arg = parseParameter(args[index]);
 
-        if (!arg.hasPrefix)
+        if (!arg.hasPrefix) {
             throw AppError::makeInvalidParameters("\"" + arg.original + "\" must be in the form --name=value");
+        }
 
         auto it = definitions_.find(arg.name);
-        if (it == definitions_.end())
+        if (it == definitions_.end()) {
             throw AppError::makeInvalidParameters("\"" + arg.name + "\" is not a valid global parameter");
+        }
 
         values_[arg.name] = parseValue(arg, it->second);
         return index + 1;
@@ -303,7 +314,7 @@ namespace QaplaTester::CliSettings
         auto it = definitions_.find(name);
         if (it == definitions_.end())
         {
-            return {SetResult::Status::UnknownName, "Unknown setting: \"" + name + "\""};
+            return {.status = SetResult::Status::UnknownName, .errorMessage = "Unknown setting: \"" + name + "\""};
         }
 
         try
@@ -312,25 +323,27 @@ namespace QaplaTester::CliSettings
         }
         catch (const AppError &ex)
         {
-            return {SetResult::Status::InvalidValue, ex.what()};
+            return {.status = SetResult::Status::InvalidValue, .errorMessage = ex.what()};
         }
 
-        return {SetResult::Status::Success, {}};
+        return {.status = SetResult::Status::Success, .errorMessage = {}};
     }
 
     const Definition *Manager::resolveGroupedKey(const GroupDefinition &group, const std::string &name)
     {
         auto it = group.keys.find(name);
-        if (it != group.keys.end())
+        if (it != group.keys.end()) {
             return &it->second;
+        }
         std::string postFix = "[name]";
         for (const auto &[key, def] : group.keys)
         {
             if (key.ends_with("." + postFix))
             {
                 std::string prefix = key.substr(0, key.size() - postFix.length());
-                if (name.rfind(prefix, 0) == 0)
+                if (name.starts_with(prefix)) {
                     return &def;
+                }
             }
         }
 

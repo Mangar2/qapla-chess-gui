@@ -218,7 +218,7 @@ namespace QaplaTester::CliSettings {
          * @return List of instances for this group
          * @throws std::runtime_error if the group is unknown.
          */
-        [[nodiscard]] static const GroupInstances getGroupInstances(const std::string& groupName);
+        [[nodiscard]] static GroupInstances getGroupInstances(const std::string& groupName);
 
 
         static std::optional<GroupInstance> getGroupInstance(const std::string& groupName);

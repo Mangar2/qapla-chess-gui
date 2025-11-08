@@ -73,8 +73,8 @@ struct EngineProcess::Win32IoData {
 
 EngineProcess::EngineProcess(const std::filesystem::path &path,
                              const std::optional<std::filesystem::path> &workingDir,
-                             std::string identifier)
-    : executablePath_(path), workingDirectory_(workingDir), identifier_(identifier)
+                             const std::string& identifier)
+    : executablePath_(path), workingDirectory_(workingDir), identifier_(std::move(identifier))
 {
     if (!std::filesystem::exists(path))
     {
@@ -102,7 +102,9 @@ void EngineProcess::startWin32Overlapped() {
     saAttr.bInheritHandle = TRUE;
     saAttr.lpSecurityDescriptor = nullptr;
 
-    HANDLE stdinReadTmp, stdoutWriteTmp, stderrWriteTmp;
+    HANDLE stdinReadTmp;
+    HANDLE stdoutWriteTmp;
+    HANDLE stderrWriteTmp;
     HANDLE nulHandle = nullptr;
 
     if (!CreatePipe(&stdinReadTmp, &stdinWrite_, &saAttr, 0) ||
@@ -419,7 +421,7 @@ void EngineProcess::appendErrorToLineQueue(EngineLine::Error error, const std::s
         lineQueue_.back().complete = true;
         lineQueue_.back().error = EngineLine::Error::IncompleteLine;
     }
-    lineQueue_.emplace_back(EngineLine{text, true, now, error});
+    lineQueue_.emplace_back(EngineLine{.content = text, .complete = true, .timestampMs = now, .error = error});
 }
 
 void EngineProcess::appendToLineQueue(const std::string &text, bool lineTerminated)
@@ -433,7 +435,7 @@ void EngineProcess::appendToLineQueue(const std::string &text, bool lineTerminat
         return;
     }
 
-    lineQueue_.emplace_back(EngineLine{text, lineTerminated, now, EngineLine::Error::NoError});
+    lineQueue_.emplace_back(EngineLine{.content = text, .complete = lineTerminated, .timestampMs = now, .error = EngineLine::Error::NoError});
 }
 
 EngineProcess::ReadResult EngineProcess::readFromStdOutOverlapped() {
@@ -579,9 +581,8 @@ EngineLine EngineProcess::readLineBlocking()
         {
             auto line = std::move(lineQueue_.front());
             lineQueue_.pop_front();
-            if (std::find_if_not(
-                line.content.begin(),
-                line.content.end(),
+            if (std::ranges::find_if_not(
+                line.content,
                 [](unsigned char ch) { return std::isspace(ch); }) != line.content.end())
             {
                 return line;
@@ -589,11 +590,13 @@ EngineLine EngineProcess::readLineBlocking()
             continue;
         }
 #ifdef _WIN32
-        if (stdoutRead_ == nullptr || read)
-            return EngineLine{"", false, Timer::getCurrentTimeMs()};
+        if (stdoutRead_ == nullptr || read) {
+            return EngineLine{.content = "", .complete = false, .timestampMs = Timer::getCurrentTimeMs()};
+        }
 #else
-        if (stdoutRead_ < 0 || read)
-            return EngineLine{"", false, Timer::getCurrentTimeMs()};
+        if (stdoutRead_ < 0 || read) {
+            return EngineLine{.content = "", .complete = false, .timestampMs = Timer::getCurrentTimeMs()};
+        }
 #endif
         reading_ = true;
         if (!terminating_)

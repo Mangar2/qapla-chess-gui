@@ -330,59 +330,60 @@ void WinboardAdapter::setTestOption(
 	throw AppError::make("WinboardAdapter does not support setTestOption");
 }
 
+std::string WinboardAdapter::computeStandardOptions(const EngineOption& supportedOption, const std::string& value) {
+    // We use uci compatible option names for memory and smp
+    std::string command;
+    if (supportedOption.name == "Hash" && isEnabled("memory")) {
+        command = "memory " + value;
+    } else if (supportedOption.name == "Threads" && isEnabled("smp")) {
+        command = "cores " + value;
+    } else {
+        // XBoard protocol: options are set with "option <name>=<value>"
+        command = "option " + supportedOption.name + "=" + value;
+    }
+    return command;
+}
+
 void WinboardAdapter::setOptionValues(const OptionValues& optionValues) {
     for (const auto& [name, value] : optionValues) {
         try {
 			auto opt = getSupportedOption(name);
             if (!opt) {
-                Logger::testLogger().log("Unsupported option: " + name, TraceLevel::info);
+                Logger::testLogger().log(std::format("Unsupported option: {}", name), TraceLevel::info);
                 continue;
             }
 			const auto& supportedOption = *opt;
             // check type and  value constraints
             if (supportedOption.type == EngineOption::Type::String) {
                 if (value.size() > 9999) {
-                    Logger::testLogger().log("Option value for " + name + " is too long", TraceLevel::info);
+                    Logger::testLogger().log(std::format("Option value for {} is too long", name), TraceLevel::info);
                     continue;
                 }
             }
             else if (supportedOption.type == EngineOption::Type::Spin) {
                 int intValue = std::stoi(value);
                 if (intValue < supportedOption.min || intValue > supportedOption.max) {
-                    Logger::testLogger().log("Option value for " + name + " is out of bounds", TraceLevel::info);
+                    Logger::testLogger().log(std::format("Option value for {} is out of bounds", name), TraceLevel::info);
                     continue;
                 }
             }
             else if (supportedOption.type == EngineOption::Type::Check) {
                 if (value != "true" && value != "false") {
-                    Logger::testLogger().log("Invalid boolean value for option " + name, TraceLevel::info);
+                    Logger::testLogger().log(std::format("Invalid boolean value for option {}", name), TraceLevel::info);
                     continue;
                 }
             }
             else if (supportedOption.type == EngineOption::Type::Combo) {
                 if (std::ranges::find(supportedOption.vars, value) == supportedOption.vars.end()) {
-                    Logger::testLogger().log("Invalid value for combo option " + name, TraceLevel::info);
+                    Logger::testLogger().log(std::format("Invalid value for combo option {}", name), TraceLevel::info);
                     continue;
                 }
             }
-            // XBoard protocol: special mappings for UCI-compatible options
-            std::string command;
-            if (supportedOption.name == "Hash" && isEnabled("memory")) {
-                command = "memory " + value;
-            } else if (supportedOption.name == "Threads" && isEnabled("smp")) {
-                command = "cores " + value;
-            } else {
-                // XBoard protocol: options are set with "option <name>=<value>"
-                command = "option " + supportedOption.name + "=" + value;
-            }
+            std::string command = computeStandardOptions(supportedOption, value);
             writeCommand(command);
         }
         catch (...) {
-            std::string msg = "Invalid value ";
-            msg += value;
-            msg += " for option ";
-            msg += name;
-            Logger::testLogger().log(msg, TraceLevel::info);
+            Logger::testLogger().log(std::format("Invalid value {} for option {}", value, name), TraceLevel::info);
         }
 
 	}
@@ -792,40 +793,42 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
     return event;
 }
 
-EngineEvent WinboardAdapter::readEvent() {
-    EngineLine engineLine = process_.readLineBlocking();
-    const std::string& line = engineLine.content;
-
-    if (!engineLine.complete || engineLine.error == EngineLine::Error::IncompleteLine) {
-        if (engineLine.complete) {
-            logFromEngine(line, TraceLevel::info);
-        }
-        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
-    }
-
-    if (engineLine.error == EngineLine::Error::EngineTerminated) {
-        if (terminating_) {
-            return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
-        }
-        return EngineEvent::createEngineDisconnected(identifier_, engineLine.timestampMs, engineLine.content);
-    }
-
-    if (inFeatureSection_) {
-        return readFeatureSection(engineLine);
-    }
-
+EngineEvent WinboardAdapter::parseCommentLine(const EngineLine& engineLine) {
     // XBoard protocol: engines with "feature debug=1" may send lines starting with '#' for debugging
     // These lines should be ignored when debug mode is enabled, but trigger an error otherwise
-    if (!line.empty() && line[0] == '#') {
-        if (isEnabled("debug")) {
-            logFromEngine(line, TraceLevel::info);
-            return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
-        }
-        logFromEngine(line, TraceLevel::error);
-        return EngineEvent::createError(identifier_, engineLine.timestampMs, 
-            "Engine sent debug output without debug mode enabled");
+    if (isEnabled("debug")) {
+        logFromEngine(engineLine.content, TraceLevel::info);
+        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
+    logFromEngine(engineLine.content, TraceLevel::error);
+    return EngineEvent::createError(identifier_, engineLine.timestampMs, 
+        "Engine sent debug output without debug mode enabled");
+}
 
+EngineEvent WinboardAdapter::parseMove(std::istringstream& iss, const EngineLine& engineLine) {
+    logFromEngine(engineLine.content, TraceLevel::command);
+    std::string move;
+    iss >> move;
+    gameStruct_.originalMove = move;
+    // lastOwnMove is used to remember that the engine is one move ahead until bestMoveReceived is called
+    // reflecting that the move is now known to the game management
+    lastOwnMove_ = move;
+    return EngineEvent::createBestMove(identifier_, engineLine.timestampMs, engineLine.content, move, "");
+}
+
+EngineEvent WinboardAdapter::parseHint(std::istringstream& iss, const EngineLine& engineLine) {
+    logFromEngine(engineLine.content, TraceLevel::command);
+    std::string hintMove;
+    iss >> hintMove;
+    if (!hintMove.empty()) {
+        return EngineEvent::createPonderMove(identifier_, engineLine.timestampMs, engineLine.content, hintMove);
+    }
+    return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+}
+
+EngineEvent WinboardAdapter::parseCommand(const EngineLine& engineLine) {
+
+    const auto& line = engineLine.content;
     std::istringstream iss(line);
     std::string command;
     iss >> command;
@@ -850,14 +853,7 @@ EngineEvent WinboardAdapter::readEvent() {
     }
 
     if (command == "move") {
-        logFromEngine(line, TraceLevel::command);
-        std::string move;
-		iss >> move;
-        gameStruct_.originalMove = move;
-        // lastOwnMove is used to remember that the engine is one move ahead until bestMoveReceived is called
-        // reflecting that the move is now known to the game management
-        lastOwnMove_ = move;
-		return EngineEvent::createBestMove(identifier_, engineLine.timestampMs, line, move, "");
+        return parseMove(iss, engineLine);
     }
 
     if (command == "tellics" || command == "tellicsnoalias" 
@@ -868,13 +864,7 @@ EngineEvent WinboardAdapter::readEvent() {
     }
 
     if (command == "hint:") {
-        logFromEngine(line, TraceLevel::command);
-        std::string hintMove;
-        iss >> hintMove;
-        if (!hintMove.empty()) {
-            return EngineEvent::createPonderMove(identifier_, engineLine.timestampMs, line, hintMove);
-        }
-        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+        return parseHint(iss, engineLine);
     }
 
     if (command == "feature") {
@@ -909,6 +899,38 @@ EngineEvent WinboardAdapter::readEvent() {
     }
 
     return EngineEvent::createUnknown(identifier_, engineLine.timestampMs, line);
+}
+
+EngineEvent WinboardAdapter::readEvent() {
+    EngineLine engineLine = process_.readLineBlocking();
+    const auto& line = engineLine.content;
+
+    if (!engineLine.complete) {
+        logFromEngine(line, TraceLevel::error);
+        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+    }
+
+    if (engineLine.error == EngineLine::Error::IncompleteLine) {
+        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+    }
+
+    if (engineLine.error == EngineLine::Error::EngineTerminated && terminating_) {
+        return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
+    }
+    if (engineLine.error == EngineLine::Error::EngineTerminated && !terminating_) {
+        return EngineEvent::createEngineDisconnected(identifier_, engineLine.timestampMs, engineLine.content);
+    }
+
+    if (inFeatureSection_) {
+        return readFeatureSection(engineLine);
+    }
+
+    if (!line.empty() && line[0] == '#') {
+        return parseCommentLine(engineLine);
+    }
+
+    return parseCommand(engineLine);
+   
 }
 
 } // namespace QaplaTester

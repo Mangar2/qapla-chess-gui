@@ -301,6 +301,29 @@ private:
     EngineEvent parseFeatureLine(std::istringstream& iss, uint64_t timestamp, bool onlyOption);
 
     /**
+     * @brief Parses a comment or debug line from the engine.
+     * @param engineLine The full engine output line with timestamp and completeness status.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseCommentLine(const EngineLine& engineLine);
+
+    /**
+     * @brief Parses a move string from the engine.
+     * @param iss The input string stream.
+     * @param engineLine The full engine output line with timestamp and completeness status.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseMove(std::istringstream& iss, const EngineLine& engineLine);
+
+    /**
+     * @brief Parses a hint command from the engine.
+     * @param iss The input string stream.
+     * @param engineLine The full engine output line with timestamp and completeness status.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseHint(std::istringstream& iss, const EngineLine& engineLine);
+
+    /**
      * @brief Parses an option feature from the feature line.
      * @param optionStr The option string.
      * @param event The EngineEvent to populate.
@@ -315,8 +338,22 @@ private:
      * @return The parsed EngineEvent.
      */
     static EngineEvent parseResult(std::istringstream& iss, const std::string& command, EngineEvent event);
-    
 
+    /**
+     * @brief Computes windows standard option strings.
+     * @param supportedOption The supported engine option.
+     * @param value The value to set.
+     * @return The computed Winboard option command string.
+     */
+    std::string computeStandardOptions(const EngineOption& supportedOption, const std::string& value);
+
+    /**
+     * @brief Parses a command from the engine.
+     * @param engineLine The full engine output line with timestamp and completeness status.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseCommand(const EngineLine& engineLine);
+    
     static inline int numOptionError_ = 0;
     static inline int numFeatureError_ = 0;
     static inline int numNameError_ = 0;

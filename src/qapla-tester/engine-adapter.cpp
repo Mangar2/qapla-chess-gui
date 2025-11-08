@@ -22,7 +22,7 @@
 
 namespace QaplaTester {
 
-EngineAdapter::EngineAdapter(std::filesystem::path enginePath,
+EngineAdapter::EngineAdapter(const std::filesystem::path& enginePath,
     const std::optional<std::filesystem::path>& workingDirectory, 
     const std::string& identifier)
     : process_(enginePath, workingDirectory, identifier), 
@@ -34,7 +34,7 @@ uint64_t EngineAdapter::writeCommand(const std::string& command) {
 		// The engine is probably not running anymore, so we cannot write commands.
         return 0; 
     }
-    std::lock_guard<std::mutex> lock(commandMutex_);
+    std::scoped_lock<std::mutex> lock(commandMutex_);
     logToEngine(command, TraceLevel::command);
     return process_.writeLine(command);
 }
