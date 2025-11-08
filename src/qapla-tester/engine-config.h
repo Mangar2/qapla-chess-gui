@@ -254,7 +254,7 @@ public:
      * @param name The option name.
      * @param value The value to assign.
 	 */
-    void setValue(const std::string& name, const std::string& value);
+    void setValue(const std::string& key, const std::string& value);
 
     /**
      * @brief Sets multiple values at once from a map of key-value pairs.
@@ -288,7 +288,7 @@ public:
 	 * @param availableOptions The set of options that are available for the engine.
 	 * @return A map of option names and their values that are present in the available options.
      */
-    [[nodiscard]] std::unordered_map<std::string, std::string> getOptions(EngineOptions availableOptions) const;
+    [[nodiscard]] std::unordered_map<std::string, std::string> getOptions(const EngineOptions& availableOptions) const;
 
 
     friend std::istream& operator>>(std::istream& in, EngineConfig& config);
@@ -298,7 +298,7 @@ public:
      * @param out The output stream to write the configuration to.
      * @param section The section name to use (default "engine").
      */
-    void save(std::ostream& out, std::string section = "engine") const;
+    void save(std::ostream& out, const std::string& section = "engine") const;
     friend std::ostream& operator<<(std::ostream& out, const EngineConfig& config);
 
     /**
@@ -332,7 +332,7 @@ private:
      */
     void warnOnNameMismatch(const std::string& fileName, const std::string& engineName) const;
 
-    std::string toString(const Value& value);
+    static std::string toString(const Value& value);
     std::string name_;
     std::string author_;
     std::string cmd_;

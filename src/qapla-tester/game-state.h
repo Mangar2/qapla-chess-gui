@@ -43,13 +43,13 @@ public:
 	 * @brief Checks if it's White's turn to move.
 	 * @return True if it's White's turn, false otherwise.
 	 */
-	bool isWhiteToMove() const { return position_.isWhiteToMove(); }
+	[[nodiscard]] bool isWhiteToMove() const { return position_.isWhiteToMove(); }
 
 	/**
 	 * @brief Get the current position in FEN notation.
 	 * @return The FEN string representing the current position.
 	 */
-	std::string getFen() const { return position_.getFen(); }
+	[[nodiscard]] std::string getFen() const { return position_.getFen(); }
 
 	/**
 	 * @brief Get the number of half moves without pawn move or capture from the starting position (from FEN).
@@ -59,7 +59,7 @@ public:
 	 * 
 	 * @return The halfmove clock value from the starting position FEN.
 	 */
-	uint32_t getStartHalfmoves() const { return position_.getStartHalfmoves(); }
+	[[nodiscard]] uint32_t getStartHalfmoves() const { return position_.getStartHalfmoves(); }
 
 	/**
 	 * @brief Get the Fullmove Number according to FEN specification.
@@ -69,7 +69,7 @@ public:
 	 * 
 	 * @return The fullmove number.
 	 */
-	uint32_t getFullmoveNumber() const { 
+	[[nodiscard]] uint32_t getFullmoveNumber() const { 
 		return getHalfmovesPlayed() / 2 + 1;
 	}
 

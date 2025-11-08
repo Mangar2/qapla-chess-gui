@@ -170,7 +170,7 @@ namespace QaplaConfiguration {
          * @brief Marks engines as not supported if they failed both UCI and XBoard detection.
          * @param failedConfigs Vector of configurations that failed detection.
          */
-        void markAsNotSupported(const std::vector<QaplaTester::EngineConfig>& failedConfigs);
+        static void markAsNotSupported(const std::vector<QaplaTester::EngineConfig>& failedConfigs);
 
         /**
          * @brief Creates a unique key for the unordered_map based on path and protocol.

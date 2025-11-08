@@ -49,7 +49,7 @@ std::vector<EngineConfig> EngineCapabilities::detectWithProtocol(
     std::optional<EngineProtocol> protocol) 
 {
     for (auto& config : configs) {
-        auto mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
+        auto* mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
             .getConfigMutableByCmdAndProtocol(config.getCmd(), config.getProtocol());
         if (protocol) {
             config.setProtocol(*protocol);
@@ -78,14 +78,14 @@ std::vector<EngineConfig> EngineCapabilities::detectWithProtocol(
 }
 
 void EngineCapabilities::storeCapabilities(const std::vector<std::unique_ptr<EngineWorker>>& engines) {
-    for (auto& engine : engines) {
-        auto& command = engine->getConfig().getCmd();
+    for (const auto& engine : engines) {
+        const auto& command = engine->getConfig().getCmd();
         auto protocol = engine->getConfig().getProtocol();
         
         // Update the config manager with engine name and author
-        auto config = EngineWorkerFactory::getConfigManagerMutable()
+        auto* const config = EngineWorkerFactory::getConfigManagerMutable()
             .getConfigMutableByCmdAndProtocol(command, protocol);
-        if (config && !engine->getEngineName().empty()) {
+        if (config != nullptr && !engine->getEngineName().empty()) {
             config->setName(engine->getEngineName());
             config->setAuthor(engine->getEngineAuthor());
         }
@@ -104,9 +104,9 @@ void EngineCapabilities::storeCapabilities(const std::vector<std::unique_ptr<Eng
 void EngineCapabilities::markAsNotSupported(const std::vector<EngineConfig>& failedConfigs) {
     std::string message = "Auto autodetection completed. Not supported Engine(s):\n";
     for (const auto& config : failedConfigs) {
-        auto mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
+        auto* mutableConfig = EngineWorkerFactory::getConfigManagerMutable()
             .getConfigMutableByCmdAndProtocol(config.getCmd(), config.getProtocol());
-        if (mutableConfig) {
+        if (mutableConfig != nullptr) {
             mutableConfig->setProtocol(EngineProtocol::NotSupported);
         }
         message += " - " + config.getCmd() + "\n";
@@ -144,11 +144,11 @@ void EngineCapabilities::autoDetect() {
 }
 
 bool EngineCapabilities::areAllEnginesDetected() const {
-    for (const auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
-        if (!hasAnyCapability(config.getCmd(), config.getProtocol())) {
-            return false;
-        }
-    }
-    return true;
+    auto allDetected = std::ranges::all_of(EngineWorkerFactory::getConfigManager().getAllConfigs(), 
+        [this](const auto& config) 
+    {
+        return hasAnyCapability(config.getCmd(), config.getProtocol());
+    });
+    return allDetected;
 }
 

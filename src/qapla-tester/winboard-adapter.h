@@ -50,6 +50,9 @@ public:
     explicit WinboardAdapter(std::filesystem::path enginePath,
         const std::optional<std::filesystem::path>& workingDirectory,
         const std::string& identifier);
+    /**
+     * @brief Destructor for WinboardAdapter.
+     */
     ~WinboardAdapter() override;
 
     /**
@@ -74,8 +77,17 @@ public:
      * terminated or unreachable, this is treated as a normal condition.
      * If forced termination fails, the adapter reports a critical error.
      */
+    /**
+     * @brief Attempts to gracefully terminate the Winboard engine. If the engine is already
+     * terminated or unreachable, this is treated as a normal condition.
+     * If forced termination fails, the adapter reports a critical error.
+     */
     void terminateEngine() override;
 
+    /**
+     * @brief Reads the next event from the engine.
+     * @return The next EngineEvent from the engine.
+     */
     EngineEvent readEvent() override;
 
     /**
@@ -112,12 +124,48 @@ public:
      */
     void setTimeControl(const GameRecord& game, bool engineIsWhite) override;
 
+    /**
+     * @brief Notifies the adapter that a best move has been received from the engine.
+     * @param sanMove The move in SAN notation.
+     * @param lanMove The move in LAN notation.
+     */
     void bestMoveReceived(const std::string& sanMove, const std::string& lanMove) override;
+
+    /**
+     * @brief Sends a move now command to the engine.
+     */
     void moveNow() override;
+
+    /**
+     * @brief Enables or disables pondering for the engine.
+     * @param enabled True to enable pondering, false to disable.
+     */
     void setPonder(bool enabled) override;
+
+    /**
+     * @brief Periodic ticker function for engine management.
+     */
+    /**
+     * @brief Periodic ticker function for engine management.
+     */
     void ticker() override;
 
+    /**
+     * @brief Allows the engine to ponder on a move.
+     * @param game The current game state.
+     * @param limits The search limits.
+     * @param ponderMove The move to ponder on.
+     * @return Timestamp when pondering was initiated.
+     */
     uint64_t allowPonder(const GameStruct& game, const GoLimits& limits, std::string ponderMove) override;
+
+    /**
+     * @brief Requests the engine to compute a move.
+     * @param game The current game state.
+     * @param limits The search limits.
+     * @param ponderHit True if pondering hit, false otherwise.
+     * @return Timestamp when the move computation was requested.
+     */
     uint64_t computeMove(const GameStruct& game, const GoLimits& limits, bool ponderHit) override;
 
     /**
@@ -148,7 +196,7 @@ public:
 
 private:
     /**
-     * Parses a line received during the Winboard handshake phase.
+     * @brief Parses a line received during the Winboard handshake phase.
      * This function should be called only when waiting for the Winboard handshake.
      * It handles 'feature', 'xboard', and readiness lines specifically.
      * Any unexpected input is reported as a protocol error.
@@ -212,20 +260,61 @@ private:
     void setForceMode();
 
     /**
-     * Ensures all known boolean features are present in featureMap_ with correct defaults.
+     * @brief Ensures all known boolean features are present in featureMap_ with correct defaults.
      * Should be called once after parsing all incoming 'feature' lines from GUI.
      */
     void finalizeFeatures();
 
+    /**
+     * @brief Checks if a feature is enabled.
+     * @param key The feature key to check.
+     * @return True if the feature is enabled, false otherwise.
+     */
+    /**
+     * @brief Checks if a feature is enabled.
+     * @param key The feature key to check.
+     * @return True if the feature is enabled, false otherwise.
+     */
     bool isEnabled(const std::string& key) const {
         auto it = featureMap_.find(key);
         return it != featureMap_.end() && it->second == "1";
     }
 
-    EngineEvent parseSearchInfo(std::string depthStr, std::istringstream& iss, uint64_t timestamp, const std::string& rawLine);
-	EngineEvent parseFeatureLine(std::istringstream& iss, uint64_t timestamp, bool onlyOption);
+    /**
+     * @brief Parses search information from engine output.
+     * @param depthStr The depth string.
+     * @param iss The input string stream.
+     * @param timestamp The timestamp of the line.
+     * @param originalLine The original line for error reporting.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseSearchInfo(const std::string& depthStr, std::istringstream& iss, uint64_t timestamp, 
+        const std::string& originalLine);
+
+    /**
+     * @brief Parses a feature line from the engine.
+     * @param iss The input string stream.
+     * @param timestamp The timestamp of the line.
+     * @param onlyOption True if only option parsing is expected.
+     * @return The parsed EngineEvent.
+     */
+    EngineEvent parseFeatureLine(std::istringstream& iss, uint64_t timestamp, bool onlyOption);
+
+    /**
+     * @brief Parses an option feature from the feature line.
+     * @param optionStr The option string.
+     * @param event The EngineEvent to populate.
+     */
     void parseOptionFeature(const std::string& optionStr, EngineEvent& event);
-    EngineEvent parseResult(std::istringstream& iss, const std::string& command, EngineEvent event);
+
+    /**
+     * @brief Parses the result of a command.
+     * @param iss The input string stream.
+     * @param command The command that was sent.
+     * @param event The EngineEvent to populate.
+     * @return The parsed EngineEvent.
+     */
+    static EngineEvent parseResult(std::istringstream& iss, const std::string& command, EngineEvent event);
     
 
     static inline int numOptionError_ = 0;

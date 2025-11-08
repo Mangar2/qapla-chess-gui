@@ -206,7 +206,7 @@ public:
      * @brief Executes the given callable with thread-safe access to the current move.
      * @param accessFn A callable that takes a const MoveRecord&.
      */
-    void withCurrentMove(std::function<void(const MoveRecord&)> accessFn) const {
+    void withCurrentMove(const std::function<void(const MoveRecord&)>& accessFn) const {
         std::scoped_lock lock(currentMoveMutex_);
         accessFn(currentMove_);
     }

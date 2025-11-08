@@ -35,7 +35,7 @@ namespace QaplaTester {
 WinboardAdapter::WinboardAdapter(std::filesystem::path enginePath,
     const std::optional<std::filesystem::path>& workingDirectory,
     const std::string& identifier)
-	: EngineAdapter(enginePath, workingDirectory, identifier)
+	: EngineAdapter(std::move(enginePath), workingDirectory, identifier)
 {
     suppressInfoLines_ = true;
 }
@@ -102,7 +102,9 @@ void WinboardAdapter::setTimeControl(const GameRecord& gameRecord, bool engineIs
 }
 
 void WinboardAdapter::setTimeControl(const TimeControl& timeControl) {
-    if (!timeControl.isValid()) return;
+    if (!timeControl.isValid()) {
+        return;
+    }
 
 
     const auto& segments = timeControl.timeSegments();
@@ -223,17 +225,16 @@ uint64_t WinboardAdapter::go(bool isInfinite) {
     if (isInfinite) {
         isAnalyzeMode_ = true;
         return writeCommand("analyze");
-    } else {
-        return writeCommand("go");
     }
+    return writeCommand("go");
 }
 
 uint64_t WinboardAdapter::catchupMovesAndGo(const GameStruct& game, bool isInfinite) {
 
-	auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
-	auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
+	const auto& newMoves = isEnabled("san") ? game.sanMoves : game.lanMoves;
+	const auto& oldMoves = isEnabled("san") ? gameStruct_.sanMoves : gameStruct_.lanMoves;
     
-    if (game.fen != gameStruct_.fen || newMoves.rfind(oldMoves, 0) != 0) {
+    if (game.fen != gameStruct_.fen || !newMoves.starts_with(oldMoves)) {
         sendPosition(game);
         return go(isInfinite);
     }
@@ -288,7 +289,8 @@ uint64_t WinboardAdapter::computeMove(const GameStruct& game,
     if (limits.infinite) {
         setForceMode();
         return catchupMovesAndGo(game, true);
-    } else if (isEnabled("time") && !limits.mateIn && !limits.depth && !limits.nodes && !limits.moveTimeMs) {
+    } 
+    if (isEnabled("time") && !limits.mateIn && !limits.depth && !limits.nodes && !limits.moveTimeMs) {
         uint64_t time = game.isWhiteToMove ? limits.wtimeMs : limits.btimeMs;
         uint64_t otim = game.isWhiteToMove ? limits.btimeMs : limits.wtimeMs;
         writeCommand("time " + std::to_string(time / 10));
@@ -351,18 +353,18 @@ void WinboardAdapter::setOptionValues(const OptionValues& optionValues) {
                     continue;
                 }
             }
-			else if (supportedOption.type == EngineOption::Type::Check) {
-				if (value != "true" && value != "false") {
-					Logger::testLogger().log("Invalid boolean value for option " + name, TraceLevel::info);
-					continue;
-				}
-			}
-			else if (supportedOption.type == EngineOption::Type::Combo) {
-				if (std::find(supportedOption.vars.begin(), supportedOption.vars.end(), value) == supportedOption.vars.end()) {
-					Logger::testLogger().log("Invalid value for combo option " + name, TraceLevel::info);
-					continue;
-				}
-			}
+            else if (supportedOption.type == EngineOption::Type::Check) {
+                if (value != "true" && value != "false") {
+                    Logger::testLogger().log("Invalid boolean value for option " + name, TraceLevel::info);
+                    continue;
+                }
+            }
+            else if (supportedOption.type == EngineOption::Type::Combo) {
+                if (std::ranges::find(supportedOption.vars, value) == supportedOption.vars.end()) {
+                    Logger::testLogger().log("Invalid value for combo option " + name, TraceLevel::info);
+                    continue;
+                }
+            }
             // XBoard protocol: special mappings for UCI-compatible options
             std::string command;
             if (supportedOption.name == "Hash" && isEnabled("memory")) {
@@ -376,7 +378,11 @@ void WinboardAdapter::setOptionValues(const OptionValues& optionValues) {
             writeCommand(command);
         }
         catch (...) {
-            Logger::testLogger().log("Invalid value " + value + " for option " + name, TraceLevel::info);
+            std::string msg = "Invalid value ";
+            msg += value;
+            msg += " for option ";
+            msg += name;
+            Logger::testLogger().log(msg, TraceLevel::info);
         }
 
 	}
@@ -405,8 +411,8 @@ static bool readBoundedInt(std::istringstream& iss,
     int64_t value;
     if (!(iss >> value)) {
         errors.push_back({
-            "missing-thinking-output",
-            "Expected an integer for '" + fieldName + "'"
+            .name = "missing-thinking-output",
+            .detail = "Expected an integer for '" + fieldName + "'"
             });
         return false;
     }
@@ -458,7 +464,7 @@ void storeBoundedInt(
  * @return true if the next non-whitespace character is a tab, false otherwise.
  */
 static bool comesTab(std::istream& stream) {
-    while (std::isspace(static_cast<unsigned char>(stream.peek())) && stream.peek() != '\t') {
+    while (std::isspace(static_cast<unsigned char>(stream.peek())) != 0 && stream.peek() != '\t') {
         stream.get();
     }
     return stream.peek() == '\t';
@@ -507,14 +513,16 @@ static void parsePV(const std::vector<std::string>& pv, EngineEvent& event) {
         if (token.find(')') != std::string::npos) {
             inParens = false;
         }
-        if (inParens) continue;
-        if (std::isalpha(static_cast<unsigned char>(token[0])) || token == "0-0" || token == "0-0-0") {
+        if (inParens) {
+            continue;
+        }
+        if (std::isalpha(static_cast<unsigned char>(token[0])) != 0 || token == "0-0" || token == "0-0-0") {
 			event.searchInfo->pv.push_back(token);
         }
     }
 }
 
-EngineEvent WinboardAdapter::parseSearchInfo(std::string depthStr, std::istringstream& iss, 
+EngineEvent WinboardAdapter::parseSearchInfo(const std::string& depthStr, std::istringstream& iss, 
     uint64_t timestamp, const std::string& originalLine) {
     EngineEvent event = EngineEvent::createInfo(identifier_, timestamp, originalLine);
     constexpr int32_t MATE_VALUE = 100000;
@@ -555,7 +563,7 @@ void WinboardAdapter::parseOptionFeature(const std::string& optionStr, EngineEve
     std::string name;
     std::getline(iss, name, '-');
     if (name.find(' ') != std::string::npos) {
-        event.errors.push_back({ "feature-report", "Option name '" + name + "' contains space" });
+        event.errors.push_back({ .name = "feature-report", .detail = "Option name '" + name + "' contains space" });
     }
     QaplaHelpers::trim(name);
 
@@ -568,14 +576,15 @@ void WinboardAdapter::parseOptionFeature(const std::string& optionStr, EngineEve
 
     if (opt.type == EngineOption::Type::Spin || opt.type == EngineOption::Type::Slider) {
         std::string value;
-        int min, max;
+        int min;
+        int max;
         if (iss >> value >> min >> max) {
             opt.defaultValue = value;
             opt.min = min;
             opt.max = max;
         }
         else {
-            event.errors.push_back({ "feature-report", "Invalid spin/slider definition for '" + name + "'" });
+            event.errors.push_back({ .name = "feature-report", .detail = "Invalid spin/slider definition for '" + name + "'" });
             return;
         }
     }
@@ -614,10 +623,12 @@ EngineEvent WinboardAdapter::parseFeatureLine(std::istringstream& iss, uint64_t 
         // feature supports quoted values (strings)
         if (!value.empty() && value.front() == '"') {
             std::string remainder;
-            while (!value.ends_with("\"") && iss >> remainder)
+            while (!value.ends_with("\"") && iss >> remainder) {
                 value += " " + remainder;
-            if (value.ends_with("\""))
+            }
+            if (value.ends_with("\"")) {
                 value = value.substr(1, value.size() - 2);
+            }
         }
 
         if (key == "option") {
@@ -626,13 +637,13 @@ EngineEvent WinboardAdapter::parseFeatureLine(std::istringstream& iss, uint64_t 
         }
 
         if (onlyOption) {
-			event.errors.push_back({ "feature-report", "Unexpected feature '" + key + "' outside protocol initialization" });
+			event.errors.push_back({ .name = "feature-report", .detail = "Unexpected feature '" + key + "' outside protocol initialization" });
             continue;
         }
 
         auto it = featureMap_.find(key);
         if (it != featureMap_.end() && key != "done") {
-            event.errors.push_back({ "feature-report", "Feature '" + key + "' specified more than once" });
+            event.errors.push_back({ .name = "feature-report", .detail = "Feature '" + key + "' specified more than once" });
         }
         featureMap_[key] = value;
     }
@@ -667,11 +678,11 @@ void WinboardAdapter::finalizeFeatures() {
     };
 
     for (const auto& [key, defaultValue] : booleanFeatureDefaults) {
-        if (featureMap_.find(key) == featureMap_.end()) {
+        if (!featureMap_.contains(key)) {
             featureMap_[key] = defaultValue ? "1" : "0";
         }
     }
-    if (featureMap_.find("myname") != featureMap_.end()) {
+    if (featureMap_.contains("myname")) {
         engineName_ = featureMap_["myname"];
     }
 
@@ -724,7 +735,7 @@ EngineEvent WinboardAdapter::readFeatureSection(const EngineLine& engineLine) {
             event.type = EngineEvent::Type::ExtendTimeout;
         }
         else {
-			event.errors.push_back({ "feature-report", "Invalid 'done' value: '" + it->second + "'" });
+			event.errors.push_back({ .name = "feature-report", .detail = "Invalid 'done' value: '" + it->second + "'" });
             event.type = EngineEvent::Type::Error;
         }
     }
@@ -738,15 +749,15 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
     char openBrace;
     if (!(iss >> openBrace) || openBrace != '{') {
         event.errors.push_back({
-            "result-parsing",
-            "Expected opening '{' after game result command, in line: " + event.rawLine
+            .name = "result-parsing",
+            .detail = "Expected opening '{' after game result command, in line: " + event.rawLine
 			});
     }
     std::string text;
     if (!std::getline(iss, text, '}')) {
         event.errors.push_back({
-            "result-parsing",
-            "Expected closing '}' at the end of a result command in line: " + event.rawLine
+            .name = "result-parsing",
+            .detail = "Expected closing '}' at the end of a result command in line: " + event.rawLine
             });
     }
     text = QaplaHelpers::trim(text);
@@ -755,8 +766,8 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
         event.gameResult = GameResult::BlackWins;
         if (text != "Black mates") {
             event.errors.push_back({
-                "result-parsing",
-                "Expected 'Black mates' after '0-1' in: " + event.rawLine
+                .name = "result-parsing",
+                .detail = "Expected 'Black mates' after '0-1' in: " + event.rawLine
             });
 		}
     }
@@ -764,8 +775,8 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
         event.gameResult = GameResult::WhiteWins;
         if (text != "White mates") {
             event.errors.push_back({
-                "result-parsing",
-                "Expected 'White mates' after '1-0' in: " + event.rawLine
+                .name = "result-parsing",
+                .detail = "Expected 'White mates' after '1-0' in: " + event.rawLine
                 });
         }
     }
@@ -774,8 +785,8 @@ EngineEvent WinboardAdapter::parseResult(std::istringstream& iss, const std::str
     }
     else {
         event.errors.push_back({
-            "result-parsing",
-            "Unexpected game result command: " + command + " in line: " + event.rawLine
+            .name = "result-parsing",
+            .detail = "Unexpected game result command: " + command + " in line: " + event.rawLine
 			});
 	}
     return event;
@@ -786,7 +797,9 @@ EngineEvent WinboardAdapter::readEvent() {
     const std::string& line = engineLine.content;
 
     if (!engineLine.complete || engineLine.error == EngineLine::Error::IncompleteLine) {
-        if (engineLine.complete) logFromEngine(line, TraceLevel::info);
+        if (engineLine.complete) {
+            logFromEngine(line, TraceLevel::info);
+        }
         return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
 
@@ -808,11 +821,9 @@ EngineEvent WinboardAdapter::readEvent() {
             logFromEngine(line, TraceLevel::info);
             return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
         }
-        else {
-            logFromEngine(line, TraceLevel::error);
-            return EngineEvent::createError(identifier_, engineLine.timestampMs, 
-                "Engine sent debug output without debug mode enabled");
-        }
+        logFromEngine(line, TraceLevel::error);
+        return EngineEvent::createError(identifier_, engineLine.timestampMs, 
+            "Engine sent debug output without debug mode enabled");
     }
 
     std::istringstream iss(line);

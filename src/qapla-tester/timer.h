@@ -43,12 +43,14 @@ public:
         started_ = true;
     }
 
-    bool isStarted() const {
+    [[nodiscard]] bool isStarted() const {
         return started_;
     }
 
     void stop() {
-        if (!started_) return;
+        if (!started_) {
+            return;
+        }
         started_ = false;
         end_ = getCurrentTimeMs();
     }
@@ -59,14 +61,14 @@ public:
         end_ = 0;
     }
 
-	uint64_t elapsedMs(uint64_t end) const {
+	[[nodiscard]] uint64_t elapsedMs(uint64_t end) const {
 		return end - start_;
 	}
-    uint64_t elapsedMs() const {
+    [[nodiscard]] uint64_t elapsedMs() const {
         return started_ ? getCurrentTimeMs() - start_ : end_ - start_;
     }
 
-    void printElapsed(const char* label) {
+    void printElapsed(const char* label) const {
 		uint64_t elapsed = elapsedMs();
         int sec = (elapsed / 1000) % 60;
         
@@ -74,7 +76,7 @@ public:
             << std::right 
 			<< elapsed / 1000 / 60 << ":" 
 			<< std::setw(2) << std::setfill('0') << sec << "." 
-            << std::setw(3) << std::setfill('0') << elapsed % 1000 << std::endl;
+            << std::setw(3) << std::setfill('0') << elapsed % 1000 << "\n" << std::flush;
     }
 
 private:

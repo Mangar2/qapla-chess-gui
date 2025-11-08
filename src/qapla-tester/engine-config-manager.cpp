@@ -105,15 +105,16 @@ std::unordered_set<std::string> EngineConfigManager::findMatchingNames(const std
     return valid;
 }
 
-std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::string>> &disambiguationMaps, 
-    size_t index, const std::vector<size_t> &indices)
+std::vector<std::string> collectDifferentiatingKeys(
+    const std::vector<std::unordered_map<std::string, std::string>>& disambiguationMaps,
+    size_t index, const std::vector<size_t>& indices)
 {
     std::vector<std::string> differentiatingKeys;
-    
+
     // Collect only keys that actually differentiate from other engines
-    for (const auto &[key, value] : disambiguationMaps[index])
+    for (const auto& [key, value] : disambiguationMaps[index])
     {
-        if (key == "name" || key == "trace" || key == "selected" || key == "gauntlet" ) {
+        if (key == "name" || key == "trace" || key == "selected" || key == "gauntlet") {
             continue;
         }
 
@@ -123,8 +124,8 @@ std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::
             if (i == index) {
                 continue; // Skip self
             }
-            
-            const auto &map = disambiguationMaps[i];
+
+            const auto& map = disambiguationMaps[i];
             auto it = map.find(key);
             if (it == map.end() || it->second != value)
             {
@@ -133,6 +134,64 @@ std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::
             }
         }
     }
+
+    return differentiatingKeys;
+}
+
+std::string buildDifferentiatorsForKey(
+    const std::vector<std::unordered_map<std::string, std::string>>& disambiguationMaps,
+    const std::string& key, const std::vector<size_t>& indices, size_t index,
+    std::vector<std::string>& differentiators)
+{
+    size_t curIndex = 0;
+    std::string currentEngineString;
+
+    // Incrementally build all differentiators for this key
+    for (std::size_t i : indices)
+    {
+        const auto& map = disambiguationMaps[i];
+        auto it = map.find(key);
+        if (it != map.end())
+        {
+            // Add key (and value if present) to this engine's differentiator string
+            if (differentiators[curIndex].empty()) {
+                differentiators[curIndex] += key;
+            } else {
+                differentiators[curIndex] += ", " + key;
+            }
+            if (!it->second.empty()) {
+                differentiators[curIndex] += "=" + it->second;
+            }
+        }
+
+        // Track the string for our target engine
+        if (i == index) {
+            currentEngineString = differentiators[curIndex];
+        }
+
+        curIndex++;
+    }
+
+    return currentEngineString;
+}
+
+bool isUniqueDifferentiator(const std::vector<std::string>& differentiators,
+    const std::vector<size_t>& indices, size_t index, const std::string& currentEngineString)
+{
+    for (size_t i = 0; i < differentiators.size(); ++i)
+    {
+        if (indices[i] != index && differentiators[i] == currentEngineString)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::string>> &disambiguationMaps, 
+    size_t index, const std::vector<size_t> &indices)
+{
+    std::vector<std::string> differentiatingKeys = collectDifferentiatingKeys(disambiguationMaps, index, indices);
     
     // Progressive building: add one key at a time and check if it's sufficient
     std::vector<std::string> differentiators(indices.size());
@@ -140,46 +199,9 @@ std::string computeUnifiedName(std::vector<std::unordered_map<std::string, std::
 
     for (const std::string& key : differentiatingKeys)
     {
-        size_t curIndex = 0;        
+        currentEngineString = buildDifferentiatorsForKey(disambiguationMaps, key, indices, index, differentiators);
         
-        // Incrementally build all differentiators for this key
-        for (std::size_t i : indices)
-        {
-            const auto &map = disambiguationMaps[i];
-            auto it = map.find(key);
-            if (it != map.end())
-            {
-                // Add key (and value if present) to this engine's differentiator string
-                if (differentiators[curIndex].empty()) {
-                    differentiators[curIndex] += key;
-                } else {
-                    differentiators[curIndex] += ", " + key;
-                }
-                if (!it->second.empty()) {
-                    differentiators[curIndex] += "=" + it->second;
-                }
-            }
-            
-            // Track the string for our target engine
-            if (i == index) {
-                currentEngineString = differentiators[curIndex];
-            }
-            
-            curIndex++;
-        }
-        
-        // Check if current engine's string is unique among all engines
-        bool isUnique = true;
-        for (size_t i = 0; i < differentiators.size(); ++i)
-        {
-            if (indices[i] != index && differentiators[i] == currentEngineString)
-            {
-                isUnique = false;
-                break;
-            }
-        }
-        
-        if (isUnique)
+        if (isUniqueDifferentiator(differentiators, indices, index, currentEngineString))
         {
             break; // Found minimal set of keys that uniquely identify this engine
         }

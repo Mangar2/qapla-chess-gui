@@ -272,7 +272,7 @@ public:
      * @brief Executes the given callable with thread-safe access to the engine records.
      * @param accessFn A callable that takes a const EngineRecords&.
      */
-    void withEngineRecords(std::function<void(const EngineRecords&)> accessFn) const
+    void withEngineRecords(const std::function<void(const EngineRecords&)>& accessFn) const
     {
         std::scoped_lock lock(engineMutex_);
         accessFn(mkEngineRecords());
@@ -281,7 +281,7 @@ public:
     std::pair<std::string, std::string> getEngineNames() const
     {
         std::scoped_lock lock(engineMutex_);
-        if (!getWhite() || !getBlack())
+        if (getWhite() == nullptr || getBlack() == nullptr)
         {
             return {"", ""};
         }
