@@ -40,6 +40,8 @@
 #include "tutorial.h"
 #include "callback-manager.h"
 #include "dark-wood-background.h"
+#include "font.h"
+#include "background-renderer.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -51,8 +53,9 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-#include "font.h"
-#include "background-renderer.h"
+#ifndef _WIN32
+#include <signal.h>
+#endif
 
 using QaplaTester::Logger;
 using QaplaTester::TraceLevel;
@@ -163,6 +166,10 @@ namespace {
     }
 
     int runApp() {
+
+        #ifndef _WIN32
+        signal(SIGPIPE, SIG_IGN);
+        #endif
         
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
