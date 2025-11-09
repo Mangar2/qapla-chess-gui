@@ -28,7 +28,7 @@
 
 namespace QaplaBasics {
 
-	std::tuple<pieceSignature_t, pieceSignature_t> PieceSignature::charToSignature(char piece) const {
+	std::tuple<pieceSignature_t, pieceSignature_t> PieceSignature::charToSignature(char piece) {
 		switch (piece) {
 		case 0: return { 0, 0 };
 		case 'Q': return{ static_cast<pieceSignature_t>(Signature::QUEEN),  static_cast<pieceSignature_t>(SignatureMask::QUEEN) };
@@ -37,7 +37,7 @@ namespace QaplaBasics {
 		case 'N': return{ static_cast<pieceSignature_t>(Signature::KNIGHT),  static_cast<pieceSignature_t>(SignatureMask::KNIGHT) };
 		case 'P': return{ static_cast<pieceSignature_t>(Signature::PAWN),  static_cast<pieceSignature_t>(SignatureMask::PAWN) };
 		default:
-			std::cerr << "Unknown piece: " << piece << std::endl;
+			std::cerr << "Unknown piece: " << piece << "\n" << std::flush;
 			return{ 0, 0 };
 		}
 	}
@@ -118,7 +118,7 @@ namespace QaplaBasics {
 
 		if (pos < part.size()) {
 			allowMore = (part[pos] == '+' || part[pos] == '*');
-			valid = !((minCount == 0) && allowMore);
+			valid = (minCount != 0) || !allowMore;
 			if (part[pos] == '*') {
 				valid = minCount == 1;
 				minCount = 0;

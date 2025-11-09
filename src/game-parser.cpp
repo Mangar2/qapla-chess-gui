@@ -114,7 +114,7 @@ std::optional<GameRecord> parsePGN(const std::string& input) {
  */
 std::optional<GameRecord> parseUCI(const std::string& input) {
     // Check that it is not a PGN string
-    if (input.find("[") != std::string::npos && input.find("]") != std::string::npos) {
+    if (input.find('[') != std::string::npos && input.find(']') != std::string::npos) {
         return std::nullopt;
     }
     // Note: it will also return std::nullopt, if the move string starts with a number with dot

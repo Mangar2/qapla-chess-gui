@@ -32,7 +32,7 @@
 namespace QaplaBasics
 {
 
-	typedef uint32_t pieceSignature_t;
+	using pieceSignature_t = uint32_t;
 
 	/**
 	 * Bit of a piece in the signature field
@@ -86,9 +86,9 @@ namespace QaplaBasics
 		{
 			set(pieces);
 		}
-		bool operator<(const PieceSignature aSignature)
+		bool operator<(const PieceSignature aSignature) const
 		{
-			return pieceSignature_t(_signature) < pieceSignature_t(aSignature);
+			return _signature < pieceSignature_t(aSignature);
 		}
 		void clear() { _signature = 0; }
 
@@ -182,7 +182,7 @@ namespace QaplaBasics
 		/**
 		 * Gets the signature of all pieces
 		 */
-		[[nodiscard]] inline pieceSignature_t getPiecesSignature() const
+		[[nodiscard]] pieceSignature_t getPiecesSignature() const
 		{
 			return _signature;
 		}
@@ -212,7 +212,7 @@ namespace QaplaBasics
 		 * Checks if a side has a range piece
 		 */
 		template <Piece COLOR>
-		[[nodiscard]] inline bool hasQueenOrRookOrBishop() const
+		[[nodiscard]] bool hasQueenOrRookOrBishop() const
 		{
 			constexpr pieceSignature_t mask = SignatureMask::QUEEN | SignatureMask::ROOK | SignatureMask::BISHOP;
 			return (getSignature<COLOR>() & mask) != 0;
@@ -228,7 +228,7 @@ namespace QaplaBasics
 		/**
 		 * Checks, if the side to move has a range piece
 		 */
-		[[nodiscard]] inline bool sideToMoveHasQueenRookBishop(bool whiteToMove) const
+		[[nodiscard]] bool sideToMoveHasQueenRookBishop(bool whiteToMove) const
 		{
 			return whiteToMove ? hasQueenOrRookOrBishop<WHITE>() : hasQueenOrRookOrBishop<BLACK>();
 		}
@@ -251,8 +251,8 @@ namespace QaplaBasics
 		{
 			constexpr pieceSignature_t blackBishop = static_cast<pieceSignature_t>(Signature::BISHOP) << SIG_SHIFT_BLACK;
 			constexpr pieceSignature_t blackKnight = static_cast<pieceSignature_t>(Signature::KNIGHT) << SIG_SHIFT_BLACK;
-			constexpr pieceSignature_t whiteBishop = static_cast<pieceSignature_t>(Signature::BISHOP);
-			constexpr pieceSignature_t whiteKnight = static_cast<pieceSignature_t>(Signature::KNIGHT);
+			constexpr auto whiteBishop = static_cast<pieceSignature_t>(Signature::BISHOP);
+			constexpr auto whiteKnight = static_cast<pieceSignature_t>(Signature::KNIGHT);
 
 			return _signature == whiteBishop
 				|| _signature == whiteKnight
@@ -274,7 +274,7 @@ namespace QaplaBasics
 		 * @param out The output vector to store the generated signatures
 		 *
 		 */
-		void generateSignatures(const std::string &pattern, std::vector<pieceSignature_t> &out);
+		static void generateSignatures(const std::string &pattern, std::vector<pieceSignature_t> &out);
 
 		/**
 		 * Checks if the current signature matches a pattern
@@ -322,12 +322,12 @@ namespace QaplaBasics
 	private:
 		pieceSignature_t _signature;
 
-		inline operator pieceSignature_t() const { return _signature; }
+		operator pieceSignature_t() const { return _signature; }
 
 		/**
 		 * Checks, if a piece is available more than twice
 		 */
-		[[nodiscard]] inline bool moreThanTwoPiecesInBitBoard(bitBoard_t bitBoard) const
+		[[nodiscard]] static bool moreThanTwoPiecesInBitBoard(bitBoard_t bitBoard)
 		{
 			bitBoard &= bitBoard - 1;
 			bitBoard &= bitBoard - 1;
@@ -337,7 +337,7 @@ namespace QaplaBasics
 		/**
 		 * Checks, if a piece is available more than once
 		 */
-		[[nodiscard]] inline bool moreThanOnePieceInBitBoard(bitBoard_t bitBoard) const
+		[[nodiscard]] static bool moreThanOnePieceInBitBoard(bitBoard_t bitBoard)
 		{
 			bitBoard &= bitBoard - 1;
 			return bitBoard != 0;
@@ -471,6 +471,6 @@ namespace QaplaBasics
 		/**
 		 * Maps a piece char to a piece signature bit
 		 */
-		[[nodiscard]] std::tuple<pieceSignature_t, pieceSignature_t> charToSignature(char piece) const;
+		[[nodiscard]] static std::tuple<pieceSignature_t, pieceSignature_t> charToSignature(char piece);
 	};
 }

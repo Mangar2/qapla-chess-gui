@@ -661,10 +661,14 @@ void MoveGenerator::genMoves(MoveList& moveList)
 		// are standing in the row
 		if (isKingSideCastleAllowed<COLOR>() && (attackMask[OPPONENT_COLOR] & castleAttackMaskKingSide[COLOR]) == 0 &&
 			(castlePieceMaskKingSide[COLOR] & bitBoardAllPieces) == 0)
+		{
 			moveList.addSilentMove(Move(kingSquares[COLOR], KING_SIDE_CASTLE, Move::KING_CASTLES_KING_SIDE + COLOR));
+		}
 		if (isQueenSideCastleAllowed<COLOR>() && (attackMask[OPPONENT_COLOR] & castleAttackMaskQueenSide[COLOR]) == 0 &&
 			(castlePieceMaskQueenSide[COLOR] & bitBoardAllPieces) == 0)
+		{
 			moveList.addSilentMove(Move(kingSquares[COLOR], QUEEN_SIDE_CASTLE, Move::KING_CASTLES_QUEEN_SIDE + COLOR));
+		}
 
 		genPinnedMovesForAllPieces<COLOR>(moveList, getEP());
 	}

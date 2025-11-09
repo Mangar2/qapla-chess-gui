@@ -29,9 +29,10 @@
 
 namespace QaplaBasics {
 
-	typedef int32_t square_t;
-	typedef uint64_t bitBoard_t;
-	typedef std::array<bitBoard_t, 2> colorBB_t;
+	using square_t = int32_t;
+	using bitBoard_t = uint64_t;
+	using colorBB_t = std::array<bitBoard_t, 2>;
+
 
 	/**
 	 * Prints a bitboard to stdout

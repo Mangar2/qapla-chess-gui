@@ -38,7 +38,7 @@ namespace QaplaBasics {
 			return _pst[piece][square]; 
 		}
 		static std::vector<EvalValue> getPSTLookup(Piece piece) { 
-			return std::vector<EvalValue>(_pst[piece], _pst[piece] + BOARD_SIZE); 
+			return { _pst[piece], _pst[piece] + BOARD_SIZE }; 
 		}
 	private:
 

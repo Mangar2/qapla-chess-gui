@@ -39,7 +39,7 @@ namespace QaplaMoveGenerator {
 	class MoveGenerator : public QaplaBasics::Board
 	{
 	public:
-		MoveGenerator(void);
+		MoveGenerator();
 
 		/**
 		 * Checks if the king of the side to move is currently under attack.
@@ -49,7 +49,7 @@ namespace QaplaMoveGenerator {
 		 *
 		 * @return True if the side to move is in check, false otherwise.
 		 */
-		inline bool isInCheck() const {
+		[[nodiscard]] bool isInCheck() const {
 			bool result;
 			if (isWhiteToMove()) {
 				result = (bitBoardsPiece[QaplaBasics::WHITE_KING] & attackMask[QaplaBasics::BLACK]) != 0;
@@ -136,7 +136,7 @@ namespace QaplaMoveGenerator {
 		*/
 
 
-		std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> 
+		[[nodiscard]] std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> 
 			computeCheckBitmapsForMovingColor() const;
 
 		/**
@@ -147,7 +147,7 @@ namespace QaplaMoveGenerator {
 		 *
 		 * Uses the precomputed checkBitmaps from computeCheckBitmaps().
 		 */
-		bool isCheckMove(QaplaBasics::Move move, const std::array<QaplaBasics::bitBoard_t, 
+		[[nodiscard]] bool isCheckMove(QaplaBasics::Move move, const std::array<QaplaBasics::bitBoard_t, 
 			QaplaBasics::Piece::PIECE_AMOUNT / 2>& checkBitmaps) const;
 
 		/**
@@ -206,7 +206,7 @@ namespace QaplaMoveGenerator {
 		 * @brief provides a SAN for the move
 		 * @param move the move
 		 */
-		std::string moveToSan(QaplaBasics::Move move) const;
+		[[nodiscard]] std::string moveToSan(QaplaBasics::Move move) const;
 
 		// ------------------------------------------------------------------------
 		// ---------------------- Gives check -------------------------------------
@@ -333,7 +333,7 @@ namespace QaplaMoveGenerator {
 		 * These bitboards are used to detect if a move delivers check.
 		 */
 		template <QaplaBasics::Piece COLOR>
-		std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> computeCheckBitmaps() const;
+		[[nodiscard]] std::array<QaplaBasics::bitBoard_t, QaplaBasics::Piece::PIECE_AMOUNT / 2> computeCheckBitmaps() const;
 
 		static const int32_t ONE_COLUMN = 1;
 

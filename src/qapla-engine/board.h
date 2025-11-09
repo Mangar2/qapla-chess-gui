@@ -51,15 +51,15 @@ namespace QaplaBasics {
 		/**
 		 * Checks if the board is in a valid state
 		 */
-		bool isValidPosition() const;
-		inline auto operator[](Square square) const { return _board[square]; }
-		inline auto isWhiteToMove() const { return _whiteToMove; }
-		inline void setWhiteToMove(bool whiteToMove) { _whiteToMove = whiteToMove; }
+		[[nodiscard]] bool isValidPosition() const;
+		auto operator[](Square square) const { return _board[square]; }
+		[[nodiscard]] auto isWhiteToMove() const { return _whiteToMove; }
+		void setWhiteToMove(bool whiteToMove) { _whiteToMove = whiteToMove; }
 
 		/**
 		 * Checks, if two positions are identical
 		 */
-		constexpr bool isIdenticalPosition(const Board& boardToCompare) const {
+		[[nodiscard]] constexpr bool isIdenticalPosition(const Board& boardToCompare) const {
 			return _whiteToMove == boardToCompare._whiteToMove && _board == boardToCompare._board;
 		}
 
@@ -72,7 +72,7 @@ namespace QaplaBasics {
 		 * Sets a nullmove on the board. A nullmove is a non legal chess move where the 
 		 * person to move does nothing and hand over the moving right to the opponent.
 		 */
-		inline void doNullmove() {
+		void doNullmove() {
 			clearEP();
 			setWhiteToMove(!isWhiteToMove());
 		}
@@ -81,7 +81,7 @@ namespace QaplaBasics {
 		 * Undoes a previously made nullmove
 		 * @param boardState a stored state from the board before doing the nullmove incl. EP-Position
 		 */
-		inline void undoNullmove(BoardState recentBoardState) {
+		void undoNullmove(BoardState recentBoardState) {
 			setWhiteToMove(!isWhiteToMove());
 			_boardState = recentBoardState;
 		}
@@ -103,7 +103,7 @@ namespace QaplaBasics {
 		 * Computes the hash value of the current board
 		 * @returns board hash for the current position
 		 */
-		inline uint64_t computeBoardHash() const {
+		[[nodiscard]] uint64_t computeBoardHash() const {
 			return _boardState.computeBoardHash() ^ HashConstants::COLOR_RANDOMS[static_cast<int32_t>(_whiteToMove)];
 		}
 
@@ -112,7 +112,7 @@ namespace QaplaBasics {
 		 * Gets the amount of half moves without pawn move or capture to implement the repetitive moves draw rule
 		 * Note: the fen value is not included as there are no corresponding moves stored
 		 */
-		constexpr uint32_t getHalfmovesWithoutPawnMoveOrCapture() const {
+		[[nodiscard]] constexpr uint32_t getHalfmovesWithoutPawnMoveOrCapture() const {
 			return _boardState.halfmovesWithoutPawnMoveOrCapture;
 		}
 
@@ -120,7 +120,7 @@ namespace QaplaBasics {
 		 * Gets the amount of half moves without pawn move or capture including the start value from fen to implement
 		 * the 50-moves-draw rule
 		 */
-		constexpr uint32_t getTotalHalfmovesWithoutPawnMoveOrCapture() const {
+		[[nodiscard]] constexpr uint32_t getTotalHalfmovesWithoutPawnMoveOrCapture() const {
 			return _boardState.halfmovesWithoutPawnMoveOrCapture 
 				+ _boardState.fenHalfmovesWithoutPawnMoveOrCapture;
 		}
@@ -143,7 +143,7 @@ namespace QaplaBasics {
 		 * Is the position forced draw due to missing material (in any cases)?
 		 * No side has any pawn, no side has more than either a Knight or a Bishop
 		 */
-		inline auto drawDueToMissingMaterial() const {
+		[[nodiscard]] auto drawDueToMissingMaterial() const {
 			static const bitBoard_t WHITE_FIELDS = 0x55AA55AA55AA55AA;
 			const bool sameBishopColor = ((bitBoardsPiece[WHITE_BISHOP] & WHITE_FIELDS) != 0 
 				== (bitBoardsPiece[BLACK_BISHOP] & WHITE_FIELDS) != 0);
@@ -167,26 +167,26 @@ namespace QaplaBasics {
 		/**
 		 * @return true, if side to move has more that pawns
 		 */
-		auto hasMoreThanPawns() const {
+		[[nodiscard]] auto hasMoreThanPawns() const {
 			return isWhiteToMove() ? _pieceSignature.hasMoreThanPawns<WHITE>() : _pieceSignature.hasMoreThanPawns<BLACK>();
 		}
 
 		/**
 		 * Computes if futility pruning should be applied based on the captured piece
 		 */
-		inline auto doFutilityOnCapture(Piece capturedPiece) const {
+		[[nodiscard]] auto doFutilityOnCapture(Piece capturedPiece) const {
 			return _pieceSignature.doFutilityOnCapture(capturedPiece);
 		}
 
 		/**
 		 * Gets the signature of all pieces
 		 */
-		inline auto getPiecesSignature() const {
+		[[nodiscard]] auto getPiecesSignature() const {
 			return _pieceSignature.getPiecesSignature();
 		}
 
 		template <Piece COLOR>
-			constexpr pieceSignature_t getPiecesSignature() const {
+		[[nodiscard]]	constexpr pieceSignature_t getPiecesSignature() const {
 			return _pieceSignature.getSignature<COLOR>();
 		}
 
@@ -195,62 +195,65 @@ namespace QaplaBasics {
 		 * The pawns are not really counted.
 		 */
 		template <Piece COLOR>
-		inline auto getStaticPiecesValue() const { return _pieceSignature.getStaticPiecesValue<COLOR>(); }
+		auto getStaticPiecesValue() const { return _pieceSignature.getStaticPiecesValue<COLOR>(); }
 
 		/**
 		 * Gets the absolute value of a piece
 		 */
-		inline auto getAbsolutePieceValue(Piece piece) const {
+		[[nodiscard]] auto getAbsolutePieceValue(Piece piece) const {
 			return _materialBalance.getAbsolutePieceValue(piece);
 		}
 
 		/**
 		 * Gets the value of a piece
 		 */
-		inline auto getPieceValue(Piece piece) const {
+		[[nodiscard]] auto getPieceValue(Piece piece) const {
 			return _materialBalance.getPieceValue(piece);
 		}
 
 		/**
 		 * Gets the value of a piece used for move ordering
 		 */
-		inline auto getPieceValueForMoveSorting(Piece piece) const {
+		[[nodiscard]] auto getPieceValueForMoveSorting(Piece piece) const {
 			return _materialBalance.getPieceValueForMoveSorting(piece);
 		}
 
 		/**
 		 * Gets the material balance value of the board
 		 */
-		inline auto getMaterialValue() const {
+		[[nodiscard]] auto getMaterialValue() const {
 			return _materialBalance.getMaterialValue();
 		}
 
-		inline const auto& getPieceValues() const {
+		[[nodiscard]] const auto& getPieceValues() const {
 			return _materialBalance.getPieceValues();
 		}
 
 		/**
 		 * Gets the material balance value of the board
 		 */
-		inline auto getMaterialAndPSTValue() const {
+		[[nodiscard]] auto getMaterialAndPSTValue() const {
 			return _materialBalance.getMaterialValue() + _pstBonus;
 		}
 
 		/**
 		 * Get the piece square table bonus
 		 */
-		inline auto getPstBonus() const {
+		[[nodiscard]] auto getPstBonus() const {
 			return _pstBonus;
 		}
 
 		/**
 		 * Debugging, recompute the piece square table bonus
 		 */
-		auto computePstBonus() const {
+		[[nodiscard]] auto computePstBonus() const {
 			EvalValue bonus = 0;
 			for (Square square = A1; square <= H8; ++square) {
 				const auto piece = operator[](square);
-				if (piece == NO_PIECE) continue;
+				if (piece == NO_PIECE)
+				{
+					continue;
+				}
 				bonus += PST::getValue(square, piece);
 				// std::cout << squareToString(square) << " " << pieceToChar(piece) << " " << PST::getValue(square, piece) << std::endl;
 			}
@@ -258,24 +261,23 @@ namespace QaplaBasics {
 		}
 
 		/**
-		 * Gets the material balance value of the board
 		 * Positive, if the player to move has a better position
 		 */
-		inline auto getMaterialValue(bool whiteToMove) const {
+		[[nodiscard]] auto getMaterialValue(bool whiteToMove) const {
 			return whiteToMove ? getMaterialValue() : - getMaterialValue();
 		}
 
 		/**
 		 * Returns true, if the side to move has any range piece
 		 */
-		inline auto sideToMoveHasQueenRookBishop(bool whiteToMove) const {
+		[[nodiscard]] auto sideToMoveHasQueenRookBishop(bool whiteToMove) const {
 			return _pieceSignature.sideToMoveHasQueenRookBishop(whiteToMove);
 		}
 
 		/**
 		 * Gets the bitboard of a piece type
 		 */
-		inline auto getPieceBB(Piece piece) const {
+		[[nodiscard]] auto getPieceBB(Piece piece) const {
 			return bitBoardsPiece[piece];
 		}
 		
@@ -283,37 +285,37 @@ namespace QaplaBasics {
 		 * Gets the bitboard of a color
 		 */
 		template <Piece COLOR>
-		inline auto getPiecesOfOneColorBB() const { return bitBoardAllPiecesOfOneColor[COLOR]; }
+		[[nodiscard]] auto getPiecesOfOneColorBB() const { return bitBoardAllPiecesOfOneColor[COLOR]; }
 
 		/**
 		 * Gets the joint bitboard for all pieces
 		 */
-		inline auto getAllPiecesBB() const { return bitBoardAllPieces; }
+		[[nodiscard]] auto getAllPiecesBB() const { return bitBoardAllPieces; }
 
 		/**
 		 * Gets the square of the king
 		 */
 		template <Piece COLOR>
-		inline auto getKingSquare() const { return kingSquares[COLOR]; }
+		[[nodiscard]] auto getKingSquare() const { return kingSquares[COLOR]; }
 
 		/**
 		 * Gets the start square of the king rook
 		 */
 		template <Piece COLOR>
-		inline auto getKingRookStartSquare() const { return _kingRookStartSquare[COLOR]; }
+		[[nodiscard]] auto getKingRookStartSquare() const { return _kingRookStartSquare[COLOR]; }
 
 		/**
 		 * Gets the start square of the king rook
 		 */
 		template <Piece COLOR>
-		inline auto getQueenRookStartSquare() const { return _queenRookStartSquare[COLOR]; }
+		[[nodiscard]] auto getQueenRookStartSquare() const { return _queenRookStartSquare[COLOR]; }
 
-		BoardState getBoardState() const { return _boardState; }
+		[[nodiscard]] BoardState getBoardState() const { return _boardState; }
 
 		/**
 		 * Gets the board in Fen representation
 		 */
-		std::string getFen(uint32_t halfmovesPlayed = 0) const;
+		[[nodiscard]] std::string getFen(uint32_t halfmovesPlayed = 0) const;
 
 		/**
 		 * Prints the board as fen to std-out
@@ -330,14 +332,14 @@ namespace QaplaBasics {
 		 */
 		void printPst() const;
 
-		uint32_t getEvalVersion() const {
+		[[nodiscard]] uint32_t getEvalVersion() const {
 			return evalVersion;
 		}
 		void setEvalVersion(uint32_t version) { 
 			evalVersion = version; 
 		}
 
-		value_t getRandomBonus() const {
+		[[nodiscard]] value_t getRandomBonus() const {
 			return randomBonus;
 		}
 		void setRandomBonus(value_t bonus) {
@@ -347,17 +349,17 @@ namespace QaplaBasics {
 		/**
 		 * Sets the capture square for an en passant move
 		 */
-		inline void setEP(Square destination) { _boardState.setEP(destination); }
+		void setEP(Square destination) { _boardState.setEP(destination); }
 
 		/**
 		 * Clears the capture square for an en passant move
 		 */
-		inline void clearEP() { _boardState.clearEP(); }
+		void clearEP() { _boardState.clearEP(); }
 
 		/**
 		 * Gets the EP square
 		 */
-		inline auto getEP() const {
+		[[nodiscard]] auto getEP() const {
 			return _boardState.getEP();
 		}
 
@@ -365,7 +367,7 @@ namespace QaplaBasics {
 		 * Checks, if king side castling is allowed
 		 */
 		template <Piece COLOR>
-		inline bool isKingSideCastleAllowed() const {
+		[[nodiscard]] bool isKingSideCastleAllowed() const {
 			return _boardState.isKingSideCastleAllowed<COLOR>();
 		}
 
@@ -373,21 +375,21 @@ namespace QaplaBasics {
 		 * Checks, if queen side castling is allowed
 		 */
 		template <Piece COLOR>
-		inline bool isQueenSideCastleAllowed() const {
+		[[nodiscard]] bool isQueenSideCastleAllowed() const {
 			return _boardState.isQueenSideCastleAllowed<COLOR>();
 		}
 
 		/**
 		 * Enable/Disable castling right
 		 */
-		inline void setCastlingRight(Piece color, bool kingSide, bool allow) {
+		void setCastlingRight(Piece color, bool kingSide, bool allow) {
 			_boardState.setCastlingRight(color, kingSide, allow);
 		}
 
 		/**
 		 * Gets the hash key for the pawn structure
 		 */
-		inline hash_t getPawnHash() const {
+		[[nodiscard]] hash_t getPawnHash() const {
 			return _boardState.pawnHash;
 		}
 
@@ -395,7 +397,7 @@ namespace QaplaBasics {
 			_startHalfmoves = startHalfmoves;
 		}
 
-		uint32_t getStartHalfmoves() const {
+		[[nodiscard]] uint32_t getStartHalfmoves() const {
 			return _startHalfmoves;
 		}
 
@@ -416,7 +418,7 @@ namespace QaplaBasics {
 		 * Gets the EP square for setup position, the internal representation is different
 		 * @returns the square where the pawn moved to, not the capture square
 		 */
-		Square getSetupEpSquare() const;
+		[[nodiscard]] Square getSetupEpSquare() const;
 
 		/**
 		 * Sets the EP square for setup position, the internal representation is different
@@ -434,14 +436,12 @@ namespace QaplaBasics {
 	private:
 
 
-		
+
 		void initClearCastleMask();
-		bool validateCastlingRights() const;
-		bool validateEPSquare() const;
-		bool validatePieceCounts() const;
-		bool validatePawnRows() const;
-
-
+		[[nodiscard]] bool validateCastlingRights() const;
+		[[nodiscard]] bool validateEPSquare() const;
+		[[nodiscard]] bool validatePieceCounts() const;
+		[[nodiscard]] bool validatePawnRows() const;
 		/**
 		 * Clears the bitboards
 		 */
@@ -500,7 +500,7 @@ namespace QaplaBasics {
 		/**
 		 * Checks that moving piece and captured piece of the move matches the board
 		 */
-		bool assertMove(Move move) const;
+		[[nodiscard]] bool assertMove(Move move) const;
 
 		/**
 		 * handles EP, Castling, Promotion 

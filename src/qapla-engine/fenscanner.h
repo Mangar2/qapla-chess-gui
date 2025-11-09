@@ -85,7 +85,7 @@ namespace QaplaInterface {
 				if (curChar == 0 || curChar == ' ') {
 					break;
 				}
-				else if (curChar == '/') {
+				if (curChar == '/') {
 					error = file != QaplaBasics::NORTH;
 					file = 0;
 					rank--;
@@ -116,7 +116,7 @@ namespace QaplaInterface {
 		/**
 		 * Skips a mandatory blank
 		 */
-		bool skipBlank(const std::string& fen, std::string::iterator& fenIterator) {
+		static bool skipBlank(const std::string& fen, std::string::iterator& fenIterator) {
 			bool hasBlank = false;
 			if (fenIterator != fen.end()) {
 				if (*fenIterator == ' ') {
@@ -226,7 +226,7 @@ namespace QaplaInterface {
 		/**
 		 * Scans a positive integer in the fen
 		 */
-		uint32_t scanInteger(const std::string& fen, std::string::iterator& fenIterator) {
+		static uint32_t scanInteger(const std::string& fen, std::string::iterator& fenIterator) {
 			uint32_t result = 0;
 			while (fenIterator != fen.end() && *fenIterator >= '0' && *fenIterator <= '9') {
 				result *= 10;
@@ -245,17 +245,20 @@ namespace QaplaInterface {
 			QaplaMoveGenerator::MoveGenerator& chessBoard) {
 			auto fullmoves = scanInteger(fen, fenIterator);
 			// fullmoves are not 0 indexed
-			if (fullmoves > 0) fullmoves--;
+			if (fullmoves > 0)
+			{
+				fullmoves--;
+			}
 			auto halfmoves = fullmoves * 2 + (chessBoard.isWhiteToMove() ? 0 : 1);
 			chessBoard.setStartHalfmoves(halfmoves);
 		}
 
-		bool isPieceChar(char pieceChar) {
+		static bool isPieceChar(char pieceChar) {
 			std::string supportedChars = "PpNnBbRrQqKk";
 			return supportedChars.find(pieceChar) != std::string::npos;
 		}
 
-		bool isColChar(char colChar) {
+		static bool isColChar(char colChar) {
 			std::string supportedChars = "12345678";
 			return supportedChars.find(colChar) != std::string::npos;
 		}
