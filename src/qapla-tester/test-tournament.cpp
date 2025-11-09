@@ -21,24 +21,27 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
+#include <array>
 
 namespace QaplaTester {
 
 TestTournament::TestTournament(uint32_t totalGames, EngineReport* checklist)
     : maxGames_(totalGames), checklist_(checklist) {
     timePairs_ = {
-        {{0, 20000, 500}, {0, 10000, 100}},
-        {{0, 10000, 500}, {0,  5000, 100}},
-        {{0,  4000, 500}, {0,  2000, 100}},
-        {{0, 20000, 500}, {0, 10000,   0}},
-        {{0, 10000, 200}, {0,  5000,   0}},
-        {{0,  6000, 200}, {0,  3000,   0}}
+        {{.movesToPlay=0, .baseTimeMs=20000, .incrementMs=500}, {.movesToPlay=0, .baseTimeMs=10000, .incrementMs=100}},
+        {{.movesToPlay=0, .baseTimeMs=10000, .incrementMs=500}, {.movesToPlay=0, .baseTimeMs=5000, .incrementMs=100}},
+        {{.movesToPlay=0, .baseTimeMs=4000, .incrementMs=500}, {.movesToPlay=0, .baseTimeMs=2000, .incrementMs=100}},
+        {{.movesToPlay=0, .baseTimeMs=20000, .incrementMs=500}, {.movesToPlay=0, .baseTimeMs=10000, .incrementMs=0}},
+        {{.movesToPlay=0, .baseTimeMs=10000, .incrementMs=200}, {.movesToPlay=0, .baseTimeMs=5000, .incrementMs=0}},
+        {{.movesToPlay=0, .baseTimeMs=6000, .incrementMs=200}, {.movesToPlay=0, .baseTimeMs=3000, .incrementMs=0}}
     };
 }
 
 std::optional<GameTask> TestTournament::nextTask() {
     std::scoped_lock lock(mutex_);
-    if (current_ >= maxGames_) return std::nullopt;
+    if (current_ >= maxGames_) {
+        return std::nullopt;
+    }
 
     size_t numPairs = timePairs_.size();
     size_t divisor = (maxGames_ + numPairs - 1) / numPairs;
@@ -89,13 +92,13 @@ std::pair<double, double> TestTournament::expectedUsageRatioRange(size_t moveCou
         double maxRatio;
     };
 
-    constexpr UsageProfile usageTable[] = {
-        {0,   0.00, 0.20},
-        {40,  0.20, 0.60},
-        {80,  0.40, 0.90},
-        {160, 0.65, 1.00},
-        {320, 0.80, 1.00},
-    };
+    constexpr std::array<UsageProfile, 5> usageTable = {{
+        {.moveThreshold=0, .minRatio=0.00, .maxRatio=0.20},
+        {.moveThreshold=40, .minRatio=0.20, .maxRatio=0.60},
+        {.moveThreshold=80, .minRatio=0.40, .maxRatio=0.90},
+        {.moveThreshold=160, .minRatio=0.65, .maxRatio=1.00},
+        {.moveThreshold=320, .minRatio=0.80, .maxRatio=1.00},
+    }};
 
     for (size_t i = 1; i < std::size(usageTable); ++i) {
         if (moveCount < usageTable[i].moveThreshold) {
@@ -114,14 +117,20 @@ std::pair<double, double> TestTournament::expectedUsageRatioRange(size_t moveCou
 }
 
 void TestTournament::timeUsageReasonable(uint64_t usedTimeMs, const TimeControl& tc, size_t moveCount) {
-    if (moveCount < 30) return;
+    if (moveCount < 30) {
+        return;
+    }
 
     auto segments = tc.timeSegments();
-    if (segments.empty()) return;
+    if (segments.empty()) {
+        return;
+    }
 
     const auto& seg = segments.front();
     uint64_t availableTime = seg.baseTimeMs + moveCount * seg.incrementMs;
-    if (availableTime == 0) return;
+    if (availableTime == 0) {
+        return;
+    }
 
     double usageRatio = static_cast<double>(usedTimeMs) / static_cast<double>(availableTime);
     auto [minRatio, maxRatio] = expectedUsageRatioRange(moveCount);

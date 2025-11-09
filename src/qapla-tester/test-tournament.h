@@ -20,9 +20,9 @@
 
 #include <optional>
 #include <string>
-#include <map>
 #include <mutex>
 #include <utility>
+
 #include "time-control.h"
 #include "game-record.h"
 #include "game-result.h"
@@ -117,7 +117,7 @@ private:
      * @param moveCount Total number of moves in the game
      * @return Pair of (minimum ratio, maximum ratio), both in range [0.0, 1.0]
      */
-    std::pair<double, double> expectedUsageRatioRange(size_t moveCount);
+    static std::pair<double, double> expectedUsageRatioRange(size_t moveCount);
 
     /**
      * @brief Validates that time usage is within reasonable bounds.

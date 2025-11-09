@@ -61,7 +61,7 @@ namespace QaplaBasics {
 			}
 
 			if (index >= pattern.size()) {
-				if (remainingPieces) curSig += pieceSignature;
+				if (remainingPieces) { curSig += pieceSignature; }
 				out.push_back(curSig);
 				return;
 			}
@@ -69,7 +69,7 @@ namespace QaplaBasics {
 			char patternChar = pattern[index];
 			switch (patternChar) {
 				case 'K': {
-					if (remainingPieces) curSig += pieceSignature;
+					if (remainingPieces) { curSig += pieceSignature; }
 					// 'K' marks the start of black's pieces if not at position 0
 					recurse(index + 1, curSig, 0, index == 0);
 					break;
@@ -88,7 +88,7 @@ namespace QaplaBasics {
 					break;
 				}
 				default: {
-					if (remainingPieces) curSig += pieceSignature;
+					if (remainingPieces) { curSig += pieceSignature; }
 					recurse(index + 1, curSig, patternChar, isWhite);
 					break;
 				}
@@ -113,8 +113,8 @@ namespace QaplaBasics {
 		bool valid = true;
 		size_t pos = 0;
 
-		for (; pos < part.size() && part[pos] != pieceChar; ++pos);
-		for (; pos < part.size() && part[pos] == pieceChar; ++pos, ++minCount);
+		for (; pos < part.size() && part[pos] != pieceChar; ++pos) {}
+		for (; pos < part.size() && part[pos] == pieceChar; ++pos, ++minCount) {}
 
 		if (pos < part.size()) {
 			allowMore = (part[pos] == '+' || part[pos] == '*');
@@ -142,8 +142,9 @@ namespace QaplaBasics {
 			const std::string& part = parts[color];
 			for (char pieceChar : {'Q', 'R', 'B', 'N', 'P'}) {
 				auto [minCount, allowMore, valid] = parsePieceInPattern(pieceChar, part);
-				if (!valid)
+				if (!valid) {
 					return false;
+				}
 
 				auto [value, mask] = charToSignature(pieceChar);
 				if (color == 1) {
@@ -153,10 +154,12 @@ namespace QaplaBasics {
 
 				uint32_t count = (_signature & mask) / value;
 
-				if (count < static_cast<uint32_t>(minCount))
+				if (count < static_cast<uint32_t>(minCount)) {
 					return false;
-				if (count > static_cast<uint32_t>(minCount) && !allowMore)
+				}
+				if (count > static_cast<uint32_t>(minCount) && !allowMore) {
 					return false;
+				}
 			}
 		}
 

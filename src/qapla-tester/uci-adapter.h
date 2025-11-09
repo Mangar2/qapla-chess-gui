@@ -44,7 +44,7 @@ public:
 	 * @param workingDirectory Optional working directory for the engine.
 	 * @param identifier Unique identifier for this engine instance.
 	 */
-    explicit UciAdapter(std::filesystem::path enginePath,
+    explicit UciAdapter(const std::filesystem::path& enginePath,
         const std::optional<std::filesystem::path>& workingDirectory,
         const std::string& identifier);
     ~UciAdapter() override;
@@ -156,14 +156,14 @@ private:
     /**
      * @brief Compute the time setting options required for the go command
      */
-	std::string computeGoOptions(const GoLimits& limits) const;
+	static std::string computeGoOptions(const GoLimits& limits);
 
 	/**
 	 * @brief Sends the current position to the engine.
 	 * @param game The current game structure containing the position and moves played.
 	 * @param ponderMove Optional move to ponder on, if any.
 	 */
-    void sendPosition(const GameStruct& game, std::string ponderMove = "");   
+    void sendPosition(const GameStruct& game, const std::string& ponderMove = "");   
 
     EngineEvent parseSearchInfo(std::istringstream& iss, uint64_t timestamp, const std::string& originalLine);
 

@@ -103,11 +103,6 @@ public:
 		load(sections);
 	}
 
-    /**
-     * @brief Returns a compact status summary of all pairings.
-     */
-    std::string statusSummary() const { return {}; }
-
 	TournamentResult getResult() const {
 		TournamentResult result;
 		for (const auto& pairing : pairings_) {
@@ -137,7 +132,9 @@ public:
 	 * @result std::optional containing the PairTournament pointer if index is valid, otherwise std::nullopt.
 	 */
     std::optional<const PairTournament*> getPairTournament(size_t index) const {
-        if (index < pairings_.size()) return pairings_[index].get();
+        if (index < pairings_.size()) {
+            return pairings_[index].get();
+        }
         return std::nullopt;
     }
 
