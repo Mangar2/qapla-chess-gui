@@ -341,6 +341,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
         }
         if (config.isGauntlet()) { entries.emplace_back("gauntlet", "true"); }
         if (config.isPonderEnabled()) { entries.emplace_back("ponder", "true"); }
+        if (config.isScoreFromWhitePov()) { entries.emplace_back("whitepov", "true"); }
 
         if (config.getTraceLevel() != TraceLevel::command) {
             entries.emplace_back("trace", QaplaTester::to_string(config.getTraceLevel()));
