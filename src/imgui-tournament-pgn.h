@@ -21,8 +21,8 @@
 
 #include "tutorial.h"
 
-#include "qapla-tester/pgn-io.h"
-#include "qapla-tester/ini-file.h"
+#include "pgn-io.h"
+#include "ini-file.h"
 
 #include <string>
 #include <vector>

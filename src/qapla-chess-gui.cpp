@@ -18,8 +18,8 @@
  */
 
 #include "interactive-board-window.h"
-#include "qapla-tester/logger.h"
-#include "qapla-tester/game-manager-pool.h"
+#include "logger.h"
+#include "game-manager-pool.h"
 
 #include "configuration.h"
 #include "configuration-window.h"

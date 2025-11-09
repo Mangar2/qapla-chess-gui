@@ -21,9 +21,9 @@
 #include "imgui-controls.h"
 #include "imgui-engine-controls.h"
 #include "configuration.h"
-#include "qapla-tester/engine-worker-factory.h"
-#include "qapla-tester/engine-config-manager.h"
-#include "qapla-tester/logger.h"
+#include "engine-worker-factory.h"
+#include "engine-config-manager.h"
+#include "logger.h"
 
 using QaplaTester::EngineWorkerFactory;
 using QaplaTester::EngineConfig;

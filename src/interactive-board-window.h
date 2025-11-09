@@ -27,9 +27,9 @@
 #include "time-control-window.h"
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/time-control.h"
-#include "qapla-tester/ini-file.h"
-#include "qapla-tester/move-record.h"
+#include "time-control.h"
+#include "ini-file.h"
+#include "move-record.h"
 
 #include <memory>
 #include <optional>

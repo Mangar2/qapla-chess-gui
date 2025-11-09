@@ -25,8 +25,8 @@
 #include "vertical-split-container.h"
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/engine-record.h"
+#include "game-record.h"
+#include "engine-record.h"
 
 #include <imgui.h>
 #include <memory>

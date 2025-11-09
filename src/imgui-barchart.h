@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/change-tracker.h"
+#include "game-record.h"
+#include "change-tracker.h"
 
 #include <imgui.h>
 #include <algorithm>

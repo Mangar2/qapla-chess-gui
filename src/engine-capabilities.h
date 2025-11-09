@@ -20,8 +20,8 @@
 #pragma once
 #include "engine-capability.h"
 
-#include "qapla-tester/ini-file.h"
-#include "qapla-tester/engine-option.h"
+#include "ini-file.h"
+#include "engine-option.h"
 
 #include <unordered_map>
 #include <string>

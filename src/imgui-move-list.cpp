@@ -18,8 +18,8 @@
  */
 
 #include "imgui-move-list.h"
-#include "qapla-tester/move-record.h"
-#include "qapla-tester/game-record.h"
+#include "move-record.h"
+#include "game-record.h"
 #include <imgui.h>
 
 #include <sstream>

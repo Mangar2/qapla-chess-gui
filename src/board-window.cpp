@@ -19,8 +19,8 @@
 #include "board-window.h"
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/game-state.h"
-#include "qapla-tester/game-record.h"
+#include "game-state.h"
+#include "game-record.h"
 
 #include "font.h"
 #include "imgui-cut-paste.h"

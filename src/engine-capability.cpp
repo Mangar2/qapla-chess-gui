@@ -19,9 +19,9 @@
 
 #include "engine-capability.h"
 
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/ini-file.h"
+#include "engine-option.h"
+#include "string-helper.h"
+#include "ini-file.h"
 
 #include <sstream>
 #include <stdexcept>

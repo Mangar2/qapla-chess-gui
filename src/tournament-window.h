@@ -23,7 +23,7 @@
 #include "imgui-engine-select.h"
 #include "tutorial.h"
 
-#include "qapla-tester/engine-config.h"
+#include "engine-config.h"
 
 #include <memory>
 

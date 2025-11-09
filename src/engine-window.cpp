@@ -24,7 +24,7 @@
 #include "snackbar.h"
 #include "tutorial.h"
 
-#include "qapla-tester/engine-worker-factory.h"
+#include "engine-worker-factory.h"
 
 #include <imgui.h>
 

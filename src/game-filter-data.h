@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "qapla-tester/game-result.h"
+#include "game-result.h"
 #include <string>
 #include <set>
 #include <vector>

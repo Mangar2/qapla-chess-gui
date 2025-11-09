@@ -18,8 +18,8 @@
  */
 
 #include "autosavable.h"
-#include "qapla-tester/logger.h"
-#include "qapla-tester/timer.h"
+#include "logger.h"
+#include "timer.h"
 
 #include <filesystem>
 #include <iostream>

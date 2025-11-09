@@ -24,8 +24,8 @@
 #include <memory>
 #include <mutex>
 #include <thread>
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/engine-test-functions.h"
+#include "engine-config.h"
+#include "engine-test-functions.h"
 #include "imgui-table.h"
 
 namespace QaplaWindows

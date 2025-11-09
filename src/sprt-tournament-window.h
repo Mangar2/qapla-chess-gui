@@ -22,7 +22,7 @@
 #include "embedded-window.h"
 #include "imgui-engine-select.h"
 
-#include "qapla-tester/engine-config.h"
+#include "engine-config.h"
 
 #include <memory>
 

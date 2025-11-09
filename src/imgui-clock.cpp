@@ -21,10 +21,10 @@
 #include "font.h"
 #include "imgui-controls.h"
 #include "qapla-engine/types.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/move-record.h"
-#include "qapla-tester/time-control.h"
+#include "string-helper.h"
+#include "game-record.h"
+#include "move-record.h"
+#include "time-control.h"
 
 #include <imgui.h>
 

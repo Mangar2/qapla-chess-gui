@@ -22,7 +22,7 @@
 #include "engine-capabilities.h"
 #include "autosavable.h"
 
-#include "qapla-tester/ini-file.h"
+#include "ini-file.h"
 
 #include <memory>
 #include <array>

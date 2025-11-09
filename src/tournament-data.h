@@ -32,13 +32,13 @@
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
-#include "qapla-tester/ini-file.h"
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/pgn-io.h"
-#include "qapla-tester/adjudication-manager.h"
-#include "qapla-tester/time-control.h"
-#include "qapla-tester/logger.h"
+#include "ini-file.h"
+#include "engine-option.h"
+#include "engine-config.h"
+#include "pgn-io.h"
+#include "adjudication-manager.h"
+#include "time-control.h"
+#include "logger.h"
 
 #include <memory>
 #include <optional>

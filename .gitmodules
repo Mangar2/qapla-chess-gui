@@ -7,3 +7,7 @@
 [submodule "extern/stb"]
 	path = extern/stb
 	url = https://github.com/nothings/stb
+[submodule "extern/qapla-engine-tester"]
+	path = extern/qapla-engine-tester
+	url = https://github.com/Mangar2/qapla-engine-tester.git
+	branch = 0.5.0

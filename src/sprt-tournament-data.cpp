@@ -22,12 +22,12 @@
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
-#include "qapla-tester/ini-file.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/sprt-manager.h"
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/pgn-io.h"
-#include "qapla-tester/game-manager-pool.h"
+#include "ini-file.h"
+#include "string-helper.h"
+#include "sprt-manager.h"
+#include "engine-option.h"
+#include "pgn-io.h"
+#include "game-manager-pool.h"
 
 #include <algorithm>
 #include <format>

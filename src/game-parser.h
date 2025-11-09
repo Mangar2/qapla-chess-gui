@@ -24,7 +24,7 @@
 #include <functional>
 #include <vector>
 
-#include "qapla-tester/game-record.h"
+#include "game-record.h"
 
 namespace QaplaUtils {
 

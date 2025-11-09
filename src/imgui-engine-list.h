@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "qapla-tester/engine-record.h"
-#include "qapla-tester/change-tracker.h"
+#include "engine-record.h"
+#include "change-tracker.h"
 
 #include <imgui.h>
 #include <memory>

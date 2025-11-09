@@ -22,8 +22,8 @@
 #include "imgui-controls.h"
 #include <imgui.h>
 
-#include "qapla-tester/time-control.h"
-#include "qapla-tester/string-helper.h"
+#include "time-control.h"
+#include "string-helper.h"
 
 #include <array>
 #include <utility>

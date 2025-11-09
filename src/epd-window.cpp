@@ -27,11 +27,11 @@
 #include "epd-data.h"
 #include "configuration.h"
 
-#include "qapla-tester/move-record.h"
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/engine-event.h"
-#include "qapla-tester/game-manager-pool.h"
+#include "move-record.h"
+#include "game-record.h"
+#include "string-helper.h"
+#include "engine-event.h"
+#include "game-manager-pool.h"
 
 #include <imgui.h>
 

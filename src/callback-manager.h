@@ -27,7 +27,7 @@
 #include <mutex>
 #include <iostream>
 
-#include "qapla-tester/game-record.h"
+#include "game-record.h"
 
 namespace QaplaWindows {
 

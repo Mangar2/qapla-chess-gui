@@ -22,7 +22,7 @@
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "callback-manager.h"
-#include "qapla-tester/game-result.h"
+#include "game-result.h"
 
 using QaplaTester::GameRecord;
 using QaplaTester::GameResult;

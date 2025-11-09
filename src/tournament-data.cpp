@@ -27,17 +27,17 @@
 #include "imgui-engine-global-settings.h"
 #include "configuration.h"
 
-#include "qapla-tester/string-helper.h"
+#include "string-helper.h"
 
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/engine-worker-factory.h"
+#include "engine-option.h"
+#include "engine-worker-factory.h"
 
-#include "qapla-tester/tournament.h"
-#include "qapla-tester/tournament-result.h"
+#include "tournament.h"
+#include "tournament-result.h"
 
-#include "qapla-tester/game-manager-pool.h"
-#include "qapla-tester/pgn-io.h"
-#include "qapla-tester/adjudication-manager.h"
+#include "game-manager-pool.h"
+#include "pgn-io.h"
+#include "adjudication-manager.h"
 #include "imgui-table.h"
 
 #include <imgui.h>

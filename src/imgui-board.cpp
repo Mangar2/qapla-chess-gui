@@ -21,9 +21,9 @@
 #include "font.h"
 #include "imgui-button.h"
 
-#include "qapla-tester/game-state.h"
-#include "qapla-tester/move-record.h"
-#include "qapla-tester/game-record.h"
+#include "game-state.h"
+#include "move-record.h"
+#include "game-record.h"
 
 #include "qapla-engine/types.h"
 #include "qapla-engine/move.h"

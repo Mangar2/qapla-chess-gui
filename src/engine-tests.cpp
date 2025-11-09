@@ -18,9 +18,9 @@
  */
 
 #include "engine-tests.h"
-#include "qapla-tester/engine-test-functions.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/engine-report.h"
+#include "engine-test-functions.h"
+#include "string-helper.h"
+#include "engine-report.h"
 #include "snackbar.h"
 #include "configuration.h"
 

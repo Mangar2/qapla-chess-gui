@@ -22,8 +22,8 @@
 #include "os-dialogs.h"
 #include "snackbar.h"
 
-#include "qapla-tester/time-control.h"
-#include "qapla-tester/engine-option.h"
+#include "time-control.h"
+#include "engine-option.h"
 
 #include <imgui.h>
 #include <string>

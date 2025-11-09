@@ -20,7 +20,7 @@
 #include "tutorial.h"
 #include "configuration.h"
 #include "snackbar.h"
-#include "qapla-tester/string-helper.h"
+#include "string-helper.h"
 
 #include <optional>
 

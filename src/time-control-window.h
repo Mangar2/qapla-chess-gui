@@ -20,7 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "qapla-tester/time-control.h"
+#include "time-control.h"
 
 #include <memory>
 #include <array>

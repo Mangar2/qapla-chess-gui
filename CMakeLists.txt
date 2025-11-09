@@ -36,6 +36,15 @@ target_include_directories(imgui PUBLIC
 target_compile_options(imgui PRIVATE -Wno-all)
 
 # --------------------------------
+# qapla-engine-tester Sources
+# --------------------------------
+file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
+    extern/qapla-engine-tester/src/*.cpp
+)
+# qapla-engine-tester.cpp entfernen (hat main())
+list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
+
+# --------------------------------
 # Eigene Quelldateien
 # --------------------------------
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
@@ -46,13 +55,14 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 # --------------------------------
 # Executable
 # --------------------------------
-add_executable(qapla WIN32 ${PROJECT_SOURCES})
+add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES})
 
 # --------------------------------
 # Includes & Libs
 # --------------------------------
 target_include_directories(qapla PRIVATE
   extern/glad/include
+  extern/qapla-engine-tester/src
   src
 )
 

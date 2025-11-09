@@ -19,7 +19,7 @@
 
 #include "game-filter-data.h"
 #include "configuration.h"
-#include "qapla-tester/string-helper.h"
+#include "string-helper.h"
 
 namespace QaplaWindows {
 

@@ -21,8 +21,8 @@
 
 #include "tutorial.h"
 
-#include "qapla-tester/openings.h"
-#include "qapla-tester/ini-file.h"
+#include "openings.h"
+#include "ini-file.h"
 
 #include <string>
 #include <optional>

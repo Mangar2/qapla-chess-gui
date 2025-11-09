@@ -21,8 +21,8 @@
 
 #include <string>
 #include <unordered_map>
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/ini-file.h"
+#include "engine-option.h"
+#include "ini-file.h"
 
 namespace QaplaConfiguration {
 

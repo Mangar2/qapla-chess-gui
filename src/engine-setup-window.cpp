@@ -29,9 +29,9 @@
 #include "snackbar.h"
 #include "tutorial.h"
 
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/engine-worker-factory.h"
+#include "string-helper.h"
+#include "engine-config.h"
+#include "engine-worker-factory.h"
 
 #include <imgui.h>
 

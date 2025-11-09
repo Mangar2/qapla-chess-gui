@@ -18,8 +18,8 @@
  */
 
 #include "imgui-causes-table.h"
-#include "qapla-tester/tournament-result.h"
-#include "qapla-tester/game-result.h"
+#include "tournament-result.h"
+#include "game-result.h"
 #include <imgui.h>
 
 using namespace QaplaTester;

@@ -22,11 +22,11 @@
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "imgui-separator.h"
-#include "qapla-tester/engine-record.h"
-#include "qapla-tester/move-record.h"
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/engine-event.h"
+#include "engine-record.h"
+#include "move-record.h"
+#include "game-record.h"
+#include "string-helper.h"
+#include "engine-event.h"
 #include "qapla-engine/types.h"
 
 #include <imgui.h>

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/ini-file.h"
+#include "engine-config.h"
+#include "ini-file.h"
 
 #include <vector>
 #include <functional>

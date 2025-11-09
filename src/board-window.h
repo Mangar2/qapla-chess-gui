@@ -19,7 +19,7 @@
 #pragma once
 
 #include "qapla-engine/types.h"
-#include "qapla-tester/move-record.h"
+#include "move-record.h"
 
 #include "imgui-board.h"
 #include "imgui-button.h"

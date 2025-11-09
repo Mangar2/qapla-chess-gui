@@ -20,7 +20,7 @@
 
 #include "qapla-engine/types.h"
 
-#include "qapla-tester/change-tracker.h"
+#include "change-tracker.h"
 #include "imgui-board-setup.h"
 
 #include <imgui.h>

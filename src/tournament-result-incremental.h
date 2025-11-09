@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "qapla-tester/tournament-result.h"
+#include "tournament-result.h"
 
 #include <unordered_set>
 

@@ -23,8 +23,8 @@
 #include "configuration.h"
 #include "tutorial.h"
 
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/engine-option.h"
+#include "engine-config.h"
+#include "engine-option.h"
 
 #include <imgui.h>
 

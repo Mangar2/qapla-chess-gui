@@ -23,10 +23,10 @@
 #include "configuration.h"
 #include "snackbar.h"
 
-#include "qapla-tester/engine-worker-factory.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/epd-manager.h"
-#include "qapla-tester/game-manager-pool.h"
+#include "engine-worker-factory.h"
+#include "string-helper.h"
+#include "epd-manager.h"
+#include "game-manager-pool.h"
 
 #include <imgui.h>
 

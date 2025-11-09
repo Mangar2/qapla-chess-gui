@@ -22,12 +22,12 @@
 #include "interactive-board-window.h"
 #include "callback-manager.h"
 
-#include "qapla-tester/logger.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/ini-file.h"
-#include "qapla-tester/timer.h"
-#include "qapla-tester/time-control.h"
-#include "qapla-tester/engine-worker-factory.h"
+#include "logger.h"
+#include "string-helper.h"
+#include "ini-file.h"
+#include "timer.h"
+#include "time-control.h"
+#include "engine-worker-factory.h"
 
 #include <cstdlib>
 #include <fstream>

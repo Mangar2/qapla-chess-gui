@@ -21,9 +21,9 @@
 #include "engine-capabilities.h"
 #include "snackbar.h"
 
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/engine-config-manager.h"
-#include "qapla-tester/engine-worker-factory.h"
+#include "engine-config.h"
+#include "engine-config-manager.h"
+#include "engine-worker-factory.h"
 
 #include <thread>
 

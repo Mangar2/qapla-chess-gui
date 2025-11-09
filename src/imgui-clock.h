@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "qapla-tester/timer.h"
-#include "qapla-tester/change-tracker.h"
-#include "qapla-tester/engine-record.h"
+#include "timer.h"
+#include "change-tracker.h"
+#include "engine-record.h"
 
 #include <imgui.h>
 

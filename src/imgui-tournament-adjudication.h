@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "qapla-tester/adjudication-manager.h"
-#include "qapla-tester/ini-file.h"
+#include "adjudication-manager.h"
+#include "ini-file.h"
 
 #include <string>
 #include <vector>

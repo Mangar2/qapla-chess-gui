@@ -21,7 +21,7 @@
 
 #include "imgui-table.h"
 
-#include "qapla-tester/change-tracker.h"
+#include "change-tracker.h"
 
 #include <imgui.h>
 

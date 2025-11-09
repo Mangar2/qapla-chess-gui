@@ -21,7 +21,7 @@
 
 #include "embedded-window.h"
 #include "game-filter-data.h"
-#include "qapla-tester/game-result.h"
+#include "game-result.h"
 #include <string>
 #include <vector>
 #include <set>

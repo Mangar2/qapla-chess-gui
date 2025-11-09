@@ -21,7 +21,7 @@
 
 #include "qapla-engine/types.h"
 
-#include "qapla-tester/engine-record.h"
+#include "engine-record.h"
 
 #include "embedded-window.h"
 #include "imgui-board.h"

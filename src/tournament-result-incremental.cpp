@@ -19,8 +19,8 @@
 
 #include "tournament-result-incremental.h"
 
-#include "qapla-tester/tournament.h"
-#include "qapla-tester/tournament-result.h"
+#include "tournament.h"
+#include "tournament-result.h"
 
 using QaplaTester::Tournament;
 using namespace QaplaWindows;

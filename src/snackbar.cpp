@@ -21,7 +21,7 @@
 #include "configuration.h"
 #include "tutorial.h"
 
-#include "qapla-tester/string-helper.h"
+#include "string-helper.h"
 
 #include <imgui.h>
 

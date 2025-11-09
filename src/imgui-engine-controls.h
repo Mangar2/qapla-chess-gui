@@ -20,10 +20,10 @@
 #pragma once
 
 #include "imgui-controls.h"
-#include "qapla-tester/string-helper.h"
-#include "qapla-tester/engine-config.h"
-#include "qapla-tester/engine-option.h"
-#include "qapla-tester/logger.h"
+#include "string-helper.h"
+#include "engine-config.h"
+#include "engine-option.h"
+#include "logger.h"
 #include "configuration.h"
 
 #include <imgui.h>

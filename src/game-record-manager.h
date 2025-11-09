@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "qapla-tester/game-record.h"
-#include "qapla-tester/pgn-io.h"
+#include "game-record.h"
+#include "pgn-io.h"
 
 #include <string>
 #include <vector>

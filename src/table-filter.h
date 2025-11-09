@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "qapla-tester/game-record.h"
+#include "game-record.h"
 
 namespace QaplaWindows {
 
