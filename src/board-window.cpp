@@ -259,7 +259,7 @@ namespace QaplaWindows
         ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
         
         if (!clickedButton.empty()) {
-            showNextBoardTutorialStep(clickedButton, status);
+            showNextBoardTutorialStep(clickedButton);
             showNextCutPasteTutorialStep(clickedButton);  
         }
         
@@ -379,7 +379,7 @@ namespace QaplaWindows
             return drawSetupButtons();
         } 
         showNextCutPasteTutorialStep("");
-        showNextBoardTutorialStep("", status);
+        showNextBoardTutorialStep("");
         return drawBoardButtons(status);
     }
 
@@ -490,7 +490,7 @@ namespace QaplaWindows
         return true;
     }();
 
-    void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status) {
+    void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton) {
         if (this != tutorialInstance_) return;
         
         constexpr auto tutorialName = Tutorial::TutorialName::BoardWindow;

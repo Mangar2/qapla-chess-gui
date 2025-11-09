@@ -565,9 +565,7 @@ private:
 	uint32_t gameInRound_ = 0;
 	uint32_t opening_ = 0;
 	uint32_t round_ = 0;
-	uint32_t pgnRound_ = 0;
 	ChangeTracker changeTracker_;
-	GameEvent gameEvent_ = GameEvent::None;
 };
 
 } // namespace QaplaTester

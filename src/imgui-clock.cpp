@@ -350,13 +350,12 @@ static void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight,
  * @param bottomRight Bottom-right anchor of the clock area. 
  * @param totalMs   Total remaining time in milliseconds.
  * @param moveMs    Time for the current move in milliseconds.
- * @param engineName Name of the chess engine (unused in small mode).
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
  * @param analyze   True if in analyze mode.
  */
 static void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
-    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
+    uint64_t totalMs, uint64_t moveMs, bool white, bool wtm, bool analyze)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
@@ -405,7 +404,7 @@ void ImGuiClock::draw() const {
 
     if (smallClock) {
         drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
-            clockData_.wEngineName, true, clockData_.wtm, analyze_);
+            true, clockData_.wtm, analyze_);
     }
     else {
         drawClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
@@ -420,7 +419,7 @@ void ImGuiClock::draw() const {
 
     if (smallClock) {
         drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
-            clockData_.bEngineName, false, clockData_.wtm, analyze_);
+            false, clockData_.wtm, analyze_);
     }
     else {
         drawClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,

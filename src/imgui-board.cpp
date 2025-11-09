@@ -538,7 +538,7 @@ namespace QaplaWindows
         {
             const Piece currentPieceOnSquare = gameState_->position()[*hoveredSquareForPopup_];
             auto selectedPiece = drawPieceSelectionPopup(
-                hoveredSquareCellMin_, hoveredSquareCellMax_, hoveredSquareCellSize_, currentPieceOnSquare);
+                hoveredSquareCellMin_, hoveredSquareCellSize_, currentPieceOnSquare);
             
             if (selectedPiece) {
                 if (*selectedPiece != Piece::NO_PIECE) {
@@ -554,13 +554,13 @@ namespace QaplaWindows
 
         ImGui::PopFont();
 
-        drawSetupControls(screenPos, boardSize, region);
+        drawSetupControls(screenPos, boardSize);
 
         const auto moveRecord = checkMove();
         return moveRecord;
     }
 
-    void ImGuiBoard::drawSetupControls(const ImVec2 &screenPos, const float boardSize, const ImVec2 &region)
+    void ImGuiBoard::drawSetupControls(const ImVec2 &screenPos, const float boardSize)
     {
         // Draw setup controls to the right of the board if in setup mode
         if (setupMode_)
@@ -667,10 +667,6 @@ namespace QaplaWindows
         const float originalSize = originalMax.x - originalMin.x;
         const float newSize = originalSize * REDUCE_SATELLITES;
         
-        // Calculate radius for circular arrangement
-        // Use the grid cell size as the base radius (distance from center to satellite)
-        const float baseRadius = gridCellSize * (GRID_COL_COUNT * 0.5F);
-        // Add half the enlarged center size and half the satellite size
         const float enlargedCenterRadius = (gridCellSize * CENTER_EXTENT * ENLARGE_CENTER) * 0.5F;
         const float satelliteRadius = newSize * 0.5F;
         const float circularRadius = enlargedCenterRadius + satelliteRadius;
@@ -779,7 +775,7 @@ namespace QaplaWindows
     }
 
     std::optional<Piece> ImGuiBoard::drawPieceSelectionPopup(
-        const ImVec2& cellMin, const ImVec2& cellMax, float cellSize, Piece currentPieceOnSquare)
+        const ImVec2& cellMin, float cellSize, Piece currentPieceOnSquare)
     {
         const float gridCellSize = cellSize * GRID_CELL_SIZE_RATIO;
         const float popupWidth = gridCellSize * GRID_COL_COUNT;

@@ -79,7 +79,7 @@ namespace QaplaButton {
         return ImGui::GetColorU32(m);
     }
 
-    void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawNew(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
         constexpr float FIELD_SIZE = 3;
         auto xPos = topLeft.x + BORDER;
         auto yPos = topLeft.y + BORDER;
@@ -97,7 +97,7 @@ namespace QaplaButton {
         }
     }
 
-    void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawNow(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
         auto yReduce = BORDER + 5.0F;
         auto thickness = 7.0F;
         auto arrowInset = 4.0F;
@@ -241,14 +241,12 @@ namespace QaplaButton {
 
     }
 
-
-    void drawRestart (ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawRestart (ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         ImVec2 center = topLeft;
         center.x += size.x / 2;
         center.y += size.y / 2;
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
 
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
         constexpr float pi = std::numbers::pi_v<float>;
 
         auto color = getFgColor(state);
@@ -299,7 +297,7 @@ namespace QaplaButton {
         list->AddText(ImGui::GetFont(), fontSize, textPos, color, text.c_str());
 	}
 
-    void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawPlay(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
 		auto yReduce = BORDER + 5.0F;
         auto thickness = 7.0F;
         auto arrowInset = 4.0F;
@@ -317,7 +315,7 @@ namespace QaplaButton {
         }
     }
 
-    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
         auto yReduce = BORDER + 4.0F;
         auto thickness = 5.0F;
         auto arrowInset = 3.0F;

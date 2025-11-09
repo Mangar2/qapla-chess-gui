@@ -122,7 +122,7 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
         if (tableIndex >= engineRecords_.size()) {
             break; 
         }
-        if (moveIndex < 0 || moveIndex >= history.size()) {
+        if (moveIndex < 0 || static_cast<size_t>(moveIndex) >= history.size()) {
 			if (tables_.size() > tableIndex) {
                 tables_[tableIndex]->clear();
             }
@@ -132,7 +132,6 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
             continue;
         }
         const auto& moveRecord = history[static_cast<size_t>(moveIndex)];
-        auto& engineRecord = engineRecords_[tableIndex];
         setTable(tableIndex, moveRecord);
         displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
     }
@@ -275,7 +274,7 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
     }
 }
 
-static std::string drawButtons(size_t index) {
+static std::string drawButtons() {
     constexpr float space = 3.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
@@ -352,7 +351,7 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0F));
     ImGui::PushItemWidth(cEngineInfoWidth - 10.0F);
     bool hasEngine = (index < engineRecords_.size());
-    if (allowInput_ && (!isSmall || !hasEngine)) { command = drawButtons(index); }
+    if (allowInput_ && (!isSmall || !hasEngine)) { command = drawButtons(); }
     if (hasEngine) {
         drawEngineInfo(engineRecords_[index], index);
     }

@@ -96,10 +96,10 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     uint32_t moveNumber = (gameRecord.halfmoveNoAtPly(tableSizeWithoutStartRow) + 1) / 2;
     for (size_t i = tableSizeWithoutStartRow; i < moves.size(); ++i) {
         if (wtm) {
-            table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i], i));
+            table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i]));
         } 
         else {
-            table_.push(mkRow("...", moves[i], i));
+            table_.push(mkRow("...", moves[i]));
             moveNumber++;
         }
         wtm = !wtm;
@@ -126,7 +126,7 @@ std::optional<size_t> ImGuiMoveList::draw() {
 }
 
 
-std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move, size_t index) {
+std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const MoveRecord& move) {
     std::vector<std::string> row;
     row.push_back(label + move.san_);
     if (!label.empty() && label[0] == '.') {

@@ -663,10 +663,6 @@ PgnIO::parseMoveLine(const std::vector<std::string>& tokens, bool loadComments) 
             return { moves, GameResult::Unterminated };
         }
         // Check for spaced-out results
-
-        if (tok == "1") {
-            auto test = 0;
-        }
         if (pos + 2 < tokens.size()) {
             if (tok == "1" && tokens[pos+1] == "-" && tokens[pos+2] == "0") {
                 return { moves, GameResult::WhiteWins };

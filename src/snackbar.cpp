@@ -100,7 +100,6 @@ void SnackbarManager::draw() {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
         
         float availableWidth = snackbarWidth - 2 * padding;
-        float fontSize = ImGui::GetFontSize() * 1.1f;
         
         // Calculate text size with wrapping
         std::string fullText = std::string(typeNames[static_cast<int>(currentSnackbar.type)]) + ":\n" + currentSnackbar.message;

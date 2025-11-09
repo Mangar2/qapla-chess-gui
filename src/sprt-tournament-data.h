@@ -38,7 +38,7 @@ namespace QaplaTester {
     struct SprtConfig;
     class GameManagerPool;
     class SprtManager;
-    class MonteCarloResult;
+    struct MonteCarloResult;
 }
 class ImGuiConcurrency;
 

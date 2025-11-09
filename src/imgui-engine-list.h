@@ -29,7 +29,7 @@
 
 namespace QaplaTester
 {
-    struct GameRecord;
+    class GameRecord;
     struct MoveRecord;
     struct SearchInfo;
 }

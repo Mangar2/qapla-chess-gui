@@ -305,8 +305,8 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool selectionBox(const char* label, int& currentItem, const std::vector<std::string>& options) {
         bool modified = false;
-        if (ImGui::BeginCombo(label, 
-            currentItem >= 0 && currentItem < options.size() ? options[currentItem].c_str() : "Custom"
+        bool isIndex = currentItem >= 0 && currentItem < static_cast<int>(options.size());
+        if (ImGui::BeginCombo(label, isIndex ? options[currentItem].c_str() : "Custom"
         )) {
             for (size_t i = 0; i < options.size(); ++i) {
                 bool isSelected = (currentItem == static_cast<int>(i));

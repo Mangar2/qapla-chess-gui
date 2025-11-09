@@ -72,7 +72,7 @@ namespace QaplaWindows {
         }
 
     private:
-        static std::vector<std::string> mkRow(const std::string& label, const QaplaTester::MoveRecord& move, size_t index);
+        static std::vector<std::string> mkRow(const std::string& label, const QaplaTester::MoveRecord& move);
 		size_t currentPly_ = 0;
         QaplaTester::ChangeTracker referenceTracker_;
         ImGuiTable table_;

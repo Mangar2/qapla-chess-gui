@@ -78,11 +78,6 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
 }
 
 std::pair<std::string, std::string> EngineWindow::draw() {
-    constexpr float cMinRowHeight = 80.0F;
-    constexpr float cEngineInfoWidth = 160.0F;
-    constexpr float cMinTableWidth = 200.0F;
-    constexpr float cSectionSpacing = 4.0F;
-    constexpr float rightBorder = 5.0F;
 
     const auto engineRecords = getEngineRecords();
     const auto engineAvailable = !QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs().empty();

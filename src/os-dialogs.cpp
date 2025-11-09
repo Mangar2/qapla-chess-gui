@@ -219,7 +219,7 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
         std::snprintf(filename, sizeof(filename), "%s", defaultPath.c_str());
     }
 
-    OPENFILENAMEA ofn = { 0 };
+    OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = nullptr;
     ofn.lpstrFile = filename;

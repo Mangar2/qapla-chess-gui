@@ -87,12 +87,6 @@ EngineList EngineTestController::startEngines(uint32_t count) {
     return list;
 }
 
-static std::string bytesToMB(uint64_t bytes) {
-	std::ostringstream oss;
-	oss << std::fixed << std::setprecision(1) << (static_cast<double>(bytes) / (1024.0 * 1024.0));
-	return oss.str();
-}
-
 void EngineTestController::runAllTests(const EngineConfig& engine, int numGames) {
     engineConfig_ = engine;
 	checklist_ = EngineReport::getChecklist(engineConfig_.getName());

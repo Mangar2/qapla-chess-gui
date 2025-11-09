@@ -694,7 +694,8 @@ void WinboardAdapter::finalizeFeatures() {
             .type = EngineOption::Type::Spin,
             .defaultValue = "32",
             .min = 1,
-            .max = 131072
+            .max = 131072,
+            .vars = {}
         };
         supportedOptions_.push_back(std::move(hashOption));
     }
@@ -706,7 +707,8 @@ void WinboardAdapter::finalizeFeatures() {
             .type = EngineOption::Type::Spin,
             .defaultValue = "1",
             .min = 1,
-            .max = 512
+            .max = 512,
+            .vars = {}
         };
         supportedOptions_.push_back(std::move(threadsOption));
     }

@@ -65,11 +65,11 @@ namespace QaplaWindows {
     EpdData::~EpdData() = default;
 
     void EpdData::setCallbacks() {
-        pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+        pollCallbackHandle_ = StaticCallbacks::poll().registerCallback(
 		    [this]() {
     			this->pollData();
 		    }
-    	));
+    	);
         
         engineSelect_->setConfigurationChangedCallback(
             [this](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {

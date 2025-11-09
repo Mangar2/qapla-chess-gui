@@ -43,7 +43,7 @@ namespace QaplaBasics
 namespace QaplaTester
 {
     class GameRecord;
-    class MoveRecord;
+    struct MoveRecord;
     class GameState;
 }
 
@@ -205,14 +205,14 @@ namespace QaplaWindows
         // std::nullopt: no action (just cursor change)
         // NO_PIECE: remove piece from square
         // other piece: place that piece on square
-        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, const ImVec2& cellMax, float cellSize, QaplaBasics::Piece currentPieceOnSquare);
+        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, float cellSize, QaplaBasics::Piece currentPieceOnSquare);
         std::optional<QaplaBasics::Piece> handlePieceSelectionClick(const ImVec2& popupMin, float gridCellSize);
         
         // Handles piece selection popup logic - returns true if mouse is over popup
         bool handlePieceSelectionPopup();
 
         // Draws setup controls like side to move, castling rights, en passant, ...
-        void drawSetupControls(const ImVec2 &screenPos, const float boardSize, const ImVec2 &region);
+        void drawSetupControls(const ImVec2 &screenPos, const float boardSize);
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;

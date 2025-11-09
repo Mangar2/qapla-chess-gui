@@ -74,7 +74,6 @@ void Configuration::loadData(std::ifstream& in) {
 
 bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section) {
     const auto& sectionName = section.name;
-    const auto& entries = section.entries;
     try {
         if (sectionName == "enginecapability") {
             engineCapabilities_.addOrReplace(section);

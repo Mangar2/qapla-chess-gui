@@ -257,7 +257,11 @@ bool attachToParentConsole() {
     return false;
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance, 
+    [[maybe_unused]] HINSTANCE hPrevInstance, 
+    [[maybe_unused]] LPSTR lpCmdLine, 
+    [[maybe_unused]] int nShowCmd) 
+{
     bool hasConsole = attachToParentConsole();
     
     try {

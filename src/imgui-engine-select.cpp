@@ -104,7 +104,8 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
     {
         EngineConfiguration engine = {
             .config = config,
-            .selected = false};
+            .selected = false, 
+            .originalName = {}};
 
         auto it = findEngineConfiguration(config);
         if (it != engineConfigurations_.end())

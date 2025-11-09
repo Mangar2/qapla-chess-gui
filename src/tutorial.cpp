@@ -106,12 +106,10 @@ void Tutorial::loadConfiguration() {
     if (!sections.empty()) {
         const auto& section = sections[0];
         
-        // Lade alle Tutorial-Counter aus der Konfiguration
         for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
-            auto name = static_cast<TutorialName>(i);
             auto& entry = entries_[i];
-            
-            // Nutze displayName + Index als Config-Key für Uniqueness
+
+            // Use displayName + Index as Config-Key for Uniqueness
             auto configName = entry.displayName + std::to_string(i);
             
             auto valueOpt = section.getValue(configName).value_or("0");
@@ -119,8 +117,8 @@ void Tutorial::loadConfiguration() {
             entry.getProgressCounter() = entry.counter;
         }
     }
-    
-    // Prüfe, ob auto-start Tutorials nun starten können
+
+    // Check if auto-start tutorials can now start
     for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
         auto name = static_cast<TutorialName>(i);
         if (mayStart(name)) {
@@ -137,13 +135,9 @@ void Tutorial::saveConfiguration() const {
         }
     };
     
-    // Speichere alle Tutorial-Counter
     for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
         const auto& entry = entries_[i];
-        
-        // Nutze displayName + Index als Config-Key für Uniqueness
         auto configName = entry.displayName + std::to_string(i);
-        
         section.entries.push_back({ configName, std::to_string(entry.counter) });
     }
     

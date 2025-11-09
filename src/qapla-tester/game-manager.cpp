@@ -42,7 +42,7 @@
 namespace QaplaTester {
 
 GameManager::GameManager(GameManagerPool* pool)
-    : pool_(pool), taskProvider_(nullptr)
+    : taskProvider_(nullptr), pool_(pool)
 {
     eventThread_ = std::thread(&GameManager::processQueue, this);
     gameContext_.setEventCallback([this](EngineEvent&& event) {

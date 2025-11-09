@@ -70,10 +70,9 @@ public:
     /**
      * @brief Loads a specific game by index from the previously loaded file.
      * @param index Index of the game to load.
-     * @param loadComments Whether to parse move comments.
      * @return Optional GameRecord if successful.
      */
-    std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index, bool loadComments = true);
+    std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index);
 
 private:
     std::vector<QaplaTester::GameRecord> games_;  // Loaded game records

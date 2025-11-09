@@ -89,7 +89,7 @@ public:
      * @brief Updates the filter's options (not used for full text filter).
      * @param games The list of game records (ignored).
      */
-    void updateOptions(const ITableFilter::Table& table) override {};
+    void updateOptions([[maybe_unused]] const ITableFilter::Table& table) override {};
 
     private:
         /**

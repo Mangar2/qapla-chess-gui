@@ -106,11 +106,11 @@ SprtTournamentData::SprtTournamentData() :
     loadTournament();
 
     // Register poll callback
-    pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+    pollCallbackHandle_ = StaticCallbacks::poll().registerCallback(
         [this]() {
             this->pollData();
         }
-    ));
+    );
 }
 
 SprtTournamentData::~SprtTournamentData() = default;

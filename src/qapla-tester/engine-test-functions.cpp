@@ -555,12 +555,11 @@ TestResult runInfiniteAnalyzeTest(const EngineConfig& engineConfig)
 
 TestResult runGoLimitsTest(const EngineConfig& engineConfig)
 {
-    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+    return runTest({engineConfig}, [](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
             return {TestResultEntry("Go limits test", "No engine started", false)};
         }
         
-        auto* checklist = EngineReport::getChecklist(engineConfig.getName());
         auto computeTask = std::make_unique<ComputeTask>();
         computeTask->initEngines(std::move(engines));
         
@@ -622,7 +621,7 @@ TestResult runGoLimitsTest(const EngineConfig& engineConfig)
 
 TestResult runEpFromFenTest(const EngineConfig& engineConfig)
 {
-    return runTest({engineConfig}, [&engineConfig](EngineList&& engines) -> TestResult {
+    return runTest({engineConfig}, [](EngineList&& engines) -> TestResult {
         if (engines.empty()) {
             return {TestResultEntry("EP from FEN test", "No engine started", false)};
         }
@@ -648,7 +647,7 @@ TestResult runEpFromFenTest(const EngineConfig& engineConfig)
 
 TestResult runComputeGameTest(const EngineConfig& engineConfig, bool logMoves)
 {
-    return runTest({engineConfig, engineConfig}, [&engineConfig, logMoves](EngineList&& engines) -> TestResult {
+    return runTest({engineConfig, engineConfig}, [logMoves](EngineList&& engines) -> TestResult {
         if (engines.size() < 2) {
             return {TestResultEntry("Compute game test", "Could not start two engines", false)};
         }
@@ -780,7 +779,8 @@ TestResult runUciPonderTest(const EngineConfig& engineConfig)
 
 TestResult runPonderGameTest(const EngineConfig& engineConfig, bool logMoves)
 {
-    return runTest({engineConfig, engineConfig}, [&engineConfig, logMoves](EngineList&& engines) -> TestResult {
+    return runTest({engineConfig, engineConfig}, 
+        [logMoves](EngineList&& engines) -> TestResult {
         if (engines.size() < 2) {
             return {TestResultEntry("Ponder game test", "Could not start two engines", false)};
         }

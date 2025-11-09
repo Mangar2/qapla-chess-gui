@@ -210,7 +210,7 @@ void Tournament::scheduleAll(uint32_t concurrency, bool registerToInputhandler, 
                 InputHandler::ImmediateCommand::Info,
                 InputHandler::ImmediateCommand::Outcome
             },
-            [this](InputHandler::ImmediateCommand cmd, const InputHandler::CommandValue& value) {
+            [this](InputHandler::ImmediateCommand cmd, [[maybe_unused]] const InputHandler::CommandValue& value) {
                 auto result = getResult();
                 if (cmd == InputHandler::ImmediateCommand::Info) {
                     result.printRatingTableUciStyle(std::cout, config_.averageElo);

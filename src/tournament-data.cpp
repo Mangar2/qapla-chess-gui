@@ -147,11 +147,11 @@ namespace QaplaWindows {
         );
 
         // Poll callback to regularly update tournament data
-        pollCallbackHandle_ = std::move(StaticCallbacks::poll().registerCallback(
+        pollCallbackHandle_ = StaticCallbacks::poll().registerCallback(
 		    [this]() {
     			this->pollData();
 		    }
-    	));
+    	);
     }
 
     void TournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
@@ -434,7 +434,7 @@ namespace QaplaWindows {
         runningTable_.clear();
         if (tournament_) {
             poolAccess_->withGameRecords(
-                [&](const GameRecord& game, uint32_t gameIndex) {
+                [&](const GameRecord& game, [[maybe_unused]] uint32_t gameIndex) {
                     std::vector<std::string> row;
                     row.push_back(game.getWhiteEngineName());
                     row.push_back(game.getBlackEngineName());
@@ -444,7 +444,7 @@ namespace QaplaWindows {
                     runningTable_.push(row);
                     runningCount_++;
                 },
-            [&](uint32_t gameIndex) -> bool {
+            [&]([[maybe_unused]] uint32_t gameIndex) -> bool {
                 return true;
             });
             bool anyRunning = boardWindowList_.isAnyRunning();

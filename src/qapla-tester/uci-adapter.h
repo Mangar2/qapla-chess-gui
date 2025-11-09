@@ -92,7 +92,9 @@ public:
     EngineEvent readEvent() override;
 
     void newGame(const GameRecord& gameRecord, bool engineIsWhite) override;
-    void setTimeControl(const GameRecord& gameRecord, bool engineIsWhite) override {
+    void setTimeControl(
+        [[maybe_unused]] const GameRecord& gameRecord, 
+        [[maybe_unused]] bool engineIsWhite) override {
         // Nothing to do for UCI, time control is sent with 'go' command
     }
     void moveNow() override;

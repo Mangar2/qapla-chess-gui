@@ -71,7 +71,7 @@ namespace QaplaWindows {
 			ImGui::SetCursorPosX(buttonSpacing);
             ImGui::SetCursorPosY(ImGui::GetWindowHeight() - buttonSize.y - 8.0F);
             if (config_.okButton) {
-                if (ImGui::Button("OK", buttonSize)) {
+                if (ImGui::Button(ok.c_str(), buttonSize)) {
                     confirmed_ = true;
                     close();
                 }
@@ -80,7 +80,7 @@ namespace QaplaWindows {
 
 			ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonSize.x - buttonSpacing);
             if (config_.cancelButton) {
-                if (ImGui::Button("Cancel", buttonSize)) {
+                if (ImGui::Button(cancel.c_str(), buttonSize)) {
                     confirmed_ = false;
                     close();
                 }

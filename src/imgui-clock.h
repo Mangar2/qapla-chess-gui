@@ -32,7 +32,7 @@
 namespace QaplaTester
 {
     class GameRecord;
-    class MoveRecord;
+    struct MoveRecord;
 }
 
 namespace QaplaWindows {

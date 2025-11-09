@@ -171,11 +171,11 @@ namespace QaplaWindows {
     void ImGuiTable::tableHeadersRow() const {
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
-        for (int columnN = 0; columnN < columns_.size(); columnN++) {
+        for (size_t columnN = 0; columnN < columns_.size(); columnN++) {
             if (!ImGui::TableSetColumnIndex(columnN))
                 continue;
 			std::string name = columns_[columnN].name;
-            ImGui::PushID(columnN);
+            ImGui::PushID(static_cast<int>(columnN));
             headerAligned(columns_[columnN].name, columns_[columnN].alignRight);
             ImGui::PopID();
         }

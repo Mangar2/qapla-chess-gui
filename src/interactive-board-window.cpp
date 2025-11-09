@@ -20,6 +20,7 @@
 #include "interactive-board-window.h"
 #include "configuration.h"
 
+#include "qapla-tester/string-helper.h"
 #include "qapla-engine/move.h"
 #include "qapla-tester/time-control.h"
 #include "qapla-tester/game-state.h"
@@ -53,8 +54,7 @@ using namespace QaplaTester;
 using namespace QaplaWindows;
 
 InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
-	: id_(id),
-	  gameRecord_(std::make_unique<GameRecord>()),
+	: gameRecord_(std::make_unique<GameRecord>()),
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
@@ -76,7 +76,8 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
-	  imGuiBarChart_(std::make_unique<ImGuiBarChart>())
+	  imGuiBarChart_(std::make_unique<ImGuiBarChart>()),
+	  id_(id)
 {
 	timeControlWindow_->content().setFromConfiguration("board" + std::to_string(id_));
 	timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
@@ -224,7 +225,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 					swapEngines();
 				}
 				else if (command.starts_with("pv|")) {
-					copyPv(id, command);
+					copyPv(command);
 				}
 			}
 		);
@@ -306,7 +307,7 @@ std::string InteractiveBoardWindow::computePgn(uint32_t upToHalfmove) {
 	return pgnString;
 }
 
-void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv) {
+void InteractiveBoardWindow::copyPv(const std::string& pv) {
 	// Expected format produced by encodePV: "pv|<halfmoveNo>|<pv...>"
 
 	std::string_view sv(pv);
@@ -328,18 +329,12 @@ void InteractiveBoardWindow::copyPv(const std::string& id, const std::string& pv
 	std::string_view pvPart = sv.substr(sep + 1);
 
 	// parse unsigned integer without exceptions
-	uint32_t halfmove = 0;
-	if (!numPart.empty()) {
-		// use from_chars for fast, no-throw parsing
-		auto [ptr, ec] = std::from_chars(numPart.data(), numPart.data() + numPart.size(), halfmove);
-		if (ec != std::errc()) {
-			return; // parse failed
-		}
-	} else {
-		return; // no number
+	auto halfmove = QaplaHelpers::to_uint32(numPart);
+	if (!halfmove) {
+		return; // parse failed
 	}
 
-	std::string pvString = computePgn(halfmove);
+	std::string pvString = computePgn(*halfmove);
 	pvString += std::string(pvPart);
 
 	GLFWwindow* window = glfwGetCurrentContext();

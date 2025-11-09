@@ -28,7 +28,7 @@ class ChangeTracker {
 
 public:
     ChangeTracker() = default;
-    ChangeTracker(const ChangeTracker& tracker) 
+    ChangeTracker([[maybe_unused]] const ChangeTracker& tracker) 
     :id_(nextId_++)
     {}
 

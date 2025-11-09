@@ -33,6 +33,7 @@ target_include_directories(imgui PUBLIC
   extern/imgui/backends
   extern/glfw/include
   )
+target_compile_options(imgui PRIVATE -Wno-all)
 
 # --------------------------------
 # Eigene Quelldateien

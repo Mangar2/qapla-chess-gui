@@ -59,9 +59,8 @@ namespace QaplaWindows
          * @brief Advances the tutorial based on button clicks and game state.
          * 
          * @param clickedButton The button that was clicked
-         * @param status The current game status
          */
-        void showNextBoardTutorialStep(const std::string& clickedButton, const std::string& status);
+        void showNextBoardTutorialStep(const std::string& clickedButton);
 
         /**
          * @brief Advances the cut&paste tutorial based on button clicks and state.

@@ -27,7 +27,7 @@ void GameRecordManager::load(const std::string& fileName, std::function<bool(con
     games_ = pgnIO_.loadGames(fileName, false, gameCallback);  // Load without comments
 }
 
-std::optional<GameRecord> GameRecordManager::loadGameByIndex(size_t index, bool loadComments) {
+std::optional<GameRecord> GameRecordManager::loadGameByIndex(size_t index) {
     return pgnIO_.loadGameAtIndex(index);
 }
 

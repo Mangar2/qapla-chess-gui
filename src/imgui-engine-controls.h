@@ -121,8 +121,6 @@ inline bool drawEngineDirectory(QaplaTester::EngineConfig& config, bool enabled)
 inline bool drawEngineProtocol(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    constexpr std::array protocolOptions = {QaplaTester::EngineProtocol::Uci, QaplaTester::EngineProtocol::XBoard};
-    
     std::vector<std::string> labels = {"UCI", "XBoard"};
     
     std::string protocolStr = (config.getProtocol() == QaplaTester::EngineProtocol::Uci) ? "UCI" : "XBoard";
@@ -161,7 +159,7 @@ inline bool drawEngineTraceLevel(QaplaTester::TraceLevel& traceLevel, bool enabl
  * @return True if the value was changed
  */
 inline bool drawEngineTraceLevel(QaplaTester::EngineConfig& config, bool enabled) {
-    return drawEngineTraceLevel(config.getTraceLevel(), true);
+    return drawEngineTraceLevel(config.getTraceLevel(), enabled);
 }
 
 /**
@@ -172,8 +170,6 @@ inline bool drawEngineTraceLevel(QaplaTester::EngineConfig& config, bool enabled
  */
 inline bool drawEngineRestartOption(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
-    
-    constexpr std::array restartOptions = {QaplaTester::RestartOption::EngineDecides, QaplaTester::RestartOption::Always, QaplaTester::RestartOption::Never};
     
     std::vector<std::string> labels = {"Engine decides", "Always", "Never"};
     

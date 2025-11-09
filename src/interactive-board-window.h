@@ -45,7 +45,7 @@ namespace QaplaTester
 {
 	class EngineConfig;
 	class GameState;
-	class MoveRecord;
+	struct MoveRecord;
 	class GameRecord;
 	class ComputeTask;
 }
@@ -175,10 +175,9 @@ namespace QaplaWindows
 
 		/**
 		 * @brief Copies the given PV (principal variation) to the clipboard.
-		 * @param id The ID of the engine.
 		 * @param pv The PV string to copy.
 		 */
-		void copyPv(const std::string& id, const std::string& pv);
+		void copyPv(const std::string& pv);
 
 		/**
 		 * @brief Converts the current game record to PGN string format.
