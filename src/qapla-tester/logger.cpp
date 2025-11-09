@@ -61,6 +61,10 @@ void Logger::log(std::string_view prefix, std::string_view message, bool isOutpu
     if (level > cliThreshold) {
         return;
     }
+    if (message.empty()) {
+        std::cout << prefix << (isOutput ? " -> " : " <- ") << "\n" << std::flush;
+        return;
+    }
     std::cout << prefix << (isOutput ? " -> " : " <- ") << message << "\n" << std::flush;
 }
 

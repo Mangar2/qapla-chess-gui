@@ -908,11 +908,11 @@ EngineEvent WinboardAdapter::readEvent() {
     const auto& line = engineLine.content;
 
     if (!engineLine.complete) {
-        logFromEngine(line, TraceLevel::error);
         return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
 
     if (engineLine.error == EngineLine::Error::IncompleteLine) {
+        logFromEngine(line, TraceLevel::error);
         return EngineEvent::createNoData(identifier_, engineLine.timestampMs);
     }
 
