@@ -30,11 +30,19 @@
   "buildPresets": [
     {
       "name": "default",
-      "configurePreset": "default"
+      "configurePreset": "default",
+      "targets": ["qapla"]
     },
     {
       "name": "release",
-      "configurePreset": "release"
+      "configurePreset": "release",
+      "targets": ["qapla"]
+    },
+    {
+      "name": "diagnostic",
+      "displayName": "Build Diagnostic Engine Only",
+      "configurePreset": "default",
+      "targets": ["diagnostic-engine"]
     }
   ]
 }

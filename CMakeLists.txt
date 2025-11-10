@@ -87,3 +87,8 @@ elseif(UNIX)
   target_include_directories(qapla PRIVATE ${GTK3_INCLUDE_DIRS})
   target_link_libraries(qapla PRIVATE ${OPENGL_LIBRARIES} ${GTK3_LIBRARIES} dl pthread)
 endif()
+
+# --------------------------------
+# Diagnostic Engine (separate executable)
+# --------------------------------
+add_subdirectory(diagnostic-engine)
