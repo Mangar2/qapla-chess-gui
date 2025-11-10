@@ -54,7 +54,7 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #ifndef _WIN32
-#include <signal.h>
+#include <csignal>
 #endif
 
 using QaplaTester::Logger;
@@ -166,10 +166,6 @@ namespace {
     }
 
     int runApp() {
-
-        #ifndef _WIN32
-        signal(SIGPIPE, SIG_IGN);
-        #endif
         
         initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
@@ -291,6 +287,9 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
 }
 #else
 int main() {
+    // Ignore SIGPIPE to prevent crashes when writing to closed pipes (e.g., chess engines)
+    std::signal(SIGPIPE, SIG_IGN);
+
     try {
         auto code = runApp();
         return code;
