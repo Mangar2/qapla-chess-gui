@@ -210,18 +210,10 @@ namespace {
         return workspace;
     }
 
-    void initLogging() {
-        Logger::setLogPath("./log");
-        Logger::testLogger().setLogFile("report");
-        Logger::testLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
-        Logger::engineLogger().setLogFile("enginelog");
-        Logger::engineLogger().setTraceLevel(TraceLevel::error, TraceLevel::info);
-    }
-
     int runApp() {
         
-        initLogging();
         QaplaConfiguration::Configuration::instance().loadFile();
+        QaplaConfiguration::Configuration::loadLoggerConfiguration();
         QaplaWindows::EpdData::instance().loadFile();
         Tutorial::instance().loadConfiguration();
         SnackbarManager::instance().loadConfiguration();

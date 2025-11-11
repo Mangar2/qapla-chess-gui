@@ -23,10 +23,46 @@
 #include "snackbar.h"
 #include "configuration.h"
 #include "tutorial.h"
+#include "logger.h"
+#include "os-dialogs.h"
 
 #include <imgui.h>
 
 using namespace QaplaWindows;
+
+bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float width) {
+    // Check if source value changed externally (e.g., loaded from config)
+    if (originalValue_ != sourceValue) {
+        originalValue_ = sourceValue;
+        currentValue_ = sourceValue;
+    }
+    
+    bool applied = false;
+    
+    // Apply button
+    ImGui::PushID(label);
+    const bool hasChanges = (currentValue_ != originalValue_);
+    if (!hasChanges) {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Button("Apply")) {
+        sourceValue = currentValue_;
+        originalValue_ = currentValue_;
+        applied = true;
+    }
+    if (!hasChanges) {
+        ImGui::EndDisabled();
+    }
+    
+    // Input field
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(width);
+    ImGuiControls::inputText(label, currentValue_);
+    
+    ImGui::PopID();
+    
+    return applied;
+}
 
 ConfigurationWindow::ConfigurationWindow() = default;
 ConfigurationWindow::~ConfigurationWindow() = default;
@@ -37,7 +73,7 @@ void ConfigurationWindow::draw()
     
     if (ImGui::CollapsingHeader("Snackbar Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
-        drawSnackbarSettings();
+        drawSnackbarConfig();
         ImGui::Unindent(10.0F);
     }
     
@@ -45,14 +81,22 @@ void ConfigurationWindow::draw()
 
     if (ImGui::CollapsingHeader("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
-        drawTutorialSettings();
+        drawTutorialConfig();
+        ImGui::Unindent(10.0F);
+    }
+    
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0F);
+        drawLoggerConfig();
         ImGui::Unindent(10.0F);
     }
     
     ImGui::Spacing();
 }
 
-void ConfigurationWindow::drawSnackbarSettings()
+void ConfigurationWindow::drawSnackbarConfig()
 {
     constexpr float inputWidth = 200.0F;
     constexpr uint32_t minDuration = 1;
@@ -93,7 +137,7 @@ void ConfigurationWindow::drawSnackbarSettings()
     }
 }
 
-void ConfigurationWindow::drawTutorialSettings()
+void ConfigurationWindow::drawTutorialConfig()
 {
     ImGui::Text("Tutorial Topics:");
     ImGui::Spacing();
@@ -118,5 +162,65 @@ void ConfigurationWindow::drawTutorialSettings()
         auto messageCount = entry.messages.size();
         auto progress = std::min<uint32_t>(entry.getProgressCounter(), messageCount);
         ImGui::TextDisabled("(Progress: %u/%zu)", progress, messageCount);
+    }
+}
+
+void ConfigurationWindow::drawLoggerConfig()
+{
+    constexpr float inputWidth = 200.0F;
+    
+    auto& config = QaplaTester::Logger::getConfig();
+    bool modified = false;
+
+    // Log Path - only via dialog, no manual typing
+    ImGui::Text("Log Directory:");
+    if (ImGui::Button("Browse##LogPath")) {
+        try {
+            auto selectedPath = OsDialogs::selectFolderDialog(config.logPath);
+            if (!selectedPath.empty()) {
+                config.logPath = selectedPath;
+                modified = true;
+            }
+        }
+        catch (const std::exception& e) {
+            SnackbarManager::instance().showError(e.what());
+        }
+    }
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", config.logPath.c_str());
+    ImGui::Spacing();
+
+    // Report Log Base Name with Apply button
+    if (reportBaseNameInput_.draw("Report Log - Base Name", config.reportLogBaseName, inputWidth)) {
+        modified = true;
+    }
+
+    // Engine Log Base Name with Apply button
+    if (engineBaseNameInput_.draw("Engine Log - Base Name", config.engineLogBaseName, inputWidth)) {
+        modified = true;
+    }
+
+    // Engine Log Strategy
+    ImGui::SetNextItemWidth(inputWidth);
+    int currentStrategy = static_cast<int>(config.engineLogStrategy);
+    const std::vector<std::string> strategyItems = { 
+        "Global (single file for all engines)", "Per Engine (one file per engine)", "Per Game (one file per game)" };
+    if (ImGuiControls::selectionBox("Engine Log File Strategy", currentStrategy, strategyItems)) {
+        config.engineLogStrategy = static_cast<QaplaTester::LogFileStrategy>(currentStrategy);
+        modified = true;
+    }
+    if (ImGui::IsItemHovered()) {
+        const char* tooltip = "";
+        switch (currentStrategy) {
+            case 0: tooltip = "All engine communication is logged to a single file"; break;
+            case 1: tooltip = "Each engine gets its own log file"; break;
+            case 2: tooltip = "All engines in a game share a single log file"; break;
+        }
+        ImGui::SetTooltip("%s", tooltip);
+    }
+
+    if (modified) {
+        QaplaTester::Logger::setConfig(config);
+        QaplaConfiguration::Configuration::updateLoggerConfiguration();
     }
 }

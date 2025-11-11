@@ -105,7 +105,7 @@ inline bool drawEngineDirectory(QaplaTester::EngineConfig& config, bool enabled)
     if (!enabled) return false;
     
     std::string dir = config.getDir();
-    if (ImGuiControls::existingDialogInput("Directory", dir)) {
+    if (ImGuiControls::existingDirectoryInput("Directory", dir)) {
         config.setDir(dir);
         return true;
     }

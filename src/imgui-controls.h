@@ -222,7 +222,7 @@ namespace QaplaWindows::ImGuiControls {
      * @param buttonLabel Label for the directory selection button.
      * @return True if the directory path was modified, false otherwise.
      */
-    inline bool existingDialogInput(const std::string& label, std::string& directoryPath, 
+    inline bool existingDirectoryInput(const std::string& label, std::string& directoryPath, 
         float inputWidth = 200.0F, const char* buttonLabel = "Browse") {
         bool modified = false;
         ImGui::PushID(label.c_str()); 
@@ -507,7 +507,7 @@ namespace QaplaWindows::ImGuiControls {
             
             if (optionNameLower.find("path") != std::string::npos) {
                 // Use directory selection dialog for path options
-                modified |= existingDialogInput(option.name, value);
+                modified |= existingDirectoryInput(option.name, value);
             } else {
                 // Use regular text input for other string options
                 modified |= inputText(option.name.c_str(), value);

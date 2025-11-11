@@ -66,6 +66,8 @@ void Configuration::loadData(std::ifstream& in) {
                 configData_.addSection(section);
             }
         }
+        loadLoggerConfiguration();
+
     }
     catch (const std::exception& e) {
         throw std::runtime_error(std::string("Error in loadData: ") + e.what());
@@ -91,4 +93,40 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
         throw std::runtime_error("Error processing section [" + sectionName + "]: " + e.what());
     }
     return true;
+}
+
+void Configuration::loadLoggerConfiguration() {
+    auto sections = Configuration::instance().
+        getConfigData().getSectionList("logger", "logger").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        auto& config = QaplaTester::Logger::getConfig();
+        config.logPath = section.getValue("logpath").value_or("./log");
+        config.reportLogBaseName = section.getValue("reportlogbasename").value_or("report");
+        config.engineLogBaseName = section.getValue("enginelogbasename").value_or("engine");
+        
+        auto strategyStr = section.getValue("enginelogstrategy").value_or("0");
+        auto strategyInt = QaplaHelpers::to_uint32(strategyStr).value_or(0);
+        config.engineLogStrategy = static_cast<QaplaTester::LogFileStrategy>(strategyInt);
+        
+        QaplaTester::Logger::setConfig(config);
+    }
+}
+
+void Configuration::updateLoggerConfiguration() {
+    const auto& config = QaplaTester::Logger::getConfig();
+    
+    QaplaHelpers::IniFile::Section section {
+        .name = "logger",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "logger"},
+            {"logpath", config.logPath},
+            {"reportlogbasename", config.reportLogBaseName},
+            {"enginelogbasename", config.engineLogBaseName},
+            {"enginelogstrategy", std::to_string(static_cast<int>(config.engineLogStrategy))}
+        }
+    };
+    
+    Configuration::instance().getConfigData().setSectionList("logger", "logger", { section });
 }

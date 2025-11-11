@@ -21,9 +21,31 @@
 
 #include "embedded-window.h"
 #include <memory>
+#include <string>
 
 namespace QaplaWindows
 {
+    /**
+     * @brief Buffered text input with apply button.
+     * 
+     * Holds original and current values. Only updates the source value when Apply is clicked.
+     * Auto-syncs when source value changes externally.
+     */
+    class BufferedTextInput {
+    public:
+        /**
+         * @brief Draws the input field with Apply button.
+         * @param label Label for the input field.
+         * @param sourceValue Reference to the source value (will be updated on Apply).
+         * @param width Width of the input field.
+         * @return True if Apply was clicked and value was modified.
+         */
+        bool draw(const char* label, std::string& sourceValue, float width = 200.0F);
+        
+    private:
+        std::string originalValue_;  ///< Original value from source
+        std::string currentValue_;   ///< Current edited value
+    };
 
     /**
      * @brief Window for displaying and editing application settings.
@@ -54,12 +76,20 @@ namespace QaplaWindows
         /**
          * @brief Draws the snackbar configuration section
          */
-        static void drawSnackbarSettings();
+        static void drawSnackbarConfig();
 
         /**
          * @brief Draws the tutorial configuration section
          */
-        static void drawTutorialSettings();
+        static void drawTutorialConfig();
+
+        /**
+         * @brief Draws the logger configuration section
+         */
+        void drawLoggerConfig();
+
+        BufferedTextInput reportBaseNameInput_;  ///< Buffered input for report log base name
+        BufferedTextInput engineBaseNameInput_;  ///< Buffered input for engine log base name
     };
 
 } // namespace QaplaWindows

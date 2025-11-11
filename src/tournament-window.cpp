@@ -198,7 +198,7 @@ bool TournamentWindow::drawInput() {
     
 	constexpr float inputWidth = 200.0F;
     constexpr float fileInputWidth = inputWidth + 100.0F;
-    constexpr int maxConcurrency = 32;
+    constexpr int maxConcurrency = 128;
 	auto& tournamentData = TournamentData::instance();
     
     ImGui::SetNextItemWidth(inputWidth);

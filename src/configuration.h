@@ -72,6 +72,16 @@ namespace QaplaConfiguration {
             Autosavable::autosave();
         }
 
+        /**
+         * @brief Loads the logger configuration from the configuration data
+         */
+        static void loadLoggerConfiguration();
+
+        /**
+         * @brief Updates the configuration data with the current logger settings
+         */
+        static void updateLoggerConfiguration();
+
     protected:
         /**
          * @brief Saves configuration data to the output stream.
