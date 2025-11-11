@@ -111,15 +111,22 @@ private:
      * @brief Starts a thread to handle increasing concurrency if needed.
      */
     void adjustConcurrency() {
+        if (!active_) {
+            return;
+        }
 
         if (currentConcurrency_ == targetConcurrency_) {
             return; 
         }
-        if (currentConcurrency_ > targetConcurrency_ && active_) {
+        if (currentConcurrency_ > targetConcurrency_) {
             currentConcurrency_ = targetConcurrency_;
             poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
             return;
         }
+        currentConcurrency_ = targetConcurrency_;
+        poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
+        return;
+        // Usage of threads disabled due to different startup methode, maybe no longer needed.
         std::thread([this]() {
             try {
                 while (currentConcurrency_ < targetConcurrency_ && active_) {
