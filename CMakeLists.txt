@@ -14,6 +14,9 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "no")
 set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "no")
 set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "no")
 set(GLFW_INSTALL OFF CACHE INTERNAL "no")
+# Force X11 on Linux to avoid Wayland decoration issues
+set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "Build support for Wayland" FORCE)
+set(GLFW_BUILD_X11 ON CACHE BOOL "Build support for X11" FORCE)
 
 add_subdirectory(extern/glfw)
 

@@ -45,6 +45,8 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <thread>
+#include <chrono>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -55,6 +57,7 @@
 
 #ifndef _WIN32
 #include <csignal>
+#include <cstdlib>
 #endif
 
 using QaplaTester::Logger;
@@ -63,6 +66,34 @@ using QaplaTester::GameManagerPool;
 
 namespace {
 
+    /**
+     * @brief Frame rate limiter to ensure consistent frame timing across platforms
+     * 
+     * VSync (glfwSwapInterval) doesn't work reliably on all platforms/drivers,
+     * especially on Linux. This class provides a fallback frame rate limiter.
+     */
+    class FrameRateLimiter {
+    public:
+        explicit FrameRateLimiter(double targetFps = 60.0) 
+            : targetFrameTime_(1.0 / targetFps)
+            , lastFrameTime_(glfwGetTime()) {}
+
+        void waitForNextFrame() {
+            const double currentTime = glfwGetTime();
+            const double deltaTime = currentTime - lastFrameTime_;
+            
+            if (deltaTime < targetFrameTime_) {
+                const double sleepTime = targetFrameTime_ - deltaTime;
+                std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
+            }
+            
+            lastFrameTime_ = glfwGetTime();
+        }
+
+    private:
+        double targetFrameTime_;
+        double lastFrameTime_;
+    };
 
    
     void glfwErrorCallback(int error, const char* description) {
@@ -72,6 +103,15 @@ namespace {
     GLFWwindow* initGlfwContext() {
         glfwSetErrorCallback(glfwErrorCallback);
 
+#ifndef _WIN32
+        // Force X11 backend on Linux to ensure window decorations work properly
+        // Must be set before glfwInit() is called
+        setenv("GDK_BACKEND", "x11", 1);  // 1 = overwrite existing value
+        // Also prevent GLFW from using Wayland
+        setenv("GLFW_IM_MODULE", "none", 0);
+        unsetenv("WAYLAND_DISPLAY");  // Force GLFW to use X11
+#endif
+        
         if (glfwInit() == 0) {
             throw std::runtime_error("Failed to initialize GLFW");
         }
@@ -82,6 +122,13 @@ namespace {
 #ifdef __APPLE__
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
+        
+        // Ensure all window decorations are enabled (including minimize button)
+        glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
+        glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
         auto* window = glfwCreateWindow(1400, 800, "Qapla Chess GUI", nullptr, nullptr);
         if (window == nullptr) {
@@ -97,6 +144,12 @@ namespace {
         if (gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)) == 0) {
             throw std::runtime_error("Failed to initialize GLAD");
         }
+        
+        // Debug: Check OpenGL renderer (GPU vs Software rendering)
+        const GLubyte* renderer = glGetString(GL_RENDERER);
+        const GLubyte* version = glGetString(GL_VERSION);
+        std::cout << "OpenGL Renderer: " << renderer << std::endl;
+        std::cout << "OpenGL Version: " << version << std::endl;
     }
 
     void initImGui(GLFWwindow* window) {
@@ -184,6 +237,9 @@ namespace {
             std::cerr << "Warning: Failed to load background image: " << e.what() << "\n";
         }
         font::loadFonts();
+        
+        FrameRateLimiter frameRateLimiter(60.0);
+        
         while (glfwWindowShouldClose(window) == 0) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
                 glfwWaitEvents(); 
@@ -220,6 +276,8 @@ namespace {
             glfwSwapBuffers(window);
             QaplaConfiguration::Configuration::instance().autosave();
             QaplaWindows::EpdData::instance().autosave();
+            
+            frameRateLimiter.waitForNextFrame();
         }
 
         shutdownImGui();
