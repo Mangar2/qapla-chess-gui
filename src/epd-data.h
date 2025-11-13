@@ -36,6 +36,8 @@ namespace QaplaTester {
     struct EpdTestResult;
 }
 
+class ImGuiConcurrency;
+
 namespace QaplaWindows {
 
 	class EpdData : public QaplaHelpers::Autosavable {
@@ -137,6 +139,7 @@ namespace QaplaWindows {
         void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
             poolAccess_ = GameManagerPoolAccess(pool);
             viewerBoardWindows_.setPoolAccess(poolAccess_);
+            imguiConcurrency_->setPoolAccess(poolAccess_);
         }
 
         /**
@@ -225,6 +228,7 @@ namespace QaplaWindows {
 		std::unique_ptr<std::vector<QaplaTester::EpdTestResult>> epdResults_;
    		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
+        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
 
         uint32_t scheduledEngines_ = 0;
 

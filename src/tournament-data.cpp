@@ -531,11 +531,16 @@ namespace QaplaWindows {
     }
 
     void TournamentData::stopPool(bool graceful) {
+        // Must be called before deactivating the control so that the pool is informed about 
+        // setting concurrency to zero. 
         imguiConcurrency_->update(0);
+        // Prevents that concurrency control tells the pool to start new tasks when calculations are stopped
         imguiConcurrency_->setActive(false);
+
         auto oldState = state_;
         state_ = graceful ? State::GracefulStopping : State::Stopped;
         if (!graceful) {
+            // If we are not graceful, we stop all immediately
             poolAccess_->stopAll();
         }
 

@@ -22,6 +22,7 @@
 #include "imgui-table.h"
 #include "configuration.h"
 #include "snackbar.h"
+#include "imgui-concurrency.h"
 
 #include "engine-worker-factory.h"
 #include "string-helper.h"
@@ -46,6 +47,7 @@ namespace QaplaWindows {
         epdManager_(std::make_shared<EpdManager>()),
         epdResults_(std::make_unique<std::vector<EpdTestResult>>()),
         engineSelect_(std::make_unique<ImGuiEngineSelect>()),
+        imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         table_(
             "EpdResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -127,7 +129,7 @@ namespace QaplaWindows {
     void EpdData::updateConcurrency(uint32_t newConcurrency) {
         epdConfig_.concurrency = newConcurrency;
         if (state == State::Running) {
-            poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
+            imguiConcurrency_->update(epdConfig_.concurrency);
         }
     }
 
@@ -268,7 +270,8 @@ namespace QaplaWindows {
 
         epdManager_->continueAnalysis();
         state = State::Starting;
-		poolAccess_->setConcurrency(epdConfig_.concurrency, true, true);
+        imguiConcurrency_->init();
+        imguiConcurrency_->setActive(true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig, *poolAccess_);
@@ -281,7 +284,12 @@ namespace QaplaWindows {
     }
 
      void EpdData::stopPool(bool graceful) {
-        //imguiConcurrency_->setActive(false);
+        // Must be called before deactivating the control so that the pool is informed about 
+        // setting concurrency to zero. 
+        imguiConcurrency_->update(0);
+        // Prevents that concurrency control tells the pool to start new tasks when calculations are stopped
+        imguiConcurrency_->setActive(false);
+
         if (state == State::Stopped || state == State::Cleared) {
             SnackbarManager::instance().showNote("No analysis running.");
             return;
@@ -289,10 +297,9 @@ namespace QaplaWindows {
         auto oldState = state;
         state = graceful ? State::Stopping : State::Stopped;
         if (!graceful) {
+            // If we are not graceful, we stop all immediately
             poolAccess_->stopAll();
-        } else {
-            poolAccess_->setConcurrency(0, true, false);
-        }
+        } 
 
         if (oldState == State::Stopping && graceful) {
             SnackbarManager::instance().showNote("Analysis is already stopping gracefully.");

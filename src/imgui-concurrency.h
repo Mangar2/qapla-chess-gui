@@ -27,6 +27,8 @@
 #include <atomic>
 #include <utility>
 
+constexpr int DEBOUNCE_FRAMES = 10;
+
 /**
  * @class ImGuiConcurrency
  * @brief Handles concurrency updates via ImGui slider and ensures the GameManagerPool is updated accordingly.
@@ -66,7 +68,7 @@ public:
 
         if (newConcurrency != targetConcurrency_) {
             targetConcurrency_ = newConcurrency;
-            debounceCounter_ = 10; // Reset debounce counter
+            debounceCounter_ = DEBOUNCE_FRAMES; // Reset debounce counter
         }
 
         if (newConcurrency == 0) {
@@ -101,10 +103,10 @@ public:
 
 private:
     GameManagerPoolAccess poolAccess_; ///< Access to the GameManagerPool instance.
-    std::atomic<bool> active_ = false;  ///< Whether the concurrency control is active.
+    bool active_ = false;  ///< Whether the concurrency control is active.
     bool niceStop_ = true;  ///< Whether to finish games or abort them.
     uint32_t currentConcurrency_ = 0; ///< Tracks the current concurrency value.
-    std::atomic<uint32_t> targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
+    uint32_t targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
     int debounceCounter_;         ///< Counter for debouncing slider changes.
 
     /**
@@ -114,31 +116,10 @@ private:
         if (!active_) {
             return;
         }
-
         if (currentConcurrency_ == targetConcurrency_) {
             return; 
         }
-        if (currentConcurrency_ > targetConcurrency_) {
-            currentConcurrency_ = targetConcurrency_;
-            poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
-            return;
-        }
         currentConcurrency_ = targetConcurrency_;
         poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
-        return;
-        // Usage of threads disabled due to different startup methode, maybe no longer needed.
-        std::thread([this]() {
-            try {
-                while (currentConcurrency_ < targetConcurrency_ && active_) {
-                    ++currentConcurrency_;
-                    poolAccess_->setConcurrency(currentConcurrency_, niceStop_, true);
-                }
-            }
-            catch (const std::exception& e) {
-                // Log the exception if needed
-                SnackbarManager::instance().showError(std::string(e.what()));
-            }
-
-        }).detach();
     }
 };
