@@ -133,6 +133,12 @@ namespace QaplaWindows {
         }
     }
 
+    void EpdData::setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
+        poolAccess_ = GameManagerPoolAccess(pool);
+        viewerBoardWindows_.setPoolAccess(poolAccess_);
+        imguiConcurrency_->setPoolAccess(poolAccess_);
+    }
+
     std::optional<std::string> EpdData::getFen(size_t index) const {
 		if (epdResults_->empty()) {
             return std::nullopt;

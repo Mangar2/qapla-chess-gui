@@ -93,7 +93,7 @@ void Autosavable::saveFile() {
         }
     }
     catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Error saving file: ") + e.what(), TraceLevel::error);
+        Logger::reportLogger().log(std::string("Error saving file: ") + e.what(), TraceLevel::error);
 
         // Restore the backup if saving failed
         if (fs::exists(backupFilePath_)) {
@@ -119,7 +119,7 @@ bool Autosavable::tryLoadFromFile(const std::string& filepath) {
         return true;
     }
     catch (const std::exception& e) {
-        Logger::testLogger().log(std::string("Failed to load from ") + filepath + ": " + e.what(),
+        Logger::reportLogger().log(std::string("Failed to load from ") + filepath + ": " + e.what(),
             TraceLevel::error);
         return false;
     }
@@ -132,11 +132,11 @@ bool Autosavable::shouldPreferBackup() const {
         return false;
     }
     
-    Logger::testLogger().log("Warning: Backup file exists, indicating potential save failure: " + backupFilePath_, 
+    Logger::reportLogger().log("Warning: Backup file exists, indicating potential save failure: " + backupFilePath_, 
         TraceLevel::warning);
     
     if (!fs::exists(filePath_)) {
-        Logger::testLogger().log("Main file missing, using backup", TraceLevel::warning);
+        Logger::reportLogger().log("Main file missing, using backup", TraceLevel::warning);
         return true;
     }
     
@@ -145,17 +145,17 @@ bool Autosavable::shouldPreferBackup() const {
     auto backupSize = fs::file_size(backupFilePath_);
     
     if (mainSize == 0) {
-        Logger::testLogger().log("Main file is empty, using backup", TraceLevel::warning);
+        Logger::reportLogger().log("Main file is empty, using backup", TraceLevel::warning);
         return true;
     }
     
     if (mainSize < static_cast<uintmax_t>(backupSize * MIN_VALID_FILE_SIZE_RATIO)) {
-        Logger::testLogger().log("Main file is significantly smaller than backup (ratio: " + 
+        Logger::reportLogger().log("Main file is significantly smaller than backup (ratio: " + 
             std::to_string(MIN_VALID_FILE_SIZE_RATIO) + "), using backup", TraceLevel::warning);
         return true;
     }
     
-    Logger::testLogger().log("Main file size looks valid, attempting to load it (backup available as fallback)", 
+    Logger::reportLogger().log("Main file size looks valid, attempting to load it (backup available as fallback)", 
         TraceLevel::info);
     return false;
 }
@@ -167,7 +167,7 @@ bool Autosavable::restoreAndLoadBackup() {
         return false;
     }
     
-    Logger::testLogger().log("Restoring from backup: " + backupFilePath_, TraceLevel::info);
+    Logger::reportLogger().log("Restoring from backup: " + backupFilePath_, TraceLevel::info);
     
     // Remove corrupted main file if it exists
     if (fs::exists(filePath_)) {
@@ -195,7 +195,7 @@ void Autosavable::loadFile() {
         if (restoreAndLoadBackup()) {
             return; 
         }
-        Logger::testLogger().log("Backup load failed", TraceLevel::error);
+        Logger::reportLogger().log("Backup load failed", TraceLevel::error);
         return;
     }
 
@@ -204,18 +204,18 @@ void Autosavable::loadFile() {
             return; 
         }
         
-        Logger::testLogger().log("Main file failed to load, attempting backup recovery", TraceLevel::warning);
+        Logger::reportLogger().log("Main file failed to load, attempting backup recovery", TraceLevel::warning);
         if (restoreAndLoadBackup()) {
-            Logger::testLogger().log("Successfully recovered from backup", TraceLevel::info);
+            Logger::reportLogger().log("Successfully recovered from backup", TraceLevel::info);
             return;
         }
         
-        Logger::testLogger().log("Backup recovery also failed, no ini file loaded", TraceLevel::error);
+        Logger::reportLogger().log("Backup recovery also failed, no ini file loaded", TraceLevel::error);
         return;
     }
     
     // Neither main file nor backup exists
-    Logger::testLogger().log("No file found: " + filePath_, TraceLevel::error);
+    Logger::reportLogger().log("No file found: " + filePath_, TraceLevel::error);
 }
 
 std::string Autosavable::getDirectory() const {

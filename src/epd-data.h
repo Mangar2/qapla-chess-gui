@@ -136,11 +136,7 @@ namespace QaplaWindows {
          * @brief Sets the GameManagerPool instance to use.
          * @param pool Shared pointer to a GameManagerPool instance.
          */
-        void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
-            poolAccess_ = GameManagerPoolAccess(pool);
-            viewerBoardWindows_.setPoolAccess(poolAccess_);
-            imguiConcurrency_->setPoolAccess(poolAccess_);
-        }
+        void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool);
 
         /**
          * @brief Sets the engine configurations for EPD analysis

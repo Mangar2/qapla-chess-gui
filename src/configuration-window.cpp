@@ -204,7 +204,7 @@ void ConfigurationWindow::drawLoggerConfig()
     ImGui::SetNextItemWidth(inputWidth);
     int currentStrategy = static_cast<int>(config.engineLogStrategy);
     const std::vector<std::string> strategyItems = { 
-        "Global (single file for all engines)", "Per Engine (one file per engine)", "Per Game (one file per game)" };
+        "Global (single file for all engines)", "Per Engine (one file per engine instance)" };
     if (ImGuiControls::selectionBox("Engine Log File Strategy", currentStrategy, strategyItems)) {
         config.engineLogStrategy = static_cast<QaplaTester::LogFileStrategy>(currentStrategy);
         modified = true;
@@ -212,7 +212,7 @@ void ConfigurationWindow::drawLoggerConfig()
     if (ImGui::IsItemHovered()) {
         const char* tooltip = "";
         switch (currentStrategy) {
-            case 0: tooltip = "All engine communication is logged to a single file"; break;
+            case 0: tooltip = "All engine instance communication is logged to a single file"; break;
             case 1: tooltip = "Each engine gets its own log file"; break;
             case 2: tooltip = "All engines in a game share a single log file"; break;
         }
