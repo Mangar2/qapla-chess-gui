@@ -170,6 +170,11 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
                 TournamentData::instance().clear();
             } else if (button == "Load")
             {
+                if (TournamentData::instance().isRunning())
+                {
+                    SnackbarManager::instance().showWarning("Cannot load tournament while running");
+                    return;
+                }
                 auto selectedPath = OsDialogs::openFileDialog();
                 if (!selectedPath.empty() && !selectedPath[0].empty())
                 {
@@ -177,6 +182,11 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
                 }
             } else if (button == "Save As")
             {
+                if (TournamentData::instance().isRunning())
+                {
+                    SnackbarManager::instance().showWarning("Cannot save tournament while running");
+                    return;
+                }
                 auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla Tournament Files", "qtour"} });
                 if (!selectedPath.empty())
                 {
@@ -191,8 +201,6 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
         }
     }
 }
-
-
 
 bool TournamentWindow::drawInput() {
     
@@ -347,9 +355,9 @@ void TournamentWindow::draw() {
     if (drawInput()) {
         tournamentData.updateConfiguration();
     }
-    tournamentData.drawRunningTable(ImVec2(size.x, 600.0F));
-    tournamentData.drawEloTable(ImVec2(size.x, 400.0F));
-    tournamentData.drawCauseTable(ImVec2(size.x, 400.0F));
+    tournamentData.drawRunningTable(ImVec2(size.x, 800.0F));
+    tournamentData.drawEloTable(ImVec2(size.x, 800.0F));
+    tournamentData.drawCauseTable(ImVec2(size.x, 1000.0F));
     if (tournamentData.drawConfig().testOnly || tournamentData.resignConfig().testOnly) {
         tournamentData.drawAdjudicationTable(ImVec2(size.x, 200.0F));
     }

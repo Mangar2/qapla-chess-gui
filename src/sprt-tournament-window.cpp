@@ -156,11 +156,19 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
         } else if (button == "Test") {
             SprtTournamentData::instance().runMonteCarloTest();
         } else if (button == "Load") {
+            if (SprtTournamentData::instance().isAnyRunning()) {
+                SnackbarManager::instance().showWarning("Cannot load tournament while running");
+                return;
+            }
             auto selectedPath = OsDialogs::openFileDialog();
             if (!selectedPath.empty() && !selectedPath[0].empty()) {
                 SprtTournamentData::instance().loadTournament(selectedPath[0]);
             }
         } else if (button == "Save As") {
+            if (SprtTournamentData::instance().isAnyRunning()) {
+                SnackbarManager::instance().showWarning("Cannot save tournament while running");
+                return;
+            }
             auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla SPRT Files", "qsprt"} });
             if (!selectedPath.empty()) {
                 SprtTournamentData::saveTournament(selectedPath);
