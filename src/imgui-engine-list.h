@@ -86,7 +86,7 @@ namespace QaplaWindows {
         /**
          * @brief Sets the move record for the list.
          * @param moveRecord The move record to display.
-         * @param playerIndex The index of the player (0 or 1).
+         * @param playerIndex The index of the player.
          * @param gameStatus The current status of the game.
          */
         void setFromMoveRecord(const QaplaTester::MoveRecord &moveRecord, uint32_t playerIndex,
@@ -99,7 +99,31 @@ namespace QaplaWindows {
          */
         void setFromGameRecord(const QaplaTester::GameRecord& gameRecord);
 
+        /**
+         * @brief Polls the log buffers for all engines and updates the log tables.
+         */
+        void pollLogBuffers();
+
+    protected:
+        /**
+         * @brief Sets the log buffer for a specific player index.
+         * @param logBuffer The ring buffer containing log messages.
+         * @param playerIndex The index of the player.
+         */
+        void setFromLogBuffer(const QaplaTester::RingBuffer& logBuffer, uint32_t playerIndex);
+
     private:
+        struct EngineInfoTable {
+            std::unique_ptr<ImGuiTable> infoTable_;
+            std::unique_ptr<ImGuiTable> logTable_;
+            QaplaTester::ChangeTracker logTracker_{};
+            bool showLog_ = false;
+        };
+
+        /**
+         * @brief Ensures that the number of tables matches the specified size.
+         * @param size The desired number of tables.
+         */
         void addTables(size_t size);
 
         /**
@@ -119,15 +143,19 @@ namespace QaplaWindows {
 		 */
         std::string drawEngineSpace(size_t index, const ImVec2 size);
 
+
         std::string drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
             const ImVec2 &max, float cEngineInfoWidth, size_t index, bool isSmall);
 
         std::string drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, 
             float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);
 
-        void setTable(size_t index, const QaplaTester::MoveRecord& moveRecord);
+        void drawLog(const ImVec2 &topLeft, float cEngineInfoWidth, 
+            float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);            
 
-        std::vector<std::unique_ptr<ImGuiTable>> tables_;
+        void setInfoTable(size_t index, const QaplaTester::MoveRecord& moveRecord);
+
+        std::vector<EngineInfoTable> infoTables_;
         std::vector<uint32_t> displayedMoveNo_;
         std::vector<uint32_t> infoCnt_;
         std::optional<size_t> nextHalfmoveNo_;

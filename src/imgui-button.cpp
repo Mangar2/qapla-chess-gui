@@ -823,6 +823,32 @@ namespace QaplaButton {
         list->AddCircleFilled(center, 1.5F, color);
     }
 
+    void drawLog(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+        auto color = getFgColor(state);
+        
+        // Calculate rectangle with slight padding
+        float padding = BORDER;
+        ImVec2 rectMin = ImVec2(topLeft.x + padding, topLeft.y + padding);
+        ImVec2 rectMax = ImVec2(topLeft.x + size.x - padding, topLeft.y + size.y - padding);
+        float rounding = 2.0F;
+        
+        // Draw rounded rectangle (paper/document)
+        list->AddRect(rectMin, rectMax, color, rounding, 0, 1.5F);
+        
+        // Draw three horizontal lines (text lines) inside the rectangle
+        float lineMargin = (rectMax.x - rectMin.x) * 0.15F;  // 15% margin on each side
+        float lineSpacing = (rectMax.y - rectMin.y) / 4.5F;
+        for (int index = 0; index < 3; index++) {
+            float lineY = rectMin.y + lineSpacing * (index + 1);
+            list->AddLine(
+                ImVec2(rectMin.x + lineMargin, lineY),
+                ImVec2(rectMax.x - lineMargin - 1.0F, lineY),
+                color, 1.5F
+            );
+        }
+        
+    }
+
     bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
         ImVec2 topLeft = ImGui::GetCursorScreenPos();

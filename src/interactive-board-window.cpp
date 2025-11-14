@@ -556,6 +556,8 @@ void InteractiveBoardWindow::pollData()
 			engineWindow_->setFromMoveRecord(moveRecord, idx, computeTask_->getStatus());
 			imGuiClock_->setFromMoveRecord(moveRecord, idx);
 		});
+		const std::string engineId = "";
+		engineWindow_->pollLogBuffers();
 		computeTask_->getGameContext().withEngineRecords([&](const EngineRecords &records) {
 			engineWindow_->setEngineRecords(records);
 		});

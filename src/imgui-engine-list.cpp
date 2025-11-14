@@ -123,8 +123,8 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
             break; 
         }
         if (moveIndex < 0 || static_cast<size_t>(moveIndex) >= history.size()) {
-			if (tables_.size() > tableIndex) {
-                tables_[tableIndex]->clear();
+			if (infoTables_.size() > tableIndex) {
+                infoTables_[tableIndex].infoTable_->clear();
             }
             if (moveIndex == -1) {
                 displayedMoveNo_[tableIndex] = gameRecord.halfmoveNoAtPly(0);
@@ -132,7 +132,7 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
             continue;
         }
         const auto& moveRecord = history[static_cast<size_t>(moveIndex)];
-        setTable(tableIndex, moveRecord);
+        setInfoTable(tableIndex, moveRecord);
         displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
     }
 }
@@ -157,7 +157,35 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
     // Here we also show moves currently being calculated
     displayedMoveNo_[playerIndex] = moveRecord.halfmoveNo_;
 
-    setTable(playerIndex, moveRecord);
+    setInfoTable(playerIndex, moveRecord);
+}
+
+void ImGuiEngineList::setFromLogBuffer(const QaplaTester::RingBuffer& logBuffer, uint32_t playerIndex) {
+    addTables(playerIndex + 1);
+    auto& infoTable = infoTables_[playerIndex];
+    auto [modification, update] = infoTable.logTracker_.checkModification(logBuffer.getChangeTracker());
+    if (!update) { 
+        return; 
+    }
+    auto& logTable = infoTable.logTable_;
+    if (modification) {
+        logTable->clear();
+    }
+    // Implement incremental update later
+    logTable->clear();
+    for (size_t i = 0; i < logBuffer.size(); ++i) {
+        logTable->push({ logBuffer[i] });
+    }
+}
+
+void ImGuiEngineList::pollLogBuffers() {
+    for (size_t i = 0; i < infoTables_.size() && i < engineRecords_.size(); ++i) {
+        auto& engineRecord = engineRecords_[i];
+        auto& engineId = engineRecord.identifier;
+        QaplaTester::Logger::withEngineLogBuffer(engineId, [&](const QaplaTester::RingBuffer &logBuffer) {
+            setFromLogBuffer(logBuffer, static_cast<uint32_t>(i));
+        });
+    }
 }
 
 bool QaplaWindows::ImGuiEngineList::shouldDisplayMoveRecord(
@@ -191,22 +219,29 @@ bool QaplaWindows::ImGuiEngineList::shouldDisplayMoveRecord(
 }
 
 void ImGuiEngineList::addTables(size_t size) {
-    for (size_t i = tables_.size(); i < size; ++i) {
+    for (size_t i = infoTables_.size(); i < size; ++i) {
 		displayedMoveNo_.push_back(0);
         gameRecordTracker_.clear();
 		infoCnt_.push_back(0);
-        tables_.emplace_back(std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
-            std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
-                { .name = "NPS", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
-                { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Primary variant", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 1660.0F }
-        }));
-        tables_[i]->setClickable(true);
+        infoTables_.emplace_back(
+            std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
+                ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
+                std::vector<ImGuiTable::ColumnDef>{
+                    { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                    { .name = "NPS", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
+                    { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Primary variant", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 1660.0F }
+            }),
+            std::make_unique<ImGuiTable>(std::format("EngineLogTable{}", i),
+                ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
+                std::vector<ImGuiTable::ColumnDef>{
+                    { .name = "Log Entry", .flags = ImGuiTableColumnFlags_WidthStretch, .width = 1800.0F }
+            })
+        );
+        infoTables_[i].infoTable_->setClickable(true);
     }
 }
 
@@ -252,13 +287,13 @@ static std::vector<std::string> mkTableLine(ImGuiTable* table, const SearchInfo&
         return row;
 }
 
-void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
+void ImGuiEngineList::setInfoTable(size_t index, const MoveRecord& moveRecord) {
     
-    if (index >= tables_.size()) {
+    if (index >= infoTables_.size()) {
         return; 
     }
     
-    auto& table = tables_[index];
+    auto& table = infoTables_[index].infoTable_;
 	const auto& searchInfos = moveRecord.info;
 
     table->clear();
@@ -274,12 +309,12 @@ void ImGuiEngineList::setTable(size_t index, const MoveRecord& moveRecord) {
     }
 }
 
-static std::string drawButtons() {
+static std::string drawButtons(bool showLog) {
     constexpr float space = 3.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
-    std::vector<std::string> buttons{ "Restart", "Stop" };
+    std::vector<std::string> buttons{ "Restart", "Stop", "Log" };
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
 	topLeft.x = std::round(topLeft.x);
 	topLeft.y = std::round(topLeft.y);
@@ -288,17 +323,24 @@ static std::string drawButtons() {
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
 
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
-
+    
     std::string command;
     for (const auto& button : buttons) {
         ImGui::SetCursorScreenPos(curPos);
-        if (QaplaButton::drawIconButton(button, button, buttonSize, QaplaButton::ButtonState::Normal,
-            [&button](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+        QaplaButton::ButtonState state = QaplaButton::ButtonState::Normal;
+        if (button == "Log" && showLog) {
+            state = QaplaButton::ButtonState::Active;
+        }
+        if (QaplaButton::drawIconButton(button, button, buttonSize, state,
+            [&button, &state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Restart") {
-                    QaplaButton::drawRestart(drawList, topLeft, size);
+                    QaplaButton::drawRestart(drawList, topLeft, size, state);
                 }
                 if (button == "Stop") {
-                    QaplaButton::drawStop(drawList, topLeft, size);
+                    QaplaButton::drawStop(drawList, topLeft, size, state);
+                }
+                if (button == "Log") {
+                    QaplaButton::drawLog(drawList, topLeft, size, state);
                 }
             }))
         {
@@ -334,7 +376,13 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
     ImGuiSeparator::Vertical();
 
-    std::string pv = drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
+    std::string pv;
+    if (index < infoTables_.size() && infoTables_[index].showLog_) {
+        drawLog(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
+    } else {
+        // User may select a PV from the engine table
+        pv = drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
+    }
     
     ImGui::SetCursorScreenPos(topLeft);
     ImGui::Dummy(ImVec2(size.x, size.y - 3.0F));
@@ -351,7 +399,13 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0F));
     ImGui::PushItemWidth(cEngineInfoWidth - 10.0F);
     bool hasEngine = (index < engineRecords_.size());
-    if (allowInput_ && (!isSmall || !hasEngine)) { command = drawButtons(); }
+    auto& infoTable = infoTables_[index];
+    if (allowInput_ && (!isSmall || !hasEngine)) { 
+        command = drawButtons(infoTable.showLog_); 
+        if (command == "Log") {
+            infoTable.showLog_ = !infoTable.showLog_;
+        }
+    }
     if (hasEngine) {
         drawEngineInfo(engineRecords_[index], index);
     }
@@ -373,20 +427,40 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
     ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
     ImGui::SetCursorScreenPos(tableMin);
     std::string pv;
-    if (index < tables_.size())
+    if (index < infoTables_.size())
     {
         auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+        auto& infoTable = infoTables_[index].infoTable_;
         if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
             ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
         {
-            auto clicked = tables_[index]->draw(ImVec2(2000.0F, tableSize.y));
+            auto clicked = infoTable->draw(ImVec2(2000.0F, tableSize.y));
             if (clicked) {
-                pv = encodePV(displayedMoveNo_[index], tables_[index]->getField(*clicked, 6));
+                pv = encodePV(displayedMoveNo_[index], infoTable->getField(*clicked, 6));
             }
         }
         ImGui::EndChild();
     }
     return pv;
+}
+
+ void QaplaWindows::ImGuiEngineList::drawLog(
+    const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
+    size_t index, const ImVec2 &max, const ImVec2 &size)
+{
+    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    ImGui::SetCursorScreenPos(tableMin);
+    if (index < infoTables_.size())
+    {
+        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+        auto& logTable = infoTables_[index].logTable_;
+        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
+            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
+        {
+            logTable->draw(ImVec2(2000.0F, tableSize.y));
+        }
+        ImGui::EndChild();
+    }
 }
 
 std::pair<std::string, std::string> ImGuiEngineList::draw() {
