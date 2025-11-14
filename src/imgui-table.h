@@ -28,6 +28,7 @@
 
 #include "table-index.h"
 #include "table-filter.h"
+#include "font.h"
 
 namespace QaplaWindows {
 
@@ -88,6 +89,14 @@ namespace QaplaWindows {
          */
         void setFilterable(bool filterable) {
             filterable_ = filterable;
+        }
+
+        /**
+         * @brief Sets the font to use for rendering the table.
+         * @param fontIndex Index of the font to use (0=System Font, 2=InterVariable, 3=IbmPlexMono).
+         */
+        void setFont(int fontIndex) {
+            fontIndex_ = fontIndex;
         }
 
         /**
@@ -265,6 +274,7 @@ namespace QaplaWindows {
         bool autoScroll_ = false;
         bool filterable_ = false;
         bool allowNavigateToZero_ = false;
+        int fontIndex_ = FontManager::interVariableIndex; // Default to Inter Variable font
         std::optional<size_t> scrollToRow_;
         int lastInputFrame_ = -1;
         bool isRowClicked(size_t index) const;

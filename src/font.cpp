@@ -18,13 +18,14 @@
  */
 
 #include "font.h"
-#include "chess-font.h"
-#include "inter-variable.h"
+#include "data/chess-font.h"
+#include "data/inter-variable.h"
+#include "data/ibm-plex-mono-font.h"
 #include <imgui.h>
 #include <stdexcept>
 #include <filesystem>
 
-namespace font {
+namespace FontManager {
 
     const char8_t* pieceSymbol(QaplaBasics::Piece piece) {
         using enum QaplaBasics::Piece;
@@ -78,8 +79,8 @@ namespace font {
         }
 
         const float fontSize = ImGui::GetFontSize();
-        const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
-        const char* background = reinterpret_cast<const char*>(font::pieceBackground(piece));
+        const char* text = reinterpret_cast<const char*>(FontManager::pieceSymbol(piece));
+        const char* background = reinterpret_cast<const char*>(FontManager::pieceBackground(piece));
         const ImVec2 textPos = ImGui::GetCursorScreenPos();
 
         drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
@@ -94,8 +95,8 @@ namespace font {
         }
 
         const float fontSize = cellSize * 0.9F;
-        const char* text = reinterpret_cast<const char*>(font::pieceSymbol(piece));
-        const char* background = reinterpret_cast<const char*>(font::pieceBackground(piece));
+        const char* text = reinterpret_cast<const char*>(FontManager::pieceSymbol(piece));
+        const char* background = reinterpret_cast<const char*>(FontManager::pieceBackground(piece));
         const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0F, text);
         const ImVec2 textPos = {
             cellMin.x + (cellSize - textSize.x) * 0.5F,
@@ -130,7 +131,16 @@ namespace font {
             &fontCfg
         );
 
-        imguiIO.FontDefault = imguiIO.Fonts->Fonts[2]; 
+        static constexpr float ibmPlexMonoSizeInPixel = 17.0F;
+        ibmPlexMono = imguiIO.Fonts->AddFontFromMemoryTTF(
+            reinterpret_cast<void*>(const_cast<uint32_t*>(ibmPlexMonoFontData)),
+            static_cast<int>(ibmPlexMonoFontSize),
+            ibmPlexMonoSizeInPixel,
+            &fontCfg
+        );
+
+
+        imguiIO.FontDefault = imguiIO.Fonts->Fonts[interVariableIndex]; 
     }
 
 }

@@ -228,7 +228,7 @@ namespace {
         } catch (const std::exception& e) {
             std::cerr << "Warning: Failed to load background image: " << e.what() << "\n";
         }
-        font::loadFonts();
+        FontManager::loadFonts();
         
         FrameRateLimiter frameRateLimiter(60.0);
         

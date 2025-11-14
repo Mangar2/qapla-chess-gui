@@ -18,6 +18,7 @@
  */
 
 #include "imgui-table.h"
+#include "font.h"
 #include <imgui.h>
 #include <iostream>
 #include <algorithm>
@@ -270,6 +271,19 @@ namespace QaplaWindows {
             tableSize.y = std::max(0.0F, tableSize.y - filterHeight);
             handleFiltering(changed);
         }
+
+        // Push the selected font if not using default system font
+        ImFont* selectedFont = nullptr;
+        if (fontIndex_ == FontManager::interVariableIndex && FontManager::interVariable != nullptr) {
+            selectedFont = FontManager::interVariable;
+        } else if (fontIndex_ == FontManager::ibmPlexMonoIndex && FontManager::ibmPlexMono != nullptr) {
+            selectedFont = FontManager::ibmPlexMono;
+        }
+        
+        if (selectedFont != nullptr) {
+            ImGui::PushFont(selectedFont);
+        }
+
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
             setupTable();
             handleSorting();
@@ -278,6 +292,11 @@ namespace QaplaWindows {
             handleClipping(clickedRow);
             keyboardRow = checkKeyboard(visibleRows);
             ImGui::EndTable();
+        }
+
+        // Pop the font if we pushed one
+        if (selectedFont != nullptr) {
+            ImGui::PopFont();
         }
         
         return (keyboardRow) ? *keyboardRow : clickedRow;

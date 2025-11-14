@@ -176,7 +176,7 @@ namespace QaplaWindows
         cellSize = std::max(30.0F, cellSize * SHRINK_CELL_SIZE);
         ImDrawList *drawList = ImGui::GetWindowDrawList();
         ImFont *font = ImGui::GetFont();
-        ImGui::PushFont(font::chessFont);
+        ImGui::PushFont(FontManager::chessFont);
 
         const ImVec2 startPos = ImGui::GetCursorScreenPos();
 
@@ -200,7 +200,7 @@ namespace QaplaWindows
 
             const ImU32 bgColor = IM_COL32(240, 217, 181, 255);
             drawList->AddRectFilled(cellMin, cellMax, bgColor);
-            font::drawPiece(drawList, pieces[i], cellMin, cellSize, font);
+            FontManager::drawPiece(drawList, pieces[i], cellMin, cellSize, font);
         }
 
         ImGui::PopFont();
@@ -287,7 +287,7 @@ namespace QaplaWindows
                 const auto [cellMin, _] = computeCellCoordinates(boardPos, cellSize, file, rank);
                 
                 // Draw the piece
-                font::drawPiece(drawList, piece, cellMin, cellSize, font);
+                FontManager::drawPiece(drawList, piece, cellMin, cellSize, font);
                 
                 // Draw castling indicators on top of king pieces
                 bool isWhite = (static_cast<int>(file) + static_cast<int>(rank)) % 2 != 0;
@@ -357,7 +357,7 @@ namespace QaplaWindows
         drawList->AddCircleFilled(center, radius, bgColor);
         
         // Draw piece icon
-        font::drawPiece(drawList, piece, indicatorMin, indicatorSize, font);
+        FontManager::drawPiece(drawList, piece, indicatorMin, indicatorSize, font);
     }
 
     void ImGuiBoard::drawEPIndicator(ImDrawList *drawList, const ImVec2 &boardPos, 
@@ -496,7 +496,7 @@ namespace QaplaWindows
             return {};
         }
 
-        ImGui::PushFont(font::chessFont);
+        ImGui::PushFont(FontManager::chessFont);
 
         const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95F;
 
@@ -694,7 +694,7 @@ namespace QaplaWindows
         const float size = max.x - min.x;
         
         drawPopupRect(params.drawList, min, max, POPUP_PIECE_BACKGROUND);
-        font::drawPiece(params.drawList, piece, min, size, params.font);
+        FontManager::drawPiece(params.drawList, piece, min, size, params.font);
     }
 
     static void drawClearIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, float paddingRatio)
@@ -770,7 +770,7 @@ namespace QaplaWindows
         if (lastSelectedPiece_ == Piece::NO_PIECE) {
             drawClearIcon(drawList, min, max, 0.3F);
         } else {
-            font::drawPiece(drawList, lastSelectedPiece_, min, size, font);
+            FontManager::drawPiece(drawList, lastSelectedPiece_, min, size, font);
         }
     }
 
@@ -788,7 +788,7 @@ namespace QaplaWindows
         
         ImDrawList* drawList = ImGui::GetWindowDrawList();
         ImFont* font = ImGui::GetFont();
-        ImGui::PushFont(font::chessFont);
+        ImGui::PushFont(FontManager::chessFont);
         
         // Background
         const ImVec2 popupMax = {popupMin.x + popupWidth, popupMin.y + popupHeight};

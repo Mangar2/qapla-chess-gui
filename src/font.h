@@ -23,10 +23,29 @@
 #include <string>
 #include <imgui.h>
 
-namespace font {
+namespace FontManager {
 
 	inline ImFont* chessFont = nullptr;
 	inline ImFont* interVariable = nullptr;
+	inline ImFont* ibmPlexMono = nullptr;
+
+	static constexpr int interVariableIndex = 2;
+	static constexpr int ibmPlexMonoIndex = 3;
+
+	/**
+	 * @brief List of supported fonts for general use (excluding chess font at index 1).
+	 * Each entry contains the font index and a descriptive name.
+	 */
+	struct SupportedFont {
+		int index;
+		const char* name;
+	};
+
+	inline constexpr SupportedFont supportedFonts[] = {
+		{0, "System Font"},
+		{interVariableIndex, "Inter Variable"},
+		{ibmPlexMonoIndex, "IBM Plex Mono"}
+	};
 
 	/**
 	 * @brief Loads a TrueType chess font into the ImGui font system.

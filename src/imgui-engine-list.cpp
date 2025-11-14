@@ -71,7 +71,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
         auto textTopLeft = ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
         ImGui::SetCursorScreenPos(textTopLeft);
         if (i == 0 && index <= 1) {
-            font::drawPiece(drawList, index == 0 ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING);
+            FontManager::drawPiece(drawList, index == 0 ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING);
             ImGui::SetCursorScreenPos(ImVec2(textTopLeft.x + 20, textTopLeft.y));
         }
         ImGui::TextUnformatted(lines[i].c_str());
@@ -244,7 +244,9 @@ void ImGuiEngineList::addTables(size_t size) {
             })
         );
         infoTables_[i].infoTable_->setClickable(true);
+        infoTables_[i].infoTable_->setFont(FontManager::ibmPlexMonoIndex);
         infoTables_[i].logTable_->setSortable(true);
+        infoTables_[i].logTable_->setFont(FontManager::ibmPlexMonoIndex);
     }
 }
 

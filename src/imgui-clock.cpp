@@ -194,7 +194,7 @@ std::pair<std::string, std::string> prepareTimeStrings(uint64_t totalMs, uint64_
  */
 void drawKingIcon(ImDrawList* drawList, const ImVec2& topLeft, bool white, bool wtm) {
     if (wtm == white) {
-        font::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
+        FontManager::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
             ImVec2(topLeft.x + 5, topLeft.y + 5), 30);
     }
 }
