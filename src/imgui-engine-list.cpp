@@ -30,17 +30,16 @@
 #include "qapla-engine/types.h"
 
 #include <imgui.h>
-
 #include <sstream>
 #include <string>
+#include <format>
+#include <memory>
+#include <algorithm>
 
 using QaplaTester::GameRecord;
 using QaplaTester::MoveRecord;
 using QaplaTester::SearchInfo;
 using QaplaTester::EngineRecord;
-#include <format>
-#include <memory>
-#include <algorithm>
 
 using namespace QaplaWindows;
 
@@ -174,7 +173,9 @@ void ImGuiEngineList::setFromLogBuffer(const QaplaTester::RingBuffer& logBuffer,
     // Implement incremental update later
     logTable->clear();
     for (size_t i = 0; i < logBuffer.size(); ++i) {
-        logTable->push({ logBuffer[i] });
+        //auto timeStr = QaplaHelpers::formatTimeOfDay(logBuffer[i].timestamp);
+        auto countStr = std::format("{:05}", logBuffer[i].inputCount);
+        logTable->push({ countStr, logBuffer[i].data });
     }
 }
 
@@ -238,10 +239,12 @@ void ImGuiEngineList::addTables(size_t size) {
             std::make_unique<ImGuiTable>(std::format("EngineLogTable{}", i),
                 ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
                 std::vector<ImGuiTable::ColumnDef>{
+                    { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
                     { .name = "Log Entry", .flags = ImGuiTableColumnFlags_WidthStretch, .width = 1800.0F }
             })
         );
         infoTables_[i].infoTable_->setClickable(true);
+        infoTables_[i].logTable_->setSortable(true);
     }
 }
 
