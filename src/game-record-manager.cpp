@@ -27,7 +27,7 @@ using QaplaTester::GameRecord;
 using QaplaTester::PgnIO;
 
 void GameRecordManager::load(const std::string& fileName, std::function<bool(const GameRecord&, float)> gameCallback) {
-    games_ = pgnIO_.loadGames(fileName, false, gameCallback);  // Load without comments
+    games_ = pgnIO_.loadGames(fileName, true, gameCallback);  // Load without comments
 }
 
 std::optional<GameRecord> GameRecordManager::loadGameByIndex(size_t index) {

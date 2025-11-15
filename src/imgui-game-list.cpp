@@ -22,11 +22,10 @@
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "callback-manager.h"
-#include "pgn-io.h"
 
-using QaplaTester::GameRecord;
-using QaplaTester::GameResult;
-using QaplaTester::PgnIO;
+#include <pgn-io.h>
+#include <timer.h>
+#include <string-helper.h>
 
 #include <fstream>
 #include <sstream>
@@ -35,6 +34,10 @@ using QaplaTester::PgnIO;
 #include <format>
 #include <filesystem>
 #include <system_error>
+
+using QaplaTester::GameRecord;
+using QaplaTester::GameResult;
+using QaplaTester::PgnIO;
 
 using namespace QaplaWindows;
 
@@ -155,6 +158,7 @@ std::pair<QaplaButton::ButtonState, std::string> ImGuiGameList::computeButtonSta
 void ImGuiGameList::executeCommand(const std::string& button, bool isLoading) {
     if (button == "Open") {
         if (isLoading) {
+            // Inform the loading thread to cancel 
             operationState_.store(OperationState::Cancelling);
         } else {
             openFile();
@@ -204,12 +208,13 @@ static std::vector<std::string> createTableRow(const QaplaTester::GameRecord& ga
     std::string black = tags.contains("Black") ? tags.at("Black") : "";
     
     auto [cause, result] = game.getGameResult();
-    std::string resultStr = gameResultToPgnResult(result);
+    std::string resultStr = to_string(result);
+    std::string causeStr = to_string(cause);
     // Cause is not set in load games for speed reasons and cannot be used here
     
     std::string moves = std::to_string(game.history().size());
     
-    std::vector<std::string> rowData = {white, black, resultStr, moves};
+    std::vector<std::string> rowData = {white, black, resultStr, causeStr, moves};
     
     for (const std::string& tag : commonTags) {
         // Only add if not already included
@@ -243,6 +248,7 @@ void ImGuiGameList::createTable() {
         { .name = "White", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
         { .name = "Black", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
         { .name = "Result", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F },
+        { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
         { .name = "PlyCount", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 65.0F, .alignRight = true }
     };
 
@@ -316,12 +322,14 @@ void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
     try {
         gamesLoaded_ = 0;
         loadingProgress_ = 0.0F;
-
+        QaplaHelpers::Timer timer;
+        timer.start();
         gameRecordManager_.load(fileName, [&](const GameRecord&, float progress) {
             gamesLoaded_++;
             loadingProgress_ = progress;
             return operationState_.load() != OperationState::Cancelling; 
         });
+        timer.stop();
         
         bool cancelled = operationState_.load() == OperationState::Cancelling;
         
@@ -335,10 +343,12 @@ void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
 
         if (cancelled) {
             SnackbarManager::instance().showSuccess(
-                std::format("Loading stopped.\n Loaded {} games from {}", games.size(), fileName));
+                std::format("Loading stopped.\n Loaded {} games from {}\ntook {} s", games.size(), fileName, 
+                    QaplaHelpers::formatMs(timer.elapsedMs())));
         } else {
             SnackbarManager::instance().showSuccess(
-                std::format("Loading finished.\n Loaded {} games from {}", games.size(), fileName));
+                std::format("Loading finished.\n Loaded {} games from {}\ntook {} s", games.size(), fileName, 
+                    QaplaHelpers::formatMs(timer.elapsedMs())));
         }
     } catch (const std::exception& e) {
         operationState_.store(OperationState::Idle);

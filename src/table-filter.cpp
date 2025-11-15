@@ -48,7 +48,7 @@ bool FullTextFilter::draw() {
     filterChanged_ = false;
     
     ImGui::PushID("FullTextFilter");
-    if (ImGuiControls::inputText("Filter", searchText_)) {
+    if (ImGuiControls::inputText("Search", searchText_)) {
         filterChanged_ = true;
     }
     ImGui::PopID();
