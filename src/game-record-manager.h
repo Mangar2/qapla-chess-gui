@@ -60,14 +60,7 @@ public:
      */
     std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
 
-    /**
-     * @brief Loads game positions from a PGN file without parsing the games.
-     * @param fileName Name of the PGN file to load positions from.
-     * @return Number of games found in the file.
-     */
-    size_t loadPositions(const std::string& fileName);
-
-    /**
+     /**
      * @brief Loads a specific game by index from the previously loaded file.
      * @param index Index of the game to load.
      * @return Optional GameRecord if successful.
@@ -87,7 +80,52 @@ public:
      */
     const std::string& getCurrentFileName() const { return pgnIO_.getCurrentFileName(); }
 
+    /**
+     * @brief Saves games to a file, handling special cases like same-file save.
+     * @param fileName Target filename to save to.
+     * @param filterFunc Function to filter games (return true to include game).
+     * @param progressCallback Callback for progress updates (gamesProcessed, progress 0-1).
+     * @param cancelCheck Function to check if operation should be cancelled.
+     * @return Number of games saved.
+     */
+    size_t save(const std::string& fileName,
+                std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                std::function<void(size_t, float)> progressCallback,
+                std::function<bool()> cancelCheck);
+
 private:
+    /**
+     * @brief Saves games to the same file (uses temporary file).
+     * @param fileName Target filename.
+     * @param filterFunc Function to filter games.
+     * @param progressCallback Callback for progress updates.
+     * @param cancelCheck Function to check if operation should be cancelled.
+     * @return Number of games saved.
+     */
+    size_t saveToSameFile(const std::string& fileName,
+                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                          std::function<void(size_t, float)> progressCallback,
+                          std::function<bool()> cancelCheck);
+
+    /**
+     * @brief Copies the entire file without filtering.
+     * @param fileName Target filename.
+     */
+    void saveWithoutFilter(const std::string& fileName);
+
+    /**
+     * @brief Saves filtered games to a file.
+     * @param fileName Target filename.
+     * @param filterFunc Function to filter games.
+     * @param progressCallback Callback for progress updates.
+     * @param cancelCheck Function to check if operation should be cancelled.
+     * @return Number of games saved.
+     */
+    size_t saveWithFilter(const std::string& fileName,
+                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                          std::function<void(size_t, float)> progressCallback,
+                          std::function<bool()> cancelCheck);
+
     std::vector<QaplaTester::GameRecord> games_;  // Loaded game records
     QaplaTester::PgnIO pgnIO_;  // PGN I/O handler
 };

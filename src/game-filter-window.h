@@ -22,6 +22,7 @@
 #include "embedded-window.h"
 #include "game-filter-data.h"
 #include "game-result.h"
+#include <game-record.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -32,12 +33,18 @@ namespace QaplaWindows {
 /**
  * @brief Window for configuring game list filters.
  * 
- * Provides UI controls for multi-selecting players, opponents,
- * game results, and termination causes.
+ * Owns and manages GameFilterData, provides UI controls for multi-selecting
+ * players, opponents, game results, and termination causes.
  */
 class GameFilterWindow : public EmbeddedWindow {
 public:
     GameFilterWindow();
+
+    /**
+     * @brief Initializes filter data from configuration.
+     * @param configId Configuration identifier for loading/saving filter settings.
+     */
+    void init(const std::string& configId);
 
     /**
      * @brief Draws the filter configuration window.
@@ -45,37 +52,28 @@ public:
     void draw() override;
 
     /**
-     * @brief Sets the filter data to edit.
+     * @brief Updates available filter options from loaded games.
+     * @param games Vector of game records to extract filter options from.
      */
-    void setFilterData(GameFilterData* filterData) { filterData_ = filterData; }
+    void updateFilterOptions(const std::vector<QaplaTester::GameRecord>& games);
 
     /**
-     * @brief Sets available player names from loaded games.
+     * @brief Saves current filter configuration.
+     * @param configId Configuration identifier for saving filter settings.
      */
-    void setAvailablePlayers(const std::vector<std::string>& players) { 
-        availablePlayers_ = players; 
-    }
+    void updateConfiguration(const std::string& configId) const;
 
     /**
-     * @brief Sets available opponent names from loaded games.
+     * @brief Gets the filter data.
+     * @return Reference to the filter data.
      */
-    void setAvailableOpponents(const std::vector<std::string>& opponents) { 
-        availableOpponents_ = opponents; 
-    }
+    GameFilterData& getFilterData() { return filterData_; }
 
     /**
-     * @brief Sets available game results from loaded games.
+     * @brief Gets the filter data (const).
+     * @return Const reference to the filter data.
      */
-    void setAvailableResults(const std::set<QaplaTester::GameResult>& results) { 
-        availableResults_ = results; 
-    }
-
-    /**
-     * @brief Sets available termination causes from loaded games.
-     */
-    void setAvailableTerminations(const std::set<QaplaTester::GameEndCause>& terminations) { 
-        availableTerminations_ = terminations; 
-    }
+    const GameFilterData& getFilterData() const { return filterData_; }
 
     /**
      * @brief Sets a callback to be called when filter settings change.
@@ -88,27 +86,36 @@ private:
     /**
      * @brief Draws the active/inactive toggle.
      */
-    void drawActiveToggle();
+    bool drawActiveToggle();
 
     /**
      * @brief Draws the player selection section.
      */
-    void drawPlayerSelection();
+    bool drawPlayerSelection();
 
     /**
      * @brief Draws the opponent selection section.
      */
-    void drawOpponentSelection();
+    bool drawOpponentSelection();
 
     /**
      * @brief Draws the game result selection section.
      */
-    void drawResultSelection();
+    bool drawResultSelection();
 
     /**
      * @brief Draws the termination cause selection section.
      */
-    void drawTerminationSelection();
+    bool drawTerminationSelection();
+
+    /**
+     * @brief Draws a name selection section (helper for player/opponent).
+     */
+    bool drawNameSelection(const std::string& tooltip,
+                          const std::vector<std::string>& availableNames,
+                          std::function<bool(const std::string&)> isSelected,
+                          std::function<void(const std::string&)> onToggle,
+                          std::function<void()> onClear);
 
     /**
      * @brief Draws a multi-select list for strings.
@@ -118,7 +125,7 @@ private:
                             const std::set<std::string>& selected,
                             std::function<void(const std::string&)> onToggle);
 
-    GameFilterData* filterData_ = nullptr;
+    GameFilterData filterData_;  // Owner of filter data
     std::vector<std::string> availablePlayers_;
     std::vector<std::string> availableOpponents_;
     std::set<QaplaTester::GameResult> availableResults_;

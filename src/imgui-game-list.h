@@ -21,8 +21,9 @@
 
 #include "embedded-window.h"
 #include "game-record-manager.h"
-#include "imgui-game-filter.h"
+#include "game-filter-window.h"
 #include "imgui-table.h"
+#include "imgui-popup.h"
 #include "imgui-button.h"
 #include <thread>
 #include <atomic>
@@ -96,6 +97,11 @@ private:
     void openFile();
 
     /**
+     * @brief Saves the current games to a new file.
+     */
+    void saveAsFile();
+
+    /**
      * @brief Updates the filter configuration.
      */
     void updateFilterConfiguration();
@@ -109,26 +115,6 @@ private:
      * @brief Background loading function.
      */
     void loadFileInBackground(const std::string& fileName);
-
-    /**
-     * @brief Handles saving when source and target files are the same.
-     */
-    void saveToSameFile(const std::string& fileName, size_t totalGames, size_t& gamesSaved);
-
-    /**
-     * @brief Handles saving when no filter is active (simple file copy).
-     */
-    void saveWithoutFilter(const std::string& fileName, size_t totalGames);
-
-    /**
-     * @brief Handles saving with active filter (write filtered games).
-     */
-    void saveWithFilter(const std::string& fileName, size_t totalGames, size_t& gamesSaved);
-
-    /**
-     * @brief Opens a save dialog and saves filtered games to a PGN file.
-     */
-    void saveAsFile();
 
     /**
      * @brief Background saving function.
@@ -181,18 +167,12 @@ private:
     std::mutex gameTableMutex_;
 
     /**
-     * @brief Filter data for game list.
-     */
-    GameFilterData filterData_;
-
-    /**
      * @brief Popup window for filter configuration.
      */
     ImGuiPopup<GameFilterWindow> filterPopup_;
 
     inline static std::optional<QaplaTester::GameRecord> selectedGame_;
 
-private:
     std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;
     void executeCommand(const std::string& button, bool isLoading);
 };

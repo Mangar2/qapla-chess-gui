@@ -19,6 +19,9 @@
 
 #include "game-record-manager.h"
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
+#include <format>
 
 using QaplaTester::GameRecord;
 using QaplaTester::PgnIO;
@@ -57,4 +60,118 @@ std::vector<std::pair<std::string, size_t>> GameRecordManager::getMostCommonTags
     }
     
     return result;
+}
+
+size_t GameRecordManager::save(const std::string& fileName,
+                                std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                std::function<void(size_t, float)> progressCallback,
+                                std::function<bool()> cancelCheck) {
+    const std::string& sourceFile = pgnIO_.getCurrentFileName();
+    
+    // Check if source and target are the same file
+    if (!sourceFile.empty() && std::filesystem::equivalent(sourceFile, fileName)) {
+        return saveToSameFile(fileName, filterFunc, progressCallback, cancelCheck);
+    }
+    
+    // Check if filter function always returns true (no filtering)
+    bool hasFilter = false;
+    if (filterFunc && !games_.empty()) {
+        // Test with first game to see if there's actual filtering
+        hasFilter = !filterFunc(games_[0]);
+        if (!hasFilter && games_.size() > 1) {
+            hasFilter = !filterFunc(games_[1]);
+        }
+    }
+    
+    if (!hasFilter && filterFunc) {
+        // No actual filtering needed - just copy
+        saveWithoutFilter(fileName);
+        return games_.size();
+    } else {
+        return saveWithFilter(fileName, filterFunc, progressCallback, cancelCheck);
+    }
+}
+
+size_t GameRecordManager::saveToSameFile(const std::string& fileName,
+                                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                          std::function<void(size_t, float)> progressCallback,
+                                          std::function<bool()> cancelCheck) {
+    // Create temporary file name
+    std::filesystem::path filePath(fileName);
+    std::filesystem::path tempPath = filePath;
+    tempPath.replace_filename(filePath.stem().string() + ".tmp");
+    
+    // Save filtered games to temp file
+    size_t gamesSaved = saveWithFilter(tempPath.string(), filterFunc, progressCallback, cancelCheck);
+    
+    // Check if operation was cancelled
+    if (!cancelCheck || !cancelCheck()) {
+        // Delete original file
+        std::filesystem::remove(fileName);
+        
+        // Rename temp file to original name
+        std::filesystem::rename(tempPath, fileName);
+    } else {
+        // Cancelled - remove temp file
+        std::filesystem::remove(tempPath);
+    }
+    
+    return gamesSaved;
+}
+
+void GameRecordManager::saveWithoutFilter(const std::string& fileName) {
+    const std::string& sourceFile = pgnIO_.getCurrentFileName();
+    if (!sourceFile.empty()) {
+        std::ifstream src(sourceFile, std::ios::binary);
+        std::ofstream dst(fileName, std::ios::binary);
+        dst << src.rdbuf();
+        src.close();
+        dst.close();
+    }
+}
+
+size_t GameRecordManager::saveWithFilter(const std::string& fileName,
+                                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                          std::function<void(size_t, float)> progressCallback,
+                                          std::function<bool()> cancelCheck) {
+    // Open file for writing
+    std::ofstream outFile(fileName, std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
+        throw std::runtime_error(
+            std::format("Failed to open file for writing: {}", fileName)
+        );
+    }
+    
+    size_t gamesSaved = 0;
+    size_t totalGames = games_.size();
+    
+    // Save each game that passes the filter
+    for (size_t i = 0; i < totalGames; ++i) {
+        const auto& game = games_[i];
+        
+        // Check if user cancelled
+        if (cancelCheck && cancelCheck()) {
+            break;
+        }
+        
+        // Apply filter
+        if (filterFunc && !filterFunc(game)) {
+            continue;
+        }
+        
+        // Get raw game text and write it
+        auto rawText = pgnIO_.getRawGameText(i);
+        if (rawText) {
+            outFile << *rawText;
+            gamesSaved++;
+        }
+        
+        // Update progress
+        if (progressCallback) {
+            progressCallback(gamesSaved, static_cast<float>(i + 1) / static_cast<float>(totalGames));
+        }
+    }
+    
+    outFile.close();
+    return gamesSaved;
 }
