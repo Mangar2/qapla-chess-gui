@@ -295,6 +295,8 @@ void ImGuiGameList::createTable() {
 void ImGuiGameList::openFile() {
     auto selectedFiles = OsDialogs::openFileDialog(false);
     if (!selectedFiles.empty()) {
+        // We disable the filter for new loads
+        filterPopup_.content().getFilterData().setActive(false);
         // Wait for any previous thread to finish
         if (loadingThread_.joinable()) {
             loadingThread_.join();

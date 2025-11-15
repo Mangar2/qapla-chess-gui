@@ -178,22 +178,14 @@ bool GameFilterWindow::drawTerminationSelection() {
         modified = true;
     }
     
-    // Sort terminations for better UI
-    std::vector<QaplaTester::GameEndCause> sortedTerminations(
-        availableTerminations_.begin(), 
-        availableTerminations_.end()
-    );
-    std::sort(sortedTerminations.begin(), sortedTerminations.end(),
-        [](QaplaTester::GameEndCause a, QaplaTester::GameEndCause b) {
-            return QaplaTester::gameEndCauseToPgnTermination(a) < 
-                   QaplaTester::gameEndCauseToPgnTermination(b);
-        });
+    // Sort terminations alphabetically
+    std::vector<std::string> sortedTerminations = availableTerminations_;
+    std::sort(sortedTerminations.begin(), sortedTerminations.end());
     
     for (const auto& termination : sortedTerminations) {
         bool selected = filterData_.isTerminationSelected(termination);
-        std::string terminationStr = QaplaTester::gameEndCauseToPgnTermination(termination);
         
-        if (ImGui::Selectable(terminationStr.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
+        if (ImGui::Selectable(termination.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
             filterData_.toggleTermination(termination);
             modified = true;
         }
@@ -215,7 +207,7 @@ void GameFilterWindow::updateFilterOptions(const std::vector<QaplaTester::GameRe
     // Extract unique player names (both White and Black)
     std::set<std::string> uniquePlayers;
     std::set<QaplaTester::GameResult> uniqueResults;
-    std::set<QaplaTester::GameEndCause> uniqueTerminations;
+    std::set<std::string> uniqueTerminations;
 
     for (const auto& game : games) {
         const auto& tags = game.getTags();
@@ -235,8 +227,10 @@ void GameFilterWindow::updateFilterOptions(const std::vector<QaplaTester::GameRe
         auto [cause, result] = game.getGameResult();
         uniqueResults.insert(result);
         
-        if (cause != QaplaTester::GameEndCause::Ongoing) {
-            uniqueTerminations.insert(cause);
+        // Extract termination from PGN tag
+        auto terminationIt = tags.find("Termination");
+        if (terminationIt != tags.end() && !terminationIt->second.empty()) {
+            uniqueTerminations.insert(terminationIt->second);
         }
     }
 
@@ -250,7 +244,7 @@ void GameFilterWindow::updateFilterOptions(const std::vector<QaplaTester::GameRe
     availablePlayers_ = playerVec;
     availableOpponents_ = playerVec;
     availableResults_ = uniqueResults;
-    availableTerminations_ = uniqueTerminations;
+    availableTerminations_ = std::vector<std::string>(uniqueTerminations.begin(), uniqueTerminations.end());
 }
 
 void GameFilterWindow::updateConfiguration(const std::string& configId) const {

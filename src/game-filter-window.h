@@ -129,7 +129,7 @@ private:
     std::vector<std::string> availablePlayers_;
     std::vector<std::string> availableOpponents_;
     std::set<QaplaTester::GameResult> availableResults_;
-    std::set<QaplaTester::GameEndCause> availableTerminations_;
+    std::vector<std::string> availableTerminations_;
     std::function<void()> onFilterChanged_;
 };
 

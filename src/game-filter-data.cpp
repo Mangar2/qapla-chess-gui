@@ -65,12 +65,7 @@ void GameFilterData::init(const std::string& id) {
         auto terminationsStr = section.getValue("terminations").value_or("");
         if (!terminationsStr.empty()) {
             auto terminationsList = QaplaHelpers::splitWithUnescape(terminationsStr, '|');
-            for (const auto& term : terminationsList) {
-                auto cause = QaplaTester::tryParseGameEndCause(term);
-                if (cause) {
-                    selectedTerminations_.insert(*cause);
-                }
-            }
+            selectedTerminations_ = std::set<std::string>(terminationsList.begin(), terminationsList.end());
         }
     }
 }
@@ -101,8 +96,7 @@ void GameFilterData::updateConfiguration(const std::string& id) const {
     std::string terminationsStr;
     for (const auto& termination : selectedTerminations_) {
         if (!terminationsStr.empty()) terminationsStr += "|";
-        terminationsStr += QaplaHelpers::escapeDelimiter(
-            QaplaTester::gameEndCauseToPgnTermination(termination), '|');
+        terminationsStr += QaplaHelpers::escapeDelimiter(termination, '|');
     }
     
     QaplaHelpers::IniFile::Section section{
@@ -146,11 +140,11 @@ void GameFilterData::toggleResult(QaplaTester::GameResult result) {
     }
 }
 
-void GameFilterData::toggleTermination(QaplaTester::GameEndCause cause) {
-    if (selectedTerminations_.count(cause)) {
-        selectedTerminations_.erase(cause);
+void GameFilterData::toggleTermination(const std::string& termination) {
+    if (selectedTerminations_.count(termination)) {
+        selectedTerminations_.erase(termination);
     } else {
-        selectedTerminations_.insert(cause);
+        selectedTerminations_.insert(termination);
     }
 }
 
@@ -166,8 +160,8 @@ bool GameFilterData::isResultSelected(QaplaTester::GameResult result) const {
     return selectedResults_.count(result) > 0;
 }
 
-bool GameFilterData::isTerminationSelected(QaplaTester::GameEndCause cause) const {
-    return selectedTerminations_.count(cause) > 0;
+bool GameFilterData::isTerminationSelected(const std::string& termination) const {
+    return selectedTerminations_.count(termination) > 0;
 }
 
 void GameFilterData::clear() {
@@ -205,7 +199,11 @@ bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {
         return false;
     }
 
-    return passesTerminationFilter(cause);
+    // Get Termination tag from PGN
+    auto terminationIt = tags.find("Termination");
+    std::string termination = (terminationIt != tags.end()) ? terminationIt->second : "";
+    
+    return passesTerminationFilter(termination);
 }
 
 bool GameFilterData::passesPlayerNamesFilter(const std::string& white, const std::string& black) const {
@@ -234,8 +232,8 @@ bool GameFilterData::passesResultFilter(QaplaTester::GameResult result) const {
     return selectedResults_.empty() || selectedResults_.contains(result);
 }
 
-bool GameFilterData::passesTerminationFilter(QaplaTester::GameEndCause cause) const {
-    return selectedTerminations_.empty() || selectedTerminations_.contains(cause);
+bool GameFilterData::passesTerminationFilter(const std::string& termination) const {
+    return selectedTerminations_.empty() || selectedTerminations_.contains(termination);
 }
 
 } // namespace QaplaWindows

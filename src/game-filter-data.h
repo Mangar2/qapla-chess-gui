@@ -77,9 +77,9 @@ public:
     const std::set<QaplaTester::GameResult>& getSelectedResults() const { return selectedResults_; }
 
     /**
-     * @brief Gets the selected termination causes.
+     * @brief Gets the selected termination strings (from PGN Termination tag).
      */
-    const std::set<QaplaTester::GameEndCause>& getSelectedTerminations() const { return selectedTerminations_; }
+    const std::set<std::string>& getSelectedTerminations() const { return selectedTerminations_; }
 
     /**
      * @brief Sets the selected player names.
@@ -97,9 +97,9 @@ public:
     void setSelectedResults(const std::set<QaplaTester::GameResult>& results) { selectedResults_ = results; }
 
     /**
-     * @brief Sets the selected termination causes.
+     * @brief Sets the selected termination strings.
      */
-    void setSelectedTerminations(const std::set<QaplaTester::GameEndCause>& terminations) { 
+    void setSelectedTerminations(const std::set<std::string>& terminations) { 
         selectedTerminations_ = terminations; 
     }
 
@@ -119,9 +119,9 @@ public:
     void toggleResult(QaplaTester::GameResult result);
 
     /**
-     * @brief Toggles a termination cause in the selection.
+     * @brief Toggles a termination string in the selection.
      */
-    void toggleTermination(QaplaTester::GameEndCause cause);
+    void toggleTermination(const std::string& termination);
 
     /**
      * @brief Checks if a player is selected.
@@ -139,9 +139,9 @@ public:
     bool isResultSelected(QaplaTester::GameResult result) const;
 
     /**
-     * @brief Checks if a termination cause is selected.
+     * @brief Checks if a termination string is selected.
      */
-    bool isTerminationSelected(QaplaTester::GameEndCause cause) const;
+    bool isTerminationSelected(const std::string& termination) const;
 
     /**
      * @brief Clears all filter selections.
@@ -178,18 +178,18 @@ private:
     bool passesResultFilter(QaplaTester::GameResult result) const;
 
     /**
-     * @brief Checks if a game passes the termination cause filter.
-     * @param cause The game end cause
+     * @brief Checks if a game passes the termination filter.
+     * @param termination The PGN Termination tag value
      * @return true if the game passes the termination filter
      */
-    bool passesTerminationFilter(QaplaTester::GameEndCause cause) const;
+    bool passesTerminationFilter(const std::string& termination) const;
 
 private:
     bool active_ = false;
     std::set<std::string> selectedPlayers_;
     std::set<std::string> selectedOpponents_;
     std::set<QaplaTester::GameResult> selectedResults_;
-    std::set<QaplaTester::GameEndCause> selectedTerminations_;
+    std::set<std::string> selectedTerminations_;
 };
 
 } // namespace QaplaWindows
