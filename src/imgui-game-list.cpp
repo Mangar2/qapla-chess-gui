@@ -343,11 +343,11 @@ void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
 
         if (cancelled) {
             SnackbarManager::instance().showSuccess(
-                std::format("Loading stopped.\n Loaded {} games from {}\ntook {} s", games.size(), fileName, 
+                std::format("Loading stopped.\n Loaded {} games from {}\nLoading time {} s", games.size(), fileName, 
                     QaplaHelpers::formatMs(timer.elapsedMs())));
         } else {
             SnackbarManager::instance().showSuccess(
-                std::format("Loading finished.\n Loaded {} games from {}\ntook {} s", games.size(), fileName, 
+                std::format("Loading finished.\n Loaded {} games from {}\nLoading time {} s", games.size(), fileName, 
                     QaplaHelpers::formatMs(timer.elapsedMs())));
         }
     } catch (const std::exception& e) {

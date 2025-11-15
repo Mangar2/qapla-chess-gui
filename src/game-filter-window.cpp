@@ -56,10 +56,13 @@ void GameFilterWindow::draw() {
         modified |= drawOpponentSelection();
         ImGui::Separator();
         
-        modified |= drawResultSelection();
+        modified |= drawTopicSelection("results", "Filter by Game Result:", "Select game results");
         ImGui::Separator();
         
-        modified |= drawTerminationSelection();
+        modified |= drawTopicSelection("causes", "Filter by Game Cause:", "Select game termination causes");
+        ImGui::Separator();
+        
+        modified |= drawTopicSelection("terminations", "Filter by Termination:", "Select termination types from PGN Termination tag");
     }
     
     ImGui::EndChild();
@@ -172,48 +175,33 @@ bool GameFilterWindow::drawNameSelection(const std::vector<std::string>& availab
     return modified;
 }
 
-bool GameFilterWindow::drawResultSelection() {
-    size_t selectedCount = filterData_.getSelectedResults().size();
-    bool modified = drawSectionHeader("Filter by Game Result:", selectedCount, "Select game results");
+bool GameFilterWindow::drawTopicSelection(const std::string& topic, const std::string& title, const std::string& tooltip) {
+    const auto& availableOptions = filterData_.getAvailableOptions(topic);
     
-    if (modified) {
-        filterData_.setSelectedResults({});
+    // Don't show topics with less than 2 options
+    if (availableOptions.size() < 2) {
+        return false;
     }
     
-    for (const auto& result : filterData_.getAvailableResults()) {
-        bool selected = filterData_.isResultSelected(result);
-        std::string resultStr = QaplaTester::gameResultToPgnResult(result);
+    ImGui::PushID(topic.c_str());
+    
+    size_t selectedCount = filterData_.getSelectedOptions(topic).size();
+    bool modified = drawSectionHeader(title, selectedCount, tooltip);
+    
+    if (modified) {
+        filterData_.setSelectedOptions(topic, {});
+    }
+    
+    for (const auto& option : availableOptions) {
+        bool selected = filterData_.isOptionSelected(topic, option);
         
-        if (ImGui::Selectable(resultStr.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
-            filterData_.toggleResult(result);
+        if (ImGui::Selectable(option.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
+            filterData_.toggleOption(topic, option);
             modified = true;
         }
     }
     
-    return modified;
-}
-
-bool GameFilterWindow::drawTerminationSelection() {
-    size_t selectedCount = filterData_.getSelectedTerminations().size();
-    bool modified = drawSectionHeader("Filter by Termination:", selectedCount, "Select termination types from PGN Termination tag");
-    
-    if (modified) {
-        filterData_.setSelectedTerminations({});
-    }
-    
-    // Sort terminations alphabetically
-    std::vector<std::string> sortedTerminations = filterData_.getAvailableTerminations();
-    std::sort(sortedTerminations.begin(), sortedTerminations.end());
-    
-    for (const auto& termination : sortedTerminations) {
-        bool selected = filterData_.isTerminationSelected(termination);
-        
-        if (ImGui::Selectable(termination.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
-            filterData_.toggleTermination(termination);
-            modified = true;
-        }
-    }
-    
+    ImGui::PopID();
     return modified;
 }
 

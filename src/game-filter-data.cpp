@@ -24,6 +24,9 @@
 
 namespace QaplaWindows {
 
+// Define static member
+const std::vector<std::string> GameFilterData::emptyVector_;
+
 void GameFilterData::init(const std::string& id) {
     auto sections = QaplaConfiguration::Configuration::instance()
         .getConfigData()
@@ -49,25 +52,17 @@ void GameFilterData::init(const std::string& id) {
             auto opponentsList = QaplaHelpers::splitWithUnescape(opponentsStr, '|');
             selectedOpponents_ = std::set<std::string>(opponentsList.begin(), opponentsList.end());
         }
-        
-        // Load selected results
-        auto resultsStr = section.getValue("results").value_or("");
-        if (!resultsStr.empty()) {
-            auto resultsList = QaplaHelpers::split(resultsStr, '|');
-            for (const auto& res : resultsList) {
-                if (res == "1-0") selectedResults_.insert(QaplaTester::GameResult::WhiteWins);
-                else if (res == "0-1") selectedResults_.insert(QaplaTester::GameResult::BlackWins);
-                else if (res == "1/2-1/2") selectedResults_.insert(QaplaTester::GameResult::Draw);
-                else if (res == "*") selectedResults_.insert(QaplaTester::GameResult::Unterminated);
+
+        std::vector<std::string> loadTopics = { "results", "causes", "terminations" };
+
+        for (const auto& topic : loadTopics) {
+            auto topicStr = section.getValue(topic).value_or("");
+            if (!topicStr.empty()) {
+                auto topicList = QaplaHelpers::splitWithUnescape(topicStr, '|');
+                selectedOptions_[topic] = std::set<std::string>(topicList.begin(), topicList.end());
             }
         }
-        
-        // Load selected terminations
-        auto terminationsStr = section.getValue("terminations").value_or("");
-        if (!terminationsStr.empty()) {
-            auto terminationsList = QaplaHelpers::splitWithUnescape(terminationsStr, '|');
-            selectedTerminations_ = std::set<std::string>(terminationsList.begin(), terminationsList.end());
-        }
+
     }
 }
 
@@ -94,29 +89,25 @@ void GameFilterData::updateConfiguration(const std::string& id) const {
         opponentsStr += QaplaHelpers::escapeDelimiter(opponent, '|');
     }
     
-    // Serialize results (no escaping needed for predefined values)
-    std::string resultsStr;
-    for (const auto& result : selectedResults_) {
-        if (!resultsStr.empty()) resultsStr += "|";
-        resultsStr += QaplaTester::gameResultToPgnResult(result);
-    }
+    QaplaHelpers::IniFile::KeyValueMap entries{
+        {"id", id},
+        {"players", playersStr},
+        {"opponents", opponentsStr}
+    };
     
-    // Serialize terminations (with escaping for safety)
-    std::string terminationsStr;
-    for (const auto& termination : selectedTerminations_) {
-        if (!terminationsStr.empty()) terminationsStr += "|";
-        terminationsStr += QaplaHelpers::escapeDelimiter(termination, '|');
+    // Serialize all generic topics
+    for (const auto& [topic, options] : selectedOptions_) {
+        std::string optionsStr;
+        for (const auto& option : options) {
+            if (!optionsStr.empty()) optionsStr += "|";
+            optionsStr += QaplaHelpers::escapeDelimiter(option, '|');
+        }
+        entries.push_back({topic, optionsStr});
     }
     
     QaplaHelpers::IniFile::Section section{
         .name = "gamefilter",
-        .entries = QaplaHelpers::IniFile::KeyValueMap{
-            {"id", id},
-            {"players", playersStr},
-            {"opponents", opponentsStr},
-            {"results", resultsStr},
-            {"terminations", terminationsStr}
-        }
+        .entries = entries
     };
     
     QaplaConfiguration::Configuration::instance()
@@ -140,19 +131,11 @@ void GameFilterData::toggleOpponent(const std::string& opponent) {
     }
 }
 
-void GameFilterData::toggleResult(QaplaTester::GameResult result) {
-    if (selectedResults_.count(result)) {
-        selectedResults_.erase(result);
+void GameFilterData::toggleOption(const std::string& topic, const std::string& option) {
+    if (selectedOptions_[topic].count(option)) {
+        selectedOptions_[topic].erase(option);
     } else {
-        selectedResults_.insert(result);
-    }
-}
-
-void GameFilterData::toggleTermination(const std::string& termination) {
-    if (selectedTerminations_.count(termination)) {
-        selectedTerminations_.erase(termination);
-    } else {
-        selectedTerminations_.insert(termination);
+        selectedOptions_[topic].insert(option);
     }
 }
 
@@ -164,27 +147,56 @@ bool GameFilterData::isOpponentSelected(const std::string& opponent) const {
     return selectedOpponents_.count(opponent) > 0;
 }
 
-bool GameFilterData::isResultSelected(QaplaTester::GameResult result) const {
-    return selectedResults_.count(result) > 0;
+bool GameFilterData::isOptionSelected(const std::string& topic, const std::string& option) const {
+    auto it = selectedOptions_.find(topic);
+    if (it == selectedOptions_.end()) {
+        return false;
+    }
+    return it->second.count(option) > 0;
 }
 
-bool GameFilterData::isTerminationSelected(const std::string& termination) const {
-    return selectedTerminations_.count(termination) > 0;
+std::set<std::string> GameFilterData::getSelectedOptions(const std::string& topic) const {
+    auto it = selectedOptions_.find(topic);
+    if (it == selectedOptions_.end()) {
+        return std::set<std::string>();
+    }
+    return it->second;
+}
+
+void GameFilterData::setSelectedOptions(const std::string& topic, const std::set<std::string>& options) {
+    selectedOptions_[topic] = options;
+}
+
+const std::vector<std::string>& GameFilterData::getAvailableOptions(const std::string& topic) const {
+    auto it = availableOptions_.find(topic);
+    if (it == availableOptions_.end()) {
+        return emptyVector_;
+    }
+    return it->second;
 }
 
 void GameFilterData::clear() {
     selectedPlayers_.clear();
     selectedOpponents_.clear();
-    selectedResults_.clear();
-    selectedTerminations_.clear();
+    selectedOptions_.clear();
 }
 
 bool GameFilterData::hasActiveFilters() const {
-    return active_ && 
-           (!selectedPlayers_.empty() || 
-            !selectedOpponents_.empty() || 
-            !selectedResults_.empty() || 
-            !selectedTerminations_.empty());
+    if (!active_) {
+        return false;
+    }
+    
+    if (!selectedPlayers_.empty() || !selectedOpponents_.empty()) {
+        return true;
+    }
+    
+    for (const auto& [topic, options] : selectedOptions_) {
+        if (!options.empty()) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {
@@ -203,7 +215,13 @@ bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {
     }
 
     auto [cause, result] = game.getGameResult();
-    if (!passesResultFilter(result)) {
+    std::string resultStr = to_string(result);
+    std::string causeStr = to_string(cause);
+    
+    if (!passesTopicFilter("results", resultStr)) {
+        return false;
+    }
+    if (!passesTopicFilter("causes", causeStr)) {
         return false;
     }
 
@@ -211,7 +229,7 @@ bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {
     auto terminationIt = tags.find("Termination");
     std::string termination = (terminationIt != tags.end()) ? terminationIt->second : "";
     
-    return passesTerminationFilter(termination);
+    return passesTopicFilter("terminations", termination);
 }
 
 bool GameFilterData::passesPlayerNamesFilter(const std::string& white, const std::string& black) const {
@@ -236,12 +254,12 @@ bool GameFilterData::passesPlayerNamesFilter(const std::string& white, const std
     return playerMatch && opponentMatch;
 }
 
-bool GameFilterData::passesResultFilter(QaplaTester::GameResult result) const {
-    return selectedResults_.empty() || selectedResults_.contains(result);
-}
-
-bool GameFilterData::passesTerminationFilter(const std::string& termination) const {
-    return selectedTerminations_.empty() || selectedTerminations_.contains(termination);
+bool GameFilterData::passesTopicFilter(const std::string& topic, const std::string& value) const {
+    auto it = selectedOptions_.find(topic);
+    if (it == selectedOptions_.end() || it->second.empty()) {
+        return true;
+    }
+    return it->second.contains(value);
 }
 
 void GameFilterData::updateAvailableOptions(const std::vector<QaplaTester::GameRecord>& games) {
@@ -251,8 +269,9 @@ void GameFilterData::updateAvailableOptions(const std::vector<QaplaTester::GameR
 
     // Extract unique player names (both White and Black)
     std::set<std::string> uniqueNames;
-    std::set<QaplaTester::GameResult> uniqueResults;
-    std::set<std::string> uniqueTerminations;
+    
+    // Map for all topic options
+    std::map<std::string, std::set<std::string>> uniqueOptions;
 
     for (const auto& game : games) {
         const auto& tags = game.getTags();
@@ -268,14 +287,15 @@ void GameFilterData::updateAvailableOptions(const std::vector<QaplaTester::GameR
             uniqueNames.insert(blackIt->second);
         }
         
-        // Extract game result
+        // Extract game result as string
         auto [cause, result] = game.getGameResult();
-        uniqueResults.insert(result);
+        uniqueOptions["results"].insert(to_string(result));
+        uniqueOptions["causes"].insert(to_string(cause));
         
         // Extract termination from PGN tag
         auto terminationIt = tags.find("Termination");
         if (terminationIt != tags.end() && !terminationIt->second.empty()) {
-            uniqueTerminations.insert(terminationIt->second);
+            uniqueOptions["terminations"].insert(terminationIt->second);
         }
     }
 
@@ -283,8 +303,11 @@ void GameFilterData::updateAvailableOptions(const std::vector<QaplaTester::GameR
     availableNames_ = std::vector<std::string>(uniqueNames.begin(), uniqueNames.end());
     std::ranges::sort(availableNames_);
     
-    availableResults_ = uniqueResults;
-    availableTerminations_ = std::vector<std::string>(uniqueTerminations.begin(), uniqueTerminations.end());
+    // Convert all topics to sorted vectors
+    for (const auto& [topic, optionsSet] : uniqueOptions) {
+        availableOptions_[topic] = std::vector<std::string>(optionsSet.begin(), optionsSet.end());
+        std::ranges::sort(availableOptions_[topic]);
+    }
 }
 
 void GameFilterData::cleanupSelections() {
@@ -309,24 +332,23 @@ void GameFilterData::cleanupSelections() {
     }
     selectedOpponents_ = std::move(cleanedOpponents);
     
-    // Cleanup results - keep only those in availableResults
-    std::set<QaplaTester::GameResult> cleanedResults;
-    for (const auto& result : selectedResults_) {
-        if (availableResults_.contains(result)) {
-            cleanedResults.insert(result);
+    // Cleanup all generic topics
+    for (auto& [topic, selectedSet] : selectedOptions_) {
+        auto availIt = availableOptions_.find(topic);
+        if (availIt == availableOptions_.end()) {
+            selectedSet.clear();
+            continue;
         }
-    }
-    selectedResults_ = std::move(cleanedResults);
-    
-    // Cleanup terminations - keep only those in availableTerminations
-    std::set<std::string> availableTerminationsSet(availableTerminations_.begin(), availableTerminations_.end());
-    std::set<std::string> cleanedTerminations;
-    for (const auto& termination : selectedTerminations_) {
-        if (availableTerminationsSet.contains(termination)) {
-            cleanedTerminations.insert(termination);
+        
+        std::set<std::string> availableSet(availIt->second.begin(), availIt->second.end());
+        std::set<std::string> cleanedSet;
+        for (const auto& option : selectedSet) {
+            if (availableSet.contains(option)) {
+                cleanedSet.insert(option);
+            }
         }
+        selectedSet = std::move(cleanedSet);
     }
-    selectedTerminations_ = std::move(cleanedTerminations);
 }
 
 } // namespace QaplaWindows

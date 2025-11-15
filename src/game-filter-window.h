@@ -99,14 +99,12 @@ private:
     bool drawOpponentSelection();
 
     /**
-     * @brief Draws the game result selection section.
+     * @brief Draws a generic topic selection section.
+     * @param topic The topic name (e.g., "results", "terminations").
+     * @param title Display title for the section.
+     * @param tooltip Optional tooltip text.
      */
-    bool drawResultSelection();
-
-    /**
-     * @brief Draws the termination cause selection section.
-     */
-    bool drawTerminationSelection();
+    bool drawTopicSelection(const std::string& topic, const std::string& title, const std::string& tooltip = "");
 
     /**
      * @brief Draws a section header with title, optional clear button, and optional tooltip.

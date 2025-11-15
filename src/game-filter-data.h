@@ -26,6 +26,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <map>
 
 namespace QaplaWindows {
 
@@ -34,6 +35,7 @@ namespace QaplaWindows {
  * 
  * Stores filter parameters for filtering PGN games by player names,
  * game results, and termination reasons.
+ * Uses a generic map-based approach for extensible filtering options.
  */
 class GameFilterData {
 public:
@@ -73,14 +75,11 @@ public:
     const std::set<std::string>& getSelectedOpponents() const { return selectedOpponents_; }
 
     /**
-     * @brief Gets the selected game results.
+     * @brief Gets the selected options for a specific topic.
+     * @param topic The filter topic (e.g., "results", "terminations")
+     * @return Set of selected option strings for the topic
      */
-    const std::set<QaplaTester::GameResult>& getSelectedResults() const { return selectedResults_; }
-
-    /**
-     * @brief Gets the selected termination strings (from PGN Termination tag).
-     */
-    const std::set<std::string>& getSelectedTerminations() const { return selectedTerminations_; }
+    std::set<std::string> getSelectedOptions(const std::string& topic) const;
 
     /**
      * @brief Sets the selected player names.
@@ -93,16 +92,11 @@ public:
     void setSelectedOpponents(const std::set<std::string>& opponents) { selectedOpponents_ = opponents; }
 
     /**
-     * @brief Sets the selected game results.
+     * @brief Sets the selected options for a specific topic.
+     * @param topic The filter topic
+     * @param options Set of option strings to select
      */
-    void setSelectedResults(const std::set<QaplaTester::GameResult>& results) { selectedResults_ = results; }
-
-    /**
-     * @brief Sets the selected termination strings.
-     */
-    void setSelectedTerminations(const std::set<std::string>& terminations) { 
-        selectedTerminations_ = terminations; 
-    }
+    void setSelectedOptions(const std::string& topic, const std::set<std::string>& options);
 
     /**
      * @brief Toggles a player name in the selection.
@@ -115,14 +109,11 @@ public:
     void toggleOpponent(const std::string& opponent);
 
     /**
-     * @brief Toggles a game result in the selection.
+     * @brief Toggles an option for a specific topic in the selection.
+     * @param topic The filter topic
+     * @param option The option string to toggle
      */
-    void toggleResult(QaplaTester::GameResult result);
-
-    /**
-     * @brief Toggles a termination string in the selection.
-     */
-    void toggleTermination(const std::string& termination);
+    void toggleOption(const std::string& topic, const std::string& option);
 
     /**
      * @brief Checks if a player is selected.
@@ -135,14 +126,12 @@ public:
     bool isOpponentSelected(const std::string& opponent) const;
 
     /**
-     * @brief Checks if a result is selected.
+     * @brief Checks if an option for a specific topic is selected.
+     * @param topic The filter topic
+     * @param option The option string to check
+     * @return true if the option is selected
      */
-    bool isResultSelected(QaplaTester::GameResult result) const;
-
-    /**
-     * @brief Checks if a termination string is selected.
-     */
-    bool isTerminationSelected(const std::string& termination) const;
+    bool isOptionSelected(const std::string& topic, const std::string& option) const;
 
     /**
      * @brief Gets the available names (players/opponents).
@@ -150,14 +139,11 @@ public:
     const std::vector<std::string>& getAvailableNames() const { return availableNames_; }
 
     /**
-     * @brief Gets the available game results.
+     * @brief Gets the available options for a specific topic.
+     * @param topic The filter topic
+     * @return Vector of available option strings for the topic
      */
-    const std::set<QaplaTester::GameResult>& getAvailableResults() const { return availableResults_; }
-
-    /**
-     * @brief Gets the available termination strings.
-     */
-    const std::vector<std::string>& getAvailableTerminations() const { return availableTerminations_; }
+    const std::vector<std::string>& getAvailableOptions(const std::string& topic) const;
 
     /**
      * @brief Updates available filter options from loaded games.
@@ -193,18 +179,12 @@ private:
     bool passesPlayerNamesFilter(const std::string& white, const std::string& black) const;
 
     /**
-     * @brief Checks if a game passes the result filter.
-     * @param result The game result
-     * @return true if the game passes the result filter
+     * @brief Checks if a game passes a generic topic filter.
+     * @param topic The filter topic
+     * @param value The value to check against the filter
+     * @return true if the game passes the topic filter
      */
-    bool passesResultFilter(QaplaTester::GameResult result) const;
-
-    /**
-     * @brief Checks if a game passes the termination filter.
-     * @param termination The PGN Termination tag value
-     * @return true if the game passes the termination filter
-     */
-    bool passesTerminationFilter(const std::string& termination) const;
+    bool passesTopicFilter(const std::string& topic, const std::string& value) const;
 
     /**
      * @brief Cleans up selections that are no longer in available options.
@@ -213,14 +193,18 @@ private:
 
 private:
     bool active_ = false;
+    
+    // Special handling for players and opponents (bidirectional matching)
     std::set<std::string> selectedPlayers_;
     std::set<std::string> selectedOpponents_;
-    std::set<QaplaTester::GameResult> selectedResults_;
-    std::set<std::string> selectedTerminations_;
-    
     std::vector<std::string> availableNames_;
-    std::set<QaplaTester::GameResult> availableResults_;
-    std::vector<std::string> availableTerminations_;
+    
+    // Generic topic-based filtering
+    std::map<std::string, std::set<std::string>> selectedOptions_;
+    std::map<std::string, std::vector<std::string>> availableOptions_;
+    
+    // Empty vector for returning when topic not found
+    static const std::vector<std::string> emptyVector_;
 };
 
 } // namespace QaplaWindows
