@@ -20,7 +20,6 @@
 #include "game-filter-window.h"
 #include <imgui.h>
 #include <algorithm>
-#include <ranges>
 
 namespace QaplaWindows {
 
@@ -71,6 +70,39 @@ void GameFilterWindow::draw() {
     }
 }
 
+bool GameFilterWindow::drawSectionHeader(const std::string& title, size_t selectedCount, const std::string& tooltip) {
+    bool cleared = false;
+    
+    // Show title
+    ImGui::Text("%s", title.c_str());
+    
+    // Show selected count
+    if (selectedCount > 0) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%zu selected)", selectedCount);
+    }
+    
+    // Show clear button only if items are selected
+    if (selectedCount > 0) {
+        ImGui::SameLine();
+        std::string buttonLabel = "Clear##" + title;
+        if (ImGui::SmallButton(buttonLabel.c_str())) {
+            cleared = true;
+        }
+    }
+    
+    // Show tooltip if provided
+    if (!tooltip.empty()) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", tooltip.c_str());
+        }
+    }
+    
+    return cleared;
+}
+
 bool GameFilterWindow::drawActiveToggle() {
     bool active = filterData_.isActive();
     if (ImGui::Checkbox("Enable Filter", &active)) {
@@ -87,50 +119,48 @@ bool GameFilterWindow::drawActiveToggle() {
 
 bool GameFilterWindow::drawPlayerSelection() {
     ImGui::PushID("Players");
-    ImGui::Text("Filter by Player:");
     
-    bool modified = drawNameSelection(
-        "Select players (any color)",
-        availablePlayers_,
+    size_t selectedCount = filterData_.getSelectedPlayers().size();
+    bool modified = drawSectionHeader("Filter by Player:", selectedCount, "Select players (any color)");
+    
+    if (modified) {
+        filterData_.setSelectedPlayers({});
+    }
+    
+    modified |= drawNameSelection(
+        filterData_.getAvailableNames(),
         [this](const std::string& name) { return filterData_.isPlayerSelected(name); },
-        [this](const std::string& name) { filterData_.togglePlayer(name); },
-        [this]() { filterData_.setSelectedPlayers({}); }
+        [this](const std::string& name) { filterData_.togglePlayer(name); }
     );
+    
     ImGui::PopID();
     return modified;
 }
 
 bool GameFilterWindow::drawOpponentSelection() {
     ImGui::PushID("Opponents");
-    ImGui::Text("Filter by Opponent:");
+    
+    size_t selectedCount = filterData_.getSelectedOpponents().size();
+    bool modified = drawSectionHeader("Filter by Opponent:", selectedCount, "Select opponents (any color)");
+    
+    if (modified) {
+        filterData_.setSelectedOpponents({});
+    }
 
-    bool modified = drawNameSelection(
-        "Select opponents (any color)",
-        availableOpponents_,
+    modified |= drawNameSelection(
+        filterData_.getAvailableNames(),
         [this](const std::string& name) { return filterData_.isOpponentSelected(name); },
-        [this](const std::string& name) { filterData_.toggleOpponent(name); },
-        [this]() { filterData_.setSelectedOpponents({}); }
+        [this](const std::string& name) { filterData_.toggleOpponent(name); }
     );
+    
     ImGui::PopID();
     return modified;
 }
 
-bool GameFilterWindow::drawNameSelection(const std::string& tooltip,
-                                         const std::vector<std::string>& availableNames,
+bool GameFilterWindow::drawNameSelection(const std::vector<std::string>& availableNames,
                                          std::function<bool(const std::string&)> isSelected,
-                                         std::function<void(const std::string&)> onToggle,
-                                         std::function<void()> onClear) {
-    ImGui::SameLine();
+                                         std::function<void(const std::string&)> onToggle) {
     bool modified = false;
-    if (ImGui::SmallButton("Clear")) {
-        onClear();
-        modified = true;
-    }
-    ImGui::SameLine();
-    ImGui::TextDisabled("(?)");
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", tooltip.c_str());
-    }
     
     for (const auto& name : availableNames) {
         bool selected = isSelected(name);
@@ -143,15 +173,14 @@ bool GameFilterWindow::drawNameSelection(const std::string& tooltip,
 }
 
 bool GameFilterWindow::drawResultSelection() {
-    bool modified = false;
-    ImGui::Text("Filter by Game Result:");
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Clear##Results")) {
+    size_t selectedCount = filterData_.getSelectedResults().size();
+    bool modified = drawSectionHeader("Filter by Game Result:", selectedCount, "Select game results");
+    
+    if (modified) {
         filterData_.setSelectedResults({});
-        modified = true;
     }
     
-    for (const auto& result : availableResults_) {
+    for (const auto& result : filterData_.getAvailableResults()) {
         bool selected = filterData_.isResultSelected(result);
         std::string resultStr = QaplaTester::gameResultToPgnResult(result);
         
@@ -161,25 +190,19 @@ bool GameFilterWindow::drawResultSelection() {
         }
     }
     
-    // Show count
-    auto selectedCount = filterData_.getSelectedResults().size();
-    if (selectedCount > 0) {
-        ImGui::Text("Selected: %zu result(s)", selectedCount);
-    }
     return modified;
 }
 
 bool GameFilterWindow::drawTerminationSelection() {
-    bool modified = false;
-    ImGui::Text("Filter by Termination:");
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Clear##Terminations")) {
+    size_t selectedCount = filterData_.getSelectedTerminations().size();
+    bool modified = drawSectionHeader("Filter by Termination:", selectedCount, "Select termination types from PGN Termination tag");
+    
+    if (modified) {
         filterData_.setSelectedTerminations({});
-        modified = true;
     }
     
     // Sort terminations alphabetically
-    std::vector<std::string> sortedTerminations = availableTerminations_;
+    std::vector<std::string> sortedTerminations = filterData_.getAvailableTerminations();
     std::sort(sortedTerminations.begin(), sortedTerminations.end());
     
     for (const auto& termination : sortedTerminations) {
@@ -191,60 +214,11 @@ bool GameFilterWindow::drawTerminationSelection() {
         }
     }
     
-    // Show count
-    auto selectedCount = filterData_.getSelectedTerminations().size();
-    if (selectedCount > 0) {
-        ImGui::Text("Selected: %zu termination(s)", selectedCount);
-    }
     return modified;
 }
 
 void GameFilterWindow::updateFilterOptions(const std::vector<QaplaTester::GameRecord>& games) {
-    if (games.empty()) {
-        return;
-    }
-
-    // Extract unique player names (both White and Black)
-    std::set<std::string> uniquePlayers;
-    std::set<QaplaTester::GameResult> uniqueResults;
-    std::set<std::string> uniqueTerminations;
-
-    for (const auto& game : games) {
-        const auto& tags = game.getTags();
-        
-        // Extract both White and Black player names
-        auto whiteIt = tags.find("White");
-        if (whiteIt != tags.end() && !whiteIt->second.empty()) {
-            uniquePlayers.insert(whiteIt->second);
-        }
-        
-        auto blackIt = tags.find("Black");
-        if (blackIt != tags.end() && !blackIt->second.empty()) {
-            uniquePlayers.insert(blackIt->second);
-        }
-        
-        // Extract game result
-        auto [cause, result] = game.getGameResult();
-        uniqueResults.insert(result);
-        
-        // Extract termination from PGN tag
-        auto terminationIt = tags.find("Termination");
-        if (terminationIt != tags.end() && !terminationIt->second.empty()) {
-            uniqueTerminations.insert(terminationIt->second);
-        }
-    }
-
-    // Convert sets to vectors for player lists
-    std::vector<std::string> playerVec(uniquePlayers.begin(), uniquePlayers.end());
-    
-    // Sort alphabetically
-    std::ranges::sort(playerVec);
-
-    // Update filter options (same list for both players and opponents)
-    availablePlayers_ = playerVec;
-    availableOpponents_ = playerVec;
-    availableResults_ = uniqueResults;
-    availableTerminations_ = std::vector<std::string>(uniqueTerminations.begin(), uniqueTerminations.end());
+    filterData_.updateAvailableOptions(games);
 }
 
 void GameFilterWindow::updateConfiguration(const std::string& configId) const {

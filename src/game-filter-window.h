@@ -109,13 +109,20 @@ private:
     bool drawTerminationSelection();
 
     /**
+     * @brief Draws a section header with title, optional clear button, and optional tooltip.
+     * @param title Section title text.
+     * @param selectedCount Number of selected items (0 means none selected).
+     * @param tooltip Optional tooltip text (empty string = no tooltip).
+     * @return true if clear button was clicked, false otherwise.
+     */
+    bool drawSectionHeader(const std::string& title, size_t selectedCount, const std::string& tooltip = "");
+
+    /**
      * @brief Draws a name selection section (helper for player/opponent).
      */
-    bool drawNameSelection(const std::string& tooltip,
-                          const std::vector<std::string>& availableNames,
+    bool drawNameSelection(const std::vector<std::string>& availableNames,
                           std::function<bool(const std::string&)> isSelected,
-                          std::function<void(const std::string&)> onToggle,
-                          std::function<void()> onClear);
+                          std::function<void(const std::string&)> onToggle);
 
     /**
      * @brief Draws a multi-select list for strings.
@@ -126,10 +133,6 @@ private:
                             std::function<void(const std::string&)> onToggle);
 
     GameFilterData filterData_;  // Owner of filter data
-    std::vector<std::string> availablePlayers_;
-    std::vector<std::string> availableOpponents_;
-    std::set<QaplaTester::GameResult> availableResults_;
-    std::vector<std::string> availableTerminations_;
     std::function<void()> onFilterChanged_;
 };
 

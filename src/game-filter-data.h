@@ -58,8 +58,9 @@ public:
 
     /**
      * @brief Sets the filter active state.
+     * When activating, cleans up selections that are no longer in available options.
      */
-    void setActive(bool active) { active_ = active; }
+    void setActive(bool active);
 
     /**
      * @brief Gets the selected player names (White).
@@ -144,6 +145,27 @@ public:
     bool isTerminationSelected(const std::string& termination) const;
 
     /**
+     * @brief Gets the available names (players/opponents).
+     */
+    const std::vector<std::string>& getAvailableNames() const { return availableNames_; }
+
+    /**
+     * @brief Gets the available game results.
+     */
+    const std::set<QaplaTester::GameResult>& getAvailableResults() const { return availableResults_; }
+
+    /**
+     * @brief Gets the available termination strings.
+     */
+    const std::vector<std::string>& getAvailableTerminations() const { return availableTerminations_; }
+
+    /**
+     * @brief Updates available filter options from loaded games.
+     * @param games Vector of game records to extract filter options from.
+     */
+    void updateAvailableOptions(const std::vector<QaplaTester::GameRecord>& games);
+
+    /**
      * @brief Clears all filter selections.
      */
     void clear();
@@ -184,12 +206,21 @@ private:
      */
     bool passesTerminationFilter(const std::string& termination) const;
 
+    /**
+     * @brief Cleans up selections that are no longer in available options.
+     */
+    void cleanupSelections();
+
 private:
     bool active_ = false;
     std::set<std::string> selectedPlayers_;
     std::set<std::string> selectedOpponents_;
     std::set<QaplaTester::GameResult> selectedResults_;
     std::set<std::string> selectedTerminations_;
+    
+    std::vector<std::string> availableNames_;
+    std::set<QaplaTester::GameResult> availableResults_;
+    std::vector<std::string> availableTerminations_;
 };
 
 } // namespace QaplaWindows
