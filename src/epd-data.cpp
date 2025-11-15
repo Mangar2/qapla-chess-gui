@@ -126,11 +126,9 @@ namespace QaplaWindows {
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("epd", "epd", { section });
     }
 
-    void EpdData::updateConcurrency(uint32_t newConcurrency) {
+    void EpdData::setPoolConcurrency(uint32_t newConcurrency) {
         epdConfig_.concurrency = newConcurrency;
-        if (state == State::Running) {
-            imguiConcurrency_->update(epdConfig_.concurrency);
-        }
+        imguiConcurrency_->update(epdConfig_.concurrency);
     }
 
     void EpdData::setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
@@ -276,8 +274,6 @@ namespace QaplaWindows {
 
         epdManager_->continueAnalysis();
         state = State::Starting;
-        imguiConcurrency_->init();
-        imguiConcurrency_->setActive(true);
         for (uint32_t index = scheduledEngines_; index < epdConfig_.engines.size(); ++index) {
             auto& engineConfig = epdConfig_.engines[index];
             epdManager_->schedule(engineConfig, *poolAccess_);
@@ -286,6 +282,9 @@ namespace QaplaWindows {
         if (epdConfig_.concurrency == 0) {
             epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
         }
+        imguiConcurrency_->init();
+        imguiConcurrency_->setActive(true);
+
         SnackbarManager::instance().showSuccess("Epd analysis started");
     }
 

@@ -184,4 +184,57 @@ bool GameFilterData::hasFilters() const {
            !selectedTerminations_.empty();
 }
 
+bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {
+    if (!active_) {
+        return true;
+    }
+
+    const auto& tags = game.getTags();
+    auto whiteIt = tags.find("White");
+    std::string white = (whiteIt != tags.end()) ? whiteIt->second : "";
+    auto blackIt = tags.find("Black");
+    std::string black = (blackIt != tags.end()) ? blackIt->second : "";
+
+    if (!passesPlayerNamesFilter(white, black)) {
+        return false;
+    }
+
+    auto [cause, result] = game.getGameResult();
+    if (!passesResultFilter(result)) {
+        return false;
+    }
+
+    return passesTerminationFilter(cause);
+}
+
+bool GameFilterData::passesPlayerNamesFilter(const std::string& white, const std::string& black) const {
+    if (selectedPlayers_.empty() && selectedOpponents_.empty()) {
+        return true;
+    }
+
+    bool playerMatch = selectedPlayers_.empty() ||
+                      selectedPlayers_.contains(white) ||
+                      selectedPlayers_.contains(black);
+
+    bool opponentMatch = selectedOpponents_.empty() ||
+                        selectedOpponents_.contains(white) ||
+                        selectedOpponents_.contains(black);
+
+    if (!selectedPlayers_.empty() && !selectedOpponents_.empty()) {
+        bool whitePlayerBlackOpponent = selectedPlayers_.contains(white) && selectedOpponents_.contains(black);
+        bool blackPlayerWhiteOpponent = selectedPlayers_.contains(black) && selectedOpponents_.contains(white);
+        return whitePlayerBlackOpponent || blackPlayerWhiteOpponent;
+    }
+
+    return playerMatch && opponentMatch;
+}
+
+bool GameFilterData::passesResultFilter(QaplaTester::GameResult result) const {
+    return selectedResults_.empty() || selectedResults_.contains(result);
+}
+
+bool GameFilterData::passesTerminationFilter(QaplaTester::GameEndCause cause) const {
+    return selectedTerminations_.empty() || selectedTerminations_.contains(cause);
+}
+
 } // namespace QaplaWindows

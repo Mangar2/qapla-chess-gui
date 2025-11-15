@@ -22,15 +22,19 @@
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "callback-manager.h"
-#include "game-result.h"
+#include "pgn-io.h"
 
 using QaplaTester::GameRecord;
 using QaplaTester::GameResult;
+using QaplaTester::PgnIO;
 
 #include <fstream>
 #include <sstream>
 #include <set>
 #include <algorithm>
+#include <format>
+#include <filesystem>
+#include <system_error>
 
 using namespace QaplaWindows;
 
@@ -157,7 +161,7 @@ void ImGuiGameList::executeCommand(const std::string& button, bool isLoading) {
         }
     } else if (!isLoading) {
         if (button == "Save As") {
-            SnackbarManager::instance().showNote("Save As button clicked - functionality not yet implemented");
+            saveAsFile();
         } else if (button == "Filter") {
             updateFilterOptions();
             filterPopup_.open();
@@ -173,7 +177,13 @@ void ImGuiGameList::drawLoadingStatus() {
     
     ImGui::Indent(10.0F);
     if (state == OperationState::Cancelling) {
-        ImGui::Text("Cancelling loading from %s...", loadingFileName_.c_str());
+        if (!savingFileName_.empty()) {
+            ImGui::Text("Cancelling saving to %s...", savingFileName_.c_str());
+        } else {
+            ImGui::Text("Cancelling loading from %s...", loadingFileName_.c_str());
+        }
+    } else if (state == OperationState::Saving) {
+        ImGui::Text("Saving games to %s...", savingFileName_.c_str());
     } else {
         ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
     }
@@ -235,7 +245,7 @@ void ImGuiGameList::createTable() {
     size_t filteredCount = 0;
     for (const auto& game : games) {
         // Apply filter
-        if (!passesFilter(game)) {
+        if (!filterData_.passesFilter(game)) {
             continue;
         }
         filteredCount++;
@@ -270,8 +280,7 @@ void ImGuiGameList::createTable() {
     // Show filter status in snackbar if filter is active
     if (filterData_.isActive() && filterData_.hasFilters()) {
         SnackbarManager::instance().showNote(
-            "Filter active: showing " + std::to_string(filteredCount) + 
-            " of " + std::to_string(games.size()) + " games");
+            std::format("Filter active: showing {} of {} games", filteredCount, games.size()));
     }
 
 }
@@ -305,11 +314,7 @@ void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
             return operationState_.load() != OperationState::Cancelling; 
         });
         
-        if (operationState_.load() == OperationState::Cancelling) {
-            operationState_.store(OperationState::Idle);
-            SnackbarManager::instance().showNote("Loading cancelled for " + fileName);
-            return;
-        }
+        bool cancelled = operationState_.load() == OperationState::Cancelling;
         
         const auto& games = gameRecordManager_.getGames();
         gamesLoaded_ = games.size();
@@ -318,9 +323,14 @@ void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
         createTable();
         
         operationState_.store(OperationState::Idle);
-        
-        SnackbarManager::instance().showSuccess(
-            "Loaded " + std::to_string(games.size()) + " games from " + fileName);
+
+        if (cancelled) {
+            SnackbarManager::instance().showSuccess(
+                std::format("Loading stopped.\n Loaded {} games from {}", games.size(), fileName));
+        } else {
+            SnackbarManager::instance().showSuccess(
+                std::format("Loading finished.\n Loaded {} games from {}", games.size(), fileName));
+        }
     } catch (const std::exception& e) {
         operationState_.store(OperationState::Idle);
         SnackbarManager::instance().showError("Failed to load file: " + std::string(e.what()));
@@ -402,62 +412,153 @@ void ImGuiGameList::updateFilterOptions() {
     filterPopup_.content().setAvailableTerminations(uniqueTerminations);
 }
 
-bool ImGuiGameList::passesPlayerNamesFilter(const std::string& white, const std::string& black, 
-    const std::set<std::string>& selectedPlayers, const std::set<std::string>& selectedOpponents) {
-    if (selectedPlayers.empty() && selectedOpponents.empty()) {
-        return true;
+void ImGuiGameList::saveAsFile() {
+    const auto& games = gameRecordManager_.getGames();
+    if (games.empty()) {
+        SnackbarManager::instance().showNote("No games to save");
+        return;
     }
 
-    bool playerMatch = selectedPlayers.empty() ||
-                      selectedPlayers.contains(white) ||
-                      selectedPlayers.contains(black);
-
-    bool opponentMatch = selectedOpponents.empty() ||
-                        selectedOpponents.contains(white) ||
-                        selectedOpponents.contains(black);
-
-    if (!selectedPlayers.empty() && !selectedOpponents.empty()) {
-        bool whitePlayerBlackOpponent = selectedPlayers.contains(white) && selectedOpponents.contains(black);
-        bool blackPlayerWhiteOpponent = selectedPlayers.contains(black) && selectedOpponents.contains(white);
-        return whitePlayerBlackOpponent || blackPlayerWhiteOpponent;
+    // Open save dialog
+    std::vector<std::pair<std::string, std::string>> filters = {
+        {"PGN Files", "pgn"},
+        {"All Files", "*"}
+    };
+    std::string selectedFile = OsDialogs::saveFileDialog(filters);
+    
+    if (selectedFile.empty()) {
+        return; // User cancelled
     }
 
-    return playerMatch && opponentMatch;
+    // Wait for any previous thread to finish
+    if (loadingThread_.joinable()) {
+        loadingThread_.join();
+    }
+    
+    // Start saving in background thread
+    operationState_.store(OperationState::Saving);
+    gamesLoaded_ = 0;
+    loadingProgress_ = 0.0F;
+    savingFileName_ = selectedFile;
+    
+    loadingThread_ = std::thread(&ImGuiGameList::saveFileInBackground, this, selectedFile);
 }
 
-bool ImGuiGameList::passesResultFilter(QaplaTester::GameResult result, 
-    const std::set<QaplaTester::GameResult>& selectedResults) {
-    return selectedResults.empty() || selectedResults.contains(result);
+void ImGuiGameList::saveFileInBackground(const std::string& fileName) {
+    try {
+        const auto& games = gameRecordManager_.getGames();
+        size_t totalGames = games.size();
+        size_t gamesSaved = 0;
+        
+        const std::string& sourceFile = gameRecordManager_.getCurrentFileName();
+        
+        // Check if source and target are the same file
+        if (!sourceFile.empty() && std::filesystem::equivalent(sourceFile, fileName)) {
+            saveToSameFile(fileName, totalGames, gamesSaved);
+            return;
+        }
+        
+        // Check if filter is active
+        bool hasFilter = filterData_.isActive() && filterData_.hasFilters();
+        
+        if (!hasFilter) {
+            saveWithoutFilter(fileName, totalGames);
+        } else {
+            saveWithFilter(fileName, totalGames, gamesSaved);
+        }
+    } catch (const std::exception& e) {
+        operationState_.store(OperationState::Idle);
+        SnackbarManager::instance().showError("Failed to save file: " + std::string(e.what()));
+    }
 }
 
-bool ImGuiGameList::passesTerminationFilter(QaplaTester::GameEndCause cause, 
-    const std::set<QaplaTester::GameEndCause>& selectedTerminations) {
-    return selectedTerminations.empty() || selectedTerminations.contains(cause);
+void ImGuiGameList::saveToSameFile(const std::string& fileName, size_t totalGames, size_t& gamesSaved) {
+    // Create temporary file name
+    std::filesystem::path filePath(fileName);
+    std::filesystem::path tempPath = filePath;
+    tempPath.replace_filename(filePath.stem().string() + ".tmp");
+    
+    // Save filtered games to temp file
+    saveWithFilter(tempPath.string(), totalGames, gamesSaved);
+    
+    // If save was cancelled, clean up and return
+    if (operationState_.load() == OperationState::Idle) {
+        // Delete original file
+        std::filesystem::remove(fileName);
+        
+        // Rename temp file to original name
+        std::filesystem::rename(tempPath, fileName);
+        
+        SnackbarManager::instance().showSuccess(
+            std::format("Saved {} games to {}", gamesSaved, fileName));
+    } else {
+        // Cancelled - remove temp file
+        std::filesystem::remove(tempPath);
+    }
 }
 
-bool ImGuiGameList::passesFilter(const QaplaTester::GameRecord& game) const {
-    if (!filterData_.isActive()) {
-        return true;
+void ImGuiGameList::saveWithoutFilter(const std::string& fileName, size_t totalGames) {
+    const std::string& sourceFile = gameRecordManager_.getCurrentFileName();
+    if (!sourceFile.empty()) {
+        std::ifstream src(sourceFile, std::ios::binary);
+        std::ofstream dst(fileName, std::ios::binary);
+        dst << src.rdbuf();
+        src.close();
+        dst.close();
+        
+        operationState_.store(OperationState::Idle);
+        SnackbarManager::instance().showSuccess(
+            std::format("Saved {} games to {}", totalGames, fileName));
     }
+}
 
-    const auto& tags = game.getTags();
-    auto whiteIt = tags.find("White");
-    std::string white = (whiteIt != tags.end()) ? whiteIt->second : "";
-    auto blackIt = tags.find("Black");
-    std::string black = (blackIt != tags.end()) ? blackIt->second : "";
-
-    const auto& selectedPlayers = filterData_.getSelectedPlayers();
-    const auto& selectedOpponents = filterData_.getSelectedOpponents();
-    if (!passesPlayerNamesFilter(white, black, selectedPlayers, selectedOpponents)) {
-        return false;
+void ImGuiGameList::saveWithFilter(const std::string& fileName, size_t totalGames, size_t& gamesSaved) {
+    const auto& games = gameRecordManager_.getGames();
+    
+    // Open file for writing
+    std::ofstream outFile(fileName, std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
+        throw std::runtime_error(
+            std::format("Failed to open file for writing: {}", fileName)
+        );
     }
-
-    const auto& selectedResults = filterData_.getSelectedResults();
-    auto [cause, result] = game.getGameResult();
-    if (!passesResultFilter(result, selectedResults)) {
-        return false;
+    
+    // Save each game that passes the filter
+    for (size_t i = 0; i < totalGames; ++i) {
+        const auto& game = games[i];
+        
+        // Check if user cancelled
+        if (operationState_.load() == OperationState::Cancelling) {
+            break;
+        }
+        
+        // Apply filter
+        if (!filterData_.passesFilter(game)) {
+            continue;
+        }
+        
+        // Get raw game text and write it
+        auto rawText = gameRecordManager_.getRawGameText(i);
+        if (rawText) {
+            outFile << *rawText;
+            gamesSaved++;
+        }
+        
+        // Update progress
+        gamesLoaded_ = gamesSaved;
+        loadingProgress_ = static_cast<float>(i + 1) / static_cast<float>(totalGames);
     }
-
-    const auto& selectedTerminations = filterData_.getSelectedTerminations();
-    return passesTerminationFilter(cause, selectedTerminations);
+    
+    outFile.close();
+    
+    bool cancelled = operationState_.load() == OperationState::Cancelling;
+    operationState_.store(OperationState::Idle);
+    
+    if (cancelled) {
+        SnackbarManager::instance().showSuccess(
+            std::format("Saving stopped.\nSaved {} games to {}", gamesSaved, fileName));
+    } else {
+        SnackbarManager::instance().showSuccess(
+            std::format("Saving finished.\nSaved {} games to {}", gamesSaved, fileName));
+    }
 }

@@ -185,11 +185,8 @@ void EpdWindow::drawInput()
 
     auto& config = EpdData::instance().config();
 
-    if (ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency))
-    {
-        EpdData::instance().updateConcurrency(config.concurrency);
-        modified = true;
-    }
+    modified |= ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency);
+    EpdData::instance().setPoolConcurrency(config.concurrency);
 
     ImGui::Spacing();
     EpdData::instance().engineSelect().draw();

@@ -74,6 +74,19 @@ public:
      */
     std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index);
 
+    /**
+     * @brief Gets the raw PGN text of a specific game by index.
+     * @param index Index of the game to retrieve.
+     * @return Optional string containing the raw PGN text if successful.
+     */
+    std::optional<std::string> getRawGameText(size_t index);
+
+    /**
+     * @brief Gets the filename of the currently loaded PGN file.
+     * @return Reference to the current filename string.
+     */
+    const std::string& getCurrentFileName() const { return pgnIO_.getCurrentFileName(); }
+
 private:
     std::vector<QaplaTester::GameRecord> games_;  // Loaded game records
     QaplaTester::PgnIO pgnIO_;  // PGN I/O handler

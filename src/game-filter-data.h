@@ -20,6 +20,9 @@
 #pragma once
 
 #include "game-result.h"
+
+#include <game-record.h>
+
 #include <string>
 #include <set>
 #include <vector>
@@ -149,6 +152,36 @@ public:
      * @brief Checks if any filter is applied (besides active flag).
      */
     bool hasFilters() const;
+
+    /**
+     * @brief Checks if a game passes the current filter settings.
+     * @param game The game record to check
+     * @return true if the game passes all active filters, false otherwise
+     */
+    bool passesFilter(const QaplaTester::GameRecord& game) const;
+
+private:
+    /**
+     * @brief Checks if a game passes the player names filter.
+     * @param white White player name
+     * @param black Black player name
+     * @return true if the game passes the player filter
+     */
+    bool passesPlayerNamesFilter(const std::string& white, const std::string& black) const;
+
+    /**
+     * @brief Checks if a game passes the result filter.
+     * @param result The game result
+     * @return true if the game passes the result filter
+     */
+    bool passesResultFilter(QaplaTester::GameResult result) const;
+
+    /**
+     * @brief Checks if a game passes the termination cause filter.
+     * @param cause The game end cause
+     * @return true if the game passes the termination filter
+     */
+    bool passesTerminationFilter(QaplaTester::GameEndCause cause) const;
 
 private:
     bool active_ = false;

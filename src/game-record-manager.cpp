@@ -31,6 +31,10 @@ std::optional<GameRecord> GameRecordManager::loadGameByIndex(size_t index) {
     return pgnIO_.loadGameAtIndex(index);
 }
 
+std::optional<std::string> GameRecordManager::getRawGameText(size_t index) {
+    return pgnIO_.getRawGameText(index);
+}
+
 std::vector<std::pair<std::string, size_t>> GameRecordManager::getMostCommonTags(size_t topN) const {
     std::map<std::string, size_t> tagCounts;
     

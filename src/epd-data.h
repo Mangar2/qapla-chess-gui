@@ -130,7 +130,7 @@ namespace QaplaWindows {
          * @brief Updates the concurrency setting for the game manager pool.
          * @param newConcurrency The new concurrency value to set.
          */
-        void updateConcurrency(uint32_t newConcurrency);
+        void setPoolConcurrency(uint32_t newConcurrency);
 
         /**
          * @brief Sets the GameManagerPool instance to use.

@@ -21,10 +21,8 @@
 
 #include "embedded-window.h"
 #include "game-record-manager.h"
-#include "game-filter-data.h"
-#include "game-filter-window.h"
+#include "imgui-game-filter.h"
 #include "imgui-table.h"
-#include "imgui-popup.h"
 #include "imgui-button.h"
 #include <thread>
 #include <atomic>
@@ -108,14 +106,34 @@ private:
     void updateFilterOptions();
 
     /**
-     * @brief Applies the current filter to determine which games to display.
-     */
-    bool passesFilter(const QaplaTester::GameRecord& game) const;
-
-    /**
      * @brief Background loading function.
      */
     void loadFileInBackground(const std::string& fileName);
+
+    /**
+     * @brief Handles saving when source and target files are the same.
+     */
+    void saveToSameFile(const std::string& fileName, size_t totalGames, size_t& gamesSaved);
+
+    /**
+     * @brief Handles saving when no filter is active (simple file copy).
+     */
+    void saveWithoutFilter(const std::string& fileName, size_t totalGames);
+
+    /**
+     * @brief Handles saving with active filter (write filtered games).
+     */
+    void saveWithFilter(const std::string& fileName, size_t totalGames, size_t& gamesSaved);
+
+    /**
+     * @brief Opens a save dialog and saves filtered games to a PGN file.
+     */
+    void saveAsFile();
+
+    /**
+     * @brief Background saving function.
+     */
+    void saveFileInBackground(const std::string& fileName);
 
     /**
      * @brief Manager for loaded game records.
@@ -148,6 +166,11 @@ private:
     std::string loadingFileName_;
 
     /**
+     * @brief Name of the file being saved.
+     */
+    std::string savingFileName_;
+
+    /**
      * @brief Table for displaying game data.
      */
     ImGuiTable gameTable_;
@@ -172,9 +195,6 @@ private:
 private:
     std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;
     void executeCommand(const std::string& button, bool isLoading);
-    static bool passesPlayerNamesFilter(const std::string& white, const std::string& black, const std::set<std::string>& selectedPlayers, const std::set<std::string>& selectedOpponents);
-    static bool passesResultFilter(QaplaTester::GameResult result, const std::set<QaplaTester::GameResult>& selectedResults);
-    static bool passesTerminationFilter(QaplaTester::GameEndCause cause, const std::set<QaplaTester::GameEndCause>& selectedTerminations);
 };
 
 } // namespace QaplaWindows
