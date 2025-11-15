@@ -171,6 +171,12 @@ private:
      */
     ImGuiPopup<GameFilterWindow> filterPopup_;
 
+    /**
+     * @brief Maps filtered table row index to original game index.
+     * Index in this vector is the row in the table, value is the original game index.
+     */
+    std::vector<size_t> filteredToOriginalIndex_;
+
     inline static std::optional<QaplaTester::GameRecord> selectedGame_;
 
     std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;

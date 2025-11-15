@@ -276,13 +276,21 @@ void ImGuiGameList::createTable() {
     gameTable_.setSortable(true);
     gameTable_.setFilterable(true);
 
+    // Clear index mapping
+    filteredToOriginalIndex_.clear();
+
     // Fill table with game data (applying filter)
     size_t filteredCount = 0;
+    size_t originalIndex = 0;
     for (const auto& game : games) {
+        originalIndex++;
         if (!filterPopup_.content().getFilterData().passesFilter(game)) {
             continue;
         }
         filteredCount++;
+        
+        // Store mapping from filtered index to original index
+        filteredToOriginalIndex_.push_back(originalIndex - 1);
         
         auto rowData = createTableRow(game, commonTags, knownTags);
         gameTable_.push(rowData);
@@ -372,7 +380,13 @@ void ImGuiGameList::drawGameTable() {
         auto clickedIndex = gameTable_.draw(ImVec2(0, availSize.y)); 
         if (clickedIndex) {
             gameTable_.setCurrentRow(*clickedIndex);
-            selectedGame_ = gameRecordManager_.loadGameByIndex(*clickedIndex);
+            // Map filtered index to original game index
+            if (*clickedIndex < filteredToOriginalIndex_.size()) {
+                size_t originalIndex = filteredToOriginalIndex_[*clickedIndex];
+                selectedGame_ = gameRecordManager_.loadGameByIndex(originalIndex);
+            } else {
+                selectedGame_ = std::nullopt;
+            }
         } else {
             selectedGame_ = std::nullopt;
         }
