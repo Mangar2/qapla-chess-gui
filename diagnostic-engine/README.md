@@ -1,16 +1,45 @@
 # Diagnostic UCI Engine
 
-A minimal UCI chess engine designed to diagnose Linux-specific issues with tournament starts in the Qapla Chess GUI.
+A configurable UCI chess engine designed to diagnose issues with tournament starts and engine communication in the Qapla Chess GUI.
+
+## Features
+
+This diagnostic engine supports three operational modes and plays random legal moves:
+
+### Engine Modes
+
+The engine mode is determined by the executable name:
+
+1. **LOG Mode** (default, e.g., `diagnostic-engine.exe`)
+   - Logs all UCI commands, responses, and signals with timestamps
+   - Plays random legal moves using the integrated chess position logic
+   - Creates detailed log files for debugging
+   - Full UCI protocol implementation
+
+2. **NOINIT Mode** (e.g., `diagnostic-engine-noinit.exe`)
+   - Minimal mode that ignores all input except `quit`
+   - No logging, no output
+   - Used to test launcher behavior with non-responsive engines
+
+3. **LOOP Mode** (e.g., `diagnostic-engine-loop.exe`)
+   - Same as LOG mode, but hangs in an infinite loop when receiving `isready`
+   - Used to diagnose timeout handling
+
+### Chess Functionality
+
+- **Position Handling**: Supports `position startpos` and `position fen <fen>` commands
+- **Move Parsing**: Handles move lists in UCI format (e.g., `position startpos moves e2e4 e7e5`)
+- **Random Legal Moves**: On `go` commands, immediately returns a randomly selected legal move
+- **Full Move Generation**: Uses the Qapla engine's move generator for accurate legal move detection
 
 ## Purpose
 
-This diagnostic engine logs:
-- All UCI commands received (with timestamps)
-- All responses sent
-- All signals received (SIGTERM, SIGINT, SIGPIPE, etc.)
-- Process ID and lifecycle events
-
-It helps identify why engines disconnect during tournament starts on Linux.
+This diagnostic engine helps identify:
+- UCI protocol communication issues
+- Engine startup and shutdown problems
+- Signal handling on different platforms (Windows/Linux)
+- Tournament launcher behavior with various engine responses
+- Timeout and hang scenarios
 
 ## Building
 
@@ -24,15 +53,20 @@ cmake ..
 cmake --build .
 ```
 
-The executable will be in `build/bin/diagnostic-engine`.
+The executable will be in `build/bin/diagnostic-engine.exe` (or `diagnostic-engine` on Linux).
 
 ### Integrated Build
 
 The diagnostic engine is automatically built when you build the main GUI:
 
 ```bash
-cd /home/mangar/dev/qapla-chess-gui
 cmake --build --preset=default
+```
+
+Or on Windows:
+
+```powershell
+cmake --build build/default --target diagnostic-engine
 ```
 
 ## Usage
@@ -48,6 +82,110 @@ Then type UCI commands:
 uci
 isready
 position startpos
+go
+position startpos moves e2e4 e7e5
+go
+quit
+```
+
+### File-based Testing
+
+Create a test file with UCI commands:
+```bash
+# test-commands.txt
+uci
+isready
+position startpos
+go
+quit
+```
+
+Run the engine with the test file:
+```bash
+# Linux/macOS
+cat test-commands.txt | ./diagnostic-engine
+
+# Windows PowerShell
+Get-Content test-commands.txt | .\diagnostic-engine.exe
+```
+
+### Creating Different Modes
+
+To use different modes, rename or copy the executable:
+
+```bash
+# Windows
+Copy-Item diagnostic-engine.exe diagnostic-engine-noinit.exe
+Copy-Item diagnostic-engine.exe diagnostic-engine-loop.exe
+
+# Linux/macOS
+cp diagnostic-engine diagnostic-engine-noinit
+cp diagnostic-engine diagnostic-engine-loop
+```
+
+### Testing with GUI
+
+Add the engine to your GUI's engine list and configure tournaments as needed. Check the generated log files for detailed execution traces.
+
+## Log Files
+
+In LOG mode, the engine creates timestamped log files:
+- Format: `diagnostic-engine-YYYY-MM-DD_HH-MM-SS-mmm-pidXXXXX.log`
+- Location: Current working directory
+- Content: All UCI I/O, system events, and signals
+
+Example log entry:
+```
+[2025-11-15 22:53:34.940] INPUT: #4 'go'
+[2025-11-15 22:53:34.940] SEARCH: Search command: go
+[2025-11-15 22:53:34.940] SEARCH: Randomly selected move 12 of 20: d2d4
+[2025-11-15 22:53:34.940] OUTPUT: bestmove d2d4
+```
+
+## Platform Support
+
+- **Windows**: Full support with Visual Studio or Clang
+- **Linux**: Full support with GCC or Clang
+- **macOS**: Full support
+
+Signal handling is platform-aware:
+- Windows: SIGTERM, SIGINT, SIGABRT, SIGSEGV
+- Linux/macOS: Additionally handles SIGHUP, SIGPIPE
+
+## Technical Details
+
+### Dependencies
+
+- **GameState**: Integrated from qapla-engine-tester for position management
+- **Move Generator**: Full legal move generation using the Qapla chess engine
+- **Standard Library**: C++20 features (filesystem, optional, etc.)
+
+### Architecture
+
+- Modular design with separate functions for UCI command handling
+- Exception-safe initialization with detailed error reporting
+- Lazy GameState initialization after logging is established
+- Platform-agnostic code with conditional compilation for OS-specific features
+
+## Example Output
+
+```
+id name Diagnostic Engine 1.0
+id author Qapla Chess GUI Team
+option name Ponder type check default false
+option name Hash type spin default 128 min 1 max 4096
+uciok
+readyok
+info depth 1 score cp 0 nodes 20 nps 1000 time 1
+bestmove d2d4
+```
+
+## Troubleshooting
+
+- **Engine crashes on startup**: Check the log file for initialization errors
+- **No log file created**: Engine is running in NOINIT mode (check executable name)
+- **Engine hangs on isready**: Engine is running in LOOP mode (intentional behavior)
+- **Illegal moves**: Position parsing issue - check FEN string in log file
 go infinite
 stop
 quit

@@ -5,9 +5,31 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Get the qapla-engine-tester source directory
+set(QAPLA_TESTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../extern/qapla-engine-tester/src")
+
 # Build the diagnostic engine executable
 add_executable(diagnostic-engine
     diagnostic-engine.cpp
+    # GameState and dependencies
+    ${QAPLA_TESTER_DIR}/game-state.cpp
+    ${QAPLA_TESTER_DIR}/game-record.cpp
+    ${QAPLA_TESTER_DIR}/move-record.cpp
+    ${QAPLA_TESTER_DIR}/logger.cpp
+    # qapla-engine core
+    ${QAPLA_TESTER_DIR}/qapla-engine/board.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/movegenerator.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/hashconstants.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/bitboardmasks.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/magics.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/piecesignature.cpp
+    ${QAPLA_TESTER_DIR}/qapla-engine/pst.cpp
+)
+
+# Include directories for GameState and qapla-engine
+target_include_directories(diagnostic-engine PRIVATE
+    ${QAPLA_TESTER_DIR}
+    ${QAPLA_TESTER_DIR}/../..
 )
 
 # Set output directory
@@ -22,6 +44,16 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wextra
         -Wpedantic
     )
+endif()
+
+# Link threading library
+if(APPLE)
+    target_link_libraries(diagnostic-engine PRIVATE pthread)
+elseif(WIN32)
+    find_package(Threads REQUIRED)
+    target_link_libraries(diagnostic-engine PRIVATE Threads::Threads)
+else()
+    target_link_libraries(diagnostic-engine PRIVATE pthread)
 endif()
 
 # Installation
