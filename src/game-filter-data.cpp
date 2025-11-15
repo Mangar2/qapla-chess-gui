@@ -177,11 +177,12 @@ void GameFilterData::clear() {
     selectedTerminations_.clear();
 }
 
-bool GameFilterData::hasFilters() const {
-    return !selectedPlayers_.empty() || 
-           !selectedOpponents_.empty() || 
-           !selectedResults_.empty() || 
-           !selectedTerminations_.empty();
+bool GameFilterData::hasActiveFilters() const {
+    return active_ && 
+           (!selectedPlayers_.empty() || 
+            !selectedOpponents_.empty() || 
+            !selectedResults_.empty() || 
+            !selectedTerminations_.empty());
 }
 
 bool GameFilterData::passesFilter(const QaplaTester::GameRecord& game) const {

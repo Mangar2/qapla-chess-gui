@@ -21,11 +21,15 @@
 
 #include "game-record.h"
 #include "pgn-io.h"
+#include "game-filter-data.h"
 
 #include <string>
 #include <vector>
 #include <functional>
 
+namespace QaplaWindows {
+    class GameFilterData;
+}
 
 /**
  * @brief Manages a collection of GameRecords loaded from PGN files.
@@ -83,13 +87,13 @@ public:
     /**
      * @brief Saves games to a file, handling special cases like same-file save.
      * @param fileName Target filename to save to.
-     * @param filterFunc Function to filter games (return true to include game).
+     * @param filterData Filter configuration to apply.
      * @param progressCallback Callback for progress updates (gamesProcessed, progress 0-1).
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
     size_t save(const std::string& fileName,
-                std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                const QaplaWindows::GameFilterData& filterData,
                 std::function<void(size_t, float)> progressCallback,
                 std::function<bool()> cancelCheck);
 
@@ -97,13 +101,13 @@ private:
     /**
      * @brief Saves games to the same file (uses temporary file).
      * @param fileName Target filename.
-     * @param filterFunc Function to filter games.
+     * @param filterData Filter configuration to apply.
      * @param progressCallback Callback for progress updates.
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
     size_t saveToSameFile(const std::string& fileName,
-                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                          const QaplaWindows::GameFilterData& filterData,
                           std::function<void(size_t, float)> progressCallback,
                           std::function<bool()> cancelCheck);
 
@@ -116,13 +120,13 @@ private:
     /**
      * @brief Saves filtered games to a file.
      * @param fileName Target filename.
-     * @param filterFunc Function to filter games.
+     * @param filterData Filter configuration to apply.
      * @param progressCallback Callback for progress updates.
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
     size_t saveWithFilter(const std::string& fileName,
-                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                          const QaplaWindows::GameFilterData& filterData,
                           std::function<void(size_t, float)> progressCallback,
                           std::function<bool()> cancelCheck);
 

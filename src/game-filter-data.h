@@ -149,9 +149,10 @@ public:
     void clear();
 
     /**
-     * @brief Checks if any filter is applied (besides active flag).
+     * @brief Checks if filter is active AND any filter criteria are set.
+     * @return true if filter is enabled and has filter criteria configured.
      */
-    bool hasFilters() const;
+    bool hasActiveFilters() const;
 
     /**
      * @brief Checks if a game passes the current filter settings.

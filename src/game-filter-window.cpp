@@ -235,7 +235,6 @@ void GameFilterWindow::updateFilterOptions(const std::vector<QaplaTester::GameRe
         auto [cause, result] = game.getGameResult();
         uniqueResults.insert(result);
         
-        // Extract termination cause (only if game ended)
         if (cause != QaplaTester::GameEndCause::Ongoing) {
             uniqueTerminations.insert(cause);
         }

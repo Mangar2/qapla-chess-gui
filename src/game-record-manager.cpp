@@ -63,37 +63,31 @@ std::vector<std::pair<std::string, size_t>> GameRecordManager::getMostCommonTags
 }
 
 size_t GameRecordManager::save(const std::string& fileName,
-                                std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                const QaplaWindows::GameFilterData& filterData,
                                 std::function<void(size_t, float)> progressCallback,
                                 std::function<bool()> cancelCheck) {
     const std::string& sourceFile = pgnIO_.getCurrentFileName();
     
     // Check if source and target are the same file
-    if (!sourceFile.empty() && std::filesystem::equivalent(sourceFile, fileName)) {
-        return saveToSameFile(fileName, filterFunc, progressCallback, cancelCheck);
+    if (!sourceFile.empty() && 
+        std::filesystem::weakly_canonical(sourceFile) == std::filesystem::weakly_canonical(fileName)) {
+        return saveToSameFile(fileName, filterData, progressCallback, cancelCheck);
     }
     
-    // Check if filter function always returns true (no filtering)
-    bool hasFilter = false;
-    if (filterFunc && !games_.empty()) {
-        // Test with first game to see if there's actual filtering
-        hasFilter = !filterFunc(games_[0]);
-        if (!hasFilter && games_.size() > 1) {
-            hasFilter = !filterFunc(games_[1]);
-        }
-    }
+    // Check if filter is active
+    bool hasFilter = filterData.hasActiveFilters();
     
-    if (!hasFilter && filterFunc) {
-        // No actual filtering needed - just copy
+    if (!hasFilter) {
+        // No filtering needed - just copy
         saveWithoutFilter(fileName);
         return games_.size();
     } else {
-        return saveWithFilter(fileName, filterFunc, progressCallback, cancelCheck);
+        return saveWithFilter(fileName, filterData, progressCallback, cancelCheck);
     }
 }
 
 size_t GameRecordManager::saveToSameFile(const std::string& fileName,
-                                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                          const QaplaWindows::GameFilterData& filterData,
                                           std::function<void(size_t, float)> progressCallback,
                                           std::function<bool()> cancelCheck) {
     // Create temporary file name
@@ -102,7 +96,7 @@ size_t GameRecordManager::saveToSameFile(const std::string& fileName,
     tempPath.replace_filename(filePath.stem().string() + ".tmp");
     
     // Save filtered games to temp file
-    size_t gamesSaved = saveWithFilter(tempPath.string(), filterFunc, progressCallback, cancelCheck);
+    size_t gamesSaved = saveWithFilter(tempPath.string(), filterData, progressCallback, cancelCheck);
     
     // Check if operation was cancelled
     if (!cancelCheck || !cancelCheck()) {
@@ -131,11 +125,11 @@ void GameRecordManager::saveWithoutFilter(const std::string& fileName) {
 }
 
 size_t GameRecordManager::saveWithFilter(const std::string& fileName,
-                                          std::function<bool(const QaplaTester::GameRecord&)> filterFunc,
+                                          const QaplaWindows::GameFilterData& filterData,
                                           std::function<void(size_t, float)> progressCallback,
                                           std::function<bool()> cancelCheck) {
-    // Open file for writing
-    std::ofstream outFile(fileName, std::ios::out | std::ios::trunc);
+    // Open file for writing in binary mode to preserve line endings
+    std::ofstream outFile(fileName, std::ios::out | std::ios::trunc | std::ios::binary);
     if (!outFile.is_open()) {
         throw std::runtime_error(
             std::format("Failed to open file for writing: {}", fileName)
@@ -155,7 +149,7 @@ size_t GameRecordManager::saveWithFilter(const std::string& fileName,
         }
         
         // Apply filter
-        if (filterFunc && !filterFunc(game)) {
+        if (!filterData.passesFilter(game)) {
             continue;
         }
         

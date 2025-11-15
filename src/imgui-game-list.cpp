@@ -138,7 +138,7 @@ std::pair<QaplaButton::ButtonState, std::string> ImGuiGameList::computeButtonSta
         text = isLoading ? "Stop" : "Open";
     } else if (button == "Filter") {
         const auto& filterData = filterPopup_.content().getFilterData();
-        bool filterActive = filterData.isActive() && filterData.hasFilters();
+        bool filterActive = filterData.hasActiveFilters();
         if (isLoading) {
             state = QaplaButton::ButtonState::Disabled;
         } else if (filterActive) {
@@ -285,7 +285,7 @@ void ImGuiGameList::createTable() {
     
     // Show filter status in snackbar if filter is active
     const auto& filterData = filterPopup_.content().getFilterData();
-    if (filterData.isActive() && filterData.hasFilters()) {
+    if (filterData.hasActiveFilters()) {
         SnackbarManager::instance().showNote(
             std::format("Filter active: showing {} of {} games", filteredCount, games.size()));
     }
@@ -410,14 +410,8 @@ void ImGuiGameList::saveAsFile() {
 
 void ImGuiGameList::saveFileInBackground(const std::string& fileName) {
     try {
-        // Create filter function
-        auto filterFunc = [this](const QaplaTester::GameRecord& game) -> bool {
-            const auto& filterData = filterPopup_.content().getFilterData();
-            if (!filterData.isActive() || !filterData.hasFilters()) {
-                return true;
-            }
-            return filterData.passesFilter(game);
-        };
+        // Get filter data reference
+        const auto& filterData = filterPopup_.content().getFilterData();
         
         // Create progress callback
         auto progressCallback = [this](size_t gamesSaved, float progress) {
@@ -431,7 +425,7 @@ void ImGuiGameList::saveFileInBackground(const std::string& fileName) {
         };
         
         // Perform save operation
-        size_t gamesSaved = gameRecordManager_.save(fileName, filterFunc, progressCallback, cancelCheck);
+        size_t gamesSaved = gameRecordManager_.save(fileName, filterData, progressCallback, cancelCheck);
         
         // Update operation state and show success message
         bool cancelled = operationState_.load() == OperationState::Cancelling;
