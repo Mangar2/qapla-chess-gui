@@ -231,7 +231,6 @@ namespace QaplaWindows {
 
     std::vector<EngineConfig> TournamentData::getSelectedEngines() const {
         std::vector<EngineConfig> selectedEngines;
-        config_->type = "round-robin";
         
         for (const auto& tournamentConfig : engineConfigurations_) {
             if (!tournamentConfig.selected) {
@@ -240,9 +239,6 @@ namespace QaplaWindows {
             auto engine = tournamentConfig.config;
             ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
             
-            if (engine.gauntlet()) {
-                config_->type = "gauntlet";
-            }
             selectedEngines.push_back(engine);
         }
         
@@ -312,7 +308,7 @@ namespace QaplaWindows {
 
     TournamentConfig& TournamentData::config() {
         return *config_;
-	}
+    }
 
     void TournamentData::populateEloTable() {
         eloTable_.clear();
@@ -451,8 +447,9 @@ namespace QaplaWindows {
             if (state_ == State::Starting && anyRunning) {
                 state_ = State::Running;
             }
-            if (state_ != State::Starting && !anyRunning) {
+            if (state_ != State::Starting && state_ != State::Stopped && !anyRunning) {
                 state_ = State::Stopped;
+                SnackbarManager::instance().showSuccess("Tournament finished.");
             }
         }
 	}
@@ -566,11 +563,15 @@ namespace QaplaWindows {
             return;
         }
         imguiConcurrency_->setActive(false);
-        state_ = State::Stopped;
         poolAccess_->clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
-        SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
+        if (state_ == State::Running) {
+            SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
+        } else {
+            SnackbarManager::instance().showNote("All results have been cleared.");
+        }
+        state_ = State::Stopped;
     }
 
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
