@@ -15,6 +15,7 @@ add_executable(diagnostic-engine
     ${QAPLA_TESTER_DIR}/game-state.cpp
     ${QAPLA_TESTER_DIR}/game-record.cpp
     ${QAPLA_TESTER_DIR}/move-record.cpp
+    ${QAPLA_TESTER_DIR}/base-logger.cpp
     ${QAPLA_TESTER_DIR}/logger.cpp
     # qapla-engine core
     ${QAPLA_TESTER_DIR}/qapla-engine/board.cpp

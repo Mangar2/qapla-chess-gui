@@ -101,7 +101,7 @@ void Configuration::loadLoggerConfiguration() {
     
     if (!sections.empty()) {
         const auto& section = sections[0];
-        auto& config = QaplaTester::Logger::getConfig();
+        auto config = QaplaTester::getLoggerConfig();
         config.logPath = section.getValue("logpath").value_or("./log");
         config.reportLogBaseName = section.getValue("reportlogbasename").value_or("report");
         config.engineLogBaseName = section.getValue("enginelogbasename").value_or("engine");
@@ -110,12 +110,12 @@ void Configuration::loadLoggerConfiguration() {
         auto strategyInt = QaplaHelpers::to_uint32(strategyStr).value_or(0);
         config.engineLogStrategy = static_cast<QaplaTester::LogFileStrategy>(strategyInt);
         
-        QaplaTester::Logger::setConfig(config);
+        QaplaTester::setLoggerConfig(config);
     }
 }
 
 void Configuration::updateLoggerConfiguration() {
-    const auto& config = QaplaTester::Logger::getConfig();
+    const auto& config = QaplaTester::getLoggerConfig();
     
     QaplaHelpers::IniFile::Section section {
         .name = "logger",

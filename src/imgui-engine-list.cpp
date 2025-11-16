@@ -204,7 +204,7 @@ void ImGuiEngineList::pollLogBuffers() {
     for (size_t i = 0; i < infoTables_.size() && i < engineRecords_.size(); ++i) {
         auto& engineRecord = engineRecords_[i];
         auto& engineId = engineRecord.identifier;
-        QaplaTester::Logger::withEngineLogBuffer(engineId, [&](const QaplaTester::RingBuffer &logBuffer) {
+        QaplaTester::EngineLogger::withEngineLogBuffer(engineId, [&](const QaplaTester::RingBuffer &logBuffer) {
             setFromLogBuffer(logBuffer, static_cast<uint32_t>(i));
         });
     }

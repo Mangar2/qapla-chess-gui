@@ -169,7 +169,7 @@ void ConfigurationWindow::drawLoggerConfig()
 {
     constexpr float inputWidth = 200.0F;
     
-    auto& config = QaplaTester::Logger::getConfig();
+    auto config = QaplaTester::getLoggerConfig();
     bool modified = false;
 
     // Log Path - only via dialog, no manual typing
@@ -220,7 +220,7 @@ void ConfigurationWindow::drawLoggerConfig()
     }
 
     if (modified) {
-        QaplaTester::Logger::setConfig(config);
+        QaplaTester::setLoggerConfig(config);
         QaplaConfiguration::Configuration::updateLoggerConfiguration();
     }
 }
