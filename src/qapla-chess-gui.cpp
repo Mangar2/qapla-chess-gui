@@ -277,8 +277,7 @@ namespace {
         glfwTerminate();
         GameManagerPool::getInstance().stopAll();
         GameManagerPool::getInstance().waitForTask();
-        QaplaConfiguration::Configuration::instance().saveFile();
-        QaplaWindows::EpdData::instance().saveFile();
+        QaplaWindows::StaticCallbacks::save().invokeAll();
         return 0;
     }
 

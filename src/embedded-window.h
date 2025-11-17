@@ -44,6 +44,16 @@ public:
     virtual bool highlighted() const {
         return false;
     }
+
+    /**
+     * @brief Saves the state of the window.
+     * 
+     * This method can be overridden by derived classes to implement
+     * custom save functionality.
+     */
+    virtual void save() const {
+        // Default implementation does nothing
+    }
 };
 
 /**

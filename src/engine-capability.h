@@ -19,10 +19,12 @@
 
 #pragma once
 
+#include <engine-option.h>
+#include <ini-file.h>
+
 #include <string>
 #include <unordered_map>
-#include "engine-option.h"
-#include "ini-file.h"
+#include <memory>
 
 namespace QaplaConfiguration {
 
@@ -135,7 +137,7 @@ namespace QaplaConfiguration {
       std::string path_; ///< Path to the engine executable.
       QaplaTester::EngineProtocol protocol_ = QaplaTester::EngineProtocol::Unknown; ///< Protocol used by the engine.
       std::string name_;  ///< The name reported by the engine itself.
-    std::string author_; ///< The author reported by the engine itself.
+      std::string author_; ///< The author reported by the engine itself.
       QaplaTester::EngineOptions supportedOptions_; ///< Supported options of the engine.
   };
 

@@ -25,11 +25,13 @@
 #include "engine-setup-window.h"
 #include "callback-manager.h"
 #include "time-control-window.h"
+#include "pgn-auto-saver.h"
+#include "callback-manager.h"
 
-#include "qapla-engine/types.h"
-#include "time-control.h"
-#include "ini-file.h"
-#include "move-record.h"
+#include <qapla-engine/types.h>
+#include <time-control.h>
+#include <ini-file.h>
+#include <move-record.h>
 
 #include <memory>
 #include <optional>
@@ -149,6 +151,16 @@ namespace QaplaWindows
 		 */
 		void draw() override;
 
+		/**
+		 * @brief Saves the state of the window.
+		 * 
+		 * This method overrides the base class save method to implement
+		 * custom save functionality for the InteractiveBoardWindow.
+		 */
+		void save() const override {
+			savePgnGame();
+		}
+
 	private:
 
 		/**
@@ -186,6 +198,13 @@ namespace QaplaWindows
 		 * @return PGN string representation of the game.
 		 */
 		std::string computePgn(uint32_t upToHalfmove = 0);
+
+		/**
+		 * @brief Saves the current game to PGN auto-save file.
+		 * The game is only saved if it has at least one move or a custom FEN position
+		 * (i.e., not the starting position without moves).
+		 */
+		void savePgnGame() const;
 
 		/**
 		 * @brief Swaps the engines assigned to white and black.
@@ -277,8 +296,7 @@ namespace QaplaWindows
 		std::unique_ptr<ImGuiMoveList> imGuiMoveList_;
 		std::unique_ptr<ImGuiBarChart> imGuiBarChart_;
 
-		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
-		std::unique_ptr<Callback::UnregisterHandle> gameUpdateHandle_;
+		std::unique_ptr<Callback::UnregisterHandle> saveCallbackHandle_;
 
 		uint32_t id_;
 

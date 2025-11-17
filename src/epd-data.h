@@ -223,6 +223,7 @@ namespace QaplaWindows {
 		std::shared_ptr<QaplaTester::EpdManager> epdManager_;
 		std::unique_ptr<std::vector<QaplaTester::EpdTestResult>> epdResults_;
    		std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+        std::unique_ptr<Callback::UnregisterHandle> saveCallbackHandle_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_;
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
 
@@ -231,6 +232,7 @@ namespace QaplaWindows {
         ImGuiTable table_;
         GameManagerPoolAccess poolAccess_;
         ViewerBoardWindowList viewerBoardWindows_;
+
 
     };
 

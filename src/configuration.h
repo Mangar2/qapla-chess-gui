@@ -21,8 +21,9 @@
 
 #include "engine-capabilities.h"
 #include "autosavable.h"
+#include "callback-manager.h"
 
-#include "ini-file.h"
+#include <ini-file.h>
 
 #include <memory>
 #include <array>
@@ -111,6 +112,8 @@ namespace QaplaConfiguration {
         QaplaHelpers::ConfigData configData_;
 
         static constexpr const char* CONFIG_FILE = "qapla-chess-gui.ini";
+
+        std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> saveCallbackHandle_;
 
     };
 

@@ -72,6 +72,11 @@ namespace QaplaWindows {
     			this->pollData();
 		    }
     	);
+        saveCallbackHandle_ = StaticCallbacks::save().registerCallback(
+            [this]() {
+                this->saveFile();
+            }
+        );
         
         engineSelect_->setConfigurationChangedCallback(
             [this](const std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration>& configs) {

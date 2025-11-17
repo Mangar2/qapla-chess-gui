@@ -45,6 +45,9 @@ namespace QaplaWindows {
             [&name](const Tab& tab) { return tab.name == name; });
         
         if (it != tabs_.end()) {
+            if (it->window) {
+                it->window->save();
+            }
             tabs_.erase(it);
             return true;
         }

@@ -45,6 +45,9 @@ using namespace QaplaConfiguration;
 Configuration::Configuration() 
     : Autosavable(CONFIG_FILE, ".bak", 60000, []() { return Autosavable::getConfigDirectory(); })
 {
+    saveCallbackHandle_ = QaplaWindows::StaticCallbacks::save().registerCallback([this]() {
+        this->saveFile();
+    });
 }
 
 // getConfigDirectory, autosave, saveFile, loadFile are now handled by Autosavable base class

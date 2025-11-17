@@ -169,3 +169,61 @@ size_t GameRecordManager::saveWithFilter(const std::string& fileName,
     outFile.close();
     return gamesSaved;
 }
+
+void GameRecordManager::appendGame(const std::string& fileName, const QaplaTester::GameRecord& game) {
+    // Open file in append mode
+    std::ofstream outFile(fileName, std::ios::out | std::ios::app | std::ios::binary);
+    if (!outFile.is_open()) {
+        throw std::runtime_error(
+            std::format("Failed to open file for appending: {}", fileName)
+        );
+    }
+
+    // Use PgnIO to write the game
+    pgnIO_.saveGameToStream(outFile, game);
+    outFile.close();
+}
+
+size_t GameRecordManager::pruneOldGames(const std::string& fileName, size_t keepCount) {
+    // Load all games from the file
+    load(fileName);
+    
+    // Check if pruning is needed
+    if (games_.size() <= keepCount) {
+        return games_.size();  // No pruning needed
+    }
+
+    // Calculate how many games to skip (oldest ones to remove)
+    size_t skipCount = games_.size() - keepCount;
+
+    // Create temporary file
+    std::filesystem::path filePath(fileName);
+    std::filesystem::path tempPath = filePath;
+    tempPath.replace_filename(filePath.stem().string() + ".prune.tmp");
+
+    // Open temporary file for writing
+    std::ofstream outFile(tempPath, std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!outFile.is_open()) {
+        throw std::runtime_error(
+            std::format("Failed to create temporary file: {}", tempPath.string())
+        );
+    }
+
+    // Write only the games we want to keep (skip the oldest ones)
+    size_t gamesWritten = 0;
+    for (size_t i = skipCount; i < games_.size(); ++i) {
+        auto rawText = pgnIO_.getRawGameText(i);
+        if (rawText) {
+            outFile << *rawText;
+            gamesWritten++;
+        }
+    }
+
+    outFile.close();
+
+    // Replace original file with pruned version
+    std::filesystem::remove(fileName);
+    std::filesystem::rename(tempPath, fileName);
+
+    return gamesWritten;
+}

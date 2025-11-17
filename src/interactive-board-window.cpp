@@ -19,18 +19,6 @@
 
 #include "interactive-board-window.h"
 #include "configuration.h"
-
-#include "string-helper.h"
-#include "qapla-engine/move.h"
-#include "time-control.h"
-#include "game-state.h"
-#include "game-record.h"
-#include "compute-task.h"
-#include "engine-config.h"
-#include "engine-config-manager.h"
-#include "engine-worker-factory.h"
-#include "game-manager-pool.h"
-
 #include "snackbar.h"
 #include "imgui-clock.h"
 #include "imgui-move-list.h"
@@ -46,8 +34,20 @@
 #include "imgui-cut-paste.h"
 #include "game-parser.h"
 #include "epd-data.h"
+#include "callback-manager.h"
 
-#include "GLFW/glfw3.h"
+#include <string-helper.h>
+#include <qapla-engine/move.h>
+#include <time-control.h>
+#include <game-state.h>
+#include <game-record.h>
+#include <compute-task.h>
+#include <engine-config.h>
+#include <engine-config-manager.h>
+#include <engine-worker-factory.h>
+#include <game-manager-pool.h>
+
+#include <GLFW/glfw3.h>
 
 using namespace QaplaTester;
 
@@ -102,6 +102,9 @@ InteractiveBoardWindow::~InteractiveBoardWindow() {
 std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance() {
 	static uint32_t id = 1;
 	auto instance = std::make_unique<InteractiveBoardWindow>(id);
+	instance->saveCallbackHandle_ = StaticCallbacks::save().registerCallback([instancePtr = instance.get()]() {
+		instancePtr->save();
+	});
 	++id;
 	return instance;
 }
@@ -307,6 +310,20 @@ std::string InteractiveBoardWindow::computePgn(uint32_t upToHalfmove) {
 	return pgnString;
 }
 
+void InteractiveBoardWindow::savePgnGame() const
+{
+	computeTask_->getGameContext().withGameRecord([&](const QaplaTester::GameRecord& gameRecord) {
+		// Only save if game has at least one move or a custom FEN position
+		bool hasCustomFen = !gameRecord.getStartPos();
+		bool hasMoves = !gameRecord.history().empty();
+		
+		if (hasCustomFen || hasMoves) {
+			static PgnAutoSaver pgnAutoSaver;
+			pgnAutoSaver.addGame(gameRecord);
+		}
+	});
+}
+
 void InteractiveBoardWindow::copyPv(const std::string& pv) {
 	// Expected format produced by encodePV: "pv|<halfmoveNo>|<pv...>"
 
@@ -425,6 +442,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 
 	if (command == "New") {
 		// Order is important because newGame sets the current position for winboard
+		savePgnGame();
 		setPosition(true, "");
 		computeTask_->newGame();
 	}
@@ -454,6 +472,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 		if (pasted) {
 			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
 			if (gameRecord) {
+				savePgnGame();
 				setPosition(*gameRecord);
 			}
 		}
@@ -472,6 +491,7 @@ void InteractiveBoardWindow::execute(const std::string& command)
 		openTimeControlDialog();
 	}
 	else if (command.starts_with("Position: ")) {
+		savePgnGame();
 		computeTask_->newGame();
 		std::string fen = command.substr(std::string("Position: ").size());
 		setPosition(false, fen);

@@ -85,6 +85,22 @@ public:
     const std::string& getCurrentFileName() const { return pgnIO_.getCurrentFileName(); }
 
     /**
+     * @brief Appends a single game to an existing PGN file.
+     * @param fileName Target filename to append to.
+     * @param game Game record to append.
+     */
+    void appendGame(const std::string& fileName, const QaplaTester::GameRecord& game);
+
+    /**
+     * @brief Prunes old games from the beginning of a PGN file, keeping only the most recent games.
+     * Creates a temporary file with the pruned games, then replaces the original.
+     * @param fileName Filename to prune.
+     * @param keepCount Number of most recent games to keep.
+     * @return Number of games kept in the pruned file.
+     */
+    size_t pruneOldGames(const std::string& fileName, size_t keepCount);
+
+    /**
      * @brief Saves games to a file, handling special cases like same-file save.
      * @param fileName Target filename to save to.
      * @param filterData Filter configuration to apply.
