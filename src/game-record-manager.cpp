@@ -129,7 +129,7 @@ size_t GameRecordManager::saveWithFilter(const std::string& fileName,
                                           std::function<void(size_t, float)> progressCallback,
                                           std::function<bool()> cancelCheck) {
     // Open file for writing in binary mode to preserve line endings
-    std::ofstream outFile(fileName, std::ios::out | std::ios::trunc | std::ios::binary);
+    std::ofstream outFile(fileName, std::ios::trunc | std::ios::binary);
     if (!outFile.is_open()) {
         throw std::runtime_error(
             std::format("Failed to open file for writing: {}", fileName)
@@ -171,17 +171,7 @@ size_t GameRecordManager::saveWithFilter(const std::string& fileName,
 }
 
 void GameRecordManager::appendGame(const std::string& fileName, const QaplaTester::GameRecord& game) {
-    // Open file in append mode
-    std::ofstream outFile(fileName, std::ios::out | std::ios::app | std::ios::binary);
-    if (!outFile.is_open()) {
-        throw std::runtime_error(
-            std::format("Failed to open file for appending: {}", fileName)
-        );
-    }
-
-    // Use PgnIO to write the game
-    pgnIO_.saveGameToStream(outFile, game);
-    outFile.close();
+    pgnIO_.saveGame(fileName, game);
 }
 
 size_t GameRecordManager::pruneOldGames(const std::string& fileName, size_t keepCount) {
@@ -202,7 +192,7 @@ size_t GameRecordManager::pruneOldGames(const std::string& fileName, size_t keep
     tempPath.replace_filename(filePath.stem().string() + ".prune.tmp");
 
     // Open temporary file for writing
-    std::ofstream outFile(tempPath, std::ios::out | std::ios::trunc | std::ios::binary);
+    std::ofstream outFile(tempPath, std::ios::trunc | std::ios::binary);
     if (!outFile.is_open()) {
         throw std::runtime_error(
             std::format("Failed to create temporary file: {}", tempPath.string())
