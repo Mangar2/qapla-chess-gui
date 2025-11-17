@@ -278,6 +278,16 @@ namespace QaplaWindows {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
         }
+        if (getTotalGames() == 0) {
+            if (config_->type == "gauntlet") {
+                SnackbarManager::instance().showError("No games to play in tournament\n"
+                    "Did you forget to set at least one engine as gauntlet engine?");
+            } else {
+                SnackbarManager::instance().showError("No games to play in tournament\n"
+                    "You need at least two engines to play a tournament");
+            }
+            return;
+        }
         if (isFinished()) {
             SnackbarManager::instance().showNote("Tournament already finished");
             return;

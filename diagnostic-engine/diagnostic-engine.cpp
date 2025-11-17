@@ -238,12 +238,12 @@ void handlePositionCommand(const std::string& line) {
         log("WARNING", "Invalid position command: missing position type");
         return;
     }
+    std::string fenPart;
     
     if (token == "startpos") {
         gameState->setFen(true);
     } else if (token == "fen") {
         std::string fen;
-        std::string fenPart;
         // Read FEN parts until we hit "moves" or end of line
         while (iss >> fenPart && fenPart != "moves") {
             if (!fen.empty()) fen += " ";
@@ -270,8 +270,12 @@ void handlePositionCommand(const std::string& line) {
     }
     
     // Look for "moves" keyword
-    while (iss >> token && token != "moves") {
-        // Skip until we find "moves"
+    if (fenPart == "moves") {
+        token = "moves";
+    } else {
+        while (iss >> token && token != "moves") {
+            // Skip until we find "moves"
+        }
     }
     
     if (token == "moves") {
