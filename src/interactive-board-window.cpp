@@ -390,6 +390,13 @@ void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &
 
 void InteractiveBoardWindow::setPosition(const GameRecord &gameRecord)
 {
+	if (!gameRecord.getWhiteTimeControl().isValid() || !gameRecord.getBlackTimeControl().isValid()) {
+		auto tc = timeControlWindow_->content().getSelectedTimeControl();
+		auto copy = gameRecord;
+		copy.setTimeControl(tc, tc);
+		computeTask_->setPosition(copy);
+		return;
+	}
 	computeTask_->setPosition(gameRecord);
 }
 
