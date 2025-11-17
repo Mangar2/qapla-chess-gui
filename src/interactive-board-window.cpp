@@ -318,8 +318,7 @@ void InteractiveBoardWindow::savePgnGame() const
 		bool hasMoves = !gameRecord.history().empty();
 		
 		if (hasCustomFen || hasMoves) {
-			static PgnAutoSaver pgnAutoSaver;
-			pgnAutoSaver.addGame(gameRecord);
+			PgnAutoSaver::instance().addGame(gameRecord);
 		}
 	});
 }

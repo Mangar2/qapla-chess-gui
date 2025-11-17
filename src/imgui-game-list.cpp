@@ -105,7 +105,7 @@ void ImGuiGameList::drawButtons() {
 
     constexpr ImVec2 buttonSize = {25.0F, 25.0F};
 
-    const std::vector<std::string> buttons = {"Open", "Save As", "Filter"};
+    const std::vector<std::string> buttons = {"Open", "AutoSaved", "Save As", "Filter"};
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
@@ -118,6 +118,8 @@ void ImGuiGameList::drawButtons() {
                 button, text, buttonSize, state,
                 [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             if (button == "Open") {
+                QaplaButton::drawOpen(drawList, topLeft, size, state);
+            } else if (button == "AutoSaved") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
             } else if (button == "Filter") {
                 QaplaButton::drawFilter(drawList, topLeft, size, state);
@@ -139,6 +141,9 @@ std::pair<QaplaButton::ButtonState, std::string> ImGuiGameList::computeButtonSta
     if (button == "Open") {
         state = isLoading ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal;
         text = isLoading ? "Stop" : "Open";
+    } else if (button == "AutoSaved") {
+        state = isLoading ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
+        text = "AutoSaved";
     } else if (button == "Filter") {
         const auto& filterData = filterPopup_.content().getFilterData();
         bool filterActive = filterData.hasActiveFilters();
@@ -164,7 +169,9 @@ void ImGuiGameList::executeCommand(const std::string& button, bool isLoading) {
             openFile();
         }
     } else if (!isLoading) {
-        if (button == "Save As") {
+        if (button == "AutoSaved") {
+            loadFileInBackground(PgnAutoSaver::instance().getFilePath());
+        } else if (button == "Save As") {
             saveAsFile();
         } else if (button == "Filter") {
             updateFilterOptions();
@@ -309,24 +316,35 @@ void ImGuiGameList::createTable() {
 void ImGuiGameList::openFile() {
     auto selectedFiles = OsDialogs::openFileDialog(false);
     if (!selectedFiles.empty()) {
-        // We disable the filter for new loads
-        filterPopup_.content().getFilterData().setActive(false);
-        // Wait for any previous thread to finish
-        if (loadingThread_.joinable()) {
-            loadingThread_.join();
-        }
-        
-        // Start loading in background thread
-        operationState_.store(OperationState::Loading);
-        gamesLoaded_ = 0;
-        loadingProgress_ = 0.0F;
-        loadingFileName_ = selectedFiles[0];
-        
-        loadingThread_ = std::thread(&ImGuiGameList::loadFileInBackground, this, selectedFiles[0]);
+        loadFileInBackground(selectedFiles[0]);
     }
 }
 
 void ImGuiGameList::loadFileInBackground(const std::string& fileName) {
+    // Check if file exists
+    if (!std::filesystem::exists(fileName)) {
+        SnackbarManager::instance().showWarning("File not found: " + fileName);
+        return;
+    }
+    
+    // We disable the filter for new loads
+    filterPopup_.content().getFilterData().setActive(false);
+    
+    // Wait for any previous thread to finish
+    if (loadingThread_.joinable()) {
+        loadingThread_.join();
+    }
+    
+    // Start loading in background thread
+    operationState_.store(OperationState::Loading);
+    gamesLoaded_ = 0;
+    loadingProgress_ = 0.0F;
+    loadingFileName_ = fileName;
+    
+    loadingThread_ = std::thread(&ImGuiGameList::loadFile, this, fileName);
+}
+
+void ImGuiGameList::loadFile(const std::string& fileName) {
     try {
         gamesLoaded_ = 0;
         loadingProgress_ = 0.0F;

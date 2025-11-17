@@ -55,4 +55,14 @@ public:
      * @return The selected folder path, or an empty string if cancelled.
      */
     static std::string selectFolderDialog(const std::string& defaultPath = {});
+
+    /**
+     * Gets the platform-specific configuration directory for qapla-chess-gui.
+     * 
+     * @return Configuration directory path:
+     *         - Windows: %LOCALAPPDATA%/qapla-chess-gui
+     *         - Linux/Mac: ~/.qapla-chess-gui
+     *         Returns empty string on error.
+     */
+    static std::string getConfigDirectory();
 };

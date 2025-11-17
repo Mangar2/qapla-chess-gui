@@ -25,12 +25,13 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <shobjidl.h> 
-#include <comdef.h>   // Für _com_error (Fehlermeldungen)
+#include <comdef.h>    // For _com_error (error messages)
+#include <shlobj.h>    // For CSIDL_LOCAL_APPDATA
 
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     std::vector<std::string> results;
 
-    // COM initialisieren (Thread-sicher)
+    // Initialize COM library (thread-safe)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     if (FAILED(hr)) {
         return results;
@@ -41,17 +42,17 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
                           IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
     if (SUCCEEDED(hr)) {
-        // Optionen holen und anpassen
+        // Get and adjust options
         DWORD dwOptions;
         if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
-            dwOptions |= FOS_FORCEFILESYSTEM; // Nur echte Dateien/Ordner
+            dwOptions |= FOS_FORCEFILESYSTEM; // Only real files/folders
             if (multiple) {
                 dwOptions |= FOS_ALLOWMULTISELECT;
             }
             pFileOpen->SetOptions(dwOptions);
         }
 
-        // Dialog anzeigen
+        // Show dialog
         hr = pFileOpen->Show(nullptr);
         if (SUCCEEDED(hr)) {
             IShellItemArray* pResults = nullptr;
@@ -65,7 +66,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
                         if (SUCCEEDED(pResults->GetItemAt(i, &pItem))) {
                             PWSTR pszFilePath = nullptr;
                             if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
-                                // Konvertiere WideChar → std::string
+                                // Convert WideChar to std::string
                                 char buffer[MAX_PATH];
                                 WideCharToMultiByte(CP_UTF8, 0, pszFilePath, -1, buffer, MAX_PATH, nullptr, nullptr);
                                 results.push_back(buffer);
@@ -365,7 +366,7 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
 std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     std::string result;
 
-    // COM initialisieren
+    // Initialize COM (thread-safe)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     if (FAILED(hr)) {
         return result;
@@ -376,14 +377,14 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
                           IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
     if (SUCCEEDED(hr)) {
-        // Optionen für Ordner-Auswahl setzen
+        // Options for folder selection
         DWORD dwOptions;
         if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
             dwOptions |= FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM;
             pFileOpen->SetOptions(dwOptions);
         }
 
-        // Standard-Pfad setzen, falls angegeben
+        // Set default path if provided
         if (!defaultPath.empty()) {
             IShellItem* pItem = nullptr;
             wchar_t wDefaultPath[MAX_PATH];
@@ -397,7 +398,7 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
             }
         }
 
-        // Dialog anzeigen
+        // Show dialog
         hr = pFileOpen->Show(nullptr);
         if (SUCCEEDED(hr)) {
             IShellItem* pItem = nullptr;
@@ -433,12 +434,12 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     Class NSOpenPanel = (Class)objc_getClass("NSOpenPanel");
     id panel = ((id(*)(Class, SEL))objc_msgSend)(NSOpenPanel, sel_registerName("openPanel"));
 
-    // Nur Ordner erlauben
+    // Only allow folders
     ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseFiles:"), (BOOL)0);
     ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseDirectories:"), (BOOL)1);
     ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setAllowsMultipleSelection:"), (BOOL)0);
 
-    // Standard-Pfad setzen, falls angegeben
+    // Set default path if provided
     if (!defaultPath.empty()) {
         id nsPath = ((id(*)(Class, SEL, const char*))objc_msgSend)(
             (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), defaultPath.c_str());
@@ -475,7 +476,7 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
         "_Select", GTK_RESPONSE_ACCEPT,
         nullptr);
 
-    // Standard-Pfad setzen, falls angegeben
+    // Set default path if provided
     if (!defaultPath.empty()) {
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), defaultPath.c_str());
     }
@@ -501,4 +502,49 @@ std::string OsDialogs::selectFolderDialog(const std::string&) {
 }
 
 #endif
+
+
+std::string OsDialogs::getConfigDirectory() {
+#ifdef _WIN32
+    // Try using Windows API first (most robust)
+    char path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, path))) {
+        std::filesystem::path configPath(path);
+        configPath /= "qapla-chess-gui";
+        return configPath.string();
+    }
+    
+    // Fallback to environment variable
+    char* buf = nullptr;
+    size_t sz = 0;
+    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf != nullptr) {
+        std::string localAppData(buf);
+        free(buf);
+        return localAppData + "/qapla-chess-gui";
+    }
+    
+    // Last fallback for Windows
+    return "./qapla-chess-gui";
+#else
+    // Try environment variable first
+    const char* homeDir = getenv("HOME");
+    
+    // Fallback to passwd if HOME not set
+    if (homeDir == nullptr) {
+        struct passwd* pw = getpwuid(getuid());
+        if (pw != nullptr) {
+            homeDir = pw->pw_dir;
+        }
+    }
+    
+    if (homeDir != nullptr) {
+        std::filesystem::path configPath(homeDir);
+        configPath /= ".qapla-chess-gui";
+        return configPath.string();
+    }
+    
+    return "";
+#endif
+}
+
 

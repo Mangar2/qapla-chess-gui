@@ -25,6 +25,7 @@
 #include "imgui-table.h"
 #include "imgui-popup.h"
 #include "imgui-button.h"
+#include "pgn-auto-saver.h"
 #include <thread>
 #include <atomic>
 #include <string>
@@ -112,9 +113,14 @@ private:
     void updateFilterOptions();
 
     /**
-     * @brief Background loading function.
+     * @brief Starts loading a file in background thread with validation.
      */
     void loadFileInBackground(const std::string& fileName);
+
+    /**
+     * @brief Loads a file (runs in background thread).
+     */
+    void loadFile(const std::string& fileName);
 
     /**
      * @brief Background saving function.

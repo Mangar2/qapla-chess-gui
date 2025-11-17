@@ -19,44 +19,37 @@
 
 #pragma once
 
-#include "autosavable.h"
 #include "game-record-manager.h"
 
 #include <game-record.h>
 
-#include <vector>
 #include <string>
 
 /**
- * @brief Automatically saves PGN games with automatic pruning of old games.
+ * @brief Automatically saves PGN games by appending them to a file.
  * 
  * This class manages automatic saving of chess games in PGN format. It:
- * - Uses automatic path and filename determination via Autosavable
- * - Saves games to a configurable directory (typically config directory)
- * - Automatically prunes old games when file size exceeds a threshold
+ * - Uses Autosavable's path determination for consistent file location
+ * - Appends new games to an existing file
+ * - Automatically prunes old games when file contains too many games
  * - Removes the oldest games (from the beginning of the file) to maintain a reasonable size
  * 
- * The class inherits from Autosavable and follows the pattern used by Configuration and EpdData.
  * Files are saved to the platform-specific config directory:
  * - Windows: %LOCALAPPDATA%/qapla-chess-gui
  * - Linux/Mac: ~/.qapla-chess-gui
  * 
  * When the number of games exceeds MAX_GAMES_BEFORE_PRUNE (900), the oldest GAMES_TO_REMOVE (100)
- * games are automatically deleted during the next save operation.
+ * games are automatically deleted during pruning.
  * 
  * Usage example:
  * @code
- *   PgnAutoSaver autoSaver;
- *   autoSaver.loadFile();  // Load existing games on startup
+ *   PgnAutoSaver& autoSaver = PgnAutoSaver::instance();
  *   
- *   // Later, when a game finishes:
- *   autoSaver.addGame(gameRecord);  // Add new game and trigger autosave
- *   
- *   // Periodic autosave (called in main loop):
- *   autoSaver.autosave();  // Saves if modified and interval elapsed
+ *   // When a game finishes:
+ *   autoSaver.addGame(gameRecord);  // Appends game to file
  * @endcode
  */
-class PgnAutoSaver : public QaplaHelpers::Autosavable {
+class PgnAutoSaver {
 public:
     /**
      * @brief Maximum number of games before automatic pruning is triggered.
@@ -74,56 +67,33 @@ public:
     static constexpr const char* DEFAULT_FILENAME = "auto-saved-games.pgn";
 
     /**
-     * @brief Constructor.
-     * @param filename Base filename for auto-saved games (default: "auto-saved-games.pgn").
-     * @param autosaveIntervalMs Auto-save interval in milliseconds (default: 60000ms = 1 minute).
+     * @brief Gets the singleton instance.
      */
-    PgnAutoSaver(std::string filename = DEFAULT_FILENAME,
-                 uint64_t autosaveIntervalMs = 60000);
+    static PgnAutoSaver& instance() {
+        static PgnAutoSaver instance;
+        return instance;
+    }
 
     /**
-     * @brief Adds a game to the auto-save collection and triggers autosave.
+     * @brief Adds a game and appends it to the PGN file.
      * @param game The game record to add.
      */
     void addGame(const QaplaTester::GameRecord& game);
 
     /**
-     * @brief Gets the number of games currently stored.
-     * @return Number of games.
+     * @brief Gets the full file path where games are saved.
+     * @return Full path to the auto-save PGN file.
      */
-    size_t getGameCount() const { return games_.size(); }
-
-    /**
-     * @brief Gets the loaded games.
-     * @return Const reference to the vector of GameRecords.
-     */
-    const std::vector<QaplaTester::GameRecord>& getGames() const { return games_; }
-
-    /**
-     * @brief Clears all stored games.
-     */
-    void clear() {
-        games_.clear();
-        setModified();
-    }
-
-protected:
-    /**
-     * @brief Saves the data to an output stream.
-     * Implements the pure virtual method from Autosavable.
-     * Automatically prunes old games if count exceeds MAX_GAMES_BEFORE_PRUNE.
-     * @param out Output stream to write to.
-     */
-    void saveData(std::ofstream& out) override;
-
-    /**
-     * @brief Loads the data from an input stream.
-     * Implements the pure virtual method from Autosavable.
-     * @param in Input stream to read from.
-     */
-    void loadData(std::ifstream& in) override;
+    std::string getFilePath() const;
 
 private:
-    std::vector<QaplaTester::GameRecord> games_;  ///< Collection of game records
+    PgnAutoSaver() = default;
+    
+    /**
+     * @brief Checks game count and prunes if necessary.
+     */
+    void checkAndPrune();
+
     GameRecordManager gameRecordManager_;  ///< Manager for PGN I/O operations
+    std::string filename_{DEFAULT_FILENAME};  ///< Base filename
 };

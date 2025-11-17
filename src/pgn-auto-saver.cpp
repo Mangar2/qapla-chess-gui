@@ -18,68 +18,50 @@
  */
 
 #include "pgn-auto-saver.h"
+#include "os-dialogs.h"
 
-#include <pgn-io.h>
-
-#include <fstream>
 #include <filesystem>
 
-PgnAutoSaver::PgnAutoSaver(std::string filename, uint64_t autosaveIntervalMs)
-    : Autosavable(std::move(filename), ".bak", autosaveIntervalMs, 
-                  []() { return Autosavable::getConfigDirectory(); })
-{
+std::string PgnAutoSaver::getFilePath() const {
+    // Get config directory
+    std::string directory = OsDialogs::getConfigDirectory();
+    
+    // Create directory if it doesn't exist
+    if (!directory.empty() && !std::filesystem::exists(directory)) {
+        std::filesystem::create_directories(directory);
+    }
+    
+    // Combine directory and filename
+    std::filesystem::path path(directory);
+    path /= filename_;
+    return path.string();
 }
 
 void PgnAutoSaver::addGame(const QaplaTester::GameRecord& game) {
-    games_.push_back(game);
-    setModified();
-    autosave();
-}
-
-void PgnAutoSaver::saveData(std::ofstream& out) {
+    std::string filePath = getFilePath();
+    
+    // Append game to file
+    gameRecordManager_.appendGame(filePath, game);
+    
     // Check if pruning is needed
-    std::vector<QaplaTester::GameRecord> gamesToSave;
-    
-    if (games_.size() > MAX_GAMES_BEFORE_PRUNE) {
-        // Keep only the most recent games (remove oldest GAMES_TO_REMOVE)
-        gamesToSave.assign(games_.begin() + GAMES_TO_REMOVE, games_.end());
-        
-        // Update the internal collection to match what we're saving
-        games_ = gamesToSave;
-    } else {
-        gamesToSave = games_;
-    }
-
-    // Save games using PgnIO
-    QaplaTester::PgnIO pgnIO;
-    for (const auto& game : gamesToSave) {
-        pgnIO.saveGameToStream(out, game);
-    }
+    checkAndPrune();
 }
 
-void PgnAutoSaver::loadData(std::ifstream& in) {
-    // Close the ifstream and use PgnIO to load from the file path
-    // PgnIO needs the filename, not the stream
-    if (!in.is_open()) {
+void PgnAutoSaver::checkAndPrune() {
+    std::string filePath = getFilePath();
+    
+    // Check if file exists
+    if (!std::filesystem::exists(filePath)) {
         return;
     }
     
-    // Get the filename from the autosavable path
-    std::string fileName = getFilePath();
-    in.close();
+    // Load to count games
+    gameRecordManager_.load(filePath);
+    size_t gameCount = gameRecordManager_.getGames().size();
     
-    // Check if file exists and is not empty
-    if (!std::filesystem::exists(fileName) || std::filesystem::file_size(fileName) == 0) {
-        games_.clear();
-        return;
-    }
-    
-    // Load games using GameRecordManager
-    try {
-        gameRecordManager_.load(fileName);
-        games_ = gameRecordManager_.getGames();
-    } catch (const std::exception&) {
-        // If loading fails, start with empty collection
-        games_.clear();
+    // Prune if necessary
+    if (gameCount > MAX_GAMES_BEFORE_PRUNE) {
+        size_t keepCount = gameCount - GAMES_TO_REMOVE;
+        gameRecordManager_.pruneOldGames(filePath, keepCount);
     }
 }
