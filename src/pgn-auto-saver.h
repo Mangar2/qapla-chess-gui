@@ -57,11 +57,6 @@ public:
     static constexpr size_t MAX_GAMES_BEFORE_PRUNE = 900;
 
     /**
-     * @brief Number of oldest games to remove during pruning.
-     */
-    static constexpr size_t GAMES_TO_REMOVE = 100;
-
-    /**
      * @brief Default filename for auto-saved games.
      */
     static constexpr const char* DEFAULT_FILENAME = "auto-saved-games.pgn";
@@ -70,7 +65,12 @@ public:
      * @brief Gets the singleton instance.
      */
     static PgnAutoSaver& instance() {
+        static bool initialize = true;
         static PgnAutoSaver instance;
+        if (initialize) {
+            instance.checkAndPrune();
+            initialize = false;
+        }
         return instance;
     }
 

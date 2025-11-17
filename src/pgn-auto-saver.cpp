@@ -42,9 +42,7 @@ void PgnAutoSaver::addGame(const QaplaTester::GameRecord& game) {
     
     // Append game to file
     gameRecordManager_.appendGame(filePath, game);
-    
-    // Check if pruning is needed
-    checkAndPrune();
+
 }
 
 void PgnAutoSaver::checkAndPrune() {
@@ -55,13 +53,6 @@ void PgnAutoSaver::checkAndPrune() {
         return;
     }
     
-    // Load to count games
-    gameRecordManager_.load(filePath);
-    size_t gameCount = gameRecordManager_.getGames().size();
-    
-    // Prune if necessary
-    if (gameCount > MAX_GAMES_BEFORE_PRUNE) {
-        size_t keepCount = gameCount - GAMES_TO_REMOVE;
-        gameRecordManager_.pruneOldGames(filePath, keepCount);
-    }
+    // Prune old games if file has too many
+    gameRecordManager_.pruneOldGames(filePath, MAX_GAMES_BEFORE_PRUNE);
 }

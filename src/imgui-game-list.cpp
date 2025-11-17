@@ -105,7 +105,7 @@ void ImGuiGameList::drawButtons() {
 
     constexpr ImVec2 buttonSize = {25.0F, 25.0F};
 
-    const std::vector<std::string> buttons = {"Open", "AutoSaved", "Save As", "Filter"};
+    const std::vector<std::string> buttons = {"Open", "Recent", "Save As", "Filter"};
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
@@ -119,7 +119,7 @@ void ImGuiGameList::drawButtons() {
                 [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             if (button == "Open") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
-            } else if (button == "AutoSaved") {
+            } else if (button == "Recent") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
             } else if (button == "Filter") {
                 QaplaButton::drawFilter(drawList, topLeft, size, state);
@@ -141,9 +141,9 @@ std::pair<QaplaButton::ButtonState, std::string> ImGuiGameList::computeButtonSta
     if (button == "Open") {
         state = isLoading ? QaplaButton::ButtonState::Active : QaplaButton::ButtonState::Normal;
         text = isLoading ? "Stop" : "Open";
-    } else if (button == "AutoSaved") {
+    } else if (button == "Recent") {
         state = isLoading ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal;
-        text = "AutoSaved";
+        text = "Recent";
     } else if (button == "Filter") {
         const auto& filterData = filterPopup_.content().getFilterData();
         bool filterActive = filterData.hasActiveFilters();
@@ -169,7 +169,7 @@ void ImGuiGameList::executeCommand(const std::string& button, bool isLoading) {
             openFile();
         }
     } else if (!isLoading) {
-        if (button == "AutoSaved") {
+        if (button == "Recent") {
             loadFileInBackground(PgnAutoSaver::instance().getFilePath());
         } else if (button == "Save As") {
             saveAsFile();

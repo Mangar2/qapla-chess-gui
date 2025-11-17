@@ -316,8 +316,9 @@ void InteractiveBoardWindow::savePgnGame() const
 		// Only save if game has at least one move or a custom FEN position
 		bool hasCustomFen = !gameRecord.getStartPos();
 		bool hasMoves = !gameRecord.history().empty();
+		bool wasChanged = gameRecord.getChangeTracker().getUpdateCountSinceLastModification() > 0;
 		
-		if (hasCustomFen || hasMoves) {
+		if (wasChanged && (hasCustomFen || hasMoves)) {
 			PgnAutoSaver::instance().addGame(gameRecord);
 		}
 	});

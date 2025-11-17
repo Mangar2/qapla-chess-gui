@@ -49,40 +49,40 @@ public:
      * @brief Gets the loaded games.
      * @return Const reference to the vector of GameRecords.
      */
-    const std::vector<QaplaTester::GameRecord>& getGames() const { return games_; }
+    [[nodiscard]] const std::vector<QaplaTester::GameRecord>& getGames() const { return games_; }
 
     /**
      * @brief Gets the game positions from the last loaded file.
      * @return Const reference to the vector of stream positions.
      */
-    const std::vector<std::streampos>& getGamePositions() const { return pgnIO_.getGamePositions(); }
+    [[nodiscard]] const std::vector<std::streampos>& getGamePositions() const { return pgnIO_.getGamePositions(); }
 
     /**
      * @brief Gets the most common PGN header tag names present in all loaded games.
      * @param topN Number of top tags to return (default: 10).
      * @return Vector of pairs containing tag name and occurrence count, sorted by count descending.
      */
-    std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
+    [[nodiscard]] std::vector<std::pair<std::string, size_t>> getMostCommonTags(size_t topN = 10) const;
 
      /**
      * @brief Loads a specific game by index from the previously loaded file.
      * @param index Index of the game to load.
      * @return Optional GameRecord if successful.
      */
-    std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index);
+    [[nodiscard]] std::optional<QaplaTester::GameRecord> loadGameByIndex(size_t index);
 
     /**
      * @brief Gets the raw PGN text of a specific game by index.
      * @param index Index of the game to retrieve.
      * @return Optional string containing the raw PGN text if successful.
      */
-    std::optional<std::string> getRawGameText(size_t index);
+    [[nodiscard]] std::optional<std::string> getRawGameText(size_t index);
 
     /**
      * @brief Gets the filename of the currently loaded PGN file.
      * @return Reference to the current filename string.
      */
-    const std::string& getCurrentFileName() const { return pgnIO_.getCurrentFileName(); }
+    [[nodiscard]] const std::string& getCurrentFileName() const { return pgnIO_.getCurrentFileName(); }
 
     /**
      * @brief Appends a single game to an existing PGN file.
@@ -95,10 +95,9 @@ public:
      * @brief Prunes old games from the beginning of a PGN file, keeping only the most recent games.
      * Creates a temporary file with the pruned games, then replaces the original.
      * @param fileName Filename to prune.
-     * @param keepCount Number of most recent games to keep.
-     * @return Number of games kept in the pruned file.
+     * @param maxGames Maximum number of games allowed before pruning is triggered.
      */
-    size_t pruneOldGames(const std::string& fileName, size_t keepCount);
+    void pruneOldGames(const std::string& fileName, size_t maxGames);
 
     /**
      * @brief Saves games to a file, handling special cases like same-file save.
@@ -108,7 +107,7 @@ public:
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
-    size_t save(const std::string& fileName,
+    [[nodiscard]] size_t save(const std::string& fileName,
                 const QaplaWindows::GameFilterData& filterData,
                 std::function<void(size_t, float)> progressCallback,
                 std::function<bool()> cancelCheck);
@@ -122,7 +121,7 @@ private:
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
-    size_t saveToSameFile(const std::string& fileName,
+    [[nodiscard]] size_t saveToSameFile(const std::string& fileName,
                           const QaplaWindows::GameFilterData& filterData,
                           std::function<void(size_t, float)> progressCallback,
                           std::function<bool()> cancelCheck);
@@ -141,7 +140,7 @@ private:
      * @param cancelCheck Function to check if operation should be cancelled.
      * @return Number of games saved.
      */
-    size_t saveWithFilter(const std::string& fileName,
+    [[nodiscard]] size_t saveWithFilter(const std::string& fileName,
                           const QaplaWindows::GameFilterData& filterData,
                           std::function<void(size_t, float)> progressCallback,
                           std::function<bool()> cancelCheck);
