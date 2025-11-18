@@ -442,45 +442,48 @@ namespace QaplaWindows
             .name = Tutorial::TutorialName::BoardCutPaste,
             .displayName = "Board Cut & Paste",
             .messages = {
-                { "Cut & Paste - Step 1\n\n"
+                { .text = "Cut & Paste - Step 1\n\n"
                   "Learn to manage positions and multiple boards.\n\n"
                   "First, click the 'Time' button to set the game time.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 2\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 2\n\n"
                   "Set the time to 5 minutes and confirm with 'Apply'.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 3\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 3\n\n"
                   "Good! Now click 'Setup' to enter setup mode.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 4\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 4\n\n"
                   "Click 'Clear' to remove all pieces from the board.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 5\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 5\n\n"
                   "Place two kings and a queen on the board.\n\n"
                   "Then click 'Ok' to return to play mode.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 6\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 6\n\n"
                   "Click 'Analyze' to start engine analysis.\n"
                   "Wait a moment for the engine to calculate.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 7\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 7\n\n"
+                  "Click 'Stop' to stop engine analysis.\n",
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 8\n\n"
                   "In the Engine List window, click on the top row.\n"
                   "This copies the position including the calculated variation (PV).",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 8\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 9\n\n"
                   "Click the '+' tab at the top to create a second board.\n"
                   "A new tab (Board 2) will appear. You can switch between boards using the tabs.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste - Step 9\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste - Step 10\n\n"
                   "Switch to the Board 2 tab and click 'Paste'.\n"
                   "The position and PV will be pasted. Navigate to see the calculated line.\n\n"
                   "Tip: Hover over Board 2 tab to see the close button (×).",
-                  SnackbarManager::SnackbarType::Note },
-                { "Cut & Paste Complete!\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Cut & Paste Complete!\n\n"
                   "You've learned Cut & Paste and multi-board management!\n"
                   "You can copy FEN, PGN, PGN+PV, and paste various formats.\n\n"
                   "Use tabs to manage multiple boards. Board 1 cannot be closed.",
-                  SnackbarManager::SnackbarType::Success }
+                  .type = SnackbarManager::SnackbarType::Success }
             },
             .getProgressCounter = []() -> uint32_t& {
                 return BoardWindow::tutorialCutPasteProgress_;
@@ -693,13 +696,22 @@ namespace QaplaWindows
             case 6:
             // Step 6: User clicks Analyze and waits
             if (clickedButton == "Analyze") {
+                highlightedButton_ = "Stop";
+                Tutorial::instance().showNextTutorialStep(tutorialName);
+                return;
+            }
+            return;
+
+            case 7:
+            // Step 7: User clicks Stop
+            if (clickedButton == "Stop") {
                 highlightedButton_ = "";
                 Tutorial::instance().showNextTutorialStep(tutorialName);
                 return;
             }
             return;
             
-            case 7:
+            case 8:
             // Step 7: User clicks on engine list row to copy PV
             if (hasValidStringInClipboard()) {
                 Tutorial::instance().showNextTutorialStep(tutorialName);
@@ -707,7 +719,7 @@ namespace QaplaWindows
             }
             return;
             
-            case 8:
+            case 9:
             // Step 8: Second board instance created (triggered from constructor)
             if (clickedButton == "new instance") {
                 Tutorial::instance().showNextTutorialStep(tutorialName);
@@ -719,7 +731,7 @@ namespace QaplaWindows
             }
             return;
             
-            case 9:
+            case 10:
             if (this == secondaryTutorialInstance_ && clickedButton == "Paste") {
                 highlightedButton_ = "";
                 Tutorial::instance().showNextTutorialStep(tutorialName);
@@ -727,7 +739,7 @@ namespace QaplaWindows
             }
             return;
             
-            case 10:
+            case 11:
             // Letzte Message wurde angezeigt - warte bis User sie schließt
             if (!SnackbarManager::instance().isTutorialMessageVisible()) {
                 Tutorial::instance().finishTutorial(tutorialName);

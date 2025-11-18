@@ -49,6 +49,7 @@ public:
     struct Message {
         std::string text;
         SnackbarManager::SnackbarType type;
+        bool sticky = false;
     };
 
     enum class TutorialName {
@@ -86,7 +87,7 @@ public:
         void showNextMessage() {
             if (counter < messages.size() && counter < getProgressCounter()) {
                 const auto& msg = messages[counter];
-                SnackbarManager::instance().showTutorial(msg.text, msg.type, false);
+                SnackbarManager::instance().showTutorial(msg.text, msg.type, msg.sticky);
             }
             // Beeing finished is an additional state after all messages shown
             if (counter < getProgressCounter()) {

@@ -69,6 +69,37 @@ bool SnackbarManager::isTutorialMessageVisible() const {
     return false;
 }
 
+/**
+ * @brief Draws a circular close button with an "X" mark
+ * @param position The center position of the button
+ * @param radius The radius of the button circle
+ * @return true if the button was clicked, false otherwise
+ */
+static bool drawCloseButton(const ImVec2& position, float radius) {
+    auto* drawList = ImGui::GetWindowDrawList();
+
+    // Draw circle background
+    drawList->AddCircleFilled(position, radius, ImColor(1.0F, 1.0F, 1.0F, 0.9F));
+    drawList->AddCircle(position, radius, ImColor(0.0F, 0.0F, 0.0F, 0.9F), 16, 1.5F);
+
+    // Draw "X" mark 
+    float lineThickness = 2.0F;
+    float crossSize = radius * 0.5F;
+    ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
+    ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
+    ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
+    ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
+
+    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
+    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
+
+    // Create invisible button for interaction
+    ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
+    ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
+    
+    return ImGui::IsItemClicked();
+}
+
 void SnackbarManager::draw() {
     constexpr float snackbarWidth = 450.0F;
     constexpr float minSnackbarHeight = 120.0F;
@@ -93,7 +124,7 @@ void SnackbarManager::draw() {
         }
 
         ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
-        ImVec4 borderColor = ImVec4(bgColor.x + 0.2f, bgColor.y + 0.2f, bgColor.z + 0.2f, 1.0F);
+        ImVec4 borderColor = ImVec4(bgColor.x + 0.2F, bgColor.y + 0.2F, bgColor.z + 0.2F, 1.0F);
 
         // Calculate required height for text
         ImGui::PushFont(ImGui::GetFont());
@@ -127,14 +158,14 @@ void SnackbarManager::draw() {
         ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
 
         // Draw border
-        auto drawList = ImGui::GetWindowDrawList();
+        auto* drawList = ImGui::GetWindowDrawList();
         ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
         ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
         drawList->AddRect(p1, p2, ImColor(borderColor), 10.0F, 0, borderThickness);
 
         ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0F, 0.0F, 0.0F, 1.0F));
-        ImGui::SetWindowFontScale(1.1f);
+        ImGui::SetWindowFontScale(1.1F);
         ImGui::SetCursorPos(ImVec2(0.0F, 20.0F));
         ImGui::Indent(20.0F); 
         ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
@@ -165,31 +196,6 @@ void SnackbarManager::draw() {
 
         break; // Only show the most recent snackbar
     }
-}
-
-bool SnackbarManager::drawCloseButton(const ImVec2& position, float radius) {
-    auto drawList = ImGui::GetWindowDrawList();
-
-    // Draw circle background
-    drawList->AddCircleFilled(position, radius, ImColor(1.0F, 1.0F, 1.0F, 0.9f));
-    drawList->AddCircle(position, radius, ImColor(0.0F, 0.0F, 0.0F, 0.9f), 16, 1.5f);
-
-    // Draw "X" mark 
-    float lineThickness = 2.0F;
-    float crossSize = radius * 0.5f;
-    ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
-    ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
-    ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
-    ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
-
-    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0F, 0.0F, 0.0F, 0.9f), lineThickness);
-    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0F, 0.0F, 0.0F, 0.9f), lineThickness);
-
-    // Create invisible button for interaction
-    ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
-    ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
-    
-    return ImGui::IsItemClicked();
 }
 
 float SnackbarManager::getDuration(SnackbarType type) const {
@@ -235,8 +241,8 @@ void SnackbarManager::updateConfiguration() const {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
 }
 
-void SnackbarManager::showNextTutorialStep() {
-    if (tutorialProgress_ == 3) {
+void SnackbarManager::showNextTutorialStep() const {
+    if (tutorialProgress_ == 5) {
         Tutorial::instance().finishTutorial(Tutorial::TutorialName::Snackbar);
         return; 
     }
@@ -248,21 +254,30 @@ bool SnackbarManager::tutorialInitialized_ = []() {
         .name = Tutorial::TutorialName::Snackbar,
         .displayName = "Snackbar",
         .messages = {
-            { "Welcome to the Snackbar System!\n\n"
+            { .text = "Welcome to the Snackbar System!\n\n"
               "Snackbars display temporary notifications in the bottom-left corner. "
               "They automatically disappear after a few seconds. "
               "This is a 'sticky' note - it stays until you close it manually by clicking the X button.", 
-              SnackbarType::Note },
-            { "This is an example of a warning\n\n"
+              .type = SnackbarType::Note,
+              .sticky = true },
+            { .text = "This is an example of a warning\n\n"
               "There are 4 types of snackbars:\n"
               "- Note, Success, Warning, and Error.\n\n"
               "Each type has a different display duration.",
-              SnackbarType::Warning },
-            { "Snackbar Configuration\n\n"
+              .type = SnackbarType::Warning },
+            { .text = "Snackbar Configuration\n\n"
               "You can customize the display duration for each snackbar type in the Settings window.\n"
-              "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n\n"
-              "Red dots show where to click next - setup engines now.", 
-              SnackbarType::Note }
+              "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n"
+              "If the tutorial is too fast, adjust the duration of the messages.", 
+              .type = SnackbarType::Note },
+            { .text = "Snackbar Configuration\n\n"
+              "You can restart any tutorial from the beginning if needed.\n"
+              "Go to the 'Settings' tab and uncheck the tutorial you want to restart.\n",
+              .type = SnackbarType::Note },
+            { .text = "Snackbar Configuration\n\n"
+              "Now we start with the functionality.\n\n"
+              "Red dots show where to click next - setup engines.", 
+              .type = SnackbarType::Note }
         },
         .getProgressCounter = []() -> uint32_t& {
             return SnackbarManager::instance().tutorialProgress_;

@@ -176,15 +176,7 @@ private:
 
     static bool tutorialInitialized_;
     uint32_t tutorialProgress_ = 0;
-    void showNextTutorialStep();
-
-    /**
-     * @brief Draws a circular close button with an "X" mark
-     * @param position The center position of the button
-     * @param radius The radius of the button circle
-     * @return true if the button was clicked, false otherwise
-     */
-    bool drawCloseButton(const ImVec2& position, float radius);
+    void showNextTutorialStep() const;
 
     static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
         ImVec4(0.8f, 0.8f, 0.8f, 1.0F), // Note: Light Gray
