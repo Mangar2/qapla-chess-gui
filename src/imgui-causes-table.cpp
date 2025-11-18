@@ -36,7 +36,10 @@ namespace QaplaWindows {
                 { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F }
             }
-        ) {
+        ) 
+    {
+        table_.setSortable(true);
+        table_.setFilterable(true);
     }
 
     void ImGuiCausesTable::populate(const std::vector<EngineDuelResult>& duelResults) {

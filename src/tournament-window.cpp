@@ -357,7 +357,7 @@ void TournamentWindow::draw() {
     }
     tournamentData.drawRunningTable(ImVec2(size.x, 800.0F));
     tournamentData.drawEloTable(ImVec2(size.x, 800.0F));
-    tournamentData.drawCauseTable(ImVec2(size.x, 1000.0F));
+    tournamentData.drawCauseTable(ImVec2(size.x, 10000.0F));
     if (tournamentData.drawConfig().testOnly || tournamentData.resignConfig().testOnly) {
         tournamentData.drawAdjudicationTable(ImVec2(size.x, 200.0F));
     }

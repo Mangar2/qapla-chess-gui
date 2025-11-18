@@ -253,14 +253,8 @@ namespace QaplaWindows {
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) {
         std::optional<size_t> clickedRow;
         ImVec2 tableSize = size;
-        if (shrink) {
-            float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-            tableSize.y = std::min(tableSize.y, (indexManager_.size() + 2) * rowHeight);
-        }
-        // Calculate visible rows
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-        size_t visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
-        if (visibleRows == 0) visibleRows = 1; // Fallback
+
         std::optional<size_t> keyboardRow;
         indexManager_.updateSize(rows_.size());
         if (filterable_) {
@@ -271,6 +265,14 @@ namespace QaplaWindows {
             tableSize.y = std::max(0.0F, tableSize.y - filterHeight);
             handleFiltering(changed);
         }
+
+        if (shrink) {
+            tableSize.y = std::min(tableSize.y, (indexManager_.size() + 2) * rowHeight);
+        }
+
+        // Calculate visible rows
+        size_t visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
+        if (visibleRows == 0) visibleRows = 1; // Fallback
 
         // Push the selected font if not using default system font
         ImFont* selectedFont = nullptr;
