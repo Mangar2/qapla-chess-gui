@@ -4,6 +4,16 @@ project(QaplaChess)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # Generate compile_commands.json for IntelliSense
+
+# Statisches Linken der C/C++ Runtime auf Windows für portable exe
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  # Verhindere automatisches Linken der dynamischen Runtime
+  add_compile_options(-D_MT)
+  add_compile_options($<$<CONFIG:Debug>:-D_DEBUG>)
+  add_compile_options($<$<CONFIG:Release>:-DNDEBUG>)
+endif()
+
 if(NOT WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
@@ -77,6 +87,19 @@ target_link_libraries(qapla PRIVATE glfw imgui)
 # --------------------------------
 if(WIN32)
   target_link_libraries(qapla PRIVATE opengl32)
+  
+  # Static linkig of the C/C++ runtime for portable exe without dll-dependency
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Explizit statische Runtime Libraries linken
+    target_link_libraries(qapla PRIVATE 
+      $<$<CONFIG:Debug>:libcmtd>
+      $<$<CONFIG:Release>:libcmt>
+    )
+  elseif(MSVC)
+    # MSVC Compiler
+    set_property(TARGET qapla PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+  
 elseif(APPLE)
   target_link_libraries(qapla PRIVATE
     "-framework OpenGL"
