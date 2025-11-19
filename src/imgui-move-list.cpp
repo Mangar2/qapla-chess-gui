@@ -20,16 +20,17 @@
 #include "imgui-move-list.h"
 #include "move-record.h"
 #include "game-record.h"
+
 #include <imgui.h>
 
 #include <sstream>
+#include <format>
+#include <string>
 
 using QaplaTester::GameRecord;
 using QaplaTester::MoveRecord;
 using QaplaTester::GameEndCause;
 using QaplaTester::GameResult;
-#include <format>
-#include <string>
 
 using namespace QaplaWindows;
 
@@ -45,7 +46,7 @@ ImGuiMoveList::ImGuiMoveList()
         { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
         { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
         { .name = "Eval", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-        { .name = "PV", .flags = ImGuiTableColumnFlags_WidthStretch, .width = 0.0F, .alignRight = false }
+        { .name = "PV", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 0.0F, .alignRight = false }
 })
 {
     table_.setAutoScroll(true);  
@@ -96,7 +97,7 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
     uint32_t moveNumber = (gameRecord.halfmoveNoAtPly(tableSizeWithoutStartRow) + 1) / 2;
     for (size_t i = tableSizeWithoutStartRow; i < moves.size(); ++i) {
         if (wtm) {
-            table_.push(mkRow(" " + std::to_string(moveNumber) + ". ", moves[i]));
+            table_.push(mkRow(std::format(" {}. ", moveNumber), moves[i]));
         } 
         else {
             table_.push(mkRow("...", moves[i]));

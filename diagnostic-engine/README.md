@@ -25,6 +25,15 @@ The engine mode is determined by the executable name:
    - Same as LOG mode, but hangs in an infinite loop when receiving `isready`
    - Used to diagnose timeout handling
 
+4. **LOSSONTIME Mode** (e.g., `diagnostic-engine-lossontime.exe`)
+   - Progressively wastes increasing amounts of time on each move
+   - Move 1: sleeps for 5% of available time
+   - Move 2: sleeps for 10% of available time
+   - Move 3: sleeps for 15% of available time
+   - Continues incrementing by 5% until it exceeds available time and loses on time
+   - No debug output to avoid interference with time measurements
+   - Used to test time management and time forfeit handling
+
 ### Chess Functionality
 
 - **Position Handling**: Supports `position startpos` and `position fen <fen>` commands
@@ -117,10 +126,12 @@ To use different modes, rename or copy the executable:
 # Windows
 Copy-Item diagnostic-engine.exe diagnostic-engine-noinit.exe
 Copy-Item diagnostic-engine.exe diagnostic-engine-loop.exe
+Copy-Item diagnostic-engine.exe diagnostic-engine-lossontime.exe
 
 # Linux/macOS
 cp diagnostic-engine diagnostic-engine-noinit
 cp diagnostic-engine diagnostic-engine-loop
+cp diagnostic-engine diagnostic-engine-lossontime
 ```
 
 ### Testing with GUI

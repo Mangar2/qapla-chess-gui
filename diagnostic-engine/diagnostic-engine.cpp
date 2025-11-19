@@ -43,7 +43,8 @@ using namespace QaplaTester;
 enum class EngineMode {
     LOG,        // Full logging and UCI functionality
     NOINIT,     // Ignore all input except quit, no logging
-    LOOP        // Infinite loop on isready
+    LOOP,       // Infinite loop on isready
+    LOSSONTIME  // Progressively waste time until time loss
 };
 
 // =============================================================================
@@ -55,6 +56,7 @@ std::string logFileName;
 EngineMode engineMode = EngineMode::LOG;
 std::unique_ptr<GameState> gameState;
 std::mt19937 rng(std::random_device{}());
+int moveCounter = 0; // Counter for LOSSONTIME mode
 
 // =============================================================================
 // Utility Functions
@@ -74,7 +76,7 @@ std::string getTimestamp() {
 
 void log(const std::string& type, const std::string& message) {
     if (engineMode != EngineMode::LOG) {
-        return; // No logging in NOINIT mode
+        return; // No logging in NOINIT or LOSSONTIME mode
     }
     
     std::string timestamp = getTimestamp();
@@ -164,6 +166,8 @@ EngineMode detectEngineMode(const std::string& executablePath) {
         return EngineMode::NOINIT;
     } else if (filename.find("loop") != std::string::npos) {
         return EngineMode::LOOP;
+    } else if (filename.find("lossontime") != std::string::npos) {
+        return EngineMode::LOSSONTIME;
     } else {
         return EngineMode::LOG;
     }
@@ -298,6 +302,50 @@ void handlePositionCommand(const std::string& line) {
 void handleGoCommand(const std::string& line) {
     log("SEARCH", "Search command: " + line);
     
+    // LOSSONTIME mode: waste increasing amounts of time
+    if (engineMode == EngineMode::LOSSONTIME) {
+        moveCounter++;
+        
+        // Parse go command to extract time information
+        std::istringstream iss(line);
+        std::string token;
+        long long wtime = 0, btime = 0, winc = 0, binc = 0, movetime = 0;
+        
+        while (iss >> token) {
+            if (token == "wtime") {
+                iss >> wtime;
+            } else if (token == "btime") {
+                iss >> btime;
+            } else if (token == "winc") {
+                iss >> winc;
+            } else if (token == "binc") {
+                iss >> binc;
+            } else if (token == "movetime") {
+                iss >> movetime;
+            }
+        }
+        
+        // Determine available time for this move
+        long long availableTime = 0;
+        bool isWhite = gameState->isWhiteToMove();
+        
+        if (movetime > 0) {
+            availableTime = movetime;
+        } else if (isWhite && wtime > 0) {
+            availableTime = wtime;
+        } else if (!isWhite && btime > 0) {
+            availableTime = btime;
+        }
+        
+        double sleepPercentage = moveCounter * 0.10;
+        long long sleepTime = static_cast<long long>(availableTime * sleepPercentage);
+        
+        // Sleep for the calculated time
+        if (sleepTime > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+        }
+    }
+    
     // Get all legal moves
     auto legalMoves = gameState->getLegalMoves();
     
@@ -339,6 +387,7 @@ bool processCommand(const std::string& line, int commandCount) {
     else if (line == "ucinewgame") {
         log("GAME", "New game started");
         gameState->setFen(true); // Reset to starting position
+        moveCounter = 0; // Reset move counter for LOSSONTIME mode
     }
     else if (line.substr(0, 8) == "position") {
         handlePositionCommand(line);
@@ -438,7 +487,7 @@ void runNoInitMode() {
 // Main Entry Point
 // =============================================================================
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, char* argv[]) {
     // Detect engine mode from executable name
     engineMode = detectEngineMode(argv[0]);
     
@@ -477,6 +526,10 @@ int main(int argc, char* argv[]) {
         case EngineMode::LOOP:
             log("SYSTEM", "Running in LOOP mode");
             runLogMode(); // Same as LOG mode, but isready will loop
+            break;
+            
+        case EngineMode::LOSSONTIME:
+            runLogMode(); // Same as LOG mode, but go command wastes time
             break;
     }
     

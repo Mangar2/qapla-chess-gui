@@ -61,3 +61,25 @@ endif()
 install(TARGETS diagnostic-engine
     RUNTIME DESTINATION bin
 )
+
+# Create copies for different diagnostic modes
+add_custom_command(TARGET diagnostic-engine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:diagnostic-engine>
+        ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-lossontime${CMAKE_EXECUTABLE_SUFFIX}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:diagnostic-engine>
+        ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-loop${CMAKE_EXECUTABLE_SUFFIX}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:diagnostic-engine>
+        ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-noinit${CMAKE_EXECUTABLE_SUFFIX}
+    COMMENT "Creating diagnostic-engine mode variants (lossontime, loop, noinit)"
+)
+
+install(FILES 
+    ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-lossontime${CMAKE_EXECUTABLE_SUFFIX}
+    ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-loop${CMAKE_EXECUTABLE_SUFFIX}
+    ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-noinit${CMAKE_EXECUTABLE_SUFFIX}
+    DESTINATION bin
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+)
