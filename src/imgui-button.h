@@ -144,16 +144,6 @@ namespace QaplaButton {
      * @return The total size (width and height) required to render all buttons, considering the largest
      *         dimensions among them.
      */
-    inline ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels) {
-        auto totalSize = buttonSize;
-        for (const auto& label : labels) {
-            auto total = QaplaButton::calcIconButtonTotalSize(buttonSize, label.c_str());
-            totalSize.x = std::max(totalSize.x, total.x);
-            totalSize.y = std::max(totalSize.y, total.y);
-        }
-        totalSize.x = std::round(totalSize.x);
-        totalSize.y = std::round(totalSize.y);
-		return totalSize;
-    }
+    ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels);
     
 } // namespace QaplaButton

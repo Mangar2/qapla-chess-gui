@@ -336,7 +336,7 @@ void ImGuiEngineList::setInfoTable(size_t index, const MoveRecord& moveRecord) {
 }
 
 static std::string drawButtons(bool showLog) {
-    constexpr float space = 3.0F;
+    constexpr float space = 0.0F;
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;

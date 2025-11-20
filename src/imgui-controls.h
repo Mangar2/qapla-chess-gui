@@ -21,6 +21,7 @@
 
 #include "os-dialogs.h"
 #include "snackbar.h"
+#include "i18n.h"
 
 #include "time-control.h"
 #include "engine-option.h"
@@ -432,7 +433,8 @@ namespace QaplaWindows::ImGuiControls {
         bool modified = false;
         modified = ImGui::Checkbox("##select", &selected);
         ImGui::SameLine(0.0F, 4.0F);
-        if (ImGui::CollapsingHeader(label.c_str(), flags)) {
+        auto translatedLabel = Translator::instance().translate(label);
+        if (ImGui::CollapsingHeader(translatedLabel.c_str(), flags)) {
             ImGui::Indent(10.0F);
             // call callback to draw content
             if ((flags & ImGuiTreeNodeFlags_Leaf) == 0 && contentCallback) {
@@ -694,7 +696,8 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the header is open, false otherwise.
      */
     inline bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false) {
-        bool result = ImGui::CollapsingHeader(label, flags);
+        auto translatedLabel = Translator::instance().translate(label);
+        bool result = ImGui::CollapsingHeader(translatedLabel.c_str(), flags);
         
         if (showDot) {
             constexpr float dotOffsetX = 20.0F;  // More offset for CollapsingHeader arrow

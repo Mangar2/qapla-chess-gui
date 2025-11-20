@@ -83,6 +83,17 @@ namespace QaplaConfiguration {
          */
         static void updateLoggerConfiguration();
 
+        /**
+         * @brief Loads the language configuration from the configuration data
+         */
+        static void loadLanguageConfiguration();
+
+        /**
+         * @brief Updates the configuration data with the current language settings
+         * @param language The language code to save
+         */
+        static void updateLanguageConfiguration(const std::string& language);
+
     protected:
         /**
          * @brief Saves configuration data to the output stream.

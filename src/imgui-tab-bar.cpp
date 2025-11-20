@@ -19,7 +19,10 @@
 
 #include "imgui-tab-bar.h"
 #include "imgui-controls.h"
+#include "i18n.h"
+
 #include <algorithm>
+
 
 namespace QaplaWindows {
 
@@ -67,8 +70,8 @@ namespace QaplaWindows {
 
                 // Check if window is highlighted
                 bool isHighlighted = it->window && it->window->highlighted();
-
-                bool tabIsActive = ImGui::BeginTabItem(it->name.c_str(), closable ? &open : nullptr, flags);
+                auto translatedName = Translator::instance().translate(it->name);
+                bool tabIsActive = ImGui::BeginTabItem(translatedName.c_str(), closable ? &open : nullptr, flags);
                 
                 // Draw dot if window is highlighted (after BeginTabItem, independent of whether tab is active)
                 if (isHighlighted) {

@@ -88,6 +88,11 @@ namespace QaplaWindows
          */
         void drawLoggerConfig();
 
+        /**
+         * @brief Draws the language configuration section
+         */
+        void drawLanguageConfig();
+
         BufferedTextInput reportBaseNameInput_;  ///< Buffered input for report log base name
         BufferedTextInput engineBaseNameInput_;  ///< Buffered input for engine log base name
     };

@@ -48,7 +48,7 @@ static void drawSingleButton(
     ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
 {
-    if (button == "Run/Grace/Continue")
+    if (button == "RGC")
     {
         if (running)
         {
@@ -90,25 +90,27 @@ void SprtTournamentWindow::drawButtons() {
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
-    const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+    
+    std::vector<std::string> allButtons = { "RGC", "Stop", "Clear", "Test", "Load", "Save As" };
+    const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
-    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Test", "Load", "Save As" }) {
+    for (const std::string& button : allButtons) {
         ImGui::SetCursorScreenPos(pos);
         bool running = SprtTournamentData::instance().isRunning();
         auto label = button;
         
-        if (label == "Run/Grace/Continue") {
+        if (label == "RGC") {
             label = running ? "Grace" : "Run";
         } 
-        if (label == "Run/Grace/Continue" && SprtTournamentData::instance().hasTasksScheduled()) {
+        if (label == "RGC" && SprtTournamentData::instance().hasTasksScheduled()) {
             label = "Continue";
         }
 
         auto state = QaplaButton::ButtonState::Normal;
-        if (button == "Run/Grace/Continue" && SprtTournamentData::instance().state() == SprtTournamentData::State::GracefulStopping) {
+        if (button == "RGC" && SprtTournamentData::instance().state() == SprtTournamentData::State::GracefulStopping) {
             state = QaplaButton::ButtonState::Active;
         }
-        if (button == "Run/Grace/Continue" && SprtTournamentData::instance().isMonteCarloTestRunning()) {
+        if (button == "RGC" && SprtTournamentData::instance().isMonteCarloTestRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
         if ((button == "Stop") && !SprtTournamentData::instance().isAnyRunning()) {
@@ -140,7 +142,7 @@ void SprtTournamentWindow::drawButtons() {
 
 void SprtTournamentWindow::executeCommand(const std::string &button) {
     try {
-        if (button == "Run/Grace/Continue") {
+        if (button == "RGC") {
             bool running = SprtTournamentData::instance().isRunning();
             if (running) {
                 SprtTournamentData::instance().stopPool(true);

@@ -28,6 +28,7 @@
 #include "timer.h"
 #include "time-control.h"
 #include "engine-worker-factory.h"
+#include "i18n.h"
 
 #include <cstdlib>
 #include <fstream>
@@ -70,6 +71,7 @@ void Configuration::loadData(std::ifstream& in) {
             }
         }
         loadLoggerConfiguration();
+        loadLanguageConfiguration();
 
     }
     catch (const std::exception& e) {
@@ -132,4 +134,27 @@ void Configuration::updateLoggerConfiguration() {
     };
     
     Configuration::instance().getConfigData().setSectionList("logger", "logger", { section });
+}
+
+void Configuration::loadLanguageConfiguration() {
+    auto sections = Configuration::instance().
+        getConfigData().getSectionList("languagesettings", "general").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        std::string languageCode = section.getValue("languagecode").value_or("eng");
+        Translator::instance().setLanguageCode(languageCode);
+    }
+}
+
+void Configuration::updateLanguageConfiguration(const std::string& languageCode) {
+    QaplaHelpers::IniFile::Section section {
+        .name = "languagesettings",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "general"},
+            {"languagecode", languageCode}
+        }
+    };
+    
+    Configuration::instance().getConfigData().setSectionList("languagesettings", "general", { section });
 }

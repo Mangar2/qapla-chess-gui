@@ -25,8 +25,11 @@
 #include "tutorial.h"
 #include "logger.h"
 #include "os-dialogs.h"
+#include "i18n.h"
 
 #include <imgui.h>
+#include <map>
+#include <vector>
 
 using namespace QaplaWindows;
 
@@ -90,6 +93,14 @@ void ConfigurationWindow::draw()
     if (ImGui::CollapsingHeader("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawLoggerConfig();
+        ImGui::Unindent(10.0F);
+    }
+    
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Language Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0F);
+        drawLanguageConfig();
         ImGui::Unindent(10.0F);
     }
     
@@ -190,17 +201,14 @@ void ConfigurationWindow::drawLoggerConfig()
     ImGui::TextDisabled("%s", config.logPath.c_str());
     ImGui::Spacing();
 
-    // Report Log Base Name with Apply button
     if (reportBaseNameInput_.draw("Report Log - Base Name", config.reportLogBaseName, inputWidth)) {
         modified = true;
     }
 
-    // Engine Log Base Name with Apply button
     if (engineBaseNameInput_.draw("Engine Log - Base Name", config.engineLogBaseName, inputWidth)) {
         modified = true;
     }
 
-    // Engine Log Strategy
     ImGui::SetNextItemWidth(inputWidth);
     int currentStrategy = static_cast<int>(config.engineLogStrategy);
     const std::vector<std::string> strategyItems = { 
@@ -222,5 +230,35 @@ void ConfigurationWindow::drawLoggerConfig()
     if (modified) {
         QaplaTester::setLoggerConfig(config);
         QaplaConfiguration::Configuration::updateLoggerConfiguration();
+    }
+}
+
+void ConfigurationWindow::drawLanguageConfig() {
+    auto& config = QaplaConfiguration::Configuration::instance();
+    std::string currentLanguageCode = Translator::instance().getLanguageCode();
+    
+    std::map<std::string, std::string> langMap = {
+        {"English", "eng"},
+        {"Deutsch", "deu"},
+        {"Français", "fra"}
+    };    
+    
+    std::string currentLanguageName = "English"; 
+    std::vector<std::string> languageNames;
+    
+    for (const auto& [key, value] : langMap) {
+        if (value == currentLanguageCode) {
+            currentLanguageName = key;
+        }
+        languageNames.push_back(key);
+    }
+    if (ImGuiControls::selectionBox("Language", currentLanguageName, languageNames)) {
+        auto& newLanguageCode = langMap[currentLanguageName];
+        config.updateLanguageConfiguration(newLanguageCode);
+        Translator::instance().setLanguageCode(newLanguageCode);
+    }
+    
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", tr("Translation is currently work in progress. Only few parts are translated.").c_str());
     }
 }

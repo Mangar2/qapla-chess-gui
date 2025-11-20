@@ -114,7 +114,9 @@ std::string TournamentWindow::drawButtons() {
     ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
     constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
-    const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+    const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, 
+        { "Continue", "Stop", "Clear", "Load", "Save As" });
+        
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
     std::string clickedButton = "";

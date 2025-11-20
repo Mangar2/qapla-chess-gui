@@ -18,6 +18,7 @@
  */
 
 #include "imgui-button.h"
+#include "i18n.h"
 
 #include <functional>
 #include <string>
@@ -763,7 +764,8 @@ namespace QaplaButton {
                 ImVec2 textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
                                        itemStartPos.y + POPUP_ITEM_PADDING_Y);
                 ImU32 textColor = ImGui::GetColorU32(ImGuiCol_Text);
-                drawList->AddText(textPos, textColor, command.name.c_str());
+                auto translatedName = Translator::instance().translate(command.name);
+                drawList->AddText(textPos, textColor, translatedName.c_str());
                 
                 // Draw red highlight dot if command is highlighted
                 if (command.state == ButtonState::Highlighted) {
@@ -872,25 +874,33 @@ namespace QaplaButton {
             drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
         }
 
-        ImVec2 labelSize = ImGui::CalcTextSize(label.c_str());
+        auto translatedLabel = Translator::instance().translate(label);
+
+        ImVec2 labelSize = ImGui::CalcTextSize(translatedLabel.c_str());
         ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
-        drawList->AddText(labelPos, getTextColor(state), label.c_str());
+        drawList->AddText(labelPos, getTextColor(state), translatedLabel.c_str());
 
         return clicked;
     }
 
-    /**
-     * @brief Calculates the total area needed to draw the icon button including its label.
-     *
-     * @param size   Size of the clickable icon area (excluding label).
-     * @param label  The label text shown below the button.
-     * @return Total size including label.
-     */
     ImVec2 calcIconButtonTotalSize(ImVec2 size, const char* label) {
         ImVec2 labelSize = ImGui::CalcTextSize(label);
         float totalHeight = size.y + 4.0F + labelSize.y;
         float totalWidth = std::max(size.x, labelSize.x);
         return { totalWidth, totalHeight };
+    }
+
+    ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels) {
+        auto totalSize = buttonSize;
+        for (const auto& label : labels) {
+            auto translatedLabel = Translator::instance().translate(label);
+            auto total = QaplaButton::calcIconButtonTotalSize(buttonSize, translatedLabel.c_str());
+            totalSize.x = std::max(totalSize.x, total.x);
+            totalSize.y = std::max(totalSize.y, total.y);
+        }
+        totalSize.x = std::round(totalSize.x);
+        totalSize.y = std::round(totalSize.y);
+		return totalSize;
     }
 
 } // namespace QaplaButton

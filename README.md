@@ -30,6 +30,7 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Comprehensive Settings** - All features of the command-line engine tester accessible via GUI
 - **Real-time Control** - Adjust concurrency, monitor progress, and control running tournaments on the fly
 - **Modern Interface** - Clean, responsive UI with OpenGL rendering
+- **Initial Multilingual Support** - Basic localization support (English, Deutsch, Français). Select your preferred language in the Settings; translations are work-in-progress and may be incomplete.
 
 ### Architecture
 

@@ -222,11 +222,12 @@ namespace QaplaWindows
         constexpr ImVec2 buttonSize = {25.0F, 25.0F};
         
         ImVec2 boardPos = ImGui::GetCursorScreenPos();
-        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
         
         std::vector<std::string> allButtons = {
             "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Time", "Setup", "Paste"
         };
+
+        const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
         
         float availableWidth = ImGui::GetContentRegionAvail().x - leftOffset;
         float buttonWidth = totalSize.x + space;
@@ -350,11 +351,16 @@ namespace QaplaWindows
         ImVec2 boardPos = ImGui::GetCursorScreenPos();
 
         constexpr ImVec2 buttonSize = {25.0F, 25.0F};
-        const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
+
+        std::vector<std::string> allButtons = {
+            "Ok", "New", "Clear", "Copy", "Paste", "Cancel"
+        };
+
+        const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
         auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
-        for (const std::string button : {"Ok", "New", "Clear", "Copy", "Paste", "Cancel"})
+        for (const std::string& button : allButtons)
         {
             ImGui::SetCursorScreenPos(pos);
             if (drawSetupButton(button, button, buttonSize))
