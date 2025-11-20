@@ -386,6 +386,7 @@ void InteractiveBoardWindow::doMove(const MoveRecord& move)
 
 void InteractiveBoardWindow::setPosition(bool startPosition, const std::string &fen)
 {
+	computeTask_->setTimeControl(timeControl_);
 	computeTask_->setPosition(startPosition, fen);
 }
 
@@ -576,7 +577,6 @@ void InteractiveBoardWindow::pollData()
 			imGuiBarChart_->setFromGameRecord(gameRecord);
 			boardWindow_->setFromGameRecord(gameRecord);
 			engineWindow_->setFromGameRecord(gameRecord);
-			timeControl_ = gameRecord.getWhiteTimeControl(); 
 		});
 		engineWindow_->setAllowInput(true);
 		computeTask_->getGameContext().withMoveRecord([&](const MoveRecord &moveRecord, uint32_t idx) {
