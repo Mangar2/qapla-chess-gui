@@ -45,7 +45,7 @@ ImGuiClock::ImGuiClock() = default;
 ImGuiClock::~ImGuiClock() = default;
 
 void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
-    bool update = gameRecordTracker_.checkModification(gameRecord.getChangeTracker()).second;
+    auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
     if (!update) {
         return;
     }
@@ -62,7 +62,7 @@ void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
     GoLimits goLimits = createGoLimits(wtc, btc,
         halfMoves, whiteTime, blackTime, gameRecord.isWhiteToMove());
 
-    if (nextMoveIndex == 0) {
+    if (modification) {
         clockData_.wEngineName = gameRecord.getWhiteEngineName();
         clockData_.bEngineName = gameRecord.getBlackEngineName();
     }
