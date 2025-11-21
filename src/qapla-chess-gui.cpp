@@ -39,7 +39,7 @@
 #include "snackbar.h"
 #include "tutorial.h"
 #include "callback-manager.h"
-#include "dark-wood-background.h"
+#include "data/dark-wood-background.h"
 #include "font.h"
 #include "background-renderer.h"
 
