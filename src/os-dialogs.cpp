@@ -309,6 +309,8 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
 #elif defined(__linux__)
 #include <gtk/gtk.h>
 #include <filesystem>
+#include <pwd.h>
+#include <unistd.h>
 
 std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
         const std::string& defaultPath) 
