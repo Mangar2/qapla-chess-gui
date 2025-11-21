@@ -19,6 +19,8 @@
 
 #include "imgui-table.h"
 #include "font.h"
+#include "i18n.h"
+
 #include <imgui.h>
 #include <iostream>
 #include <algorithm>
@@ -175,9 +177,9 @@ namespace QaplaWindows {
         for (size_t columnN = 0; columnN < columns_.size(); columnN++) {
             if (!ImGui::TableSetColumnIndex(columnN))
                 continue;
-			std::string name = columns_[columnN].name;
+            std::string translatedName = Translator::instance().translate("Table", columns_[columnN].name);
             ImGui::PushID(static_cast<int>(columnN));
-            headerAligned(columns_[columnN].name, columns_[columnN].alignRight);
+            headerAligned(translatedName, columns_[columnN].alignRight);
             ImGui::PopID();
         }
     }
