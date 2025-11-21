@@ -1,4 +1,5 @@
-code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. 
+code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. Max. nesting lelvel 3.
+code style: prevent implicit conversions use same types where possible. Always use curly braces for all control statements. Use "auto" instead of the type where reasonable especially if the type is already in the line.
 imgui: dont use imgui controls directy use controls from imguicontrols.h
 
 code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. 

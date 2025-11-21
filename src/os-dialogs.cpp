@@ -533,9 +533,12 @@ std::string OsDialogs::getConfigDirectory() {
     
     // Fallback to passwd if HOME not set
     if (homeDir == nullptr) {
-        struct passwd* pw = getpwuid(getuid());
-        if (pw != nullptr) {
-            homeDir = pw->pw_dir;
+        struct passwd pwd;
+        struct passwd* result = nullptr;
+        char buffer[4096];
+        
+        if (getpwuid_r(getuid(), &pwd, buffer, sizeof(buffer), &result) == 0 && result != nullptr) {
+            homeDir = pwd.pw_dir;
         }
     }
     

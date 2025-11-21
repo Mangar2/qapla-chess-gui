@@ -21,18 +21,111 @@
 
 #include "qapla-engine/evalvalue.h"
 
-using QaplaTester::GameRecord;
-
+#include <ranges>
 #include <sstream>
 #include <iomanip>
 
+using QaplaTester::GameRecord;
+
 namespace QaplaWindows {
+
+namespace {
+
+/**
+ * @brief Calculates the appropriate step size for Y-axis labels based on ideal step size.
+ */
+int32_t calculateYStepSize(int32_t idealStepSize) {
+    if (idealStepSize <= 100) {
+        return 100;
+    }
+    if (idealStepSize <= 250) {
+        return 200;
+    }
+    if (idealStepSize <= 500) {
+        return 500;
+    }
+    if (idealStepSize <= 1000) {
+        return 1000;
+    }
+    if (idealStepSize <= 2500) {
+        return 2500;
+    }
+    if (idealStepSize <= 5000) {
+        return 5000;
+    }
+    return 10000;
+}
+
+/**
+ * @brief Adjusts step size when window is too small for standard spacing.
+ */
+int32_t adjustStepSizeForSmallWindow(int32_t stepSize, float chartHeight, int32_t scale) {
+    float availableSpacingForTwo = chartHeight / 2.0F;
+    auto maxValueThatFits = static_cast<int32_t>((availableSpacingForTwo / chartHeight) * scale);
+    
+    int32_t adjustedStepSize = stepSize;
+    while (adjustedStepSize > maxValueThatFits && adjustedStepSize > 25) {
+        if (adjustedStepSize >= 1000) {
+            adjustedStepSize /= 2;
+        } else if (adjustedStepSize >= 500) {
+            adjustedStepSize = 200;
+        } else {
+            adjustedStepSize = 100;
+        }
+    }
+    return adjustedStepSize;
+}
+
+/**
+ * @brief Draws a horizontal grid line with tick mark and label on the Y-axis.
+ */
+void drawYAxisGridLine(
+    ImDrawList* drawList,
+    float y,
+    float chartMinX,
+    float chartMaxX,
+    int32_t value,
+    ImU32 gridColor,
+    ImU32 axisColor,
+    ImU32 textColor
+) {
+    // Grid line
+    drawList->AddLine(
+        ImVec2(chartMinX, y),
+        ImVec2(chartMaxX, y),
+        gridColor,
+        1.0F
+    );
+    
+    // Tick mark
+    drawList->AddLine(
+        ImVec2(chartMinX - 3, y),
+        ImVec2(chartMinX + 3, y),
+        axisColor,
+        1.0F
+    );
+    
+    // Label
+    std::string label = std::to_string(value / 100);
+    ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
+    drawList->AddText(
+        ImVec2(chartMinX - textSize.x - 8, y - textSize.y * 0.5F),
+        textColor,
+        label.c_str()
+    );
+}
+
+} // anonymous namespace
 
 void ImGuiBarChart::setFromGameRecord(const GameRecord& gameRecord) {
     auto [isModified, isUpdated] = changeTracker_.checkModification(gameRecord.getChangeTracker());
-    if (!isUpdated) return;
+    if (!isUpdated) {
+        return;
+    }
     changeTracker_.updateFrom(gameRecord.getChangeTracker());
-    if (isModified) clearValues();
+    if (isModified) {
+        clearValues();
+    }
 
     for (uint32_t index = values_.size(); index < gameRecord.history().size(); ++index) {
         const auto& move = gameRecord.history()[index];
@@ -56,9 +149,9 @@ void ImGuiBarChart::calculateScale(int32_t& minValue, int32_t& maxValue, int32_t
         return;
     }
     
-    auto minMaxPair = std::minmax_element(values_.begin(), values_.end());
-    int32_t dataMin = *minMaxPair.first;
-    int32_t dataMax = *minMaxPair.second;
+    auto [minIt, maxIt] = std::ranges::minmax_element(values_);
+    int32_t dataMin = *minIt;
+    int32_t dataMax = *maxIt;
     
     int32_t maxAbsValue = std::max(std::abs(dataMin), std::abs(dataMax));
     
@@ -90,7 +183,7 @@ ImVec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const ImVec2&
     float yNormalized = static_cast<float>(value - minValue) / static_cast<float>(scale);
     float y = chartMax.y - yNormalized * (chartMax.y - chartMin.y);
     
-    return ImVec2(x, y);
+    return {x, y};
 }
 
 void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
@@ -103,11 +196,13 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         2.0F
     );
     
-    if (values_.empty()) return;
+    if (values_.empty()) {
+        return;
+    }
     
     float availableWidth = chartMax.x - chartMin.x;
     float avgLabelWidth = ImGui::CalcTextSize("100").x;
-    float minLabelSpacing = avgLabelWidth * 1.5f;
+    float minLabelSpacing = avgLabelWidth * 1.5F;
     
     int maxLabels = static_cast<int>(availableWidth / minLabelSpacing);
     maxLabels = std::max(2, std::min(maxLabels, static_cast<int>(values_.size())));
@@ -116,17 +211,23 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     int idealStep = std::max(1, totalValues / (maxLabels - 1));
     
     int stepSize;
-    if (idealStep <= 10) stepSize = 10;
-    else if (idealStep <= 20) stepSize = 20;
-    else if (idealStep <= 40) stepSize = 40;
-    else if (idealStep <= 100) stepSize = 100;
-    else stepSize = 200;
+    if (idealStep <= 10) {
+        stepSize = 10;
+    } else if (idealStep <= 20) {
+        stepSize = 20;
+    } else if (idealStep <= 40) {
+        stepSize = 40;
+    } else if (idealStep <= 100) {
+        stepSize = 100;
+    } else {
+        stepSize = 200;
+    }
     
     for (int step = 1; step * stepSize <= totalValues; ++step) {
         int moveNumber = step * stepSize;
         int arrayIndex = moveNumber - 1;
         
-        float x = chartMin.x + arrayIndex * (config_.barWidth + config_.barSpacing) + config_.barWidth * 0.5f;
+        float x = chartMin.x + arrayIndex * (config_.barWidth + config_.barSpacing) + config_.barWidth * 0.5F;
         
         drawList->AddLine(
             ImVec2(x, zeroY - 3),
@@ -138,7 +239,7 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         std::string label = std::to_string(moveNumber / 2);
         ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
         drawList->AddText(
-            ImVec2(x - textSize.x * 0.5f, zeroY + 8),
+            ImVec2(x - textSize.x * 0.5F, zeroY + 8),
             config_.textColor,
             label.c_str()
         );
@@ -156,36 +257,18 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     
     float chartHeight = chartMax.y - chartMin.y;
     float textHeight = ImGui::GetTextLineHeight();
-    float minLabelSpacing = textHeight * 1.5f;
+    float minLabelSpacing = textHeight * 1.5F;
     
     int maxLabels = static_cast<int>(chartHeight / minLabelSpacing);
     maxLabels = std::max(3, std::min(maxLabels, 15));
     
     int32_t idealStepSize = scale / (maxLabels - 1);
-    
-    int32_t stepSize;
-    if (idealStepSize <= 100) stepSize = 100;
-    else if (idealStepSize <= 250) stepSize = 200;
-    else if (idealStepSize <= 500) stepSize = 500;
-    else if (idealStepSize <= 1000) stepSize = 1000;
-    else if (idealStepSize <= 2500) stepSize = 2500;
-    else if (idealStepSize <= 5000) stepSize = 5000;
-    else stepSize = 10000;
+    int32_t stepSize = calculateYStepSize(idealStepSize);
     
     bool showZero = maxLabels > 3;
     
-    // Special case: window too small for 3 labels - adjust step size to fit
     if (!showZero) {
-        float availableSpacingForTwo = chartHeight / 2.0F;
-        int32_t maxValueThatFits = static_cast<int32_t>((availableSpacingForTwo / chartHeight) * scale);
-        
-        int32_t adjustedStepSize = stepSize;
-        while (adjustedStepSize > maxValueThatFits && adjustedStepSize > 25) {
-            if (adjustedStepSize >= 1000) adjustedStepSize /= 2;
-            else if (adjustedStepSize >= 500) adjustedStepSize = 200;
-            else adjustedStepSize = 100;
-        }
-        stepSize = adjustedStepSize;
+        stepSize = adjustStepSizeForSmallWindow(stepSize, chartHeight, scale);
     }
     
     if (showZero) {
@@ -202,7 +285,7 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         std::string label = "0";
         ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
         drawList->AddText(
-            ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5f),
+            ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5F),
             config_.textColor,
             label.c_str()
         );
@@ -220,54 +303,12 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         
         if (positiveValue <= maxValue || (!showZero && step == 1)) {
             float y = chartMax.y - (static_cast<float>(positiveValue - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
-            
-            drawList->AddLine(
-                ImVec2(chartMin.x, y),
-                ImVec2(chartMax.x, y),
-                config_.gridColor,
-                1.0F
-            );
-            
-            drawList->AddLine(
-                ImVec2(chartMin.x - 3, y),
-                ImVec2(chartMin.x + 3, y),
-                config_.axisColor,
-                1.0F
-            );
-            
-            std::string label = std::to_string(positiveValue / 100);
-            ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-            drawList->AddText(
-                ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5f),
-                config_.textColor,
-                label.c_str()
-            );
+            drawYAxisGridLine(drawList, y, chartMin.x, chartMax.x, positiveValue, config_.gridColor, config_.axisColor, config_.textColor);
         }
         
         if (negativeValue >= minValue || (!showZero && step == 1)) {
             float y = chartMax.y - (static_cast<float>(negativeValue - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
-            
-            drawList->AddLine(
-                ImVec2(chartMin.x, y),
-                ImVec2(chartMax.x, y),
-                config_.gridColor,
-                1.0F
-            );
-            
-            drawList->AddLine(
-                ImVec2(chartMin.x - 3, y),
-                ImVec2(chartMin.x + 3, y),
-                config_.axisColor,
-                1.0F
-            );
-            
-            std::string label = std::to_string(negativeValue / 100);
-            ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-            drawList->AddText(
-                ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5f),
-                config_.textColor,
-                label.c_str()
-            );
+            drawYAxisGridLine(drawList, y, chartMin.x, chartMax.x, negativeValue, config_.gridColor, config_.axisColor, config_.textColor);
         }
     }
 }
@@ -285,7 +326,8 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
         float barX = chartMin.x + i * (config_.barWidth + config_.barSpacing);
         ImVec2 valuePixel = valueToPixel(static_cast<float>(i), value, chartMin, chartMax, minValue, scale);
         
-        ImVec2 barMin, barMax;
+        ImVec2 barMin;
+        ImVec2 barMax;
         if (value >= 0) {
             barMin = ImVec2(barX, std::min(valuePixel.y, zeroY));
             barMax = ImVec2(barX + config_.barWidth, std::max(valuePixel.y, zeroY));
@@ -310,7 +352,9 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
 
 std::optional<uint32_t> ImGuiBarChart::draw() {
     
-    int32_t minValue, maxValue, scale;
+    int32_t minValue;
+    int32_t maxValue;
+    int32_t scale;
     calculateScale(minValue, maxValue, scale);
     
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
@@ -321,7 +365,7 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
         canvasPos.y + canvasSize.y - config_.verticalMargin);
 
     float availableWidth = chartMax.x - chartMin.x;
-    float totalBarsNeeded = static_cast<float>(values_.size());
+    auto totalBarsNeeded = static_cast<float>(values_.size());
     float dynamicBarWidth = config_.barWidth;
     
     if (totalBarsNeeded > 0) {
@@ -348,7 +392,7 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
             
             // Calculate which bar was clicked based on x position
             float relativeX = mousePos.x - chartMin.x;
-            uint32_t barIndex = static_cast<uint32_t>(relativeX / (dynamicBarWidth + config_.barSpacing));
+            auto barIndex = static_cast<uint32_t>(relativeX / (dynamicBarWidth + config_.barSpacing));
             
             // Ensure the bar index is valid and the click is actually on a bar
             if (barIndex < values_.size()) {
@@ -372,7 +416,7 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
     std::string title = config_.title;
     ImVec2 titleSize = ImGui::CalcTextSize(title.c_str());
     drawList->AddText(
-        ImVec2(canvasPos.x + (canvasSize.x - titleSize.x) * 0.5f, canvasPos.y + 5),
+        ImVec2(canvasPos.x + (canvasSize.x - titleSize.x) * 0.5F, canvasPos.y + 5),
         config_.textColor,
         title.c_str()
     );

@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include <vector>
 #include <mutex>
+
+#include <ini-file.h>
+
 #include "autosavable.h"
 
 class Translator : public QaplaHelpers::Autosavable {
@@ -55,12 +58,6 @@ public:
     [[nodiscard]] std::string getLanguageCode() const;
 
     /**
-     * @brief Gets a map of topics and their missing translation keys.
-     * @return A map of topic to missing keys.
-     */
-    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> getMissingTranslations() const;
-
-    /**
      * @brief Converts text to file format (escapes newlines).
      * @param text The text to escape.
      * @return The escaped text.
@@ -88,7 +85,7 @@ private:
     using TopicMap = std::unordered_map<std::string, TranslationMap>;
     
     TopicMap translations;
-    mutable std::unordered_map<std::string, std::vector<std::string>> missingKeys;
+    mutable QaplaHelpers::ConfigData missingKeys_;
     mutable std::mutex languageMutex;
     std::string languageDirectory = "lang";
     std::string currentLanguage = "eng";

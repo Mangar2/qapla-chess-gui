@@ -70,6 +70,35 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
 ConfigurationWindow::ConfigurationWindow() = default;
 ConfigurationWindow::~ConfigurationWindow() = default;
 
+static void drawLanguageConfig() {
+    std::string currentLanguageCode = Translator::instance().getLanguageCode();
+    
+    std::map<std::string, std::string, std::less<>> langMap = {
+        {"English", "eng"},
+        {"Deutsch", "deu"},
+        {"Français", "fra"}
+    };    
+    
+    std::string currentLanguageName = "English"; 
+    std::vector<std::string> languageNames;
+    
+    for (const auto& [key, value] : langMap) {
+        if (value == currentLanguageCode) {
+            currentLanguageName = key;
+        }
+        languageNames.push_back(key);
+    }
+    if (ImGuiControls::selectionBox("Language", currentLanguageName, languageNames)) {
+        auto& newLanguageCode = langMap[currentLanguageName];
+        QaplaConfiguration::Configuration::updateLanguageConfiguration(newLanguageCode);
+        Translator::instance().setLanguageCode(newLanguageCode);
+    }
+    
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", tr("Tooltip", "Translation is currently work in progress. Only few parts are translated.").c_str());
+    }
+}
+
 void ConfigurationWindow::draw()
 {
     ImGui::Spacing();
@@ -230,35 +259,5 @@ void ConfigurationWindow::drawLoggerConfig()
     if (modified) {
         QaplaTester::setLoggerConfig(config);
         QaplaConfiguration::Configuration::updateLoggerConfiguration();
-    }
-}
-
-void ConfigurationWindow::drawLanguageConfig() {
-    auto& config = QaplaConfiguration::Configuration::instance();
-    std::string currentLanguageCode = Translator::instance().getLanguageCode();
-    
-    std::map<std::string, std::string> langMap = {
-        {"English", "eng"},
-        {"Deutsch", "deu"},
-        {"Français", "fra"}
-    };    
-    
-    std::string currentLanguageName = "English"; 
-    std::vector<std::string> languageNames;
-    
-    for (const auto& [key, value] : langMap) {
-        if (value == currentLanguageCode) {
-            currentLanguageName = key;
-        }
-        languageNames.push_back(key);
-    }
-    if (ImGuiControls::selectionBox("Language", currentLanguageName, languageNames)) {
-        auto& newLanguageCode = langMap[currentLanguageName];
-        config.updateLanguageConfiguration(newLanguageCode);
-        Translator::instance().setLanguageCode(newLanguageCode);
-    }
-    
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", tr("Tooltip", "Translation is currently work in progress. Only few parts are translated.").c_str());
     }
 }
