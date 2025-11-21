@@ -231,7 +231,7 @@ ImGuiEngineSelect::findDeselectedEngineConfiguration(const EngineConfig& engineC
 bool ImGuiEngineSelect::drawSelectedEngines() {
     bool modified = false;
     
-    if (ImGui::CollapsingHeader("Selected Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         
         // Draw all selected engines with checkboxes
@@ -254,7 +254,7 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
 bool ImGuiEngineSelect::drawAvailableEngines() {
     bool modified = false;
     
-    if (ImGui::CollapsingHeader("Available Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         
         auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
@@ -288,7 +288,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             
             // Show engine info in a collapsing header (read-only)
             ImGui::SameLine();
-            ImGui::CollapsingHeader(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
+            ImGuiControls::CollapsingHeaderWithDot(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
             
             ImGui::PopID();
             index++;

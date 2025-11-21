@@ -32,7 +32,7 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
     bool changed = false;
 
     // Draw Adjudication section
-    if (ImGui::CollapsingHeader("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Adjudicate draw", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("drawAdjudication");
         ImGui::Indent(indent);
         ImGui::SetNextItemWidth(inputWidth);
@@ -48,7 +48,7 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
         ImGui::PopID();
     }
 
-    if (ImGui::CollapsingHeader("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Adjudicate resign", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("resignAdjudication");
         ImGui::Indent(indent);
         ImGui::SetNextItemWidth(inputWidth);

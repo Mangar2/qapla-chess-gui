@@ -74,7 +74,7 @@ void ConfigurationWindow::draw()
 {
     ImGui::Spacing();
     
-    if (ImGui::CollapsingHeader("Snackbar Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Snackbar Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawSnackbarConfig();
         ImGui::Unindent(10.0F);
@@ -82,7 +82,7 @@ void ConfigurationWindow::draw()
     
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawTutorialConfig();
         ImGui::Unindent(10.0F);
@@ -90,7 +90,7 @@ void ConfigurationWindow::draw()
     
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawLoggerConfig();
         ImGui::Unindent(10.0F);
@@ -98,7 +98,7 @@ void ConfigurationWindow::draw()
     
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Language Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Language Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawLanguageConfig();
         ImGui::Unindent(10.0F);

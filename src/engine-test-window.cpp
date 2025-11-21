@@ -181,7 +181,7 @@ void EngineTestWindow::drawButtons()
 
 void EngineTestWindow::drawInput()
 {
-    if (ImGui::CollapsingHeader("Engines", ImGuiTreeNodeFlags_Selected)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Engines", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("engineSettings");
         ImGui::Indent(standardIndent);
         engineSelect_->draw();
@@ -204,7 +204,7 @@ static void drawTests()
     constexpr uint32_t maxGames = 10000;
     constexpr uint32_t maxConcurrency = 32;
     
-    if (ImGui::CollapsingHeader("Tests", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Tests", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(standardIndent);
         
         bool modified = false;
@@ -267,7 +267,7 @@ void EngineTestWindow::drawReportTables()
     for (const auto& engineConfig : selectedEngines) {
         std::string headerLabel = engineConfig.getName() + " Report";
         
-        if (ImGui::CollapsingHeader(headerLabel.c_str())) {
+        if (ImGuiControls::CollapsingHeaderWithDot(headerLabel.c_str())) {
             
             // Create and draw the report table for this engine
             auto reportTable = EngineTests::createReportTable(engineConfig.getName());

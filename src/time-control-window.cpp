@@ -178,7 +178,7 @@ void TimeControlWindow::draw() {
             }
         }
         ImGui::SameLine();
-        if (ImGui::CollapsingHeader(headerLabel)) {
+        if (ImGuiControls::CollapsingHeaderWithDot(headerLabel)) {
 			ImGui::PushID(headerLabel);
             ImGui::Indent(inputIndent);
             ImGui::PushItemWidth(inputWidth);

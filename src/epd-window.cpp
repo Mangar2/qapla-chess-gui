@@ -191,7 +191,7 @@ void EpdWindow::drawInput()
     ImGui::Spacing();
     EpdData::instance().engineSelect().draw();
 
-    if (ImGui::CollapsingHeader("Configuration", ImGuiTreeNodeFlags_Selected))
+    if (ImGuiControls::CollapsingHeaderWithDot("Configuration", ImGuiTreeNodeFlags_Selected))
     {
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
