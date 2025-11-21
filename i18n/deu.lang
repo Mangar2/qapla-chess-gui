@@ -53,7 +53,7 @@ Language Settings=Sprach Einstellungen
 
 [Translation]
 id=Input
-Concurrency=Nebenläufigkeit
+Concurrency=Parallelität
 Search=Suche
 Hash (MB)=Hash (MB)
 Restart=Neustart

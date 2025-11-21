@@ -57,9 +57,9 @@ namespace QaplaWindows {
          * @param tableFlags ImGui table flags.
 		 * @param columns Column definitions including names, flags, and widths.
          */
-        ImGuiTable(const std::string& tableId,
+        ImGuiTable(std::string tableId,
             ImGuiTableFlags tableFlags,
-            const std::vector<ColumnDef>& columns);
+            std::vector<ColumnDef> columns);
 
         /**
          * @brief Sets whether the table rows are clickable.

@@ -29,6 +29,97 @@
 namespace QaplaWindows {
 
     /**
+     * @brief Skips leading zeros in a string starting at position pos.
+     * @param str The string to process
+     * @param pos The starting position (will be updated)
+     */
+    static void skipLeadingZeros(const std::string& str, size_t& pos) {
+        while (pos < str.size() && str[pos] == '0') {
+            ++pos;
+        }
+    }
+
+    /**
+     * @brief Finds the end position of a numeric sequence in a string.
+     * @param str The string to process
+     * @param start The starting position
+     * @return The position after the last digit
+     */
+    static size_t findNumericEnd(const std::string& str, size_t start) {
+        size_t end = start;
+        while (end < str.size() && std::isdigit(static_cast<unsigned char>(str[end])) != 0) {
+            ++end;
+        }
+        return end;
+    }
+
+    /**
+     * @brief Counts leading zeros in a numeric sequence.
+     * @param str The string to process
+     * @param start The starting position of the numeric sequence
+     * @return The number of leading zeros
+     */
+    static size_t countLeadingZeros(const std::string& str, size_t start) {
+        size_t count = 0;
+        while (start + count < str.size() && str[start + count] == '0') {
+            ++count;
+        }
+        return count;
+    }
+
+    /**
+     * @brief Compares two numeric sequences in strings.
+     * @param a First string
+     * @param b Second string
+     * @param posA Position in first string (will be updated)
+     * @param posB Position in second string (will be updated)
+     * @return Comparison result: negative if a < b, positive if a > b, 0 if equal
+     */
+    static int compareNumericSequences(const std::string& a, const std::string& b, 
+                                       size_t& posA, size_t& posB) {
+        size_t numStartA = posA;
+        size_t numStartB = posB;
+        
+        skipLeadingZeros(a, posA);
+        skipLeadingZeros(b, posB);
+        
+        size_t numEndA = findNumericEnd(a, posA);
+        size_t numEndB = findNumericEnd(b, posB);
+        
+        // Compare by length first (longer number = larger)
+        size_t lenA = numEndA - posA;
+        size_t lenB = numEndB - posB;
+        
+        if (lenA != lenB) {
+            posA = numEndA;
+            posB = numEndB;
+            return (lenA < lenB) ? -1 : 1;
+        }
+        
+        // Same length: compare digit by digit
+        while (posA < numEndA && posB < numEndB) {
+            if (a[posA] != b[posB]) {
+                char result = (a[posA] < b[posB]) ? -1 : 1;
+                posA = numEndA;
+                posB = numEndB;
+                return result;
+            }
+            ++posA;
+            ++posB;
+        }
+        
+        // Numbers are equal, compare leading zeros count
+        size_t zeroCountA = countLeadingZeros(a, numStartA);
+        size_t zeroCountB = countLeadingZeros(b, numStartB);
+        
+        if (zeroCountA != zeroCountB) {
+            return (zeroCountA < zeroCountB) ? -1 : 1;
+        }
+        
+        return 0;
+    }
+
+    /**
      * @brief Natural sort comparison for strings containing numbers.
      * Compares strings in a human-friendly way: "1" < "2" < "10" instead of "1" < "10" < "2".
      * @param a First string to compare
@@ -36,53 +127,16 @@ namespace QaplaWindows {
      * @return true if a should come before b in natural sort order
      */
     static bool naturalCompare(const std::string& a, const std::string& b) {
-        size_t i = 0, j = 0;
+        size_t i = 0;
+        size_t j = 0;
         
         while (i < a.size() && j < b.size()) {
-            if (std::isdigit(static_cast<unsigned char>(a[i])) && 
-                std::isdigit(static_cast<unsigned char>(b[j]))) {
+            if (std::isdigit(static_cast<unsigned char>(a[i])) != 0 && 
+                std::isdigit(static_cast<unsigned char>(b[j])) != 0) {
                 
-                // Extract the full number from both strings
-                size_t numStartA = i;
-                size_t numStartB = j;
-                
-                while (i < a.size() && a[i] == '0') ++i;
-                while (j < b.size() && b[j] == '0') ++j;
-                
-                // Find the end of the number
-                size_t numEndA = i;
-                size_t numEndB = j;
-                while (numEndA < a.size() && std::isdigit(static_cast<unsigned char>(a[numEndA]))) ++numEndA;
-                while (numEndB < b.size() && std::isdigit(static_cast<unsigned char>(b[numEndB]))) ++numEndB;
-                
-                // Compare by length first (longer number = larger)
-                size_t lenA = numEndA - i;
-                size_t lenB = numEndB - j;
-                
-                if (lenA != lenB) {
-                    return lenA < lenB;
-                }
-                
-                // Same length: compare digit by digit
-                while (i < numEndA && j < numEndB) {
-                    if (a[i] != b[j]) {
-                        return a[i] < b[j];
-                    }
-                    ++i;
-                    ++j;
-                }
-                
-                // If numbers are equal, compare leading zeros count
-                if (i == numEndA && j == numEndB) {
-                    size_t zerosA = numStartA;
-                    size_t zerosB = numStartB;
-                    while (zerosA < a.size() && a[zerosA] == '0') ++zerosA;
-                    while (zerosB < b.size() && b[zerosB] == '0') ++zerosB;
-                    size_t zeroCountA = zerosA - numStartA;
-                    size_t zeroCountB = zerosB - numStartB;
-                    if (zeroCountA != zeroCountB) {
-                        return zeroCountA < zeroCountB;
-                    }
+                int cmp = compareNumericSequences(a, b, i, j);
+                if (cmp != 0) {
+                    return cmp < 0;
                 }
             } else {
                 // Non-digit characters: compare directly
@@ -98,12 +152,12 @@ namespace QaplaWindows {
         return a.size() < b.size();
     }
 
-    ImGuiTable::ImGuiTable(const std::string& tableId,
+    ImGuiTable::ImGuiTable(std::string tableId,
         ImGuiTableFlags tableFlags,
-        const std::vector<ColumnDef>& columns)
-        : tableId_(tableId),
+        std::vector<ColumnDef> columns)
+        : tableId_(std::move(tableId)),
         tableFlags_(tableFlags),
-        columns_(columns),
+        columns_(std::move(columns)),
         indexManager_(TableIndex::Unsorted) {
     }
 
@@ -175,8 +229,9 @@ namespace QaplaWindows {
         ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
         for (size_t columnN = 0; columnN < columns_.size(); columnN++) {
-            if (!ImGui::TableSetColumnIndex(columnN))
+            if (!ImGui::TableSetColumnIndex(static_cast<int>(columnN))) {
                 continue;
+            }
             std::string translatedName = Translator::instance().translate("Table", columns_[columnN].name);
             ImGui::PushID(static_cast<int>(columnN));
             headerAligned(translatedName, columns_[columnN].alignRight);
@@ -192,7 +247,7 @@ namespace QaplaWindows {
         }
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
         
-        float rowTop = (rowIndex + 1) * rowHeight; // +1 for header row
+        float rowTop = static_cast<float>(rowIndex + 1) * rowHeight; // +1 for header row
         float rowBottom = rowTop + rowHeight;
         float visibleTop = scrollY + rowHeight; 
         float visibleBottom = scrollY + windowHeight;
@@ -204,7 +259,7 @@ namespace QaplaWindows {
 
         // Row far away → scroll to center
         if (rowBottom + windowHeight < visibleTop || rowTop - windowHeight > visibleBottom) {
-            return rowTop - (windowHeight * 0.5f) + (rowHeight * 0.5f);
+            return rowTop - (windowHeight * 0.5F) + (rowHeight * 0.5F);
         }
         
         // Row too far up (but close) → scroll to top
@@ -217,7 +272,9 @@ namespace QaplaWindows {
     }
 
     bool ImGuiTable::isRowClicked(size_t index) const {
-        if (!clickable_) return false;
+        if (!clickable_) {
+            return false;
+        }
         std::string id = "row" + std::to_string(index);
         ImGui::PushID(id.c_str());
         bool clicked = ImGui::Selectable("##row", false,
@@ -269,12 +326,14 @@ namespace QaplaWindows {
         }
 
         if (shrink) {
-            tableSize.y = std::min(tableSize.y, (indexManager_.size() + 2) * rowHeight);
+            tableSize.y = std::min(tableSize.y, static_cast<float>(indexManager_.size() + 2) * rowHeight);
         }
 
         // Calculate visible rows
-        size_t visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
-        if (visibleRows == 0) visibleRows = 1; // Fallback
+        auto visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
+        if (visibleRows == 0) {
+            visibleRows = 1; // Fallback
+        }
 
         // Push the selected font if not using default system font
         ImFont* selectedFont = nullptr;
@@ -346,32 +405,40 @@ namespace QaplaWindows {
     }
 
     void ImGuiTable::handleFiltering(bool changed) {
-        if (!filterable_ || !changed) return;
+        if (!filterable_ || !changed) {
+            return;
+        }
         needsSort_ = true;
         indexManager_.filter([&](size_t rowIndex) {
             const auto& row = rows_[rowIndex];
-            if (filter_.matches(row)) {
-                return true;
-            }
-            return false;
+            return filter_.matches(row);
         });
     }
     
     void ImGuiTable::handleSorting() {
         ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
-        if (!specs) return;
-        if (needsSort_ || (specs && specs->SpecsDirty)) {
+        if (specs == nullptr) {
+            return;
+        }
+        if (needsSort_ || (specs != nullptr && specs->SpecsDirty)) {
             needsSort_ = false;
             if (specs->SpecsCount > 0) {
                 auto spec = specs->Specs[0];
-                int column = spec.ColumnUserID;
+                auto column = static_cast<int>(spec.ColumnUserID);
                 bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
                 indexManager_.sort([&](size_t a, size_t b) {
-                    if (column >= static_cast<int>(columns_.size())) return false;
-                    std::string valA = (column < static_cast<int>(rows_[a].size())) ? rows_[a][column] : "";
-                    std::string valB = (column < static_cast<int>(rows_[b].size())) ? rows_[b][column] : "";
-                    if (ascending) return naturalCompare(valA, valB);
-                    else return naturalCompare(valB, valA);
+                    auto columnSize = static_cast<int>(columns_.size());
+                    if (column >= columnSize) {
+                        return false;
+                    }
+                    auto rowASizeInt = static_cast<int>(rows_[a].size());
+                    auto rowBSizeInt = static_cast<int>(rows_[b].size());
+                    std::string valA = (column < rowASizeInt) ? rows_[a][static_cast<size_t>(column)] : "";
+                    std::string valB = (column < rowBSizeInt) ? rows_[b][static_cast<size_t>(column)] : "";
+                    if (ascending) {
+                        return naturalCompare(valA, valB);
+                    }
+                    return naturalCompare(valB, valA);
                 });
             }
             specs->SpecsDirty = false;
