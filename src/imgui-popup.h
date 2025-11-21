@@ -47,7 +47,7 @@ namespace QaplaWindows {
          * @brief Creates a popup window.
          * @param config configuration
          */
-        ImGuiPopup(Config config, ImVec2 size = ImVec2(400, 300))
+        ImGuiPopup(Config config, auto size = ImVec2(400, 300))
             : content_(), config_(config), size_(size) {
         }
 

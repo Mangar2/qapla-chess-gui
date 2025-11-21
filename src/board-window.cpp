@@ -235,11 +235,11 @@ namespace QaplaWindows
         auto [visibleButtons, moreCommands] = splitButtonsForResponsiveLayout(
             allButtons, availableWidth, buttonWidth, status);
         
-        ImVec2 startPos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        auto startPos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton = drawVisibleButtons(
             visibleButtons, startPos, buttonSize, totalSize, status);
         
-        ImVec2 moreButtonPos = ImVec2(
+        auto moreButtonPos = ImVec2(
             startPos.x + visibleButtons.size() * (totalSize.x + space),
             startPos.y);
         ImGui::SetCursorScreenPos(moreButtonPos);

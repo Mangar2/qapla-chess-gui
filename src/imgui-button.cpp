@@ -258,21 +258,21 @@ namespace QaplaButton {
         drawList->PathStroke(color, ImDrawFlags_None, 1.5F);
 
         // Pfeilspitze
-        ImVec2 arrowTip = ImVec2(center.x + cosf(pi) * radius,
+        auto arrowTip = ImVec2(center.x + cosf(pi) * radius,
             center.y + sinf(pi) * radius);
 
         for (int i = 0; i < 3; ++i) {
             float width = std::max(5.0F - 2.0F * static_cast<float>(i), 1.0F);
             float yOffset = -2.0F * i;
-            ImVec2 p1 = ImVec2(arrowTip.x - width / 2.0F, arrowTip.y + yOffset);
-            ImVec2 p2 = ImVec2(arrowTip.x + width / 2.0F, arrowTip.y + yOffset);
+            auto p1 = ImVec2(arrowTip.x - width / 2.0F, arrowTip.y + yOffset);
+            auto p2 = ImVec2(arrowTip.x + width / 2.0F, arrowTip.y + yOffset);
             drawList->AddLine(p1, p2, color, 2.0F);
         }
     }
 
     void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto color = getFgColor(state);
-        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
         constexpr float pi = std::numbers::pi_v<float>;
         
@@ -290,7 +290,7 @@ namespace QaplaButton {
     void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto color = getFgColor(state);
         ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
-        ImVec2 textPos = ImVec2(
+        auto textPos = ImVec2(
             topLeft.x + std::round((size.x - textSize.x) * 0.5F) - 2.0F,
             topLeft.y - 2.0F
         );
@@ -383,7 +383,7 @@ namespace QaplaButton {
 
     void drawAutoDetect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
         auto color = QaplaButton::getFgColor(state);
-        ImVec2 center = ImVec2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
+        auto center = ImVec2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
         float radius = std::min(size.x, size.y) / 2 - BORDER; // Leave some padding
 
         // Draw outer circle
@@ -395,7 +395,7 @@ namespace QaplaButton {
         // Draw scanning line
         if (state == ButtonState::Animated) {
             float angle = static_cast<float>(ImGui::GetTime()) * 2.0F;
-            ImVec2 endPoint = ImVec2(
+            auto endPoint = ImVec2(
                 center.x + cos(angle) * (radius + 2),
                 center.y + sin(angle) * (radius + 2)
             );
@@ -504,15 +504,15 @@ namespace QaplaButton {
         auto color = getFgColor(state);
         
         // Draw circle
-        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
         list->AddCircle(center, radius, color, 0, 2.0F);
         
         // Draw small cross inside the circle
         constexpr float CROSS_LINE_THICKNESS = 2.0F;
         float crossSize = radius - 3.0F;
-        ImVec2 crossTopLeft = ImVec2(center.x - crossSize / 2.0F - 1.0F, center.y - crossSize / 2.0F - 1.0F);
-        ImVec2 crossSizeVec = ImVec2(crossSize, crossSize);
+        auto crossTopLeft = ImVec2(center.x - crossSize / 2.0F - 1.0F, center.y - crossSize / 2.0F - 1.0F);
+        auto crossSizeVec = ImVec2(crossSize, crossSize);
         drawCross(list, crossTopLeft, crossSizeVec, color, CROSS_LINE_THICKNESS, 0.0F);
     }
 
@@ -521,8 +521,8 @@ namespace QaplaButton {
         
         constexpr float borderThickness = 2.0F;
         constexpr float rounding = 1.0F;
-        ImVec2 outerRectTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER);
-        ImVec2 outerRectBottomRight = ImVec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
+        auto outerRectTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER);
+        auto outerRectBottomRight = ImVec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
         
         // Draw outer rounded rectangle
         list->AddRect(outerRectTopLeft, outerRectBottomRight, fgColor, rounding, ImDrawFlags_None, borderThickness);
@@ -530,13 +530,13 @@ namespace QaplaButton {
         // In the rectangle: A smaller filled rectangle
         constexpr float innerRectWidth = 6.0F;
         constexpr float innerRectHeight = 3.0F;
-        ImVec2 innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0F, outerRectTopLeft.y + 4.0F);
-        ImVec2 innerRectBottomRight = ImVec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
+        auto innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0F, outerRectTopLeft.y + 4.0F);
+        auto innerRectBottomRight = ImVec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
         list->AddRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
         
         // In the rectangle: A small filled circle at the bottom center
         constexpr float circleRadius = 2.5F;
-        ImVec2 circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
+        auto circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
                                      outerRectBottomRight.y - 5.0F);
         list->AddCircleFilled(circleCenter, circleRadius, fgColor);
     }
@@ -549,8 +549,8 @@ namespace QaplaButton {
         constexpr float rectReduce = 2.0F;
         constexpr float fold = 7.0F;
 
-        ImVec2 docTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
-        ImVec2 docBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
+        auto docTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
+        auto docBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
 
         // Top side
         list->AddLine(ImVec2(docTopLeft.x, docTopLeft.y), ImVec2(docBottomRight.x  - fold + 1, docTopLeft.y), fgColor, borderThickness);
@@ -576,14 +576,14 @@ namespace QaplaButton {
         constexpr float borderThickness = 2.0F;
         constexpr float rectReduce = 0.0F;
 
-        ImVec2 rectTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER + rectReduce);
-        ImVec2 rectBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER - rectReduce);
+        auto rectTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER + rectReduce);
+        auto rectBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER - rectReduce);
 
         // Draw rectangle outline
         list->AddRect(rectTopLeft, rectBottomRight, fgColor, 0.0F, 0, borderThickness);
 
         // Draw question mark in the middle
-        ImVec2 center = ImVec2((rectTopLeft.x + rectBottomRight.x) / 2.0F, (rectTopLeft.y + rectBottomRight.y) / 2.0F);
+        auto center = ImVec2((rectTopLeft.x + rectBottomRight.x) / 2.0F, (rectTopLeft.y + rectBottomRight.y) / 2.0F);
         
         // Question mark parameters
         constexpr float questionMarkHeight = 10.0F;
@@ -592,17 +592,17 @@ namespace QaplaButton {
         constexpr float dotOffset = 3.0F;
         
         // Top arc of question mark
-        ImVec2 arcCenter = ImVec2(center.x, center.y - questionMarkHeight / 2.0F + questionMarkWidth / 2.0F);
+        auto arcCenter = ImVec2(center.x, center.y - questionMarkHeight / 2.0F + questionMarkWidth / 2.0F);
         constexpr float arcRadius = questionMarkWidth / 2.0F;
         list->AddCircle(arcCenter, arcRadius, fgColor, 12, borderThickness - 0.5F);
         
         // Vertical line of question mark
-        ImVec2 lineStart = ImVec2(center.x, arcCenter.y);
-        ImVec2 lineEnd = ImVec2(center.x, center.y + questionMarkHeight / 2.0F - dotOffset);
+        auto lineStart = ImVec2(center.x, arcCenter.y);
+        auto lineEnd = ImVec2(center.x, center.y + questionMarkHeight / 2.0F - dotOffset);
         list->AddLine(lineStart, lineEnd, fgColor, borderThickness - 0.5F);
         
         // Dot at the bottom
-        ImVec2 dotCenter = ImVec2(center.x, center.y + questionMarkHeight / 2.0F);
+        auto dotCenter = ImVec2(center.x, center.y + questionMarkHeight / 2.0F);
         list->AddCircleFilled(dotCenter, dotRadius, fgColor);
     }
 
@@ -614,9 +614,9 @@ namespace QaplaButton {
         constexpr float spoutThickness = 4.0F;
         
         // Draw funnel shape
-        ImVec2 triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0F);
-        ImVec2 triangleTopRight = ImVec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
-        ImVec2 triangleMiddle = ImVec2(
+        auto triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0F);
+        auto triangleTopRight = ImVec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
+        auto triangleMiddle = ImVec2(
             (triangleTopLeft.x + triangleTopRight.x) / 2.0F, 
             triangleTopLeft.y + triangleHeight);
 
@@ -761,7 +761,7 @@ namespace QaplaButton {
                 
                 // Draw text with padding
                 ImDrawList* drawList = ImGui::GetWindowDrawList();
-                ImVec2 textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
+                auto textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
                                        itemStartPos.y + POPUP_ITEM_PADDING_Y);
                 ImU32 textColor = ImGui::GetColorU32(ImGuiCol_Text);
                 auto translatedName = Translator::instance().translate("Button", command.name);
@@ -769,7 +769,7 @@ namespace QaplaButton {
                 
                 // Draw red highlight dot if command is highlighted
                 if (command.state == ButtonState::Highlighted) {
-                    ImVec2 dotPos = ImVec2(itemStartPos.x + HIGHLIGHT_DOT_OFFSET, 
+                    auto dotPos = ImVec2(itemStartPos.x + HIGHLIGHT_DOT_OFFSET, 
                                           itemStartPos.y + itemHeight * 0.5F);
                     drawList->AddCircleFilled(dotPos, HIGHLIGHT_DOT_RADIUS, IM_COL32(192, 0, 0, 192));
                 }
@@ -791,7 +791,7 @@ namespace QaplaButton {
         auto color = getFgColor(state);
         
         // Clock circle center and radius
-        ImVec2 center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
         
         // Draw clock circle
@@ -805,7 +805,7 @@ namespace QaplaButton {
         // 11:50 = 11.833 hours, angle = (11.833/12) * 360 - 90 = 264.65 degrees
         float hourAngle = (11.833F / 12.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
         float hourLength = radius * 0.5F;
-        ImVec2 hourEnd = ImVec2(
+        auto hourEnd = ImVec2(
             center.x + cos(hourAngle) * hourLength,
             center.y + sin(hourAngle) * hourLength
         );
@@ -815,7 +815,7 @@ namespace QaplaButton {
         // 50 minutes = (50/60) * 360 - 90 = 210 degrees
         float minuteAngle = (50.0F / 60.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
         float minuteLength = radius * 0.7F;
-        ImVec2 minuteEnd = ImVec2(
+        auto minuteEnd = ImVec2(
             center.x + cos(minuteAngle) * minuteLength,
             center.y + sin(minuteAngle) * minuteLength
         );
@@ -830,8 +830,8 @@ namespace QaplaButton {
         
         // Calculate rectangle with slight padding
         float padding = BORDER;
-        ImVec2 rectMin = ImVec2(topLeft.x + padding, topLeft.y + padding);
-        ImVec2 rectMax = ImVec2(topLeft.x + size.x - padding, topLeft.y + size.y - padding);
+        auto rectMin = ImVec2(topLeft.x + padding, topLeft.y + padding);
+        auto rectMax = ImVec2(topLeft.x + size.x - padding, topLeft.y + size.y - padding);
         float rounding = 2.0F;
         
         // Draw rounded rectangle (paper/document)
@@ -870,14 +870,14 @@ namespace QaplaButton {
             // draw red dot on top right position
             constexpr float dotRadius = 6.0F;
             constexpr float dotLocation = 2.0F;
-            ImVec2 dotPos = ImVec2(topLeft.x + size.x - dotLocation, topLeft.y + dotLocation);
+            auto dotPos = ImVec2(topLeft.x + size.x - dotLocation, topLeft.y + dotLocation);
             drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
         }
 
         auto translatedLabel = Translator::instance().translate("Button", label);
 
         ImVec2 labelSize = ImGui::CalcTextSize(translatedLabel.c_str());
-        ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
+        auto labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
         drawList->AddText(labelPos, getTextColor(state), translatedLabel.c_str());
 
         return clicked;

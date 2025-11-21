@@ -316,8 +316,8 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
     ImVec2 canvasPos = ImGui::GetCursorScreenPos();
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
-    ImVec2 chartMin = ImVec2(canvasPos.x + config_.leftMargin, canvasPos.y + config_.verticalMargin);
-    ImVec2 chartMax = ImVec2(canvasPos.x + canvasSize.x - config_.rightMargin, 
+    auto chartMin = ImVec2(canvasPos.x + config_.leftMargin, canvasPos.y + config_.verticalMargin);
+    auto chartMax = ImVec2(canvasPos.x + canvasSize.x - config_.rightMargin, 
         canvasPos.y + canvasSize.y - config_.verticalMargin);
 
     float availableWidth = chartMax.x - chartMin.x;

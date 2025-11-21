@@ -670,8 +670,8 @@ namespace QaplaWindows::ImGuiControls {
         ImU32 shadowCol = ImGui::GetColorU32(ImGuiCol_BorderShadow);
 
         const float shadowSpread = 2.0F; 
-        ImVec2 shadowMin = ImVec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
-        ImVec2 shadowMax = ImVec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
+        auto shadowMin = ImVec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
+        auto shadowMax = ImVec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
         drawList->AddRect(shadowMin, shadowMax, shadowCol, style.FrameRounding + shadowSpread);
 
         drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0F);
@@ -683,7 +683,7 @@ namespace QaplaWindows::ImGuiControls {
             ImVec2 tabMax = ImGui::GetItemRectMax();
 
             constexpr float dotRadius = 6.0F;
-            ImVec2 dotPos = ImVec2(tabMax.x - offsetX, tabMin.y + offsetY);
+            auto dotPos = ImVec2(tabMax.x - offsetX, tabMin.y + offsetY);
 
             ImDrawList* drawList = ImGui::GetWindowDrawList();
             drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));

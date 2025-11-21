@@ -63,7 +63,7 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
 
     for (size_t i = 0; i < lines.size(); ++i) {
         ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImVec2 size = ImVec2(width, boxHeight);
+        auto size = ImVec2(width, boxHeight);
 
         drawList->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
         drawList->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
@@ -392,7 +392,7 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     ImGui::PushID(std::to_string(index).c_str());
-    ImVec2 max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
+    auto max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
 
     drawList->AddRectFilled(topLeft, max, bgColor);
     ImGuiSeparator::Horizontal();
@@ -450,7 +450,7 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
     const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
     size_t index, const ImVec2 &max, const ImVec2 &size)
 {
-    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    auto tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
     ImGui::SetCursorScreenPos(tableMin);
     std::string pv;
     if (index < infoTables_.size())
@@ -474,7 +474,7 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
     const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
     size_t index, const ImVec2 &max, const ImVec2 &size)
 {
-    ImVec2 tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    auto tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
     ImGui::SetCursorScreenPos(tableMin);
     if (index < infoTables_.size())
     {

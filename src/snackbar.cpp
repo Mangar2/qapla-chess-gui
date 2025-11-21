@@ -85,10 +85,10 @@ static bool drawCloseButton(const ImVec2& position, float radius) {
     // Draw "X" mark 
     float lineThickness = 2.0F;
     float crossSize = radius * 0.5F;
-    ImVec2 lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
-    ImVec2 lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
-    ImVec2 lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
-    ImVec2 lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
+    auto lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
+    auto lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
+    auto lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
+    auto lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
 
     drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
     drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
@@ -140,7 +140,7 @@ void SnackbarManager::draw() {
         float requiredHeight = textSize.y + 2 * padding + 20.0F;
         float snackbarHeight = std::max(minSnackbarHeight, std::min(requiredHeight, maxSnackbarHeight));
         
-        ImVec2 snackbarSize = ImVec2(snackbarWidth, snackbarHeight);
+        auto snackbarSize = ImVec2(snackbarWidth, snackbarHeight);
         
         ImGui::PopStyleVar();
         ImGui::PopFont();
@@ -150,7 +150,7 @@ void SnackbarManager::draw() {
 
         ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
         ImVec2 windowSize = ImGui::GetMainViewport()->Size;
-        ImVec2 snackbarPos = ImVec2(windowPos.x + 20.0F, windowPos.y + windowSize.y - snackbarSize.y - 20.0F);
+        auto snackbarPos = ImVec2(windowPos.x + 20.0F, windowPos.y + windowSize.y - snackbarSize.y - 20.0F);
 
         ImGui::SetNextWindowPos(snackbarPos, ImGuiCond_Always);
         ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
@@ -159,8 +159,8 @@ void SnackbarManager::draw() {
 
         // Draw border
         auto* drawList = ImGui::GetWindowDrawList();
-        ImVec2 p1 = ImVec2(snackbarPos.x, snackbarPos.y);
-        ImVec2 p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
+        auto p1 = ImVec2(snackbarPos.x, snackbarPos.y);
+        auto p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
         drawList->AddRect(p1, p2, ImColor(borderColor), 10.0F, 0, borderThickness);
 
         ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
@@ -175,7 +175,7 @@ void SnackbarManager::draw() {
         ImGui::PopStyleColor();
         ImGui::PopTextWrapPos(); 
 
-        ImVec2 closeButtonPos = ImVec2(
+        auto closeButtonPos = ImVec2(
             snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0F, 
             snackbarPos.y + closeButtonRadius + 10.0F                  
         );

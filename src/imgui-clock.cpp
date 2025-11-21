@@ -394,9 +394,9 @@ void ImGuiClock::draw() const {
 	const float topSpace = smallClock ? 0 : std::round((totalHeight - clockHeight) * 0.5F);
 
     // White Clock
-    ImVec2 whiteMin = ImVec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5F),
+    auto whiteMin = ImVec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5F),
         std::round(topLeft.y + topSpace));
-    ImVec2 whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
+    auto whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
     auto wCur = clockData_.wTimeCurMove + clockData_.wTimer.elapsedMs();
@@ -415,7 +415,7 @@ void ImGuiClock::draw() const {
     ImVec2 blackMin = smallClock ?
         ImVec2(whiteMin.x, whiteMax.y + 10.0F) :
         ImVec2(whiteMax.x + spacing, whiteMin.y);
-    ImVec2 blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
+    auto blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
 
     if (smallClock) {
         drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
