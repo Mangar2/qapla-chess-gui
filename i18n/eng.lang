@@ -1,3 +1,5 @@
+[Translation]
+id=Button
 Add=Add
 Remove=Remove
 Detect=Detect
@@ -29,3 +31,33 @@ Ok=Ok
 Copy=Copy
 Paste=Paste
 Cancel=Cancel
+RGC=RGC
+
+[Translation]
+id=Section
+Global Engine Settings=Global Engine Settings
+Engines=Engines
+Opening=Opening
+Tournament=Tournament
+Time Control=Time Control
+Pgn=Pgn
+Adjudicate draw=Adjudicate draw
+Adjudicate resign=Adjudicate resign
+SPRT Configuration=SPRT Configuration
+Configuration=Configuration
+Tests=Tests
+Snackbar Settings=Snackbar Settings
+Tutorial Progress=Tutorial Progress
+Logger Settings=Logger Settings
+Language Settings=Language Settings
+
+[Translation]
+id=Tab
+Engines=Engines
+Tournament=Tournament
+Sprt=Sprt
+Pgn=Pgn
+Epd=Epd
+Test=Test
+Settings=Settings
+Board=Board

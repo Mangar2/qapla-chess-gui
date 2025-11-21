@@ -1,3 +1,9 @@
 code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. 
 imgui: dont use imgui controls directy use controls from imguicontrols.h
 
+code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. 
+Bitte verändere das laden und speichern der language-files und der missing translations wie folgt:
+1. Translation muss immer auch ein Topic bekommen. Ein topic ist ein string zu dem die Übersetzung gehört, z.B. "Button" oder "Tab". Damit können wir gleiche strings an unterschiedlichen stellen auch unerschiedlich übersetzen.
+2. Nutze das ini format zum laden und speichern von language dateien und missing translations. Schaue dir dazu configuration.h/.cpp an wie das funktioniert.
+3. Nutze als name "Translation" und als "id" den topic.  
+Hinweis: die sprachdateien in i18n hab ich schon manuell auf das neue format umgestellt. 

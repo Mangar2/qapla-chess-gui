@@ -259,6 +259,6 @@ void ConfigurationWindow::drawLanguageConfig() {
     }
     
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", tr("Translation is currently work in progress. Only few parts are translated.").c_str());
+        ImGui::SetTooltip("%s", tr("Tooltip", "Translation is currently work in progress. Only few parts are translated.").c_str());
     }
 }

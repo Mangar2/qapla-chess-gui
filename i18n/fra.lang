@@ -1,3 +1,5 @@
+[Translation]
+id=Button
 Add=Ajouter
 Remove=Retirer
 Detect=Detecter
@@ -29,3 +31,33 @@ Ok=OK
 Copy=Copier
 Paste=Coller
 Cancel=Annuler
+RGC=RGC
+
+[Translation]
+id=Section
+Global Engine Settings=Paramètres globaux du moteur
+Engines=Moteurs
+Opening=Ouverture
+Tournament=Tournoi
+Time Control=Contrôle du temps
+Pgn=Pgn
+Adjudicate draw=Adjuger nulle
+Adjudicate resign=Adjuger abandon
+SPRT Configuration=Configuration SPRT
+Configuration=Configuration
+Tests=Tests
+Snackbar Settings=Paramètres Snackbar
+Tutorial Progress=Progrès du tutoriel
+Logger Settings=Paramètres du journal
+Language Settings=Paramètres de langue
+
+[Translation]
+id=Tab
+Engines=Moteurs
+Tournament=Tournoi
+Sprt=Sprt
+Pgn=Pgn
+Epd=Epd
+Test=Test
+Settings=Paramètres
+Board=Échiquier

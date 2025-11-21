@@ -422,6 +422,7 @@ namespace QaplaWindows::ImGuiControls {
 
     /**
      * @brief Collapsing header with a checkbox to select/deselect.
+     * 
      * @param label Label to display next to the checkbox and header.
      * @param selected Reference to the boolean value indicating selection state.
      * @param flags Optional ImGuiTreeNodeFlags for the collapsing header.
@@ -430,11 +431,12 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool collapsingSelection(std::string label, bool& selected, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None,
         const std::function<bool()>& contentCallback = nullptr){
+
         bool modified = false;
         modified = ImGui::Checkbox("##select", &selected);
         ImGui::SameLine(0.0F, 4.0F);
-        auto translatedLabel = Translator::instance().translate(label);
-        if (ImGui::CollapsingHeader(translatedLabel.c_str(), flags)) {
+        // Collapsing selection are used to select content items and are thus not translated.
+        if (ImGui::CollapsingHeader(label.c_str(), flags)) {
             ImGui::Indent(10.0F);
             // call callback to draw content
             if ((flags & ImGuiTreeNodeFlags_Leaf) == 0 && contentCallback) {
@@ -696,7 +698,7 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the header is open, false otherwise.
      */
     inline bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false) {
-        auto translatedLabel = Translator::instance().translate(label);
+        auto translatedLabel = Translator::instance().translate("Section", label);
         bool result = ImGui::CollapsingHeader(translatedLabel.c_str(), flags);
         
         if (showDot) {

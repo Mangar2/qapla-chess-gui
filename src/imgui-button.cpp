@@ -764,7 +764,7 @@ namespace QaplaButton {
                 ImVec2 textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
                                        itemStartPos.y + POPUP_ITEM_PADDING_Y);
                 ImU32 textColor = ImGui::GetColorU32(ImGuiCol_Text);
-                auto translatedName = Translator::instance().translate(command.name);
+                auto translatedName = Translator::instance().translate("Button", command.name);
                 drawList->AddText(textPos, textColor, translatedName.c_str());
                 
                 // Draw red highlight dot if command is highlighted
@@ -874,7 +874,7 @@ namespace QaplaButton {
             drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
         }
 
-        auto translatedLabel = Translator::instance().translate(label);
+        auto translatedLabel = Translator::instance().translate("Button", label);
 
         ImVec2 labelSize = ImGui::CalcTextSize(translatedLabel.c_str());
         ImVec2 labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
@@ -893,7 +893,7 @@ namespace QaplaButton {
     ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels) {
         auto totalSize = buttonSize;
         for (const auto& label : labels) {
-            auto translatedLabel = Translator::instance().translate(label);
+            auto translatedLabel = Translator::instance().translate("Button", label);
             auto total = QaplaButton::calcIconButtonTotalSize(buttonSize, translatedLabel.c_str());
             totalSize.x = std::max(totalSize.x, total.x);
             totalSize.y = std::max(totalSize.y, total.y);

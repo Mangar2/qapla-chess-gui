@@ -1,3 +1,5 @@
+[Translation]
+id=Button
 Add=Neu
 Remove=Löschen
 Detect=Erkennen
@@ -20,7 +22,7 @@ Clear=Reset
 Grace=Sanft
 Open=Öffnen
 Recent=Zuletzt
-Save As=Sp. Als
+Save As=Sp. als
 Filter=Filter
 Test=Test
 Load=Laden
@@ -29,3 +31,33 @@ Ok=OK
 Copy=Kopieren
 Paste=Einfügen
 Cancel=Stopp
+RGC=RGC
+
+[Translation]
+id=Section
+Global Engine Settings=Globale Engine Einstellungen
+Engines=Engines
+Opening=Eröffnung
+Tournament=Turnier
+Time Control=Zeitkontrolle
+Pgn=Pgn
+Adjudicate draw=Remis bewerten
+Adjudicate resign=Aufgabe bewerten
+SPRT Configuration=SPRT Konfiguration
+Configuration=Konfiguration
+Tests=Tests
+Snackbar Settings=Snackbar Einstellungen
+Tutorial Progress=Tutorial Fortschritt
+Logger Settings=Logger Einstellungen
+Language Settings=Sprach Einstellungen
+
+[Translation]
+id=Tab
+Engines=Engines
+Tournament=Turnier
+Sprt=Sprt
+Pgn=Pgn
+Epd=Epd
+Test=Test
+Settings=Einstellungen
+Board=Brett

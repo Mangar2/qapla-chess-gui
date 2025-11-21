@@ -14,24 +14,26 @@ public:
     [[nodiscard]] static Translator& instance();
 
     /**
-     * @brief Translates a key. Returns the key itself if no translation is found.
+     * @brief Translates a key with a topic. Returns the key itself if no translation is found.
+     * @param topic The topic category (e.g., "Button", "Tab").
      * @param key The key to translate.
      * @return The translated string or the key if not found.
      */
-    [[nodiscard]] std::string translate(const std::string& key);
+    [[nodiscard]] std::string translate(const std::string& topic, const std::string& key);
 
     /**
-     * @brief Loads translations from a file (key=value format).
+     * @brief Loads translations from an INI file.
      * @param filepath The path to the language file.
      */
     void loadLanguageFile(const std::string& filepath);
 
     /**
-     * @brief Adds a translation programmatically (e.g. for hardcoded defaults).
+     * @brief Adds a translation programmatically.
+     * @param topic The topic category.
      * @param key The key to translate.
      * @param value The translated value.
      */
-    void addTranslation(const std::string& key, const std::string& value);
+    void addTranslation(const std::string& topic, const std::string& key, const std::string& value);
 
     /**
      * @brief Sets the directory where language files are located relative to the main data directory.
@@ -53,10 +55,10 @@ public:
     [[nodiscard]] std::string getLanguageCode() const;
 
     /**
-     * @brief Gets a list of keys that were requested but not found.
-     * @return A vector of missing keys.
+     * @brief Gets a map of topics and their missing translation keys.
+     * @return A map of topic to missing keys.
      */
-    [[nodiscard]] std::vector<std::string> getMissingTranslations() const;
+    [[nodiscard]] std::unordered_map<std::string, std::vector<std::string>> getMissingTranslations() const;
 
     /**
      * @brief Converts text to file format (escapes newlines).
@@ -82,8 +84,11 @@ private:
     Translator(const Translator&) = delete;
     Translator& operator=(const Translator&) = delete;
 
-    std::unordered_map<std::string, std::string> translations;
-    mutable std::vector<std::string> missingKeys;
+    using TranslationMap = std::unordered_map<std::string, std::string>;
+    using TopicMap = std::unordered_map<std::string, TranslationMap>;
+    
+    TopicMap translations;
+    mutable std::unordered_map<std::string, std::vector<std::string>> missingKeys;
     mutable std::mutex languageMutex;
     std::string languageDirectory = "lang";
     std::string currentLanguage = "eng";
@@ -92,9 +97,10 @@ private:
 
 /**
  * @brief Global helper function for easy access to translation.
+ * @param topic The topic category.
  * @param text The text key to translate.
  * @return The translated text.
  */
-[[nodiscard]] inline std::string tr(const std::string& text) {
-    return Translator::instance().translate(text);
+[[nodiscard]] inline std::string tr(const std::string& topic, const std::string& text) {
+    return Translator::instance().translate(topic, text);
 }

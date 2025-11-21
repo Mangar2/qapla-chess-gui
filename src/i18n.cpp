@@ -2,6 +2,7 @@
 
 #include <string-helper.h>
 #include <logger.h>
+#include <ini-file.h>
 
 #include <fstream>
 #include <sstream>
@@ -28,7 +29,7 @@ Translator::~Translator() {
     saveFile();
 }
 
-std::string Translator::translate(const std::string& key) {
+std::string Translator::translate(const std::string& topic, const std::string& key) {
     // Detect leading/trailing whitespace to preserve it
     size_t first = key.find_first_not_of(" \t\r\n");
     if (first == std::string::npos) {
@@ -41,12 +42,18 @@ std::string Translator::translate(const std::string& key) {
     std::string trimmedKey = key.substr(first, last - first + 1);
 
     std::lock_guard<std::mutex> lock(languageMutex);
-    if (auto it = translations.find(trimmedKey); it != translations.end()) {
-        return prefix + it->second + suffix;
+    
+    auto topicIt = translations.find(topic);
+    if (topicIt != translations.end()) {
+        auto keyIt = topicIt->second.find(trimmedKey);
+        if (keyIt != topicIt->second.end()) {
+            return prefix + keyIt->second + suffix;
+        }
     }
 
-    if (std::ranges::find(missingKeys, trimmedKey) == missingKeys.end()) {
-        missingKeys.push_back(trimmedKey);
+    auto& topicMissingKeys = missingKeys[topic];
+    if (std::ranges::find(topicMissingKeys, trimmedKey) == topicMissingKeys.end()) {
+        topicMissingKeys.push_back(trimmedKey);
         setModified();
     }
     
@@ -62,23 +69,30 @@ void Translator::loadLanguageFile(const std::string& filepath) {
         return;
     }
 
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty() || line[0] == '#' || line[0] == ';') continue;
-
-        size_t delimiterPos = line.find('=');
-        if (delimiterPos != std::string::npos) {
-            std::string key = line.substr(0, delimiterPos);
-            std::string value = line.substr(delimiterPos + 1);
+    auto sectionList = QaplaHelpers::IniFile::load(file);
+    
+    for (const auto& section : sectionList) {
+        if (section.name == "Translation") {
+            auto topicOpt = section.getValue("id");
+            if (!topicOpt.has_value()) {
+                continue;
+            }
             
-            translations[fromFileFormat(key)] = fromFileFormat(value);
+            std::string topic = topicOpt.value();
+            auto& topicTranslations = translations[topic];
+            
+            for (const auto& [key, value] : section.entries) {
+                if (key != "id") {
+                    topicTranslations[fromFileFormat(key)] = fromFileFormat(value);
+                }
+            }
         }
     }
 }
 
-void Translator::addTranslation(const std::string& key, const std::string& value) {
+void Translator::addTranslation(const std::string& topic, const std::string& key, const std::string& value) {
     std::lock_guard<std::mutex> lock(languageMutex);
-    translations[key] = value;
+    translations[topic][key] = value;
 }
 
 void Translator::setLanguageDirectory(const std::string& directory) {
@@ -117,31 +131,58 @@ std::string Translator::getLanguageCode() const {
     return currentLanguage;
 }
 
-std::vector<std::string> Translator::getMissingTranslations() const {
+std::unordered_map<std::string, std::vector<std::string>> Translator::getMissingTranslations() const {
     std::lock_guard<std::mutex> lock(languageMutex);
     return missingKeys;
 }
 
 void Translator::saveData(std::ofstream& out) {
     std::lock_guard<std::mutex> lock(languageMutex);
-    for (const auto& key : missingKeys) {
-        if (translations.find(key) == translations.end()) {
-            out << toFileFormat(key) << "=" << std::endl;
+    
+    for (const auto& [topic, keys] : missingKeys) {
+        if (keys.empty()) {
+            continue;
         }
+        
+        QaplaHelpers::IniFile::Section section;
+        section.name = "Translation";
+        section.addEntry("id", topic);
+        
+        for (const auto& key : keys) {
+            auto topicIt = translations.find(topic);
+            if (topicIt == translations.end() || topicIt->second.find(key) == topicIt->second.end()) {
+                section.addEntry(toFileFormat(key), "");
+            }
+        }
+        
+        QaplaHelpers::IniFile::saveSection(out, section);
     }
 }
 
 void Translator::loadData(std::ifstream& in) {
     std::lock_guard<std::mutex> lock(languageMutex);
-    std::string line;
-    while (std::getline(in, line)) {
-        if (line.empty()) continue;
-        size_t pos = line.find('=');
-        std::string key = (pos != std::string::npos) ? line.substr(0, pos) : line;
-        std::string processedKey = fromFileFormat(key);
-        
-        if (!processedKey.empty() && std::ranges::find(missingKeys, processedKey) == missingKeys.end()) {
-             missingKeys.push_back(processedKey);
+    
+    auto sectionList = QaplaHelpers::IniFile::load(in);
+    
+    for (const auto& section : sectionList) {
+        if (section.name == "Translation") {
+            auto topicOpt = section.getValue("id");
+            if (!topicOpt.has_value()) {
+                continue;
+            }
+            
+            std::string topic = topicOpt.value();
+            auto& topicMissingKeys = missingKeys[topic];
+            
+            for (const auto& [key, value] : section.entries) {
+                if (key != "id") {
+                    std::string processedKey = fromFileFormat(key);
+                    if (!processedKey.empty() && 
+                        std::ranges::find(topicMissingKeys, processedKey) == topicMissingKeys.end()) {
+                        topicMissingKeys.push_back(processedKey);
+                    }
+                }
+            }
         }
     }
 }
