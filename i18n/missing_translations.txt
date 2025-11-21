@@ -1,0 +1,94 @@
+[Translation]
+id=Input
+Concurrency=
+Search=
+Hash (MB)=
+Restart=
+Trace=
+File format=
+Order=
+First opening=
+Random seed=
+Switch policy=
+Event=
+Type=
+Rounds=
+Games per pairing=
+Same opening=
+No color swap=
+Average Elo=
+Hours=
+Minutes=
+Seconds=
+Increment Minutes=
+Increment Seconds=
+Increment Milliseconds=
+Moves to Play=
+Predefined time control=
+Append mode=
+Save only finished games=
+Minimal tags=
+Include clock=
+Include eval=
+Include PV=
+Include depth=
+Active=
+Min full moves=
+Required consecutive moves=
+Centipawn threshold=
+Both side decides=
+Elo Lower (H0)=
+Elo Upper (H1)=
+Alpha (‰)=
+Beta (‰)=
+Max Games=
+Number of Games=
+Note Duration=
+Success Duration=
+Warning Duration=
+Error Duration=
+Report Log - Base Name=
+Engine Log - Base Name=
+Engine Log File Strategy=
+Language=
+
+[Translation]
+id=Option
+Yes=
+Inactive=
+Test=
+Active=
+
+[Translation]
+id=Section
+Available Engines=
+Selected Engines=
+
+[Translation]
+id=Table
+Depth=
+Time=
+Eval=
+PV=
+Move=
+Nodes=
+NPS=
+Tb hits=
+Value=
+Primary variant=
+Name=
+Elo=
+Error=
+Score=
+Total=
+WDL=
+Count=
+Cause=
+White=
+Black=
+Result=
+Best move=
+Engine=
+Status=
+Test=
+

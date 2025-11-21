@@ -67,8 +67,8 @@ namespace QaplaWindows::ImGuiControls {
         void* userData = nullptr) {
         std::string buffer = value;
         buffer.resize(1024);  // Fixed buffer size
-
-        if (ImGui::InputText(label, buffer.data(), buffer.size(), flags, callback, userData)) {
+        auto translatedLabel = Translator::instance().translate("Input", label);
+        if (ImGui::InputText(translatedLabel.c_str(), buffer.data(), buffer.size(), flags, callback, userData)) {
             size_t nullPos = buffer.find('\0');
             return buffer.substr(0, nullPos);
         }
@@ -108,7 +108,9 @@ namespace QaplaWindows::ImGuiControls {
 		assert(min < max && "Min must be less than max");
 
         int tempValue = static_cast<int>(value);
-        bool modified = ImGui::InputInt(label, &tempValue, step, stepFast, flags);
+        auto translatedLabel = Translator::instance().translate("Input", label);
+
+        bool modified = ImGui::InputInt(translatedLabel.c_str(), &tempValue, step, stepFast, flags);
 
         if (tempValue < static_cast<int>(min)) tempValue = static_cast<int>(min);
         if (tempValue > static_cast<int>(max)) tempValue = static_cast<int>(max);
@@ -137,7 +139,8 @@ namespace QaplaWindows::ImGuiControls {
 
         // Convert value to int for ImGui::SliderInt
         int tempValue = static_cast<int>(value);
-        bool modified = ImGui::SliderInt(label, &tempValue, static_cast<int>(min), static_cast<int>(max), format);
+        auto translatedLabel = Translator::instance().translate("Input", label);
+        bool modified = ImGui::SliderInt(translatedLabel.c_str(), &tempValue, static_cast<int>(min), static_cast<int>(max), format);
 
         // Update the original value if it was modified
         if (modified) {
@@ -165,8 +168,9 @@ namespace QaplaWindows::ImGuiControls {
         int32_t promilleMin = static_cast<int32_t>(min * 1000.0);
         int32_t promilleMax = static_cast<int32_t>(max * 1000.0);
         int32_t promilleStep = static_cast<int32_t>(step * 1000.0);
+        auto translatedLabel = Translator::instance().translate("Input", label);
 
-        bool modified = ImGui::InputInt(label, &promilleValue, promilleStep, promilleStep * 10);
+        bool modified = ImGui::InputInt(translatedLabel.c_str(), &promilleValue, promilleStep, promilleStep * 10);
 
         promilleValue = std::clamp(promilleValue, promilleMin, promilleMax);
 
@@ -307,7 +311,8 @@ namespace QaplaWindows::ImGuiControls {
     inline bool selectionBox(const char* label, int& currentItem, const std::vector<std::string>& options) {
         bool modified = false;
         bool isIndex = currentItem >= 0 && currentItem < static_cast<int>(options.size());
-        if (ImGui::BeginCombo(label, isIndex ? options[currentItem].c_str() : "Custom"
+        auto translatedLabel = Translator::instance().translate("Input", label);
+        if (ImGui::BeginCombo(translatedLabel.c_str(), isIndex ? options[currentItem].c_str() : "Custom"
         )) {
             for (size_t i = 0; i < options.size(); ++i) {
                 bool isSelected = (currentItem == static_cast<int>(i));
@@ -363,7 +368,10 @@ namespace QaplaWindows::ImGuiControls {
      */
     inline bool booleanInput(const char* label, bool& value) {
         // Define the options for the selection box
-        static const std::vector<std::string> options = { "No", "Yes" };
+        static std::vector<std::string> options = {
+            Translator::instance().translate("Option", "No"),
+            Translator::instance().translate("Option", "Yes")
+        };
 
         // Map the boolean value to the selection index
         int currentItem = value ? 1 : 0;
@@ -390,7 +398,11 @@ namespace QaplaWindows::ImGuiControls {
      * @param labels Optional labels for the three states (default: {"Inactive", "Test", "Active"}).
      */
     inline bool triStateInput(const char* label, bool& major, bool& minor, 
-        std::vector<std::string> labels = {"Inactive", "Test", "Active"}) {
+        std::vector<std::string> labels = {
+            Translator::instance().translate("Option", "Inactive"),
+            Translator::instance().translate("Option", "Test"),
+            Translator::instance().translate("Option", "Active")
+        }) {
 
         // Map the boolean value to the selection index
         int currentItem = major ? 2 : 0;

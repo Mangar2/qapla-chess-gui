@@ -34,7 +34,70 @@ Cancel=Cancel
 RGC=RGC
 
 [Translation]
+id=Input
+Concurrency=Concurrency
+Search=Search
+Hash (MB)=Hash (MB)
+Restart=Restart
+Trace=Trace
+File format=File format
+Order=Order
+First opening=First opening
+Random seed=Random seed
+Switch policy=Switch policy
+Event=Event
+Type=Type
+Rounds=Rounds
+Games per pairing=Games per pairing
+Same opening=Same opening
+No color swap=No color swap
+Average Elo=Average Elo
+Hours=Hours
+Minutes=Minutes
+Seconds=Seconds
+Increment Minutes=Increment Minutes
+Increment Seconds=Increment Seconds
+Increment Milliseconds=Increment Milliseconds
+Moves to Play=Moves to Play
+Predefined time control=Predefined time control
+Append mode=Append mode
+Save only finished games=Save only finished games
+Minimal tags=Minimal tags
+Include clock=Include clock
+Include eval=Include eval
+Include PV=Include PV
+Include depth=Include depth
+Active=Active
+Min full moves=Min full moves
+Required consecutive moves=Required consecutive moves
+Centipawn threshold=Centipawn threshold
+Both side decides=Both side decides
+Elo Lower (H0)=Elo Lower (H0)
+Elo Upper (H1)=Elo Upper (H1)
+Alpha (‰)=Alpha (‰)
+Beta (‰)=Beta (‰)
+Max Games=Max Games
+Number of Games=Number of Games
+Note Duration=Note Duration
+Success Duration=Success Duration
+Warning Duration=Warning Duration
+Error Duration=Error Duration
+Report Log - Base Name=Report Log - Base Name
+Engine Log - Base Name=Engine Log - Base Name
+Engine Log File Strategy=Engine Log File Strategy
+Language=Language
+
+[Translation]
+id=Option
+Yes=Yes
+Inactive=Inactive
+Test=Test
+Active=Active
+
+[Translation]
 id=Section
+Available Engines=Available Engines
+Selected Engines=Selected Engines
 Global Engine Settings=Global Engine Settings
 Engines=Engines
 Opening=Opening
@@ -50,6 +113,34 @@ Snackbar Settings=Snackbar Settings
 Tutorial Progress=Tutorial Progress
 Logger Settings=Logger Settings
 Language Settings=Language Settings
+
+[Translation]
+id=Table
+Depth=Depth
+Time=Time
+Eval=Eval
+PV=PV
+Move=Move
+Nodes=Nodes
+NPS=NPS
+Tb hits=Tb
+Value=Value
+Primary variant=Primary variant
+Name=Name
+Elo=Elo
+Error=Error
+Score=Score
+Total=Total
+WDL=WDL
+Count=Count
+Cause=Cause
+White=White
+Black=Black
+Result=Result
+Best move=Best move
+Engine=Engine
+Status=Status
+Test=Test
 
 [Translation]
 id=Tab

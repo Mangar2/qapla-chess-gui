@@ -51,13 +51,22 @@ std::string Translator::translate(const std::string& topic, const std::string& k
         }
     }
 
-    QaplaHelpers::IniFile::Section section;
-    section.name = "Translation";
-    section.addEntry("id", topic);
-    section.addEntry(toFileFormat(trimmedKey), "");
-    missingKeys_.addSection(section);
+    auto sectionListOpt = missingKeys_.getSectionList("Translation", topic);
+    if (!sectionListOpt || sectionListOpt->empty()) {
+        missingKeys_.addSection({
+            .name = "Translation",
+            .entries = { {"id", topic} }
+        });
+        setModified();
+        return key;
+    }
+    // There is only one section per name/id in this use case
+    auto& section = sectionListOpt->front();
+    if (!section.getValue(trimmedKey)) {
+        section.addEntry(trimmedKey, "");
+        missingKeys_.setSectionList("Translation", topic, *sectionListOpt);
+    }
     setModified();
-    
     return key;
 }
 
@@ -164,3 +173,4 @@ std::string Translator::fromFileFormat(const std::string& text) {
     }
     return result;
 }
+
