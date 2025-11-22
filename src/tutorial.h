@@ -97,6 +97,12 @@ public:
     };
 
     /**
+     * @brief Shows the current tutorial step without advancing the counter
+     * @param name The name of the tutorial topic
+     */
+    void showLastTutorialStep(TutorialName name);
+
+    /**
      * @brief Shows the next tutorial step for a given topic
      * @param topicName The name of the tutorial topic
      */
@@ -113,6 +119,11 @@ public:
      * @param name The tutorial topic to restart
      */
     void restartTutorial(TutorialName name);
+
+    /**
+     * @brief Resets all tutorials to their initial state
+     */
+    void resetAll();
 
     /**
      * @brief Sets a tutorial entry at the specified position
@@ -190,4 +201,9 @@ private:
      * @return true if the tutorial may start, false otherwise
      */
     bool mayStart(TutorialName name) const;
+
+    /**
+     * @brief Starts the next tutorial that is allowed to start
+     */
+    void startNextTutorialIfAllowed();
 };

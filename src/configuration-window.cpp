@@ -203,6 +203,14 @@ void ConfigurationWindow::drawTutorialConfig()
         auto progress = std::min<uint32_t>(entry.getProgressCounter(), messageCount);
         ImGui::TextDisabled("(Progress: %u/%zu)", progress, messageCount);
     }
+    
+    ImGui::Spacing();
+    if (ImGuiControls::textButton("Reset All Tutorials")) {
+        Tutorial::instance().resetAll();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Resets all tutorials to their initial state");
+    }
 }
 
 void ConfigurationWindow::drawLoggerConfig()

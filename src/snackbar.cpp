@@ -191,7 +191,7 @@ void SnackbarManager::draw() {
             
             // Handle tutorial progression for tutorial snackbars
             if (wasTutorial) {
-                showNextTutorialStep();
+                showNextTutorialStep(true);
             }
         }
 
@@ -246,7 +246,11 @@ void SnackbarManager::updateConfiguration() const {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("snackbar", "snackbar", { section });
 }
 
-void SnackbarManager::showNextTutorialStep() const {
+void SnackbarManager::showNextTutorialStep(bool endSticky) const {
+    if (tutorialProgress_ == 1 && !endSticky) {
+        Tutorial::instance().showLastTutorialStep(Tutorial::TutorialName::Snackbar);
+        return;
+    }
     if (tutorialProgress_ == 5) {
         Tutorial::instance().finishTutorial(Tutorial::TutorialName::Snackbar);
         return; 
@@ -270,16 +274,16 @@ bool SnackbarManager::tutorialInitialized_ = []() {
               "- Note, Success, Warning, and Error.\n\n"
               "Each type has a different display duration.",
               .type = SnackbarType::Warning },
-            { .text = "Snackbar Configuration\n\n"
+            { .text = 
               "You can customize the display duration for each snackbar type in the Settings window.\n"
               "Go to the 'Settings' tab and check the 'Snackbar Settings' section.\n"
               "If the tutorial is too fast, adjust the duration of the messages.", 
               .type = SnackbarType::Note },
-            { .text = "Snackbar Configuration\n\n"
+            { .text = 
               "You can restart any tutorial from the beginning if needed.\n"
               "Go to the 'Settings' tab and uncheck the tutorial you want to restart.\n",
               .type = SnackbarType::Note },
-            { .text = "Snackbar Configuration\n\n"
+            { .text = 
               "Now we start with the functionality.\n\n"
               "Red dots show where to click next - setup engines.", 
               .type = SnackbarType::Note }

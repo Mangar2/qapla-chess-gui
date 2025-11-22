@@ -51,7 +51,7 @@ namespace QaplaWindows {
          * @brief Advances the Tournament tutorial based on user actions.
          * @param clickedButton The button that was clicked (empty string for state checks)
          */
-        void showNextTournamentTutorialStep(const std::string& clickedButton);
+        static void showNextTournamentTutorialStep(const std::string& clickedButton);
 
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for Tournament tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial
@@ -65,7 +65,7 @@ namespace QaplaWindows {
     private:
 
         static std::string drawButtons();
-        void executeCommand(const std::string &button);
+        static void executeCommand(const std::string &button);
         static bool drawInput();
         static void drawProgress();
         

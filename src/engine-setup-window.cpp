@@ -129,7 +129,7 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
         }
         return QaplaButton::ButtonState::Normal;
     }
-    else if (button == "Remove") {
+    if (button == "Remove") {
         // Check if any engines are selected
         const auto& configurations = engineSelect_.getEngineConfigurations();
         bool hasSelection = std::ranges::any_of(configurations, 
@@ -140,7 +140,7 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
         }
         return QaplaButton::ButtonState::Normal;
     }
-    else if (button == "Detect") {
+    if (button == "Detect") {
         if (detecting) {
             return QaplaButton::ButtonState::Animated;
         }
@@ -206,42 +206,43 @@ bool EngineSetupWindow::drawGlobalSettings() {
 
 void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
 {
-    try
+
+    if (button == "Add")
     {
-        if (button == "Add")
+        auto commands = OsDialogs::openFileDialog(true);
+        for (auto &command : commands)
         {
-            auto commands = OsDialogs::openFileDialog(true);
-            for (auto &command : commands)
-            {
-                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().addConfig(QaplaTester::EngineConfig::createFromPath(command));
-            }
-            QaplaConfiguration::Configuration::instance().setModified();
+            QaplaTester::EngineWorkerFactory::getConfigManagerMutable().addConfig(QaplaTester::EngineConfig::createFromPath(command));
         }
-        else if (button == "Remove")
-        {
-            // Remove selected engines
-            const auto& configurations = engineSelect_.getEngineConfigurations();
-            for (const auto& config : configurations) {
-                if (config.selected) {
-                    QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(config.config);
-                    QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
-                        config.config.getCmd(), config.config.getProtocol());
-                }
+        QaplaConfiguration::Configuration::instance().setModified();
+    }
+    else if (button == "Remove")
+    {
+        // Remove selected engines
+        const auto& configurations = engineSelect_.getEngineConfigurations();
+        for (const auto& config : configurations) {
+            if (config.selected) {
+                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(config.config);
+                QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
+                    config.config.getCmd(), config.config.getProtocol());
             }
-            
-            // Clear selection after removal
-            std::vector<ImGuiEngineSelect::EngineConfiguration> emptyConfigs;
-            engineSelect_.setEngineConfigurations(emptyConfigs);
         }
-        else if (button == "Detect")
-        {
+        
+        // Clear selection after removal
+        std::vector<ImGuiEngineSelect::EngineConfiguration> emptyConfigs;
+        engineSelect_.setEngineConfigurations(emptyConfigs);
+    }
+    else if (button == "Detect")
+    {
+        try {
             QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
-            QaplaConfiguration::Configuration::instance().setModified();
+        } catch (const std::exception& ex) {
+            SnackbarManager::instance().showWarning(
+                std::format("Engine auto-detect failed,\nsome engines may not be detected\n {}", ex.what()));
         }
+        QaplaConfiguration::Configuration::instance().setModified();
     }
-    catch (...)
-    {
-    }
+
 }
 
 void EngineSetupWindow::draw() {
@@ -270,22 +271,20 @@ static auto engineSetupTutorialInit = []() {
         .name = Tutorial::TutorialName::EngineSetup,
         .displayName = "Engine Setup",
         .messages = {
-            { "Engine Setup - Step 1\n\n"
-              "To use this chess GUI, you need chess engines.\n"
+            { .text = "To use this chess GUI, you need chess engines.\n"
               "Click the 'Add' button in the engines tab to select engine executables. "
               "You can select multiple engines at once in the file dialog.\n\n"
               "Please add 2 or more engines to continue.",
-              SnackbarManager::SnackbarType::Note },
-            { "Engine Setup - Step 2\n\n"
-              "Great! You have added engines.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Great! You have added engines.\n"
               "Now click the 'Detect' button to automatically read all options from your engines.\n"
               "It runs in parallel for all engines. Still it may take a few seconds.",
-              SnackbarManager::SnackbarType::Note },
-            { "Engine Setup Complete!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Engine Setup Complete!\n\n"
               "Excellent! Your engines are now configured and ready to use.\n"
               "You can select them in other tabs like Tournament or Engine Test.\n\n"
               "Engine setup tutorial completed!",
-              SnackbarManager::SnackbarType::Success }
+              .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
             return EngineSetupWindow::tutorialProgress_;

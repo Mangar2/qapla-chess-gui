@@ -107,7 +107,7 @@ std::string EpdWindow::drawButtons()
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
     auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
-    std::string clickedButton = "";
+    std::string clickedButton;
     
     for (const std::string button : {"Run/Stop", "Grace", "Clear"})
     {
@@ -193,15 +193,16 @@ void EpdWindow::drawInput()
 
     if (ImGuiControls::CollapsingHeaderWithDot("Configuration", ImGuiTreeNodeFlags_Selected))
     {
+        constexpr uint64_t maxTimeInS = 3600ULL * 24ULL * 365ULL; 
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
         modified |= ImGuiControls::inputInt<uint32_t>("Seen plies", config.seenPlies, 1, maxSeenPlies);
 
         ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, maxTimeInS, 1, 100);
 
         ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, 3600 * 24 * 365, 1, 100);
+        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, maxTimeInS, 1, 100);
 
         ImGui::Spacing();
         modified |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath, inputWidth * 2.0F);
@@ -368,58 +369,48 @@ static auto epdWindowTutorialInit = []() {
         .name = Tutorial::TutorialName::Epd,
         .displayName = "EPD Analysis",
         .messages = {
-            { "EPD Analysis - Step 1\n\n"
-              "Run engine position tests with EPD files.\n"
+            { .text = "Run engine position tests with EPD files.\n"
               "These tests evaluate engine strength on tactical positions.\n\n"
               "Click the 'EPD' tab to open this window.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 2\n\n"
-              "EPD window is now open.\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "EPD window is now open.\n\n"
               "Open 'Engines' section and select two engines.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 3\n\n"
-              "Configure test parameters in 'Configuration':\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Configure test parameters in 'Configuration':\n"
               "• Seen plies: 3\n"
               "• Max time: 10s, Min time: 1s\n"
               "• Select an EPD or RAW file",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 4\n\n"
-              "Configuration complete!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Configuration complete!\n\n"
               "Click 'Analyze' to start the test.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 5\n\n"
-              "Analysis is running!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Analysis is running!\n\n"
               "Click 'Stop' to pause. Progress is auto-saved.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 6\n\n"
-              "Stopped. Button now shows 'Continue'.\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Stopped. Button now shows 'Continue'.\n\n"
               "Click 'Continue' to resume.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 7\n\n"
-              "Analysis resumed!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Analysis resumed!\n\n"
               "Click 'Grace' for graceful stop.\n"
               "Finishes current tests, skips new ones.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 8\n\n"
-              "Grace mode! Tests finishing.\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Grace mode! Tests finishing.\n\n"
               "Board tabs show parallel analyses.\n"
               "When stopped, click 'Clear' to delete results.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 9\n\n"
-              "Results cleared!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Results cleared!\n\n"
               "Click 'Analyze' to restart.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis - Step 10\n\n"
-              "Analysis running!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Analysis running!\n\n"
               "Move 'Concurrency' slider to 10.\n"
               "Creates 10 parallel analyses with board tabs.",
-              SnackbarManager::SnackbarType::Note },
-            { "EPD Analysis Complete!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "EPD Analysis Complete!\n\n"
               "Well done!\n\n"
               "• Results auto-save on exit\n"
               "• Cannot resume after restart\n"
               "• Progress bar shows completion",
-              SnackbarManager::SnackbarType::Success }
+              .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
             return EpdWindow::tutorialProgress_;

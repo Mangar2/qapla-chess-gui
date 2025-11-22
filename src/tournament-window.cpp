@@ -119,7 +119,7 @@ std::string TournamentWindow::drawButtons() {
         
     auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
-    std::string clickedButton = "";
+    std::string clickedButton;
     
     for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
         ImGui::SetCursorScreenPos(pos);
@@ -376,10 +376,10 @@ bool TournamentWindow::highlighted() const {
 }
 
 bool TournamentWindow::hasTwoSameEnginesWithPonder() {
-    auto& configs = TournamentData::instance().engineSelect().getEngineConfigurations();
+    const auto& configs = TournamentData::instance().engineSelect().getEngineConfigurations();
     
     // Check if we have at least 2 selected engines with same originalName
-    size_t index = 0;
+    long long index = 0;
     for (const auto& config: configs) {
         if (config.selected) {
             auto it = std::ranges::find_if(configs.begin() + index + 1, configs.end(), 
@@ -399,6 +399,7 @@ bool TournamentWindow::hasTwoSameEnginesWithPonder() {
     return false;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     auto topicName = Tutorial::TutorialName::Tournament;
     
@@ -523,7 +524,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 12:
         // Step 11: Add third engine - check if at least 3 engines are selected
         {
-            auto& configs = tournamentData.engineSelect().getEngineConfigurations();
+            const auto& configs = tournamentData.engineSelect().getEngineConfigurations();
             int selectedCount = 0;
             for (const auto& engineConfig : configs) {
                 if (engineConfig.selected) {
@@ -573,86 +574,72 @@ static auto tournamentWindowTutorialInit = []() {
         .name = Tutorial::TutorialName::Tournament,
         .displayName = "Tournament",
         .messages = {
-            { "Tournament - Step 1\n\n"
-              "Start engine tournaments here.\n"
+            { .text = "Start engine tournaments here.\n"
               "Compare multiple engines in round-robin matches.\n\n"
               "Click the 'Tournament' tab to open.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 2\n\n"
-              "Configure global engine settings.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Configure global engine settings.\n"
               "Set Hash to 64 MB.\n"
               "Disable 'Engine decides' for Ponder.\n\n"
               "This ensures consistent memory usage.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 3\n\n"
-              "Select engines for the tournament.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Select engines for the tournament.\n"
               "Choose the same engine twice.\n"
               "Enable 'Ponder' for one of them.\n\n"
               "Names will auto-disambiguate with [ponder].",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 4\n\n"
-              "Configure opening positions.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Configure opening positions.\n"
               "Select an opening file (.epd, .pgn, or raw FEN).\n"
               "Choose the appropriate file format.\n\n"
               "Hover over options for detailed tooltips.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 5\n\n"
-              "Configure tournament settings.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Configure tournament settings.\n"
               "Type: round-robin, Rounds: 2\n"
               "Games per pairing: 2, Same opening: 2\n\n"
               "Hover over options for explanations.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 6\n\n"
-              "Select time control.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Select time control.\n"
               "Choose '20.0+0.02' from predefined options.\n"
               "(20 seconds + 20 milliseconds per move)\n\n"
               "Hover over fields for format help.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 7\n\n"
-              "Set PGN output file.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Set PGN output file.\n"
               "All games will be saved to this file.\n\n"
               "Hover over options for detailed tooltips.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 8\n\n"
-              "Set Concurrency to 4.\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Set Concurrency to 4.\n"
               "This runs 4 games in parallel.\n\n"
               "You'll see 4 board tabs during the tournament.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 9\n\n"
-              "Start your first tournament!\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Start your first tournament!\n"
               "Click 'Run' to begin.\n\n"
               "Input controls hide while running.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 10\n\n"
-              "Tournament is running!\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Tournament is running!\n"
               "Click a board tab to watch games.\n\n"
               "Wait for the tournament to finish...",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 11\n\n"
-              "Tournament finished!\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Tournament finished!\n"
               "Results are auto-saved.\n\n"
               "Click 'Save As' to save manually.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 12\n\n"
-              "Save dialog completed!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Save dialog completed!\n\n"
               "Now let's extend the tournament.\n"
               "Add a third engine to the selection.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 13\n\n"
-              "Third engine added!\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Third engine added!\n"
               "Tournament will include new pairings.\n\n"
               "Click 'Continue' to resume.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament - Step 14\n\n"
-              "Extended tournament is running!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Extended tournament is running!\n\n"
               "Let it finish or click 'Stop' to pause.",
-              SnackbarManager::SnackbarType::Note },
-            { "Tournament Tutorial Complete!\n\n"
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Tournament Tutorial Complete!\n\n"
               "You've mastered tournament basics!\n\n"
               "• Configure engines and settings\n"
               "• Run tournaments with concurrency\n"
               "• Save and extend tournaments",
-              SnackbarManager::SnackbarType::Success }
+              .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
             return TournamentWindow::tutorialProgress_;

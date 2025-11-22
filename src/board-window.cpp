@@ -394,46 +394,38 @@ namespace QaplaWindows
             .name = Tutorial::TutorialName::BoardWindow,
             .displayName = "Board Window",
             .messages = {
-                { "Board Controls - Step 1\n\n"
-                  "Welcome to the Board Window!\n"
+                { .text = "Welcome to the Board Window!\n"
                   "Here you can play chess and control the engines.\n\n"
                   "Click the 'Play' button to make the first engine (white) play a move.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 2\n\n"
-                  "Great! The engine played a move.\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Great! The engine played a move.\n"
                   "Now make a counter-move. You can click piece then target, or target then piece.\n"
                   "Try clicking a5 directly - if the move is unambiguous, it executes immediately.\n\n"
                   "The computer will continue playing while 'Play' is active.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 3\n\n"
-                  "You made a move, the engine responded automatically in play mode.\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "You made a move, the engine responded automatically in play mode.\n"
                   "Click 'Play' again. This will make the second engine play for black\n"
                   "(if two engines are selected).",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 4\n\n"
-                  "Good! Now click 'Stop' to end the engine play.\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Good! Now click 'Stop' to end the engine play.\n"
                   "After that, make another move manually.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 5\n\n"
-                  "Perfect! Now both sides are manual.\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Perfect! Now both sides are manual.\n"
                   "Click 'Analyze' to make both engines analyze the position\n"
                   "without making moves.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 6\n\n"
-                  "Excellent! Both engines are analyzing.\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Excellent! Both engines are analyzing.\n"
                   "Click 'Stop' again to end the analysis.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 7\n\n"
-                  "Great! Now click 'Auto' to make both engines play against each other\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Great! Now click 'Auto' to make both engines play against each other\n"
                   "automatically.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls - Step 8\n\n"
-                  "Click 'Stop' one more time to end the auto-play.",
-                  SnackbarManager::SnackbarType::Note },
-                { "Board Controls Complete!\n\n"
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Click 'Stop' one more time to end the auto-play.",
+                  .type = SnackbarManager::SnackbarType::Note },
+                { .text = "Board Controls Complete!\n\n"
                   "Well done! You now know Play, Stop, Analyze, and Auto.\n\n"
                   "Next tutorial: Learn Cut & Paste to save and load positions.",
-                  SnackbarManager::SnackbarType::Success }
+                  .type = SnackbarManager::SnackbarType::Success }
             },
             .getProgressCounter = []() -> uint32_t& {
                 return BoardWindow::tutorialProgress_;
@@ -448,45 +440,34 @@ namespace QaplaWindows
             .name = Tutorial::TutorialName::BoardCutPaste,
             .displayName = "Board Cut & Paste",
             .messages = {
-                { .text = "Cut & Paste - Step 1\n\n"
-                  "Learn to manage positions and multiple boards.\n\n"
+                { .text = "Learn to manage positions and multiple boards.\n\n"
                   "First, click the 'Time' button to set the game time.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 2\n\n"
-                  "Set the time to 5 minutes and confirm with 'Apply'.",
+                { .text = "Set the time to 5 minutes and confirm with 'Apply'.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 3\n\n"
-                  "Good! Now click 'Setup' to enter setup mode.",
+                { .text = "Good! Now click 'Setup' to enter setup mode.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 4\n\n"
-                  "Click 'Clear' to remove all pieces from the board.",
+                { .text = "Click 'Clear' to remove all pieces from the board.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 5\n\n"
-                  "Place two kings and a queen on the board.\n\n"
+                { .text = "Place two kings and a queen on the board.\n\n"
                   "Then click 'Ok' to return to play mode.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 6\n\n"
-                  "Click 'Analyze' to start engine analysis.\n"
+                { .text = "Click 'Analyze' to start engine analysis.\n"
                   "Wait a moment for the engine to calculate.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 7\n\n"
-                  "Click 'Stop' to stop engine analysis.\n",
+                { .text = "Click 'Stop' to stop engine analysis.\n",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 8\n\n"
-                  "In the Engine List window, click on the top row.\n"
+                { .text = "In the Engine List window, click on the top row.\n"
                   "This copies the position including the calculated variation (PV).",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 9\n\n"
-                  "Click the '+' tab at the top to create a second board.\n"
+                { .text = "Click the '+' tab at the top to create a second board.\n"
                   "A new tab (Board 2) will appear. You can switch between boards using the tabs.",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste - Step 10\n\n"
-                  "Switch to the Board 2 tab and click 'Paste'.\n"
+                { .text = "Switch to the Board 2 tab and click 'Paste'.\n"
                   "The position and PV will be pasted. Navigate to see the calculated line.\n\n"
                   "Tip: Hover over Board 2 tab to see the close button (×).",
                   .type = SnackbarManager::SnackbarType::Note },
-                { .text = "Cut & Paste Complete!\n\n"
-                  "You've learned Cut & Paste and multi-board management!\n"
+                { .text = "You've learned Cut & Paste and multi-board management!\n"
                   "You can copy FEN, PGN, PGN+PV, and paste various formats.\n\n"
                   "Use tabs to manage multiple boards. Board 1 cannot be closed.",
                   .type = SnackbarManager::SnackbarType::Success }

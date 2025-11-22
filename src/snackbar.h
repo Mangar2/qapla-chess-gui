@@ -176,7 +176,7 @@ private:
 
     static bool tutorialInitialized_;
     uint32_t tutorialProgress_ = 0;
-    void showNextTutorialStep() const;
+    void showNextTutorialStep(bool endSticky = false) const;
 
     static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
         ImVec4(0.8f, 0.8f, 0.8f, 1.0F), // Note: Light Gray

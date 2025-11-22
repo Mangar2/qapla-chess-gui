@@ -27,7 +27,6 @@
 bool Tutorial::allPrecedingCompleted(TutorialName name) const {
     const size_t currentIndex = toIndex(name);
     
-    // Alle Tutorials vor dem aktuellen müssen beendet sein
     for (size_t i = 0; i < currentIndex; ++i) {
         if (!entries_[i].completed()) {
             return false;
@@ -39,13 +38,27 @@ bool Tutorial::allPrecedingCompleted(TutorialName name) const {
 bool Tutorial::mayStart(TutorialName name) const {
     const auto& entry = entries_[toIndex(name)];
     
-    // Kann nur starten, wenn autoStart gesetzt ist und noch nicht begonnen wurde
+    // Auto-start starts only tutorials that are set to autoStart and have not yet begun
     if (!entry.autoStart || entry.getProgressCounter() != 0) {
         return false;
     }
     
-    // Alle vorhergehenden Tutorials müssen abgeschlossen sein
     return allPrecedingCompleted(name);
+}
+
+void Tutorial::showLastTutorialStep(TutorialName name) {
+    auto& entry = entries_[toIndex(name)];
+    uint32_t messageIndex = entry.counter > 0 ? entry.counter - 1 : 0;
+    if (messageIndex >= entry.messages.size()) {
+        return;
+    }
+    
+    if (!allPrecedingCompleted(name)) {
+        return;
+    }
+    
+    const auto& msg = entry.messages[messageIndex];
+    SnackbarManager::instance().showTutorial(msg.text, msg.type, msg.sticky);
 }
 
 void Tutorial::showNextTutorialStep(TutorialName name) {
@@ -55,7 +68,6 @@ void Tutorial::showNextTutorialStep(TutorialName name) {
         return;
     }
     
-    // Prüfe, ob alle vorhergehenden Tutorials beendet sind
     if (!allPrecedingCompleted(name)) {
         return;
     }
@@ -73,18 +85,23 @@ void Tutorial::finishTutorial(TutorialName name) {
     }
     
     entry.finish();
-    
-    // Prüfe, ob nachfolgende auto-start Tutorials nun starten können
-    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+
+    startNextTutorialIfAllowed();
+    saveConfiguration();
+}
+
+void Tutorial::startNextTutorialIfAllowed()
+{
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i)
+    {
         auto tutorialName = static_cast<TutorialName>(i);
-        if (mayStart(tutorialName)) {
-            auto& autoStartEntry = entries_[i];
+        if (mayStart(tutorialName))
+        {
+            auto &autoStartEntry = entries_[i];
             autoStartEntry.getProgressCounter() = 1;
             autoStartEntry.showNextMessage();
         }
     }
-    
-    saveConfiguration();
 }
 
 void Tutorial::restartTutorial(TutorialName name) {
@@ -96,6 +113,16 @@ void Tutorial::restartTutorial(TutorialName name) {
         entry.showNextMessage();
     }
     
+    saveConfiguration();
+}
+
+void Tutorial::resetAll() {
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+        auto& entry = entries_[i];
+        entry.reset();
+    }
+    
+    startNextTutorialIfAllowed();
     saveConfiguration();
 }
 
@@ -118,7 +145,6 @@ void Tutorial::loadConfiguration() {
         }
     }
 
-    // Check if auto-start tutorials can now start
     for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
         auto name = static_cast<TutorialName>(i);
         if (mayStart(name)) {
@@ -138,7 +164,7 @@ void Tutorial::saveConfiguration() const {
     for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
         const auto& entry = entries_[i];
         auto configName = entry.displayName + std::to_string(i);
-        section.entries.push_back({ configName, std::to_string(entry.counter) });
+        section.entries.emplace_back(std::move(configName), std::to_string(entry.counter));
     }
     
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("tutorial", "tutorial", { section });

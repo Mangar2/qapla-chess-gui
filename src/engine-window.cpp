@@ -107,13 +107,11 @@ static auto engineWindowTutorialInit = []() {
         .name = Tutorial::TutorialName::BoardEngines,
         .displayName = "Engine Window",
         .messages = {
-            { "Engine Window - Step 1\n\n"
-              "Welcome to the Engine Window!\n"
+            { "Welcome to the Engine Window!\n"
               "Here you can select which engines to use for analysis or play.\n\n"
               "Click the Config button (gear icon) on the left to open the engine selection popup.",
               SnackbarManager::SnackbarType::Note },
-            { "Engine Window - Step 2\n\n"
-              "Great! You've opened the engine selection.\n"
+            { "Great! You've opened the engine selection.\n"
               "You can select multiple engines, and the same engine can be selected multiple times.\n\n"
               "Now please select two different engines to continue.",
               SnackbarManager::SnackbarType::Note },

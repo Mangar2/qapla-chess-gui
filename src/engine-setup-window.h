@@ -160,7 +160,7 @@ namespace QaplaWindows {
         /**
          * @brief Checks conditions and shows next tutorial step if applicable.
          */
-        void showNextTutorialStep();
+        static void showNextTutorialStep();
 
         ImGuiEngineSelect engineSelect_;
         ImGuiEngineGlobalSettings globalSettings_;
