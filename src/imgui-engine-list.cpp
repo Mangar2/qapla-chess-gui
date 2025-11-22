@@ -166,11 +166,12 @@ void ImGuiEngineList::setFromLogBuffer(const QaplaTester::RingBuffer& logBuffer,
     if (!update) { 
         return; 
     }
+    infoTable.logTracker_.updateFrom(logBuffer.getChangeTracker());
     auto& logTable = infoTable.logTable_;
 
     if (modification) {
         logTable->clear();
-        infoTable.lastInputCount_ = 0;
+        infoTable.nextInputCount_ = 0;
     }
     
     if (logBuffer.size() == 0) {
@@ -182,22 +183,21 @@ void ImGuiEngineList::setFromLogBuffer(const QaplaTester::RingBuffer& logBuffer,
     
     // If the smallest number in the buffer is greater than our last processed number,
     // the buffer has wrapped around and we've lost continuity - clear the table
-    if (infoTable.lastInputCount_ + 1 < smallestInputCount) {
+    if (infoTable.nextInputCount_ < smallestInputCount) {
         logTable->clear();
-        infoTable.lastInputCount_ = 0;
+        infoTable.nextInputCount_ = smallestInputCount;
     }
     
-    size_t index = infoTable.lastInputCount_ + 1 - smallestInputCount;
+    size_t logBufferIndex = infoTable.nextInputCount_ - smallestInputCount;
     
     // Add only new entries starting from calculated index
-    for (; index < logBuffer.size(); ++index) {
-        const auto& entry = logBuffer[index];
+    for (; logBufferIndex < logBuffer.size(); ++logBufferIndex) {
+        const auto& entry = logBuffer[logBufferIndex];
         auto countStr = std::format("{:05}", entry.inputCount);
         logTable->push({ countStr, entry.data });
     }
     
-    // Update lastInputCount to the largest inputCount in buffer
-    infoTable.lastInputCount_ = largestInputCount;
+    infoTable.nextInputCount_ = largestInputCount + 1;
 }
 
 void ImGuiEngineList::pollLogBuffers() {

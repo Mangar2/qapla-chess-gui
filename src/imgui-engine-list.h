@@ -118,7 +118,7 @@ namespace QaplaWindows {
             std::unique_ptr<ImGuiTable> logTable_;
             QaplaTester::ChangeTracker logTracker_{};
             bool showLog_ = false;
-            size_t lastInputCount_ = 0;
+            size_t nextInputCount_ = 0;
         };
 
         /**

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensured time control consistency: Reset to GUI settings on new game and update engine handlers on position changes to prevent mismatches between displayed and active game time controls.
 - Improved engine display consistency: Show PGN-defined engines during move scrolling, but switch to currently configured engines during Play mode to reflect active computation.
 - Initial multilingual support: Added language selector (English, Deutsch, Français), i18n subsystem and initial translation files. Translations are partial and still work-in-progress.
+- Fixed: Table filter stays consistend when adding new lines now (problem in Game-End-Cause Table filter)
+- Fixed: Log information in the engine log view is no longer empty after 1000 log lines. Having only the last 1000 log entries when opening the window is normal. 
 
 ## [1.0.0] - 2025-11-18
 
