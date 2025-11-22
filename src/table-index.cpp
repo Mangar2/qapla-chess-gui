@@ -25,19 +25,44 @@
 
 namespace QaplaWindows {
 
-TableIndex::TableIndex(Mode mode) : mode_(mode) {}
+TableIndex::TableIndex() = default;
 
-void TableIndex::updateSize(size_t size) {
-    if (size == unfilteredSize_) return; // No change
+void TableIndex::updateSize(size_t size, std::optional<size_t> addedRow) {
+    if (size == unfilteredSize_) {
+        return; // No change
+    }
     unfilteredSize_ = size;
-    clearFilter();
-    if (mode_ == Unsorted) return;
+    // Required to grow the filteredSize if no filtering is active. 
+    filteredSize_ = size;
+    if (!useSortedIndices_) {
+        return;
+    }
+    // Performance optimization: reserve more space to avoid frequent reallocations
+    if (sortedIndices_.capacity() < size) {
+        constexpr size_t minCapacityIncrease = 16;
+        constexpr size_t maxCapacityIncrease = 1024;
+        sortedIndices_.reserve(std::clamp(size * 2, minCapacityIncrease, maxCapacityIncrease)); 
+    }
     sortedIndices_.resize(size);
-    for (size_t i = 0; i < size; ++i) sortedIndices_[i] = i;
+    if (addedRow) {
+        // Performance optimization. We added a new row with number *addedRow so any 
+        // index greater or equal is now wrong and must be incremented by one.
+        for (size_t index = 0; index < size; ++index) {
+            if (sortedIndices_[index] >= *addedRow) {
+                ++sortedIndices_[index];
+            }
+        }
+        sortedIndices_[*addedRow] = *addedRow;
+        return;
+    }
+    // Any other more complex change requires a full reinitialization
+    for (size_t index = 0; index < unfilteredSize_; ++index) {
+        sortedIndices_[index] = index;
+    }
 }
 
 size_t TableIndex::size() const {
-    return (mode_ == Unsorted) ? unfilteredSize_ : filteredSize_;
+    return (!useSortedIndices_) ? unfilteredSize_ : filteredSize_;
 }
 
 void TableIndex::setCurrentIndex(size_t index) {
@@ -49,7 +74,7 @@ void TableIndex::setCurrentIndex(size_t index) {
 }
 
 void TableIndex::setCurrentRow(size_t row) {
-    if (mode_ == Unsorted) {
+    if (!useSortedIndices_) {
         setCurrentIndex(row);
     } else {
         // Find the index in sortedIndices_
@@ -67,11 +92,10 @@ std::optional<size_t> TableIndex::getCurrentRow() const {
     if (!currentIndex_) {
         return std::nullopt;
     }
-    if (mode_ == Unsorted) {
+    if (!useSortedIndices_) {
         return *currentIndex_;
-    } else {
-        return sortedIndices_[*currentIndex_];
-    }
+    } 
+    return sortedIndices_[*currentIndex_];
 }
 
 void TableIndex::navigateUp(size_t rows) {
@@ -91,34 +115,46 @@ void TableIndex::navigateEnd() {
 }
 
 std::optional<size_t> TableIndex::getRowIndex(size_t row) const {
-    if (mode_ == Unsorted) {
+    if (!useSortedIndices_) {
         if (row < size()) {
             return row;
         }
         return std::nullopt;
-    } else {
-        for (size_t i = 0; i < size(); ++i) {
-            if (sortedIndices_[i] == row) {
-                return i;
-            }
+    } 
+    for (size_t i = 0; i < size(); ++i) {
+        if (sortedIndices_[i] == row) {
+            return i;
         }
-        return std::nullopt;
     }
+    return std::nullopt;
+}
+
+void TableIndex::initFilter() {
+    sortedIndices_.resize(unfilteredSize_);
+    for (size_t i = 0; i < unfilteredSize_; ++i) {
+        sortedIndices_[i] = i;
+    }
+    filteredSize_ = unfilteredSize_;
 }
 
 void TableIndex::sort(const std::function<bool(size_t, size_t)>& compare) {
-    if (mode_ == Sorted) {
-        std::sort(sortedIndices_.begin(), sortedIndices_.begin() + filteredSize_, compare);
+    if (!useSortedIndices_) {
+        initFilter();
     }
+    useSortedIndices_ = true;
+    std::sort(sortedIndices_.begin(), sortedIndices_.begin() + static_cast<long long>(filteredSize_), compare);
 }
 
 void TableIndex::filter(const std::function<bool(size_t)>& predicate) {
-    // We need a sortedIndex_ to filter rows
-    if (mode_ == Unsorted) return;
+    if (!useSortedIndices_) {
+        initFilter();
+    }
+    // We filter by compacting the sortedIndices_ array in place
+    useSortedIndices_ = true;
 
     size_t writeIndex = 0;
     const auto selectedRow = getCurrentRow();
-    for (size_t i = 0; i < sortedIndices_.size(); ++i) {
+    for (size_t i = 0; i < unfilteredSize_; ++i) {
         size_t row = sortedIndices_[i];
         if (predicate(row)) {
             if (writeIndex != i) {

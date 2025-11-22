@@ -157,8 +157,7 @@ namespace QaplaWindows {
         std::vector<ColumnDef> columns)
         : tableId_(std::move(tableId)),
         tableFlags_(tableFlags),
-        columns_(std::move(columns)),
-        indexManager_(TableIndex::Unsorted) {
+        columns_(std::move(columns)) {
     }
 
     ImGuiTable::ImGuiTable() = default;
@@ -191,19 +190,20 @@ namespace QaplaWindows {
         ImGui::TableHeader(content.c_str());
     }
 
-    void ImGuiTable::updated() {
+    void ImGuiTable::updated(std::optional<size_t> addedRow) {
         needsSort_ = true;
-        indexManager_.updateSize(rows_.size());
+        needsFilter_ = true;
+        indexManager_.updateSize(rows_.size(), addedRow);
     }
 
     void ImGuiTable::push(const std::vector<std::string>& row) {
         rows_.push_back(row);
-        updated();
+        updated(rows_.size() - 1);
     }
 
     void ImGuiTable::push_front(const std::vector<std::string>& row) {
         rows_.insert(rows_.begin(), row);
-        updated();
+        updated(0);
     }
 
     void ImGuiTable::clear() {
@@ -315,14 +315,13 @@ namespace QaplaWindows {
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
 
         std::optional<size_t> keyboardRow;
-        indexManager_.updateSize(rows_.size());
         if (filterable_) {
             float cursorYBefore = ImGui::GetCursorPosY();
-            auto changed = filter_.draw();
+            needsFilter_ |= filter_.draw();
             float cursorYAfter = ImGui::GetCursorPosY();
             float filterHeight = cursorYAfter - cursorYBefore;
             tableSize.y = std::max(0.0F, tableSize.y - filterHeight);
-            handleFiltering(changed);
+            handleFiltering();
         }
 
         if (shrink) {
@@ -404,10 +403,11 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiTable::handleFiltering(bool changed) {
-        if (!filterable_ || !changed) {
+    void ImGuiTable::handleFiltering() {
+        if (!filterable_ || !needsFilter_) {
             return;
         }
+        needsFilter_ = false;
         needsSort_ = true;
         indexManager_.filter([&](size_t rowIndex) {
             const auto& row = rows_[rowIndex];

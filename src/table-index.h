@@ -31,19 +31,19 @@ namespace QaplaWindows {
  */
 class TableIndex {
 public:
-    enum Mode { Unsorted, Sorted };
 
     /**
      * @brief Constructs a TableIndexManager with the specified mode.
      * @param mode The initial mode (Unsorted or Sorted).
      */
-    TableIndex(Mode mode = Unsorted);
+    TableIndex();
 
     /**
      * @brief Initializes the index manager with the given size.
      * @param size The total number of rows.
+     * @param addedRow Optional row index that was just added.
      */
-    void updateSize(size_t size);
+    void updateSize(size_t size, std::optional<size_t> addedRow = std::nullopt);
 
     /**
      * @brief Gets the size (total number of indices).
@@ -106,7 +106,7 @@ public:
      * @return The corresponding row number.
      */
     size_t getRowNumber(size_t index) const {
-        if (mode_ == Sorted && index < sortedIndices_.size()) {
+        if (useSortedIndices_ && index < sortedIndices_.size()) {
             return sortedIndices_[index];
         }
         return index;
@@ -150,15 +150,16 @@ public:
      * Note: resorting may be necessary after clearing the filter.
      */
     void clearFilter() {
-        filteredSize_ = unfilteredSize_;
+        filteredSize_ = sortedIndices_.size();
     }
 
 private:
-    Mode mode_;
-    std::optional<size_t> currentIndex_; // Index into the table (0 to size()-1)
+    void initFilter();
+    bool useSortedIndices_ = false;
+    std::optional<size_t> currentIndex_; ///> current index position after filtering/sorting
     std::vector<size_t> sortedIndices_;
-    size_t unfilteredSize_ = 0;
-    size_t filteredSize_ = 0; // Current amount of rows in the table
+    size_t unfilteredSize_ = 0;         ///> Total number of rows without filtering
+    size_t filteredSize_ = 0;           ///> Number of rows after filtering
 };
 
 } // namespace QaplaWindows

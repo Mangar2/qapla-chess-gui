@@ -76,10 +76,8 @@ namespace QaplaWindows {
         void setSortable(bool sortable) {
             if (sortable) {
                 tableFlags_ |= ImGuiTableFlags_Sortable;
-                indexManager_ = TableIndex::Sorted;
             } else {
                 tableFlags_ &= ~ImGuiTableFlags_Sortable;
-                indexManager_ = TableIndex::Unsorted;
             }
         }
 
@@ -185,7 +183,7 @@ namespace QaplaWindows {
         void setField(size_t row, size_t column, const std::string& value) {
             if (row < rows_.size() && column < columns_.size()) {
                 rows_[row][column] = value;
-                needsSort_ = true;
+                updated();
             }
         }        
         
@@ -197,7 +195,7 @@ namespace QaplaWindows {
         void extend(size_t row, const std::string& col) {
             if (row < rows_.size()) {
                 rows_[row].push_back(col);
-                needsSort_ = true;
+                updated();
             }
         }
 
@@ -247,8 +245,9 @@ namespace QaplaWindows {
 
         /** 
          * @brief Performs any necessary updates after external changes.
+         * @param addedRow Optional row index that was just added.
          */
-        void updated();
+        void updated(std::optional<size_t> addedRow = std::nullopt);
 
         /**
          * @brief Checks for keyboard input and returns the index of the row to focus.
@@ -264,7 +263,7 @@ namespace QaplaWindows {
         void setupTable() const;
         
         void handleSorting();
-        void handleFiltering(bool changed);
+        void handleFiltering();
         void handleClipping(std::optional<size_t> &clickedRow);
         void handleScrolling();
         void tableHeadersRow() const;
@@ -283,6 +282,7 @@ namespace QaplaWindows {
         std::vector<ColumnDef> columns_;
         std::vector<std::vector<std::string>> rows_;
         bool needsSort_ = true;
+        bool needsFilter_ = true;
         ImGuiTableSortSpecs* sortSpecs_ = nullptr;
         TableIndex indexManager_;
         MetaFilter filter_;
