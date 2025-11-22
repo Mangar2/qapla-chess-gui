@@ -58,6 +58,7 @@ inline bool drawEngineName(QaplaTester::EngineConfig& config, bool enabled) {
         config.setName(name);
         return true;
     }
+    ImGuiControls::hooverTooltip("Display name for the engine");
     return false;
 }
 
@@ -75,6 +76,7 @@ inline bool drawEngineAuthor(QaplaTester::EngineConfig& config, bool enabled) {
         config.setAuthor(author);
         return true;
     }
+    ImGuiControls::hooverTooltip("Engine author name");
     return false;
 }
 
@@ -92,6 +94,7 @@ inline bool drawEngineCommand(QaplaTester::EngineConfig& config, bool enabled) {
         config.setCmd(cmd);
         return true;
     }
+    ImGuiControls::hooverTooltip("Executable path or command to launch the engine");
     return false;
 }
 
@@ -109,6 +112,7 @@ inline bool drawEngineDirectory(QaplaTester::EngineConfig& config, bool enabled)
         config.setDir(dir);
         return true;
     }
+    ImGuiControls::hooverTooltip("Working directory for the engine process");
     return false;
 }
 
@@ -129,6 +133,7 @@ inline bool drawEngineProtocol(QaplaTester::EngineConfig& config, bool enabled) 
         config.setProtocol(QaplaTester::parseEngineProtocol(protocolStr));
         return true;
     }
+    ImGuiControls::hooverTooltip("Chess engine communication protocol (UCI or XBoard)");
     return false;
 }
 
@@ -149,6 +154,7 @@ inline bool drawEngineTraceLevel(QaplaTester::TraceLevel& traceLevel, bool enabl
         traceLevel = stringToTrace(traceStr);
         return true;
     }
+    ImGuiControls::hooverTooltip("Engine communication logging level (None/All/Command only)");
     return false;
 }
 
@@ -185,6 +191,7 @@ inline bool drawEngineRestartOption(QaplaTester::EngineConfig& config, bool enab
         config.setRestartOption(QaplaTester::parseRestartOption(restartStr));
         return true;
     }
+    ImGuiControls::hooverTooltip("Whether to restart engine process between games");
     return false;
 }
 
@@ -202,6 +209,7 @@ inline bool drawEnginePonder(QaplaTester::EngineConfig& config, bool enabled) {
         config.setPonder(ponder);
         return true;
     }
+    ImGuiControls::hooverTooltip("Allow engine to think during opponent's time");
     return false;
 }
 
@@ -214,13 +222,17 @@ inline bool drawEnginePonder(QaplaTester::EngineConfig& config, bool enabled) {
 inline bool drawEngineGauntlet(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    return ImGuiControls::checkbox("Gauntlet", config.gauntlet());
+    bool result = ImGuiControls::checkbox("Gauntlet", config.gauntlet());
+    ImGuiControls::hooverTooltip("Mark this engine to play against all others in gauntlet mode");
+    return result;
 }
 
 inline bool drawEngineScoreFromWhitePov(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
-    return ImGuiControls::checkbox("Score from White POV", config.scoreFromWhitePov());
+    bool result = ImGuiControls::checkbox("Score from White POV", config.scoreFromWhitePov());
+    ImGuiControls::hooverTooltip("Engine reports scores from white's perspective regardless of side to move");
+    return result;
 }
 
 /**
@@ -241,6 +253,7 @@ inline bool drawEngineTimeControl(QaplaTester::EngineConfig& config, bool enable
             // Ignore invalid input
         }
     }
+    ImGuiControls::hooverTooltip("Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)");
     return false;
 }
 

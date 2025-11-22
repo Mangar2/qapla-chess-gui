@@ -53,27 +53,35 @@ static void drawSingleButton(
         if (running)
         {
             QaplaButton::drawGrace(drawList, topLeft, size, state);
+            ImGuiControls::hooverTooltip("Stop tournament gracefully after current games finish");
         }
         else
         {
             QaplaButton::drawPlay(drawList, topLeft, size, state);
+            ImGuiControls::hooverTooltip(TournamentData::instance().hasTasksScheduled() 
+                ? "Continue tournament with current configuration" 
+                : "Start new tournament with current configuration");
         }
     }
     if (button == "Stop")
     {
         QaplaButton::drawStop(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Stop tournament immediately, aborting running games");
     }
     if (button == "Clear")
     {
         QaplaButton::drawClear(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Clear all tournament data and results");
     }
     if (button == "Load")
     {
         QaplaButton::drawOpen(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Load tournament configuration and results from file");
     }
     if (button == "Save As")
     {
         QaplaButton::drawSave(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Save tournament configuration and results to file");
     }
 }
 
@@ -213,6 +221,7 @@ bool TournamentWindow::drawInput() {
     
     ImGui::SetNextItemWidth(inputWidth);
     ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    ImGuiControls::hooverTooltip("Number of games running in parallel");
     tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
     drawProgress();
     
@@ -241,19 +250,15 @@ bool TournamentWindow::drawInput() {
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputText("Event", tournamentData.config().event);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Optional event name for PGN or logging");
-        }
+        ImGuiControls::hooverTooltip("Optional event name for PGN or logging");
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Type", tournamentData.config().type, { "gauntlet", "round-robin" });
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(
-                "Tournament type:\n"
-                "  gauntlet - One engine plays against all others\n"
-                "  round-robin - Every engine plays against every other engine"
-            );
-        }
+        ImGuiControls::hooverTooltip(
+            "Tournament type:\n"
+            "  gauntlet - One engine plays against all others\n"
+            "  round-robin - Every engine plays against every other engine"
+        );
         
         // Show tutorial annotation if present
         auto it = tournamentTutorial_.annotations.find("Type");
@@ -263,9 +268,7 @@ bool TournamentWindow::drawInput() {
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData.config().rounds, 1, 1000);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Repeat all pairings this many times");
-        }
+        ImGuiControls::hooverTooltip("Repeat all pairings this many times");
         
         // Show tutorial annotation if present
         it = tournamentTutorial_.annotations.find("Rounds");
@@ -275,9 +278,7 @@ bool TournamentWindow::drawInput() {
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData.config().games, 1, 1000);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Number of games per pairing.\nTotal games = games × rounds");
-        }
+        ImGuiControls::hooverTooltip("Number of games per pairing.\nTotal games = games × rounds");
         
         // Show tutorial annotation if present
         it = tournamentTutorial_.annotations.find("Games per pairing");
@@ -287,12 +288,10 @@ bool TournamentWindow::drawInput() {
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Same opening", tournamentData.config().repeat, 1, 1000);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(
-                "Number of consecutive games played per opening.\n"
-                "Commonly set to 2 to alternate colors with the same line"
-            );
-        }
+        ImGuiControls::hooverTooltip(
+            "Number of consecutive games played per opening.\n"
+            "Commonly set to 2 to alternate colors with the same line"
+        );
         
         // Show tutorial annotation if present
         it = tournamentTutorial_.annotations.find("Same opening");
@@ -302,15 +301,11 @@ bool TournamentWindow::drawInput() {
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("No color swap", tournamentData.config().noSwap);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Disable automatic color swap after each game");
-        }
+        ImGuiControls::hooverTooltip("Disable automatic color swap after each game");
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<int>("Average Elo", tournamentData.config().averageElo, 1000, 5000);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Average Elo level for scaling rating output");
-        }
+        ImGuiControls::hooverTooltip("Average Elo level for scaling rating output");
         
         ImGui::Unindent(10.0F);
         ImGui::PopID();
@@ -340,6 +335,7 @@ void TournamentWindow::drawProgress()
     float progress = static_cast<float>(playedGames) / static_cast<float>(totalGames);
     ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0F), 
         std::to_string(playedGames).c_str());
+    ImGuiControls::hooverTooltip("Tournament progress: games played / total games");
 }
 
 void TournamentWindow::draw() {

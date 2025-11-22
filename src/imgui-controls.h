@@ -35,6 +35,15 @@
 namespace QaplaWindows::ImGuiControls {
 
     /**
+     * @brief Displays a tooltip when hovering over the last item.
+     * 
+     * It translates the tooltip text before displaying.
+     * 
+     * @param text The tooltip text to display.
+     */
+    void hooverTooltip(const std::string& text);
+
+    /**
      * @brief Wrapper around ImGui::Button with automatic label translation.
      * @param label The button label to translate and display.
      * @param size Optional size for the button.

@@ -35,6 +35,13 @@
 
 namespace QaplaWindows::ImGuiControls {
 
+    void hooverTooltip(const std::string& text) {
+        if (ImGui::IsItemHovered() && !text.empty()) {
+            auto translatedText = Translator::instance().translate("Tooltip", text);
+            ImGui::SetTooltip("%s", translatedText.c_str());
+        }
+    }
+
     bool textButton(const char* label, ImVec2 size) {
         auto translatedLabel = Translator::instance().translate("Button", label);
         return ImGui::Button(translatedLabel.c_str(), size);

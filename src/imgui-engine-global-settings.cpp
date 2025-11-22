@@ -47,10 +47,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         if (options_.showHash) {
             constexpr uint32_t maxHashMB = 64000;
             modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
+            ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
             modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
+            ImGuiControls::hooverTooltip("Hash table size in megabytes for engine memory");
             ImGui::EndDisabled();
             
             // Show tutorial annotation if present
@@ -63,11 +65,13 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         // Restart option control
         if (options_.showRestart) {
             modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
+            ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
             modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
                 {"Engine decides", "Always", "Never"});
+            ImGuiControls::hooverTooltip("Whether to restart engine process between games");
             ImGui::EndDisabled();
             
             // Show tutorial annotation if present
@@ -80,11 +84,13 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         // Trace level control
         if (options_.showTrace) {
             modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
+            ImGuiControls::hooverTooltip("Enable global trace level for all engines");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
             modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
                 {"None", "All", "Command"});
+            ImGuiControls::hooverTooltip("Engine communication logging level (None/All/Command only)");
             ImGui::EndDisabled();
             
             // Show tutorial annotation if present
@@ -97,10 +103,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         // Ponder control
         if (options_.showPonder) {
             modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
+            ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
             modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
+            ImGuiControls::hooverTooltip("Allow engines to think during opponent's time");
             ImGui::EndDisabled();
             
             // Show tutorial annotation if present
@@ -130,17 +138,16 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
         // This ensures automatic synchronization: selecting "50.0+0.10" in the dropdown
         // automatically updates the input field, and vice versa - no separate sync needed
         modified |= ImGuiControls::timeControlInput(timeControlSettings_.timeControl, blitz, controlWidth);
+        ImGuiControls::hooverTooltip("Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)");
         
         ImGui::SetNextItemWidth(controlWidth);
         modified |= ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.timeControl, 
                                         timeControlSettings_.predefinedOptions);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(
-                "Quick selection for common time controls.\n"
-                "Selecting an option automatically fills the input fields above.\n"
-                "Example: '20.0+0.02' sets Seconds=20, Increment Ms=20"
-            );
-        }
+        ImGuiControls::hooverTooltip(
+            "Quick selection for common time controls.\n"
+            "Selecting an option automatically fills the input fields above.\n"
+            "Example: '20.0+0.02' sets Seconds=20, Increment Ms=20"
+        );
         
         // Show tutorial annotation if present
         auto it = tutorialContext.annotations.find("Predefined time control");

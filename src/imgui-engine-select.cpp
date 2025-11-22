@@ -285,6 +285,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
                 }
                 modified = true;
             }
+            ImGuiControls::hooverTooltip("Add this engine to tournament selection");
             
             // Show engine info in a collapsing header (read-only)
             ImGui::SameLine();
