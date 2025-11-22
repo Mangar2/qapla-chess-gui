@@ -35,7 +35,12 @@ std::string Translator::translate(const std::string& topic, const std::string& k
     if (first == std::string::npos) {
         return key;
     }
+    // Remove ## and everything after it for calculating last
     size_t last = key.find_last_not_of(" \t\r\n0123456789");
+    size_t imguiIdPos = key.find("##");
+    if (imguiIdPos != std::string::npos && imguiIdPos != 0) {
+        last = std::min(last, imguiIdPos - 1);
+    }
     
     std::string prefix = key.substr(0, first);
     std::string suffix = key.substr(last + 1);

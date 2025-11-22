@@ -20,8 +20,9 @@
 #include "snackbar.h"
 #include "configuration.h"
 #include "tutorial.h"
+#include "i18n.h"
 
-#include "string-helper.h"
+#include <string-helper.h>
 
 #include <imgui.h>
 
@@ -168,8 +169,12 @@ void SnackbarManager::draw() {
         ImGui::SetWindowFontScale(1.1F);
         ImGui::SetCursorPos(ImVec2(0.0F, 20.0F));
         ImGui::Indent(20.0F); 
-        ImGui::Text("%s:", typeNames[static_cast<int>(currentSnackbar.type)]);
-        ImGui::Text("%s", currentSnackbar.message.c_str());
+        auto translatedType = Translator::instance().translate("Snackbar",
+            typeNames[static_cast<int>(currentSnackbar.type)]);
+        ImGui::Text("%s:", translatedType.c_str());
+        auto translatedMessage = Translator::instance().translate("Snackbar",
+            currentSnackbar.message);
+        ImGui::Text("%s", translatedMessage.c_str());
         ImGui::Unindent(20.0F);
         ImGui::SetWindowFontScale(1.0F);
         ImGui::PopStyleColor();

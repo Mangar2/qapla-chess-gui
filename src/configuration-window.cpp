@@ -48,7 +48,7 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
     if (!hasChanges) {
         ImGui::BeginDisabled();
     }
-    if (ImGui::Button("Apply")) {
+    if (ImGuiControls::textButton("Apply")) {
         sourceValue = currentValue_;
         originalValue_ = currentValue_;
         applied = true;
@@ -214,7 +214,7 @@ void ConfigurationWindow::drawLoggerConfig()
 
     // Log Path - only via dialog, no manual typing
     ImGui::Text("Log Directory:");
-    if (ImGui::Button("Browse##LogPath")) {
+    if (ImGuiControls::textButton("Browse###LogPath")) {
         try {
             auto selectedPath = OsDialogs::selectFolderDialog(config.logPath);
             if (!selectedPath.empty()) {
