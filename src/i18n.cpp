@@ -55,7 +55,7 @@ std::string Translator::translate(const std::string& topic, const std::string& k
             return prefix + keyIt->second + suffix;
         }
     }
-
+    auto trimmedKeyFileFormat = toFileFormat(trimmedKey);
     auto sectionListOpt = missingKeys_.getSectionList("Translation", topic);
     if (!sectionListOpt || sectionListOpt->empty()) {
         missingKeys_.addSection({
@@ -67,8 +67,8 @@ std::string Translator::translate(const std::string& topic, const std::string& k
     }
     // There is only one section per name/id in this use case
     auto& section = sectionListOpt->front();
-    if (!section.getValue(trimmedKey)) {
-        section.addEntry(trimmedKey, "");
+    if (!section.getValue(trimmedKeyFileFormat)) {
+        section.addEntry(trimmedKeyFileFormat, "");
         missingKeys_.setSectionList("Translation", topic, *sectionListOpt);
     }
     setModified();
