@@ -180,12 +180,15 @@ void EngineSetupWindow::drawButtons() {
             [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Add") {
                     QaplaButton::drawAdd(drawList, topLeft, size);
+                    ImGuiControls::hooverTooltip("Add new engine from executable file");
                 }
                 if (button == "Remove") {
                     QaplaButton::drawRemove(drawList, topLeft, size);
+                    ImGuiControls::hooverTooltip("Remove selected engine from configuration");
                 }
                 if (button == "Detect") {
                     QaplaButton::drawAutoDetect(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Auto-detect engine capabilities and supported options");
                 }
             }))
         {

@@ -42,6 +42,11 @@ namespace QaplaWindows::ImGuiControls {
         }
     }
 
+    bool checkbox(const char* label, bool& value) {
+        auto translatedLabel = Translator::instance().translate("Checkbox", label);
+        return ImGui::Checkbox(translatedLabel.c_str(), &value);
+    }
+
     bool textButton(const char* label, ImVec2 size) {
         auto translatedLabel = Translator::instance().translate("Button", label);
         return ImGui::Button(translatedLabel.c_str(), size);

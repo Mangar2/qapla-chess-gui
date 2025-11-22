@@ -111,11 +111,14 @@ static void drawButtonIcon(const std::string& button, EngineTests::State testSta
     if (button == "Run/Stop") {
         if (testState == EngineTests::State::Running) {
             QaplaButton::drawStop(drawList, topLeft, size, buttonState);
+            ImGuiControls::hooverTooltip("Stop engine tests immediately");
         } else {
             QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
+            ImGuiControls::hooverTooltip("Run selected engine tests");
         }
     } else if (button == "Clear") {
         QaplaButton::drawClear(drawList, topLeft, size, buttonState);
+        ImGuiControls::hooverTooltip("Clear all test results");
     }
 }
 
@@ -179,24 +182,12 @@ void EngineTestWindow::drawButtons()
     ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
 }
 
-void EngineTestWindow::drawInput()
-{
-    if (ImGuiControls::CollapsingHeaderWithDot("Engines", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("engineSettings");
-        ImGui::Indent(standardIndent);
-        engineSelect_->draw();
-        ImGui::Unindent(standardIndent);
-        ImGui::PopID();
-    }
-}
-
 static void drawCheckbox(const char* label, bool& value, const char* tooltip) {
-    if (ImGui::Checkbox(label, &value)) {
+
+    if (ImGuiControls::checkbox(label, value)) {
         EngineTests::instance().updateConfiguration();
     }
-    if (ImGui::IsItemHovered() && tooltip != nullptr) {
-        ImGui::SetTooltip("%s", tooltip);
-    }
+    ImGuiControls::hooverTooltip(tooltip);
 }
 
 static void drawTests()
@@ -229,14 +220,10 @@ static void drawTests()
             ImGui::Indent(standardIndent);
 
             modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Number of Games", testSelection.numGames, 1, maxGames);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Total number of games to play");
-            }
+            ImGuiControls::hooverTooltip("Total number of games to play");
 
             modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Concurrency", testSelection.concurrency, 1, maxConcurrency);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Number of games to play in parallel");
-            }
+            ImGuiControls::hooverTooltip("Number of games to play in parallel");
             
             ImGui::Unindent(standardIndent);
         }
@@ -293,7 +280,7 @@ void EngineTestWindow::draw()
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
 
-    drawInput();
+    engineSelect_->draw();
     drawTests();
     drawReportTables();
     

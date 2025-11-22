@@ -21,6 +21,7 @@
 #include "font.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
+#include "imgui-controls.h"
 #include "imgui-separator.h"
 #include "engine-record.h"
 #include "move-record.h"
@@ -361,12 +362,15 @@ static std::string drawButtons(bool showLog) {
             [&button, &state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
                 if (button == "Restart") {
                     QaplaButton::drawRestart(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Restart the engine process");
                 }
                 if (button == "Stop") {
                     QaplaButton::drawStop(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Stop the engine calculation");
                 }
                 if (button == "Log") {
                     QaplaButton::drawLog(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Toggle engine communication log display");
                 }
             }))
         {

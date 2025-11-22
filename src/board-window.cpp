@@ -29,6 +29,7 @@
 #include "game-parser.h"
 #include "snackbar.h"
 #include "tutorial.h"
+#include "imgui-controls.h"
 
 #include <imgui.h>
 #include <algorithm>
@@ -71,46 +72,57 @@ namespace QaplaWindows
                 if (button == "Stop")
                 {
                     QaplaButton::drawStop(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Stop all engine activity");
                 }
                 else if (button == "Play")
                 {
                     QaplaButton::drawPlay(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Make the engine play for the current side");
                 }
                 else if (button == "Analyze")
                 {
                     QaplaButton::drawAnalyze(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Make both engines analyze the position without making moves");
                 }
                 else if (button == "New")
                 {
                     QaplaButton::drawNew(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Start a new game from the initial position");
                 }
                 else if (button == "Auto")
                 {
                     QaplaButton::drawAutoPlay(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Let both engines play against each other automatically");
                 }
                 else if (button == "Invert")
                 {
                     QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Swap the engines playing white and black");
                 }
                 else if (button == "Paste")
                 {
                     QaplaButton::drawPaste(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Paste a position from the clipboard (FEN or PGN)");
                 } 
                 else if (button == "Now")
                 {
                     QaplaButton::drawNow(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Force the engine to make a move immediately");
                 }
                 else if (button == "Setup")
                 {
                     QaplaButton::drawSetup(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Enter setup mode to create custom positions");
                 }
                 else if (button == "More")
                 {
                     QaplaButton::drawMore(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Show additional commands and options");
                 }
                 else if (button == "Time")
                 {
                     QaplaButton::drawTimeClock(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Configure time control settings for the game");
                 }
             });
     }
@@ -328,16 +340,22 @@ namespace QaplaWindows
             {
                 if (button == "Ok") {
                     QaplaButton::drawSetup(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Exit setup mode and confirm the position");
                 } else if (button == "New") {
                     QaplaButton::drawNew(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Reset to the initial chess position");
                 } else if (button == "Clear") {
                     QaplaButton::drawClear(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Remove all pieces from the board");
                 } else if (button == "Copy") {
                     QaplaButton::drawCopy(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Copy the current position as FEN to clipboard");
                 } else if (button == "Paste") {
                     QaplaButton::drawPaste(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Paste a position from the clipboard");
                 } else if (button == "Cancel") {
                     QaplaButton::drawCancel(drawList, topLeft, size, state);
+                    ImGuiControls::hooverTooltip("Cancel setup mode and restore the previous position");
                 }
             });
     }

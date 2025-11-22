@@ -53,31 +53,40 @@ static void drawSingleButton(
         if (running)
         {
             QaplaButton::drawGrace(drawList, topLeft, size, state);
+            ImGuiControls::hooverTooltip("Stop SPRT tournament gracefully after current games finish");
         }
         else
         {
             QaplaButton::drawPlay(drawList, topLeft, size, state);
+            ImGuiControls::hooverTooltip(SprtTournamentData::instance().hasTasksScheduled() 
+                ? "Continue SPRT tournament with current configuration" 
+                : "Start new SPRT tournament with current configuration");
         }
     }
     if (button == "Stop")
     {
         QaplaButton::drawStop(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Stop SPRT tournament or Monte Carlo test immediately");
     }
     if (button == "Clear")
     {
         QaplaButton::drawClear(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Clear all SPRT tournament data and results");
     }
     if (button == "Load")
     {
         QaplaButton::drawOpen(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Load SPRT tournament configuration and results from file");
     }
     if (button == "Save As")
     {
         QaplaButton::drawSave(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Save SPRT tournament configuration and results to file");
     }
     if (button == "Test")
     {
         QaplaButton::drawTest(drawList, topLeft, size, state);
+        ImGuiControls::hooverTooltip("Run Monte Carlo test to estimate SPRT test duration");
     }
 }
 
@@ -190,6 +199,7 @@ bool SprtTournamentWindow::drawInput() {
 
     ImGui::SetNextItemWidth(inputWidth);
     ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    ImGuiControls::hooverTooltip("Number of games running in parallel");
     tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
     drawProgress();
     
@@ -218,22 +228,27 @@ bool SprtTournamentWindow::drawInput() {
 
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<int>("Elo Lower (H0)", tournamentData.sprtConfig().eloLower, -1000, 1000);
+        ImGuiControls::hooverTooltip("Lower Elo bound (H0): null hypothesis threshold for SPRT test");
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<int>("Elo Upper (H1)", tournamentData.sprtConfig().eloUpper, -1000, 1000);
+        ImGuiControls::hooverTooltip("Upper Elo bound (H1): alternative hypothesis threshold for SPRT test");
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputPromille("Alpha (‰)", tournamentData.sprtConfig().alpha, 0.001, 0.5, 0.001);
+        ImGuiControls::hooverTooltip("Type I error rate (false positive): probability of rejecting H0 when it's true");
         ImGui::SameLine();
         ImGui::Text("(%.3f)", tournamentData.sprtConfig().alpha);
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputPromille("Beta (‰)", tournamentData.sprtConfig().beta, 0.001, 0.5, 0.001);
+        ImGuiControls::hooverTooltip("Type II error rate (false negative): probability of accepting H0 when H1 is true");
         ImGui::SameLine();
         ImGui::Text("(%.3f)", tournamentData.sprtConfig().beta);
         
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Max Games", tournamentData.sprtConfig().maxGames, 1, 1000000);
+        ImGuiControls::hooverTooltip("Maximum number of games before test terminates inconclusively");
 
         ImGui::Unindent(10.0F);
         ImGui::PopID();

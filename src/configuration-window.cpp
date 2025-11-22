@@ -53,6 +53,7 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
         originalValue_ = currentValue_;
         applied = true;
     }
+    ImGuiControls::hooverTooltip("Apply pending changes to configuration");
     if (!hasChanges) {
         ImGui::EndDisabled();
     }
@@ -61,6 +62,7 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
     ImGui::SameLine();
     ImGui::SetNextItemWidth(width);
     ImGuiControls::inputText(label, currentValue_);
+    ImGuiControls::hooverTooltip("Edit value and click Apply to save changes");
     
     ImGui::PopID();
     
@@ -93,10 +95,7 @@ static void drawLanguageConfig() {
         QaplaConfiguration::Configuration::updateLanguageConfiguration(newLanguageCode);
         Translator::instance().setLanguageCode(newLanguageCode);
     }
-    
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("%s", tr("Tooltip", "Translation is currently work in progress. Only few parts are translated.").c_str());
-    }
+    ImGuiControls::hooverTooltip(tr("Tooltip", "Translation is currently work in progress. Only few parts are translated."));
 }
 
 void ConfigurationWindow::draw()
@@ -153,24 +152,28 @@ void ConfigurationWindow::drawSnackbarConfig()
     {
         modified = true;
     }
+    ImGuiControls::hooverTooltip("Display duration for informational messages in seconds");
 
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Success Duration", config.successDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
+    ImGuiControls::hooverTooltip("Display duration for success messages in seconds");
 
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Warning Duration", config.warningDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
+    ImGuiControls::hooverTooltip("Display duration for warning messages in seconds");
 
     ImGui::SetNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Error Duration", config.errorDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
+    ImGuiControls::hooverTooltip("Display duration for error messages in seconds");
 
     if (modified) {
         SnackbarManager::instance().updateConfiguration();
@@ -195,9 +198,7 @@ void ConfigurationWindow::drawTutorialConfig()
                 Tutorial::instance().restartTutorial(tutorialName);
             }
         }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
-        }
+        ImGuiControls::hooverTooltip(completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
         ImGui::SameLine();
         auto messageCount = entry.messages.size();
         auto progress = std::min<uint32_t>(entry.getProgressCounter(), messageCount);
@@ -208,9 +209,7 @@ void ConfigurationWindow::drawTutorialConfig()
     if (ImGuiControls::textButton("Reset All Tutorials")) {
         Tutorial::instance().resetAll();
     }
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Resets all tutorials to their initial state");
-    }
+    ImGuiControls::hooverTooltip("Resets all tutorials to their initial state");
 }
 
 void ConfigurationWindow::drawLoggerConfig()
@@ -234,6 +233,7 @@ void ConfigurationWindow::drawLoggerConfig()
             SnackbarManager::instance().showError(e.what());
         }
     }
+    ImGuiControls::hooverTooltip("Select directory for log files");
     ImGui::SameLine();
     ImGui::TextDisabled("%s", config.logPath.c_str());
     ImGui::Spacing();
@@ -254,15 +254,13 @@ void ConfigurationWindow::drawLoggerConfig()
         config.engineLogStrategy = static_cast<QaplaTester::LogFileStrategy>(currentStrategy);
         modified = true;
     }
-    if (ImGui::IsItemHovered()) {
-        const char* tooltip = "";
-        switch (currentStrategy) {
-            case 0: tooltip = "All engine instance communication is logged to a single file"; break;
-            case 1: tooltip = "Each engine gets its own log file"; break;
-            case 2: tooltip = "All engines in a game share a single log file"; break;
-        }
-        ImGui::SetTooltip("%s", tooltip);
+    const char* tooltip = "";
+    switch (currentStrategy) {
+        case 0: tooltip = "All engine instance communication is logged to a single file"; break;
+        case 1: tooltip = "Each engine gets its own log file"; break;
+        case 2: tooltip = "All engines in a game share a single log file"; break;
     }
+    ImGuiControls::hooverTooltip(tooltip);
 
     if (modified) {
         QaplaTester::setLoggerConfig(config);

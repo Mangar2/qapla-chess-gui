@@ -19,6 +19,7 @@
 
 #include "imgui-game-list.h"
 #include "imgui-button.h"
+#include "imgui-controls.h"
 #include "snackbar.h"
 #include "os-dialogs.h"
 #include "callback-manager.h"
@@ -119,12 +120,18 @@ void ImGuiGameList::drawButtons() {
                 [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
             if (button == "Open") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
+                ImGuiControls::hooverTooltip(state == QaplaButton::ButtonState::Active 
+                    ? "Stop loading PGN file" 
+                    : "Open PGN file to load games");
             } else if (button == "Recent") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
+                ImGuiControls::hooverTooltip("Load recently auto-saved PGN file");
             } else if (button == "Filter") {
                 QaplaButton::drawFilter(drawList, topLeft, size, state);
+                ImGuiControls::hooverTooltip("Open filter dialog to filter games by criteria");
             } else if (button == "Save As") {
                 QaplaButton::drawSave(drawList, topLeft, size, state);
+                ImGuiControls::hooverTooltip("Save filtered games to new PGN file");
             }
         })) {
             executeCommand(button, isLoading);

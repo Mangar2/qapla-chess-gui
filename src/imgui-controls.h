@@ -44,6 +44,14 @@ namespace QaplaWindows::ImGuiControls {
     void hooverTooltip(const std::string& text);
 
     /**
+     * @brief Wrapper around ImGui::Checkbox with automatic label translation.
+     * @param label The checkbox label to translate and display.
+     * @param value Reference to the boolean value to modify.
+     * @return True if the value was changed, false otherwise.
+     */
+    bool checkbox(const char* label, bool& value);
+
+    /**
      * @brief Wrapper around ImGui::Button with automatic label translation.
      * @param label The button label to translate and display.
      * @param size Optional size for the button.

@@ -124,17 +124,23 @@ std::string EpdWindow::drawButtons()
                 {
                     if (epdState == EpdData::State::Running) {
                         QaplaButton::drawStop(drawList, topLeft, size, buttonState);
+                        ImGuiControls::hooverTooltip("Stop EPD analysis immediately");
                     } else {
                         QaplaButton::drawPlay(drawList, topLeft, size, buttonState);
+                        ImGuiControls::hooverTooltip(EpdData::instance().configChanged() || EpdData::instance().remainingTests == 0 
+                            ? "Start EPD position analysis" 
+                            : "Continue EPD position analysis");
                     }
                 }
                 if (button == "Grace")
                 {
                         QaplaButton::drawGrace(drawList, topLeft, size, buttonState);
+                        ImGuiControls::hooverTooltip("Stop EPD analysis gracefully after current positions finish");
                 }
                 if (button == "Clear")
                 {
                     QaplaButton::drawClear(drawList, topLeft, size, buttonState);
+                    ImGuiControls::hooverTooltip("Clear all EPD analysis results");
                 } 
             }))
         {
@@ -186,6 +192,7 @@ void EpdWindow::drawInput()
     auto& config = EpdData::instance().config();
 
     modified |= ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency);
+    ImGuiControls::hooverTooltip("Number of positions analyzed in parallel");
     EpdData::instance().setPoolConcurrency(config.concurrency);
 
     ImGui::Spacing();
@@ -197,15 +204,19 @@ void EpdWindow::drawInput()
         ImGui::Indent(10.0F);
         ImGui::SetNextItemWidth(inputWidth);
         modified |= ImGuiControls::inputInt<uint32_t>("Seen plies", config.seenPlies, 1, maxSeenPlies);
+        ImGuiControls::hooverTooltip("Number of plies to play from position before starting engine analysis");
 
         ImGui::SetNextItemWidth(inputWidth);
         modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, maxTimeInS, 1, 100);
+        ImGuiControls::hooverTooltip("Maximum analysis time per position in seconds");
 
         ImGui::SetNextItemWidth(inputWidth);
         modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, maxTimeInS, 1, 100);
+        ImGuiControls::hooverTooltip("Minimum analysis time per position in seconds");
 
         ImGui::Spacing();
         modified |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath, inputWidth * 2.0F);
+        ImGuiControls::hooverTooltip("Path to EPD or RAW position file to analyze");
         ImGui::Spacing();
         ImGui::Unindent(10.0F);
 
@@ -226,6 +237,7 @@ void EpdWindow::drawProgress()
     float progress = static_cast<float>(testFinished) / static_cast<float>(total);
     ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0F), 
         std::to_string(testFinished).c_str());
+    ImGuiControls::hooverTooltip("EPD analysis progress: positions analyzed / total positions");
 }
 
 void EpdWindow::draw()

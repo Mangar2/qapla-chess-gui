@@ -21,6 +21,7 @@
 #include "imgui-separator.h"
 #include "imgui-engine-list.h"
 #include "imgui-button.h"
+#include "imgui-controls.h"
 #include "snackbar.h"
 #include "tutorial.h"
 
@@ -61,6 +62,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
     {
         command = "Config";
     }
+    ImGuiControls::hooverTooltip("Open engine configuration to select and manage engines");
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY + buttonSize.y + spacingY));
     if (QaplaButton::drawIconButton("SwapButton", "Swap", buttonSize, 
@@ -71,6 +73,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
     {
         command = "Swap";
     }
+    ImGuiControls::hooverTooltip("Swap White and Black engines");
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + areaWidth, topLeft.y));
     ImGuiSeparator::Vertical();
@@ -107,18 +110,18 @@ static auto engineWindowTutorialInit = []() {
         .name = Tutorial::TutorialName::BoardEngines,
         .displayName = "Engine Window",
         .messages = {
-            { "Welcome to the Engine Window!\n"
+            { .text = "Welcome to the Engine Window!\n"
               "Here you can select which engines to use for analysis or play.\n\n"
               "Click the Config button (gear icon) on the left to open the engine selection popup.",
-              SnackbarManager::SnackbarType::Note },
-            { "Great! You've opened the engine selection.\n"
+              .type =SnackbarManager::SnackbarType::Note },
+            { .text = "Great! You've opened the engine selection.\n"
               "You can select multiple engines, and the same engine can be selected multiple times.\n\n"
               "Now please select two different engines to continue.",
-              SnackbarManager::SnackbarType::Note },
-            { "Engine Window Complete!\n\n"
+              .type =SnackbarManager::SnackbarType::Note },
+            { .text = "Engine Window Complete!\n\n"
               "Excellent! You've successfully selected engines for playing.\n"
               "Next we will use the engines.",
-              SnackbarManager::SnackbarType::Success }
+              .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
             return EngineWindow::tutorialProgress_;

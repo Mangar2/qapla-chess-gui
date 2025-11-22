@@ -65,7 +65,7 @@ namespace QaplaWindows {
          * @param configCommandIssued Whether the Config button was clicked.
          * @param activeEngines The currently active engines.
          */
-        void showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
+        static void showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
 
     };
 
