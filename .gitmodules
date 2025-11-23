@@ -11,3 +11,6 @@
 	path = extern/qapla-engine-tester
 	url = https://github.com/Mangar2/qapla-engine-tester.git
 	branch = 0.5.0
+[submodule "extern/imgui_test_engine"]
+	path = extern/imgui_test_engine
+	url = https://github.com/ocornut/imgui_test_engine.git
