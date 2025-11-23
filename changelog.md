@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-11-23
 
 - Corrected display of "wins on time"
 - Added horizontal scrollbar in the move list
@@ -21,6 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved Game-End-Cause Table: Filtering the table no longer causes the window layout to jump
 - Added tooltips to game viewer tabs showing detailed information (Round, Game, Engines or Position/Engine)
 
-## [1.0.0] - 2025-11-18
+## [0.1.0] - 2025-11-18
 
 - Initial version

@@ -49,16 +49,6 @@ using namespace QaplaTester;
 namespace QaplaWindows {
 
     TournamentData::TournamentData() : 
-        boardWindowList_("Tournament"),
-        tournament_(std::make_unique<Tournament>()),
-		config_(std::make_unique<TournamentConfig>()),
-        result_(std::make_unique<TournamentResultIncremental>()),
-        imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
-        engineSelect_(std::make_unique<ImGuiEngineSelect>()),
-        globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
-        tournamentOpening_(std::make_unique<ImGuiTournamentOpening>()),
-        tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
-        tournamentAdjudication_(std::make_unique<ImGuiTournamentAdjudication>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
@@ -365,27 +355,8 @@ namespace QaplaWindows {
             std::vector<std::string> row;
             for (const auto &entry : results.resignResult)
             {
-                if (entry.key == "label")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "total")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "correct")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "incorrect")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "saved")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "total_time")
+                if (entry.key == "label" || entry.key == "total" || entry.key == "correct" 
+                    || entry.key == "incorrect" || entry.key == "saved" || entry.key == "total_time")
                 {
                     row.push_back(entry.value);
                 }
@@ -404,27 +375,8 @@ namespace QaplaWindows {
             std::vector<std::string> row;
             for (const auto &entry : results.drawResult)
             {
-                if (entry.key == "label")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "total")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "correct")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "incorrect")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "saved")
-                {
-                    row.push_back(entry.value);
-                }
-                else if (entry.key == "total_time")
+                if (entry.key == "label" || entry.key == "total" || entry.key == "correct" 
+                    || entry.key == "incorrect" || entry.key == "saved" || entry.key == "total_time")
                 {
                     row.push_back(entry.value);
                 }

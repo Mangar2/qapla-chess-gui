@@ -390,17 +390,18 @@ namespace QaplaWindows {
         void populateResignTest(QaplaTester::AdjudicationManager::TestResults &results);
         void populateDrawTest(QaplaTester::AdjudicationManager::TestResults &results);
 
-        ViewerBoardWindowList boardWindowList_;
+        ViewerBoardWindowList boardWindowList_{"Tournament"};
 
-        std::unique_ptr<QaplaTester::Tournament> tournament_;
-        std::unique_ptr<QaplaTester::TournamentConfig> config_;
-        std::unique_ptr<TournamentResultIncremental> result_;
-        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
-        std::unique_ptr<ImGuiEngineSelect> engineSelect_;
-        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
-        std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_;
-        std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
-        std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_;
+        std::unique_ptr<QaplaTester::Tournament> tournament_{std::make_unique<QaplaTester::Tournament>()};
+        std::unique_ptr<QaplaTester::TournamentConfig> config_{std::make_unique<QaplaTester::TournamentConfig>()};
+        std::unique_ptr<TournamentResultIncremental> result_{std::make_unique<TournamentResultIncremental>()};
+        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_{std::make_unique<ImGuiConcurrency>()};
+        std::unique_ptr<ImGuiEngineSelect> engineSelect_{std::make_unique<ImGuiEngineSelect>()};
+        std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_{std::make_unique<ImGuiEngineGlobalSettings>()};
+        std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_{std::make_unique<ImGuiTournamentOpening>()};
+        std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_{std::make_unique<ImGuiTournamentPgn>()};
+        std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_{std::make_unique<ImGuiTournamentAdjudication>()};
+
         GameManagerPoolAccess poolAccess_;
         ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
