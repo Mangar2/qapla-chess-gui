@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added lots of tooltips to explain any control
 - File filtering: Open file dialogs for tournaments and SPRT now only display files with appropriate extensions
 - Improved Game-End-Cause Table: Filtering the table no longer causes the window layout to jump
+- Added tooltips to game viewer tabs showing detailed information (Round, Game, Engines or Position/Engine)
 
 ## [1.0.0] - 2025-11-18
 

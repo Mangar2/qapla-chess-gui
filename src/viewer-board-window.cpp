@@ -31,6 +31,7 @@
 #include <imgui.h>
 #include <memory>
 #include <vector>
+#include <format>
 
 using QaplaTester::GameRecord;
 using QaplaTester::EngineRecords;
@@ -97,6 +98,18 @@ namespace QaplaWindows
         round_ = gameRecord.getRound();
         gameInRound_ = gameRecord.getGameInRound();
         positionName_ = gameRecord.getPositionName();
+        auto whiteEngineName = gameRecord.getWhiteEngineName();
+        auto blackEngineName = gameRecord.getBlackEngineName();
+        if (positionName_.empty()) {
+            // Tournament game with round, game number and two engines
+            tooltipText_ = std::format("Round {}, Game {}\n{} vs {}", 
+                round_, gameInRound_, whiteEngineName, blackEngineName);
+        } else {
+            // Epd-Analysis, one engine computes a position
+            tooltipText_ = std::format("{}\n{}", 
+                positionName_, whiteEngineName);
+        }
+
         if (!active_) {
             return;
         }

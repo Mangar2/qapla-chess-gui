@@ -184,7 +184,11 @@ private:
             if (!window.isRunning() && index != selectedIndex_) {
                 continue;
             }
-            if (ImGui::BeginTabItem((tabName + tabId).c_str())) {
+            bool open = ImGui::BeginTabItem((tabName + tabId).c_str());
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", window.getTooltip().c_str());
+            }
+            if (open) {
                 if (window.isActive()) {
                     window.draw();
                 } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindows_.size())) {

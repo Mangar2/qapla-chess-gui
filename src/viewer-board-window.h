@@ -98,6 +98,8 @@ namespace QaplaWindows
          */
         [[nodiscard]] std::string id() const;
 
+        [[nodiscard]] std::string getTooltip() const { return tooltipText_; }
+
     private:
         bool active_ = false;
         bool running_ = false;
@@ -105,6 +107,7 @@ namespace QaplaWindows
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
         std::string positionName_;
+        std::string tooltipText_;
 
         static VerticalSplitContainer& getMainWindow();
         static HorizontalSplitContainer& getTopWindow();
