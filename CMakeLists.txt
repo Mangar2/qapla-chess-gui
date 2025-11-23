@@ -34,7 +34,9 @@ add_subdirectory(extern/glfw)
 # --------------------------------
 # ImGui
 # --------------------------------
-add_library(imgui STATIC
+option(QAPLA_WITH_TEST_ENGINE "Build with ImGui Test Engine" OFF)
+
+set(IMGUI_SOURCES
   extern/imgui/imgui.cpp
   extern/imgui/imgui_draw.cpp
   extern/imgui/imgui_tables.cpp
@@ -42,11 +44,34 @@ add_library(imgui STATIC
   extern/imgui/backends/imgui_impl_glfw.cpp
   extern/imgui/backends/imgui_impl_opengl3.cpp
 )
+
+if(QAPLA_WITH_TEST_ENGINE)
+  list(APPEND IMGUI_SOURCES
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_context.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_coroutine.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_engine.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_exporters.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_perftool.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_ui.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_te_utils.cpp
+    extern/imgui_test_engine/imgui_test_engine/imgui_capture_tool.cpp
+  )
+endif()
+
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
 target_include_directories(imgui PUBLIC
   extern/imgui
   extern/imgui/backends
   extern/glfw/include
-  )
+)
+
+if(QAPLA_WITH_TEST_ENGINE)
+  target_include_directories(imgui PUBLIC extern/imgui_test_engine/imgui_test_engine)
+  target_compile_definitions(imgui PUBLIC IMGUI_ENABLE_TEST_ENGINE)
+  target_compile_definitions(imgui PUBLIC IMGUI_TEST_ENGINE_ENABLE_COROUTINE_STDTHREAD_IMPL=1)
+endif()
+
 target_compile_options(imgui PRIVATE -Wno-all)
 
 # --------------------------------

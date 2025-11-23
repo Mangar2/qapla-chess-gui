@@ -25,6 +25,22 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "test",
+      "displayName": "Test Debug (Clang + Ninja)",
+      "inherits": "default",
+      "cacheVariables": {
+        "QAPLA_WITH_TEST_ENGINE": "ON"
+      }
+    },
+    {
+      "name": "releasetest",
+      "displayName": "Test Release (Clang + Ninja)",
+      "inherits": "release",
+      "cacheVariables": {
+        "QAPLA_WITH_TEST_ENGINE": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -36,6 +52,16 @@
     {
       "name": "release",
       "configurePreset": "release",
+      "targets": ["qapla"]
+    },
+    {
+      "name": "test",
+      "configurePreset": "test",
+      "targets": ["qapla"]
+    },
+    {
+      "name": "releasetest",
+      "configurePreset": "releasetest",
       "targets": ["qapla"]
     },
     {

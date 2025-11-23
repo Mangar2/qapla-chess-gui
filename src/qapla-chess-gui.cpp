@@ -42,6 +42,7 @@
 #include "data/dark-wood-background.h"
 #include "font.h"
 #include "background-renderer.h"
+#include "test-system/test-manager.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -54,6 +55,11 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+
+#ifdef IMGUI_ENABLE_TEST_ENGINE
+#include "imgui_te_engine.h"
+#include "imgui_te_ui.h"
+#endif
 
 #ifndef _WIN32
 #include <csignal>
@@ -230,6 +236,9 @@ namespace {
         }
         FontManager::loadFonts();
         
+        QaplaTest::TestManager testManager;
+        testManager.init();
+
         FrameRateLimiter frameRateLimiter(60.0);
         
         while (glfwWindowShouldClose(window) == 0) {
@@ -262,17 +271,24 @@ namespace {
             workspace.draw();
 			SnackbarManager::instance().draw();
 
+            testManager.drawDebugWindows();
+
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
             glfwSwapBuffers(window);
+            
+            testManager.onPostSwap();
+
             QaplaConfiguration::Configuration::instance().autosave();
             QaplaWindows::EpdData::instance().autosave();
             
             frameRateLimiter.waitForNextFrame();
         }
 
+        testManager.stop();
         shutdownImGui();
+        testManager.destroy();
         glfwDestroyWindow(window);
         glfwTerminate();
         GameManagerPool::getInstance().stopAll();
