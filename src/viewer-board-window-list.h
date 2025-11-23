@@ -115,7 +115,8 @@ public:
      * @brief Checks if any window is currently running.
      * @return True if at least one window is running, false otherwise.
      */
-    [[nodiscard]] bool isAnyRunning() const {
+    [[nodiscard]] 
+    bool isAnyRunning() const {
         return std::ranges::any_of(boardWindows_,
             [](const ViewerBoardWindow& window) { return window.isRunning(); });
     }
@@ -142,7 +143,8 @@ public:
      * @brief Gets the list of board windows (const version).
      * @return Const reference to the vector of board windows.
      */
-    [[nodiscard]] const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
+    [[nodiscard]] 
+    const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
 
     /**
      * @brief Activates a tab by its window ID.
@@ -150,6 +152,15 @@ public:
      */
     void setActiveWindowId(const std::string& windowId) {
         activeWindowId_ = windowId;
+    }
+
+    /**
+     * @brief Gets the currently active window ID.
+     * @return The active window ID as a string.
+     */
+    [[nodiscard]]
+    const std::string& getActiveWindowId() const {
+        return activeWindowId_;
     }
 
 private:
@@ -193,21 +204,24 @@ private:
             if (!window.isRunning() && index != selectedIndex_) {
                 continue;
             }
-            ImGui::SetTabItemClosed((tabName + tabId).c_str());
             ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
-            if (!activeWindowId_.empty() && activeWindowId_ == window.id()) {
-                //flags |= ImGuiTabItemFlags_SetSelected;
+            // If this window is not active but matches the activeWindowId_ there was a request to activate it
+            if (!activeWindowId_.empty() && activeWindowId_ == window.getWindowId()) {
+                flags |= ImGuiTabItemFlags_SetSelected;
                 activeWindowId_.clear();
             }
 
-            bool open = ImGui::BeginTabItem((tabName + tabId).c_str());
+            bool open = ImGui::BeginTabItem((tabName + tabId).c_str(), nullptr, flags);
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("%s", window.getTooltip().c_str());
             }
             if (open) {
+                // We may not show the window directly after activating because it needs one
+                // frame to populate data
                 if (window.isActive()) {
                     window.draw();
                 } else if (selectedIndex_ >= 0 && std::cmp_equal(selectedIndex_, boardWindows_.size())) {
+                    // Once more draw the old window to prevent flickering
                     boardWindows_[selectedIndex_].draw();
                 }
                 window.setActive(true);
