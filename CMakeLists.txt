@@ -89,6 +89,7 @@ list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
     src/*.cpp
     src/*.c
+    i18n/*.cpp
 )
 
 # --------------------------------
@@ -103,6 +104,7 @@ target_include_directories(qapla PRIVATE
   extern/glad/include
   extern/qapla-engine-tester/src
   src
+  i18n
 )
 
 target_link_libraries(qapla PRIVATE glfw imgui)

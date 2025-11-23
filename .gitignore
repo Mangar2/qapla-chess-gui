@@ -6,6 +6,7 @@
 # User-specific files
 game.*
 log.*
+i18n/*.exe
 
 # Libraries used
 extern/imgui/
