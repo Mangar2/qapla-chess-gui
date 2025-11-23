@@ -104,10 +104,12 @@ namespace QaplaWindows
             // Tournament game with round, game number and two engines
             tooltipText_ = std::format("Round {}, Game {}\n{} vs {}", 
                 round_, gameInRound_, whiteEngineName, blackEngineName);
+            windowId_ = std::format("{}.{}:{}-{}", 
+                round_, gameInRound_, whiteEngineName, blackEngineName);
         } else {
             // Epd-Analysis, one engine computes a position
-            tooltipText_ = std::format("{}\n{}", 
-                positionName_, whiteEngineName);
+            tooltipText_ = std::format("{}\n{}", positionName_, whiteEngineName);
+            windowId_ = std::format("{}:{}", positionName_, whiteEngineName);
         }
 
         if (!active_) {

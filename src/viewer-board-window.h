@@ -93,11 +93,21 @@ namespace QaplaWindows
         [[nodiscard]] bool isRunning() const { return running_; }
 
         /**
-         * Get the unique identifier "round.game" for this board instance.
-         * @return The unique identifier as a string.
+         * Get the identifier "round.game" for this board instance.
+         * @return The identifier as a string.
          */
         [[nodiscard]] std::string id() const;
 
+        /**
+         * Get the unique window ID for this board instance.
+         * @return The unique window ID as a string.
+         */
+        [[nodiscard]] std::string getWindowId() const { return windowId_; }
+
+        /**
+         * Get the tooltip text for this board instance.
+         * @return The tooltip text as a string.
+         */
         [[nodiscard]] std::string getTooltip() const { return tooltipText_; }
 
     private:
@@ -108,6 +118,7 @@ namespace QaplaWindows
         uint32_t gameInRound_ = 0;
         std::string positionName_;
         std::string tooltipText_;
+        std::string windowId_;
 
         static VerticalSplitContainer& getMainWindow();
         static HorizontalSplitContainer& getTopWindow();

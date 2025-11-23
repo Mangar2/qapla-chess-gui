@@ -144,6 +144,14 @@ public:
      */
     [[nodiscard]] const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
 
+    /**
+     * @brief Activates a tab by its window ID.
+     * @param windowId The ID of the window to activate.
+     */
+    void setActiveWindowId(const std::string& windowId) {
+        activeWindowId_ = windowId;
+    }
+
 private:
     static inline std::vector<ViewerBoardWindowList*> instances_;
     static inline std::mutex instancesMutex_;
@@ -152,6 +160,7 @@ private:
     std::vector<ViewerBoardWindow> boardWindows_;
     size_t selectedIndex_ = 0;
     std::string name_;
+    std::string activeWindowId_;
 
     /**
      * @brief Ensures that a window exists at the given index.
@@ -184,6 +193,13 @@ private:
             if (!window.isRunning() && index != selectedIndex_) {
                 continue;
             }
+            ImGui::SetTabItemClosed((tabName + tabId).c_str());
+            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
+            if (!activeWindowId_.empty() && activeWindowId_ == window.id()) {
+                //flags |= ImGuiTabItemFlags_SetSelected;
+                activeWindowId_.clear();
+            }
+
             bool open = ImGui::BeginTabItem((tabName + tabId).c_str());
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("%s", window.getTooltip().c_str());

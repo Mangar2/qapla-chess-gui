@@ -41,6 +41,7 @@
 #include "imgui-table.h"
 
 #include <imgui.h>
+#include <format>
 
 
 
@@ -472,7 +473,14 @@ namespace QaplaWindows {
         if (runningTable_.size() == 0) {
             return std::nullopt;
         }
-        return runningTable_.draw(size, true);
+        const auto clickedLine = runningTable_.draw(size, true);
+        if (clickedLine) {
+            const auto& row = runningTable_.getRow(*clickedLine);
+            // Round.Game:WhiteEngine-BlackEngine
+            std::string rowId = std::format("{}.{}:{}-{}", row[2], row[3], row[0], row[1]);
+            boardWindowList_.setActiveWindowId(rowId);
+        }
+        return clickedLine;
 	}
 
     void TournamentData::drawCauseTable(const ImVec2& size) {

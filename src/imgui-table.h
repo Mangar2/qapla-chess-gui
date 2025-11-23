@@ -218,8 +218,8 @@ namespace QaplaWindows {
         /**
 		 * @brief Returns the currently selected row index.
          */
-        size_t getSelectedRow() {
-            return indexManager_.getCurrentRow().value_or(0);
+        std::optional<size_t> getSelectedRow() {
+            return indexManager_.getCurrentRow();
         }
 
         /**
@@ -231,6 +231,15 @@ namespace QaplaWindows {
                 scrollToRow_ = row; 
             }
             indexManager_.setCurrentRow(row.value_or(0));
+        }
+
+        /**
+         * @brief Returns the content of a specific row.
+         * @param row Row index.
+         * @return Reference to the vector of strings representing the row content.
+         */
+        const std::vector<std::string>& getRow(size_t row) const {
+            return rows_[row];
         }
 
         /**
