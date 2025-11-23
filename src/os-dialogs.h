@@ -33,9 +33,13 @@ public:
      * Opens a native file dialog for selecting files.
      *
      * @param multiple If true, allows selecting multiple files.
+     * @param filters List of file type filters as pairs of (description, pattern).
+     *                Example: { {"PGN Files", "*.pgn"}, {"All Files", "*.*"} }
+     *                If empty, no file type filtering is applied.
      * @return Vector of selected file paths, empty if cancelled.
      */
-    static std::vector<std::string> openFileDialog(bool multiple = false);
+    static std::vector<std::string> openFileDialog(bool multiple = false,
+        const std::vector<std::pair<std::string, std::string>>& filters = {});
 
     /**
      * Opens a native file dialog for saving a file.

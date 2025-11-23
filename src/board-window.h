@@ -148,7 +148,7 @@ namespace QaplaWindows
          * @param visibleButtons Buttons to display
          * @param startPos Starting position for drawing
          * @param buttonSize Size of each button
-         * @param totalSize Total size including label
+         * @param buttonWidth Width of a single button including spacing
          * @param status Current game status
          * @return The clicked button name or empty string
          */
@@ -156,7 +156,7 @@ namespace QaplaWindows
             const std::vector<std::string>& visibleButtons,
             ImVec2 startPos,
             ImVec2 buttonSize,
-            ImVec2 totalSize,
+            float buttonWidth,
             const std::string& status);
 
         /**
@@ -165,7 +165,7 @@ namespace QaplaWindows
          * @param moreCommands Commands in the More menu
          * @return true if any command is highlighted
          */
-        bool hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands) const;
+        static bool hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands);
 
         bool setupMode_ = false;
         std::string boardId_;

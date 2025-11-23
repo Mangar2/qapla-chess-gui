@@ -267,15 +267,12 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             }
             ImGui::PushID(("available_" + std::to_string(index)).c_str());
            
-            // Use a simple button to add the engine instead of checkbox
             if (ImGui::Button("+")) {
                 // Find if there's a deselected instance of this engine
                 auto it = findDeselectedEngineConfiguration(config);
                 if (it != engineConfigurations_.end()) {
-                    // Mark existing deselected instance as selected
                     it->selected = true;
                 } else {
-                    // Add new selected instance
                     EngineConfiguration newEngine = {
                         .config = config,
                         .selected = true,
@@ -287,9 +284,9 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             }
             ImGuiControls::hooverTooltip("Add this engine to tournament selection");
             
-            // Show engine info in a collapsing header (read-only)
             ImGui::SameLine();
-            ImGuiControls::CollapsingHeaderWithDot(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
+            // Engine name, no translation needed
+            ImGui::CollapsingHeader(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
             
             ImGui::PopID();
             index++;

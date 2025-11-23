@@ -18,78 +18,115 @@
  */
 
 #include "os-dialogs.h"
+#include "../extern/qapla-engine-tester/src/string-helper.h"
 #include <vector>
 #include <filesystem>
 #include <string>
+#include <ranges>
 
 #ifdef _WIN32
 #include <windows.h>
 #include <shobjidl.h> 
-#include <comdef.h>    // For _com_error (error messages)
-#include <shlobj.h>    // For CSIDL_LOCAL_APPDATA
+#include <comdef.h>
+#include <shlobj.h>
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
+namespace {
+    using namespace QaplaHelpers;
+
+    void setDialogOptions(IFileOpenDialog* pFileOpen, bool multiple) {
+        DWORD dwOptions;
+        if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
+            dwOptions |= FOS_FORCEFILESYSTEM;
+            if (multiple) {
+                dwOptions |= FOS_ALLOWMULTISELECT;
+            }
+            pFileOpen->SetOptions(dwOptions);
+        }
+    }
+
+    void setFileFilters(IFileOpenDialog* pFileOpen,
+                        const std::vector<std::pair<std::string, std::string>>& filters) {
+        if (filters.empty()) return;
+
+        std::vector<std::wstring> nameStrings;
+        std::vector<std::wstring> specStrings;
+        std::vector<COMDLG_FILTERSPEC> fileTypes;
+
+        nameStrings.reserve(filters.size());
+        specStrings.reserve(filters.size());
+        fileTypes.reserve(filters.size());
+
+        for (const auto& [desc, pattern] : filters) {
+            nameStrings.push_back(ascii_to_wstring(desc));
+            specStrings.push_back(ascii_to_wstring(pattern));
+            // COMDLG_FILTERSPEC stores only pointers, not strings. nameStrings/specStrings keep the actual data alive.
+            fileTypes.push_back({nameStrings.back().c_str(), specStrings.back().c_str()});
+        }
+
+        pFileOpen->SetFileTypes(static_cast<UINT>(fileTypes.size()), fileTypes.data());
+        pFileOpen->SetFileTypeIndex(1);
+    }
+
+    std::string wideCharToString(PWSTR wstr) {
+        char buffer[MAX_PATH];
+        WideCharToMultiByte(CP_UTF8, 0, wstr, -1, buffer, MAX_PATH, nullptr, nullptr);
+        return buffer;
+    }
+
+    void collectMultipleResults(IShellItemArray* pResults, std::vector<std::string>& results) {
+        DWORD count = 0;
+        pResults->GetCount(&count);
+        for (DWORD i = 0; i < count; i++) {
+            IShellItem* pItem = nullptr;
+            if (SUCCEEDED(pResults->GetItemAt(i, &pItem))) {
+                PWSTR pszFilePath = nullptr;
+                if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
+                    results.push_back(wideCharToString(pszFilePath));
+                    CoTaskMemFree(pszFilePath);
+                }
+                pItem->Release();
+            }
+        }
+    }
+
+    void collectSingleResult(IFileOpenDialog* pFileOpen, std::vector<std::string>& results) {
+        IShellItem* pItem = nullptr;
+        if (SUCCEEDED(pFileOpen->GetResult(&pItem))) {
+            PWSTR pszFilePath = nullptr;
+            if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
+                results.push_back(wideCharToString(pszFilePath));
+                CoTaskMemFree(pszFilePath);
+            }
+            pItem->Release();
+        }
+    }
+}
+
+std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
+    const std::vector<std::pair<std::string, std::string>>& filters) {
     std::vector<std::string> results;
 
-    // Initialize COM library (thread-safe)
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    if (FAILED(hr)) {
-        return results;
-    }
+    if (FAILED(hr)) return results;
 
     IFileOpenDialog* pFileOpen = nullptr;
     hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
                           IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
 
     if (SUCCEEDED(hr)) {
-        // Get and adjust options
-        DWORD dwOptions;
-        if (SUCCEEDED(pFileOpen->GetOptions(&dwOptions))) {
-            dwOptions |= FOS_FORCEFILESYSTEM; // Only real files/folders
-            if (multiple) {
-                dwOptions |= FOS_ALLOWMULTISELECT;
-            }
-            pFileOpen->SetOptions(dwOptions);
-        }
+        setDialogOptions(pFileOpen, multiple);
+        setFileFilters(pFileOpen, filters);
 
-        // Show dialog
         hr = pFileOpen->Show(nullptr);
         if (SUCCEEDED(hr)) {
-            IShellItemArray* pResults = nullptr;
             if (multiple) {
-                hr = pFileOpen->GetResults(&pResults);
-                if (SUCCEEDED(hr)) {
-                    DWORD count = 0;
-                    pResults->GetCount(&count);
-                    for (DWORD i = 0; i < count; i++) {
-                        IShellItem* pItem = nullptr;
-                        if (SUCCEEDED(pResults->GetItemAt(i, &pItem))) {
-                            PWSTR pszFilePath = nullptr;
-                            if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
-                                // Convert WideChar to std::string
-                                char buffer[MAX_PATH];
-                                WideCharToMultiByte(CP_UTF8, 0, pszFilePath, -1, buffer, MAX_PATH, nullptr, nullptr);
-                                results.push_back(buffer);
-                                CoTaskMemFree(pszFilePath);
-                            }
-                            pItem->Release();
-                        }
-                    }
+                IShellItemArray* pResults = nullptr;
+                if (SUCCEEDED(pFileOpen->GetResults(&pResults))) {
+                    collectMultipleResults(pResults, results);
                     pResults->Release();
                 }
             } else {
-                IShellItem* pItem = nullptr;
-                hr = pFileOpen->GetResult(&pItem);
-                if (SUCCEEDED(hr)) {
-                    PWSTR pszFilePath = nullptr;
-                    if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath))) {
-                        char buffer[MAX_PATH];
-                        WideCharToMultiByte(CP_UTF8, 0, pszFilePath, -1, buffer, MAX_PATH, nullptr, nullptr);
-                        results.push_back(buffer);
-                        CoTaskMemFree(pszFilePath);
-                    }
-                    pItem->Release();
-                }
+                collectSingleResult(pFileOpen, results);
             }
         }
         pFileOpen->Release();
@@ -114,8 +151,9 @@ using NSInteger  = int;
 using NSUInteger = unsigned int;
 #endif
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
-    std::vector<std::string> result;
+std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
+    const std::vector<std::pair<std::string, std::string>>& filters) {
+    std::vector<std::string> results;
 
     // pool = [[NSAutoreleasePool alloc] init];
     Class NSAutoreleasePool = (Class)objc_getClass("NSAutoreleasePool");
@@ -128,6 +166,28 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     ((void(*)(id, SEL, BOOL))objc_msgSend)(
         panel, sel_registerName("setAllowsMultipleSelection:"), multiple ? (BOOL)1 : (BOOL)0);
 
+    // Set file type filters (NSOpenPanel only supports extensions, not descriptions)
+    if (!filters.empty()) {
+        Class NSMutableArray = (Class)objc_getClass("NSMutableArray");
+        id allowedTypes = ((id(*)(Class, SEL))objc_msgSend)(NSMutableArray, sel_registerName("array"));
+        
+        for (const auto& filter : filters) {
+            // Extract file extensions from pattern (e.g., "*.pgn" -> "pgn")
+            std::string pattern = filter.second;
+            if (pattern.find("*.") == 0 && pattern.length() > 2) {
+                std::string ext = pattern.substr(2);
+                Class NSString = (Class)objc_getClass("NSString");
+                id extStr = ((id(*)(Class, SEL, const char*, NSUInteger))objc_msgSend)(
+                    NSString, sel_registerName("stringWithUTF8String:"), ext.c_str());
+                ((void(*)(id, SEL, id))objc_msgSend)(allowedTypes, sel_registerName("addObject:"), extStr);
+            }
+        }
+        
+        if (((NSUInteger(*)(id, SEL))objc_msgSend)(allowedTypes, sel_registerName("count")) > 0) {
+            ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setAllowedFileTypes:"), allowedTypes);
+        }
+    }
+
     // NSModalResponseOK == 1
     NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
     if (r == 1) {
@@ -137,21 +197,22 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
             id url  = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), i);
             id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
             const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-            if (cstr) result.emplace_back(cstr);
+            if (cstr) results.emplace_back(cstr);
         }
     }
 
     // [pool drain];  (alternativ: release)
     ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
-    return result;
+    return results;
 }
 
 #elif defined(__linux__)
 
 #include <gtk/gtk.h>
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
-    std::vector<std::string> result;
+std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
+    const std::vector<std::pair<std::string, std::string>>& filters) {
+    std::vector<std::string> results;
 
     gtk_init(nullptr, nullptr);
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Open File", nullptr,
@@ -162,10 +223,18 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
 
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), multiple);
 
+    // Set file type filters if provided
+    for (const auto& filter : filters) {
+        GtkFileFilter* gtkFilter = gtk_file_filter_new();
+        gtk_file_filter_set_name(gtkFilter, filter.first.c_str());
+        gtk_file_filter_add_pattern(gtkFilter, filter.second.c_str());
+        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtkFilter);
+    }
+
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
         for (GSList* iter = files; iter != nullptr; iter = iter->next) {
-            result.emplace_back((char*)iter->data);
+            results.emplace_back((char*)iter->data);
             g_free(iter->data);
         }
         g_slist_free(files);
@@ -173,7 +242,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple) {
     gtk_widget_destroy(dialog);
     while (gtk_events_pending()) gtk_main_iteration();
 
-    return result;
+    return results;
 }
 
 #else

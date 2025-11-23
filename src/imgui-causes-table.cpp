@@ -39,7 +39,7 @@ namespace QaplaWindows {
         ) 
     {
         table_.setSortable(true);
-        table_.setFilterable(true);
+        table_.setFilterable(true, true);
     }
 
     void ImGuiCausesTable::populate(const std::vector<EngineDuelResult>& duelResults) {

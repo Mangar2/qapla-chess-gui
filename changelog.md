@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial multilingual support: Added language selector (English, Deutsch, Français), i18n subsystem and initial translation files. Translations are partial and still work-in-progress.
 - Fixed: Table filter stays consistend when adding new lines now (problem in Game-End-Cause Table filter)
 - Fixed: Log information in the engine log view is no longer empty after 1000 log lines. Having only the last 1000 log entries when opening the window is normal. 
+- Added clear button for tutorials
+- Added lots of tooltips to explain any control
+- File filtering: Open file dialogs for tournaments and SPRT now only display files with appropriate extensions
+- Improved Game-End-Cause Table: Filtering the table no longer causes the window layout to jump
 
 ## [1.0.0] - 2025-11-18
 

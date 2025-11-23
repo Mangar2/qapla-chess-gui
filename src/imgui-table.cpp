@@ -361,6 +361,15 @@ namespace QaplaWindows {
             ImGui::PopFont();
         }
         
+        if (keepSize_) {
+            size_t totalRows = rows_.size();
+            size_t filteredRows = indexManager_.size();
+            if (filteredRows < totalRows) {
+                float diffHeight = static_cast<float>(totalRows - filteredRows) * rowHeight;
+                ImGui::Dummy(ImVec2(0.0F, diffHeight));
+            }
+        }
+
         return (keyboardRow) ? *keyboardRow : clickedRow;
     }
 

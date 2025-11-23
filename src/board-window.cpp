@@ -171,8 +171,8 @@ namespace QaplaWindows
         
         // More menu commands with tutorial highlights
         std::vector<QaplaButton::PopupCommand> moreCommands = {
-            {"Copy PGN", QaplaButton::ButtonState::Normal},
-            {"Copy FEN", QaplaButton::ButtonState::Normal}
+            { .name = "Copy PGN"},
+            { .name = "Copy FEN"}
         };
         
         if (maxVisibleButtons >= static_cast<int>(allButtons.size()) + 1) {
@@ -187,7 +187,7 @@ namespace QaplaWindows
             
             for (int i = static_cast<int>(allButtons.size()) - 1; i >= numVisibleButtons; --i) {
                 auto state = getBoardButtonState(allButtons[i], status);
-                moreCommands.insert(moreCommands.begin(), {allButtons[i], state});
+                moreCommands.insert(moreCommands.begin(), { .name = allButtons[i], .state = state});
             }
         }
         
@@ -196,12 +196,11 @@ namespace QaplaWindows
 
     std::string BoardWindow::drawVisibleButtons(
         const std::vector<std::string>& visibleButtons,
-        ImVec2 startPos,
+        ImVec2 startPos, // NOLINT(bugprone-easily-swappable-parameters)
         ImVec2 buttonSize,
-        ImVec2 totalSize,
+        float buttonWidth,
         const std::string& status)
     {
-        constexpr float space = 3.0F;
         auto pos = startPos;
         std::string clickedButton;
         
@@ -211,15 +210,15 @@ namespace QaplaWindows
             if (drawBoardButton(button, button, buttonSize, state)) {
                 clickedButton = button;
             }
-            pos.x += totalSize.x + space;
+            pos.x += buttonWidth;
         }
         
         return clickedButton;
     }
 
-    bool BoardWindow::hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands) const
+    bool BoardWindow::hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands)
     {
-        return std::any_of(moreCommands.begin(), moreCommands.end(),
+        return std::ranges::any_of(moreCommands,
             [](const QaplaButton::PopupCommand& cmd) {
                 return cmd.state == QaplaButton::ButtonState::Highlighted;
             });
@@ -249,10 +248,10 @@ namespace QaplaWindows
         
         auto startPos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton = drawVisibleButtons(
-            visibleButtons, startPos, buttonSize, totalSize, status);
+            visibleButtons, startPos, buttonSize, buttonWidth, status);
         
         auto moreButtonPos = ImVec2(
-            startPos.x + visibleButtons.size() * (totalSize.x + space),
+            startPos.x + static_cast<float>(visibleButtons.size()) * (totalSize.x + space),
             startPos.y);
         ImGui::SetCursorScreenPos(moreButtonPos);
         
@@ -498,8 +497,11 @@ namespace QaplaWindows
         return true;
     }();
 
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton) {
-        if (this != tutorialInstance_) return;
+        if (this != tutorialInstance_) {
+            return;
+        }
         
         constexpr auto tutorialName = Tutorial::TutorialName::BoardWindow;
         
@@ -633,13 +635,15 @@ namespace QaplaWindows
     }
     }
 
+    // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     void BoardWindow::showNextCutPasteTutorialStep(const std::string& clickedButton) {
         constexpr auto tutorialName = Tutorial::TutorialName::BoardCutPaste;
         
-        bool twoBoardsStep = (tutorialCutPasteProgress_ == 9 || tutorialCutPasteProgress_ == 10);
+        bool twoBoardsStep = (tutorialCutPasteProgress_ == 10 || tutorialCutPasteProgress_ == 11);
            
-        // Special handling for two board instances in steps 9 and 10
-        if (this != tutorialInstance_ && (!twoBoardsStep || this != secondaryTutorialInstance_)) return;
+        if (this != tutorialInstance_ && (!twoBoardsStep || this != secondaryTutorialInstance_)) {
+            return;
+        }
         
         switch (tutorialCutPasteProgress_) {
             case 0:

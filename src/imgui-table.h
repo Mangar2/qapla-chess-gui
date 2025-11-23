@@ -84,9 +84,11 @@ namespace QaplaWindows {
         /**
          * @brief Sets whether the table supports filtering.
          * @param filterable If true, table can be filtered.
+         * @param keepSize If true, a dummy element is added to maintain the full table height.
          */
-        void setFilterable(bool filterable) {
+        void setFilterable(bool filterable, bool keepSize = false) {
             filterable_ = filterable;
+            keepSize_ = keepSize;
         }
 
         /**
@@ -272,6 +274,7 @@ namespace QaplaWindows {
         bool clickable_ = false;
         bool autoScroll_ = false;
         bool filterable_ = false;
+        bool keepSize_ = false;
         bool allowNavigateToZero_ = false;
         int fontIndex_ = FontManager::interVariableIndex; // Default to Inter Variable font
         std::optional<size_t> scrollToRow_;
