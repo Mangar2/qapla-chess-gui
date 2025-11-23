@@ -16,20 +16,26 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: Open Tournament Tab
+        // Test: Smoke Test - Start and Stop Game
         // -----------------------------------------------------------------
-        t = IM_REGISTER_TEST(engine, "Regression", "OpenTournamentTab");
+        t = IM_REGISTER_TEST(engine, "Regression", "SmokeTest");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            // 1. Open the "View" menu (assuming there is one, adjust as needed)
-            // ctx->MenuClick("View/Tournament");
+            ctx->LogInfo("Starting Smoke Test");
 
-            // 2. Or if it's a tab in a dockspace, try to find it.
-            // For now, we just log something to prove it runs.
-            ctx->LogInfo("Test 'OpenTournamentTab' is running!");
+            // Click Play
+            // We use wildcards because the button is deeply nested:
+            // RootOverlay -> main -> main.right -> Board 1 -> hsplit.board_moves.left -> Play
+            ctx->LogInfo("Clicking Play...");
+            ctx->ItemClick("**/Play");
             
-            // Example of checking a window existence
-            // ctx->SetRef("Tournament");
-            // IM_CHECK(ctx->WindowIsFocused());
+            // Wait for game to run a bit
+            ctx->Sleep(2.0f);
+
+            // Click Stop
+            ctx->LogInfo("Clicking Stop...");
+            ctx->ItemClick("**/Stop");
+
+            ctx->LogInfo("Smoke Test Completed");
         };
     }
 

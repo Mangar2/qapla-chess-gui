@@ -30,12 +30,13 @@
 namespace QaplaTest {
 
     void TestManager::init() {
+        // Initialize Test Engine
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         engine_ = ImGuiTestEngine_CreateContext();
         ImGuiTestEngineIO& io = ImGuiTestEngine_GetIO(engine_);
         io.ConfigVerboseLevel = ImGuiTestVerboseLevel_Info;
-        io.ConfigRunSpeed = ImGuiTestRunSpeed_Fast;
-        io.ConfigNoThrottle = true;
+        io.ConfigRunSpeed = ImGuiTestRunSpeed_Normal;
+        io.ConfigNoThrottle = false;
         io.ScreenCaptureFunc = []([[maybe_unused]] ImGuiID viewport_id, int x, int y, int w, int h, unsigned int* pixels, [[maybe_unused]] void* user_data) {
             GLint last_buffer;
             glGetIntegerv(GL_READ_BUFFER, &last_buffer);
