@@ -21,6 +21,7 @@
 #include "chatbot-step-tournament-save-existing.h"
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
+#include "chatbot-step-tournament-start.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -29,18 +30,26 @@ void ChatbotTournament::start() {
     currentStep_ = 0;
 
     // Step 1: Check if existing tournament needs saving
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSaveExisting>(this));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentSaveExisting>());
     
     // Step 2: Select engines from existing list
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(this));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
 
     // Step 3: Load more engines
-    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(this));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
+
+    // Step 4: Start Tournament
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 
 void ChatbotTournament::draw() {
+    for (size_t i = 0; i < steps_.size(); ++i) {
+        if (i <= currentStep_) {
+            steps_[i]->draw();
+        }
+    }
+
     if (currentStep_ < steps_.size()) {
-        steps_[currentStep_]->draw();
         if (steps_[currentStep_]->isFinished()) {
             ++currentStep_;
         }

@@ -29,13 +29,12 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepTournamentSaveExisting : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentSaveExisting(ChatbotTournament* thread);
+    ChatbotStepTournamentSaveExisting();
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
-    ChatbotTournament* thread_;
     bool finished_ = false;
     bool askUser_ = true;
 };

@@ -70,8 +70,9 @@ namespace QaplaWindows {
 
         /**
          * @brief Starts the tournament.
+         * @param verbose If true, enables snackbar info on success.
          */
-        void startTournament();
+        void startTournament(bool verbose = false);
 
         /**
 		 * @brief Polls the Tournament data for new entries.

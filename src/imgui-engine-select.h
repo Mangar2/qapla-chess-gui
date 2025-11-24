@@ -135,6 +135,12 @@ namespace QaplaWindows {
          */
         void setAlwaysShowEngines(bool alwaysShow) { alwaysShowEngines_ = alwaysShow; }
 
+        /**
+         * @brief Draws the available engines section (without checkboxes)
+         * @return true if something changed, false otherwise
+         */
+        bool drawAvailableEngines();
+
     private:
         /**
          * @brief Draws a single engine configuration
@@ -165,12 +171,6 @@ namespace QaplaWindows {
         bool drawSelectedEngines();
 
         /**
-         * @brief Draws the available engines section (without checkboxes)
-         * @return true if something changed, false otherwise
-         */
-        bool drawAvailableEngines();
-
-        /**
          * @brief Draws all engines in single selection mode
          * @return true if something changed, false otherwise
          */
@@ -197,6 +197,11 @@ namespace QaplaWindows {
          */
         void resetNamesToOriginal();
 
+        /**
+         * @brief Cleans up engine configurations that are no longer available
+         * @return true if any engines were removed, false otherwise
+         */
+        bool cleanupNonAvailableEngines();
 
         bool alwaysShowEngines_ = true;                         ///< Always show the engines, disable collapsing header
         Options options_;                                       ///< Current options

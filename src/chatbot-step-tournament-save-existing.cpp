@@ -26,11 +26,7 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentSaveExisting::ChatbotStepTournamentSaveExisting(ChatbotTournament* thread)
-    : thread_(thread) {
-    // We always ask the user if he likes to save the existing tournament, no matter if it has data or not.
-    // Tournament files includes all settings and the data thus there is always something to save.
-}
+ChatbotStepTournamentSaveExisting::ChatbotStepTournamentSaveExisting() = default;
 
 void ChatbotStepTournamentSaveExisting::draw() {
     if (!askUser_) {
@@ -41,8 +37,13 @@ void ChatbotStepTournamentSaveExisting::draw() {
     QaplaWindows::ImGuiControls::textWrapped("Do you want to save the current tournament before creating a new one?");
     ImGui::Spacing();
 
+    if (finished_) {
+        QaplaWindows::ImGuiControls::textDisabled("Step completed.");
+        return;
+    }
+
     if (QaplaWindows::ImGuiControls::textButton("Yes, Save")) {
-        auto path = OsDialogs::saveFileDialog({"Qapla Tournament Files", "qtour"});
+        auto path = OsDialogs::saveFileDialog({{"Qapla Tournament Files", "qtour"}});
         if (!path.empty()) {
             TournamentData::saveTournament(path);
         }

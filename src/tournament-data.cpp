@@ -264,7 +264,7 @@ namespace QaplaWindows {
         return true;
     }
 
-    void TournamentData::startTournament() {
+    void TournamentData::startTournament(bool verbose) {
         if (!tournament_) {
             SnackbarManager::instance().showError("Internal error, tournament not initialized");
             return;
@@ -304,7 +304,9 @@ namespace QaplaWindows {
         imguiConcurrency_->init();
         imguiConcurrency_->setActive(true);
         state_ = State::Starting;
-		SnackbarManager::instance().showSuccess("Tournament started");
+        if (verbose) {
+            SnackbarManager::instance().showSuccess("Tournament started");
+        }
 	}
 
     TournamentConfig& TournamentData::config() {

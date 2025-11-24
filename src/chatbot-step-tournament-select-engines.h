@@ -21,10 +21,6 @@
 
 #include "chatbot-step.h"
 #include "chatbot-tournament.h"
-#include "engine-capabilities.h"
-#include <vector>
-#include <string>
-#include <map>
 
 namespace QaplaWindows::ChatBot {
 
@@ -33,23 +29,15 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepTournamentSelectEngines : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentSelectEngines(ChatbotTournament* thread);
+    ChatbotStepTournamentSelectEngines();
+    ~ChatbotStepTournamentSelectEngines() override;
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
-    ChatbotTournament* thread_;
     bool finished_ = false;
-    
-    struct EngineEntry {
-        std::string name;
-        std::string path;
-        QaplaTester::EngineProtocol protocol;
-        bool selected = false;
-    };
-    
-    std::vector<EngineEntry> availableEngines_;
+    bool initialized_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

@@ -59,20 +59,8 @@ bool ImGuiEngineSelect::draw(bool highlight) {
     ImGui::PushID("engineSettings");
     ImGui::Indent(10.0F);
 
-    // Clean up engines that are no longer available
-    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
-    for (uint32_t index = 0; index < engineConfigurations_.size(); ) {
-        const auto& usedConfig = engineConfigurations_[index];
-        auto* baseConfig = configManager.getConfigMutableByCmdAndProtocol(
-            usedConfig.config.getCmd(), usedConfig.config.getProtocol());
-        if (baseConfig == nullptr) {
-            engineConfigurations_.erase(engineConfigurations_.begin() + index);
-            modified = true;
-        } else {
-            index++;
-        }
-    }
-    
+    modified |= cleanupNonAvailableEngines();
+
     if (options_.allowMultipleSelection) {
         // Multiple selection mode: show selected engines first, then all available engines
         modified |= drawSelectedEngines();
@@ -90,6 +78,28 @@ bool ImGuiEngineSelect::draw(bool highlight) {
     ImGui::Unindent(10.0F);
     ImGui::PopID();
     
+    return modified;
+}
+
+bool QaplaWindows::ImGuiEngineSelect::cleanupNonAvailableEngines()
+{
+    bool modified = false;
+    auto &configManager = EngineWorkerFactory::getConfigManagerMutable();
+    for (uint32_t index = 0; index < engineConfigurations_.size();)
+    {
+        const auto &usedConfig = engineConfigurations_[index];
+        auto *baseConfig = configManager.getConfigMutableByCmdAndProtocol(
+            usedConfig.config.getCmd(), usedConfig.config.getProtocol());
+        if (baseConfig == nullptr)
+        {
+            engineConfigurations_.erase(engineConfigurations_.begin() + index);
+            modified = true;
+        }
+        else
+        {
+            index++;
+        }
+    }
     return modified;
 }
 
