@@ -9,3 +9,31 @@ Bitte verändere das laden und speichern der language-files und der missing tran
 2. Nutze das ini format zum laden und speichern von language dateien und missing translations. Schaue dir dazu configuration.h/.cpp an wie das funktioniert.
 3. Nutze als name "Translation" und als "id" den topic.  
 Hinweis: die sprachdateien in i18n hab ich schon manuell auf das neue format umgestellt. 
+
+Baue einen "eröffnungs-parser" (opening-parser.h/.cpp) im verzeichnis extern/qapla-engine-tester. 
+Er soll  eine datei mit verschiedenen möglichen formaten einlesen und als std::vector<GameRecord> zurückgeben. 
+Orientiere Dich von der struktur an game-parser.cpp, d.h. es muss die möglichkeit geben verschiedene parser zu registrieren
+Die Reihenfolge mit der Parser ausprobiert werden orientiert sich zunächst an der Dateiendung und danach an der reihenfolge wie die parser hinzugefügt wurden
+Implementiere zunächst genau einen parser, der PGN - Parser da der schon vorhanden ist. 
+code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. Max. nesting lelvel 3.
+code style: prevent implicit conversions use same types where possible. Always use curly braces for all control statements. Use "auto" instead of the type where reasonable especially if the type is already in the line.
+
+
+Ich baue eine schach-gui mit Dear ImGUI. Sie funktioniert ist aber - so ein user feedback zu kompliziert. 
+Meine Idee ist nun einen weiteren einfacheren Zugang zur selben funktionalität hinzuzufügen. 
+Der Fensterinhalt soll wie eine art chat-bot funktionieren - allerdings nur mit festen optionen, nicht mit mit echtem Text. 
+Bitte erstelle zunächst dazu ein chatbot-window.h/.cpp das von EmbeddedWindow erbt und den chat-ablauf anzeigt. 
+Es muss chatbot-thread elemente nutzen können weche den ablauf steuern. Das EmbeddedWindow wird alle treads als optionen anbieten.
+Wenn der nutzer dann einen thread auswählt, wird der gestartet - erstelle dafür also eine basisklasse in einer extra datei,
+von der alle implementierten threads erben und das die nötigen pur virtuellen basisklassen hat, damit ChatbotWindow sie nutzen kann.
+Ein Chatbot thread wiederum besteht aus ChatBot steps, die jeweils einen step umsetzen. Erstelle auch für einen Chatbot-step 
+eine basisklasse, die nötige pur virtuellen methoden enthält soweit schon jetzt klar ist. Implementiere als ersten chatbot-step 
+dann einen der Eine Liste von Optionen anzeigt und den benutzer eine der optionen auswählen lässt. 
+Baue dann in ChatbotWindow als erstes diesen ChatbotStep ein, der den benutzer die bisher im ChatbotWindow registrierten threads 
+auswählen lässt (threads müssen im ChatbotWindow registriert werden, das ChatbotWindow kennt also nur die Basisklasse ChatbotThread und ChatbotStep nicht deren ausprägung)
+Baue dann einen ersten Thread chatbot-choose-language der inhaltlich komplett leer bleibt und direkt wieder zurückgeht. 
+Das ChatbotWindow muss sich alle abgeabeiteten Threads merken. Es wird die fertigen hinter ein collapable stecken so dass der 
+Benutzer nachträglich sehen kann, was gemacht wurde, wenn er will.
+code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. Max. nesting lelvel 3.
+code style: prevent implicit conversions use same types where possible. Always use curly braces for all control statements. Use "auto" instead of the type where reasonable especially if the type is already in the line.
+
