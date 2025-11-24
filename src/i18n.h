@@ -81,6 +81,8 @@ private:
     Translator(const Translator&) = delete;
     Translator& operator=(const Translator&) = delete;
 
+    void loadLanguageFromStream(std::istream& stream);
+
     using TranslationMap = std::unordered_map<std::string, std::string>;
     using TopicMap = std::unordered_map<std::string, TranslationMap>;
     

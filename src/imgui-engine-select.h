@@ -129,6 +129,12 @@ namespace QaplaWindows {
          */
         void setId(const std::string& id) { id_ = id; }
 
+        /**
+         * @brief Sets whether to always show the engines without collapsing
+         * @param alwaysShow True to always show, false to allow collapsing
+         */
+        void setAlwaysShowEngines(bool alwaysShow) { alwaysShowEngines_ = alwaysShow; }
+
     private:
         /**
          * @brief Draws a single engine configuration
@@ -192,7 +198,7 @@ namespace QaplaWindows {
         void resetNamesToOriginal();
 
 
-
+        bool alwaysShowEngines_ = true;                         ///< Always show the engines, disable collapsing header
         Options options_;                                       ///< Current options
         std::string id_ = "unset";                              ///< Unique identifier for the selection instance
         std::vector<EngineConfiguration> engineConfigurations_;     ///< All configured engine configurations (both selected and deselected)

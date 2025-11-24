@@ -4,6 +4,10 @@
 #include <logger.h>
 #include <ini-file.h>
 
+#include <deu-lang.h>
+#include <eng-lang.h>
+#include <fra-lang.h>
+
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -83,8 +87,11 @@ void Translator::loadLanguageFile(const std::string& filepath) {
             TraceLevel::error);
         return;
     }
+    loadLanguageFromStream(file);
+}
 
-    auto sectionList = QaplaHelpers::IniFile::load(file);
+void Translator::loadLanguageFromStream(std::istream& stream) {
+    auto sectionList = QaplaHelpers::IniFile::load(stream);
     
     for (const auto& section : sectionList) {
         if (section.name != "Translation") {
@@ -125,6 +132,38 @@ void Translator::setLanguageCode(const std::string& language) {
             return; 
         }
         currentLanguage = language;
+        translations.clear();
+        loadedLanguages.clear();
+    }
+
+    // Try loading from embedded data first
+    const uint32_t* data = nullptr;
+    uint32_t size = 0;
+
+    if (language == "deu") {
+        data = deu_lang;
+        size = deu_langSize;
+    } else if (language == "eng") {
+        data = eng_lang;
+        size = eng_langSize;
+    } else if (language == "fra") {
+        data = fra_lang;
+        size = fra_langSize;
+    }
+
+    if (data) {
+        std::string content(reinterpret_cast<const char*>(data), size);
+        std::stringstream ss(content);
+        
+        std::scoped_lock lock(languageMutex);
+        loadLanguageFromStream(ss);
+        
+        if (std::ranges::find(loadedLanguages, language) == loadedLanguages.end()) {
+            loadedLanguages.push_back(language);
+        }
+        QaplaTester::Logger::reportLogger().log(std::string("Loaded embedded language: ") + language, 
+            TraceLevel::info);
+        return;
     }
 
     std::filesystem::path dir = getDirectory();

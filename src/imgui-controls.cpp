@@ -504,8 +504,11 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags, bool showDot) {
+        
         auto translatedLabel = Translator::instance().translate("Section", label);
-        bool result = ImGui::CollapsingHeader(translatedLabel.c_str(), flags);
+        auto headerText = std::format("{}###{}", translatedLabel, label);
+
+        bool result = ImGui::CollapsingHeader(headerText.c_str(), flags);
         
         if (showDot) {
             constexpr float dotOffsetX = 20.0F;  // More offset for CollapsingHeader arrow

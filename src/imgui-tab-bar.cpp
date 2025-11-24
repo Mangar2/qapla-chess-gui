@@ -71,7 +71,8 @@ namespace QaplaWindows {
                 // Check if window is highlighted
                 bool isHighlighted = it->window && it->window->highlighted();
                 auto translatedName = Translator::instance().translate("Tab", it->name);
-                bool tabIsActive = ImGui::BeginTabItem(translatedName.c_str(), closable ? &open : nullptr, flags);
+                auto tabItemText = std::format("{}###{}", translatedName, it->name);
+                bool tabIsActive = ImGui::BeginTabItem(tabItemText.c_str(), closable ? &open : nullptr, flags);
                 
                 // Draw dot if window is highlighted (after BeginTabItem, independent of whether tab is active)
                 if (isHighlighted) {

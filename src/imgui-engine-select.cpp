@@ -230,8 +230,9 @@ ImGuiEngineSelect::findDeselectedEngineConfiguration(const EngineConfig& engineC
 
 bool ImGuiEngineSelect::drawSelectedEngines() {
     bool modified = false;
-    
-    if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
+        (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
+    if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", flags)) {
         ImGui::Indent(10.0F);
         
         // Draw all selected engines with checkboxes
@@ -253,8 +254,9 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
 
 bool ImGuiEngineSelect::drawAvailableEngines() {
     bool modified = false;
-    
-    if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", ImGuiTreeNodeFlags_DefaultOpen)) {
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
+        (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
+    if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", flags)) {
         ImGui::Indent(10.0F);
         
         auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
