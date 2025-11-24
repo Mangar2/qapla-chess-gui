@@ -22,6 +22,8 @@
 
 #include <filesystem>
 
+namespace QaplaWindows {
+
 std::string PgnAutoSaver::getFilePath() const {
     // Get config directory
     std::string directory = OsDialogs::getConfigDirectory();
@@ -56,3 +58,5 @@ void PgnAutoSaver::checkAndPrune() {
     // Prune old games if file has too many
     gameRecordManager_.pruneOldGames(filePath, MAX_GAMES_BEFORE_PRUNE);
 }
+
+} // namespace QaplaWindows

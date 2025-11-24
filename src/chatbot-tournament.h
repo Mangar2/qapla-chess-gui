@@ -19,37 +19,36 @@
 
 #pragma once
 
+#include "chatbot-thread.h"
 #include "chatbot-step.h"
+#include "i18n.h"
 #include <vector>
-#include <string>
-#include <functional>
+#include <memory>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot step that presents a list of options to the user.
+ * @brief A chatbot thread for creating a new chess tournament.
  */
-class ChatbotStepOptionList : public ChatbotStep {
+class ChatbotTournament : public ChatbotThread {
 public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
-
-    /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
-     */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
-
+    [[nodiscard]] std::string getTitle() const override { 
+        return "Create Tournament"; 
+    }
+    void start() override;
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
+    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
+
+    /**
+     * @brief Adds a step to the thread.
+     * @param step The step to add.
+     */
+    void addStep(std::unique_ptr<ChatbotStep> step);
 
 private:
-    std::string prompt_;
-    std::vector<Option> options_;
-    bool finished_ = false;
+    std::vector<std::unique_ptr<ChatbotStep>> steps_;
+    size_t currentStep_ = 0;
 };
 
 } // namespace QaplaWindows::ChatBot

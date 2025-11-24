@@ -20,58 +20,74 @@
 #include "chatbot-window.h"
 #include "chatbot-step-option-list.h"
 #include "chatbot-choose-language.h"
+#include "chatbot-tournament.h"
+#include "i18n.h"
+#include "imgui-controls.h"
+
 #include <imgui.h>
+
+namespace QaplaWindows::ChatBot {
 
 ChatbotWindow::ChatbotWindow() {
     registerThread(std::make_unique<ChatbotChooseLanguage>());
+    registerThread(std::make_unique<ChatbotTournament>());
     resetToMainMenu();
 }
 
 void ChatbotWindow::registerThread(std::unique_ptr<ChatbotThread> thread) {
-    m_registeredThreads.push_back(std::move(thread));
+    registeredThreads_.push_back(std::move(thread));
     resetToMainMenu();
 }
 
 void ChatbotWindow::startThread(const ChatbotThread& threadPrototype) {
-    m_activeThread = threadPrototype.clone();
-    m_activeThread->start();
-    m_mainMenuStep.reset();
+    activeThread_ = threadPrototype.clone();
+    activeThread_->start();
+    // Do not reset mainMenuStep_ here, as we might be inside its draw() method (callback).
+    // It will be replaced when resetToMainMenu() is called later.
 }
 
 void ChatbotWindow::resetToMainMenu() {
     std::vector<ChatbotStepOptionList::Option> options;
-    for (const auto& thread : m_registeredThreads) {
+    for (const auto& thread : registeredThreads_) {
         // Capture raw pointer to avoid reference invalidation on vector resize
         ChatbotThread* ptr = thread.get();
         options.push_back({
-            thread->getTitle(),
+            Translator::instance().translate("Chatbot", thread->getTitle()),
             [this, ptr]() { startThread(*ptr); }
         });
     }
-    m_mainMenuStep = std::make_unique<ChatbotStepOptionList>("How can I help you?", std::move(options));
+    mainMenuStep_ = std::make_unique<ChatbotStepOptionList>(
+        Translator::instance().translate("Chatbot", "How can I help you?"),
+        std::move(options)
+    );
 }
 
 void ChatbotWindow::draw() {
+    ImGui::Spacing();
+    ImGui::Indent(10.0F);
     // Draw history
-    if (!m_completedThreads.empty()) {
-        if (ImGui::CollapsingHeader("History")) {
-            for (const auto& thread : m_completedThreads) {
-                ImGui::TextDisabled("%s", thread->getTitle().c_str());
+    if (!completedThreads_.empty()) {
+        if (ImGuiControls::CollapsingHeaderWithDot("History")) {
+            for (const auto& thread : completedThreads_) {
+                QaplaWindows::ImGuiControls::textDisabled(thread->getTitle());
             }
         }
         ImGui::Separator();
     }
 
-    if (m_activeThread) {
-        m_activeThread->draw();
-        if (m_activeThread->isFinished()) {
-            m_completedThreads.push_back(std::move(m_activeThread));
+    if (activeThread_) {
+        activeThread_->draw();
+        if (activeThread_->isFinished()) {
+            completedThreads_.push_back(std::move(activeThread_));
             resetToMainMenu();
         }
     } else {
-        if (!m_mainMenuStep) {
+        if (!mainMenuStep_) {
             resetToMainMenu();
         }
-        m_mainMenuStep->draw();
+        mainMenuStep_->draw();
     }
+    ImGui::Unindent(10.0F);
 }
+
+} // namespace QaplaWindows::ChatBot

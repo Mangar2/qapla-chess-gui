@@ -37,3 +37,25 @@ Benutzer nachträglich sehen kann, was gemacht wurde, wenn er will.
 code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. Max. nesting lelvel 3.
 code style: prevent implicit conversions use same types where possible. Always use curly braces for all control statements. Use "auto" instead of the type where reasonable especially if the type is already in the line.
 
+Nun vervollständige den thread choose language. Wie das auswählen einer sprache geht findest du in configuration-window "drawLanguageConfig". Setze das aber im step als options um nicht als dropdown-box. 
+Erstelle zunächst ein option control in imgui-controls incl. Übersetzung ( auto translatedText = Translator::instance().translate("Option", text);)
+Nutze die dann zur auswahl der sprache. Baue dafür einen chatbot-option step der genutzt wird. 
+Baue die übersetzung in alle strings ein die du im chatbot ausgibts. Insgesamt sollten wir danach einen fertigen ersten threadh
+haben der uns die Sprache setzen läst und der sich dann mit einem netten Abschlusswort verabschiedet und ein "Finish" anbietet der den Thread dann beendet.
+Baue auch für das "Finishing" einen eigenen Step.
+code style: comment method declaration in jsdoc. Use c++20. Min. id length=3. Use ranges. Use format. Use nodiscard. Only "why comments". Max. Method complexity level 20. Max. nesting lelvel 3.
+code style: prevent implicit conversions use same types where possible. Always use curly braces for all control statements. Use "auto" instead of the type where reasonable especially if the type is already in the line.
+
+Bitte erstelle nun einen neuen thread zum erstellen eines schach turniers. Die schritte sind:
+1. Auswahl ob man das bestehende Turnier speichern möchte
+2. Auswählen von Engines aus einer Liste von vorhandenen Engines (überspringen, wenn keine engines vorhanden sind).
+3. Möglichkeit anbieten weitere Engines zu laden bis "will nicht weitere" ausgewählt wird. 
+4. Auswahl der Zeitkontrolle
+5. Auswahl der Global-Engine-options
+6. Auswahl des Turniertyps, Rundenzahl, Spiele pro Runde
+7. Auswahl der Datei mit Startpositionen
+8. Auswahl der PGN-Speicher-Optionen
+9. Auswahl der Anzahl parallel laufenden Spiele
+10. Auswahl ob man das Turnier starten, speichern oder weitere Details ändern will (Nach starten wird der finish schritt übersprungen)
+11. Finish mit Ende-Meldung, wenn das Turnier nicht gestartet wurde. Details ändern kann man dann über die vorhandenen eingabemöglichkeiten im Turnier-Tab bitte darauf hinweisen.
+Bitte erstelle den Thread und die ersten drei Steps. Wie das funktioniert findest du in tournament-window und tournament-data

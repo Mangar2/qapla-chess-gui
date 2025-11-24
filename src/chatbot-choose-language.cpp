@@ -18,19 +18,59 @@
  */
 
 #include "chatbot-choose-language.h"
+#include "chatbot-step-select-option.h"
+#include "chatbot-step-finish.h"
+#include "configuration.h"
+#include "i18n.h"
+#include <map>
+
+namespace QaplaWindows::ChatBot {
 
 void ChatbotChooseLanguage::start() {
-    m_finished = true;
+    std::map<std::string, std::string> langMap = {
+        {"English", "eng"},
+        {"Deutsch", "deu"},
+        {"Français", "fra"}
+    };
+    std::vector<std::string> languageNames;
+    for (const auto& [name, code] : langMap) {
+        languageNames.push_back(name);
+    }
+
+    steps_.push_back(std::make_unique<ChatbotStepSelectOption>(
+        "Please select your preferred language:",
+        languageNames,
+        [langMap](int index) {
+            auto it = langMap.begin();
+            std::advance(it, index);
+            const auto& [name, code] = *it;
+            QaplaConfiguration::Configuration::updateLanguageConfiguration(code);
+            Translator::instance().setLanguageCode(code);
+        }
+    ));
+
+    steps_.push_back(std::make_unique<ChatbotStepFinish>(
+        "Thank you! Your language has been set. You can now continue using the application."
+    ));
+
+    currentStep_ = 0;
 }
 
 void ChatbotChooseLanguage::draw() {
-    // Intentionally empty
+    if (currentStep_ < steps_.size()) {
+        steps_[currentStep_]->draw();
+        if (steps_[currentStep_]->isFinished()) {
+            ++currentStep_;
+        }
+    }
 }
 
 bool ChatbotChooseLanguage::isFinished() const {
-    return m_finished;
+    return currentStep_ >= steps_.size();
 }
 
 std::unique_ptr<ChatbotThread> ChatbotChooseLanguage::clone() const {
     return std::make_unique<ChatbotChooseLanguage>();
 }
+
+} // namespace QaplaWindows::ChatBot

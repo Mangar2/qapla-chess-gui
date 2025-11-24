@@ -27,28 +27,25 @@
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot step that presents a list of options to the user.
+ * @brief A chatbot step that presents options for selection using the option selector control.
  */
-class ChatbotStepOptionList : public ChatbotStep {
+class ChatbotStepSelectOption : public ChatbotStep {
 public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
-
     /**
-     * @brief Constructs a new ChatbotStepOptionList.
+     * @brief Constructs a new ChatbotStepSelectOption.
      * @param prompt The text to display before the options.
      * @param options The list of options to display.
+     * @param onSelected Callback function called when an option is selected, with the index.
      */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+    ChatbotStepSelectOption(std::string prompt, std::vector<std::string> options, std::function<void(int)> onSelected);
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
     std::string prompt_;
-    std::vector<Option> options_;
+    std::vector<std::string> options_;
+    std::function<void(int)> onSelected_;
     bool finished_ = false;
 };
 

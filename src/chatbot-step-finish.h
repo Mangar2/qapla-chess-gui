@@ -20,35 +20,26 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include <vector>
 #include <string>
-#include <functional>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot step that presents a list of options to the user.
+ * @brief A chatbot step that displays a message and a finish button.
  */
-class ChatbotStepOptionList : public ChatbotStep {
+class ChatbotStepFinish : public ChatbotStep {
 public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
-
     /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
+     * @brief Constructs a new ChatbotStepFinish.
+     * @param message The message to display.
      */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+    explicit ChatbotStepFinish(std::string message);
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
-    std::string prompt_;
-    std::vector<Option> options_;
+    std::string message_;
     bool finished_ = false;
 };
 

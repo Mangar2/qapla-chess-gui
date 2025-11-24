@@ -21,24 +21,29 @@
 #include "imgui-controls.h"
 #include <imgui.h>
 
+namespace QaplaWindows::ChatBot {
+
 ChatbotStepOptionList::ChatbotStepOptionList(std::string prompt, std::vector<Option> options)
-    : m_prompt(std::move(prompt)), m_options(std::move(options)) {
+    : prompt_(std::move(prompt)), options_(std::move(options)) {
 }
 
 void ChatbotStepOptionList::draw() {
-    ImGui::TextWrapped("%s", m_prompt.c_str());
+    ImGui::TextWrapped("%s", prompt_.c_str());
     ImGui::Spacing();
 
-    for (const auto& option : m_options) {
+    for (const auto& option : options_) {
         if (QaplaWindows::ImGuiControls::textButton(option.text.c_str())) {
             if (option.onSelected) {
                 option.onSelected();
             }
-            m_finished = true;
+            finished_ = true;
+            return;
         }
     }
 }
 
 bool ChatbotStepOptionList::isFinished() const {
-    return m_finished;
+    return finished_;
 }
+
+} // namespace QaplaWindows::ChatBot

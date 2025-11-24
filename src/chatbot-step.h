@@ -19,6 +19,8 @@
 
 #pragma once
 
+namespace QaplaWindows::ChatBot {
+
 /**
  * @brief Interface for a single step in a chatbot conversation.
  * 
@@ -39,3 +41,5 @@ public:
      */
     [[nodiscard]] virtual bool isFinished() const = 0;
 };
+
+} // namespace QaplaWindows::ChatBot

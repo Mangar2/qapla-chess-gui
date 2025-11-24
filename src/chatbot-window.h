@@ -25,6 +25,8 @@
 #include <vector>
 #include <memory>
 
+namespace QaplaWindows::ChatBot {
+
 /**
  * @brief Window that provides a chatbot-like interface for simplified user interaction.
  */
@@ -53,9 +55,11 @@ private:
      */
     void resetToMainMenu();
 
-    std::vector<std::unique_ptr<ChatbotThread>> m_registeredThreads;
-    std::vector<std::unique_ptr<ChatbotThread>> m_completedThreads;
+    std::vector<std::unique_ptr<ChatbotThread>> registeredThreads_;
+    std::vector<std::unique_ptr<ChatbotThread>> completedThreads_;
     
-    std::unique_ptr<ChatbotThread> m_activeThread;
-    std::unique_ptr<ChatbotStep> m_mainMenuStep;
+    std::unique_ptr<ChatbotThread> activeThread_;
+    std::unique_ptr<ChatbotStep> mainMenuStep_;
 };
+
+} // namespace QaplaWindows::ChatBot

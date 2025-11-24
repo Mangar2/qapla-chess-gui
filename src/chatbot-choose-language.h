@@ -20,18 +20,29 @@
 #pragma once
 
 #include "chatbot-thread.h"
+#include "chatbot-step.h"
+#include "i18n.h"
+#include <vector>
+#include <memory>
+
+namespace QaplaWindows::ChatBot {
 
 /**
  * @brief A chatbot thread for choosing the application language.
  */
 class ChatbotChooseLanguage : public ChatbotThread {
 public:
-    [[nodiscard]] std::string getTitle() const override { return "Choose Language"; }
+    [[nodiscard]] std::string getTitle() const override { 
+        return "Choose Language"; 
+    }
     void start() override;
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
     [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
 private:
-    bool m_finished = false;
+    std::vector<std::unique_ptr<ChatbotStep>> steps_;
+    size_t currentStep_ = 0;
 };
+
+} // namespace QaplaWindows::ChatBot

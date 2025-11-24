@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+namespace QaplaWindows {
+
  /**
   * Native file open dialog.
   * Returns a list of selected file paths as std::vector<std::string>.
@@ -70,3 +72,5 @@ public:
      */
     static std::string getConfigDirectory();
 };
+
+} // namespace QaplaWindows

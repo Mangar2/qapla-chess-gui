@@ -20,36 +20,24 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include <vector>
-#include <string>
-#include <functional>
+#include "chatbot-tournament.h"
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot step that presents a list of options to the user.
+ * @brief Step to ask the user if they want to save the existing tournament.
  */
-class ChatbotStepOptionList : public ChatbotStep {
+class ChatbotStepTournamentSaveExisting : public ChatbotStep {
 public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
-
-    /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
-     */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+    explicit ChatbotStepTournamentSaveExisting(ChatbotTournament* thread);
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
-    std::string prompt_;
-    std::vector<Option> options_;
+    ChatbotTournament* thread_;
     bool finished_ = false;
+    bool askUser_ = true;
 };
 
 } // namespace QaplaWindows::ChatBot

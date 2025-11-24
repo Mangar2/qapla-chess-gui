@@ -25,6 +25,8 @@
 
 #include <string>
 
+namespace QaplaWindows {
+
 /**
  * @brief Automatically saves PGN games by appending them to a file.
  * 
@@ -97,3 +99,5 @@ private:
     GameRecordManager gameRecordManager_;  ///< Manager for PGN I/O operations
     std::string filename_{DEFAULT_FILENAME};  ///< Base filename
 };
+
+} // namespace QaplaWindows

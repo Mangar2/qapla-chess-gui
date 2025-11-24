@@ -60,6 +60,18 @@ namespace QaplaWindows::ImGuiControls {
     bool textButton(const char* label, ImVec2 size = ImVec2(0, 0));
 
     /**
+     * @brief Wrapper around ImGui::TextWrapped with automatic text translation.
+     * @param text The text to translate and display.
+     */
+    void textWrapped(const std::string& text);
+
+    /**
+     * @brief Wrapper around ImGui::TextDisabled with automatic text translation.
+     * @param text The text to translate and display.
+     */
+    void textDisabled(const std::string& text);
+
+    /**
      * @brief Displays an annotation text on the same line with optional red highlighting.
      * @param text The annotation text to display.
      * @param red If true, displays in red; if false, displays in disabled text color.
@@ -342,5 +354,12 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the tab is selected, false otherwise.
      */
     bool TabItemWithDot(const char* label, bool* p_open = nullptr, ImGuiTabItemFlags flags = 0,  bool showDot = false);
+
+    /**
+     * @brief Displays a list of options as buttons for selection.
+     * @param options The list of option texts to display.
+     * @return The index of the selected option, or -1 if none selected.
+     */
+    int optionSelector(const std::vector<std::string>& options);
 
 }

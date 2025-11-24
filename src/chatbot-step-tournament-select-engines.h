@@ -20,36 +20,36 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-tournament.h"
+#include "engine-capabilities.h"
 #include <vector>
 #include <string>
-#include <functional>
+#include <map>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot step that presents a list of options to the user.
+ * @brief Step to select engines from the list of available engines.
  */
-class ChatbotStepOptionList : public ChatbotStep {
+class ChatbotStepTournamentSelectEngines : public ChatbotStep {
 public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
-
-    /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
-     */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+    explicit ChatbotStepTournamentSelectEngines(ChatbotTournament* thread);
 
     void draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
-    std::string prompt_;
-    std::vector<Option> options_;
+    ChatbotTournament* thread_;
     bool finished_ = false;
+    
+    struct EngineEntry {
+        std::string name;
+        std::string path;
+        QaplaTester::EngineProtocol protocol;
+        bool selected = false;
+    };
+    
+    std::vector<EngineEntry> availableEngines_;
 };
 
 } // namespace QaplaWindows::ChatBot

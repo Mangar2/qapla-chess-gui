@@ -17,39 +17,31 @@
  * @copyright Copyright (c) 2025 GitHub Copilot
  */
 
-#pragma once
-
-#include "chatbot-step.h"
-#include <vector>
-#include <string>
-#include <functional>
+#include "chatbot-step-select-option.h"
+#include "imgui-controls.h"
+#include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-/**
- * @brief A chatbot step that presents a list of options to the user.
- */
-class ChatbotStepOptionList : public ChatbotStep {
-public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
+ChatbotStepSelectOption::ChatbotStepSelectOption(std::string prompt, std::vector<std::string> options, std::function<void(int)> onSelected)
+    : prompt_(std::move(prompt)), options_(std::move(options)), onSelected_(std::move(onSelected)) {
+}
 
-    /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
-     */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+void ChatbotStepSelectOption::draw() {
+    ImGuiControls::textWrapped(prompt_);
+    ImGui::Spacing();
 
-    void draw() override;
-    [[nodiscard]] bool isFinished() const override;
+    int selected = QaplaWindows::ImGuiControls::optionSelector(options_);
+    if (selected != -1) {
+        if (onSelected_) {
+            onSelected_(selected);
+        }
+        finished_ = true;
+    }
+}
 
-private:
-    std::string prompt_;
-    std::vector<Option> options_;
-    bool finished_ = false;
-};
+bool ChatbotStepSelectOption::isFinished() const {
+    return finished_;
+}
 
 } // namespace QaplaWindows::ChatBot

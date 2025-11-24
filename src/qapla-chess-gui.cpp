@@ -43,6 +43,7 @@
 #include "font.h"
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
+#include "chatbot-window.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -183,6 +184,7 @@ namespace {
         auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         auto instances = QaplaWindows::InteractiveBoardWindow::loadInstances();
         size_t index = 0;
+        boardTabBar->addTab("Chatbot", std::make_unique<QaplaWindows::ChatBot::ChatbotWindow>());
         for (auto& instance : instances) {
             auto title = instance->getTitle();
             boardTabBar->addTab(title, std::move(instance), 

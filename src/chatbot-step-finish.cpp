@@ -17,39 +17,27 @@
  * @copyright Copyright (c) 2025 GitHub Copilot
  */
 
-#pragma once
-
-#include "chatbot-step.h"
-#include <vector>
-#include <string>
-#include <functional>
+#include "chatbot-step-finish.h"
+#include "imgui-controls.h"
+#include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-/**
- * @brief A chatbot step that presents a list of options to the user.
- */
-class ChatbotStepOptionList : public ChatbotStep {
-public:
-    struct Option {
-        std::string text;
-        std::function<void()> onSelected;
-    };
+ChatbotStepFinish::ChatbotStepFinish(std::string message)
+    : message_(std::move(message)) {
+}
 
-    /**
-     * @brief Constructs a new ChatbotStepOptionList.
-     * @param prompt The text to display before the options.
-     * @param options The list of options to display.
-     */
-    ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
+void ChatbotStepFinish::draw() {
+    ImGuiControls::textWrapped(message_);
+    ImGui::Spacing();
 
-    void draw() override;
-    [[nodiscard]] bool isFinished() const override;
+    if (QaplaWindows::ImGuiControls::textButton("Finish")) {
+        finished_ = true;
+    }
+}
 
-private:
-    std::string prompt_;
-    std::vector<Option> options_;
-    bool finished_ = false;
-};
+bool ChatbotStepFinish::isFinished() const {
+    return finished_;
+}
 
 } // namespace QaplaWindows::ChatBot

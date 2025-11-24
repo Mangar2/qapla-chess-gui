@@ -102,6 +102,7 @@ namespace {
     }
 }
 
+namespace QaplaWindows {
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     const std::vector<std::pair<std::string, std::string>>& filters) {
     std::vector<std::string> results;
@@ -620,5 +621,7 @@ std::string OsDialogs::getConfigDirectory() {
     return "";
 #endif
 }
+
+} // namespace QaplaWindows
 
 

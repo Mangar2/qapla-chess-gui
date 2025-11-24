@@ -52,6 +52,16 @@ namespace QaplaWindows::ImGuiControls {
         return ImGui::Button(translatedLabel.c_str(), size);
     }
 
+    void textWrapped(const std::string& text) {
+        auto translatedText = Translator::instance().translate("Text", text);
+        ImGui::TextWrapped("%s", translatedText.c_str());
+    }
+
+    void textDisabled(const std::string& text) {
+        auto translatedText = Translator::instance().translate("Text", text);
+        ImGui::TextDisabled("%s", translatedText.c_str());
+    }
+
     void annotate(const std::string& text, bool red) {
         if (text.empty()) {
             return;
@@ -527,6 +537,16 @@ namespace QaplaWindows::ImGuiControls {
         }
         
         return result;
+    }
+
+    int optionSelector(const std::vector<std::string>& options) {
+        for (size_t i = 0; i < options.size(); ++i) {
+            auto translatedText = Translator::instance().translate("Option", options[i]);
+            if (textButton(translatedText.c_str())) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
     }
 
 }

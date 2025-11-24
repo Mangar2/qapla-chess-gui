@@ -22,6 +22,8 @@
 #include <string>
 #include <memory>
 
+namespace QaplaWindows::ChatBot {
+
 /**
  * @brief Interface for a chatbot conversation thread.
  * 
@@ -63,3 +65,5 @@ public:
      */
     [[nodiscard]] virtual std::unique_ptr<ChatbotThread> clone() const = 0;
 };
+
+} // namespace QaplaWindows::ChatBot
