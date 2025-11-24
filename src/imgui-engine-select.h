@@ -93,6 +93,12 @@ namespace QaplaWindows {
         const std::vector<EngineConfiguration>& getEngineConfigurations() const;
 
         /**
+         * @brief Returns only the selected engine configurations
+         * @return Vector with selected engine configurations
+         */
+        std::vector<EngineConfiguration> getSelectedEngines() const;
+
+        /**
          * @brief Sets the configured engine configurations
          * @param configurations Vector with all configured engine configurations
          */

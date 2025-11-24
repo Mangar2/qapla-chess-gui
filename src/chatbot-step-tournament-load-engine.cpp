@@ -56,35 +56,60 @@ bool ChatbotStepTournamentLoadEngine::isFinished() const {
 }
 
 void ChatbotStepTournamentLoadEngine::drawInput() {
-    QaplaWindows::ImGuiControls::textWrapped("Do you want to load additional engines for the tournament?");
-    ImGui::Spacing();
+    auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
+    size_t numSelected = selectedEngines.size();
+    size_t numAdded = addedEnginePaths_.size();
+    size_t totalEngines = numSelected + numAdded;
 
-    if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
-        addEngines();
-    }
-
-    if (!addedEnginePaths_.empty()) {
+    if (totalEngines == 0) {
+        QaplaWindows::ImGuiControls::textWrapped("No engines selected. You need at least two engines to start a tournament. Please select engines.");
         ImGui::Spacing();
-        QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
-        for (const auto& path : addedEnginePaths_) {
-            ImGui::Bullet();
-            ImGui::SameLine();
-            QaplaWindows::ImGuiControls::textWrapped(path);
+        if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
+            addEngines();
         }
-    }
-
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    if (!addedEnginePaths_.empty()) {
-        if (QaplaWindows::ImGuiControls::textButton("Done & Detect")) {
-            startDetection();
-            state_ = State::Detecting;
+    } else if (totalEngines == 1) {
+        QaplaWindows::ImGuiControls::textWrapped("One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.");
+        ImGui::Spacing();
+        if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
+            addEngines();
         }
-    } else {
-        if (QaplaWindows::ImGuiControls::textButton("Skip / No more engines")) {
-            finished_ = true;
+        if (!addedEnginePaths_.empty()) {
+            ImGui::Spacing();
+            QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
+            for (const auto& path : addedEnginePaths_) {
+                ImGui::Bullet();
+                ImGui::SameLine();
+                QaplaWindows::ImGuiControls::textWrapped(path);
+            }
+        }
+    } else { // totalEngines >= 2
+        QaplaWindows::ImGuiControls::textWrapped("Do you want to load additional engines for the tournament?");
+        ImGui::Spacing();
+        if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
+            addEngines();
+        }
+        if (!addedEnginePaths_.empty()) {
+            ImGui::Spacing();
+            QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
+            for (const auto& path : addedEnginePaths_) {
+                ImGui::Bullet();
+                ImGui::SameLine();
+                QaplaWindows::ImGuiControls::textWrapped(path);
+            }
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+            if (QaplaWindows::ImGuiControls::textButton("Done & Detect")) {
+                startDetection();
+                state_ = State::Detecting;
+            }
+        } else {
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+            if (QaplaWindows::ImGuiControls::textButton("Skip / No more engines")) {
+                finished_ = true;
+            }
         }
     }
 }

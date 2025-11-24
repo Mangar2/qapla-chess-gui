@@ -29,8 +29,8 @@
 namespace QaplaWindows::ChatBot {
 
 ChatbotWindow::ChatbotWindow() {
-    registerThread(std::make_unique<ChatbotChooseLanguage>());
     registerThread(std::make_unique<ChatbotTournament>());
+    registerThread(std::make_unique<ChatbotChooseLanguage>());
     resetToMainMenu();
 }
 

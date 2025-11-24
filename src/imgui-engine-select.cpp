@@ -199,6 +199,16 @@ const std::vector<ImGuiEngineSelect::EngineConfiguration>& ImGuiEngineSelect::ge
     return engineConfigurations_;
 }
 
+std::vector<ImGuiEngineSelect::EngineConfiguration> ImGuiEngineSelect::getSelectedEngines() const {
+    std::vector<EngineConfiguration> selected;
+    for (const auto& config : engineConfigurations_) {
+        if (config.selected) {
+            selected.push_back(config);
+        }
+    }
+    return selected;
+}
+
 void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfiguration>& configurations) {
     engineConfigurations_ = configurations;
     // Initialize originalName for all configurations

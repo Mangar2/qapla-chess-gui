@@ -21,7 +21,10 @@
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include "i18n.h"
+#include "engine-worker-factory.h"
 #include <imgui.h>
+
+using QaplaTester::EngineWorkerFactory;
 
 namespace QaplaWindows::ChatBot {
 
@@ -36,6 +39,13 @@ void ChatbotStepTournamentSelectEngines::draw() {
 
     if (!initialized_) {
         initialized_ = true;
+        // Prüfe, ob Engines verfügbar sind
+        auto& configManager = EngineWorkerFactory::getConfigManager();
+        auto configs = configManager.getAllConfigs();
+        if (configs.empty()) {
+            finished_ = true;
+            return;
+        }
     }
 
     QaplaWindows::ImGuiControls::textWrapped("Select engines for the tournament:");

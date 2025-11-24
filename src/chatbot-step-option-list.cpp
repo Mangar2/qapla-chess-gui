@@ -31,13 +31,35 @@ void ChatbotStepOptionList::draw() {
     ImGui::TextWrapped("%s", prompt_.c_str());
     ImGui::Spacing();
 
-    for (const auto& option : options_) {
-        if (QaplaWindows::ImGuiControls::textButton(option.text.c_str())) {
-            if (option.onSelected) {
-                option.onSelected();
+    size_t num_options = options_.size();
+    const int max_per_row = 4;
+    size_t rows = (num_options + max_per_row - 1) / max_per_row;
+
+    for (size_t row = 0; row < rows; ++row) {
+        size_t start = row * max_per_row;
+        size_t end = std::min(start + max_per_row, num_options);
+
+        // Berechne die maximale Button-Breite basierend auf dem längsten Text
+        float max_button_width = 0.0f;
+        for (size_t i = start; i < end; ++i) {
+            float text_width = ImGui::CalcTextSize(options_[i].text.c_str()).x;
+            float button_width_calc = text_width + 2 * ImGui::GetStyle().FramePadding.x;
+            if (button_width_calc > max_button_width) {
+                max_button_width = button_width_calc;
             }
-            finished_ = true;
-            return;
+        }
+
+        float button_width = max_button_width;
+
+        for (size_t i = start; i < end; ++i) {
+            if (QaplaWindows::ImGuiControls::textButton(options_[i].text.c_str(), ImVec2(button_width, 0))) {
+                if (options_[i].onSelected) {
+                    options_[i].onSelected();
+                }
+                finished_ = true;
+                return;
+            }
+            if (i < end - 1) ImGui::SameLine();
         }
     }
 }
