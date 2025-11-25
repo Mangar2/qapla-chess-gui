@@ -39,16 +39,21 @@ ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, Con
 
 bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
+    ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", 0, tutorialContext.highlight)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", flags, tutorialContext.highlight)) {
         ImGui::Indent(controlIndent);
         
         // Hash size control
         if (options_.showHash) {
             constexpr uint32_t maxHashMB = 64000;
-            modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
-            ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
-            ImGui::SameLine();
+            if (options_.showUseCheckboxes) {
+                modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
+                ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
+                ImGui::SameLine();
+            } else {
+                globalSettings_.useGlobalHash = true;
+            }
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
             modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
@@ -64,9 +69,13 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         
         // Restart option control
         if (options_.showRestart) {
-            modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
-            ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
-            ImGui::SameLine();
+            if (options_.showUseCheckboxes) {
+                modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
+                ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
+                ImGui::SameLine();
+            } else {
+                globalSettings_.useGlobalRestart = true;
+            }
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
             modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
@@ -83,9 +92,13 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         
         // Trace level control
         if (options_.showTrace) {
-            modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
-            ImGuiControls::hooverTooltip("Enable global trace level for all engines");
-            ImGui::SameLine();
+            if (options_.showUseCheckboxes) {
+                modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
+                ImGuiControls::hooverTooltip("Enable global trace level for all engines");
+                ImGui::SameLine();
+            } else {
+                globalSettings_.useGlobalTrace = true;
+            }
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
             modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
@@ -102,9 +115,13 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
         
         // Ponder control
         if (options_.showPonder) {
-            modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
-            ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
-            ImGui::SameLine();
+            if (options_.showUseCheckboxes) {
+                modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
+                ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
+                ImGui::SameLine();
+            } else {
+                globalSettings_.useGlobalPonder = true;
+            }
             ImGui::SetNextItemWidth(controlWidth);
             ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
             modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
@@ -128,10 +145,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, bool blitz, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, 
+    bool blitz, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
+    ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Time Control", 0, tutorialContext.highlight)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Time Control", flags, tutorialContext.highlight)) {
         ImGui::Indent(controlIndent);
         
         // Both controls work with the SAME variable (timeControlSettings_.timeControl)
@@ -165,7 +184,7 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
     return modified;
 }
 
-void ImGuiEngineGlobalSettings::setGlobalSettings(const GlobalConfiguration& globalSettings) {
+void ImGuiEngineGlobalSettings::setGlobalConfiguration(const GlobalConfiguration& globalSettings) {
     globalSettings_ = globalSettings;
     notifyConfigurationChanged();
 }

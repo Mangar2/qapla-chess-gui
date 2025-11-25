@@ -19,6 +19,7 @@
 
 #include "chatbot-tournament.h"
 #include "chatbot-step-tournament-save-existing.h"
+#include "chatbot-step-tournament-global-settings.h"
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
 #include "chatbot-step-tournament-start.h"
@@ -32,13 +33,16 @@ void ChatbotTournament::start() {
     // Step 1: Check if existing tournament needs saving
     steps_.push_back(std::make_unique<ChatbotStepTournamentSaveExisting>());
     
-    // Step 2: Select engines from existing list
+    // Step 2: Configure global engine settings (hash, time control)
+    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>());
+    
+    // Step 3: Select engines from existing list
     steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
 
-    // Step 3: Load more engines
+    // Step 4: Load more engines
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
 
-    // Step 4: Start Tournament
+    // Step 5: Start Tournament
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 

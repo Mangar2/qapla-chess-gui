@@ -417,8 +417,8 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 2:
         // Step 1: Configure global settings
         // Check if hash is 64 MB and global ponder is disabled
-        if (tournamentData.globalSettings().getGlobalSettings().hashSizeMB == 64 && 
-            !tournamentData.globalSettings().getGlobalSettings().useGlobalPonder) {
+        if (tournamentData.globalSettings().getGlobalConfiguration().hashSizeMB == 64 && 
+            !tournamentData.globalSettings().getGlobalConfiguration().useGlobalPonder) {
             Tutorial::instance().showNextTutorialStep(topicName);
             globalSettingsTutorial_.clear();
             highlightedSection_ = "EngineSelect";

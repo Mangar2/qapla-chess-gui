@@ -77,7 +77,7 @@ namespace QaplaWindows {
          * @return The current global settings.
          */
         const ImGuiEngineGlobalSettings::GlobalConfiguration& getGlobalConfiguration() const {
-            return globalSettings_.getGlobalSettings();
+            return globalSettings_.getGlobalConfiguration();
         }
 
         /** 
@@ -85,7 +85,7 @@ namespace QaplaWindows {
          * @param settings The global settings to apply.
          */
         void setGlobalConfiguration(const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
-            globalSettings_.setGlobalSettings(settings);
+            globalSettings_.setGlobalConfiguration(settings);
         }
 
         /** 

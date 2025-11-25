@@ -75,12 +75,19 @@ namespace QaplaWindows {
          * @brief Options to control which settings are displayed
          */
         struct Options {
-            Options() : showHash(true), showPonder(true), showTrace(true), showRestart(true) {}
+            // Needed due to clang not accepting default member initializers when used as 
+            // default parameters in the same class.
+            Options() : 
+                showHash(true), showPonder(true), showTrace(true), 
+                showRestart(true), showUseCheckboxes(true), alwaysOpen(false)
+            {}
             
-            bool showHash;      ///< Show hash size control
-            bool showPonder;    ///< Show ponder control
-            bool showTrace;     ///< Show trace level control
-            bool showRestart;   ///< Show restart option control
+            bool showHash = true;          ///< Show hash size control
+            bool showPonder = true;        ///< Show ponder control
+            bool showTrace = true;         ///< Show trace level control
+            bool showRestart = true;       ///< Show restart option control
+            bool showUseCheckboxes = true; ///< Show "use global" checkboxes (if false, controls are always global)
+            bool alwaysOpen = false;
         };
 
         /**
@@ -133,13 +140,13 @@ namespace QaplaWindows {
          * @brief Returns the current global settings
          * @return Reference to the current global settings
          */
-        const GlobalConfiguration& getGlobalSettings() const { return globalSettings_; }
+        const GlobalConfiguration& getGlobalConfiguration() const { return globalSettings_; }
 
         /**
          * @brief Sets the global settings
          * @param globalSettings The new global settings
          */
-        void setGlobalSettings(const GlobalConfiguration& globalSettings);
+        void setGlobalConfiguration(const GlobalConfiguration& globalSettings);
 
         /**
          * @brief Returns the current time control settings
@@ -176,6 +183,7 @@ namespace QaplaWindows {
          * @return The current options
          */
         const Options& getOptions() const { return options_; }
+        Options& getOptions() { return options_; }
 
         /**
          * @brief Sets the global settings from INI file sections
