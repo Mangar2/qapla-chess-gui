@@ -26,16 +26,19 @@
 
 using namespace QaplaWindows;
 
-bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float indent, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::TutorialContext& tutorialContext) {
     bool changed = false;
 
-    if (ImGuiControls::CollapsingHeaderWithDot("Pgn", ImGuiTreeNodeFlags_Selected, tutorialContext.highlight)) {
+    if (!options.showCollapsingHeader ||
+        ImGuiControls::CollapsingHeaderWithDot("Pgn", ImGuiTreeNodeFlags_Selected, tutorialContext.highlight)) {
         ImGui::PushID("pgn");
-        ImGui::Indent(indent);
+        ImGui::Indent(options.indent);
+
+        auto inputWidth = options.inputWidth;
 
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file, 
-            {{"PGN files (*.pgn)", "pgn"}}, fileInputWidth);
+            {{"PGN files (*.pgn)", "pgn"}}, options.fileInputWidth);
         ImGuiControls::hooverTooltip(
             "Path to the PGN file where all games will be saved.\n"
             "The file will be created if it doesn't exist"
@@ -76,33 +79,34 @@ bool ImGuiTournamentPgn::draw(float inputWidth, float fileInputWidth, float inde
         changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
         */
 
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
-        ImGuiControls::hooverTooltip(
-            "Include time spend for the move\n"
-            "(if available from engine output)"
-        );
+        if (options.drawDetails) {
+            ImGui::SetNextItemWidth(inputWidth);
+            changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
+            ImGuiControls::hooverTooltip(
+                "Include time spend for the move\n"
+                "(if available from engine output)"
+            );
 
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
-        ImGuiControls::hooverTooltip(
-            "Include the engine's evaluation score in PGN comments for each move"
-        );
+            ImGui::SetNextItemWidth(inputWidth);
+            changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
+            ImGuiControls::hooverTooltip(
+                "Include the engine's evaluation score in PGN comments for each move"
+            );
 
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
-        ImGuiControls::hooverTooltip(
-            "Include the full principal variation (PV) in PGN comments.\n"
-            "Useful for debugging or engine analysis"
-        );
+            ImGui::SetNextItemWidth(inputWidth);
+            changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
+            ImGuiControls::hooverTooltip(
+                "Include the full principal variation (PV) in PGN comments.\n"
+                "Useful for debugging or engine analysis"
+            );
 
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
-        ImGuiControls::hooverTooltip(
-            "Include the search depth reached when the move was selected"
-        );
-
-        ImGui::Unindent(indent);
+            ImGui::SetNextItemWidth(inputWidth);
+            changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
+            ImGuiControls::hooverTooltip(
+                "Include the search depth reached when the move was selected"
+            );
+        }
+        ImGui::Unindent(options.indent);
         ImGui::PopID();
     }
 

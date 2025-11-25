@@ -219,7 +219,8 @@ bool SprtTournamentWindow::drawInput() {
 
     bool changed = false;
 
-    changed |= tournamentData.globalSettings().drawGlobalSettings(inputWidth, 10.0F);
+    changed |= tournamentData.globalSettings().drawGlobalSettings(
+        { .controlWidth = inputWidth, .controlIndent = 10.0F });
     changed |= tournamentData.engineSelect().draw();
     changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
 
@@ -255,8 +256,10 @@ bool SprtTournamentWindow::drawInput() {
         ImGui::PopID();
     }
 
-    changed |= tournamentData.globalSettings().drawTimeControl(inputWidth, 10.0F, false);
-    changed |= tournamentData.tournamentPgn().draw(inputWidth, fileInputWidth, 10.0F);
+    changed |= tournamentData.globalSettings().drawTimeControl(
+        { .controlWidth = inputWidth, .controlIndent = 10.0F }, false);
+    changed |= tournamentData.tournamentPgn().draw(
+        { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth });
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 
     ImGui::Spacing();

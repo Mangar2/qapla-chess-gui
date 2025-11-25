@@ -37,105 +37,28 @@ ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, Con
 {
 }
 
-bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float controlIndent, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls, 
+    const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", flags, tutorialContext.highlight)) {
-        ImGui::Indent(controlIndent);
+        ImGui::Indent(controls.controlIndent);
         
-        // Hash size control
         if (options_.showHash) {
-            constexpr uint32_t maxHashMB = 64000;
-            if (options_.showUseCheckboxes) {
-                modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
-                ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
-                ImGui::SameLine();
-            } else {
-                globalSettings_.useGlobalHash = true;
-            }
-            ImGui::SetNextItemWidth(controlWidth);
-            ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
-            modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
-            ImGuiControls::hooverTooltip("Hash table size in megabytes for engine memory");
-            ImGui::EndDisabled();
-            
-            // Show tutorial annotation if present
-            auto it = tutorialContext.annotations.find("Hash (MB)");
-            if (it != tutorialContext.annotations.end()) {
-                ImGuiControls::annotate(it->second);
-            }
+            modified |= drawHashControl(controls.controlWidth, tutorialContext);
         }
-        
-        // Restart option control
         if (options_.showRestart) {
-            if (options_.showUseCheckboxes) {
-                modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
-                ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
-                ImGui::SameLine();
-            } else {
-                globalSettings_.useGlobalRestart = true;
-            }
-            ImGui::SetNextItemWidth(controlWidth);
-            ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
-            modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
-                {"Engine decides", "Always", "Never"});
-            ImGuiControls::hooverTooltip("Whether to restart engine process between games");
-            ImGui::EndDisabled();
-            
-            // Show tutorial annotation if present
-            auto it = tutorialContext.annotations.find("Restart");
-            if (it != tutorialContext.annotations.end()) {
-                ImGuiControls::annotate(it->second);
-            }
+            modified |= drawRestartControl(controls.controlWidth, tutorialContext);
         }
-        
-        // Trace level control
         if (options_.showTrace) {
-            if (options_.showUseCheckboxes) {
-                modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
-                ImGuiControls::hooverTooltip("Enable global trace level for all engines");
-                ImGui::SameLine();
-            } else {
-                globalSettings_.useGlobalTrace = true;
-            }
-            ImGui::SetNextItemWidth(controlWidth);
-            ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
-            modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
-                {"None", "All", "Command"});
-            ImGuiControls::hooverTooltip("Engine communication logging level (None/All/Command only)");
-            ImGui::EndDisabled();
-            
-            // Show tutorial annotation if present
-            auto it = tutorialContext.annotations.find("Trace");
-            if (it != tutorialContext.annotations.end()) {
-                ImGuiControls::annotate(it->second);
-            }
+            modified |= drawTraceControl(controls.controlWidth, tutorialContext);
         }
-        
-        // Ponder control
         if (options_.showPonder) {
-            if (options_.showUseCheckboxes) {
-                modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
-                ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
-                ImGui::SameLine();
-            } else {
-                globalSettings_.useGlobalPonder = true;
-            }
-            ImGui::SetNextItemWidth(controlWidth);
-            ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
-            modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
-            ImGuiControls::hooverTooltip("Allow engines to think during opponent's time");
-            ImGui::EndDisabled();
-            
-            // Show tutorial annotation if present
-            auto it = tutorialContext.annotations.find("Ponder");
-            if (it != tutorialContext.annotations.end()) {
-                ImGuiControls::annotate(it->second);
-            }
+            modified |= drawPonderControl(controls.controlWidth, tutorialContext);
         }
         
-        ImGui::Unindent(controlIndent);
+        ImGui::Unindent(controls.controlIndent);
     }
     
     if (modified) {
@@ -145,21 +68,117 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(float controlWidth, float con
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float controlIndent, 
+bool ImGuiEngineGlobalSettings::drawHashControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+    bool modified = false;
+    constexpr uint32_t maxHashMB = 64000;
+    
+    if (options_.showUseCheckboxes) {
+        modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
+        ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
+        ImGui::SameLine();
+    } else {
+        globalSettings_.useGlobalHash = true;
+    }
+    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
+    modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
+    ImGuiControls::hooverTooltip("Hash table size in megabytes for engine memory");
+    ImGui::EndDisabled();
+    
+    auto it = tutorialContext.annotations.find("Hash (MB)");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
+    }
+    return modified;
+}
+
+bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+    bool modified = false;
+    
+    if (options_.showUseCheckboxes) {
+        modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
+        ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
+        ImGui::SameLine();
+    } else {
+        globalSettings_.useGlobalRestart = true;
+    }
+    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
+    modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
+        {"Engine decides", "Always", "Never"});
+    ImGuiControls::hooverTooltip("Whether to restart engine process between games");
+    ImGui::EndDisabled();
+    
+    auto it = tutorialContext.annotations.find("Restart");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
+    }
+    return modified;
+}
+
+bool ImGuiEngineGlobalSettings::drawTraceControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+    bool modified = false;
+    
+    if (options_.showUseCheckboxes) {
+        modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
+        ImGuiControls::hooverTooltip("Enable global trace level for all engines");
+        ImGui::SameLine();
+    } else {
+        globalSettings_.useGlobalTrace = true;
+    }
+    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
+    modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
+        {"None", "All", "Command"});
+    ImGuiControls::hooverTooltip("Engine communication logging level (None/All/Command only)");
+    ImGui::EndDisabled();
+    
+    auto it = tutorialContext.annotations.find("Trace");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
+    }
+    return modified;
+}
+
+bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+    bool modified = false;
+    
+    if (options_.showUseCheckboxes) {
+        modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
+        ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
+        ImGui::SameLine();
+    } else {
+        globalSettings_.useGlobalPonder = true;
+    }
+    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
+    modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
+    ImGuiControls::hooverTooltip("Allow engines to think during opponent's time");
+    ImGui::EndDisabled();
+    
+    auto it = tutorialContext.annotations.find("Ponder");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
+    }
+    return modified;
+}
+
+bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls, 
     bool blitz, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Time Control", flags, tutorialContext.highlight)) {
-        ImGui::Indent(controlIndent);
+        ImGui::Indent(controls.controlIndent);
         
         // Both controls work with the SAME variable (timeControlSettings_.timeControl)
         // This ensures automatic synchronization: selecting "50.0+0.10" in the dropdown
         // automatically updates the input field, and vice versa - no separate sync needed
-        modified |= ImGuiControls::timeControlInput(timeControlSettings_.timeControl, blitz, controlWidth);
+        modified |= ImGuiControls::timeControlInput(timeControlSettings_.timeControl, blitz, 
+            controls.controlWidth);
         ImGuiControls::hooverTooltip("Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)");
         
-        ImGui::SetNextItemWidth(controlWidth);
+        ImGui::SetNextItemWidth(controls.controlWidth);
         modified |= ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.timeControl, 
                                         timeControlSettings_.predefinedOptions);
         ImGuiControls::hooverTooltip(
@@ -174,7 +193,7 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(float controlWidth, float contro
             ImGuiControls::annotate(it->second);
         }
         
-        ImGui::Unindent(controlIndent);
+        ImGui::Unindent(controls.controlIndent);
     }
     
     if (modified) {

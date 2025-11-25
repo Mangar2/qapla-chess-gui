@@ -95,8 +95,9 @@ namespace QaplaWindows {
          * @brief Sets the pool concurrency level.
          * @param count The number of concurrent tasks to allow.
          * @param nice If true, reduces the number of active managers gradually.
+         * @param direct If true, applies the change immediately without debouncing.
          */
-        void setPoolConcurrency(uint32_t count, bool nice = true);
+        void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**
          * @brief Draws the tournament elo table.

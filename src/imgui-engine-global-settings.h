@@ -35,6 +35,11 @@ namespace QaplaTester
 
 namespace QaplaWindows {
 
+    struct DrawControlOptions {
+        float controlWidth = 150.0F;      ///< Width of input controls
+        float controlIndent = 10.0F;      ///< Indentation for controls
+    };
+
     /**
      * @brief Standalone class for global engine settings in ImGui
      * 
@@ -117,23 +122,21 @@ namespace QaplaWindows {
 
         /**
          * @brief Draws the global engine settings interface
-         * @param controlWidth Width of the input controls
-         * @param controlIndent Indentation for controls (default: 10.0)
+         * @param controls Options for control dimensions (width, indent)
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawGlobalSettings(float controlWidth = 150.0F, float controlIndent = 10.0F, 
+        bool drawGlobalSettings(DrawControlOptions controls = DrawControlOptions{}, 
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
          * @brief Draws the time control interface
-         * @param controlWidth Width of the input controls
-         * @param controlIndent Indentation for controls (default: 10.0)
+         * @param controls Options for control dimensions (width, indent)
          * @param blitz Whether to use blitz mode (no hours in time input)
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawTimeControl(float controlWidth = 150.0F, float controlIndent = 10.0F, bool blitz = false, 
+        bool drawTimeControl(DrawControlOptions controls = DrawControlOptions{}, bool blitz = false, 
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
@@ -261,6 +264,38 @@ namespace QaplaWindows {
          * @param settings The settings structure to update
          */
         static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
+
+        /**
+         * @brief Draws the hash size control
+         * @param controlWidth Width of the input control
+         * @param tutorialContext Tutorial context for annotations
+         * @return true if modified, false otherwise
+         */
+        bool drawHashControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the restart option control
+         * @param controlWidth Width of the input control
+         * @param tutorialContext Tutorial context for annotations
+         * @return true if modified, false otherwise
+         */
+        bool drawRestartControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the trace level control
+         * @param controlWidth Width of the input control
+         * @param tutorialContext Tutorial context for annotations
+         * @return true if modified, false otherwise
+         */
+        bool drawTraceControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the ponder control
+         * @param controlWidth Width of the input control
+         * @param tutorialContext Tutorial context for annotations
+         * @return true if modified, false otherwise
+         */
+        bool drawPonderControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
 
         Options options_;                                       ///< Display options
         std::string id_ = "unset";                              ///< Unique identifier for this instance

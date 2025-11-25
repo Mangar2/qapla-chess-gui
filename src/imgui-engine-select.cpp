@@ -180,7 +180,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     if (config.selected) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
-    if (!options_.directEditMode && !config.selected) {
+    if (!options_.allowEngineConfiguration || !(options_.directEditMode || config.selected)) {
         // In directEditMode, allow expanding even when not selected (don't use Leaf flag)
         flags |= ImGuiTreeNodeFlags_Leaf;
     }

@@ -56,6 +56,7 @@ std::string ChatbotStepTournamentSelectEngines::draw() {
     auto options = engineSelect.getOptions();
     engineSelect.getOptions().allowMultipleSelection = false; // Simplifies engine selection
     engineSelect.getOptions().directEditMode = true;          // Scips the collapsing header
+    engineSelect.getOptions().allowEngineConfiguration = false; // Simplefies the UI
     engineSelect.draw();
     engineSelect.setOptions(options); // Restore options
 

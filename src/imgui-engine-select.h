@@ -58,6 +58,7 @@ namespace QaplaWindows {
             bool allowMultipleSelection = false;   ///< Allows selecting the same engine multiple times
             bool directEditMode = false;           ///< Direct edit mode: skips "Engines" header, engines can be edited without prior selection, changes saved via callback
             bool enginesDefaultOpen = false;       ///< If true, the "Engines" collapsing header is default open
+            bool allowEngineConfiguration = true;  ///< Allows editing of the engine configuration
         };
 
         /**

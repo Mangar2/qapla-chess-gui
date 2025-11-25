@@ -29,8 +29,8 @@ std::string ChatbotStepTournamentStart::draw() {
         ImGui::Spacing();
 
         if (QaplaWindows::ImGuiControls::textButton("Start Tournament")) {
-            TournamentData::instance().setPoolConcurrency(concurrency_);
             TournamentData::instance().startTournament();
+            TournamentData::instance().setPoolConcurrency(concurrency_, true, true);
             
             if (TournamentData::instance().isRunning()) {
                 tournamentStarted_ = true;

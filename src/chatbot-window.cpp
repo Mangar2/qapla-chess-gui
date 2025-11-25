@@ -23,8 +23,11 @@
 #include "chatbot-tournament.h"
 #include "i18n.h"
 #include "imgui-controls.h"
+#include "snackbar.h"
 
 #include <imgui.h>
+
+#include <format>
 
 namespace QaplaWindows::ChatBot {
 
@@ -63,31 +66,38 @@ void ChatbotWindow::resetToMainMenu() {
 }
 
 void ChatbotWindow::draw() {
-    ImGui::Spacing();
-    ImGui::Indent(10.0F);
-    // Draw history
-    if (!completedThreads_.empty()) {
-        if (ImGuiControls::CollapsingHeaderWithDot("History")) {
-            for (const auto& thread : completedThreads_) {
-                QaplaWindows::ImGuiControls::textDisabled(thread->getTitle());
+    ImGui::BeginChild("ChatbotWindowChild", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    try {
+        ImGui::Spacing();
+        ImGui::Indent(10.0F);
+        // Draw history
+        if (!completedThreads_.empty()) {
+            if (ImGuiControls::CollapsingHeaderWithDot("History")) {
+                for (const auto& thread : completedThreads_) {
+                    QaplaWindows::ImGuiControls::textDisabled(thread->getTitle());
+                }
             }
+            ImGui::Separator();
         }
-        ImGui::Separator();
-    }
 
-    if (activeThread_) {
-        activeThread_->draw();
-        if (activeThread_->isFinished()) {
-            completedThreads_.push_back(std::move(activeThread_));
-            resetToMainMenu();
+        if (activeThread_) {
+            activeThread_->draw();
+            if (activeThread_->isFinished()) {
+                completedThreads_.push_back(std::move(activeThread_));
+                resetToMainMenu();
+            }
+        } else {
+            if (!mainMenuStep_) {
+                resetToMainMenu();
+            }
+            static_cast<void>(mainMenuStep_->draw());
         }
-    } else {
-        if (!mainMenuStep_) {
-            resetToMainMenu();
-        }
-        static_cast<void>(mainMenuStep_->draw());
+        ImGui::Unindent(10.0F);
+    } catch (const std::exception& e) {
+        SnackbarManager::instance().showError(
+            std::format("An error occurred in the Chatbot window:\n{}", e.what()));
     }
-    ImGui::Unindent(10.0F);
+    ImGui::EndChild();
 }
 
 } // namespace QaplaWindows::ChatBot

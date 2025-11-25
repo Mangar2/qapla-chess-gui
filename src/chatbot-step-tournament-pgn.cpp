@@ -1,0 +1,131 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#include "chatbot-step-tournament-pgn.h"
+#include "tournament-data.h"
+#include "imgui-controls.h"
+#include <imgui.h>
+#include <filesystem>
+
+namespace QaplaWindows::ChatBot {
+
+ChatbotStepTournamentPgn::ChatbotStepTournamentPgn() = default;
+
+std::string ChatbotStepTournamentPgn::draw() {
+
+    if (!finished_) {
+        QaplaWindows::ImGuiControls::textWrapped(
+            "Select the PGN file where tournament results will be saved. "
+            "All games played during the tournament will be recorded in this file.");
+        ImGui::Spacing();
+    }
+
+    auto& tournamentPgn = TournamentData::instance().tournamentPgn();
+    
+    ImGuiTournamentPgn::DrawOptions options {
+        .fileInputWidth = 500.0F,
+        .drawDetails = false,
+        .showCollapsingHeader = false
+    };
+    tournamentPgn.draw(options);
+
+    const auto& pgnOptions = tournamentPgn.pgnOptions();
+    auto validation = validateFilePath(pgnOptions.file, pgnOptions.append);
+
+    ImGui::Spacing();
+    drawStatusMessage(validation);
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (finished_) {
+        return "";
+    }
+
+    return drawButtons(validation);
+}
+
+ChatbotStepTournamentPgn::ValidationResult ChatbotStepTournamentPgn::validateFilePath(
+        const std::string& filePath, bool appendMode) {
+    ValidationResult result;
+    
+    if (filePath.empty()) {
+        return result;
+    }
+    
+    try {
+        std::filesystem::path path(filePath);
+        auto parentPath = path.parent_path();
+        if (parentPath.empty() || std::filesystem::exists(parentPath)) {
+            result.isValidPath = true;
+        }
+        result.fileExists = std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
+        result.willOverwrite = result.fileExists && !appendMode;
+    } catch (const std::filesystem::filesystem_error&) {
+        // Path validation failed, keep defaults
+    }
+    
+    return result;
+}
+
+void ChatbotStepTournamentPgn::drawStatusMessage(const ValidationResult& validation) {
+    if (!validation.isValidPath) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.4F, 0.4F, 1.0F));
+        QaplaWindows::ImGuiControls::textWrapped(
+            "Please enter a valid file path. The directory must exist.");
+        ImGui::PopStyleColor();
+    } else if (validation.willOverwrite) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.8F, 0.2F, 1.0F));
+        QaplaWindows::ImGuiControls::textWrapped(
+            "Warning: The file already exists and overwrite mode is enabled. "
+            "The existing content will be replaced when the tournament starts.");
+        ImGui::PopStyleColor();
+    } else if (validation.fileExists) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4F, 1.0F, 0.4F, 1.0F));
+        QaplaWindows::ImGuiControls::textWrapped(
+            "The file exists. New games will be appended to the existing content.");
+        ImGui::PopStyleColor();
+    }
+}
+
+std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& validation) {
+    const char* continueLabel = validation.willOverwrite ? "Overwrite & Continue" : "Continue";
+    
+    ImGui::BeginDisabled(!validation.isValidPath);
+    if (QaplaWindows::ImGuiControls::textButton(continueLabel)) {
+        finished_ = true;
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+
+    if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+        finished_ = true;
+        return "stop";
+    }
+
+    return "";
+}
+
+bool ChatbotStepTournamentPgn::isFinished() const {
+    return finished_;
+}
+
+} // namespace QaplaWindows::ChatBot

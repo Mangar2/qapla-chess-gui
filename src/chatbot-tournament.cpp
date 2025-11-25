@@ -22,6 +22,7 @@
 #include "chatbot-step-tournament-global-settings.h"
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
+#include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
 
 namespace QaplaWindows::ChatBot {
@@ -42,7 +43,10 @@ void ChatbotTournament::start() {
     // Step 4: Load more engines
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
 
-    // Step 5: Start Tournament
+    // Step 5: Select PGN file for results
+    steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
+
+    // Step 6: Start Tournament
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 

@@ -46,9 +46,16 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
     options.showUseCheckboxes = false;
     options.alwaysOpen = true;
     globalSettings.setOptions(options);
-    
-    globalSettings.drawGlobalSettings(150.0F, 10.0F);
-    globalSettings.drawTimeControl(150.0F, 10.0F, true);
+
+    globalSettings.drawGlobalSettings();
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    globalSettings.drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true);
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
     
     globalSettings.setOptions(savedOptions);
 
@@ -56,9 +63,6 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
         return "";
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;

@@ -53,7 +53,6 @@ private:
     void drawInput();
     void showAddedEngines();
     void drawDetecting();
-    void drawSummary();
     
     void addEngines();
     void startDetection();

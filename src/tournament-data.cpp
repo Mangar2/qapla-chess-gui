@@ -552,12 +552,12 @@ namespace QaplaWindows {
         state_ = State::Stopped;
     }
 
-    void TournamentData::setPoolConcurrency(uint32_t count, bool nice) {
+    void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
         if (!isRunning()) {
             return;
         }
         imguiConcurrency_->setNiceStop(nice);
-        imguiConcurrency_->update(count);
+        imguiConcurrency_->update(count, direct);
     }
     
     void TournamentData::loadTournamentConfig() {

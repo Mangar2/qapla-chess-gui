@@ -203,7 +203,8 @@ bool EngineSetupWindow::drawGlobalSettings() {
     if (!showGlobalControls_) {
         return false;
     }
-    return globalSettings_.drawGlobalSettings(150.0F, controlIndent_);
+    return globalSettings_.drawGlobalSettings(
+        { .controlWidth = 150.0F, .controlIndent = controlIndent_ });
 }
 
 void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)

@@ -62,8 +62,9 @@ public:
     /**
      * @brief Updates the concurrency value based on user input.
      * @param newConcurrency The new concurrency value from the ImGui slider.
+     * @param direct If true, applies the change immediately without debouncing.
      */
-    void update(uint32_t newConcurrency) {
+    void update(uint32_t newConcurrency, bool direct = false) {
         if (!active_) return;
 
         if (newConcurrency != targetConcurrency_) {
@@ -71,7 +72,7 @@ public:
             debounceCounter_ = DEBOUNCE_FRAMES; // Reset debounce counter
         }
 
-        if (newConcurrency == 0) {
+        if (newConcurrency == 0 || direct) {
             adjustConcurrency();
             return;
         }

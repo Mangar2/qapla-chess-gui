@@ -34,7 +34,6 @@ ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine() = default;
 
 std::string ChatbotStepTournamentLoadEngine::draw() {
     if (finished_) {
-         drawSummary();
          return "";
     }
 
@@ -45,8 +44,8 @@ std::string ChatbotStepTournamentLoadEngine::draw() {
         case State::Detecting:
             drawDetecting();
             break;
-        case State::Summary:
-            drawSummary();
+        default:
+            // Intentionally left blank
             break;
     }
     return "";
@@ -147,8 +146,5 @@ void ChatbotStepTournamentLoadEngine::drawDetecting() {
     }
 }
 
-void ChatbotStepTournamentLoadEngine::drawSummary() {
-    QaplaWindows::ImGuiControls::textWrapped("Engine selection complete.");
-}
 
 } // namespace QaplaWindows::ChatBot

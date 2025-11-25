@@ -36,15 +36,21 @@ namespace QaplaWindows {
         ImGuiTournamentPgn() = default;
         ~ImGuiTournamentPgn() = default;
 
+        struct DrawOptions {
+            float inputWidth = 150.0F;          ///< Width of input controls
+            float fileInputWidth = 300.0F;      ///< Width of file input control
+            float indent = 10.0F;               ///< Indentation for controls
+            bool drawDetails = true;            ///< Whether to draw detailed options
+            bool showCollapsingHeader = true;   ///< Whether to show collapsing header
+        };
+
         /**
          * @brief Draws the PGN configuration UI controls.
-         * @param inputWidth Width of the input controls.
-         * @param fileInputWidth Width of the file input control.
-         * @param indent Indentation to apply to the controls.
+         * @param options Drawing options for control widths and indentation
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return True if any configuration value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent, 
+        bool draw(const DrawOptions& options, 
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
