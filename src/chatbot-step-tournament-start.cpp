@@ -12,9 +12,9 @@ ChatbotStepTournamentStart::ChatbotStepTournamentStart() {
     if (concurrency_ > 32) concurrency_ = 32;
 }
 
-void ChatbotStepTournamentStart::draw() {
+std::string ChatbotStepTournamentStart::draw() {
     if (finished_) {
-        return;
+        return "";
     }
 
     if (!tournamentStarted_) {
@@ -55,6 +55,7 @@ void ChatbotStepTournamentStart::draw() {
             finished_ = true;
         }
     }
+    return "";
 }
 
 bool ChatbotStepTournamentStart::isFinished() const {

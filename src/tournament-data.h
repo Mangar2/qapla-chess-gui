@@ -81,8 +81,9 @@ namespace QaplaWindows {
 
         /**
 		 * @brief Clears the current analysis results.
+         * @param verbose If true, enables snackbar infos.
 		 */
-        void clear();
+        void clear(bool verbose = true);
 
         /**
          * @brief Stops all ongoing tasks in the pool.
@@ -270,7 +271,7 @@ namespace QaplaWindows {
          * @brief Returns the current state of the tournament.
          * @return The current state of the tournament.
          */
-        State state() const {
+        State getState() const {
             return state_;
         }
 

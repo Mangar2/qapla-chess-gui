@@ -27,7 +27,7 @@ ChatbotStepOptionList::ChatbotStepOptionList(std::string prompt, std::vector<Opt
     : prompt_(std::move(prompt)), options_(std::move(options)) {
 }
 
-void ChatbotStepOptionList::draw() {
+std::string ChatbotStepOptionList::draw() {
     ImGui::TextWrapped("%s", prompt_.c_str());
     ImGui::Spacing();
 
@@ -57,11 +57,12 @@ void ChatbotStepOptionList::draw() {
                     options_[i].onSelected();
                 }
                 finished_ = true;
-                return;
+                return "";
             }
             if (i < end - 1) ImGui::SameLine();
         }
     }
+    return "";
 }
 
 bool ChatbotStepOptionList::isFinished() const {

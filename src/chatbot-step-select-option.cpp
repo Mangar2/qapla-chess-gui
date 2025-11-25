@@ -27,7 +27,7 @@ ChatbotStepSelectOption::ChatbotStepSelectOption(std::string prompt, std::vector
     : prompt_(std::move(prompt)), options_(std::move(options)), onSelected_(std::move(onSelected)) {
 }
 
-void ChatbotStepSelectOption::draw() {
+std::string ChatbotStepSelectOption::draw() {
     ImGuiControls::textWrapped(prompt_);
     ImGui::Spacing();
 
@@ -38,6 +38,7 @@ void ChatbotStepSelectOption::draw() {
         }
         finished_ = true;
     }
+    return "";
 }
 
 bool ChatbotStepSelectOption::isFinished() const {

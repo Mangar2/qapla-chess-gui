@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace QaplaWindows::ChatBot {
 
 /**
@@ -32,8 +34,9 @@ public:
 
     /**
      * @brief Renders the step's UI.
+     * @return Empty string for normal continuation, "stop" to abort the thread.
      */
-    virtual void draw() = 0;
+    [[nodiscard]] virtual std::string draw() = 0;
 
     /**
      * @brief Checks if the step is finished.

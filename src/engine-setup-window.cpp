@@ -144,8 +144,7 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
         if (detecting) {
             return QaplaButton::ButtonState::Animated;
         }
-        const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-        if (!capabilities.areAllEnginesDetected()) {
+        if (!ImGuiEngineSelect::areAllEnginesDetected()) {
             return QaplaButton::ButtonState::Highlighted;
         }
         return QaplaButton::ButtonState::Normal;
@@ -212,12 +211,7 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
 
     if (button == "Add")
     {
-        auto commands = OsDialogs::openFileDialog(true);
-        for (auto &command : commands)
-        {
-            QaplaTester::EngineWorkerFactory::getConfigManagerMutable().addConfig(QaplaTester::EngineConfig::createFromPath(command));
-        }
-        QaplaConfiguration::Configuration::instance().setModified();
+        engineSelect_.addEngines(false);
     }
     else if (button == "Remove")
     {

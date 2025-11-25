@@ -32,10 +32,10 @@ namespace QaplaWindows::ChatBot {
 
 ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine() = default;
 
-void ChatbotStepTournamentLoadEngine::draw() {
+std::string ChatbotStepTournamentLoadEngine::draw() {
     if (finished_) {
          drawSummary();
-         return;
+         return "";
     }
 
     switch (state_) {
@@ -49,6 +49,7 @@ void ChatbotStepTournamentLoadEngine::draw() {
             drawSummary();
             break;
     }
+    return "";
 }
 
 bool ChatbotStepTournamentLoadEngine::isFinished() const {
@@ -58,73 +59,65 @@ bool ChatbotStepTournamentLoadEngine::isFinished() const {
 void ChatbotStepTournamentLoadEngine::drawInput() {
     auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
     size_t numSelected = selectedEngines.size();
-    size_t numAdded = addedEnginePaths_.size();
-    size_t totalEngines = numSelected + numAdded;
+    showAddedEngines();
 
-    if (totalEngines == 0) {
+    // We automatically select engines that were added thus numSelected includes them
+    if (numSelected == 0) {
         QaplaWindows::ImGuiControls::textWrapped("No engines selected. You need at least two engines to start a tournament. Please select engines.");
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
-    } else if (totalEngines == 1) {
+    } else if (numSelected == 1) {
         QaplaWindows::ImGuiControls::textWrapped("One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.");
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
-        if (!addedEnginePaths_.empty()) {
-            ImGui::Spacing();
-            QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
-            for (const auto& path : addedEnginePaths_) {
-                ImGui::Bullet();
-                ImGui::SameLine();
-                QaplaWindows::ImGuiControls::textWrapped(path);
-            }
-        }
-    } else { // totalEngines >= 2
+    } else { // numSelected >= 2
         QaplaWindows::ImGuiControls::textWrapped("Do you want to load additional engines for the tournament?");
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
-        if (!addedEnginePaths_.empty()) {
-            ImGui::Spacing();
-            QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
-            for (const auto& path : addedEnginePaths_) {
-                ImGui::Bullet();
-                ImGui::SameLine();
-                QaplaWindows::ImGuiControls::textWrapped(path);
-            }
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
-            if (QaplaWindows::ImGuiControls::textButton("Done & Detect")) {
+        
+        bool needsDetection = !ImGuiEngineSelect::areAllEnginesDetected();
+        
+        if (needsDetection) {
+            ImGui::SameLine();
+            if (QaplaWindows::ImGuiControls::textButton("Detect & Continue")) {
                 startDetection();
                 state_ = State::Detecting;
             }
-        } else {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
-            if (QaplaWindows::ImGuiControls::textButton("Skip / No more engines")) {
-                finished_ = true;
-            }
+        }
+        
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton(needsDetection ? "Skip Detection" : "Continue")) {
+            finished_ = true;
         }
     }
 }
 
-void ChatbotStepTournamentLoadEngine::addEngines() {
-    auto commands = OsDialogs::openFileDialog(true);
-    for (auto &command : commands)
-    {
-        QaplaTester::EngineWorkerFactory::getConfigManagerMutable().addConfig(
-            QaplaTester::EngineConfig::createFromPath(command)
-        );
-        addedEnginePaths_.push_back(command);
+void ChatbotStepTournamentLoadEngine::showAddedEngines()
+{
+    if (addedEnginePaths_.empty()) {
+        return;
     }
-    if (!commands.empty()) {
-        QaplaConfiguration::Configuration::instance().setModified();
+    ImGui::Spacing();
+    QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
+    for (const auto &path : addedEnginePaths_)
+    {
+        ImGui::Bullet();
+        ImGui::SameLine();
+        QaplaWindows::ImGuiControls::textWrapped(path);
+    }
+}
+
+void ChatbotStepTournamentLoadEngine::addEngines() {
+    auto& engineSelect = TournamentData::instance().engineSelect();
+    auto added = engineSelect.addEngines(true);
+    for (const auto& path : added) {
+        addedEnginePaths_.push_back(path);
     }
 }
 
@@ -149,65 +142,13 @@ void ChatbotStepTournamentLoadEngine::drawDetecting() {
         float progress = (float)std::sin(ImGui::GetTime() * 3.0f) * 0.5f + 0.5f;
         ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), "Detecting...");
     } else {
-        if (detectionStarted_) {
-            selectAddedEngines();
-            state_ = State::Summary;
-            finished_ = true; 
-        } else {
-            state_ = State::Summary;
-            finished_ = true;
-        }
+        state_ = State::Summary;
+        finished_ = true;
     }
-}
-
-void ChatbotStepTournamentLoadEngine::selectAddedEngines() {
-    auto& engineSelect = TournamentData::instance().engineSelect();
-    auto configs = engineSelect.getEngineConfigurations();
-    
-    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    
-    for (const auto& path : addedEnginePaths_) {
-        auto allConfigs = configManager.getAllConfigs();
-        for (const auto& globalConfig : allConfigs) {
-            if (globalConfig.getCmd() == path) {
-                bool foundInTournament = false;
-                for (auto& tConfig : configs) {
-                    if (tConfig.config.getCmd() == globalConfig.getCmd() && 
-                        tConfig.config.getProtocol() == globalConfig.getProtocol()) {
-                        tConfig.selected = true;
-                        foundInTournament = true;
-                        break;
-                    }
-                }
-                
-                if (!foundInTournament) {
-                    ImGuiEngineSelect::EngineConfiguration newConfig;
-                    newConfig.config = globalConfig;
-                    newConfig.selected = true;
-                    newConfig.originalName = globalConfig.getName();
-                    configs.push_back(newConfig);
-                }
-            }
-        }
-    }
-    
-    engineSelect.setEngineConfigurations(configs);
 }
 
 void ChatbotStepTournamentLoadEngine::drawSummary() {
-    QaplaWindows::ImGuiControls::textWrapped("Engine detection complete.");
-    ImGui::Spacing();
-    QaplaWindows::ImGuiControls::textWrapped("Selected engines for tournament:");
-    
-    const auto& configs = TournamentData::instance().engineSelect().getEngineConfigurations();
-    for (const auto& config : configs) {
-        if (config.selected) {
-            ImGui::Bullet();
-            ImGui::SameLine();
-            std::string text = std::format("{} ({})", config.config.getName(), QaplaTester::to_string(config.config.getProtocol()));
-            QaplaWindows::ImGuiControls::textWrapped(text);
-        }
-    }
+    QaplaWindows::ImGuiControls::textWrapped("Engine selection complete.");
 }
 
 } // namespace QaplaWindows::ChatBot

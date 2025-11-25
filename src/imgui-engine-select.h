@@ -142,6 +142,19 @@ namespace QaplaWindows {
         void setAlwaysShowEngines(bool alwaysShow) { alwaysShowEngines_ = alwaysShow; }
 
         /**
+         * @brief Opens a file dialog to add engines and optionally selects them
+         * @param select If true, the engines will be selected after adding
+         * @return Vector of paths of the added engines
+         */
+        std::vector<std::string> addEngines(bool select = false);
+
+        /**
+         * @brief Checks if all engines have been auto-detected
+         * @return true if all engines are detected, false otherwise
+         */
+        [[nodiscard]] static bool areAllEnginesDetected();
+
+        /**
          * @brief Draws the available engines section (without checkboxes)
          * @return true if something changed, false otherwise
          */

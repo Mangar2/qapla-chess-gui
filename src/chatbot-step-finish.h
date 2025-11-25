@@ -35,7 +35,7 @@ public:
      */
     explicit ChatbotStepFinish(std::string message);
 
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:

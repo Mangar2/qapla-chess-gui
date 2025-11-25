@@ -91,7 +91,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
         return QaplaButton::ButtonState::Highlighted;
     }
     
-    if (button == "Run/Grace/Continue" && TournamentData::instance().state() == TournamentData::State::GracefulStopping) {
+    if (button == "Run/Grace/Continue" && TournamentData::instance().getState() == TournamentData::State::GracefulStopping) {
         return QaplaButton::ButtonState::Active;
     }
     

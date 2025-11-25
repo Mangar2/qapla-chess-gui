@@ -45,7 +45,12 @@ void ChatbotTournament::start() {
 void ChatbotTournament::draw() {
     for (size_t i = 0; i < steps_.size(); ++i) {
         if (i <= currentStep_) {
-            steps_[i]->draw();
+            std::string result = steps_[i]->draw();
+            if (result == "stop") {
+                // Abort the thread
+                currentStep_ = steps_.size();
+                return;
+            }
         }
     }
 

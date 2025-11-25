@@ -529,9 +529,11 @@ namespace QaplaWindows {
         );
     }
 
-    void TournamentData::clear() {
+    void TournamentData::clear(bool verbose) {
         if (!hasTasksScheduled()) {
-            SnackbarManager::instance().showNote("Nothing to clear.");
+            if (verbose) {
+                SnackbarManager::instance().showNote("Nothing to clear.");
+            }
             return;
         }
         imguiConcurrency_->setActive(false);
@@ -539,9 +541,13 @@ namespace QaplaWindows {
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
         if (state_ == State::Running) {
-            SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
+            if (verbose) {
+                SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
+            }
         } else {
-            SnackbarManager::instance().showNote("All results have been cleared.");
+            if (verbose) {
+                SnackbarManager::instance().showNote("All results have been cleared.");
+            }
         }
         state_ = State::Stopped;
     }

@@ -20,7 +20,6 @@
 #include "chatbot-step-tournament-save-existing.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
-#include "i18n.h"
 #include "os-dialogs.h"
 #include <imgui.h>
 
@@ -28,34 +27,100 @@ namespace QaplaWindows::ChatBot {
 
 ChatbotStepTournamentSaveExisting::ChatbotStepTournamentSaveExisting() = default;
 
-void ChatbotStepTournamentSaveExisting::draw() {
-    if (!askUser_) {
-        finished_ = true;
-        return;
+std::string ChatbotStepTournamentSaveExisting::draw() {
+    if (finished_) {
+        if (!actionMessage_.empty()) {
+            QaplaWindows::ImGuiControls::textDisabled(actionMessage_);
+        } 
+        return result_;
     }
 
-    QaplaWindows::ImGuiControls::textWrapped("Do you want to save the current tournament before creating a new one?");
+    auto& tournament = TournamentData::instance();
+    bool isRunning = tournament.getState() == TournamentData::State::Running;
+    bool hasTasksScheduled = tournament.hasTasksScheduled();
+
+    // Determine what state we're in and explain to the user
+    if (isRunning) {
+        // Tournament is currently running
+        QaplaWindows::ImGuiControls::textWrapped(
+            "A tournament is currently running!\n\n"
+            "Please press cancel, if you want to continue the current tournament.\n\n"
+            "If you continue without saving:\n"
+            "- The running tournament will be stopped\n"
+            "- All game results will be lost\n"
+            "- All tournament settings will be reset\n\n"
+            "If you save first:\n"
+            "- The running tournament will be stopped\n"
+            "- Tournament configuration and results are preserved\n"
+            "- You can load and continue the tournament later");
+    } else if (hasTasksScheduled) {
+        // Tournament was started but is now stopped (has results)
+        QaplaWindows::ImGuiControls::textWrapped(
+            "A previous tournament has results that haven't been saved.\n\n"
+            "If you continue without saving:\n"
+            "- All game results will be lost\n"
+            "- All tournament settings will be reset\n\n"
+            "If you save first:\n"
+            "- Tournament configuration and results are preserved\n"
+            "- You can load and review the results later");
+    } else {
+        // No tournament results, but we might have configuration
+        QaplaWindows::ImGuiControls::textWrapped(
+            "We will now configure a new tournament.\n\n"
+            "Saving is recommended because:\n"
+            "- Current tournament settings will be replaced\n"
+            "- During this chat, we will modify tournament settings\n"
+            "- Saving preserves your current configuration\n\n"
+            "If you have no important settings, you can skip this step.");
+    }
+    
+    ImGui::Spacing();
     ImGui::Spacing();
 
-    if (finished_) {
-        QaplaWindows::ImGuiControls::textDisabled("Step completed.");
-        return;
-    }
-
-    if (QaplaWindows::ImGuiControls::textButton("Yes, Save")) {
+    if (QaplaWindows::ImGuiControls::textButton("Save Tournament")) {
         auto path = OsDialogs::saveFileDialog({{"Qapla Tournament Files", "qtour"}});
         if (!path.empty()) {
             TournamentData::saveTournament(path);
+            if (isRunning) {
+                actionMessage_ = "Tournament saved. Running tournament stopped and results cleared.";
+            } else if (hasTasksScheduled) {
+                actionMessage_ = "Tournament saved. Previous results cleared.";
+            } else {
+                actionMessage_ = "Tournament settings saved.";
+            }
+            TournamentData::instance().clear(false);
         }
         finished_ = true;
+        result_ = "";
     }
     
     ImGui::SameLine();
 
-    if (QaplaWindows::ImGuiControls::textButton("No, Discard")) {
-        TournamentData::instance().clear();
+    // Adjust button text based on state
+    const char* skipButtonText = hasTasksScheduled ? "Discard & Continue" : "Skip";
+    
+    if (QaplaWindows::ImGuiControls::textButton(skipButtonText)) {
+        if (isRunning) {
+            actionMessage_ = "Running tournament stopped and results discarded.";
+        } else if (hasTasksScheduled) {
+            actionMessage_ = "Previous tournament results discarded.";
+        } else {
+            actionMessage_ = "";
+        }
+        TournamentData::instance().clear(false);
         finished_ = true;
+        result_ = "";
     }
+
+    ImGui::SameLine();
+
+    if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+        actionMessage_ = "Tournament setup cancelled.";
+        finished_ = true;
+        result_ = "stop";
+    }
+
+    return result_;
 }
 
 bool ChatbotStepTournamentSaveExisting::isFinished() const {

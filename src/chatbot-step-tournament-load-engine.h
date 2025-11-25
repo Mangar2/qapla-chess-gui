@@ -34,7 +34,7 @@ public:
     ChatbotStepTournamentLoadEngine();
     ~ChatbotStepTournamentLoadEngine() override = default;
 
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
@@ -51,6 +51,7 @@ private:
     bool detectionStarted_ = false;
 
     void drawInput();
+    void showAddedEngines();
     void drawDetecting();
     void drawSummary();
     

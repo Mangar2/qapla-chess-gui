@@ -20,7 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include "chatbot-tournament.h"
+#include <string>
 
 namespace QaplaWindows::ChatBot {
 
@@ -31,12 +31,13 @@ class ChatbotStepTournamentSaveExisting : public ChatbotStep {
 public:
     ChatbotStepTournamentSaveExisting();
 
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
     bool finished_ = false;
-    bool askUser_ = true;
+    std::string result_;
+    std::string actionMessage_;
 };
 
 } // namespace QaplaWindows::ChatBot

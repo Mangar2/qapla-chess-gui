@@ -27,13 +27,14 @@ ChatbotStepFinish::ChatbotStepFinish(std::string message)
     : message_(std::move(message)) {
 }
 
-void ChatbotStepFinish::draw() {
+std::string ChatbotStepFinish::draw() {
     ImGuiControls::textWrapped(message_);
     ImGui::Spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         finished_ = true;
     }
+    return "";
 }
 
 bool ChatbotStepFinish::isFinished() const {

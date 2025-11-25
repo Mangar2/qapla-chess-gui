@@ -39,7 +39,7 @@ public:
      */
     ChatbotStepSelectOption(std::string prompt, std::vector<std::string> options, std::function<void(int)> onSelected);
 
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:

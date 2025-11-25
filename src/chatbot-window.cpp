@@ -85,7 +85,7 @@ void ChatbotWindow::draw() {
         if (!mainMenuStep_) {
             resetToMainMenu();
         }
-        mainMenuStep_->draw();
+        static_cast<void>(mainMenuStep_->draw());
     }
     ImGui::Unindent(10.0F);
 }

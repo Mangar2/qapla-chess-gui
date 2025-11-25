@@ -10,7 +10,7 @@ public:
     ChatbotStepTournamentStart();
     ~ChatbotStepTournamentStart() override = default;
 
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:

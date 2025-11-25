@@ -34,21 +34,23 @@ ChatbotStepTournamentSelectEngines::~ChatbotStepTournamentSelectEngines() {
     TournamentData::instance().engineSelect().setAlwaysShowEngines(false);
 }
 
-void ChatbotStepTournamentSelectEngines::draw() {
+std::string ChatbotStepTournamentSelectEngines::draw() {
+
     auto& engineSelect = TournamentData::instance().engineSelect();
 
-    if (!initialized_) {
-        initialized_ = true;
-        // Prüfe, ob Engines verfügbar sind
-        auto& configManager = EngineWorkerFactory::getConfigManager();
-        auto configs = configManager.getAllConfigs();
-        if (configs.empty()) {
-            finished_ = true;
-            return;
-        }
+    // Prüfe, ob Engines verfügbar sind
+    auto& configManager = EngineWorkerFactory::getConfigManager();
+    auto configs = configManager.getAllConfigs();
+    if (configs.empty()) {
+        finished_ = true;
+        return "";
     }
 
-    QaplaWindows::ImGuiControls::textWrapped("Select engines for the tournament:");
+    if (!finished_) {
+        QaplaWindows::ImGuiControls::textWrapped("Select engines for the tournament:");
+    } else {
+        QaplaWindows::ImGuiControls::textWrapped("Selected engines for the tournament:");
+    }
     ImGui::Spacing();
 
     auto options = engineSelect.getOptions();
@@ -61,9 +63,24 @@ void ChatbotStepTournamentSelectEngines::draw() {
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (!finished_ && QaplaWindows::ImGuiControls::textButton("Continue")) {
-        finished_ = true;
+    if (finished_) {
+        return "";
     }
+
+    if (QaplaWindows::ImGuiControls::textButton("Continue")) {
+        finished_ = true;
+        return "";
+    }
+
+    ImGui::SameLine();
+
+    if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+        finished_ = true;
+        return "stop";
+    }
+
+    return "";
+
 }
 
 bool ChatbotStepTournamentSelectEngines::isFinished() const {

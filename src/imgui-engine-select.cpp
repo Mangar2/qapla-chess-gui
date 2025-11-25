@@ -23,6 +23,7 @@
 #include "configuration.h"
 #include "engine-worker-factory.h"
 #include "engine-config-manager.h"
+#include "os-dialogs.h"
 #include "logger.h"
 
 using QaplaTester::EngineWorkerFactory;
@@ -218,6 +219,36 @@ void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfigur
         }
     }
     notifyConfigurationChanged();
+}
+
+std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
+    auto commands = OsDialogs::openFileDialog(true);
+    if (commands.empty()) {
+        return {};
+    }
+    
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    
+    for (const auto& path : commands) {
+        auto newConfig = EngineConfig::createFromPath(path);
+        configManager.addConfig(newConfig);
+        
+        EngineConfiguration newEngine = {
+            .config = newConfig,
+            .selected = select,
+            .originalName = newConfig.getName()
+        };
+        engineConfigurations_.push_back(newEngine);
+    }
+    
+    notifyConfigurationChanged();
+    QaplaConfiguration::Configuration::instance().setModified();
+    return commands;
+}
+
+bool ImGuiEngineSelect::areAllEnginesDetected() {
+    const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+    return capabilities.areAllEnginesDetected();
 }
 
 void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCallback callback) {
