@@ -41,7 +41,7 @@
 #include <memory>
 #include <optional>
 
-using namespace QaplaWindows;
+namespace QaplaWindows {
 
 EpdWindow::EpdWindow() = default;
 EpdWindow::~EpdWindow() = default;
@@ -432,3 +432,4 @@ static auto epdWindowTutorialInit = []() {
     return true;
 }();
 
+}

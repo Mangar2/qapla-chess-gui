@@ -21,16 +21,32 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace QaplaWindows {
 
  /**
-  * Native file open dialog.
-  * Returns a list of selected file paths as std::vector<std::string>.
-  * If the dialog is cancelled, the returned vector is empty.
+  * Native file dialogs with synchronous and asynchronous variants.
+  * 
+  * Synchronous methods block until the dialog is closed.
+  * Asynchronous methods return immediately and call the callback when done.
+  * 
+  * Note: All dialogs use the current GLFW context window as parent
+  * to ensure proper modal behavior (dialog stays on top of the main window).
   */
 class OsDialogs {
 public:
+    // ========================================================================
+    // Type aliases for callbacks
+    // ========================================================================
+    
+    using OpenFileCallback = std::function<void(const std::vector<std::string>& files)>;
+    using SaveFileCallback = std::function<void(const std::string& file)>;
+    using SelectFolderCallback = std::function<void(const std::string& folder)>;
+
+    // ========================================================================
+    // Synchronous API (blocking) - existing interface
+    // ========================================================================
     /**
      * Opens a native file dialog for selecting files.
      *
@@ -61,6 +77,45 @@ public:
      * @return The selected folder path, or an empty string if cancelled.
      */
     static std::string selectFolderDialog(const std::string& defaultPath = {});
+
+    // ========================================================================
+    // Asynchronous API (non-blocking) - new interface
+    // ========================================================================
+
+    /**
+     * Opens a native file dialog for selecting files (async version).
+     * Returns immediately, calls callback when dialog is closed.
+     * The ImGui render loop continues while the dialog is open.
+     *
+     * @param callback Called with selected files (empty vector if cancelled).
+     * @param multiple If true, allows selecting multiple files.
+     * @param filters List of file type filters as pairs of (description, pattern).
+     */
+    static void openFileDialogAsync(OpenFileCallback callback,
+        bool multiple = false,
+        const std::vector<std::pair<std::string, std::string>>& filters = {});
+
+    /**
+     * Opens a native file dialog for saving a file (async version).
+     * Returns immediately, calls callback when dialog is closed.
+     *
+     * @param callback Called with selected file path (empty string if cancelled).
+     * @param filters List of file type filters as pairs of (description, pattern).
+     * @param defaultPath The default file path to show in the dialog.
+     */
+    static void saveFileDialogAsync(SaveFileCallback callback,
+        const std::vector<std::pair<std::string, std::string>>& filters,
+        const std::string& defaultPath = {});
+
+    /**
+     * Opens a native folder selection dialog (async version).
+     * Returns immediately, calls callback when dialog is closed.
+     *
+     * @param callback Called with selected folder path (empty string if cancelled).
+     * @param defaultPath The default folder path to show in the dialog.
+     */
+    static void selectFolderDialogAsync(SelectFolderCallback callback,
+        const std::string& defaultPath = {});
 
     /**
      * Gets the platform-specific configuration directory for qapla-chess-gui.

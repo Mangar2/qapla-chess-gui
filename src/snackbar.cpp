@@ -26,6 +26,8 @@
 
 #include <imgui.h>
 
+namespace QaplaWindows {
+
 SnackbarManager& SnackbarManager::instance() {
     static SnackbarManager instance;
     return instance;
@@ -295,3 +297,5 @@ bool SnackbarManager::tutorialInitialized_ = []() {
     });
     return true;
 }();
+
+} // namespace QaplaWindows

@@ -27,6 +27,7 @@
 #include <vector>
 #include <functional>
 
+namespace QaplaWindows {
 
 /**
  * @brief Manages tutorial progress for different topics in the Chess GUI
@@ -207,3 +208,5 @@ private:
      */
     void startNextTutorialIfAllowed();
 };
+
+} // namespace QaplaWindows

@@ -7,6 +7,9 @@
 #include <ini-file.h>
 
 #include "autosavable.h"
+#include "callback-manager.h"
+
+namespace QaplaWindows {
 
 class Translator : public QaplaHelpers::Autosavable {
 public:
@@ -92,6 +95,8 @@ private:
     std::string languageDirectory = "lang";
     std::string currentLanguage = "eng";
     std::vector<std::string> loadedLanguages;
+
+    std::unique_ptr<Callback::UnregisterHandle> saveCallbackHandle_;
 };
 
 /**
@@ -103,3 +108,5 @@ private:
 [[nodiscard]] inline std::string tr(const std::string& topic, const std::string& text) {
     return Translator::instance().translate(topic, text);
 }
+
+} // namespace QaplaWindows

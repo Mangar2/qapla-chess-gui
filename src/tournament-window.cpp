@@ -571,8 +571,8 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
 }
 
 static auto tournamentWindowTutorialInit = []() {
-    Tutorial::instance().setEntry({
-        .name = Tutorial::TutorialName::Tournament,
+    QaplaWindows::Tutorial::instance().setEntry({
+        .name = QaplaWindows::Tutorial::TutorialName::Tournament,
         .displayName = "Tournament",
         .messages = {
             { .text = "Start engine tournaments here.\n"

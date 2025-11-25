@@ -27,6 +27,8 @@
 #include <cmath>
 #include <numbers>
 
+using QaplaWindows::Translator;
+
 namespace QaplaButton {
 
     constexpr float BORDER = 4.0F;

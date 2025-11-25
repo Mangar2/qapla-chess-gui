@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tooltips to game viewer tabs showing detailed information (Round, Game, Engines or Position/Engine)
 - Clicking on an active game in the tournament window now opens the corresponding game tab
 - Engine selections are now always open to simplify user experience
+- Chatbot, first version to create tournaments
+- Windows file dialogs can no longer get to the background
 
 ## [0.1.0] - 2025-11-18
 

@@ -1,4 +1,5 @@
 #include "i18n.h"
+#include "callback-manager.h"
 
 #include <string-helper.h>
 #include <logger.h>
@@ -18,19 +19,25 @@
 using QaplaTester::Logger;
 using QaplaTester::TraceLevel;
 
+namespace QaplaWindows {
+
 Translator& Translator::instance() {
     static Translator instance;
     return instance;
 }
 
 Translator::Translator() 
-    : QaplaHelpers::Autosavable("missing_translations.txt", ".bak", 60000, []() { return Autosavable::getConfigDirectory(); }) 
+    : QaplaHelpers::Autosavable("missing_translations.txt", ".bak", 60000, []() { 
+        return Autosavable::getConfigDirectory(); 
+    }) 
 {
     loadFile();
+    saveCallbackHandle_ = StaticCallbacks::save().registerCallback([this]() {
+        this->saveFile();
+    });
 }
 
 Translator::~Translator() {
-    saveFile();
 }
 
 std::string Translator::translate(const std::string& topic, const std::string& key) {
@@ -218,3 +225,4 @@ std::string Translator::fromFileFormat(const std::string& text) {
     return result;
 }
 
+} // namespace QaplaWindows

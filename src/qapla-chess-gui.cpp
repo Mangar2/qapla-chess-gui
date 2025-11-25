@@ -223,8 +223,8 @@ namespace {
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaConfiguration::Configuration::loadLoggerConfiguration();
         QaplaWindows::EpdData::instance().loadFile();
-        Tutorial::instance().loadConfiguration();
-        SnackbarManager::instance().loadConfiguration();
+        QaplaWindows::Tutorial::instance().loadConfiguration();
+        QaplaWindows::SnackbarManager::instance().loadConfiguration();
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();
@@ -271,7 +271,7 @@ namespace {
             QaplaWindows::StaticCallbacks::poll().invokeAll();
 
             workspace.draw();
-			SnackbarManager::instance().draw();
+			QaplaWindows::SnackbarManager::instance().draw();
 
             testManager.drawDebugWindows();
 

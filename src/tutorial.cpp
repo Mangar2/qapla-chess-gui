@@ -24,6 +24,8 @@
 
 #include <optional>
 
+namespace QaplaWindows {
+
 bool Tutorial::allPrecedingCompleted(TutorialName name) const {
     const size_t currentIndex = toIndex(name);
     
@@ -169,3 +171,5 @@ void Tutorial::saveConfiguration() const {
     
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("tutorial", "tutorial", { section });
 }
+
+} // namespace QaplaWindows

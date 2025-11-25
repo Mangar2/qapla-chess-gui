@@ -42,6 +42,7 @@ using QaplaTester::EngineWorkerFactory;
 
 
 using namespace QaplaConfiguration;
+using namespace QaplaWindows;
 
 Configuration::Configuration() 
     : Autosavable(CONFIG_FILE, ".bak", 60000, []() { return Autosavable::getConfigDirectory(); })

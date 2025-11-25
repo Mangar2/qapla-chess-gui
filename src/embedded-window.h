@@ -54,6 +54,7 @@ public:
     virtual void save() const {
         // Default implementation does nothing
     }
+
 };
 
 /**

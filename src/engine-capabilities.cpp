@@ -31,8 +31,9 @@ using QaplaTester::EngineConfig;
 using QaplaTester::EngineWorkerFactory;
 using QaplaTester::EngineWorker;
 using QaplaTester::EngineProtocol;
+using QaplaWindows::SnackbarManager;
 
-using namespace QaplaConfiguration;
+namespace QaplaConfiguration {
 
 std::vector<EngineConfig> EngineCapabilities::collectMissingCapabilities() const {
     std::vector<EngineConfig> configs;
@@ -152,3 +153,4 @@ bool EngineCapabilities::areAllEnginesDetected() const {
     return allDetected;
 }
 
+} // namespace QaplaConfiguration

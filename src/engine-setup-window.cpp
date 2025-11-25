@@ -41,8 +41,7 @@
 #include <filesystem>
 #include <algorithm>
 
-using namespace QaplaWindows;
-
+namespace QaplaWindows {
 
 EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     : showGlobalControls_(showGlobalControls)
@@ -326,3 +325,4 @@ void EngineSetupWindow::showNextTutorialStep() {
     }
 }
 
+} // namespace QaplaWindows

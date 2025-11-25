@@ -26,6 +26,8 @@
 #include <array>
 #include <deque> 
 
+namespace QaplaWindows {
+
 /**
  * @brief Manager for displaying temporary notification messages (snackbars) in the UI
  * 
@@ -203,3 +205,5 @@ private:
     std::deque<SnackbarEntry> snackbarStack_;
     uint32_t progress = 0;
 };
+
+} // namespace QaplaWindows

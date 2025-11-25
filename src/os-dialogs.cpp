@@ -17,6 +17,45 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+/**
+ * =============================================================================
+ * PLATFORM-SPECIFIC IMPLEMENTATION NOTES
+ * =============================================================================
+ * 
+ * WINDOWS (implemented):
+ * - Uses glfwGetWin32Window() to get native HWND from current GLFW context
+ * - Passes HWND to dialog functions (IFileOpenDialog::Show, OPENFILENAME::hwndOwner)
+ * - Dialogs are properly parented and stay on top of main window
+ * 
+ * -----------------------------------------------------------------------------
+ * 
+ * MACOS (TODO):
+ * - Current: Uses runModal which shows dialog as independent modal window
+ * - Problem: Dialog can slip behind other applications
+ * - Solution: Use Sheet-Dialogs that attach to the parent window:
+ *   1. Get NSWindow* via glfwGetCocoaWindow(glfwGetCurrentContext())
+ *   2. Use [panel beginSheetModalForWindow:parent completionHandler:^(...){...}]
+ *   3. This is async - fits perfectly with openFileDialogAsync() API
+ *   4. For sync version: Use [NSApp runModalForWindow:] + [NSApp stopModal] in callback
+ *      to block until dialog closes
+ * 
+ * -----------------------------------------------------------------------------
+ * 
+ * LINUX (TODO):
+ * - Current: Uses GTK dialogs with nullptr as parent
+ * - Problem: GTK expects GtkWindow*, but GLFW gives X11 Window handle
+ *   These are incompatible types from different toolkits
+ * - Solution: Use XDG Desktop Portal via GDBus (part of GLib, already available via GTK):
+ *   1. Call org.freedesktop.portal.FileChooser via D-Bus
+ *   2. Portal shows native desktop dialog (GTK on GNOME, Qt on KDE)
+ *   3. No parent window needed - Portal handles modality
+ *   4. Async by design - fits openFileDialogAsync() API perfectly
+ *   5. For sync version: Use GMainLoop to wait for D-Bus response
+ *   Reference: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.FileChooser.html
+ * 
+ * =============================================================================
+ */
+
 #include "os-dialogs.h"
 #include "../extern/qapla-engine-tester/src/string-helper.h"
 #include <vector>
@@ -24,7 +63,13 @@
 #include <string>
 #include <ranges>
 
+// GLFW for getting native window handle
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 #ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <windows.h>
 #include <shobjidl.h> 
 #include <comdef.h>
@@ -32,6 +77,18 @@
 
 namespace {
     using namespace QaplaHelpers;
+
+    /**
+     * Gets the native Win32 window handle from the current GLFW context.
+     * @return HWND of the current window, or nullptr if no context.
+     */
+    HWND getNativeWindowHandle() {
+        GLFWwindow* window = glfwGetCurrentContext();
+        if (window == nullptr) {
+            return nullptr;
+        }
+        return glfwGetWin32Window(window);
+    }
 
     void setDialogOptions(IFileOpenDialog* pFileOpen, bool multiple) {
         DWORD dwOptions;
@@ -118,7 +175,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
         setDialogOptions(pFileOpen, multiple);
         setFileFilters(pFileOpen, filters);
 
-        hr = pFileOpen->Show(nullptr);
+        hr = pFileOpen->Show(getNativeWindowHandle());
         if (SUCCEEDED(hr)) {
             if (multiple) {
                 IShellItemArray* pResults = nullptr;
@@ -292,7 +349,7 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
 
     OPENFILENAMEA ofn = {};
     ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = nullptr;
+    ofn.hwndOwner = getNativeWindowHandle();
     ofn.lpstrFile = filename;
     ofn.nMaxFile = sizeof(filename);
     ofn.lpstrFilter = filterStr.c_str();
@@ -471,7 +528,7 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
         }
 
         // Show dialog
-        hr = pFileOpen->Show(nullptr);
+        hr = pFileOpen->Show(getNativeWindowHandle());
         if (SUCCEEDED(hr)) {
             IShellItem* pItem = nullptr;
             hr = pFileOpen->GetResult(&pItem);
@@ -620,6 +677,41 @@ std::string OsDialogs::getConfigDirectory() {
     
     return "";
 #endif
+}
+
+// ============================================================================
+// ASYNC DIALOG IMPLEMENTATIONS
+// ============================================================================
+// For Windows and Linux: Simply call the synchronous version and pass result to callback.
+// For macOS: Could be implemented with native async sheets in the future.
+
+void OsDialogs::openFileDialogAsync(OpenFileCallback callback,
+    bool multiple,
+    const std::vector<std::pair<std::string, std::string>>& filters) 
+{
+    auto result = openFileDialog(multiple, filters);
+    if (callback) {
+        callback(result);
+    }
+}
+
+void OsDialogs::saveFileDialogAsync(SaveFileCallback callback,
+    const std::vector<std::pair<std::string, std::string>>& filters,
+    const std::string& defaultPath) 
+{
+    auto result = saveFileDialog(filters, defaultPath);
+    if (callback) {
+        callback(result);
+    }
+}
+
+void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
+    const std::string& defaultPath) 
+{
+    auto result = selectFolderDialog(defaultPath);
+    if (callback) {
+        callback(result);
+    }
 }
 
 } // namespace QaplaWindows
