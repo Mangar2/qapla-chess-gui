@@ -286,6 +286,14 @@ namespace QaplaWindows {
         bool isRunning() const;
 
         /**
+         * @brief Returns true if the tournament is in the starting state.
+         * @return True if the tournament is starting, false otherwise.
+         */
+        bool isStarting() const {
+            return state_ == State::Starting;
+        }
+
+        /**
          * @brief Returns the current state of the tournament.
          * @return The current state of the tournament.
          */

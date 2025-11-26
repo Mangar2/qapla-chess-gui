@@ -286,7 +286,6 @@ namespace QaplaWindows {
             return;
         }
 
-
         state_ = State::Starting;
 
         poolAccess_->clearAll();
@@ -294,7 +293,6 @@ namespace QaplaWindows {
         // This will not delete results, but force the incremental result to reprocess all results
         result_->clear();
         
-        state_ = State::Starting;
         tournament_->scheduleAll(0, false, *poolAccess_);
         eloTable_.clear();
         populateEloTable();
@@ -302,7 +300,7 @@ namespace QaplaWindows {
         populateRunningTable();
         imguiConcurrency_->init();
         imguiConcurrency_->setActive(true);
-        state_ = State::Starting;
+
         if (verbose) {
             SnackbarManager::instance().showSuccess("Tournament started");
         }

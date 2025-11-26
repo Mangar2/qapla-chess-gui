@@ -18,6 +18,7 @@
  */
 
 #include "chatbot-tournament.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include "chatbot-step-tournament-save-existing.h"
 #include "chatbot-step-tournament-global-settings.h"
 #include "chatbot-step-tournament-select-engines.h"
@@ -32,25 +33,28 @@ void ChatbotTournament::start() {
     steps_.clear();
     currentStep_ = 0;
 
-    // Step 1: Check if existing tournament needs saving
+    // Step 1: Check if a tournament is running and offer to stop it
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>());
+
+    // Step 2: Check if existing tournament needs saving
     steps_.push_back(std::make_unique<ChatbotStepTournamentSaveExisting>());
     
-    // Step 2: Configure global engine settings (hash, time control)
+    // Step 3: Configure global engine settings (hash, time control)
     steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>());
     
-    // Step 3: Select engines from existing list
+    // Step 4: Select engines from existing list
     steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
 
-    // Step 4: Load more engines
+    // Step 5: Load more engines
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
 
-    // Step 5: Configure tournament settings (type, rounds, games)
+    // Step 6: Configure tournament settings (type, rounds, games)
     steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
 
-    // Step 6: Select PGN file for results
+    // Step 7: Select PGN file for results
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
 
-    // Step 7: Start Tournament
+    // Step 8: Start Tournament
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 

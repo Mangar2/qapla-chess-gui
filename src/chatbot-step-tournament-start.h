@@ -15,7 +15,6 @@ public:
 
 private:
     bool finished_ = false;
-    bool tournamentStarted_ = false;
     int concurrency_ = 1;
 };
 

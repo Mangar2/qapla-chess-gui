@@ -53,11 +53,17 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     void textWrapped(const std::string& text) {
+        if (text.empty()) {
+            return;
+        }
         auto translatedText = Translator::instance().translate("Text", text);
         ImGui::TextWrapped("%s", translatedText.c_str());
     }
 
     void textDisabled(const std::string& text) {
+        if (text.empty()) {
+            return;
+        }
         auto translatedText = Translator::instance().translate("Text", text);
         ImGui::TextDisabled("%s", translatedText.c_str());
     }
