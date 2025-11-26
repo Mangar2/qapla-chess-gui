@@ -221,9 +221,11 @@ bool TournamentWindow::drawInput() {
 	auto& tournamentData = TournamentData::instance();
     
     ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    auto concurrency = tournamentData.getExternalConcurrency();
+    ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, maxConcurrency);
     ImGuiControls::hooverTooltip("Number of games running in parallel");
-    tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
+    tournamentData.setExternalConcurrency(concurrency);
+    tournamentData.setPoolConcurrency(concurrency, true);
     drawProgress();
     
     ImGui::Spacing();
@@ -428,7 +430,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         
         case 8:
         // Step 7: Set concurrency to 4
-        if (tournamentData.concurrency() == 4) {
+        if (tournamentData.getExternalConcurrency() == 4) {
             Tutorial::instance().showNextTutorialStep(topicName);
             highlightedButton_ = "Run/Grace/Continue";
         }

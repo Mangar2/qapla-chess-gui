@@ -48,7 +48,8 @@ public:
 
 private:
     std::vector<std::unique_ptr<ChatbotStep>> steps_;
-    size_t currentStep_ = 0;
+    std::vector<size_t> activeStepIndices_;
+    bool stopped_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

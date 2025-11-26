@@ -66,6 +66,7 @@ public:
      */
     void update(uint32_t newConcurrency, bool direct = false) {
         if (!active_) return;
+        setExternalConcurrency(newConcurrency);
 
         if (newConcurrency != targetConcurrency_) {
             targetConcurrency_ = newConcurrency;
@@ -102,12 +103,29 @@ public:
         active_ = active;
     }
 
+    /**
+     * @brief Gets the external concurrency value.
+     * @return The external concurrency value.
+     */
+    uint32_t getExternalConcurrency() {
+        return externalConcurrency_;
+    }
+
+    /**
+     * @brief Sets the external concurrency value.
+     * @param count The new external concurrency value.
+     */
+    void setExternalConcurrency(uint32_t count) {
+        externalConcurrency_ = std::clamp(count, 1U, 32U);
+    }
+
 private:
     GameManagerPoolAccess poolAccess_; ///< Access to the GameManagerPool instance.
     bool active_ = false;  ///< Whether the concurrency control is active.
     bool niceStop_ = true;  ///< Whether to finish games or abort them.
-    uint32_t currentConcurrency_ = 0; ///< Tracks the current concurrency value.
+    uint32_t currentConcurrency_ = 0;  ///< Tracks the current concurrency value.
     uint32_t targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
+    uint32_t externalConcurrency_ = 0;       ///< Tracks the last UI concurrency value.
     int debounceCounter_;         ///< Counter for debouncing slider changes.
 
     /**

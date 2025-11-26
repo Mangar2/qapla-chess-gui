@@ -15,7 +15,6 @@ public:
 
 private:
     bool finished_ = false;
-    int concurrency_ = 1;
 };
 
 } // namespace QaplaWindows::ChatBot

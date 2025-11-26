@@ -472,7 +472,11 @@ namespace QaplaWindows {
         if (!tournament_) {
             return;
         }
-        const auto& row = runningTable_.getRow(gameIndex);
+        const auto& optRow = runningTable_.getRow(gameIndex);
+        if (!optRow) {
+            return;
+        }
+        const auto& row = *optRow;
         // Round.Game:WhiteEngine-BlackEngine
         std::string rowId = std::format("{}.{}:{}-{}", row[2], row[3], row[0], row[1]);
         boardWindowList_.setActiveWindowId(rowId);
@@ -556,14 +560,22 @@ namespace QaplaWindows {
         state_ = State::Stopped;
     }
 
+    uint32_t TournamentData::getExternalConcurrency() const {
+        return imguiConcurrency_->getExternalConcurrency();
+    }
+
+    void TournamentData::setExternalConcurrency(uint32_t count) {
+        imguiConcurrency_->setExternalConcurrency(count);
+    }
+
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
         if (!isRunning()) {
             return;
         }
-        imguiConcurrency_->setNiceStop(nice);
         imguiConcurrency_->update(count, direct);
+        imguiConcurrency_->setNiceStop(nice);
     }
-    
+
     void TournamentData::loadTournamentConfig() {
         tournamentConfiguration_->loadConfiguration();
     }

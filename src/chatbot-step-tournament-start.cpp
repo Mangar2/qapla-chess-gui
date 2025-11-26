@@ -4,15 +4,14 @@
 #include "imgui-controls.h"
 #include "i18n.h"
 #include "callback-manager.h"
+#include "imgui-controls.h"
 
 #include <imgui.h>
+#include <algorithm>
 
 namespace QaplaWindows::ChatBot {
 
 ChatbotStepTournamentStart::ChatbotStepTournamentStart() {
-    concurrency_ = TournamentData::instance().concurrency();
-    if (concurrency_ < 1) concurrency_ = 1;
-    if (concurrency_ > 32) concurrency_ = 32;
 }
 
 std::string ChatbotStepTournamentStart::draw() {
@@ -30,8 +29,11 @@ std::string ChatbotStepTournamentStart::draw() {
     if (!TournamentData::instance().isRunning()) {
         QaplaWindows::ImGuiControls::textWrapped("Configure tournament concurrency and start:");
         ImGui::Spacing();
+        auto concurrency = TournamentData::instance().getExternalConcurrency();
+        ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, 16);
 
-        ImGui::SliderInt("Concurrency", &concurrency_, 1, 32);
+        TournamentData::instance().setExternalConcurrency(concurrency);
+
         QaplaWindows::ImGuiControls::hooverTooltip("Number of games to run in parallel");
 
         ImGui::Spacing();
@@ -40,7 +42,7 @@ std::string ChatbotStepTournamentStart::draw() {
 
         if (QaplaWindows::ImGuiControls::textButton("Start Tournament")) {
             TournamentData::instance().startTournament();
-            TournamentData::instance().setPoolConcurrency(concurrency_, true, true);
+            TournamentData::instance().setPoolConcurrency(static_cast<uint32_t>(concurrency), true, true);
         }
 
         ImGui::SameLine();

@@ -31,9 +31,7 @@ ChatbotStepTournamentSaveExisting::ChatbotStepTournamentSaveExisting() = default
 
 std::string ChatbotStepTournamentSaveExisting::draw() {
     if (finished_) {
-        if (!finishedMessage_.empty()) {
-            QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
-        }
+        QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
         return "";
     }
 
@@ -74,44 +72,40 @@ std::string ChatbotStepTournamentSaveExisting::draw() {
     ImGui::Spacing();
     ImGui::Spacing();
 
-    std::string result = drawContinueButton(hasTasksScheduled);
+    bool stop = drawContinueButton(hasTasksScheduled);
+    bool start = false;
 
     ImGui::SameLine();
 
     // Show "Continue Tournament" button if there are tasks scheduled
     if (hasTasksScheduled) {
-        result = drawContinueTournamentButton();
+        start |= drawContinueTournamentButton();
         ImGui::SameLine();
     }
 
     if (!saved_) {
-        result = drawSaveTournamentButton();
+        stop |= drawSaveTournamentButton();
         ImGui::SameLine();
     }
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = "Tournament setup cancelled.";
         finished_ = true;
-        return "stop";
+        stop = true;
     }
     
-    return result;
+    return start ? "start" : (stop ? "stop" : "");
 }
 
-std::string ChatbotStepTournamentSaveExisting::drawContinueTournamentButton() {
+bool ChatbotStepTournamentSaveExisting::drawContinueTournamentButton() {
     if (QaplaWindows::ImGuiControls::textButton("Continue Existing")) {
-        TournamentData::instance().startTournament();
-        if (TournamentData::instance().isRunning()) {
-            finishedMessage_ = "Tournament continued.";
-            StaticCallbacks::message().invokeAll("switch_to_tournament_view");
-        }
         finished_ = true;
-        return "stop";  // Stop the chatbot flow since we're continuing the existing tournament
+        return true;  
     }
-    return "";
+    return false;
 }
 
-std::string ChatbotStepTournamentSaveExisting::drawSaveTournamentButton() {
+bool ChatbotStepTournamentSaveExisting::drawSaveTournamentButton() {
     if (QaplaWindows::ImGuiControls::textButton("Save Tournament")) {
         auto path = OsDialogs::saveFileDialog({{"Qapla Tournament Files", "qtour"}});
         if (!path.empty()) {
@@ -119,10 +113,10 @@ std::string ChatbotStepTournamentSaveExisting::drawSaveTournamentButton() {
             saved_ = true;
         }
     }
-    return "";
+    return false;
 }
 
-std::string ChatbotStepTournamentSaveExisting::drawContinueButton(bool hasTasksScheduled) {
+bool ChatbotStepTournamentSaveExisting::drawContinueButton(bool hasTasksScheduled) {
     // Adjust button text based on state
     const char* continueButtonText = hasTasksScheduled ? "New Tournament" : "Continue";
     
@@ -135,7 +129,7 @@ std::string ChatbotStepTournamentSaveExisting::drawContinueButton(bool hasTasksS
         TournamentData::instance().clear(false);
         finished_ = true;
     }
-    return "";
+    return false;
 }
 
 bool ChatbotStepTournamentSaveExisting::isFinished() const {

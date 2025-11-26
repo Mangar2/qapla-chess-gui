@@ -39,9 +39,9 @@ private:
     bool saved_ = false;
     std::string finishedMessage_;
     
-    std::string drawContinueTournamentButton();
-    std::string drawSaveTournamentButton();
-    std::string drawContinueButton(bool hasTasksScheduled);
+    bool drawContinueTournamentButton();
+    bool drawSaveTournamentButton();
+    bool drawContinueButton(bool hasTasksScheduled);
 };
 
 } // namespace QaplaWindows::ChatBot

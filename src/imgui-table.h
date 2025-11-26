@@ -238,8 +238,11 @@ namespace QaplaWindows {
          * @param row Row index.
          * @return Reference to the vector of strings representing the row content.
          */
-        const std::vector<std::string>& getRow(size_t row) const {
-            return rows_[row];
+        const std::optional<std::vector<std::string>> getRow(size_t row) const {
+            if (row < rows_.size()) {
+                return rows_[row];
+            }
+            return std::nullopt;
         }
 
         /**

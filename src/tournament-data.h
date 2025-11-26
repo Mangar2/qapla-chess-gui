@@ -93,12 +93,35 @@ namespace QaplaWindows {
         void stopPool(bool graceful = false);
 
         /**
+         * @brief Gets the target pool concurrency level.
+         * @return The target concurrency level.
+         */
+        uint32_t getExternalConcurrency() const;
+
+        /**
+         * @brief Sets the external concurrency value.
+         * @param count The new external concurrency value.
+         */
+        void setExternalConcurrency(uint32_t count);
+
+        /**
          * @brief Sets the pool concurrency level.
          * @param count The number of concurrent tasks to allow.
          * @param nice If true, reduces the number of active managers gradually.
          * @param direct If true, applies the change immediately without debouncing.
          */
         void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
+
+        /**
+         * @brief Sets the concurrency level for the tournament set/displayed by the ui.
+         * 
+         * It is different to the current concurrency of the pool due to
+         * - debouncing
+         * - stop state (in which case pool concurrency is 0)
+         * 
+         * @param count The desired concurrency level.
+         */
+        void setUiConcurrency(uint32_t count);
 
         /**
          * @brief Draws the tournament elo table.
@@ -144,10 +167,6 @@ namespace QaplaWindows {
          */
         void setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool);
         
-        uint32_t& concurrency() {
-            return concurrency_;
-		}
-
         /**
          * @brief Returns a reference to the engine selection.
          * @return Reference to the engine selection.
@@ -444,7 +463,6 @@ namespace QaplaWindows {
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
         std::unique_ptr<Callback::UnregisterHandle> messageCallbackHandle_;
 
-        uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games
 
         ImGuiTable eloTable_;
