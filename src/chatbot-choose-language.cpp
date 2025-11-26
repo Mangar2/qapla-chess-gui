@@ -58,7 +58,7 @@ void ChatbotChooseLanguage::start() {
 
 void ChatbotChooseLanguage::draw() {
     if (currentStep_ < steps_.size()) {
-        steps_[currentStep_]->draw();
+        static_cast<void>(steps_[currentStep_]->draw());
         if (steps_[currentStep_]->isFinished()) {
             ++currentStep_;
         }

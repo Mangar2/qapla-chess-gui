@@ -1,7 +1,10 @@
 #include "chatbot-step-tournament-start.h"
+
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include "i18n.h"
+#include "callback-manager.h"
+
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
@@ -52,6 +55,7 @@ std::string ChatbotStepTournamentStart::draw() {
         ImGui::Spacing();
         
         if (QaplaWindows::ImGuiControls::textButton("Finish")) {
+            StaticCallbacks::message().invokeAll("switch_to_tournament_view");
             finished_ = true;
         }
     }

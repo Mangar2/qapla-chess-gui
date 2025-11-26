@@ -26,6 +26,14 @@
 
 namespace QaplaWindows {
 
+    ImGuiTabBar::ImGuiTabBar() {
+        messageCallbackHandle_ = QaplaWindows::StaticCallbacks::message().registerCallback(
+            [this](const std::string& msg) {
+                    this->processMessage(msg);
+            }
+        );
+    }
+
     void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, 
         ImGuiTabItemFlags flags) {
         // Create a callback that calls the embedded window's draw method
@@ -128,6 +136,17 @@ namespace QaplaWindows {
     bool ImGuiTabBar::hasTab(const std::string& name) const {
         return std::find_if(tabs_.begin(), tabs_.end(),
             [&name](const Tab& tab) { return tab.name == name; }) != tabs_.end();
+    }
+    
+    void ImGuiTabBar::processMessage(const std::string& message) {
+        if (message == "switch_to_tournament_view") {
+            for (auto& tab : tabs_) {
+                if (tab.name == "Tournament") {
+                    tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
+                        tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                }
+            }
+        }
     }
 
 } // namespace QaplaWindows

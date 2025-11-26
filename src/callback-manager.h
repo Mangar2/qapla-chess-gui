@@ -220,6 +220,11 @@ public:
         return instance;
     }
 
+    static Callback::Manager<std::string>& message() {
+        static Callback::Manager<std::string> instance;
+        return instance;
+    }
+
     static Callback::Manager<const QaplaTester::GameRecord&>& gameUpdated() {
         static Callback::Manager<const QaplaTester::GameRecord&> instance;
         return instance;

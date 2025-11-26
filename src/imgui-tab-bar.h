@@ -20,6 +20,8 @@
 #pragma once
 
 #include "embedded-window.h"
+#include "callback-manager.h"
+
 #include <imgui.h>
 #include <memory>
 #include <string>
@@ -38,6 +40,9 @@ namespace QaplaWindows {
      */
     class ImGuiTabBar : public EmbeddedWindow {
     public:
+
+        ImGuiTabBar();
+        ~ImGuiTabBar() override = default;
 
         /**
          * @brief Add a tab with an EmbeddedWindow.
@@ -123,6 +128,16 @@ namespace QaplaWindows {
          */
         bool hasTab(const std::string& name) const;
 
+        /**
+         * @brief Process a message for the tab bar.
+         * 
+         * This method can be used to handle external messages or commands
+         * that affect the tab bar's state or behavior.
+         * 
+         * @param message The message string to process
+         */
+        void processMessage(const std::string& message);
+
     private:
         struct Tab {
             std::string name;
@@ -135,6 +150,7 @@ namespace QaplaWindows {
         std::vector<Tab> tabs_;
         std::function<void()> dynamicTabsCallback_;
         std::function<void(ImGuiTabBar&)> addTabCallback_; // Callback for adding new tabs via + button
+        std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> messageCallbackHandle_;
     };
 
 } // namespace QaplaWindows
