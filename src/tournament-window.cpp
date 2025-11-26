@@ -247,71 +247,7 @@ bool TournamentWindow::drawInput() {
     changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F, openingTutorial_);
 
     tournamentTutorial_.highlight = (highlightedSection_ == "Tournament");
-    if (ImGuiControls::CollapsingHeaderWithDot("Tournament", ImGuiTreeNodeFlags_Selected, tournamentTutorial_.highlight)) {
-        ImGui::PushID("tournament");
-        ImGui::Indent(10.0F);
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputText("Event", tournamentData.config().event);
-        ImGuiControls::hooverTooltip("Optional event name for PGN or logging");
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::selectionBox("Type", tournamentData.config().type, { "gauntlet", "round-robin" });
-        ImGuiControls::hooverTooltip(
-            "Tournament type:\n"
-            "  gauntlet - One engine plays against all others\n"
-            "  round-robin - Every engine plays against every other engine"
-        );
-        
-        // Show tutorial annotation if present
-        auto it = tournamentTutorial_.annotations.find("Type");
-        if (it != tournamentTutorial_.annotations.end()) {
-            ImGuiControls::annotate(it->second);
-        }
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Rounds", tournamentData.config().rounds, 1, 1000);
-        ImGuiControls::hooverTooltip("Repeat all pairings this many times");
-        
-        // Show tutorial annotation if present
-        it = tournamentTutorial_.annotations.find("Rounds");
-        if (it != tournamentTutorial_.annotations.end()) {
-            ImGuiControls::annotate(it->second);
-        }
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Games per pairing", tournamentData.config().games, 1, 1000);
-        ImGuiControls::hooverTooltip("Number of games per pairing.\nTotal games = games × rounds");
-        
-        // Show tutorial annotation if present
-        it = tournamentTutorial_.annotations.find("Games per pairing");
-        if (it != tournamentTutorial_.annotations.end()) {
-            ImGuiControls::annotate(it->second);
-        }
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Same opening", tournamentData.config().repeat, 1, 1000);
-        ImGuiControls::hooverTooltip(
-            "Number of consecutive games played per opening.\n"
-            "Commonly set to 2 to alternate colors with the same line"
-        );
-        
-        // Show tutorial annotation if present
-        it = tournamentTutorial_.annotations.find("Same opening");
-        if (it != tournamentTutorial_.annotations.end()) {
-            ImGuiControls::annotate(it->second);
-        }
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::booleanInput("No color swap", tournamentData.config().noSwap);
-        ImGuiControls::hooverTooltip("Disable automatic color swap after each game");
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<int>("Average Elo", tournamentData.config().averageElo, 1000, 5000);
-        ImGuiControls::hooverTooltip("Average Elo level for scaling rating output");
-        
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
+    changed |= tournamentData.tournamentConfiguration().draw({}, inputWidth, 10.0F, tournamentTutorial_);
     
     timeControlTutorial_.highlight = (highlightedSection_ == "TimeControl");
     changed |= tournamentData.globalSettings().drawTimeControl(

@@ -29,6 +29,7 @@
 #include "imgui-tournament-opening.h"
 #include "imgui-tournament-pgn.h"
 #include "imgui-tournament-adjudication.h"
+#include "imgui-tournament-configuration.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
@@ -185,6 +186,22 @@ namespace QaplaWindows {
 
         const ImGuiTournamentOpening& tournamentOpening() const {
             return *tournamentOpening_;
+        }
+
+        /**
+         * @brief Returns a reference to the tournament configuration UI component.
+         * @return Reference to the tournament configuration UI component.
+         */
+        ImGuiTournamentConfiguration& tournamentConfiguration() {
+            return *tournamentConfiguration_;
+        }
+
+        /**
+         * @brief Returns a const reference to the tournament configuration UI component.
+         * @return Const reference to the tournament configuration UI component.
+         */
+        const ImGuiTournamentConfiguration& tournamentConfiguration() const {
+            return *tournamentConfiguration_;
         }
 
         /**
@@ -410,6 +427,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_{std::make_unique<ImGuiTournamentOpening>()};
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_{std::make_unique<ImGuiTournamentPgn>()};
         std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_{std::make_unique<ImGuiTournamentAdjudication>()};
+        std::unique_ptr<ImGuiTournamentConfiguration> tournamentConfiguration_{std::make_unique<ImGuiTournamentConfiguration>()};
 
         GameManagerPoolAccess poolAccess_;
         ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;

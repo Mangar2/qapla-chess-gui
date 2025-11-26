@@ -101,6 +101,8 @@ namespace QaplaWindows {
         tournamentOpening_->setId("tournament");
         tournamentPgn_->setId("tournament");
         tournamentAdjudication_->setId("tournament");
+        tournamentConfiguration_->setId("tournament");
+        tournamentConfiguration_->setConfig(config_.get());
 
         // Set up callbacks
         setupCallbacks();
@@ -163,21 +165,9 @@ namespace QaplaWindows {
     void TournamentData::updateConfiguration() {
 
         // Tournament Config
+        auto tournamentSections = tournamentConfiguration_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournament", "tournament", {{
-                .name = "tournament",
-                .entries = QaplaHelpers::IniFile::KeyValueMap{
-                    {"id", "tournament"},
-                    {"event", config_->event},
-                    {"type", config_->type},
-                    {"rounds", std::to_string(config_->rounds)},
-                    {"games", std::to_string(config_->games)},
-                    {"repeat", std::to_string(config_->repeat)},
-                    {"noSwap", config_->noSwap ? "true" : "false"},
-                    {"averageElo", std::to_string(config_->averageElo)},
-                    {"saveInterval", std::to_string(config_->saveInterval)}
-                }
-        }});
+            "tournament", "tournament", tournamentSections);
 
         auto openingSections = tournamentOpening_->getSections();
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
@@ -577,38 +567,7 @@ namespace QaplaWindows {
     }
     
     void TournamentData::loadTournamentConfig() {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        auto sections = configData.getSectionList("tournament", "tournament");
-        if (!sections || sections->empty()) {
-            return;
-        }
-
-        for (const auto& [key, value] : (*sections)[0].entries) {
-            if (key == "event") {
-                config_->event = value;
-            }
-            else if (key == "type") {
-                config_->type = value;
-            }
-            else if (key == "rounds") {
-                config_->rounds = QaplaHelpers::to_uint32(value).value_or(1);
-            }
-            else if (key == "games") {
-                config_->games = QaplaHelpers::to_uint32(value).value_or(1);
-            }
-            else if (key == "repeat") {
-                config_->repeat = QaplaHelpers::to_uint32(value).value_or(1);
-            }
-            else if (key == "noSwap") {
-                config_->noSwap = (value == "true");
-            }
-            else if (key == "averageElo") {
-                config_->averageElo = QaplaHelpers::to_int(value).value_or(0);
-            }
-            else if (key == "saveInterval") {
-                config_->saveInterval = QaplaHelpers::to_uint32(value).value_or(10);
-            }
-        }
+        tournamentConfiguration_->loadConfiguration();
     }
 
     void TournamentData::loadOpenings() {
