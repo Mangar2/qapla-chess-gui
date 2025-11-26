@@ -18,6 +18,7 @@
  */
 
 #include "chatbot-step-tournament-pgn.h"
+#include "chatbot-step.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
@@ -87,18 +88,18 @@ ChatbotStepTournamentPgn::ValidationResult ChatbotStepTournamentPgn::validateFil
 
 void ChatbotStepTournamentPgn::drawStatusMessage(const ValidationResult& validation) {
     if (!validation.isValidPath) {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.4F, 0.4F, 1.0F));
+        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "Please enter a valid file path. The directory must exist.");
         ImGui::PopStyleColor();
     } else if (validation.willOverwrite) {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.8F, 0.2F, 1.0F));
+        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::WARNING_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "Warning: The file already exists and overwrite mode is enabled. "
             "The existing content will be replaced when the tournament starts.");
         ImGui::PopStyleColor();
     } else if (validation.fileExists) {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4F, 1.0F, 0.4F, 1.0F));
+        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::SUCCESS_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "The file exists. New games will be appended to the existing content.");
         ImGui::PopStyleColor();

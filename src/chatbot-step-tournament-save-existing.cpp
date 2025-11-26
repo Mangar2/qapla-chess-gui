@@ -18,6 +18,7 @@
  */
 
 #include "chatbot-step-tournament-save-existing.h"
+#include "chatbot-step.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
@@ -41,10 +42,13 @@ std::string ChatbotStepTournamentSaveExisting::draw() {
 
     // Determine what state we're in and explain to the user
     if (isRunning) {
-        // Tournament is currently running
+        // Tournament is currently running - use error/red color
+        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
-            "A tournament is currently running!\n\n"
-            "Please press cancel, if you want to continue the current tournament.\n\n"
+            "A tournament is currently running!");
+        ImGui::PopStyleColor();
+        QaplaWindows::ImGuiControls::textWrapped(
+            "\nPlease press cancel, if you want to continue the current tournament.\n\n"
             "If you continue without saving:\n"
             "- The running tournament will be stopped\n"
             "- All game results will be lost\n"
@@ -54,10 +58,13 @@ std::string ChatbotStepTournamentSaveExisting::draw() {
             "- Tournament configuration and results are preserved\n"
             "- You can load and continue the tournament later");
     } else if (hasTasksScheduled) {
-        // Tournament was started but is now stopped (has results)
+        // Tournament was started but is now stopped (has results) - use warning/orange color
+        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::WARNING_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
-            "A previous tournament has results that haven't been saved.\n\n"
-            "If you continue without saving:\n"
+            "A previous tournament has results that haven't been saved.");
+        ImGui::PopStyleColor();
+        QaplaWindows::ImGuiControls::textWrapped(
+            "\nIf you continue without saving:\n"
             "- All game results will be lost\n"
             "- All tournament settings will be reset\n\n"
             "If you save first:\n"

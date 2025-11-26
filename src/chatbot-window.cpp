@@ -31,6 +31,11 @@
 
 namespace QaplaWindows::ChatBot {
 
+// Constants for layout
+constexpr float BOTTOM_PADDING = 40.0F;
+constexpr float RIGHT_MARGIN = 5.0F;
+constexpr float LEFT_MARGIN = 10.0F;
+
 ChatbotWindow::ChatbotWindow() {
     registerThread(std::make_unique<ChatbotTournament>());
     registerThread(std::make_unique<ChatbotChooseLanguage>());
@@ -66,10 +71,18 @@ void ChatbotWindow::resetToMainMenu() {
 }
 
 void ChatbotWindow::draw() {
-    ImGui::BeginChild("ChatbotWindowChild", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    // Outer child window: provides vertical scrollbar
+    ImGui::BeginChild("ChatbotWindowOuter", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    
+    // Inner child window: provides margins, auto-resizes to content height so outer window scrolls
+    ImGui::Indent(LEFT_MARGIN);
+    ImVec2 innerSize = ImGui::GetContentRegionAvail();
+    innerSize.x -= RIGHT_MARGIN;
+    innerSize.y = 0;  // Auto-size height to content
+    ImGui::BeginChild("ChatbotWindowInner", innerSize, ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
+    
     try {
         ImGui::Spacing();
-        ImGui::Indent(10.0F);
         // Draw history
         if (!completedThreads_.empty()) {
             if (ImGuiControls::CollapsingHeaderWithDot("History")) {
@@ -92,11 +105,22 @@ void ChatbotWindow::draw() {
             }
             static_cast<void>(mainMenuStep_->draw());
         }
-        ImGui::Unindent(10.0F);
+        
+        // Add dummy space at the bottom to ensure current chat stays visible
+        ImGui::Dummy(ImVec2(0.0F, BOTTOM_PADDING));
+        
     } catch (const std::exception& e) {
         SnackbarManager::instance().showError(
             std::format("An error occurred in the Chatbot window:\n{}", e.what()));
     }
+    ImGui::EndChild();
+    ImGui::Unindent(LEFT_MARGIN);
+    
+    // Auto-scroll to bottom in outer window
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - BOTTOM_PADDING) {
+        ImGui::SetScrollHereY(1.0F);
+    }
+    
     ImGui::EndChild();
 }
 
