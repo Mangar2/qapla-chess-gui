@@ -36,8 +36,12 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     bool changed = false;
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Selected;
+    if (options.alwaysOpen) {
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    }
 
-    if (!ImGuiControls::CollapsingHeaderWithDot("Tournament", ImGuiTreeNodeFlags_Selected, tutorialContext.highlight)) {
+    if (!ImGuiControls::CollapsingHeaderWithDot("Tournament", flags, tutorialContext.highlight)) {
         return false;
     }
 

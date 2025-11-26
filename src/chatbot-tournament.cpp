@@ -22,6 +22,7 @@
 #include "chatbot-step-tournament-global-settings.h"
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
+#include "chatbot-step-tournament-configuration.h"
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
 
@@ -43,10 +44,13 @@ void ChatbotTournament::start() {
     // Step 4: Load more engines
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
 
-    // Step 5: Select PGN file for results
+    // Step 5: Configure tournament settings (type, rounds, games)
+    steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
+
+    // Step 6: Select PGN file for results
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
 
-    // Step 6: Start Tournament
+    // Step 7: Start Tournament
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 

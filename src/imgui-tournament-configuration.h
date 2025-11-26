@@ -44,6 +44,7 @@ namespace QaplaWindows {
          * @brief Options to control which UI elements are displayed.
          */
         struct DrawOptions {
+            bool alwaysOpen = false;         ///< Whether the configuration panel is always open
             bool showEvent = true;           ///< Show event name input
             bool showType = true;            ///< Show tournament type selection
             bool showRounds = true;          ///< Show rounds input

@@ -13,42 +13,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author GitHub Copilot
- * @copyright Copyright (c) 2025 GitHub Copilot
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #pragma once
 
-#include "chatbot-thread.h"
 #include "chatbot-step.h"
-#include "i18n.h"
-#include <vector>
-#include <memory>
+#include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot thread for creating a new chess tournament.
+ * @brief Step to configure tournament settings (type, rounds, games per pairing, etc.).
  */
-class ChatbotTournament : public ChatbotThread {
+class ChatbotStepTournamentConfiguration : public ChatbotStep {
 public:
-    [[nodiscard]] std::string getTitle() const override { 
-        return "Start Tournament"; 
-    }
-    void start() override;
-    void draw() override;
-    [[nodiscard]] bool isFinished() const override;
-    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
+    ChatbotStepTournamentConfiguration();
+    ~ChatbotStepTournamentConfiguration() override = default;
 
-    /**
-     * @brief Adds a step to the thread.
-     * @param step The step to add.
-     */
-    void addStep(std::unique_ptr<ChatbotStep> step);
+    [[nodiscard]] std::string draw() override;
+    [[nodiscard]] bool isFinished() const override;
 
 private:
-    std::vector<std::unique_ptr<ChatbotStep>> steps_;
-    size_t currentStep_ = 0;
+    bool finished_ = false;
+    
+    void drawConfiguration();
+    void drawGauntletSelection();
+    void applyGauntletSelection(int selectedIndex);
+    int findCurrentGauntletIndex() const;
+    bool isGauntletMode() const;
+    bool hasValidGauntletSelection() const;
 };
 
 } // namespace QaplaWindows::ChatBot
