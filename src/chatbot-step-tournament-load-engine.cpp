@@ -34,7 +34,7 @@ ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine() = default;
 
 std::string ChatbotStepTournamentLoadEngine::draw() {
     if (finished_) {
-         return "";
+         return result_;
     }
 
     switch (state_) {
@@ -48,7 +48,7 @@ std::string ChatbotStepTournamentLoadEngine::draw() {
             // Intentionally left blank
             break;
     }
-    return "";
+    return result_;
 }
 
 bool ChatbotStepTournamentLoadEngine::isFinished() const {
@@ -67,11 +67,21 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+            finished_ = true;
+            result_ = "stop";
+        }
     } else if (numSelected == 1) {
         QaplaWindows::ImGuiControls::textWrapped("One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.");
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
+        }
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+            finished_ = true;
+            result_ = "stop";
         }
     } else { // numSelected >= 2
         QaplaWindows::ImGuiControls::textWrapped("Do you want to load additional engines for the tournament?");
@@ -93,6 +103,11 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton(needsDetection ? "Skip Detection" : "Continue")) {
             finished_ = true;
+        }
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+            finished_ = true;
+            result_ = "stop";
         }
     }
 }

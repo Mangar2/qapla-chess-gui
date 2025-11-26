@@ -49,13 +49,21 @@ std::string ChatbotStepTournamentStart::draw() {
             finished_ = true;
         }
     } else {
-        QaplaWindows::ImGuiControls::textWrapped("Tournament started successfully.");
-        QaplaWindows::ImGuiControls::textWrapped("We will now switch to the tournament view.");
+        QaplaWindows::ImGuiControls::textWrapped("Tournament started successfully!");
+        ImGui::Spacing();
+        QaplaWindows::ImGuiControls::textWrapped("You can switch between all running games and the chatbot using the tabs at the top of the window. "
+            "Each game has its own tab, so you can easily navigate between them.");
         
         ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
         
-        if (QaplaWindows::ImGuiControls::textButton("Finish")) {
+        if (QaplaWindows::ImGuiControls::textButton("Switch to Tournament View")) {
             StaticCallbacks::message().invokeAll("switch_to_tournament_view");
+            finished_ = true;
+        }
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;
         }
     }

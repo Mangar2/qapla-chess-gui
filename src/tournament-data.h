@@ -385,6 +385,12 @@ namespace QaplaWindows {
          */
         void setupCallbacks();
 
+        /**
+         * @brief Activates the board view for a specific game index.
+         * @param gameIndex The index of the game to activate the board view for.
+         */
+        void activateBoardView(size_t gameIndex);
+
         void populateEloTable();
 		void populateRunningTable();
         void populateCauseTable();
@@ -410,6 +416,7 @@ namespace QaplaWindows {
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+        std::unique_ptr<Callback::UnregisterHandle> messageCallbackHandle_;
 
         uint32_t concurrency_ = 1;
 		uint32_t runningCount_ = 0; ///< Number of currently running games

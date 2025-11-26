@@ -39,6 +39,7 @@ public:
 
 private:
     bool finished_ = false;
+    std::string result_;
     
     enum class State {
         Input,

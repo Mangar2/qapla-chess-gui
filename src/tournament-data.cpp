@@ -143,6 +143,15 @@ namespace QaplaWindows {
     			this->pollData();
 		    }
     	);
+
+        // Message callback to handle external messages
+        messageCallbackHandle_ = StaticCallbacks::message().registerCallback(
+            [this](const std::string& msg) {
+                if (msg == "switch_to_tournament_view") {
+                    this->activateBoardView(0);
+                }
+            }
+        );
     }
 
     void TournamentData::setGameManagerPool(const std::shared_ptr<GameManagerPool>& pool) {
@@ -471,16 +480,23 @@ namespace QaplaWindows {
         return eloTable_.draw(size, true);
     }
 
+    void TournamentData::activateBoardView(size_t gameIndex) {
+        if (!tournament_) {
+            return;
+        }
+        const auto& row = runningTable_.getRow(gameIndex);
+        // Round.Game:WhiteEngine-BlackEngine
+        std::string rowId = std::format("{}.{}:{}-{}", row[2], row[3], row[0], row[1]);
+        boardWindowList_.setActiveWindowId(rowId);
+    }
+
     std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) {
         if (runningTable_.size() == 0) {
             return std::nullopt;
         }
         const auto clickedLine = runningTable_.draw(size, true);
         if (clickedLine) {
-            const auto& row = runningTable_.getRow(*clickedLine);
-            // Round.Game:WhiteEngine-BlackEngine
-            std::string rowId = std::format("{}.{}:{}-{}", row[2], row[3], row[0], row[1]);
-            boardWindowList_.setActiveWindowId(rowId);
+            activateBoardView(*clickedLine);
         }
         return clickedLine;
 	}
