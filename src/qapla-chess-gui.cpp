@@ -43,7 +43,7 @@
 #include "font.h"
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
-#include "chatbot-window.h"
+#include "chatbot/chatbot-window.h"
 
 #include <iostream>
 #include <stdexcept>
