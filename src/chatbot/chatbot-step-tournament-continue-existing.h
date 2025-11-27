@@ -13,8 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author GitHub Copilot
- * @copyright Copyright (c) 2025 GitHub Copilot
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #pragma once
@@ -25,23 +25,21 @@
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Step to ask the user if they want to save the existing tournament.
+ * @brief Step to ask the user if they want to continue an existing tournament.
+ * 
+ * This step is only active if there are scheduled tasks and the tournament is not finished.
+ * If no tournament is in progress, this step finishes automatically.
  */
-class ChatbotStepTournamentSaveExisting : public ChatbotStep {
+class ChatbotStepTournamentContinueExisting : public ChatbotStep {
 public:
-    ChatbotStepTournamentSaveExisting();
+    ChatbotStepTournamentContinueExisting();
 
     [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
 
 private:
     bool finished_ = false;
-    bool saved_ = false;
     std::string finishedMessage_;
-    
-    bool drawContinueTournamentButton();
-    bool drawSaveTournamentButton();
-    bool drawContinueButton(bool hasTasksScheduled);
 };
 
 } // namespace QaplaWindows::ChatBot

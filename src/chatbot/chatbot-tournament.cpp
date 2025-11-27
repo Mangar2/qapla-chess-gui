@@ -13,13 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author GitHub Copilot
- * @copyright Copyright (c) 2025 GitHub Copilot
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
  */
 
 #include "chatbot-tournament.h"
 #include "chatbot-step-tournament-stop-running.h"
-#include "chatbot-step-tournament-save-existing.h"
+#include "chatbot-step-tournament-continue-existing.h"
+#include "chatbot-step-tournament-menu.h"
+#include "chatbot-step-tournament-load.h"
 #include "chatbot-step-tournament-global-settings.h"
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
@@ -31,65 +33,61 @@ namespace QaplaWindows::ChatBot {
 
 void ChatbotTournament::start() {
     steps_.clear();
-    activeStepIndices_.clear();
+    currentStepIndex_ = 0;
     stopped_ = false;
 
-    // Step 0: Check if a tournament is running and offer to stop it
+    // Only add the initial steps - more steps are added dynamically based on user choice
     steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>());
+    steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>());
+}
 
-    // Step 1: Check if existing tournament needs saving
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSaveExisting>());
-    
-    // Step 2: Configure global engine settings (hash, time control)
+void ChatbotTournament::addNewTournamentSteps() {
     steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>());
-    
-    // Step 3: Select engines from existing list
     steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
-
-    // Step 4: Load more engines
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
-
-    // Step 5: Configure tournament settings (type, rounds, games)
     steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
-
-    // Step 6: Select PGN file for results
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
-
-    // Step 7: Start Tournament
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
-
-    // Start with the first step
-    activeStepIndices_.push_back(0);
 }
 
 void ChatbotTournament::draw() {
-    if (stopped_ || activeStepIndices_.empty()) {
+    if (stopped_ || steps_.empty()) {
         return;
     }
 
-    // Draw all active steps
-    for (size_t activeIdx : activeStepIndices_) {
-        if (activeIdx >= steps_.size()) {
-            continue;
-        }
-        std::string result = steps_[activeIdx]->draw();
+    // Draw all completed steps 
+    for (size_t i = 0; i < currentStepIndex_ && i < steps_.size(); ++i) {
+        static_cast<void>(steps_[i]->draw());
+    }
+
+    // Draw and handle current step
+    if (currentStepIndex_ < steps_.size()) {
+        std::string result = steps_[currentStepIndex_]->draw();
+        
         if (result == "stop") {
             stopped_ = true;
             return;
         }
-        if (result == "start") {
-            // Jump to the last step (tournament-start)
-            activeStepIndices_.push_back(steps_.size() - 1);
-            return;
-        }
-    }
 
-    // Check if we need to advance to the next step
-    size_t lastActiveIdx = activeStepIndices_.back();
-    if (steps_[lastActiveIdx]->isFinished()) {
-        size_t nextIdx = lastActiveIdx + 1;
-        if (nextIdx < steps_.size()) {
-            activeStepIndices_.push_back(nextIdx);
+        if (result == "menu") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentMenu>());
+        }
+        
+        if (result == "new") {
+            addNewTournamentSteps();
+        }
+        
+        if (result == "load") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentLoad>());
+        }
+        
+        if (result == "start") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
+        }
+        
+        // Advance to next step if current is finished
+        if (steps_[currentStepIndex_]->isFinished()) {
+            ++currentStepIndex_;
         }
     }
 }
@@ -98,26 +96,15 @@ bool ChatbotTournament::isFinished() const {
     if (stopped_) {
         return true;
     }
-    if (activeStepIndices_.empty()) {
+    if (steps_.empty()) {
         return false;
     }
-    size_t lastActiveIdx = activeStepIndices_.back();
-    // Finished when the last step in steps_ is active and finished
-    return lastActiveIdx == steps_.size() - 1 && steps_[lastActiveIdx]->isFinished();
+    // Finished when past the last step
+    return currentStepIndex_ >= steps_.size();
 }
 
 std::unique_ptr<ChatbotThread> ChatbotTournament::clone() const {
     return std::make_unique<ChatbotTournament>();
-}
-
-void ChatbotTournament::addStep(std::unique_ptr<ChatbotStep> step) {
-    // Insert after current active step in steps_ vector
-    if (!activeStepIndices_.empty()) {
-        size_t lastActiveIdx = activeStepIndices_.back();
-        steps_.insert(steps_.begin() + lastActiveIdx + 1, std::move(step));
-    } else {
-        steps_.push_back(std::move(step));
-    }
 }
 
 } // namespace QaplaWindows::ChatBot

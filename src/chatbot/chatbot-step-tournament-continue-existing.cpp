@@ -17,45 +17,49 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-step-tournament-stop-running.h"
-#include "chatbot-step.h"
+#include "chatbot-step-tournament-continue-existing.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning() {
-    // If no tournament is running, finish immediately
-    if (!TournamentData::instance().isRunning()) {
-        finished_ = true;
-    }
+ChatbotStepTournamentContinueExisting::ChatbotStepTournamentContinueExisting() {
+
 }
 
-std::string ChatbotStepTournamentStopRunning::draw() {
+std::string ChatbotStepTournamentContinueExisting::draw() {
+    auto& tournament = TournamentData::instance();
+    if (!tournament.hasTasksScheduled() || tournament.isFinished()) {
+        finished_ = true;
+    }
     if (finished_) {
-        if (!finishedMessage_.empty()) {
-            QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
-        }
+        QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
         return "";
     }
 
     QaplaWindows::ImGuiControls::textWrapped(
-        "A tournament is currently running. Would you like to end it?");
+        "There is an existing tournament that can be continued. Would you like to continue it?");
     
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (QaplaWindows::ImGuiControls::textButton("Yes, end tournament")) {
-        TournamentData::instance().stopPool(false);
-        finishedMessage_ = "Tournament ended.";
+    if (QaplaWindows::ImGuiControls::textButton("Yes, continue tournament")) {
+        finishedMessage_ = "Continuing existing tournament.";
         finished_ = true;
+        return "start";
+    }
+    
+    ImGui::SameLine();
+    if (QaplaWindows::ImGuiControls::textButton("No")) {
+        finishedMessage_ = "";
+        finished_ = true;
+        return "menu";
     }
 
     ImGui::SameLine();
-
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
-        finishedMessage_ = "Tournament continues.";
+        finishedMessage_ = "";
         finished_ = true;
         return "stop";
     }
@@ -63,7 +67,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
     return "";
 }
 
-bool ChatbotStepTournamentStopRunning::isFinished() const {
+bool ChatbotStepTournamentContinueExisting::isFinished() const {
     return finished_;
 }
 

@@ -19,6 +19,17 @@ std::string ChatbotStepTournamentStart::draw() {
         return "";
     }
 
+    bool isFinished = TournamentData::instance().isFinished();
+
+    if (isFinished) {
+        QaplaWindows::ImGuiControls::textWrapped("The tournament is already finished.");
+        ImGui::Spacing();
+        if (QaplaWindows::ImGuiControls::textButton("Return")) {
+            finished_ = true;
+        }
+        return "";
+    }
+
     if (TournamentData::instance().isStarting()) {
         QaplaWindows::ImGuiControls::textWrapped("Tournament is starting up, please wait...");
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
@@ -49,6 +60,7 @@ std::string ChatbotStepTournamentStart::draw() {
 
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
+            return "stop";
         }
     } else {
         QaplaWindows::ImGuiControls::textWrapped("Tournament started successfully!");

@@ -17,34 +17,32 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#pragma once
-
-#include "chatbot-thread.h"
-#include "chatbot-step.h"
-#include <vector>
-#include <memory>
+#include "chatbot-step-tournament-load.h"
+#include "tournament-data.h"
+#include "imgui-controls.h"
+#include "os-dialogs.h"
+#include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-/**
- * @brief A chatbot thread for creating a new chess tournament.
- */
-class ChatbotTournament : public ChatbotThread {
-public:
-    [[nodiscard]] std::string getTitle() const override { 
-        return "Tournament"; 
+std::string ChatbotStepTournamentLoad::draw() {
+    if (finished_) {
+        return "Tournament loaded successfully.";
     }
-    void start() override;
-    void draw() override;
-    [[nodiscard]] bool isFinished() const override;
-    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
-private:
-    std::vector<std::unique_ptr<ChatbotStep>> steps_;
-    size_t currentStepIndex_ = 0;
-    bool stopped_ = false;
-    
-    void addNewTournamentSteps();
-};
+    auto selectedPath = OsDialogs::openFileDialog(false, 
+        { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} });
+    if (!selectedPath.empty() && !selectedPath[0].empty()) {
+        TournamentData::instance().loadTournament(selectedPath[0]);
+        finished_ = true;
+        return "start";
+    }
+    finished_ = true;
+    return "stop";
+}
+
+bool ChatbotStepTournamentLoad::isFinished() const {
+    return finished_;
+}
 
 } // namespace QaplaWindows::ChatBot

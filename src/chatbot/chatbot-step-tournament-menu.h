@@ -19,32 +19,24 @@
 
 #pragma once
 
-#include "chatbot-thread.h"
 #include "chatbot-step.h"
-#include <vector>
-#include <memory>
+#include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot thread for creating a new chess tournament.
+ * @brief Step to ask the user what they want to do with the tournament.
+ * 
+ * Options: New tournament, Save tournament, Load tournament
  */
-class ChatbotTournament : public ChatbotThread {
+class ChatbotStepTournamentMenu : public ChatbotStep {
 public:
-    [[nodiscard]] std::string getTitle() const override { 
-        return "Tournament"; 
-    }
-    void start() override;
-    void draw() override;
+    [[nodiscard]] std::string draw() override;
     [[nodiscard]] bool isFinished() const override;
-    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
 private:
-    std::vector<std::unique_ptr<ChatbotStep>> steps_;
-    size_t currentStepIndex_ = 0;
-    bool stopped_ = false;
-    
-    void addNewTournamentSteps();
+    bool finished_ = false;
+    bool saved_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

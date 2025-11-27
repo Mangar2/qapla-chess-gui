@@ -17,53 +17,57 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-step-tournament-stop-running.h"
-#include "chatbot-step.h"
+#include "chatbot-step-tournament-menu.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
+#include "os-dialogs.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning() {
-    // If no tournament is running, finish immediately
-    if (!TournamentData::instance().isRunning()) {
-        finished_ = true;
-    }
-}
-
-std::string ChatbotStepTournamentStopRunning::draw() {
+std::string ChatbotStepTournamentMenu::draw() {
     if (finished_) {
-        if (!finishedMessage_.empty()) {
-            QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
-        }
         return "";
     }
 
-    QaplaWindows::ImGuiControls::textWrapped(
-        "A tournament is currently running. Would you like to end it?");
+    QaplaWindows::ImGuiControls::textWrapped("What would you like to do?\n");
+    if (!saved_) {
+        ImGui::Spacing();
+        QaplaWindows::ImGuiControls::textWrapped(
+            "Starting a new tournament will delete the existing one.\n"
+            "Save the current tournament to a file if you want to keep it.");
+    }
     
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (QaplaWindows::ImGuiControls::textButton("Yes, end tournament")) {
-        TournamentData::instance().stopPool(false);
-        finishedMessage_ = "Tournament ended.";
+    if (QaplaWindows::ImGuiControls::textButton("New tournament")) {
+        TournamentData::instance().clear(false);
         finished_ = true;
+        return "new";
     }
 
     ImGui::SameLine();
 
-    if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
-        finishedMessage_ = "Tournament continues.";
+    if (QaplaWindows::ImGuiControls::textButton("Save tournament")) {
+        auto path = OsDialogs::saveFileDialog({{"Qapla Tournament Files", "qtour"}});
+        if (!path.empty()) {
+            TournamentData::saveTournament(path);
+            saved_ = true;
+        }
+    }
+
+    ImGui::SameLine();
+
+    if (QaplaWindows::ImGuiControls::textButton("Load tournament")) {
         finished_ = true;
-        return "stop";
+        return "load";
     }
     
     return "";
 }
 
-bool ChatbotStepTournamentStopRunning::isFinished() const {
+bool ChatbotStepTournamentMenu::isFinished() const {
     return finished_;
 }
 
