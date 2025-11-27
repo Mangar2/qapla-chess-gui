@@ -61,25 +61,32 @@ void ChatbotWindow::resetToMainMenu() {
         ChatbotThread* ptr = thread.get();
         options.push_back({
             Translator::instance().translate("Chatbot", thread->getTitle()),
-            [this, ptr]() { startThread(*ptr); }
+            [this, ptr]() { 
+                startThread(*ptr); 
+            }
         });
     }
     mainMenuStep_ = std::make_unique<ChatbotStepOptionList>(
         Translator::instance().translate("Chatbot", "How can I help you?"),
         std::move(options)
     );
+    lastCursorY_ = 0.0F;  // Reset scroll tracking when content is cleared
 }
 
 void ChatbotWindow::draw() {
+    
     // Outer child window: provides vertical scrollbar
-    ImGui::BeginChild("ChatbotWindowOuter", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::BeginChild("ChatbotWindowOuter", ImVec2(0, 0), false, 
+        ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
     
     // Inner child window: provides margins, auto-resizes to content height so outer window scrolls
     ImGui::Indent(LEFT_MARGIN);
     ImVec2 innerSize = ImGui::GetContentRegionAvail();
     innerSize.x -= RIGHT_MARGIN;
     innerSize.y = 0;  // Auto-size height to content
-    ImGui::BeginChild("ChatbotWindowInner", innerSize, ImGuiChildFlags_AutoResizeY, ImGuiWindowFlags_NoScrollbar);
+    ImGui::BeginChild("ChatbotWindowInner", innerSize, 
+        ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AutoResizeX, 
+        ImGuiWindowFlags_NoScrollbar);
     
     try {
         ImGui::Spacing();
@@ -92,9 +99,9 @@ void ChatbotWindow::draw() {
             }
             ImGui::Separator();
         }
-
+        
         if (activeThread_) {
-            activeThread_->draw();
+            static_cast<void>(activeThread_->draw());
             if (activeThread_->isFinished()) {
                 completedThreads_.push_back(std::move(activeThread_));
                 resetToMainMenu();
@@ -116,10 +123,12 @@ void ChatbotWindow::draw() {
     ImGui::EndChild();
     ImGui::Unindent(LEFT_MARGIN);
     
-    // Auto-scroll to bottom in outer window
-    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - BOTTOM_PADDING) {
+    // Auto-scroll to bottom when content grows
+    float currentCursorY = ImGui::GetCursorScreenPos().y;
+    if (currentCursorY > lastCursorY_) {
         ImGui::SetScrollHereY(1.0F);
     }
+    lastCursorY_ = currentCursorY;
     
     ImGui::EndChild();
 }

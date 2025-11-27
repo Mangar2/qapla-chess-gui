@@ -58,10 +58,15 @@ std::string ChatbotStepTournamentMenu::draw() {
     }
 
     ImGui::SameLine();
-
     if (QaplaWindows::ImGuiControls::textButton("Load tournament")) {
         finished_ = true;
         return "load";
+    }
+
+    ImGui::SameLine();
+    if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
+        finished_ = true;
+        return "stop";
     }
     
     return "";

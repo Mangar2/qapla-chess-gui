@@ -38,7 +38,6 @@ void ChatbotTournament::start() {
 
     // Only add the initial steps - more steps are added dynamically based on user choice
     steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>());
 }
 
 void ChatbotTournament::addNewTournamentSteps() {
@@ -50,9 +49,11 @@ void ChatbotTournament::addNewTournamentSteps() {
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
 
-void ChatbotTournament::draw() {
+bool ChatbotTournament::draw() {
+    bool contentChanged = false;
+    
     if (stopped_ || steps_.empty()) {
-        return;
+        return false;
     }
 
     // Draw all completed steps 
@@ -66,7 +67,7 @@ void ChatbotTournament::draw() {
         
         if (result == "stop") {
             stopped_ = true;
-            return;
+            return false;
         }
 
         if (result == "menu") {
@@ -84,12 +85,19 @@ void ChatbotTournament::draw() {
         if (result == "start") {
             steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
         }
+
+        if (result == "existing") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>());
+        }
         
         // Advance to next step if current is finished
-        if (steps_[currentStepIndex_]->isFinished()) {
+        if (steps_.size() > currentStepIndex_ && steps_[currentStepIndex_]->isFinished()) {
             ++currentStepIndex_;
+            contentChanged = true;
         }
     }
+    
+    return contentChanged;
 }
 
 bool ChatbotTournament::isFinished() const {

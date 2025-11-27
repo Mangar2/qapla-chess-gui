@@ -25,19 +25,18 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning() {
-    // If no tournament is running, finish immediately
-    if (!TournamentData::instance().isRunning()) {
-        finished_ = true;
-    }
-}
+ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning() = default;
+
 
 std::string ChatbotStepTournamentStopRunning::draw() {
     if (finished_) {
-        if (!finishedMessage_.empty()) {
-            QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
-        }
+        QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);
         return "";
+    }
+    
+    if (!TournamentData::instance().isRunning()) {
+        finished_ = true;
+        return "existing";
     }
 
     QaplaWindows::ImGuiControls::textWrapped(
@@ -50,6 +49,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
         TournamentData::instance().stopPool(false);
         finishedMessage_ = "Tournament ended.";
         finished_ = true;
+        return "menu";
     }
 
     ImGui::SameLine();

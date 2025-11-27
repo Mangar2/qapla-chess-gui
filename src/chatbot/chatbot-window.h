@@ -60,6 +60,8 @@ private:
     
     std::unique_ptr<ChatbotThread> activeThread_;
     std::unique_ptr<ChatbotStep> mainMenuStep_;
+    
+    float lastCursorY_ = 0.0F;  ///< Last cursor Y position to detect content growth
 };
 
 } // namespace QaplaWindows::ChatBot

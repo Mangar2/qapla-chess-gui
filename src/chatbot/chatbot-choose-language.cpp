@@ -56,13 +56,18 @@ void ChatbotChooseLanguage::start() {
     currentStep_ = 0;
 }
 
-void ChatbotChooseLanguage::draw() {
+bool ChatbotChooseLanguage::draw() {
+    bool contentChanged = false;
+    
     if (currentStep_ < steps_.size()) {
         static_cast<void>(steps_[currentStep_]->draw());
         if (steps_[currentStep_]->isFinished()) {
             ++currentStep_;
+            contentChanged = true;
         }
     }
+    
+    return contentChanged;
 }
 
 bool ChatbotChooseLanguage::isFinished() const {

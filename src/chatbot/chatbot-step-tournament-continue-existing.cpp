@@ -32,6 +32,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
     auto& tournament = TournamentData::instance();
     if (!tournament.hasTasksScheduled() || tournament.isFinished()) {
         finished_ = true;
+        return "menu";
     }
     if (finished_) {
         QaplaWindows::ImGuiControls::textDisabled(finishedMessage_);

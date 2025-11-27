@@ -48,8 +48,9 @@ public:
 
     /**
      * @brief Renders the current state of the thread.
+     * @return true if content has changed and scrolling is needed, false otherwise.
      */
-    virtual void draw() = 0;
+    virtual bool draw() = 0;
 
     /**
      * @brief Checks if the thread is finished.

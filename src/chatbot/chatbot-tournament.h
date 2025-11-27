@@ -35,7 +35,7 @@ public:
         return "Tournament"; 
     }
     void start() override;
-    void draw() override;
+    bool draw() override;
     [[nodiscard]] bool isFinished() const override;
     [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
