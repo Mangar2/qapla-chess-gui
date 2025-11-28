@@ -33,11 +33,8 @@ public:
     ~ChatbotStepTournamentConfiguration() override = default;
 
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
 private:
-    bool finished_ = false;
-    
     void drawConfiguration();
     void drawGauntletSelection();
     void applyGauntletSelection(int selectedIndex);

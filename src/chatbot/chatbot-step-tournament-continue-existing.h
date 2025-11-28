@@ -35,10 +35,8 @@ public:
     ChatbotStepTournamentContinueExisting();
 
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
-private:
-    bool finished_ = false;
+    private:
     std::string finishedMessage_;
 };
 

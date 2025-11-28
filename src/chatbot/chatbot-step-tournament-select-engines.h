@@ -33,10 +33,7 @@ public:
     ~ChatbotStepTournamentSelectEngines() override;
 
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
-private:
-    bool finished_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

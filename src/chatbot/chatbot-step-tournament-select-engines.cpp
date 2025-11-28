@@ -84,8 +84,4 @@ std::string ChatbotStepTournamentSelectEngines::draw() {
 
 }
 
-bool ChatbotStepTournamentSelectEngines::isFinished() const {
-    return finished_;
-}
-
 } // namespace QaplaWindows::ChatBot

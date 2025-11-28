@@ -50,7 +50,12 @@ public:
      * @brief Checks if the step is finished.
      * @return true if the step is completed, false otherwise.
      */
-    [[nodiscard]] virtual bool isFinished() const = 0;
+    [[nodiscard]] bool isFinished() const {
+        return finished_;
+    }
+
+protected:
+    bool finished_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

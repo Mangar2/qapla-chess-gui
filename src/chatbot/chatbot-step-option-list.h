@@ -44,12 +44,10 @@ public:
     ChatbotStepOptionList(std::string prompt, std::vector<Option> options);
 
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
 private:
     std::string prompt_;
     std::vector<Option> options_;
-    bool finished_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

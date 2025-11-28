@@ -222,7 +222,8 @@ bool SprtTournamentWindow::drawInput() {
     changed |= tournamentData.globalSettings().drawGlobalSettings(
         { .controlWidth = inputWidth, .controlIndent = 10.0F });
     changed |= tournamentData.engineSelect().draw();
-    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F);
+    changed |= tournamentData.tournamentOpening().draw(
+        { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth, .indent = 10.0F });
 
     if (ImGuiControls::CollapsingHeaderWithDot("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
         ImGui::PushID("sprtConfig");

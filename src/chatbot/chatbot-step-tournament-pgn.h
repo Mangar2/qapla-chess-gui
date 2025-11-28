@@ -37,12 +37,6 @@ public:
      */
     [[nodiscard]] std::string draw() override;
 
-    /**
-     * @brief Checks if the step is finished.
-     * @return True if user confirmed or cancelled.
-     */
-    [[nodiscard]] bool isFinished() const override;
-
 private:
     /**
      * @brief Result of file path validation.
@@ -73,8 +67,6 @@ private:
      * @return "stop" if cancelled, empty string otherwise.
      */
     std::string drawButtons(const ValidationResult& validation);
-
-    bool finished_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

@@ -51,10 +51,6 @@ std::string ChatbotStepTournamentLoadEngine::draw() {
     return result_;
 }
 
-bool ChatbotStepTournamentLoadEngine::isFinished() const {
-    return finished_;
-}
-
 void ChatbotStepTournamentLoadEngine::drawInput() {
     auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
     size_t numSelected = selectedEngines.size();

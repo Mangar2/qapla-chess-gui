@@ -33,20 +33,51 @@ class Tutorial;
 
 namespace QaplaWindows {
 
+    /**
+     * @brief Parameters for drawing the tournament opening UI controls.
+     */
+    struct TournamentOpeningDrawParams {
+        float inputWidth = 150.0F;           ///< Width for input controls
+        float fileInputWidth = 300.0F;       ///< Width for file input control
+        float indent = 10.0F;                ///< Indentation level
+
+        bool showOpeningFile = true;         ///< Show opening file input
+        bool showOrder = true;               ///< Show order selection
+        bool showPlies = true;               ///< Show plies input
+        bool showFirstOpening = true;        ///< Show first opening input
+        bool showRandomSeed = true;          ///< Show random seed input
+        bool showSwitchPolicy = true;        ///< Show switch policy selection
+    };
+
     class ImGuiTournamentOpening {
     public:
         ImGuiTournamentOpening() = default;
         ~ImGuiTournamentOpening() = default;
 
         /**
+         * @brief Parameters for drawing the tournament opening UI controls.
+         */
+        struct DrawParams {
+            float inputWidth = 150.0F;           ///< Width for input controls
+            float fileInputWidth = 300.0F;       ///< Width for file input control
+            float indent = 10.0F;                ///< Indentation level
+
+            bool alwaysOpen = false;             ///< Whether the section is always open
+            bool showOpeningFile = true;         ///< Show opening file input
+            bool showOrder = true;               ///< Show order selection
+            bool showPlies = true;               ///< Show plies input
+            bool showFirstOpening = true;        ///< Show first opening input
+            bool showRandomSeed = true;          ///< Show random seed input
+            bool showSwitchPolicy = true;        ///< Show switch policy selection
+        };
+
+        /**
          * @brief Renders the tournament opening configuration UI.
-         * @param inputWidth Width for input controls.
-         * @param fileInputWidth Width for file input control.
-         * @param indent Indentation level.
+         * @param params Draw parameters including control visibility flags
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return True if any value was changed, false otherwise.
          */
-        bool draw(float inputWidth, float fileInputWidth, float indent, 
+        bool draw(const DrawParams& params, 
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         void setId(const std::string& id) {
@@ -65,6 +96,54 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
+        /**
+         * @brief Draws the opening file input control.
+         * @param fileInputWidth Width for file input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawOpeningFile(float fileInputWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the order selection control.
+         * @param inputWidth Width for input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawOrder(float inputWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the plies input control.
+         * @param inputWidth Width for input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawPlies(float inputWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the first opening input control.
+         * @param inputWidth Width for input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawFirstOpening(float inputWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the random seed input control.
+         * @param inputWidth Width for input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawRandomSeed(float inputWidth, const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the switch policy selection control.
+         * @param inputWidth Width for input control
+         * @param tutorialContext Tutorial context with highlighting and annotations
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawSwitchPolicy(float inputWidth, const Tutorial::TutorialContext& tutorialContext);
+
         QaplaTester::Openings openings_;
         std::string id_;
     };

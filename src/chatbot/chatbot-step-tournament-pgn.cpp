@@ -125,8 +125,4 @@ std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& valida
     return "";
 }
 
-bool ChatbotStepTournamentPgn::isFinished() const {
-    return finished_;
-}
-
 } // namespace QaplaWindows::ChatBot

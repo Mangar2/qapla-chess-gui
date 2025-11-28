@@ -182,8 +182,4 @@ bool ChatbotStepTournamentConfiguration::hasValidGauntletSelection() const {
     return findCurrentGauntletIndex() >= 0;
 }
 
-bool ChatbotStepTournamentConfiguration::isFinished() const {
-    return finished_;
-}
-
 } // namespace QaplaWindows::ChatBot

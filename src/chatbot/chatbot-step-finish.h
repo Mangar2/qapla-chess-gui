@@ -36,11 +36,9 @@ public:
     explicit ChatbotStepFinish(std::string message);
 
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
 private:
     std::string message_;
-    bool finished_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

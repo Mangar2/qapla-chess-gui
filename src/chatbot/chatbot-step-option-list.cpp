@@ -65,8 +65,4 @@ std::string ChatbotStepOptionList::draw() {
     return "";
 }
 
-bool ChatbotStepOptionList::isFinished() const {
-    return finished_;
-}
-
 } // namespace QaplaWindows::ChatBot

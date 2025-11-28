@@ -32,10 +32,8 @@ namespace QaplaWindows::ChatBot {
 class ChatbotStepTournamentMenu : public ChatbotStep {
 public:
     [[nodiscard]] std::string draw() override;
-    [[nodiscard]] bool isFinished() const override;
 
 private:
-    bool finished_ = false;
     bool saved_ = false;
 };
 

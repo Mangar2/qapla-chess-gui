@@ -246,7 +246,8 @@ bool TournamentWindow::drawInput() {
     changed |= tournamentData.engineSelect().draw(highlightEngineSelect);
     
     openingTutorial_.highlight = (highlightedSection_ == "Opening");
-    changed |= tournamentData.tournamentOpening().draw(inputWidth, fileInputWidth, 10.0F, openingTutorial_);
+    changed |= tournamentData.tournamentOpening().draw(
+        { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth, .indent = 10.0F }, openingTutorial_);
 
     tournamentTutorial_.highlight = (highlightedSection_ == "Tournament");
     changed |= tournamentData.tournamentConfiguration().draw({}, inputWidth, 10.0F, tournamentTutorial_);
