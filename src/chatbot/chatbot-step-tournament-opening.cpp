@@ -27,6 +27,8 @@
 
 namespace QaplaWindows::ChatBot {
 
+constexpr uint64_t MAX_VALIDATION_GAMES = 10000;
+
 ChatbotStepTournamentOpening::ChatbotStepTournamentOpening() = default;
 
 std::string ChatbotStepTournamentOpening::draw() {
@@ -65,9 +67,22 @@ std::string ChatbotStepTournamentOpening::draw() {
     }
 
     ImGui::Spacing();
+
+    // Check if file changed and reset validation state if needed
+    const auto& openings = TournamentData::instance().tournamentOpening().openings();
+    if (openings.file != lastFilename_) {
+        lastFilename_ = openings.file;
+        isValidated_ = false;
+        parseResult_.reset();
+        
+        // Auto-validate if file exists
+        if (!openings.file.empty() && doesOpeningFileExist()) {
+            validateOpeningFile();
+        }
+    }
     
     // Show status or validation result
-    if (validationState_ == ValidationState::NotValidated) {
+    if (!isValidated_) {
         drawStatusMessage();
     } else {
         drawValidationResult();
@@ -97,13 +112,6 @@ void ChatbotStepTournamentOpening::drawStatusMessage() {
         QaplaWindows::ImGuiControls::textWrapped(
             "The specified opening file does not exist. Please select a valid file.");
         ImGui::PopStyleColor();
-    } else {
-        // Automatically validate when file exists and changed
-        if (openings.file != lastValidatedFile_) {
-            validateOpeningFile();
-        } else {
-            drawValidationResult();
-        }
     }
 }
 
@@ -146,10 +154,8 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
 }
 
 std::string ChatbotStepTournamentOpening::drawButtons() {
-    bool isValidated = validationState_ == ValidationState::Success;
-
     // Continue button - only enabled after successful validation
-    ImGui::BeginDisabled(!isValidated);
+    ImGui::BeginDisabled(!isValidated_);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
@@ -183,16 +189,10 @@ bool ChatbotStepTournamentOpening::doesOpeningFileExist() const {
 void ChatbotStepTournamentOpening::validateOpeningFile() {
     const auto& openings = TournamentData::instance().tournamentOpening().openings();
     
-    lastValidatedFile_ = openings.file;
-    
     QaplaTester::OpeningParser parser;
-    parseResult_ = parser.parseWithTrace(openings.file);
+    parseResult_ = parser.parseWithTrace(openings.file, MAX_VALIDATION_GAMES);
     
-    if (parseResult_->success()) {
-        validationState_ = ValidationState::Success;
-    } else {
-        validationState_ = ValidationState::Error;
-    }
+    isValidated_ = parseResult_->success();
     
     drawValidationResult();
 }

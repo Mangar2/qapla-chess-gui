@@ -42,16 +42,6 @@ public:
 
 private:
     /**
-     * @brief State of the opening file validation.
-     */
-    enum class ValidationState {
-        NotValidated,   ///< File has not been validated yet
-        Validating,     ///< Validation in progress
-        Success,        ///< File was successfully parsed
-        Error           ///< File could not be parsed
-    };
-
-    /**
      * @brief Draws status messages based on opening file validation.
      */
     void drawStatusMessage();
@@ -86,9 +76,9 @@ private:
 
     bool showMoreOptions_ = false;                          ///< Show advanced options
     bool showTrace_ = false;                                ///< Show parser trace
-    ValidationState validationState_ = ValidationState::NotValidated;
+    bool isValidated_ = false;                              ///< True if file was successfully validated
     std::optional<QaplaTester::OpeningParserResult> parseResult_;
-    std::string lastValidatedFile_;                         ///< Last validated file path
+    std::string lastFilename_;                              ///< Last checked file path (valid or not)
 };
 
 } // namespace QaplaWindows::ChatBot
