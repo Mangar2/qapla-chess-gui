@@ -9,6 +9,7 @@ log.*
 copilot/*
 i18n/*.exe
 *.pgn
+*.code-workspace
 
 # Libraries used
 extern/imgui/
