@@ -26,6 +26,7 @@
 #include "chatbot-step-tournament-select-engines.h"
 #include "chatbot-step-tournament-load-engine.h"
 #include "chatbot-step-tournament-configuration.h"
+#include "chatbot-step-tournament-opening.h"
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
 
@@ -45,6 +46,7 @@ void ChatbotTournament::addNewTournamentSteps() {
     steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
+    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
 }
