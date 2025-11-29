@@ -21,6 +21,7 @@
 
 #include "game-record.h"
 #include "pgn-io.h"
+#include "pgn-save.h"
 #include "game-filter-data.h"
 
 #include <string>
@@ -146,5 +147,6 @@ private:
                           std::function<bool()> cancelCheck);
 
     std::vector<QaplaTester::GameRecord> games_;  // Loaded game records
-    QaplaTester::PgnIO pgnIO_;  // PGN I/O handler
+    QaplaTester::PgnIO pgnIO_;  // PGN load handler
+    QaplaTester::PgnSave pgnSave_;  // PGN save handler
 };

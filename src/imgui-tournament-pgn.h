@@ -21,7 +21,7 @@
 
 #include "tutorial.h"
 
-#include "pgn-io.h"
+#include "pgn-save.h"
 #include "ini-file.h"
 
 #include <string>
@@ -65,7 +65,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the PGN options.
          * @return Reference to the PGN options.
          */
-        QaplaTester::PgnIO::Options& pgnOptions() {
+        QaplaTester::PgnSave::Options& pgnOptions() {
             return pgnOptions_;
         }
 
@@ -73,7 +73,7 @@ namespace QaplaWindows {
          * @brief Returns a const reference to the PGN options.
          * @return Const reference to the PGN options.
          */
-        [[nodiscard]] const QaplaTester::PgnIO::Options& pgnOptions() const {
+        [[nodiscard]] const QaplaTester::PgnSave::Options& pgnOptions() const {
             return pgnOptions_;
         }
 
@@ -89,7 +89,7 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
-        QaplaTester::PgnIO::Options pgnOptions_;
+        QaplaTester::PgnSave::Options pgnOptions_;
         std::string id_;
     };
 

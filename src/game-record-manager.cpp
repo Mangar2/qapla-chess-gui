@@ -172,7 +172,7 @@ size_t GameRecordManager::saveWithFilter(const std::string& fileName,
 }
 
 void GameRecordManager::appendGame(const std::string& fileName, const QaplaTester::GameRecord& game) {
-    pgnIO_.saveGame(fileName, game);
+    pgnSave_.saveGame(fileName, game);
 }
 
 void GameRecordManager::pruneOldGames(const std::string& fileName, size_t maxGames) {

@@ -37,6 +37,7 @@
 
 #include "game-manager-pool.h"
 #include "pgn-io.h"
+#include "pgn-save.h"
 #include "adjudication-manager.h"
 #include "imgui-table.h"
 
@@ -250,7 +251,7 @@ namespace QaplaWindows {
 
             auto selectedEngines = getSelectedEngines();
 
-            PgnIO::tournament().setOptions(pgnConfig());
+            PgnSave::tournament().setOptions(pgnConfig());
             QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
             QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             tournament_->createTournament(selectedEngines, *config_);

@@ -27,6 +27,7 @@
 #include "sprt-manager.h"
 #include "engine-option.h"
 #include "pgn-io.h"
+#include "pgn-save.h"
 #include "game-manager-pool.h"
 
 #include <algorithm>
@@ -281,7 +282,7 @@ bool SprtTournamentData::createTournament(bool verbose) {
 
         // Set PGN output options and create tournament
         if (sprtManager_) {
-            PgnIO::tournament().setOptions(tournamentPgn_->pgnOptions());
+            PgnSave::tournament().setOptions(tournamentPgn_->pgnOptions());
             QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
             QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             sprtManager_->createTournament(selectedEngines[0], selectedEngines[1], *sprtConfig_);

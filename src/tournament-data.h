@@ -37,6 +37,7 @@
 #include "engine-option.h"
 #include "engine-config.h"
 #include "pgn-io.h"
+#include "pgn-save.h"
 #include "adjudication-manager.h"
 #include "time-control.h"
 #include "logger.h"
@@ -239,11 +240,11 @@ namespace QaplaWindows {
             return *tournamentPgn_;
         }
 
-        const QaplaTester::PgnIO::Options& pgnConfig() const {
+        const QaplaTester::PgnSave::Options& pgnConfig() const {
             return tournamentPgn_->pgnOptions();
         }
 
-        QaplaTester::PgnIO::Options& pgnConfig() {
+        QaplaTester::PgnSave::Options& pgnConfig() {
             return tournamentPgn_->pgnOptions();
         }
 
