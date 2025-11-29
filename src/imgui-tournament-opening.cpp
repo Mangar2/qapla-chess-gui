@@ -190,9 +190,6 @@ void ImGuiTournamentOpening::loadConfiguration() {
         if (key == "file") {
             openings_.file = value;
         }
-        else if (key == "format" && (value == "pgn" || value == "epd" || value == "raw")) {
-            openings_.format = value;
-        }
         else if (key == "order" && (value == "sequential" || value == "random")) {
             openings_.order = value;
         }
@@ -215,7 +212,6 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections(
     QaplaHelpers::IniFile::KeyValueMap openingEntries{
         {"id", id_},
         {"file", openings_.file},
-        {"format", openings_.format},
         {"order", openings_.order},
         {"seed", std::to_string(openings_.seed)},
         {"start", std::to_string(openings_.start)},
