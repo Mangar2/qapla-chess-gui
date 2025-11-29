@@ -132,8 +132,15 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
         ImGui::PopStyleColor();
     } else {
         ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
-        QaplaWindows::ImGuiControls::textWrapped(
-            "Failed to parse opening file. Please check the file format and try again.");
+        std::string errorMessage;
+        if (parseResult_->games.empty()) {
+            errorMessage = "Failed to parse opening file. No valid positions found.\n"
+                           "Please check the file format (EPD, PGN, or FEN) and ensure "
+                           "it contains valid positions.";
+        } else {
+            errorMessage = "Failed to parse opening file. Please check the file format and try again.";
+        }
+        QaplaWindows::ImGuiControls::textWrapped(errorMessage.c_str());
         ImGui::PopStyleColor();
     }
 
@@ -154,8 +161,9 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
 }
 
 std::string ChatbotStepTournamentOpening::drawButtons() {
-    // Continue button - only enabled after successful validation
-    ImGui::BeginDisabled(!isValidated_);
+    // Continue button - only enabled after successful validation with valid positions
+    const bool canContinue = isValidated_ && parseResult_ && parseResult_->success();
+    ImGui::BeginDisabled(!canContinue);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
@@ -192,7 +200,9 @@ void ChatbotStepTournamentOpening::validateOpeningFile() {
     QaplaTester::OpeningParser parser;
     parseResult_ = parser.parseWithTrace(openings.file, MAX_VALIDATION_GAMES);
     
-    isValidated_ = parseResult_->success();
+    // Mark as validated regardless of success - we have a result to show
+    // The continue button will check parseResult_->success()
+    isValidated_ = true;
     
     drawValidationResult();
 }
