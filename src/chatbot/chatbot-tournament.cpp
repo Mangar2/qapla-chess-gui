@@ -38,6 +38,7 @@ void ChatbotTournament::start() {
     stopped_ = false;
 
     // Only add the initial steps - more steps are added dynamically based on user choice
+    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>());
 }
 
