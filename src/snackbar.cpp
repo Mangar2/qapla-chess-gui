@@ -33,7 +33,7 @@ SnackbarManager& SnackbarManager::instance() {
     return instance;
 }
 
-void SnackbarManager::show(const std::string& message, SnackbarType type, bool sticky, bool isTutorial) {
+void SnackbarManager::show(const std::string& message, SnackbarType type, bool sticky, bool isTutorial, const std::string& topic) {
     SnackbarEntry entry;
     
     // Check if the same message with the same type is already at the top of the stack
@@ -51,11 +51,23 @@ void SnackbarManager::show(const std::string& message, SnackbarType type, bool s
         entry.message.erase(0, 1); 
     }
     
+    entry.topic = topic;
     entry.startTime = std::chrono::steady_clock::now();
     entry.duration = getDuration(type);
     entry.type = type;
     entry.sticky = sticky;
     entry.isTutorial = isTutorial;
+    
+    // Add to history (limit to MAX_HISTORY_SIZE entries)
+    history_.push_back(entry);
+    while (history_.size() > MAX_HISTORY_SIZE) {
+        history_.pop_front();
+    }
+    
+    // Call filter callback if set - if it returns false, don't display
+    if (filterCallback_ && !filterCallback_(entry)) {
+        return;
+    }
     
     snackbarStack_.emplace_back(std::move(entry)); 
 }

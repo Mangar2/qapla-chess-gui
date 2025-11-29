@@ -24,7 +24,8 @@
 #include <string>
 #include <chrono>
 #include <array>
-#include <deque> 
+#include <deque>
+#include <functional> 
 
 namespace QaplaWindows {
 
@@ -63,39 +64,64 @@ public:
     };
 
     /**
+     * @brief Represents a single snackbar notification entry
+     */
+    struct SnackbarEntry {
+        std::string message;
+        std::string topic;
+        std::chrono::steady_clock::time_point startTime;
+        SnackbarType type;
+        float duration;
+        bool sticky;
+        bool isTutorial;
+    };
+
+    /**
+     * @brief Callback type for filtering snackbar entries before display
+     * 
+     * The callback receives the entry before it is shown. If it returns false,
+     * the entry will not be displayed (but still added to history).
+     */
+    using FilterCallback = std::function<bool(const SnackbarEntry&)>;
+
+    /**
      * @brief Displays an error message snackbar
      * @param message The error message to display
      * @param sticky If true, the snackbar will not close automatically
+     * @param topic Optional topic for categorization (default: "")
      */
-    void showError(const std::string& message, bool sticky = false) {
-        show(message, SnackbarType::Error, sticky);
+    void showError(const std::string& message, bool sticky = false, const std::string& topic = "") {
+        show(message, SnackbarType::Error, sticky, false, topic);
     }
     
     /**
      * @brief Displays a warning message snackbar
      * @param message The warning message to display
      * @param sticky If true, the snackbar will not close automatically
+     * @param topic Optional topic for categorization (default: "")
      */
-    void showWarning(const std::string& message, bool sticky = false) {
-        show(message, SnackbarType::Warning, sticky);
+    void showWarning(const std::string& message, bool sticky = false, const std::string& topic = "") {
+        show(message, SnackbarType::Warning, sticky, false, topic);
     }
     
     /**
      * @brief Displays a success message snackbar
      * @param message The success message to display
      * @param sticky If true, the snackbar will not close automatically
+     * @param topic Optional topic for categorization (default: "")
      */
-    void showSuccess(const std::string& message, bool sticky = false) {
-        show(message, SnackbarType::Success, sticky);
+    void showSuccess(const std::string& message, bool sticky = false, const std::string& topic = "") {
+        show(message, SnackbarType::Success, sticky, false, topic);
     }
     
     /**
      * @brief Displays an informational note snackbar
      * @param message The note message to display
      * @param sticky If true, the snackbar will not close automatically
+     * @param topic Optional topic for categorization (default: "")
      */
-    void showNote(const std::string& message, bool sticky = false) {
-        show(message, SnackbarType::Note, sticky);
+    void showNote(const std::string& message, bool sticky = false, const std::string& topic = "") {
+        show(message, SnackbarType::Note, sticky, false, topic);
     }
 
     /**
@@ -104,11 +130,14 @@ public:
      * @param type The type/severity of the snackbar (Note, Success, Warning, Error)
      * @param sticky If true, the snackbar will not close automatically (default: false)
      * @param isTutorial If true, indicates this snackbar is part of a tutorial (default: false)
+     * @param topic Optional topic for categorization (default: "")
      * 
      * If a snackbar with the same message and type is already displayed,
      * the display duration will be reset instead of creating a duplicate.
+     * The entry is always added to history, but only displayed if no filter callback
+     * returns false.
      */
-    void show(const std::string& message, SnackbarType type, bool sticky = false, bool isTutorial = false);
+    void show(const std::string& message, SnackbarType type, bool sticky = false, bool isTutorial = false, const std::string& topic = "");
 
     void showTutorial(const std::string& message, SnackbarType type, bool sticky = false);
 
@@ -166,15 +195,35 @@ public:
      */
     bool isTutorialMessageVisible() const;
 
+    /**
+     * @brief Sets a filter callback that is called before displaying a snackbar
+     * 
+     * The callback receives the entry before it is shown. If it returns false,
+     * the entry will not be displayed (but still added to history).
+     * 
+     * @param callback The filter callback function, or nullptr to remove the filter
+     */
+    void setFilterCallback(FilterCallback callback) {
+        filterCallback_ = std::move(callback);
+    }
+
+    /**
+     * @brief Gets the history of snackbar entries (last 100 entries)
+     * @return Const reference to the history deque
+     */
+    [[nodiscard]] const std::deque<SnackbarEntry>& getHistory() const {
+        return history_;
+    }
+
+    /**
+     * @brief Clears the snackbar history
+     */
+    void clearHistory() {
+        history_.clear();
+    }
+
 private:
-    struct SnackbarEntry {
-        std::string message;
-        std::chrono::steady_clock::time_point startTime;
-        SnackbarType type;
-        float duration;
-        bool sticky;
-        bool isTutorial;
-    };
+    static constexpr size_t MAX_HISTORY_SIZE = 100;
 
     static bool tutorialInitialized_;
     uint32_t tutorialProgress_ = 0;
@@ -203,6 +252,8 @@ private:
 
     SnackbarConfig config_;
     std::deque<SnackbarEntry> snackbarStack_;
+    std::deque<SnackbarEntry> history_;
+    FilterCallback filterCallback_;
     uint32_t progress = 0;
 };
 
