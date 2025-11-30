@@ -584,7 +584,7 @@ static auto tournamentWindowTutorialInit = []() {
         .getProgressCounter = []() -> uint32_t& {
             return TournamentWindow::tutorialProgress_;
         },
-        .autoStart = true
+        .autoStart = false
     });
     return true;
 }();

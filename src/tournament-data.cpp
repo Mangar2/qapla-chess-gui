@@ -257,7 +257,8 @@ namespace QaplaWindows {
             tournament_->createTournament(selectedEngines, *config_);
         } catch (const std::exception& ex) {
             if (verbose) {
-                SnackbarManager::instance().showError(std::string("Failed to create tournament: ") + ex.what());
+                SnackbarManager::instance().showError(std::string("Failed to create tournament: ") + ex.what(),
+                    false, "tournament");
             }
             return false;
         }
@@ -266,21 +267,25 @@ namespace QaplaWindows {
 
     void TournamentData::startTournament(bool verbose) {
         if (!tournament_) {
-            SnackbarManager::instance().showError("Internal error, tournament not initialized");
+            SnackbarManager::instance().showError("Internal error, tournament not initialized", 
+                false, "tournament");
             return;
         }
         if (getTotalGames() == 0) {
             if (config_->type == "gauntlet") {
                 SnackbarManager::instance().showError("No games to play in tournament\n"
-                    "Did you forget to set at least one engine as gauntlet engine?");
+                    "Did you forget to set at least one engine as gauntlet engine?", 
+                    false, "tournament");
             } else {
                 SnackbarManager::instance().showError("No games to play in tournament\n"
-                    "You need at least two engines to play a tournament");
+                    "You need at least two engines to play a tournament", 
+                    false, "tournament");
             }
             return;
         }
         if (isFinished()) {
-            SnackbarManager::instance().showNote("Tournament already finished");
+            SnackbarManager::instance().showNote("Tournament already finished", 
+                false, "tournament");
             return;
         }
         if (!createTournament(true)) {
@@ -303,7 +308,8 @@ namespace QaplaWindows {
         imguiConcurrency_->setActive(true);
 
         if (verbose) {
-            SnackbarManager::instance().showSuccess("Tournament started");
+            SnackbarManager::instance().showSuccess("Tournament started", 
+                false, "tournament");
         }
 	}
 
@@ -412,7 +418,8 @@ namespace QaplaWindows {
             }
             if (state_ != State::Starting && state_ != State::Stopped && !anyRunning) {
                 state_ = State::Stopped;
-                SnackbarManager::instance().showSuccess("Tournament finished.");
+                SnackbarManager::instance().showSuccess("Tournament finished.", 
+                    false, "tournament");
             }
         }
 	}
@@ -523,25 +530,29 @@ namespace QaplaWindows {
         }
 
         if (oldState == State::Stopped) {
-            SnackbarManager::instance().showNote("Tournament is not running.");
+            SnackbarManager::instance().showNote("Tournament is not running.", 
+                false, "tournament");
             return;
         }
         if (oldState == State::GracefulStopping && graceful) {
-            SnackbarManager::instance().showNote("Tournament is already stopping gracefully.");
+            SnackbarManager::instance().showNote("Tournament is already stopping gracefully.", 
+                false, "tournament");
             return;
         }
        
         SnackbarManager::instance().showSuccess(
             graceful ? 
                 "Tournament stopped.\nFinishing ongoing games." : 
-                "Tournament stopped"
+                "Tournament stopped", 
+            false, "tournament"
         );
     }
 
     void TournamentData::clear(bool verbose) {
         if (!hasTasksScheduled()) {
             if (verbose) {
-                SnackbarManager::instance().showNote("Nothing to clear.");
+                SnackbarManager::instance().showNote("Nothing to clear.", 
+                    false, "tournament");
             }
             return;
         }
@@ -551,11 +562,13 @@ namespace QaplaWindows {
         result_ = std::make_unique<TournamentResultIncremental>();
         if (state_ == State::Running) {
             if (verbose) {
-                SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.");
+                SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.", 
+                    false, "tournament");
             }
         } else {
             if (verbose) {
-                SnackbarManager::instance().showNote("All results have been cleared.");
+                SnackbarManager::instance().showNote("All results have been cleared.", 
+                    false, "tournament");
             }
         }
         state_ = State::Stopped;
@@ -624,14 +637,16 @@ namespace QaplaWindows {
 
     void TournamentData::saveTournament(const std::string& filename) {
         if (filename.empty()) {
-            SnackbarManager::instance().showError("No filename specified for saving tournament.");
+            SnackbarManager::instance().showError("No filename specified for saving tournament.", 
+                false, "tournament");
             return;
         }
 
         try {
             std::ofstream out(filename, std::ios::trunc);
             if (!out) {
-                SnackbarManager::instance().showError("Failed to open file for writing: " + filename);
+                SnackbarManager::instance().showError("Failed to open file for writing: " + filename, 
+                    false, "tournament");
                 return;
             }
 
@@ -649,27 +664,32 @@ namespace QaplaWindows {
 
             out.close();
             if (!out) {
-                SnackbarManager::instance().showError("Error while writing to file: " + filename);
+                SnackbarManager::instance().showError("Error while writing to file: " + filename,
+                    false, "tournament");
                 return;
             }
 
-            SnackbarManager::instance().showSuccess("Tournament saved to: " + filename);
+            SnackbarManager::instance().showSuccess("Tournament saved to: " + filename, 
+                false, "tournament");
         }
         catch (const std::exception& e) {
-            SnackbarManager::instance().showError("Failed to save tournament: " + std::string(e.what()));
+            SnackbarManager::instance().showError("Failed to save tournament: " + std::string(e.what()), 
+                false, "tournament");
         }
     }
 
     void TournamentData::loadTournament(const std::string& filename) {
         if (filename.empty()) {
-            SnackbarManager::instance().showError("No filename specified for loading tournament.");
+            SnackbarManager::instance().showError("No filename specified for loading tournament.", 
+                false, "tournament");
             return;
         }
 
         try {
             std::ifstream in(filename);
             if (!in) {
-                SnackbarManager::instance().showError("Failed to open file for reading: " + filename);
+                SnackbarManager::instance().showError("Failed to open file for reading: " + filename, 
+                    false, "tournament");
                 return;
             }
 
@@ -693,10 +713,12 @@ namespace QaplaWindows {
             // Create tournament based on the configuration and load the tournament data
             loadTournament();
 
-            SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename);
+            SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename, 
+                false, "tournament");
         }
         catch (const std::exception& e) {
-            SnackbarManager::instance().showError("Failed to load tournament: " + std::string(e.what()));
+            SnackbarManager::instance().showError("Failed to load tournament: " + std::string(e.what()), 
+                false, "tournament");
         }
     }
 

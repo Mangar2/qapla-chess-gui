@@ -73,7 +73,7 @@ void SnackbarManager::show(const std::string& message, SnackbarType type, bool s
 }
 
 void SnackbarManager::showTutorial(const std::string& message, SnackbarType type, bool sticky) {
-    show(message, type, sticky, true);
+    show(message, type, sticky, true, "tutorial");
 }
 
 bool SnackbarManager::isTutorialMessageVisible() const {

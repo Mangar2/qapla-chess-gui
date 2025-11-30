@@ -1,0 +1,111 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#pragma once
+
+#include "chatbot-thread.h"
+#include "chatbot-step.h"
+#include "snackbar.h"
+#include "tutorial.h"
+
+#include <vector>
+#include <memory>
+#include <string>
+
+namespace QaplaWindows::ChatBot {
+
+/**
+ * @brief A chatbot thread for running tutorials interactively.
+ * 
+ * This thread allows the user to select a tutorial and then displays
+ * tutorial messages in the chatbot instead of as snackbars.
+ */
+class ChatbotTutorial : public ChatbotThread {
+public:
+    [[nodiscard]] std::string getTitle() const override { 
+        return "Tutorial"; 
+    }
+    void start() override;
+    bool draw() override;
+    [[nodiscard]] bool isFinished() const override;
+    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
+
+private:
+    std::vector<std::unique_ptr<ChatbotStep>> steps_;
+    size_t currentStepIndex_ = 0;
+    bool stopped_ = false;
+};
+
+/**
+ * @brief A chatbot step for selecting which tutorial to run.
+ */
+class ChatbotStepTutorialSelect : public ChatbotStep {
+public:
+    [[nodiscard]] std::string draw() override;
+
+private:
+    /// List of available tutorials to display as buttons
+    static const std::vector<std::string> availableTutorials_;
+    
+    std::string selectedTutorialName_;  ///< Name of selected tutorial (for display after selection)
+};
+
+/**
+ * @brief A chatbot step that displays tutorial messages captured from the SnackbarManager.
+ * 
+ * This step sets up a filter callback on the SnackbarManager to intercept tutorial
+ * messages and display them in the chatbot instead.
+ */
+class ChatbotStepTutorialRunner : public ChatbotStep {
+public:
+    /**
+     * @brief Constructs a tutorial runner for the specified tutorial.
+     * @param tutorialName The tutorial to run.
+     */
+    explicit ChatbotStepTutorialRunner(Tutorial::TutorialName tutorialName);
+    ~ChatbotStepTutorialRunner() override;
+
+    [[nodiscard]] std::string draw() override;
+
+private:
+    Tutorial::TutorialName tutorialName_;
+    std::vector<SnackbarManager::SnackbarEntry> capturedMessages_;
+    std::string tutorialTopicName_;  ///< The topic name for the tutorial (e.g., "tournament")
+    bool filterInstalled_ = false;
+    bool tutorialStarted_ = false;
+
+    /**
+     * @brief Gets the topic name for a tutorial.
+     * @param name The tutorial name.
+     * @return The topic name string (lowercase).
+     */
+    static std::string getTutorialTopicName(Tutorial::TutorialName name);
+
+    /**
+     * @brief Installs the filter callback on the SnackbarManager.
+     */
+    void installFilter();
+
+    /**
+     * @brief Removes the filter callback from the SnackbarManager.
+     */
+    void removeFilter();
+};
+
+} // namespace QaplaWindows::ChatBot

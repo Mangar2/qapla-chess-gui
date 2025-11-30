@@ -98,6 +98,12 @@ public:
     };
 
     /**
+     * @brief Starts a tutorial 
+     * @param name The name of the tutorial topic
+     */
+    void startTutorial(TutorialName name);
+
+    /**
      * @brief Shows the current tutorial step without advancing the counter
      * @param name The name of the tutorial topic
      */
@@ -142,6 +148,13 @@ public:
         static Tutorial instance;
         return instance;
     }
+
+    /**
+     * @brief Converts a tutorial name string to TutorialName enum.
+     * @param name The tutorial name as string.
+     * @return The corresponding TutorialName, or Count if not found.
+     */
+    [[nodiscard]] static TutorialName stringToTutorialName(const std::string& name);
 
     /**
      * @brief Loads all tutorial counters from the configuration file

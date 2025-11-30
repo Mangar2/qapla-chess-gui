@@ -106,6 +106,14 @@ void Tutorial::startNextTutorialIfAllowed()
     }
 }
 
+void Tutorial::startTutorial(TutorialName name) {
+    auto& entry = entries_[toIndex(name)];
+    entry.reset();
+    entry.getProgressCounter() = 1;
+    entry.showNextMessage();
+    saveConfiguration();
+}
+
 void Tutorial::restartTutorial(TutorialName name) {
     auto& entry = entries_[toIndex(name)];
     entry.reset();
@@ -170,6 +178,31 @@ void Tutorial::saveConfiguration() const {
     }
     
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("tutorial", "tutorial", { section });
+}
+
+Tutorial::TutorialName Tutorial::stringToTutorialName(const std::string& name) {
+    if (name == "Tournament") {
+        return TutorialName::Tournament;
+    }
+    if (name == "EngineSetup") {
+        return TutorialName::EngineSetup;
+    }
+    if (name == "BoardEngines") {
+        return TutorialName::BoardEngines;
+    }
+    if (name == "BoardWindow") {
+        return TutorialName::BoardWindow;
+    }
+    if (name == "BoardCutPaste") {
+        return TutorialName::BoardCutPaste;
+    }
+    if (name == "Epd") {
+        return TutorialName::Epd;
+    }
+    if (name == "Snackbar") {
+        return TutorialName::Snackbar;
+    }
+    return TutorialName::Count;
 }
 
 } // namespace QaplaWindows

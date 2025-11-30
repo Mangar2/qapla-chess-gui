@@ -21,6 +21,7 @@
 #include "chatbot-step-option-list.h"
 #include "chatbot-choose-language.h"
 #include "chatbot-tournament.h"
+#include "chatbot-tutorial.h"
 #include "chatbot-messages.h"
 #include "i18n.h"
 #include "imgui-controls.h"
@@ -39,6 +40,7 @@ constexpr float LEFT_MARGIN = 10.0F;
 
 ChatbotWindow::ChatbotWindow() {
     registerThread(std::make_unique<ChatbotTournament>());
+    registerThread(std::make_unique<ChatbotTutorial>());
     registerThread(std::make_unique<ChatbotChooseLanguage>());
     registerThread(std::make_unique<ChatbotMessages>());
     resetToMainMenu();
