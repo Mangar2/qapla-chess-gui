@@ -354,7 +354,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         highlightedSection_ = "GlobalSettings";
         globalSettingsTutorial_.highlight = true;
         globalSettingsTutorial_.annotations["Hash (MB)"] = "Set to: 64";
-        globalSettingsTutorial_.annotations["Ponder"] = "Uncheck 'Engine decides'";
+        globalSettingsTutorial_.annotations["Ponder"] = "Uncheck 'Enable global pondering'";
         return;
         
         case 2:
@@ -514,71 +514,146 @@ static auto tournamentWindowTutorialInit = []() {
         .name = QaplaWindows::Tutorial::TutorialName::Tournament,
         .displayName = "Tournament",
         .messages = {
-            { .text = "Start engine tournaments here.\n"
-              "Compare multiple engines in round-robin matches.\n\n"
-              "Click the 'Tournament' tab to open.",
+            { .text = "Welcome to the Tournament Tutorial!\n\n"
+              "This tutorial will guide you through setting up and running engine tournaments. "
+              "You can compare multiple chess engines against each other in round-robin and gauntlet matches.\n\n"
+              "Tip: If you prefer a simpler approach, you can also configure and start tournaments "
+              "through the Chatbot - just select 'Tournament' from the Chatbot menu. "
+              "This tutorial covers the expert mode with direct access to all settings.\n\n"
+              "To help you through the process, we'll mark the relevant sections and buttons with a red dot as we go along.\n"
+              "Hover over the options for detailed tooltips explaining each setting.\n\n"
+              "Let's begin! Click on the 'Tournament' tab in the left window to open the tournament configuration.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Configure global engine settings.\n"
-              "Set Hash to 64 MB.\n"
-              "Disable 'Engine decides' for Ponder.\n\n"
-              "This ensures consistent memory usage.",
+            { .text = "Great! You've opened the Tournament tab.\n\n"
+              "First, we'll configure the global engine settings. These settings apply to all engines "
+              "in the tournament and ensure fair, consistent conditions.\n\n"
+              "Settings can be set for all engines or individually per engine. "
+              "We change Hash size globally and pondering per engine:\n"
+              "• Leave the checkbox near Hash checked and set 'Hash (MB)' to 64\n"
+              "• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later\n\n",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Select engines for the tournament.\n"
-              "Choose the same engine twice.\n"
-              "Enable 'Ponder' for one of them.\n\n"
-              "Names will auto-disambiguate with [ponder].",
+            { .text = "Perfect! Global settings are configured.\n\n"
+              "Now let's select the engines for our tournament. We'll demonstrate specific engine settings: "
+              "compare the same engine against itself - once with pondering enabled and once without.\n\n"
+              "In the 'Engine Selection' section, "
+              "select the same engine twice (click the '+' button left of 'Available Engine' twice)\n"
+              "Now you see the same engine twice in the 'Selected Engines' list. "
+              "Expand the first one and set the check mark for 'Ponder'\n"
+              "The names will automatically get a '[ponder]' suffix to distinguish them. "
+              "Now you can see how pondering affects performance of the engine!\n\n",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Configure opening positions.\n"
-              "Select an opening file (.epd, .pgn, or raw FEN).\n"
-              "Choose the appropriate file format.\n\n"
-              "Hover over options for detailed tooltips.",
+            { .text = "Engines are selected!\n\n"
+              "Now we need opening positions. Without openings, every game would start from the "
+              "standard chess position, leading to repetitive games.\n\n"
+              "In the 'Opening' section:\n"
+              "• Click on 'Opening file' and select a file with opening positions\n"
+              "• Supported formats: .epd (EPD positions), .pgn (game moves), or raw FEN strings\n"
+              "The format is auto-detected based on file extension and file content.\n\n"
+              "Opening books ensure variety and test engines across different positions.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Configure tournament settings.\n"
-              "Type: round-robin, Rounds: 2\n"
-              "Games per pairing: 2, Same opening: 2\n\n"
-              "Hover over options for explanations.",
+            { .text = "Opening file configured!\n\n"
+              "Time to set up the tournament structure. In the 'Tournament' section, configure:\n\n"
+              "• Type: 'round-robin' - every engine plays against every other engine\n"
+              "• Rounds: 2 - the complete round-robin is played twice\n"
+              "• Games per pairing: 2 - each engine pair plays 2 games per round\n"
+              "• Same opening: 2 - each engine plays the same opening once with white and once with black (colors swapped)\n\n"
+              "With these settings and 2 engines, you'll get: 2 rounds × 1 pairing × 2 games = 4 games total. "
+              "Using the same opening twice (with swapped colors) ensures fairness - any opening advantage "
+              "is balanced out.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Select time control.\n"
-              "Choose '20.0+0.02' from predefined options.\n"
-              "(20 seconds + 20 milliseconds per move)\n\n"
-              "Hover over fields for format help.",
+            { .text = "Tournament structure set!\n\n"
+              "Now configure the time control - how much time each engine gets.\n\n"
+              "In the 'Time Control' section:\n"
+              "• Select '20.0+0.02' from the predefined options\n\n"
+              "This means: 20 seconds base time + 0.02 seconds (20 milliseconds) increment per move. "
+              "The increment is added after each move, preventing sudden time losses.\n\n"
+              "You can either use predefined time controls or set a custom one. Time settings synchronize automatically. "
+              "When you select '20.0+0.02', the custom fields update accordingly and vice versa.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Set PGN output file.\n"
-              "All games will be saved to this file.\n\n"
-              "Hover over options for detailed tooltips.",
+            { .text = "Time control configured!\n\n"
+              "Now set where to save the games. In the 'PGN' section:\n"
+              "• Click on 'Pgn file' and choose a location and filename\n\n"
+              "All games will be saved in PGN (Portable Game Notation) format - the standard "
+              "format for chess games. You can later open these files in any chess software "
+              "to review the games, analyze with engines, or share them.\n\n"
+              "Hover over other PGN options to see what additional information can be saved.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Set Concurrency to 4.\n"
-              "This runs 4 games in parallel.\n\n"
-              "You'll see 4 board tabs during the tournament.",
+            { .text = "PGN output configured!\n\n"
+              "One last setting before we start: Concurrency.\n"
+              "• Set 'Concurrency' to 4 at the top of the window\n\n"
+              "Concurrency determines how many games run simultaneously. With 4 concurrent games, "
+              "the tournament finishes 4× faster. You may want to configure one less concurrent games "
+              "than your CPU has physical cores to avoid overload. If your CPU supports hyperthreading, "
+              "divide the number of shown cores by two to get the number of physical cores.\n\n"
+              "During the tournament, you'll see 4 board tabs appear - one for each running game. "
+              "You can click on any tab to watch that game live. You can also click a line in the "
+              "running games table to jump to that game's board tab.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Start your first tournament!\n"
-              "Click 'Run' to begin.\n\n"
-              "Input controls hide while running.",
+            { .text = "Everything is configured - time to start!\n\n"
+              "Click the 'Run' button (play icon) in the toolbar to begin the tournament.\n\n"
+              "Once running:\n"
+              "• The input controls will hide to save space\n"
+              "• You'll see the progress bar fill up\n"
+              "• Board tabs will appear for each concurrent game\n"
+              "• The running games table will show active and completed games\n"
+              "• The results table will update in real-time sorted by the calculated elo of each engine\n"
+              "• The third table shows game termination causes statistics, it supports sorting and searching\n\n"
+              "You can click 'Grace' (same button) to stop gracefully after current games finish, "
+              "or 'Stop' to abort immediately.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament is running!\n"
-              "Click a board tab to watch games.\n\n"
-              "Wait for the tournament to finish...",
+            { .text = "The tournament is running!\n\n"
+              "Watch the progress bar and click on any board tab to see a live game. "
+              "The engines are now playing against each other with your configured settings.\n\n"
+              "While you wait, notice:\n"
+              "• The crosstable showing results as they come in\n"
+              "Wait for all games to complete...",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament finished!\n"
-              "Results are auto-saved.\n\n"
-              "Click 'Save As' to save manually.",
+            { .text = "Tournament finished!\n\n"
+              "Your results are automatically saved, but let's also save manually to learn the process.\n\n"
+              "Click the 'Save As' button (disk icon) in the toolbar.\n\n"
+              "The .qtour file format saves everything:\n"
+              "• All engine configurations\n"
+              "• Tournament settings\n"
+              "• Complete results and statistics\n"
+              "• Scheduling information for continuation\n\n"
+              "You can load this file later to use the same settings for another tournament, "
+              "extend or reduce the tournament by adding or removing engines, rounds or games per round "
+              "or continue the tournament.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Save dialog completed!\n\n"
-              "Now let's extend the tournament.\n"
-              "Add a third engine to the selection.",
+            { .text = "Tournament saved!\n\n"
+              "Now let's extend the tournament by adding a new engine. This is powerful: "
+              "you don't need to restart the tournament - new pairings are automatically added.\n\n"
+              "Go to 'Engine Selection' and select a third engine (any different engine).\n\n"
+              "The system will calculate which games are still needed. Only the new pairings "
+              "will be played - all existing results are preserved. This is great for "
+              "gradually adding engines to an ongoing comparison.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Third engine added!\n"
-              "Tournament will include new pairings.\n\n"
-              "Click 'Continue' to resume.",
+            { .text = "Third engine added!\n\n"
+              "The tournament now includes additional pairings for the new engine. "
+              "The button has changed to 'Continue' because there are pending games.\n\n"
+              "Click 'Continue' (same button as Run) to resume the tournament.\n\n"
+              "This continue feature is also useful if you:\n"
+              "• Stopped the tournament and want to resume\n"
+              "• Changed settings and want to play remaining games\n"
+              "• Loaded a saved tournament",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "Extended tournament is running!\n\n"
-              "Let it finish or click 'Stop' to pause.",
+              "The new games are being played. Only the pairings involving the new engine "
+              "are scheduled - previous results remain intact.\n\n"
+              "Let it finish, or click 'Stop' if you want to end early.\n\n"
+              "Tip: You can stop gracefully with 'Grace' - current games finish normally, "
+              "no new games start. This preserves all game results.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament Tutorial Complete!\n\n"
-              "You've mastered tournament basics!\n\n"
-              "• Configure engines and settings\n"
-              "• Run tournaments with concurrency\n"
-              "• Save and extend tournaments",
+            { .text = "Congratulations! Tournament Tutorial Complete!\n\n"
+              "You've learned the essentials of running engine tournaments:\n\n"
+              "• Configure global settings for fair conditions\n"
+              "• Select and compare multiple engines\n"
+              "• Set up openings, time controls, and output\n"
+              "• Run tournaments with parallel games\n"
+              "• Save, load, and extend tournaments\n\n"
+              "Explore the Adjudication settings to auto-end drawn or won games early. "
+              "Try different tournament types like 'gauntlet' where one engine plays all others.\n\n"
+              "Happy testing!",
               .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {

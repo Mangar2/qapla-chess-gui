@@ -128,7 +128,8 @@ void ChatbotWindow::draw() {
     ImGui::Unindent(LEFT_MARGIN);
     
     // Auto-scroll to bottom when content grows
-    float currentCursorY = ImGui::GetCursorScreenPos().y;
+    // Use GetCursorPos() instead of GetCursorScreenPos() to get scroll-independent position
+    float currentCursorY = ImGui::GetCursorPos().y;
     if (currentCursorY > lastCursorY_) {
         ImGui::SetScrollHereY(1.0F);
     }

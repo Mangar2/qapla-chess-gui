@@ -220,8 +220,7 @@ std::string ChatbotStepTutorialRunner::draw() {
 
             // Topic if present and different from "tutorial"
             if (!msg.topic.empty() && msg.topic != "tutorial") {
-                ImGui::SameLine();
-                ImGuiControls::textDisabled(std::format("({})", msg.topic));
+                ImGuiControls::textDisabled("System Message:");
             }
 
             // Message content
@@ -234,8 +233,6 @@ std::string ChatbotStepTutorialRunner::draw() {
         }
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
     ImGui::Spacing();
 
     // Check if tutorial is completed
