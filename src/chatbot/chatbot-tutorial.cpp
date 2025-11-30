@@ -235,6 +235,24 @@ std::string ChatbotStepTutorialRunner::draw() {
 
     ImGui::Spacing();
 
+    // Check if waiting for user acknowledgement
+    if (Tutorial::instance().doWaitForUserInput()) {
+        ImGui::Separator();
+        ImGui::Spacing();
+        if (ImGuiControls::textButton("Continue")) {
+            // Acknowledge and advance to next step
+            Tutorial::instance().requestNextTutorialStep(tutorialName_, false);
+        }
+        ImGui::SameLine();
+        if (ImGuiControls::textButton("Stop Tutorial")) {
+            removeFilter();
+            Tutorial::instance().finishTutorial(tutorialName_);
+            finished_ = true;
+            return "stop";
+        }
+        return "";
+    }
+
     // Check if tutorial is completed
     if (entry.completed()) {
         ImGui::TextColored(StepColors::SUCCESS_COLOR, "Tutorial completed!");

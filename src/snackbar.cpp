@@ -269,7 +269,7 @@ void SnackbarManager::showNextTutorialStep(bool endSticky) const {
         Tutorial::instance().finishTutorial(Tutorial::TutorialName::Snackbar);
         return; 
     }
-    Tutorial::instance().showNextTutorialStep(Tutorial::TutorialName::Snackbar);
+    Tutorial::instance().requestNextTutorialStep(Tutorial::TutorialName::Snackbar);
 }
 
 bool SnackbarManager::tutorialInitialized_ = []() {

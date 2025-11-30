@@ -339,6 +339,18 @@ bool TournamentWindow::hasTwoSameEnginesWithPonder() {
     return false;
 }
 
+void TournamentWindow::clearTournamentTutorialState() {
+    globalSettingsTutorial_.highlight = false;
+    tutorialProgress_ = 0;
+    highlightedButton_.clear();
+    highlightedSection_.clear();
+    globalSettingsTutorial_.clear();
+    openingTutorial_.clear();
+    tournamentTutorial_.clear();
+    timeControlTutorial_.clear();
+    pgnTutorial_.clear();
+}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     auto topicName = Tutorial::TutorialName::Tournament;
@@ -346,10 +358,13 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
     auto& tournamentData = TournamentData::instance();
     
     switch (tutorialProgress_) {
+        case 0:
+        clearTournamentTutorialState();
+        return;
         case 1:
         // Step 0 (autoStart): Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
-        Tutorial::instance().showNextTutorialStep(topicName);
+        Tutorial::instance().requestNextTutorialStep(topicName);
         highlightedButton_ = "";
         highlightedSection_ = "GlobalSettings";
         globalSettingsTutorial_.highlight = true;
@@ -362,7 +377,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Check if hash is 64 MB and global ponder is disabled
         if (tournamentData.globalSettings().getGlobalConfiguration().hashSizeMB == 64 && 
             !tournamentData.globalSettings().getGlobalConfiguration().useGlobalPonder) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             globalSettingsTutorial_.clear();
             highlightedSection_ = "EngineSelect";
         }
@@ -371,7 +386,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 3:
         // Step 2: Select two engines with the same originalName and ponder enabled
         if (hasTwoSameEnginesWithPonder()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedSection_ = "Opening";
             openingTutorial_.highlight = true;
             openingTutorial_.annotations["Opening file"] = "Select any opening file";
@@ -382,7 +397,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 3: Configure opening file
         // Check if opening file is set (ignore format check as requested)
         if (!tournamentData.tournamentOpening().openings().file.empty()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             openingTutorial_.clear();
             highlightedSection_ = "Tournament";
             tournamentTutorial_.highlight = true;
@@ -400,7 +415,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             tournamentData.config().rounds == 2 &&
             tournamentData.config().games == 2 &&
             tournamentData.config().repeat == 2) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             tournamentTutorial_.clear();
             highlightedSection_ = "TimeControl";
             timeControlTutorial_.highlight = true;
@@ -412,7 +427,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 5: Configure time control
         // Check if time control is set to "20.0+0.02"
         if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             timeControlTutorial_.clear();
             highlightedSection_ = "Pgn";
             pgnTutorial_.highlight = true;
@@ -423,7 +438,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 7:
         // Step 6: Set PGN output file
         if (!tournamentData.tournamentPgn().pgnOptions().file.empty()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             pgnTutorial_.clear();
             highlightedSection_ = "";
         }
@@ -432,7 +447,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 8:
         // Step 7: Set concurrency to 4
         if (tournamentData.getExternalConcurrency() == 4) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "Run/Grace/Continue";
         }
         return;
@@ -440,7 +455,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 9:
         // Step 8: Start tournament - check if running
         if (tournamentData.isRunning()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
@@ -448,7 +463,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 10:
         // Step 9: Wait for tournament to finish - check if NOT running and has results
         if (!tournamentData.isRunning() && tournamentData.hasTasksScheduled()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "Save As";
         }
         return;
@@ -456,7 +471,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 11:
         // Step 10: Save tournament - advance when "Save As" button is clicked
         if (clickedButton == "Save As") {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
@@ -472,7 +487,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
                 }
             }
             if (selectedCount >= 3) {
-                Tutorial::instance().showNextTutorialStep(topicName);
+                Tutorial::instance().requestNextTutorialStep(topicName);
                 highlightedButton_ = "Run/Grace/Continue";
             }
         }
@@ -481,30 +496,25 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         case 13:
         // Step 12: Continue tournament - check if running
         if (tournamentData.isRunning()) {
-            Tutorial::instance().showNextTutorialStep(topicName);
+            Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "";
         }
         return;
         
         case 14:
         // Step 13: Final step - tournament running or finished
-        Tutorial::instance().showNextTutorialStep(topicName);
+        Tutorial::instance().requestNextTutorialStep(topicName);
         return;
         
         case 15:
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
-            highlightedButton_ = "";
-            highlightedSection_ = "";
-            globalSettingsTutorial_.clear();
-            openingTutorial_.clear();
-            tournamentTutorial_.clear();
-            timeControlTutorial_.clear();
-            pgnTutorial_.clear();
+            clearTournamentTutorialState();
             Tutorial::instance().finishTutorial(topicName);
         }
         return;
                                 
         default:
+        clearTournamentTutorialState();
         return;
     }
 }
@@ -523,36 +533,36 @@ static auto tournamentWindowTutorialInit = []() {
               "To help you through the process, we'll mark the relevant sections and buttons with a red dot as we go along.\n"
               "Hover over the options for detailed tooltips explaining each setting.\n\n"
               "Let's begin! Click on the 'Tournament' tab in the left window to open the tournament configuration.",
+              .success = "Great! You've opened the Tournament tab.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Great! You've opened the Tournament tab.\n\n"
-              "First, we'll configure the global engine settings. These settings apply to all engines "
+            { .text = "Now we'll configure the global engine settings. These settings apply to all engines "
               "in the tournament and ensure fair, consistent conditions.\n\n"
               "Settings can be set for all engines or individually per engine. "
               "We change Hash size globally and pondering per engine:\n"
               "• Leave the checkbox near Hash checked and set 'Hash (MB)' to 64\n"
-              "• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later\n\n",
+              "• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later",
+              .success = "Global settings are configured.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Perfect! Global settings are configured.\n\n"
-              "Now let's select the engines for our tournament. We'll demonstrate specific engine settings: "
+            { .text = "Now let's select the engines for our tournament. We'll demonstrate specific engine settings: "
               "compare the same engine against itself - once with pondering enabled and once without.\n\n"
               "In the 'Engine Selection' section, "
               "select the same engine twice (click the '+' button left of 'Available Engine' twice)\n"
               "Now you see the same engine twice in the 'Selected Engines' list. "
               "Expand the first one and set the check mark for 'Ponder'\n"
               "The names will automatically get a '[ponder]' suffix to distinguish them. "
-              "Now you can see how pondering affects performance of the engine!\n\n",
+              "Now you can see how pondering affects performance of the engine!",
+              .success = "Engines are selected!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Engines are selected!\n\n"
-              "Now we need opening positions. Without openings, every game would start from the "
+            { .text = "Now we need opening positions. Without openings, every game would start from the "
               "standard chess position, leading to repetitive games.\n\n"
               "In the 'Opening' section:\n"
               "• Click on 'Opening file' and select a file with opening positions\n"
               "• Supported formats: .epd (EPD positions), .pgn (game moves), or raw FEN strings\n"
               "The format is auto-detected based on file extension and file content.\n\n"
               "Opening books ensure variety and test engines across different positions.",
+              .success = "Opening file configured!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Opening file configured!\n\n"
-              "Time to set up the tournament structure. In the 'Tournament' section, configure:\n\n"
+            { .text = "Time to set up the tournament structure. In the 'Tournament' section, configure:\n\n"
               "• Type: 'round-robin' - every engine plays against every other engine\n"
               "• Rounds: 2 - the complete round-robin is played twice\n"
               "• Games per pairing: 2 - each engine pair plays 2 games per round\n"
@@ -560,26 +570,26 @@ static auto tournamentWindowTutorialInit = []() {
               "With these settings and 2 engines, you'll get: 2 rounds × 1 pairing × 2 games = 4 games total. "
               "Using the same opening twice (with swapped colors) ensures fairness - any opening advantage "
               "is balanced out.",
+              .success = "Tournament structure set!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament structure set!\n\n"
-              "Now configure the time control - how much time each engine gets.\n\n"
+            { .text = "Now configure the time control - how much time each engine gets.\n\n"
               "In the 'Time Control' section:\n"
               "• Select '20.0+0.02' from the predefined options\n\n"
               "This means: 20 seconds base time + 0.02 seconds (20 milliseconds) increment per move. "
               "The increment is added after each move, preventing sudden time losses.\n\n"
               "You can either use predefined time controls or set a custom one. Time settings synchronize automatically. "
               "When you select '20.0+0.02', the custom fields update accordingly and vice versa.",
+              .success = "Time control configured!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Time control configured!\n\n"
-              "Now set where to save the games. In the 'PGN' section:\n"
+            { .text = "Now set where to save the games. In the 'PGN' section:\n"
               "• Click on 'Pgn file' and choose a location and filename\n\n"
               "All games will be saved in PGN (Portable Game Notation) format - the standard "
               "format for chess games. You can later open these files in any chess software "
               "to review the games, analyze with engines, or share them.\n\n"
               "Hover over other PGN options to see what additional information can be saved.",
+              .success = "PGN output configured!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "PGN output configured!\n\n"
-              "One last setting before we start: Concurrency.\n"
+            { .text = "One last setting before we start: Concurrency.\n"
               "• Set 'Concurrency' to 4 at the top of the window\n\n"
               "Concurrency determines how many games run simultaneously. With 4 concurrent games, "
               "the tournament finishes 4× faster. You may want to configure one less concurrent games "
@@ -588,9 +598,9 @@ static auto tournamentWindowTutorialInit = []() {
               "During the tournament, you'll see 4 board tabs appear - one for each running game. "
               "You can click on any tab to watch that game live. You can also click a line in the "
               "running games table to jump to that game's board tab.",
+              .success = "Everything is configured - time to start!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Everything is configured - time to start!\n\n"
-              "Click the 'Run' button (play icon) in the toolbar to begin the tournament.\n\n"
+            { .text = "Click the 'Run' button (play icon) in the toolbar to begin the tournament.\n\n"
               "Once running:\n"
               "• The input controls will hide to save space\n"
               "• You'll see the progress bar fill up\n"
@@ -600,16 +610,17 @@ static auto tournamentWindowTutorialInit = []() {
               "• The third table shows game termination causes statistics, it supports sorting and searching\n\n"
               "You can click 'Grace' (same button) to stop gracefully after current games finish, "
               "or 'Stop' to abort immediately.",
-              .type = SnackbarManager::SnackbarType::Note },
-            { .text = "The tournament is running!\n\n"
-              "Watch the progress bar and click on any board tab to see a live game. "
+              .success = "The tournament is running!",
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = false },
+            { .text = "Watch the progress bar and click on any board tab to see a live game. "
               "The engines are now playing against each other with your configured settings.\n\n"
               "While you wait, notice:\n"
               "• The crosstable showing results as they come in\n"
               "Wait for all games to complete...",
+              .success = "Tournament finished!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament finished!\n\n"
-              "Your results are automatically saved, but let's also save manually to learn the process.\n\n"
+            { .text = "Your results are automatically saved, but let's also save manually to learn the process.\n\n"
               "Click the 'Save As' button (disk icon) in the toolbar.\n\n"
               "The .qtour file format saves everything:\n"
               "• All engine configurations\n"
@@ -619,33 +630,33 @@ static auto tournamentWindowTutorialInit = []() {
               "You can load this file later to use the same settings for another tournament, "
               "extend or reduce the tournament by adding or removing engines, rounds or games per round "
               "or continue the tournament.",
+              .success = "Tournament saved!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Tournament saved!\n\n"
-              "Now let's extend the tournament by adding a new engine. This is powerful: "
+            { .text = "Now let's extend the tournament by adding a new engine. This is powerful: "
               "you don't need to restart the tournament - new pairings are automatically added.\n\n"
               "Go to 'Engine Selection' and select a third engine (any different engine).\n\n"
               "The system will calculate which games are still needed. Only the new pairings "
               "will be played - all existing results are preserved. This is great for "
               "gradually adding engines to an ongoing comparison.",
+              .success = "Third engine added!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Third engine added!\n\n"
-              "The tournament now includes additional pairings for the new engine. "
+            { .text = "The tournament now includes additional pairings for the new engine. "
               "The button has changed to 'Continue' because there are pending games.\n\n"
               "Click 'Continue' (same button as Run) to resume the tournament.\n\n"
               "This continue feature is also useful if you:\n"
               "• Stopped the tournament and want to resume\n"
               "• Changed settings and want to play remaining games\n"
               "• Loaded a saved tournament",
+              .success = "Extended tournament is running!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Extended tournament is running!\n\n"
-              "The new games are being played. Only the pairings involving the new engine "
+            { .text = "The new games are being played. Only the pairings involving the new engine "
               "are scheduled - previous results remain intact.\n\n"
               "Let it finish, or click 'Stop' if you want to end early.\n\n"
               "Tip: You can stop gracefully with 'Grace' - current games finish normally, "
               "no new games start. This preserves all game results.",
+              .success = "Congratulations! Tournament Tutorial Complete!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Congratulations! Tournament Tutorial Complete!\n\n"
-              "You've learned the essentials of running engine tournaments:\n\n"
+            { .text = "You've learned the essentials of running engine tournaments:\n\n"
               "• Configure global settings for fair conditions\n"
               "• Select and compare multiple engines\n"
               "• Set up openings, time controls, and output\n"

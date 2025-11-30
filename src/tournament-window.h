@@ -52,6 +52,7 @@ namespace QaplaWindows {
          * @param clickedButton The button that was clicked (empty string for state checks)
          */
         static void showNextTournamentTutorialStep(const std::string& clickedButton);
+        static void clearTournamentTutorialState();
 
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for Tournament tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial

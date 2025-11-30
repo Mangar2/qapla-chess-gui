@@ -282,14 +282,14 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         case 1:
         // Step 0 (autoStart): Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
-        Tutorial::instance().showNextTutorialStep(tutorialName);
+        Tutorial::instance().requestNextTutorialStep(tutorialName);
         highlightedButton_ = "";
         return;
         
         case 2:
         // Step 1: Tab opened - explain EPD and ask to select two engines
         if (config.engines.size() >= 2) {
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
             highlightedButton_ = "";
         }
         return;
@@ -300,7 +300,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
             config.maxTimeInS == 10 && 
             config.minTimeInS == 1 && 
             !config.filepath.empty()) {
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
             highlightedButton_ = "Run/Stop";
         }
         return;
@@ -309,7 +309,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 3: Configuration complete - wait for analysis to start
         if (epdState == EpdData::State::Running) {
             highlightedButton_ = "Run/Stop";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -317,7 +317,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 4: Analysis running - wait for it to stop
         if (epdState == EpdData::State::Stopped) {
             highlightedButton_ = "Run/Stop";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -325,7 +325,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 5: Stopped - wait for Continue (Running again)
         if (epdState == EpdData::State::Running) {
             highlightedButton_ = "Grace";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -333,7 +333,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 6: Running again - wait for Grace (Stopping state)
         if (epdState == EpdData::State::Stopping) {
             highlightedButton_ = "";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -344,7 +344,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         }
         if (epdState == EpdData::State::Cleared) {
             highlightedButton_ = "Run/Stop";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -352,7 +352,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 8: Cleared - wait for Analyze again (Running)
         if (epdState == EpdData::State::Running) {
             highlightedButton_ = "";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
@@ -360,7 +360,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 9: Running - wait for concurrency to be set to 10
         if (config.concurrency == 10) {
             highlightedButton_ = "";
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         

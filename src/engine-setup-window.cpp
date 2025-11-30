@@ -295,14 +295,14 @@ void EngineSetupWindow::showNextTutorialStep() {
     constexpr auto tutorialName = Tutorial::TutorialName::EngineSetup;
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().showNextTutorialStep(tutorialName);
+        Tutorial::instance().requestNextTutorialStep(tutorialName);
         return;
         case 1:
         {
             const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
             const auto configs = configManager.getAllConfigs();
             if (configs.size() >= 2) {
-                Tutorial::instance().showNextTutorialStep(tutorialName);
+                Tutorial::instance().requestNextTutorialStep(tutorialName);
             }
         }
         return;
@@ -310,7 +310,7 @@ void EngineSetupWindow::showNextTutorialStep() {
         {
             const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
             if (capabilities.areAllEnginesDetected()) {
-                Tutorial::instance().showNextTutorialStep(tutorialName);
+                Tutorial::instance().requestNextTutorialStep(tutorialName);
             }
         }
         return;

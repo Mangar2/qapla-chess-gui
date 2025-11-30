@@ -49,8 +49,10 @@ public:
 
     struct Message {
         std::string text;
+        std::string success{};
         SnackbarManager::SnackbarType type;
         bool sticky = false;
+        bool waitForUserInput = true;
     };
 
     enum class TutorialName {
@@ -72,8 +74,10 @@ public:
         bool autoStart = false;
 
         uint32_t counter = 0;
+        uint32_t successCounter = 0;
         void reset() {
             counter = 0;
+            successCounter = 0;
             getProgressCounter() = 0;
         }
         void finish() {
@@ -95,6 +99,18 @@ public:
                 ++counter;
             }
         }
+        void showSuccessMessage() {
+            auto msgIndex = successCounter;
+            if (msgIndex < messages.size() && msgIndex < getProgressCounter()) {
+                const auto& msg = messages[msgIndex];
+                if (!msg.success.empty()) {
+                    SnackbarManager::instance().showTutorial(msg.success, msg.type, false);
+                }
+            }
+            if (msgIndex < getProgressCounter()) {
+                ++successCounter;
+            }
+        }
     };
 
     /**
@@ -112,8 +128,9 @@ public:
     /**
      * @brief Shows the next tutorial step for a given topic
      * @param topicName The name of the tutorial topic
+     * @param mayWaitForUserInput If true, waits for user input before, if the supports it
      */
-    void showNextTutorialStep(TutorialName name);
+    void requestNextTutorialStep(TutorialName name, bool mayWaitForUserInput = true);
 
     /**
      * @brief Finishes a tutorial topic without showing further messages
@@ -187,6 +204,14 @@ public:
         return entries_[toIndex(name)];
     }
 
+    /**
+     * @brief Checks if tutorial steps should wait for user input
+     * @return true if currently waiting for user input, false otherwise
+     */
+    bool doWaitForUserInput() const {
+        return waitForUserInput_;
+    }
+
 private:
     Tutorial() = default;
     
@@ -220,6 +245,8 @@ private:
      * @brief Starts the next tutorial that is allowed to start
      */
     void startNextTutorialIfAllowed();
+
+    bool waitForUserInput_ = false; ///< Whether to wait for user input before advancing tutorial steps
 };
 
 } // namespace QaplaWindows

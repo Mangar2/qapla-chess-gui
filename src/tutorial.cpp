@@ -63,7 +63,7 @@ void Tutorial::showLastTutorialStep(TutorialName name) {
     SnackbarManager::instance().showTutorial(msg.text, msg.type, msg.sticky);
 }
 
-void Tutorial::showNextTutorialStep(TutorialName name) {
+void Tutorial::requestNextTutorialStep(TutorialName name,  bool mayWaitForUserInput) {
     auto& entry = entries_[toIndex(name)];
     
     if (entry.completed()) {
@@ -71,6 +71,13 @@ void Tutorial::showNextTutorialStep(TutorialName name) {
     }
     
     if (!allPrecedingCompleted(name)) {
+        return;
+    }
+
+    waitForUserInput_ = mayWaitForUserInput && 
+        entry.messages[entry.counter].waitForUserInput;
+    if (waitForUserInput_) {
+        entry.showSuccessMessage();
         return;
     }
     
@@ -109,9 +116,7 @@ void Tutorial::startNextTutorialIfAllowed()
 void Tutorial::startTutorial(TutorialName name) {
     auto& entry = entries_[toIndex(name)];
     entry.reset();
-    entry.getProgressCounter() = 1;
-    entry.showNextMessage();
-    saveConfiguration();
+    requestNextTutorialStep(name, false);
 }
 
 void Tutorial::restartTutorial(TutorialName name) {
@@ -143,7 +148,7 @@ void Tutorial::loadConfiguration() {
     if (!sections.empty()) {
         const auto& section = sections[0];
         
-        for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+        for (size_t i = 0; i < static_cast<size_t>(TutorialName::Tournament); ++i) {
             auto& entry = entries_[i];
 
             // Use displayName + Index as Config-Key for Uniqueness
@@ -155,7 +160,7 @@ void Tutorial::loadConfiguration() {
         }
     }
 
-    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Tournament); ++i) {
         auto name = static_cast<TutorialName>(i);
         if (mayStart(name)) {
             entries_[i].getProgressCounter() = 1;
@@ -171,7 +176,7 @@ void Tutorial::saveConfiguration() const {
         }
     };
     
-    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Count); ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Tournament); ++i) {
         const auto& entry = entries_[i];
         auto configName = entry.displayName + std::to_string(i);
         section.entries.emplace_back(std::move(configName), std::to_string(entry.counter));

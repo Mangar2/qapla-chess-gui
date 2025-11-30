@@ -135,11 +135,11 @@ void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vec
     constexpr auto tutorialName = Tutorial::TutorialName::BoardEngines;
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().showNextTutorialStep(tutorialName);
+        Tutorial::instance().requestNextTutorialStep(tutorialName);
         return;
         case 1:
         if (configCommandIssued) {
-            Tutorial::instance().showNextTutorialStep(tutorialName);
+            Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         case 2:
@@ -149,7 +149,7 @@ void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vec
                 uniqueEngines.insert(engine.getCmd());
             }
             if (uniqueEngines.size() >= 2) {
-                Tutorial::instance().showNextTutorialStep(tutorialName);
+                Tutorial::instance().requestNextTutorialStep(tutorialName);
             }
         }
         return;
