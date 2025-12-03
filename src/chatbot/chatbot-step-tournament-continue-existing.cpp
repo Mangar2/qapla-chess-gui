@@ -19,18 +19,35 @@
 
 #include "chatbot-step-tournament-continue-existing.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentContinueExisting::ChatbotStepTournamentContinueExisting() {
+ChatbotStepTournamentContinueExisting::ChatbotStepTournamentContinueExisting(TournamentType type)
+    : type_(type) {}
 
+bool ChatbotStepTournamentContinueExisting::hasTasksScheduled() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().hasResults();
+    }
+    return TournamentData::instance().hasTasksScheduled();
+}
+
+bool ChatbotStepTournamentContinueExisting::isFinished() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().isFinished();
+    }
+    return TournamentData::instance().isFinished();
+}
+
+const char* ChatbotStepTournamentContinueExisting::getTournamentName() const {
+    return (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
 }
 
 std::string ChatbotStepTournamentContinueExisting::draw() {
-    auto& tournament = TournamentData::instance();
-    if (!tournament.hasTasksScheduled() || tournament.isFinished()) {
+    if (!hasTasksScheduled() || isFinished()) {
         finished_ = true;
         return "menu";
     }
@@ -39,14 +56,18 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
         return "";
     }
 
-    QaplaWindows::ImGuiControls::textWrapped(
-        "There is an existing tournament that can be continued. Would you like to continue it?");
+    std::string message = std::string("There is an existing ") + getTournamentName() + 
+        " that can be continued. Would you like to continue it?";
+    QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (QaplaWindows::ImGuiControls::textButton("Yes, continue tournament")) {
-        finishedMessage_ = "Continuing existing tournament.";
+    std::string yesLabel = std::string("Yes, continue ") + getTournamentName();
+    if (QaplaWindows::ImGuiControls::textButton(yesLabel.c_str())) {
+        std::string msg = std::string("Continuing existing ") + getTournamentName() + ".";
+        msg[0] = static_cast<char>(std::toupper(msg[0]));
+        finishedMessage_ = msg;
         finished_ = true;
         return "start";
     }

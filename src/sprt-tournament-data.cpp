@@ -315,10 +315,16 @@ void SprtTournamentData::loadTournament() {
 
 void SprtTournamentData::startTournament() {
     if (!sprtManager_) {
-        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized");
+        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized", 
+            false, "sprt-tournament");
         return;
     }
     if (!createTournament(true)) {
+        return;
+    }
+    if (isFinished()) {
+        SnackbarManager::instance().showNote("Tournament already finished", 
+            false, "sprt-tournament");
         return;
     }
 
@@ -326,7 +332,7 @@ void SprtTournamentData::startTournament() {
 
     poolAccess_->clearAll();
     state_ = State::Starting;
-    sprtManager_->schedule(sprtManager_, concurrency_, *poolAccess_);
+    sprtManager_->schedule(sprtManager_, imguiConcurrency_->getExternalConcurrency(), *poolAccess_);
     imguiConcurrency_->init();
     imguiConcurrency_->setActive(true);
     state_ = State::Starting;
@@ -347,7 +353,15 @@ void SprtTournamentData::pollData() {
         if (state_ == State::Starting && anyRunning) {
             state_ = State::Running;
         }
-        if (state_ != State::Starting && !anyRunning) {
+        if (state_ == State::Running && !anyRunning) {
+            // Tournament just stopped - check if it finished naturally
+            if (isFinished()) {
+                auto sprtResult = sprtManager_->computeSprt();
+                SnackbarManager::instance().showSuccess("SPRT tournament finished:\n" + sprtResult.info);
+            }
+            state_ = State::Stopped;
+        }
+        if (state_ == State::GracefulStopping && !anyRunning) {
             state_ = State::Stopped;
         }
 
@@ -393,7 +407,7 @@ void SprtTournamentData::stopPool(bool graceful) {
 }
 
 void SprtTournamentData::clear() {
-    if (!hasTasksScheduled()) {
+    if (!hasResults()) {
         SnackbarManager::instance().showNote("Nothing to clear.");
         return;
     }
@@ -407,22 +421,35 @@ void SprtTournamentData::clear() {
     SnackbarManager::instance().showSuccess("SPRT tournament stopped.\nAll results have been cleared.");
 }
 
-void SprtTournamentData::setPoolConcurrency(uint32_t count, bool nice) {
+void SprtTournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
     if (!isRunning()) {
         return;
     }
     imguiConcurrency_->setNiceStop(nice);
-    imguiConcurrency_->update(count);
+    imguiConcurrency_->update(count, direct);
 }
 
-bool SprtTournamentData::hasTasksScheduled() const {
-    // SPRT has tasks scheduled if it has been started (state is not Stopped)
-    // or if there are results from the tournament
-    return (sprtManager_ != nullptr);
+uint32_t SprtTournamentData::getExternalConcurrency() const {
+    return imguiConcurrency_->getExternalConcurrency();
+}
+
+void SprtTournamentData::setExternalConcurrency(uint32_t count) {
+    imguiConcurrency_->setExternalConcurrency(count);
+}
+
+bool SprtTournamentData::hasResults() const {
+    return (sprtManager_ != nullptr && sprtManager_->hasResults());
 }
 
 bool SprtTournamentData::isAnyRunning() const {
     return isRunning() || isMonteCarloTestRunning();
+}
+
+bool SprtTournamentData::isFinished() const {
+    if (!sprtManager_) {
+        return false;
+    }
+    return sprtManager_->isFinished();
 }
 
 void SprtTournamentData::populateResultTable() {

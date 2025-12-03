@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Engine selections are now always open to simplify user experience
 - Chatbot, first version to create tournaments
 - Windows file dialogs can no longer get to the background
+- Proper Sqpr-Tournament is finished detection including a snackbar message notifying it. 
 
 ## [0.1.0] - 2025-11-18
 

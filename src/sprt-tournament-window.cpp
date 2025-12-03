@@ -58,7 +58,7 @@ static void drawSingleButton(
         else
         {
             QaplaButton::drawPlay(drawList, topLeft, size, state);
-            ImGuiControls::hooverTooltip(SprtTournamentData::instance().hasTasksScheduled() 
+            ImGuiControls::hooverTooltip(SprtTournamentData::instance().hasResults() 
                 ? "Continue SPRT tournament with current configuration" 
                 : "Start new SPRT tournament with current configuration");
         }
@@ -111,7 +111,7 @@ void SprtTournamentWindow::drawButtons() {
         if (label == "RGC") {
             label = running ? "Grace" : "Run";
         } 
-        if (label == "RGC" && SprtTournamentData::instance().hasTasksScheduled()) {
+        if (label == "RGC" && SprtTournamentData::instance().hasResults()) {
             label = "Continue";
         }
 
@@ -125,7 +125,7 @@ void SprtTournamentWindow::drawButtons() {
         if ((button == "Stop") && !SprtTournamentData::instance().isAnyRunning()) {
             state = QaplaButton::ButtonState::Disabled;
         }
-        if (button == "Clear" && !SprtTournamentData::instance().hasTasksScheduled()) {
+        if (button == "Clear" && !SprtTournamentData::instance().hasResults()) {
             state = QaplaButton::ButtonState::Disabled;
         }
         if (button == "Test" && SprtTournamentData::instance().isAnyRunning()) {
@@ -199,9 +199,11 @@ bool SprtTournamentWindow::drawInput() {
     auto& tournamentData = SprtTournamentData::instance();
 
     ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::sliderInt<uint32_t>("Concurrency", tournamentData.concurrency(), 1, maxConcurrency);
+    auto concurrency = tournamentData.getExternalConcurrency();
+    ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, maxConcurrency);
     ImGuiControls::hooverTooltip("Number of games running in parallel");
-    tournamentData.setPoolConcurrency(tournamentData.concurrency(), true);
+    tournamentData.setExternalConcurrency(concurrency);
+    tournamentData.setPoolConcurrency(concurrency, true);
     drawProgress();
     
     ImGui::Spacing();

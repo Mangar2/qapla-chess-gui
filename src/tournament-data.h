@@ -114,17 +114,6 @@ namespace QaplaWindows {
         void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**
-         * @brief Sets the concurrency level for the tournament set/displayed by the ui.
-         * 
-         * It is different to the current concurrency of the pool due to
-         * - debouncing
-         * - stop state (in which case pool concurrency is 0)
-         * 
-         * @param count The desired concurrency level.
-         */
-        void setUiConcurrency(uint32_t count);
-
-        /**
          * @brief Draws the tournament elo table.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.

@@ -19,12 +19,14 @@
 
 #include "chatbot-sprt.h"
 #include "../chatbot-step-tournament-stop-running.h"
+#include "../chatbot-step-tournament-continue-existing.h"
 #include "../chatbot-step-tournament-menu.h"
 #include "../chatbot-step-tournament-global-settings.h"
 #include "../chatbot-step-tournament-select-engines.h"
 #include "../chatbot-step-tournament-load-engine.h"
 #include "../chatbot-step-tournament-opening.h"
 #include "../chatbot-step-tournament-pgn.h"
+#include "../chatbot-step-tournament-start.h"
 #include "chatbot-step-sprt-configuration.h"
 
 namespace QaplaWindows::ChatBot {
@@ -45,7 +47,7 @@ void ChatbotSprt::addNewSprtSteps() {
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(TournamentType::Sprt));
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(TournamentType::Sprt));
-    // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtStart>());
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::Sprt));
 }
 
 bool ChatbotSprt::draw() {
@@ -82,11 +84,11 @@ bool ChatbotSprt::draw() {
         }
         
         if (result == "start") {
-            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtStart>());
+            steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::Sprt));
         }
 
         if (result == "existing") {
-            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtContinueExisting>());
+            steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>(TournamentType::Sprt));
         }
         
         // Advance to next step if current is finished

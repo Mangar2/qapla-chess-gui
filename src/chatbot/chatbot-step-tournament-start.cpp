@@ -1,17 +1,75 @@
 #include "chatbot-step-tournament-start.h"
 
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include "i18n.h"
 #include "callback-manager.h"
-#include "imgui-controls.h"
 
 #include <imgui.h>
-#include <algorithm>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStart::ChatbotStepTournamentStart() {
+ChatbotStepTournamentStart::ChatbotStepTournamentStart(TournamentType type)
+    : type_(type) {}
+
+bool ChatbotStepTournamentStart::isFinished() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().isFinished();
+    }
+    return TournamentData::instance().isFinished();
+}
+
+bool ChatbotStepTournamentStart::isStarting() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().isStarting();
+    }
+    return TournamentData::instance().isStarting();
+}
+
+bool ChatbotStepTournamentStart::isRunning() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().isRunning();
+    }
+    return TournamentData::instance().isRunning();
+}
+
+uint32_t ChatbotStepTournamentStart::getExternalConcurrency() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().getExternalConcurrency();
+    }
+    return TournamentData::instance().getExternalConcurrency();
+}
+
+void ChatbotStepTournamentStart::setExternalConcurrency(uint32_t count) {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::instance().setExternalConcurrency(count);
+    } else {
+        TournamentData::instance().setExternalConcurrency(count);
+    }
+}
+
+void ChatbotStepTournamentStart::startTournament() {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::instance().startTournament();
+    } else {
+        TournamentData::instance().startTournament();
+    }
+}
+
+void ChatbotStepTournamentStart::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::instance().setPoolConcurrency(count, nice, direct);
+    } else {
+        TournamentData::instance().setPoolConcurrency(count, nice, direct);
+    }
+}
+
+const char* ChatbotStepTournamentStart::getTournamentName() const {
+    return (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+}
+
+const char* ChatbotStepTournamentStart::getSwitchViewMessage() const {
+    return (type_ == TournamentType::Sprt) ? "switch_to_sprt_view" : "switch_to_tournament_view";
 }
 
 std::string ChatbotStepTournamentStart::draw() {
@@ -19,10 +77,9 @@ std::string ChatbotStepTournamentStart::draw() {
         return "";
     }
 
-    bool isFinished = TournamentData::instance().isFinished();
-
-    if (isFinished) {
-        QaplaWindows::ImGuiControls::textWrapped("The tournament is already finished.");
+    if (isFinished()) {
+        std::string message = std::string("The ") + getTournamentName() + " is already finished.";
+        QaplaWindows::ImGuiControls::textWrapped(message.c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Return")) {
             finished_ = true;
@@ -30,20 +87,23 @@ std::string ChatbotStepTournamentStart::draw() {
         return "";
     }
 
-    if (TournamentData::instance().isStarting()) {
-        QaplaWindows::ImGuiControls::textWrapped("Tournament is starting up, please wait...");
+    if (isStarting()) {
+        std::string message = std::string("The ") + getTournamentName() + " is starting up, please wait...";
+        QaplaWindows::ImGuiControls::textWrapped(message.c_str());
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
         }
         return "";
     }
-    if (!TournamentData::instance().isRunning()) {
-        QaplaWindows::ImGuiControls::textWrapped("Configure tournament concurrency and start:");
+
+    if (!isRunning()) {
+        std::string configMessage = std::string("Configure ") + getTournamentName() + " concurrency and start:";
+        QaplaWindows::ImGuiControls::textWrapped(configMessage.c_str());
         ImGui::Spacing();
-        auto concurrency = TournamentData::instance().getExternalConcurrency();
+        auto concurrency = getExternalConcurrency();
         ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, 16);
 
-        TournamentData::instance().setExternalConcurrency(concurrency);
+        setExternalConcurrency(concurrency);
 
         QaplaWindows::ImGuiControls::hooverTooltip("Number of games to run in parallel");
 
@@ -51,9 +111,11 @@ std::string ChatbotStepTournamentStart::draw() {
         ImGui::Separator();
         ImGui::Spacing();
 
-        if (QaplaWindows::ImGuiControls::textButton("Start Tournament")) {
-            TournamentData::instance().startTournament();
-            TournamentData::instance().setPoolConcurrency(static_cast<uint32_t>(concurrency), true, true);
+        std::string startLabel = std::string("Start ") + getTournamentName();
+        startLabel[6] = static_cast<char>(std::toupper(startLabel[6])); // Capitalize first letter after "Start "
+        if (QaplaWindows::ImGuiControls::textButton(startLabel.c_str())) {
+            startTournament();
+            setPoolConcurrency(static_cast<uint32_t>(concurrency), true, true);
         }
 
         ImGui::SameLine();
@@ -63,7 +125,9 @@ std::string ChatbotStepTournamentStart::draw() {
             return "stop";
         }
     } else {
-        QaplaWindows::ImGuiControls::textWrapped("Tournament started successfully!");
+        std::string successMessage = std::string("The ") + getTournamentName() + " started successfully!";
+        successMessage[4] = static_cast<char>(std::toupper(successMessage[4])); // Capitalize tournament name
+        QaplaWindows::ImGuiControls::textWrapped(successMessage.c_str());
         ImGui::Spacing();
         QaplaWindows::ImGuiControls::textWrapped("You can switch between all running games and the chatbot using the tabs at the top of the window. "
             "Each game has its own tab, so you can easily navigate between them.");
@@ -72,8 +136,10 @@ std::string ChatbotStepTournamentStart::draw() {
         ImGui::Separator();
         ImGui::Spacing();
         
-        if (QaplaWindows::ImGuiControls::textButton("Switch to Tournament View")) {
-            StaticCallbacks::message().invokeAll("switch_to_tournament_view");
+        std::string switchLabel = std::string("Switch to ") + getTournamentName() + " View";
+        switchLabel[10] = static_cast<char>(std::toupper(switchLabel[10])); // Capitalize first letter
+        if (QaplaWindows::ImGuiControls::textButton(switchLabel.c_str())) {
+            StaticCallbacks::message().invokeAll(getSwitchViewMessage());
             finished_ = true;
         }
         ImGui::SameLine();

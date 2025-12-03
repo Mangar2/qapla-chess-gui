@@ -20,6 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include <string>
 
 namespace QaplaWindows::ChatBot {
@@ -29,15 +30,35 @@ namespace QaplaWindows::ChatBot {
  * 
  * This step is only active if there are scheduled tasks and the tournament is not finished.
  * If no tournament is in progress, this step finishes automatically.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentContinueExisting : public ChatbotStep {
 public:
-    ChatbotStepTournamentContinueExisting();
+    explicit ChatbotStepTournamentContinueExisting(TournamentType type = TournamentType::Standard);
 
     [[nodiscard]] std::string draw() override;
 
-    private:
+private:
+    TournamentType type_;
     std::string finishedMessage_;
+
+    /**
+     * @brief Checks if the tournament has tasks scheduled.
+     * @return true if tasks are scheduled, false otherwise.
+     */
+    [[nodiscard]] bool hasTasksScheduled() const;
+
+    /**
+     * @brief Checks if the tournament is finished.
+     * @return true if finished, false otherwise.
+     */
+    [[nodiscard]] bool isFinished() const;
+
+    /**
+     * @brief Gets the tournament name for display.
+     * @return The tournament name string.
+     */
+    [[nodiscard]] const char* getTournamentName() const;
 };
 
 } // namespace QaplaWindows::ChatBot

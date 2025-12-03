@@ -90,8 +90,9 @@ namespace QaplaWindows {
          * @brief Sets the pool concurrency level.
          * @param count The number of concurrent tasks to allow.
          * @param nice If true, reduces the number of active managers gradually.
+         * @param direct If true, applies the change immediately without debouncing.
          */
-        void setPoolConcurrency(uint32_t count, bool nice = true);
+        void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**
          * @brief Sets the GameManagerPool instance to use.
@@ -114,6 +115,14 @@ namespace QaplaWindows {
         bool isAnyRunning() const;
 
         /**
+         * @brief Checks if the SPRT tournament has finished.
+         * @details The tournament is finished if a decision has been made or the max games limit reached.
+         *          This always queries the SprtManager and does not use cached state.
+         * @return true if the tournament has finished, false otherwise.
+         */
+        bool isFinished() const;
+
+        /**
          * @brief Returns the current state of the SPRT tournament.
          * @return The current state.
          */
@@ -125,15 +134,27 @@ namespace QaplaWindows {
          * @brief Checks if there are tasks scheduled.
          * @return true if tasks are scheduled, false otherwise
          */
-        bool hasTasksScheduled() const;
+        bool hasResults() const;
 
         /**
-         * @brief Returns a reference to the concurrency level.
-         * @return Reference to the concurrency level.
+         * @brief Checks if the SPRT tournament is currently starting.
+         * @return true if starting, false otherwise
          */
-        uint32_t& concurrency() {
-            return concurrency_;
+        bool isStarting() const {
+            return state_ == State::Starting;
         }
+
+        /**
+         * @brief Gets the target pool concurrency level.
+         * @return The target concurrency level.
+         */
+        uint32_t getExternalConcurrency() const;
+
+        /**
+         * @brief Sets the external concurrency value.
+         * @param count The new external concurrency value.
+         */
+        void setExternalConcurrency(uint32_t count);
 
         /**
          * @brief Returns a reference to the engine selection.
@@ -386,7 +407,6 @@ namespace QaplaWindows {
         ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 
-        uint32_t concurrency_ = 1;
         State state_ = State::Stopped;
 
         // List of all section names used
