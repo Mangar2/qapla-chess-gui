@@ -23,6 +23,7 @@
 #include "engine-worker-factory.h"
 #include "configuration.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "snackbar.h"
 #include <imgui.h>
 #include <format>
@@ -30,7 +31,15 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine() = default;
+ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine(TournamentType type)
+    : type_(type) {}
+
+ImGuiEngineSelect& ChatbotStepTournamentLoadEngine::getEngineSelect() {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().engineSelect();
+    }
+    return TournamentData::instance().engineSelect();
+}
 
 std::string ChatbotStepTournamentLoadEngine::draw() {
     if (finished_) {
@@ -52,7 +61,7 @@ std::string ChatbotStepTournamentLoadEngine::draw() {
 }
 
 void ChatbotStepTournamentLoadEngine::drawInput() {
-    auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
+    auto selectedEngines = getEngineSelect().getSelectedEngines();
     size_t numSelected = selectedEngines.size();
     showAddedEngines();
 
@@ -124,7 +133,7 @@ void ChatbotStepTournamentLoadEngine::showAddedEngines()
 }
 
 void ChatbotStepTournamentLoadEngine::addEngines() {
-    auto& engineSelect = TournamentData::instance().engineSelect();
+    auto& engineSelect = getEngineSelect();
     auto added = engineSelect.addEngines(true);
     for (const auto& path : added) {
         addedEnginePaths_.push_back(path);

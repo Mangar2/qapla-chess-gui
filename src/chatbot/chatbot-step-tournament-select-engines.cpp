@@ -19,6 +19,7 @@
 
 #include "chatbot-step-tournament-select-engines.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include "i18n.h"
 #include "engine-worker-factory.h"
@@ -28,15 +29,23 @@ using QaplaTester::EngineWorkerFactory;
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentSelectEngines::ChatbotStepTournamentSelectEngines() = default;
+ChatbotStepTournamentSelectEngines::ChatbotStepTournamentSelectEngines(TournamentType type)
+    : type_(type) {}
 
 ChatbotStepTournamentSelectEngines::~ChatbotStepTournamentSelectEngines() {
-    TournamentData::instance().engineSelect().setAlwaysShowEngines(false);
+    getEngineSelect().setAlwaysShowEngines(false);
+}
+
+ImGuiEngineSelect& ChatbotStepTournamentSelectEngines::getEngineSelect() {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().engineSelect();
+    }
+    return TournamentData::instance().engineSelect();
 }
 
 std::string ChatbotStepTournamentSelectEngines::draw() {
 
-    auto& engineSelect = TournamentData::instance().engineSelect();
+    auto& engineSelect = getEngineSelect();
 
     // Prüfe, ob Engines verfügbar sind
     auto& configManager = EngineWorkerFactory::getConfigManager();

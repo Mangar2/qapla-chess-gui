@@ -20,22 +20,28 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include "chatbot-tournament.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include <vector>
 #include <string>
+
+namespace QaplaWindows {
+    class ImGuiEngineSelect;
+}
 
 namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to load additional engines from disk.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentLoadEngine : public ChatbotStep {
 public:
-    ChatbotStepTournamentLoadEngine();
+    explicit ChatbotStepTournamentLoadEngine(TournamentType type = TournamentType::Standard);
     ~ChatbotStepTournamentLoadEngine() override = default;
 
     [[nodiscard]] std::string draw() override;
 private:
+    TournamentType type_;
     std::string result_;
     
     enum class State {
@@ -47,6 +53,12 @@ private:
     State state_ = State::Input;
     std::vector<std::string> addedEnginePaths_;
     bool detectionStarted_ = false;
+
+    /**
+     * @brief Gets the engine selection for the tournament.
+     * @return Reference to the engine selection.
+     */
+    [[nodiscard]] ImGuiEngineSelect& getEngineSelect();
 
     void drawInput();
     void showAddedEngines();

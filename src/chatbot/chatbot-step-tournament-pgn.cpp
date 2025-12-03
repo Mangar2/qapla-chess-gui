@@ -20,13 +20,22 @@
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 #include <filesystem>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentPgn::ChatbotStepTournamentPgn() = default;
+ChatbotStepTournamentPgn::ChatbotStepTournamentPgn(TournamentType type)
+    : type_(type) {}
+
+ImGuiTournamentPgn& ChatbotStepTournamentPgn::getTournamentPgn() {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().tournamentPgn();
+    }
+    return TournamentData::instance().tournamentPgn();
+}
 
 std::string ChatbotStepTournamentPgn::draw() {
 
@@ -37,7 +46,7 @@ std::string ChatbotStepTournamentPgn::draw() {
         ImGui::Spacing();
     }
 
-    auto& tournamentPgn = TournamentData::instance().tournamentPgn();
+    auto& tournamentPgn = getTournamentPgn();
     
     ImGuiTournamentPgn::DrawOptions options {
         .fileInputWidth = 500.0F,

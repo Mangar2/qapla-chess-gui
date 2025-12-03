@@ -20,15 +20,21 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-step-tournament-stop-running.h"
+
+namespace QaplaWindows {
+    class ImGuiTournamentPgn;
+}
 
 namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Chatbot step for selecting the PGN file for tournament results.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentPgn : public ChatbotStep {
 public:
-    ChatbotStepTournamentPgn();
+    explicit ChatbotStepTournamentPgn(TournamentType type = TournamentType::Standard);
     ~ChatbotStepTournamentPgn() override = default;
 
     /**
@@ -38,6 +44,14 @@ public:
     [[nodiscard]] std::string draw() override;
 
 private:
+    TournamentType type_;
+
+    /**
+     * @brief Gets the tournament PGN configuration.
+     * @return Reference to the tournament PGN.
+     */
+    [[nodiscard]] ImGuiTournamentPgn& getTournamentPgn();
+
     /**
      * @brief Result of file path validation.
      */

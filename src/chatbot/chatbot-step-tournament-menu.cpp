@@ -19,11 +19,42 @@
 
 #include "chatbot-step-tournament-menu.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
+
+ChatbotStepTournamentMenu::ChatbotStepTournamentMenu(TournamentType type)
+    : type_(type) {}
+
+void ChatbotStepTournamentMenu::clearTournament() {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::instance().clear();
+    } else {
+        TournamentData::instance().clear(false);
+    }
+}
+
+void ChatbotStepTournamentMenu::saveTournament(const std::string& path) {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::saveTournament(path);
+    } else {
+        TournamentData::saveTournament(path);
+    }
+}
+
+std::pair<std::string, std::string> ChatbotStepTournamentMenu::getFileFilter() const {
+    if (type_ == TournamentType::Sprt) {
+        return {"Qapla SPRT Files", "qsprt"};
+    }
+    return {"Qapla Tournament Files", "qtour"};
+}
+
+const char* ChatbotStepTournamentMenu::getTournamentName() const {
+    return (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+}
 
 std::string ChatbotStepTournamentMenu::draw() {
     if (finished_) {
@@ -33,32 +64,37 @@ std::string ChatbotStepTournamentMenu::draw() {
     QaplaWindows::ImGuiControls::textWrapped("What would you like to do?\n");
     if (!saved_) {
         ImGui::Spacing();
-        QaplaWindows::ImGuiControls::textWrapped(
-            "Starting a new tournament will delete the existing one.\n"
-            "Save the current tournament to a file if you want to keep it.");
+        std::string warningText = std::string("Starting a new ") + getTournamentName() + 
+            " will delete the existing one.\n"
+            "Save the current " + getTournamentName() + " to a file if you want to keep it.";
+        QaplaWindows::ImGuiControls::textWrapped(warningText.c_str());
     }
     
     ImGui::Spacing();
     ImGui::Spacing();
 
-    if (QaplaWindows::ImGuiControls::textButton("New tournament")) {
-        TournamentData::instance().clear(false);
+    std::string newButtonLabel = std::string("New ") + getTournamentName();
+    if (QaplaWindows::ImGuiControls::textButton(newButtonLabel.c_str())) {
+        clearTournament();
         finished_ = true;
         return "new";
     }
 
     ImGui::SameLine();
 
-    if (QaplaWindows::ImGuiControls::textButton("Save tournament")) {
-        auto path = OsDialogs::saveFileDialog({{"Qapla Tournament Files", "qtour"}});
+    std::string saveButtonLabel = std::string("Save ") + getTournamentName();
+    if (QaplaWindows::ImGuiControls::textButton(saveButtonLabel.c_str())) {
+        auto filter = getFileFilter();
+        auto path = OsDialogs::saveFileDialog({{filter.first, filter.second}});
         if (!path.empty()) {
-            TournamentData::saveTournament(path);
+            saveTournament(path);
             saved_ = true;
         }
     }
 
     ImGui::SameLine();
-    if (QaplaWindows::ImGuiControls::textButton("Load tournament")) {
+    std::string loadButtonLabel = std::string("Load ") + getTournamentName();
+    if (QaplaWindows::ImGuiControls::textButton(loadButtonLabel.c_str())) {
         finished_ = true;
         return "load";
     }

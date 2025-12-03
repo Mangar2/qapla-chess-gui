@@ -17,41 +17,38 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-tournament.h"
-#include "chatbot-step-tournament-stop-running.h"
-#include "chatbot-step-tournament-continue-existing.h"
-#include "chatbot-step-tournament-menu.h"
-#include "chatbot-step-tournament-load.h"
-#include "chatbot-step-tournament-global-settings.h"
-#include "chatbot-step-tournament-select-engines.h"
-#include "chatbot-step-tournament-load-engine.h"
-#include "chatbot-step-tournament-configuration.h"
-#include "chatbot-step-tournament-opening.h"
-#include "chatbot-step-tournament-pgn.h"
-#include "chatbot-step-tournament-start.h"
+#include "chatbot-sprt.h"
+#include "../chatbot-step-tournament-stop-running.h"
+#include "../chatbot-step-tournament-menu.h"
+#include "../chatbot-step-tournament-global-settings.h"
+#include "../chatbot-step-tournament-select-engines.h"
+#include "../chatbot-step-tournament-load-engine.h"
+#include "../chatbot-step-tournament-opening.h"
+#include "../chatbot-step-tournament-pgn.h"
+#include "chatbot-step-sprt-configuration.h"
 
 namespace QaplaWindows::ChatBot {
 
-void ChatbotTournament::start() {
+void ChatbotSprt::start() {
     steps_.clear();
     currentStepIndex_ = 0;
     stopped_ = false;
 
     // Only add the initial steps - more steps are added dynamically based on user choice
-    steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>());
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>(TournamentType::Sprt));
 }
 
-void ChatbotTournament::addNewTournamentSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
+void ChatbotSprt::addNewSprtSteps() {
+    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
+    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(TournamentType::Sprt));
+    // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtStart>());
 }
 
-bool ChatbotTournament::draw() {
+bool ChatbotSprt::draw() {
     bool contentChanged = false;
     
     if (stopped_ || steps_.empty()) {
@@ -73,23 +70,23 @@ bool ChatbotTournament::draw() {
         }
 
         if (result == "menu") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentMenu>());
+            steps_.push_back(std::make_unique<ChatbotStepTournamentMenu>(TournamentType::Sprt));
         }
         
         if (result == "new") {
-            addNewTournamentSteps();
+            addNewSprtSteps();
         }
         
         if (result == "load") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentLoad>());
+            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtLoad>());
         }
         
         if (result == "start") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentStart>());
+            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtStart>());
         }
 
         if (result == "existing") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>());
+            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtContinueExisting>());
         }
         
         // Advance to next step if current is finished
@@ -102,7 +99,7 @@ bool ChatbotTournament::draw() {
     return contentChanged;
 }
 
-bool ChatbotTournament::isFinished() const {
+bool ChatbotSprt::isFinished() const {
     if (stopped_) {
         return true;
     }
@@ -113,8 +110,8 @@ bool ChatbotTournament::isFinished() const {
     return currentStepIndex_ >= steps_.size();
 }
 
-std::unique_ptr<ChatbotThread> ChatbotTournament::clone() const {
-    return std::make_unique<ChatbotTournament>();
+std::unique_ptr<ChatbotThread> ChatbotSprt::clone() const {
+    return std::make_unique<ChatbotSprt>();
 }
 
 } // namespace QaplaWindows::ChatBot

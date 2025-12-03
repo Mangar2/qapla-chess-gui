@@ -19,12 +19,21 @@
 
 #include "chatbot-step-tournament-global-settings.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings() = default;
+ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings(TournamentType type)
+    : type_(type) {}
+
+ImGuiEngineGlobalSettings& ChatbotStepTournamentGlobalSettings::getGlobalSettings() {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().globalSettings();
+    }
+    return TournamentData::instance().globalSettings();
+}
 
 std::string ChatbotStepTournamentGlobalSettings::draw() {
 
@@ -35,7 +44,7 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
         ImGui::Spacing();
     }
 
-    auto& globalSettings = TournamentData::instance().globalSettings();
+    auto& globalSettings = getGlobalSettings();
     
     auto savedOptions = globalSettings.getOptions();
     

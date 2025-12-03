@@ -20,6 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include <string>
 
 namespace QaplaWindows::ChatBot {
@@ -28,13 +29,40 @@ namespace QaplaWindows::ChatBot {
  * @brief Step to ask the user what they want to do with the tournament.
  * 
  * Options: New tournament, Save tournament, Load tournament
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentMenu : public ChatbotStep {
 public:
+    explicit ChatbotStepTournamentMenu(TournamentType type = TournamentType::Standard);
+
     [[nodiscard]] std::string draw() override;
 
 private:
+    TournamentType type_;
     bool saved_ = false;
+
+    /**
+     * @brief Clears the tournament data.
+     */
+    void clearTournament();
+
+    /**
+     * @brief Saves the tournament to a file.
+     * @param path The file path to save to.
+     */
+    void saveTournament(const std::string& path);
+
+    /**
+     * @brief Gets the file filter for the save dialog.
+     * @return The file filter pair (description, extension).
+     */
+    [[nodiscard]] std::pair<std::string, std::string> getFileFilter() const;
+
+    /**
+     * @brief Gets the tournament name for display.
+     * @return The tournament name string.
+     */
+    [[nodiscard]] const char* getTournamentName() const;
 };
 
 } // namespace QaplaWindows::ChatBot

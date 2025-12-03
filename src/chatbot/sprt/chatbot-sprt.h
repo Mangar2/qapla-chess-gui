@@ -19,34 +19,32 @@
 
 #pragma once
 
-#include "chatbot-step.h"
-#include "chatbot-step-tournament-stop-running.h"
-
-namespace QaplaWindows {
-    class ImGuiEngineGlobalSettings;
-}
+#include "../chatbot-thread.h"
+#include "../chatbot-step.h"
+#include <vector>
+#include <memory>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Step to configure global engine settings (hash, time control).
- * Supports both standard tournaments and SPRT tournaments.
+ * @brief A chatbot thread for creating a new SPRT (Sequential Probability Ratio Test) tournament.
  */
-class ChatbotStepTournamentGlobalSettings : public ChatbotStep {
+class ChatbotSprt : public ChatbotThread {
 public:
-    explicit ChatbotStepTournamentGlobalSettings(TournamentType type = TournamentType::Standard);
-    ~ChatbotStepTournamentGlobalSettings() override = default;
-
-    [[nodiscard]] std::string draw() override;
+    [[nodiscard]] std::string getTitle() const override { 
+        return "SPRT Tournament"; 
+    }
+    void start() override;
+    bool draw() override;
+    [[nodiscard]] bool isFinished() const override;
+    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
 private:
-    TournamentType type_;
-
-    /**
-     * @brief Gets the global settings for the tournament.
-     * @return Reference to the global settings.
-     */
-    [[nodiscard]] ImGuiEngineGlobalSettings& getGlobalSettings();
+    std::vector<std::unique_ptr<ChatbotStep>> steps_;
+    size_t currentStepIndex_ = 0;
+    bool stopped_ = false;
+    
+    void addNewSprtSteps();
 };
 
 } // namespace QaplaWindows::ChatBot

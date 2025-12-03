@@ -25,18 +25,40 @@
 namespace QaplaWindows::ChatBot {
 
 /**
+ * @brief Enum to distinguish between standard tournament and SPRT tournament.
+ */
+enum class TournamentType {
+    Standard,
+    Sprt
+};
+
+/**
  * @brief Step to check if a tournament is running and offer to stop it.
  * 
  * If no tournament is running, this step finishes automatically.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentStopRunning : public ChatbotStep {
 public:
-    ChatbotStepTournamentStopRunning();
+    explicit ChatbotStepTournamentStopRunning(TournamentType type = TournamentType::Standard);
 
     [[nodiscard]] std::string draw() override;
 
 private:
+    TournamentType type_;
     std::string finishedMessage_;
+
+    /**
+     * @brief Checks if the tournament is currently running.
+     * @return true if running, false otherwise.
+     */
+    [[nodiscard]] bool isRunning() const;
+
+    /**
+     * @brief Stops the tournament pool.
+     * @param graceful If true, stops gracefully.
+     */
+    void stopPool(bool graceful) const;
 };
 
 } // namespace QaplaWindows::ChatBot

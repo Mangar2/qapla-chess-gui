@@ -19,34 +19,39 @@
 
 #pragma once
 
-#include "chatbot-step.h"
-#include "chatbot-step-tournament-stop-running.h"
-
-namespace QaplaWindows {
-    class ImGuiEngineGlobalSettings;
-}
+#include "../chatbot-step.h"
+#include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Step to configure global engine settings (hash, time control).
- * Supports both standard tournaments and SPRT tournaments.
+ * @brief Step to configure SPRT (Sequential Probability Ratio Test) parameters.
+ * 
+ * Configures:
+ * - Elo Lower (H0): null hypothesis threshold
+ * - Elo Upper (H1): alternative hypothesis threshold  
+ * - Alpha: Type I error rate (false positive)
+ * - Beta: Type II error rate (false negative)
+ * - Max Games: Maximum games before inconclusive termination
  */
-class ChatbotStepTournamentGlobalSettings : public ChatbotStep {
+class ChatbotStepSprtConfiguration : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentGlobalSettings(TournamentType type = TournamentType::Standard);
-    ~ChatbotStepTournamentGlobalSettings() override = default;
+    ChatbotStepSprtConfiguration() = default;
+    ~ChatbotStepSprtConfiguration() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    /**
+     * @brief Draws the SPRT configuration controls.
+     */
+    void drawConfiguration();
 
     /**
-     * @brief Gets the global settings for the tournament.
-     * @return Reference to the global settings.
+     * @brief Validates the SPRT configuration.
+     * @return true if configuration is valid, false otherwise.
      */
-    [[nodiscard]] ImGuiEngineGlobalSettings& getGlobalSettings();
+    [[nodiscard]] bool isConfigurationValid() const;
 };
 
 } // namespace QaplaWindows::ChatBot

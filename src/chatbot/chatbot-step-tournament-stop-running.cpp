@@ -20,13 +20,29 @@
 #include "chatbot-step-tournament-stop-running.h"
 #include "chatbot-step.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning() = default;
+ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning(TournamentType type)
+    : type_(type) {}
 
+bool ChatbotStepTournamentStopRunning::isRunning() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().isRunning();
+    }
+    return TournamentData::instance().isRunning();
+}
+
+void ChatbotStepTournamentStopRunning::stopPool(bool graceful) const {
+    if (type_ == TournamentType::Sprt) {
+        SprtTournamentData::instance().stopPool(graceful);
+    } else {
+        TournamentData::instance().stopPool(graceful);
+    }
+}
 
 std::string ChatbotStepTournamentStopRunning::draw() {
     if (finished_) {
@@ -34,20 +50,22 @@ std::string ChatbotStepTournamentStopRunning::draw() {
         return "";
     }
     
-    if (!TournamentData::instance().isRunning()) {
+    if (!isRunning()) {
         finished_ = true;
         return "existing";
     }
 
-    QaplaWindows::ImGuiControls::textWrapped(
-        "A tournament is currently running. Would you like to end it?");
+    const char* tournamentName = (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+    std::string message = std::string("A ") + tournamentName + " is currently running. Would you like to end it?";
+    QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     
     ImGui::Spacing();
     ImGui::Spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Yes, end tournament")) {
-        TournamentData::instance().stopPool(false);
-        finishedMessage_ = "Tournament ended.";
+        stopPool(false);
+        finishedMessage_ = std::string(tournamentName) + " ended.";
+        finishedMessage_[0] = static_cast<char>(std::toupper(finishedMessage_[0]));
         finished_ = true;
         return "menu";
     }
@@ -55,7 +73,8 @@ std::string ChatbotStepTournamentStopRunning::draw() {
     ImGui::SameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
-        finishedMessage_ = "Tournament continues.";
+        finishedMessage_ = std::string(tournamentName) + " continues.";
+        finishedMessage_[0] = static_cast<char>(std::toupper(finishedMessage_[0]));
         finished_ = true;
         return "stop";
     }

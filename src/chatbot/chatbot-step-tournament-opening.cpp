@@ -19,6 +19,7 @@
 
 #include "chatbot-step-tournament-opening.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 #include <filesystem>
@@ -29,7 +30,22 @@ namespace QaplaWindows::ChatBot {
 
 constexpr uint64_t MAX_VALIDATION_GAMES = 10000;
 
-ChatbotStepTournamentOpening::ChatbotStepTournamentOpening() = default;
+ChatbotStepTournamentOpening::ChatbotStepTournamentOpening(TournamentType type)
+    : type_(type) {}
+
+ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().tournamentOpening();
+    }
+    return TournamentData::instance().tournamentOpening();
+}
+
+const ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() const {
+    if (type_ == TournamentType::Sprt) {
+        return SprtTournamentData::instance().tournamentOpening();
+    }
+    return TournamentData::instance().tournamentOpening();
+}
 
 std::string ChatbotStepTournamentOpening::draw() {
 
@@ -40,7 +56,7 @@ std::string ChatbotStepTournamentOpening::draw() {
         ImGui::Spacing();
     }
 
-    auto& tournamentOpening = TournamentData::instance().tournamentOpening();
+    auto& tournamentOpening = getTournamentOpening();
     
     ImGuiTournamentOpening::DrawParams drawParams{
         .inputWidth = 150.0F,
@@ -69,7 +85,7 @@ std::string ChatbotStepTournamentOpening::draw() {
     ImGui::Spacing();
 
     // Check if file changed and reset validation state if needed
-    const auto& openings = TournamentData::instance().tournamentOpening().openings();
+    const auto& openings = getTournamentOpening().openings();
     if (openings.file != lastFilename_) {
         lastFilename_ = openings.file;
         isValidated_ = false;
@@ -100,7 +116,7 @@ std::string ChatbotStepTournamentOpening::draw() {
 }
 
 void ChatbotStepTournamentOpening::drawStatusMessage() {
-    const auto& openings = TournamentData::instance().tournamentOpening().openings();
+    const auto& openings = getTournamentOpening().openings();
     
     if (openings.file.empty()) {
         ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
@@ -180,7 +196,7 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
 }
 
 bool ChatbotStepTournamentOpening::doesOpeningFileExist() const {
-    const auto& openings = TournamentData::instance().tournamentOpening().openings();
+    const auto& openings = getTournamentOpening().openings();
     
     if (openings.file.empty()) {
         return false;
@@ -195,7 +211,7 @@ bool ChatbotStepTournamentOpening::doesOpeningFileExist() const {
 }
 
 void ChatbotStepTournamentOpening::validateOpeningFile() {
-    const auto& openings = TournamentData::instance().tournamentOpening().openings();
+    const auto& openings = getTournamentOpening().openings();
     
     QaplaTester::OpeningParser parser;
     parseResult_ = parser.parseWithTrace(openings.file, MAX_VALIDATION_GAMES);

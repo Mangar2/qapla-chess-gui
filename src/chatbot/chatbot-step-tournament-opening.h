@@ -20,18 +20,24 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include "opening-parser.h"
 
 #include <optional>
+
+namespace QaplaWindows {
+    class ImGuiTournamentOpening;
+}
 
 namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Chatbot step for configuring tournament opening settings.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentOpening : public ChatbotStep {
 public:
-    ChatbotStepTournamentOpening();
+    explicit ChatbotStepTournamentOpening(TournamentType type = TournamentType::Standard);
     ~ChatbotStepTournamentOpening() override = default;
 
     /**
@@ -41,6 +47,15 @@ public:
     [[nodiscard]] std::string draw() override;
 
 private:
+    TournamentType type_;
+
+    /**
+     * @brief Gets the tournament opening configuration.
+     * @return Reference to the tournament opening.
+     */
+    [[nodiscard]] ImGuiTournamentOpening& getTournamentOpening();
+    [[nodiscard]] const ImGuiTournamentOpening& getTournamentOpening() const;
+
     /**
      * @brief Draws status messages based on opening file validation.
      */
