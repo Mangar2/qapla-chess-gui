@@ -19,21 +19,35 @@
 
 #include "chatbot-step-tournament-load.h"
 #include "tournament-data.h"
+#include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
+ChatbotStepTournamentLoad::ChatbotStepTournamentLoad(TournamentType type)
+    : type_(type) {}
+
 std::string ChatbotStepTournamentLoad::draw() {
     if (finished_) {
         return "Tournament loaded successfully.";
     }
 
-    auto selectedPath = OsDialogs::openFileDialog(false, 
-        { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} });
+    std::vector<std::pair<std::string, std::string>> filters;
+    if (type_ == TournamentType::Sprt) {
+        filters = { {"Qapla SPRT Tournament Files", "*.qsprt"}, {"All Files", "*.*"} };
+    } else {
+        filters = { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} };
+    }
+
+    auto selectedPath = OsDialogs::openFileDialog(false, filters);
     if (!selectedPath.empty() && !selectedPath[0].empty()) {
-        TournamentData::instance().loadTournament(selectedPath[0]);
+        if (type_ == TournamentType::Sprt) {
+            SprtTournamentData::instance().loadTournament(selectedPath[0]);
+        } else {
+            TournamentData::instance().loadTournament(selectedPath[0]);
+        }
         finished_ = true;
         return "start";
     }

@@ -348,7 +348,8 @@ void SprtTournamentData::startTournament() {
     imguiConcurrency_->init();
     imguiConcurrency_->setActive(true);
     state_ = State::Starting;
-    SnackbarManager::instance().showSuccess("SPRT tournament started");
+    SnackbarManager::instance().showSuccess("SPRT tournament started",
+        false, "sprt-tournament");
 }
 
 void SprtTournamentData::pollData() {

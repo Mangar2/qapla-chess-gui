@@ -20,16 +20,23 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include "chatbot-step-tournament-stop-running.h"
 #include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to load a tournament from file and optionally start it.
+ * Supports both standard tournaments and SPRT tournaments.
  */
 class ChatbotStepTournamentLoad : public ChatbotStep {
 public:
+    explicit ChatbotStepTournamentLoad(TournamentType type = TournamentType::Standard);
+
     [[nodiscard]] std::string draw() override;
+
+private:
+    TournamentType type_;
 };
 
 } // namespace QaplaWindows::ChatBot

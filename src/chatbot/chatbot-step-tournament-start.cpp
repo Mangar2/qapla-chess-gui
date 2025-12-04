@@ -12,13 +12,6 @@ namespace QaplaWindows::ChatBot {
 ChatbotStepTournamentStart::ChatbotStepTournamentStart(TournamentType type)
     : type_(type) {}
 
-bool ChatbotStepTournamentStart::isFinished() const {
-    if (type_ == TournamentType::Sprt) {
-        return SprtTournamentData::instance().isFinished();
-    }
-    return TournamentData::instance().isFinished();
-}
-
 bool ChatbotStepTournamentStart::isStarting() const {
     if (type_ == TournamentType::Sprt) {
         return SprtTournamentData::instance().isStarting();
@@ -74,16 +67,6 @@ const char* ChatbotStepTournamentStart::getSwitchViewMessage() const {
 
 std::string ChatbotStepTournamentStart::draw() {
     if (finished_) {
-        return "";
-    }
-
-    if (isFinished()) {
-        std::string message = std::string("The ") + getTournamentName() + " is already finished.";
-        QaplaWindows::ImGuiControls::textWrapped(message.c_str());
-        ImGui::Spacing();
-        if (QaplaWindows::ImGuiControls::textButton("Return")) {
-            finished_ = true;
-        }
         return "";
     }
 

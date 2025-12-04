@@ -30,6 +30,8 @@
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
 
+#include <algorithm>
+
 namespace QaplaWindows::ChatBot {
 
 void ChatbotTournament::start() {
@@ -62,7 +64,7 @@ bool ChatbotTournament::draw() {
     }
 
     // Insert any captured snackbar messages as steps
-    snackbarCapture_.insertCapturedSteps(steps_, currentStepIndex_);
+    snackbarCapture_.insertCapturedSteps(steps_, std::max<size_t>(1, currentStepIndex_) - 1);
 
     // Draw all completed steps 
     for (size_t i = 0; i < currentStepIndex_ && i < steps_.size(); ++i) {

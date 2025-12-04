@@ -24,6 +24,7 @@
 #include "../chatbot-step-tournament-global-settings.h"
 #include "../chatbot-step-tournament-select-engines.h"
 #include "../chatbot-step-tournament-load-engine.h"
+#include "../chatbot-step-tournament-load.h"
 #include "../chatbot-step-tournament-opening.h"
 #include "../chatbot-step-tournament-pgn.h"
 #include "../chatbot-step-tournament-start.h"
@@ -61,7 +62,7 @@ bool ChatbotSprt::draw() {
     }
 
     // Insert any captured snackbar messages as steps
-    snackbarCapture_.insertCapturedSteps(steps_, currentStepIndex_);
+    snackbarCapture_.insertCapturedSteps(steps_, std::max<size_t>(1, currentStepIndex_) - 1);
 
     // Draw all completed steps 
     for (size_t i = 0; i < currentStepIndex_ && i < steps_.size(); ++i) {
@@ -86,7 +87,7 @@ bool ChatbotSprt::draw() {
         }
         
         if (result == "load") {
-            // TODO: steps_.push_back(std::make_unique<ChatbotStepSprtLoad>());
+            steps_.push_back(std::make_unique<ChatbotStepTournamentLoad>(TournamentType::Sprt));
         }
         
         if (result == "start") {
