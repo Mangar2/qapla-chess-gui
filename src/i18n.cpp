@@ -5,9 +5,11 @@
 #include <logger.h>
 #include <ini-file.h>
 
+#ifndef QAPLA_DEBUG_I18N
 #include <deu-lang.h>
 #include <eng-lang.h>
 #include <fra-lang.h>
+#endif
 
 #include <fstream>
 #include <sstream>
@@ -66,6 +68,25 @@ std::string Translator::translate(const std::string& topic, const std::string& k
             return prefix + keyIt->second + suffix;
         }
     }
+
+#ifdef QAPLA_DEBUG_I18N
+    // In debug mode: Add missing translations directly to all language files
+    auto trimmedKeyFileFormat = toFileFormat(trimmedKey);
+    auto i18nDir = getI18nSourceDirectory();
+    
+    for (const auto& lang : {"deu", "eng", "fra"}) {
+        auto langFile = i18nDir / (std::string(lang) + ".lang");
+        addMissingTranslationToFile(langFile, topic, trimmedKeyFileFormat, trimmedKeyFileFormat);
+    }
+    
+    // Also add to current translations so we don't write it again
+    translations[topic][trimmedKey] = trimmedKey;
+    
+    QaplaTester::Logger::reportLogger().log(
+        std::string("Added missing translation [") + topic + "] " + trimmedKey, 
+        TraceLevel::info);
+#else
+    // In release mode: Log missing keys to separate file
     auto trimmedKeyFileFormat = toFileFormat(trimmedKey);
     auto sectionListOpt = missingKeys_.getSectionList("Translation", topic);
     if (!sectionListOpt || sectionListOpt->empty()) {
@@ -83,6 +104,7 @@ std::string Translator::translate(const std::string& topic, const std::string& k
         missingKeys_.setSectionList("Translation", topic, *sectionListOpt);
     }
     setModified();
+#endif
     return key;
 }
 
@@ -143,7 +165,27 @@ void Translator::setLanguageCode(const std::string& language) {
         loadedLanguages.clear();
     }
 
-    // Try loading from embedded data first
+#ifdef QAPLA_DEBUG_I18N
+    // In debug mode: Always load from source .lang files
+    auto i18nDir = getI18nSourceDirectory();
+    std::filesystem::path langPath = i18nDir / (language + ".lang");
+    
+    if (std::filesystem::exists(langPath)) {
+        loadLanguageFile(langPath.string());
+        std::scoped_lock lock(languageMutex);
+        if (std::ranges::find(loadedLanguages, language) == loadedLanguages.end()) {
+            loadedLanguages.push_back(language);
+        }
+        QaplaTester::Logger::reportLogger().log(
+            std::string("Debug mode: Loaded language file from source: ") + langPath.string(), 
+            TraceLevel::info);
+    } else {
+        QaplaTester::Logger::reportLogger().log(
+            std::string("Debug mode: Language file not found: ") + langPath.string(), 
+            TraceLevel::warning);
+    }
+#else
+    // Release mode: Try loading from embedded data first
     const uint32_t* data = nullptr;
     uint32_t size = 0;
 
@@ -188,6 +230,7 @@ void Translator::setLanguageCode(const std::string& language) {
         QaplaTester::Logger::reportLogger().log(std::string("Language file not found: ") + langPath.string(), 
             TraceLevel::warning);
     }
+#endif
 }
 
 std::string Translator::getLanguageCode() const {
@@ -224,5 +267,98 @@ std::string Translator::fromFileFormat(const std::string& text) {
     }
     return result;
 }
+
+#ifdef QAPLA_DEBUG_I18N
+std::filesystem::path Translator::getI18nSourceDirectory() const {
+    // Get the executable path and navigate to the source i18n directory
+    // Assuming the build directory is under the project root (e.g., build/default/)
+    std::filesystem::path exePath = std::filesystem::current_path();
+    
+    // Try different possible locations relative to where the exe might run from
+    std::vector<std::filesystem::path> possiblePaths = {
+        exePath / "i18n",                           // Running from project root
+        exePath / ".." / ".." / "i18n",             // Running from build/default/
+        exePath / ".." / "i18n",                    // Running from build/
+        exePath.parent_path() / ".." / ".." / "i18n" // Exe in build/default/
+    };
+    
+    for (const auto& path : possiblePaths) {
+        auto normalizedPath = std::filesystem::weakly_canonical(path);
+        if (std::filesystem::exists(normalizedPath) && 
+            std::filesystem::exists(normalizedPath / "eng.lang")) {
+            return normalizedPath;
+        }
+    }
+    
+    // Fallback: try to find i18n relative to current directory
+    QaplaTester::Logger::reportLogger().log(
+        "Warning: Could not find i18n source directory, using current path", 
+        TraceLevel::warning);
+    return exePath / "i18n";
+}
+
+void Translator::addMissingTranslationToFile(const std::filesystem::path& filepath, 
+                                             const std::string& topic, 
+                                             const std::string& key, 
+                                             const std::string& value) {
+    if (!std::filesystem::exists(filepath)) {
+        QaplaTester::Logger::reportLogger().log(
+            std::string("Cannot add translation - file not found: ") + filepath.string(), 
+            TraceLevel::warning);
+        return;
+    }
+
+    // Load the existing file
+    std::ifstream inFile(filepath);
+    if (!inFile.is_open()) {
+        return;
+    }
+    
+    auto sectionList = QaplaHelpers::IniFile::load(inFile);
+    inFile.close();
+    
+    // Find or create the section for this topic
+    bool foundSection = false;
+    for (auto& section : sectionList) {
+        if (section.name != "Translation") {
+            continue;
+        }
+        auto topicOpt = section.getValue("id");
+        if (!topicOpt.has_value() || topicOpt.value() != topic) {
+            continue;
+        }
+        
+        // Check if key already exists
+        if (section.getValue(key).has_value()) {
+            return; // Key already exists, nothing to do
+        }
+        
+        // Add the new key=value
+        section.addEntry(key, value);
+        foundSection = true;
+        break;
+    }
+    
+    // If section doesn't exist, create it
+    if (!foundSection) {
+        QaplaHelpers::IniFile::Section newSection;
+        newSection.name = "Translation";
+        newSection.addEntry("id", topic);
+        newSection.addEntry(key, value);
+        sectionList.push_back(newSection);
+    }
+    
+    // Write back to file
+    std::ofstream outFile(filepath);
+    if (!outFile.is_open()) {
+        QaplaTester::Logger::reportLogger().log(
+            std::string("Cannot write to language file: ") + filepath.string(), 
+            TraceLevel::error);
+        return;
+    }
+    
+    QaplaHelpers::IniFile::saveSections(outFile, sectionList);
+}
+#endif
 
 } // namespace QaplaWindows

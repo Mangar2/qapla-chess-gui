@@ -14,6 +14,11 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options($<$<CONFIG:Release>:-DNDEBUG>)
 endif()
 
+# Debug-Modus für i18n: Sprachdateien werden direkt gelesen und bei fehlenden Übersetzungen aktualisiert
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_compile_definitions(QAPLA_DEBUG_I18N)
+endif()
+
 if(NOT WIN32)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()

@@ -39,6 +39,23 @@ Use=Verwenden
 Copy PGN=PGN kopieren
 Copy FEN=FEN kopieren
 Select=Auswählen
+Tournament=Tournament
+SPRT Tournament=SPRT Tournament
+Tutorial=Tutorial
+Choose Language=Choose Language
+Messages=Messages
+Yes, continue tournament=Yes, continue tournament
+No=No
+New tournament=New tournament
+Save tournament=Save tournament
+Load tournament=Load tournament
+Add Engines=Add Engines
+More Options=More Options
+Show Trace=Show Trace
+Overwrite & Continue=Overwrite & Continue
+Start Tournament=Start Tournament
+Switch to Tournament View=Switch to Tournament View
+Stay in Chatbot=Stay in Chatbot
 
 [Translation]
 id=Checkbox
@@ -61,7 +78,21 @@ id=Input
 Seen plies=Gesehene Halbzüge
 Max time (s)=Max. Zeit (s)
 Min time (s)=Min. Zeit (s)
-##filePath=##Dateipfad
+Hash (MB)=Hash (MB)
+Minutes=Minutes
+Seconds=Seconds
+Increment Seconds=Increment Seconds
+Increment Milliseconds=Increment Milliseconds
+Predefined time control=Predefined time control
+Event=Event
+Type=Type
+Rounds=Rounds
+Games per pairing=Games per pairing
+Order=Order
+Append mode=Append mode
+Save only finished games=Save only finished games
+Minimal tags=Minimal tags
+Concurrency=Concurrency
 
 [Translation]
 id=Option
@@ -349,6 +380,9 @@ All engine instance communication is logged to a single file=Alle Engine-Instanz
 Edit value and click Apply to save changes=Wert bearbeiten und auf Übernehmen klicken, um Änderungen zu speichern
 Clear all test results=Alle Testergebnisse löschen
 Run selected engine tests=Ausgewählte Engine-Tests ausführen
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Number of games to run in parallel=Number of games to run in parallel
 
 [Translation]
 id=Table
@@ -391,3 +425,33 @@ Epd=Epd
 Test=Test
 Settings=Einstellungen
 Board=Brett
+Chatbot=Chatbot
+
+[Translation]
+id=Chatbot
+Tournament=Tournament
+How can I help you?=How can I help you?
+SPRT Tournament=SPRT Tournament
+Tutorial=Tutorial
+Choose Language=Choose Language
+Messages=Messages
+
+[Translation]
+id=Text
+There is an existing tournament that can be continued. Would you like to continue it?=There is an existing tournament that can be continued. Would you like to continue it?
+What would you like to do?=What would you like to do?
+Starting a new tournament will delete the existing one.\nSave the current tournament to a file if you want to keep it.=Starting a new tournament will delete the existing one.\nSave the current tournament to a file if you want to keep it.
+You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.=You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.
+Select engines for the tournament:=Select engines for the tournament:
+Selected engines for the tournament:=Selected engines for the tournament:
+Do you want to load additional engines for the tournament?=Do you want to load additional engines for the tournament?
+Configure the tournament settings. Choose the tournament type, number of rounds, and games per pairing.=Configure the tournament settings. Choose the tournament type, number of rounds, and games per pairing.
+Configure the opening book settings for the tournament. You must specify an opening file (EPD, PGN, or raw FEN).=Configure the opening book settings for the tournament. You must specify an opening file (EPD, PGN, or raw FEN).
+Successfully parsed opening file using EPD parser.\nFound 5624 opening position(s).=Successfully parsed opening file using EPD parser.\nFound 5624 opening position(s).
+Select the PGN file where tournament results will be saved. All games played during the tournament will be recorded in this file.=Select the PGN file where tournament results will be saved. All games played during the tournament will be recorded in this file.
+Warning: The file already exists and overwrite mode is enabled. The existing content will be replaced when the tournament starts.=Warning: The file already exists and overwrite mode is enabled. The existing content will be replaced when the tournament starts.
+Configure tournament concurrency and start:=Configure tournament concurrency and start:
+Tournament started=Tournament started
+The Tournament started successfully!=The Tournament started successfully!
+You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.=You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.
+

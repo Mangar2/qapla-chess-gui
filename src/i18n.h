@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <mutex>
+#include <filesystem>
 
 #include <ini-file.h>
 
@@ -73,6 +74,26 @@ public:
      * @return The unescaped and trimmed text.
      */
     [[nodiscard]] static std::string fromFileFormat(const std::string& text);
+
+#ifdef QAPLA_DEBUG_I18N
+    /**
+     * @brief Gets the source directory path for i18n files.
+     * @return The path to the i18n directory.
+     */
+    [[nodiscard]] std::filesystem::path getI18nSourceDirectory() const;
+
+    /**
+     * @brief Adds a missing translation to a language file.
+     * @param filepath The path to the language file.
+     * @param topic The topic category.
+     * @param key The key to add.
+     * @param value The default value (English text).
+     */
+    void addMissingTranslationToFile(const std::filesystem::path& filepath, 
+                                     const std::string& topic, 
+                                     const std::string& key, 
+                                     const std::string& value);
+#endif
 
 protected:
     void saveData(std::ofstream& out) override;
