@@ -36,6 +36,9 @@ void ChatbotSprt::start() {
     currentStepIndex_ = 0;
     stopped_ = false;
 
+    // Install snackbar capture to redirect SPRT tournament messages to chat
+    snackbarCapture_.install();
+
     // Only add the initial steps - more steps are added dynamically based on user choice
     steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>(TournamentType::Sprt));
 }
@@ -56,6 +59,9 @@ bool ChatbotSprt::draw() {
     if (stopped_ || steps_.empty()) {
         return false;
     }
+
+    // Insert any captured snackbar messages as steps
+    snackbarCapture_.insertCapturedSteps(steps_, currentStepIndex_);
 
     // Draw all completed steps 
     for (size_t i = 0; i < currentStepIndex_ && i < steps_.size(); ++i) {

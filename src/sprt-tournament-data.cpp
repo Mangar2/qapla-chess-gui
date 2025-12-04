@@ -141,6 +141,15 @@ void SprtTournamentData::setupCallbacks() {
             timeControlSettings_ = settings;
         }
     );
+
+    // Message callback to handle external messages
+    messageCallbackHandle_ = StaticCallbacks::message().registerCallback(
+        [this](const std::string& msg) {
+            if (msg == "switch_to_sprt_view") {
+                this->activateBoardView(0);
+            }
+        }
+    );
 }
 
 void SprtTournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
@@ -243,6 +252,9 @@ void SprtTournamentData::updateTournamentResults() {
         if (section.has_value()) {
             QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
                 "round", "sprt-tournament", { *section });
+        } else {
+            QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+                "round", "sprt-tournament", {});
         }
     }
 }
@@ -391,26 +403,31 @@ void SprtTournamentData::stopPool(bool graceful) {
         return;
     }
     if (oldState == State::GracefulStopping && graceful && !wasMonteCarloRunning) {
-        SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.");
+        SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.", 
+            false, "sprt-tournament");
         return;
     }
    
     if (wasMonteCarloRunning) {
-        SnackbarManager::instance().showSuccess("Monte Carlo test stopped");
+        SnackbarManager::instance().showSuccess("Monte Carlo test stopped", false, "sprt-tournament");
     } else {
         SnackbarManager::instance().showSuccess(
             graceful ? 
                 "SPRT tournament stopped.\nFinishing ongoing games." : 
-                "SPRT tournament stopped"
+                "SPRT tournament stopped",
+            false, "sprt-tournament"
         );
     }
 }
 
 void SprtTournamentData::clear() {
     if (!hasResults()) {
-        SnackbarManager::instance().showNote("Nothing to clear.");
+        SnackbarManager::instance().showNote("Nothing to clear.", false, "sprt-tournament");
         return;
     }
+    std::string message = isRunning() ?
+        "SPRT tournament stopped.\nAll SPRT tournament results have been cleared." :
+        "All SPRT tournament results have been cleared.";
     imguiConcurrency_->setActive(false);
     state_ = State::Stopped;
     poolAccess_->clearAll();
@@ -418,7 +435,7 @@ void SprtTournamentData::clear() {
     
     montecarloTable_.clear();
     
-    SnackbarManager::instance().showSuccess("SPRT tournament stopped.\nAll results have been cleared.");
+    SnackbarManager::instance().showSuccess(message, false, "sprt-tournament");
 }
 
 void SprtTournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
@@ -450,6 +467,16 @@ bool SprtTournamentData::isFinished() const {
         return false;
     }
     return sprtManager_->isFinished();
+}
+
+void SprtTournamentData::activateBoardView([[maybe_unused]] size_t gameIndex) {
+    // gameIndex is kept for compatibility with tournament activateBoardView interface
+    // Might be required later
+    if (!sprtManager_) {
+        return;
+    }
+  
+    boardWindowList_.setActiveWindowId("SPRT");
 }
 
 void SprtTournamentData::populateResultTable() {
@@ -554,14 +581,16 @@ void SprtTournamentData::drawMonteCarloTable(const ImVec2& size) {
 
 void SprtTournamentData::saveTournament(const std::string& filename) {
     if (filename.empty()) {
-        SnackbarManager::instance().showError("No filename specified for saving SPRT tournament.");
+        SnackbarManager::instance().showError("No filename specified for saving SPRT tournament.",
+            false, "sprt-tournament");
         return;
     }
 
     try {
         std::ofstream out(filename, std::ios::trunc);
         if (!out) {
-            SnackbarManager::instance().showError("Failed to open file for writing: " + filename);
+            SnackbarManager::instance().showError("Failed to open file for writing: " + filename,
+                false, "sprt-tournament");
             return;
         }
 
@@ -579,27 +608,32 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
 
         out.close();
         if (!out) {
-            SnackbarManager::instance().showError("Error while writing to file: " + filename);
+            SnackbarManager::instance().showError("Error while writing to file: " + filename,
+                false, "sprt-tournament");
             return;
         }
 
-        SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename);
+        SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,
+            false, "sprt-tournament");
     }
     catch (const std::exception& e) {
-        SnackbarManager::instance().showError("Failed to save SPRT tournament: " + std::string(e.what()));
+        SnackbarManager::instance().showError("Failed to save SPRT tournament: " + std::string(e.what()),
+            false, "sprt-tournament");
     }
 }
 
 void SprtTournamentData::loadTournament(const std::string& filename) {
     if (filename.empty()) {
-        SnackbarManager::instance().showError("No filename specified for loading SPRT tournament.");
+        SnackbarManager::instance().showError("No filename specified for loading SPRT tournament.",
+            false, "sprt-tournament");
         return;
     }
 
     try {
         std::ifstream in(filename);
         if (!in) {
-            SnackbarManager::instance().showError("Failed to open file for reading: " + filename);
+            SnackbarManager::instance().showError("Failed to open file for reading: " + filename,
+                false, "sprt-tournament");
             return;
         }
 
@@ -627,16 +661,19 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
         // Create tournament based on the configuration and load the tournament data
         loadTournament();
 
-        SnackbarManager::instance().showSuccess("SPRT tournament loaded from: " + filename);
+        SnackbarManager::instance().showSuccess("SPRT tournament loaded from: " + filename,
+            false, "sprt-tournament");
     }
     catch (const std::exception& e) {
-        SnackbarManager::instance().showError("Failed to load SPRT tournament: " + std::string(e.what()));
+        SnackbarManager::instance().showError("Failed to load SPRT tournament: " + std::string(e.what()),
+            false, "sprt-tournament");
     }
 }
 
 bool SprtTournamentData::runMonteCarloTest() {
     if (!sprtManager_) {
-        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized");
+        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized",
+            false, "sprt-tournament");
         return false;
     }
 
@@ -644,7 +681,8 @@ bool SprtTournamentData::runMonteCarloTest() {
     bool started = sprtManager_->runMonteCarloTest(*sprtConfig_);
     
     if (!started) {
-        SnackbarManager::instance().showNote("Monte Carlo test is already running.");
+        SnackbarManager::instance().showNote("Monte Carlo test is already running.",
+            false, "sprt-tournament");
     }
     
     return started;

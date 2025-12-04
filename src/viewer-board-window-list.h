@@ -147,11 +147,11 @@ public:
     const std::vector<ViewerBoardWindow>& getWindows() const { return boardWindows_; }
 
     /**
-     * @brief Activates a tab by its window ID.
-     * @param windowId The ID of the window to activate.
+     * @brief Activates the first tab whose window ID starts with the given prefix.
+     * @param prefix The prefix to match against window IDs (or exact ID).
      */
-    void setActiveWindowId(const std::string& windowId) {
-        activeWindowId_ = windowId;
+    void setActiveWindowId(const std::string& prefix) {
+        activeWindowId_ = prefix;
     }
 
     /**
@@ -206,7 +206,7 @@ private:
             }
             ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
             // If this window is not active but matches the activeWindowId_ there was a request to activate it
-            if (!activeWindowId_.empty() && activeWindowId_ == window.getWindowId()) {
+            if (!activeWindowId_.empty() && window.getWindowId().starts_with(activeWindowId_)) {
                 flags |= ImGuiTabItemFlags_SetSelected;
                 activeWindowId_.clear();
             }

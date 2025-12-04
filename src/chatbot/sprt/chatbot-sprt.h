@@ -21,6 +21,7 @@
 
 #include "../chatbot-thread.h"
 #include "../chatbot-step.h"
+#include "../chatbot-snackbar-capture.h"
 #include <vector>
 #include <memory>
 
@@ -43,6 +44,7 @@ private:
     std::vector<std::unique_ptr<ChatbotStep>> steps_;
     size_t currentStepIndex_ = 0;
     bool stopped_ = false;
+    SnackbarCapture snackbarCapture_{"sprt-tournament"};
     
     void addNewSprtSteps();
 };

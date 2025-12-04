@@ -24,7 +24,7 @@
 namespace QaplaWindows::Callback {
 
 // UnregisterHandle implementation
-UnregisterHandle::UnregisterHandle(Unregistration* unregisterable, size_t callbackId)
+UnregisterHandle::UnregisterHandle(Unregisterable* unregisterable, size_t callbackId)
     : unregisterable_(unregisterable), callbackId_(callbackId) {
 }
 

@@ -334,6 +334,12 @@ namespace QaplaWindows {
          */
         void stopMonteCarloTest();
 
+        /**
+         * @brief Activates the board view for a specific game index.
+         * @param gameIndex The index of the game to activate the board view for.
+         */
+        void activateBoardView(size_t gameIndex);
+
     private:
         /**
          * @brief Populates the result table with current duel result data.
@@ -402,7 +408,9 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         GameManagerPoolAccess poolAccess_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_;
+
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
+        std::unique_ptr<Callback::UnregisterHandle> messageCallbackHandle_;
 
         ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;

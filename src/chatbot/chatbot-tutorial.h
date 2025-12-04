@@ -87,7 +87,7 @@ private:
     Tutorial::TutorialName tutorialName_;
     std::vector<SnackbarManager::SnackbarEntry> capturedMessages_;
     std::string tutorialTopicName_;  ///< The topic name for the tutorial (e.g., "tournament")
-    bool filterInstalled_ = false;
+    std::unique_ptr<Callback::UnregisterHandle> filterHandle_;  ///< RAII handle for filter callback
     bool tutorialStarted_ = false;
 
     /**

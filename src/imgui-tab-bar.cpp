@@ -147,6 +147,14 @@ namespace QaplaWindows {
                 }
             }
         }
+        if (message == "switch_to_sprt_view") {
+            for (auto& tab : tabs_) {
+                if (tab.name == "Sprt") {
+                    tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
+                        tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                }
+            }
+        }
     }
 
 } // namespace QaplaWindows

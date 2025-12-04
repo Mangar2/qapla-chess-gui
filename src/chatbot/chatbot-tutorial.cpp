@@ -162,12 +162,12 @@ std::string ChatbotStepTutorialRunner::getTutorialTopicName(Tutorial::TutorialNa
 }
 
 void ChatbotStepTutorialRunner::installFilter() {
-    if (filterInstalled_) {
+    if (filterHandle_) {
         return;
     }
 
     // Capture messages for "tutorial" topic and the specific tutorial topic
-    SnackbarManager::instance().setFilterCallback(
+    filterHandle_ = SnackbarManager::instance().registerFilterCallback(
         [this](const SnackbarManager::SnackbarEntry& entry) -> bool {
             // Capture messages from "tutorial" topic or the specific tutorial topic
             if (entry.topic == "tutorial" || entry.topic == tutorialTopicName_) {
@@ -177,14 +177,10 @@ void ChatbotStepTutorialRunner::installFilter() {
             return true;  // Let other messages through
         }
     );
-    filterInstalled_ = true;
 }
 
 void ChatbotStepTutorialRunner::removeFilter() {
-    if (filterInstalled_) {
-        SnackbarManager::instance().setFilterCallback(nullptr);
-        filterInstalled_ = false;
-    }
+    filterHandle_.reset();  // RAII: automatically unregisters the callback
 }
 
 std::string ChatbotStepTutorialRunner::draw() {
@@ -194,7 +190,7 @@ std::string ChatbotStepTutorialRunner::draw() {
     }
 
     // Install filter if not already done
-    if (!filterInstalled_) {
+    if (!filterHandle_) {
         installFilter();
     }
 

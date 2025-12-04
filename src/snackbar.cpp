@@ -64,8 +64,9 @@ void SnackbarManager::show(const std::string& message, SnackbarType type, bool s
         history_.pop_front();
     }
     
-    // Call filter callback if set - if it returns false, don't display
-    if (filterCallback_ && !filterCallback_(entry)) {
+    // Call all filter callbacks - if ANY returns false, don't display
+    // invokeEvery returns true only if ALL callbacks return true (or no callbacks registered)
+    if (!filterCallbacks_.invokeEvery(entry)) {
         return;
     }
     

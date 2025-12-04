@@ -25,7 +25,9 @@
 #include <chrono>
 #include <array>
 #include <deque>
-#include <functional> 
+#include <functional>
+
+#include "callback-manager.h" 
 
 namespace QaplaWindows {
 
@@ -81,8 +83,11 @@ public:
      * 
      * The callback receives the entry before it is shown. If it returns false,
      * the entry will not be displayed (but still added to history).
+     * Multiple callbacks can be registered. All callbacks are always called.
+     * If ANY callback returns false, the entry will not be displayed.
      */
     using FilterCallback = std::function<bool(const SnackbarEntry&)>;
+    using FilterCallbackManager = Callback::ManagerBase<bool, const SnackbarEntry&>;
 
     /**
      * @brief Displays an error message snackbar
@@ -196,15 +201,31 @@ public:
     bool isTutorialMessageVisible() const;
 
     /**
-     * @brief Sets a filter callback that is called before displaying a snackbar
+     * @brief Registers a filter callback that is called before displaying a snackbar
      * 
      * The callback receives the entry before it is shown. If it returns false,
      * the entry will not be displayed (but still added to history).
+     * Multiple callbacks can be registered. All callbacks are always called.
+     * If ANY callback returns false, the entry will not be displayed.
      * 
-     * @param callback The filter callback function, or nullptr to remove the filter
+     * @param callback The filter callback function
+     * @return A unique_ptr to an UnregisterHandle for automatic cleanup
      */
+    [[nodiscard]] std::unique_ptr<Callback::UnregisterHandle> registerFilterCallback(FilterCallback callback) {
+        return filterCallbacks_.registerCallback(std::move(callback));
+    }
+
+    /**
+     * @brief Sets a filter callback (legacy interface, replaced by registerFilterCallback)
+     * @deprecated Use registerFilterCallback instead for proper RAII cleanup
+     * @param callback The filter callback function, or nullptr to remove all filters
+     */
+    [[deprecated("Use registerFilterCallback instead")]]
     void setFilterCallback(FilterCallback callback) {
-        filterCallback_ = std::move(callback);
+        filterCallbacks_.clear();
+        if (callback) {
+            filterCallbacks_.registerCallback(std::move(callback));
+        }
     }
 
     /**
@@ -253,7 +274,7 @@ private:
     SnackbarConfig config_;
     std::deque<SnackbarEntry> snackbarStack_;
     std::deque<SnackbarEntry> history_;
-    FilterCallback filterCallback_;
+    FilterCallbackManager filterCallbacks_;
     uint32_t progress = 0;
 };
 

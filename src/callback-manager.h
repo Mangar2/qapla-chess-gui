@@ -26,6 +26,7 @@
 #include <atomic>
 #include <mutex>
 #include <iostream>
+#include <type_traits>
 
 #include "game-record.h"
 
@@ -33,11 +34,11 @@ namespace QaplaWindows {
 
 namespace Callback {
 
-class Unregistration {
+class Unregisterable {
 public:
     using CallbackId = size_t;
 
-    virtual ~Unregistration() = default;
+    virtual ~Unregisterable() = default;
     virtual bool unregister(CallbackId id) = 0;
 };
 
@@ -52,7 +53,7 @@ public:
  */
 class UnregisterHandle {
 public:
-    UnregisterHandle(Unregistration* unregisterable, Unregistration::CallbackId callbackId);
+    UnregisterHandle(Unregisterable* unregisterable, Unregisterable::CallbackId callbackId);
     ~UnregisterHandle();
     
     // Move constructor and assignment
@@ -70,24 +71,25 @@ private:
      */
     void unregister();
 
-    Unregistration* unregisterable_;
-    Unregistration::CallbackId callbackId_;
+    Unregisterable* unregisterable_;
+    Unregisterable::CallbackId callbackId_;
 };
 
 /**
- * @brief Manager class for handling callbacks with parameters.
+ * @brief Manager class for handling callbacks with optional return type.
  * 
- * This class manages a list of callbacks that can take parameters.
- * Callbacks can be registered and unregistered, and all registered
- * callbacks can be invoked with the provided arguments.
+ * This class manages a list of callbacks that can take parameters and
+ * optionally return a value. Callbacks can be registered and unregistered,
+ * and all registered callbacks can be invoked with the provided arguments.
  * 
+ * @tparam R The return type of the callbacks (default: void)
  * @tparam Args The types of the arguments that the callbacks will accept.
  */
 
-template <typename... Args>
-class Manager : public Unregistration {
+template <typename R, typename... Args>
+class ManagerBase : public Unregisterable {
 public:
-    using Callback = std::function<void(Args...)>;
+    using Callback = std::function<R(Args...)>;
 
 private:
     std::unordered_map<CallbackId, Callback> callbacks_;
@@ -99,14 +101,14 @@ public:
     /**
      * @brief Construct a new Callback Manager object   
      */
-    Manager() : nextId_(1) {
+    ManagerBase() : nextId_(1) {
     };
 
-    ~Manager() override = default;
+    ~ManagerBase() override = default;
 
     /**
      * @brief Register a callback to the list.
-     * @param callback The parameterless function/lambda to be registered
+     * @param callback The function/lambda to be registered
      * @return A unique_ptr to an UnregisterHandle for automatic cleanup
      */
     std::unique_ptr<UnregisterHandle> registerCallback(Callback callback) {
@@ -140,13 +142,15 @@ public:
     }
 
     /**
-     * @brief Invoke all registered callbacks.
+     * @brief Invoke all registered callbacks (for void return type).
      * 
      * Calls all callbacks in the order they were added.
      * If a callback throws an exception, it will be caught and
      * the remaining callbacks will still be executed.
+     * 
+     * @note This method is only available when R is void.
      */
-    void invokeAll(Args... args) {
+    void invokeAll(Args... args) requires std::is_void_v<R> {
         // Create a copy of the callbacks to avoid issues with callbacks that
         // might modify the callbacks map during execution
         std::vector<Callback> callbacksCopy;
@@ -173,6 +177,82 @@ public:
                 // or handle it differently based on your needs
             }
         }
+    }
+
+    /**
+     * @brief Invoke all callbacks and return true if ANY callback returns true.
+     * 
+     * Calls all callbacks and returns true if at least one callback returns true.
+     * All callbacks are always called, regardless of individual return values.
+     * 
+     * @note This method is only available when R is bool.
+     * @return true if at least one callback returned true, false otherwise
+     */
+    bool invokeAny(Args... args) requires std::is_same_v<R, bool> {
+        std::vector<Callback> callbacksCopy;
+
+        {
+            std::scoped_lock lock(callbacks_mutex_);
+            callbacksCopy.reserve(callbacks_.size());
+
+            for (const auto& pair : callbacks_) {
+                if (pair.second) {
+                    callbacksCopy.push_back(pair.second);
+                }
+            }
+        }
+
+        bool result = false;
+        for (const auto& callback : callbacksCopy) {
+            try {
+                if (callback(args...)) {
+                    result = true;
+                }
+            }
+            catch (...) {
+                // Catch any exceptions to ensure all callbacks are called
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Invoke all callbacks and return true if ALL callbacks return true.
+     * 
+     * Calls all callbacks and returns true only if all callbacks return true.
+     * All callbacks are always called, regardless of individual return values.
+     * Returns true if there are no callbacks registered.
+     * 
+     * @note This method is only available when R is bool.
+     * @return true if all callbacks returned true (or no callbacks registered), false otherwise
+     */
+    bool invokeEvery(Args... args) requires std::is_same_v<R, bool> {
+        std::vector<Callback> callbacksCopy;
+
+        {
+            std::scoped_lock lock(callbacks_mutex_);
+            callbacksCopy.reserve(callbacks_.size());
+
+            for (const auto& pair : callbacks_) {
+                if (pair.second) {
+                    callbacksCopy.push_back(pair.second);
+                }
+            }
+        }
+
+        bool result = true;
+        for (const auto& callback : callbacksCopy) {
+            try {
+                if (!callback(args...)) {
+                    result = false;
+                }
+            }
+            catch (...) {
+                // Catch any exceptions to ensure all callbacks are called
+                result = false;
+            }
+        }
+        return result;
     }
 
     /**
@@ -205,6 +285,17 @@ public:
         callbacks_.clear();
     }
 };
+
+/**
+ * @brief Alias for void-returning callback manager (backwards compatible).
+ * 
+ * This alias maintains backwards compatibility with existing code that uses
+ * Manager<Args...> for void-returning callbacks.
+ * 
+ * @tparam Args The types of the arguments that the callbacks will accept.
+ */
+template <typename... Args>
+using Manager = ManagerBase<void, Args...>;
 
 } // namespace Callback
 
