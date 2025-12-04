@@ -240,7 +240,7 @@ bool TournamentWindow::drawInput() {
 
     globalSettingsTutorial_.highlight = (highlightedSection_ == "GlobalSettings");
     changed |= tournamentData.globalSettings().drawGlobalSettings(
-        { .controlWidth = inputWidth, .controlIndent = 10.0F }, globalSettingsTutorial_);
+        { .controlWidth = inputWidth, .controlIndent = 10.0F }, {}, globalSettingsTutorial_);
     
     const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
     changed |= tournamentData.engineSelect().draw(highlightEngineSelect);
@@ -254,7 +254,7 @@ bool TournamentWindow::drawInput() {
     
     timeControlTutorial_.highlight = (highlightedSection_ == "TimeControl");
     changed |= tournamentData.globalSettings().drawTimeControl(
-        { .controlWidth = inputWidth, .controlIndent = 10.0F }, false, timeControlTutorial_);
+        { .controlWidth = inputWidth, .controlIndent = 10.0F }, false, false, timeControlTutorial_);
     
     pgnTutorial_.highlight = (highlightedSection_ == "Pgn");
     changed |= tournamentData.tournamentPgn().draw(

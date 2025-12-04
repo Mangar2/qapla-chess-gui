@@ -109,11 +109,9 @@ namespace QaplaWindows {
 
         /**
          * @brief Constructor
-         * @param options Options to control which settings are displayed
          * @param callback Optional callback that is called when configuration changes
          */
-        ImGuiEngineGlobalSettings(const Options& options = Options{}, 
-                                 ConfigurationChangedCallback callback = nullptr);
+        explicit ImGuiEngineGlobalSettings(ConfigurationChangedCallback callback = nullptr);
 
         /**
          * @brief Destructor
@@ -123,20 +121,24 @@ namespace QaplaWindows {
         /**
          * @brief Draws the global engine settings interface
          * @param controls Options for control dimensions (width, indent)
+         * @param options Options to control which settings are displayed (if not provided, uses stored options)
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawGlobalSettings(DrawControlOptions controls = DrawControlOptions{}, 
+        bool drawGlobalSettings(DrawControlOptions controls = DrawControlOptions{},
+            const Options& options = Options{},
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
          * @brief Draws the time control interface
          * @param controls Options for control dimensions (width, indent)
          * @param blitz Whether to use blitz mode (no hours in time input)
+         * @param alwaysOpen Whether the section should always be open
          * @param tutorialContext Tutorial context with highlighting and annotations
          * @return true if any setting was changed, false otherwise
          */
-        bool drawTimeControl(DrawControlOptions controls = DrawControlOptions{}, bool blitz = false, 
+        bool drawTimeControl(DrawControlOptions controls = DrawControlOptions{}, bool blitz = false,
+            bool alwaysOpen = false,
             const Tutorial::TutorialContext& tutorialContext = Tutorial::TutorialContext{});
 
         /**
@@ -174,19 +176,6 @@ namespace QaplaWindows {
          * @param callback The new callback
          */
         void setTimeControlChangedCallback(TimeControlChangedCallback callback);
-
-        /**
-         * @brief Sets the options for displayed controls
-         * @param options The new options
-         */
-        void setOptions(const Options& options) { options_ = options; }
-
-        /**
-         * @brief Returns the current options
-         * @return The current options
-         */
-        const Options& getOptions() const { return options_; }
-        Options& getOptions() { return options_; }
 
         /**
          * @brief Sets the global settings from INI file sections
@@ -268,36 +257,43 @@ namespace QaplaWindows {
         /**
          * @brief Draws the hash size control
          * @param controlWidth Width of the input control
+         * @param showUseCheckboxes Whether to show the "use global" checkbox
          * @param tutorialContext Tutorial context for annotations
          * @return true if modified, false otherwise
          */
-        bool drawHashControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+        bool drawHashControl(float controlWidth, bool showUseCheckboxes, 
+            const Tutorial::TutorialContext& tutorialContext);
 
         /**
          * @brief Draws the restart option control
          * @param controlWidth Width of the input control
+         * @param showUseCheckboxes Whether to show the "use global" checkbox
          * @param tutorialContext Tutorial context for annotations
          * @return true if modified, false otherwise
          */
-        bool drawRestartControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+        bool drawRestartControl(float controlWidth, bool showUseCheckboxes,
+            const Tutorial::TutorialContext& tutorialContext);
 
         /**
          * @brief Draws the trace level control
          * @param controlWidth Width of the input control
+         * @param showUseCheckboxes Whether to show the "use global" checkbox
          * @param tutorialContext Tutorial context for annotations
          * @return true if modified, false otherwise
          */
-        bool drawTraceControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+        bool drawTraceControl(float controlWidth, bool showUseCheckboxes,
+            const Tutorial::TutorialContext& tutorialContext);
 
         /**
          * @brief Draws the ponder control
          * @param controlWidth Width of the input control
+         * @param showUseCheckboxes Whether to show the "use global" checkbox
          * @param tutorialContext Tutorial context for annotations
          * @return true if modified, false otherwise
          */
-        bool drawPonderControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext);
+        bool drawPonderControl(float controlWidth, bool showUseCheckboxes,
+            const Tutorial::TutorialContext& tutorialContext);
 
-        Options options_;                                       ///< Display options
         std::string id_ = "unset";                              ///< Unique identifier for this instance
         GlobalConfiguration globalSettings_;                         ///< Current global settings
         TimeControlSettings timeControlSettings_;               ///< Current time control settings

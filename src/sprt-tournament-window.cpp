@@ -223,7 +223,7 @@ bool SprtTournamentWindow::drawInput() {
     bool changed = false;
 
     changed |= tournamentData.globalSettings().drawGlobalSettings(
-        { .controlWidth = inputWidth, .controlIndent = 10.0F });
+        { .controlWidth = inputWidth, .controlIndent = 10.0F }, {});
     changed |= tournamentData.engineSelect().draw();
     changed |= tournamentData.tournamentOpening().draw(
         { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth, .indent = 10.0F });
@@ -231,7 +231,7 @@ bool SprtTournamentWindow::drawInput() {
     changed |= tournamentData.sprtConfiguration().draw();
 
     changed |= tournamentData.globalSettings().drawTimeControl(
-        { .controlWidth = inputWidth, .controlIndent = 10.0F }, false);
+        { .controlWidth = inputWidth, .controlIndent = 10.0F }, false, false);
     changed |= tournamentData.tournamentPgn().draw(
         { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth });
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);

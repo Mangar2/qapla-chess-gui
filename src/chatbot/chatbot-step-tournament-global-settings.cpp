@@ -46,17 +46,16 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
 
     auto& globalSettings = getGlobalSettings();
     
-    auto savedOptions = globalSettings.getOptions();
-    
     // Set simplified options for chatbot, with more options toggle
-    auto options = savedOptions;
+    ImGuiEngineGlobalSettings::Options options;
+    options.showHash = true;
+    options.showPonder = true;
     options.showTrace = showMoreOptions_;
     options.showRestart = showMoreOptions_;
     options.showUseCheckboxes = false;
     options.alwaysOpen = true;
-    globalSettings.setOptions(options);
 
-    globalSettings.drawGlobalSettings();
+    globalSettings.drawGlobalSettings({}, options);
 
     // More/Less Options button for global settings section
     if (!finished_) {
@@ -71,12 +70,10 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
     ImGui::Separator();
     ImGui::Spacing();
 
-    globalSettings.drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true);
+    globalSettings.drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true, true);
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
-    
-    globalSettings.setOptions(savedOptions);
 
     if (finished_) {
         return "";

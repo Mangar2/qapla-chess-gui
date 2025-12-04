@@ -30,32 +30,32 @@
 
 using namespace QaplaWindows;
 
-ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(const Options& options, ConfigurationChangedCallback callback)
-    : options_(options)
-    , configurationCallback_(std::move(callback))
+ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(ConfigurationChangedCallback callback)
+    : configurationCallback_(std::move(callback))
     , timeControlCallback_(nullptr)
 {
 }
 
 bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls, 
+    const Options& options,
     const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    ImGuiTreeNodeFlags flags = options.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", flags, tutorialContext.highlight)) {
         ImGui::Indent(controls.controlIndent);
         
-        if (options_.showHash) {
-            modified |= drawHashControl(controls.controlWidth, tutorialContext);
+        if (options.showHash) {
+            modified |= drawHashControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
         }
-        if (options_.showRestart) {
-            modified |= drawRestartControl(controls.controlWidth, tutorialContext);
+        if (options.showRestart) {
+            modified |= drawRestartControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
         }
-        if (options_.showTrace) {
-            modified |= drawTraceControl(controls.controlWidth, tutorialContext);
+        if (options.showTrace) {
+            modified |= drawTraceControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
         }
-        if (options_.showPonder) {
-            modified |= drawPonderControl(controls.controlWidth, tutorialContext);
+        if (options.showPonder) {
+            modified |= drawPonderControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
         }
         
         ImGui::Unindent(controls.controlIndent);
@@ -68,11 +68,12 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls,
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawHashControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawHashControl(float controlWidth, bool showUseCheckboxes, 
+    const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     constexpr uint32_t maxHashMB = 64000;
     
-    if (options_.showUseCheckboxes) {
+    if (showUseCheckboxes) {
         modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
         ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
         ImGui::SameLine();
@@ -92,10 +93,11 @@ bool ImGuiEngineGlobalSettings::drawHashControl(float controlWidth, const Tutori
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, bool showUseCheckboxes,
+    const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     
-    if (options_.showUseCheckboxes) {
+    if (showUseCheckboxes) {
         modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
         ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
         ImGui::SameLine();
@@ -116,10 +118,11 @@ bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, const Tut
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawTraceControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawTraceControl(float controlWidth, bool showUseCheckboxes,
+    const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     
-    if (options_.showUseCheckboxes) {
+    if (showUseCheckboxes) {
         modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
         ImGuiControls::hooverTooltip("Enable global trace level for all engines");
         ImGui::SameLine();
@@ -140,10 +143,11 @@ bool ImGuiEngineGlobalSettings::drawTraceControl(float controlWidth, const Tutor
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, const Tutorial::TutorialContext& tutorialContext) {
+bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, bool showUseCheckboxes,
+    const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     
-    if (options_.showUseCheckboxes) {
+    if (showUseCheckboxes) {
         modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
         ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
         ImGui::SameLine();
@@ -164,9 +168,9 @@ bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, const Tuto
 }
 
 bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls, 
-    bool blitz, const Tutorial::TutorialContext& tutorialContext) {
+    bool blitz, bool alwaysOpen, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = options_.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    ImGuiTreeNodeFlags flags = alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Time Control", flags, tutorialContext.highlight)) {
         ImGui::Indent(controls.controlIndent);

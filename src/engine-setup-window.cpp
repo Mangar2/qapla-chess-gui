@@ -63,13 +63,6 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
     engineSelect_.setOptions(options);
     engineSelect_.setId("");
     
-    ImGuiEngineGlobalSettings::Options globalOptions;
-    globalOptions.showHash = true;
-    globalOptions.showPonder = true;
-    globalOptions.showTrace = true;
-    globalOptions.showRestart = true;
-    
-    globalSettings_.setOptions(globalOptions);
     globalSettings_.setId("");
 }
 

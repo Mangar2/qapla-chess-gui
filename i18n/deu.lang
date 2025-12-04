@@ -114,6 +114,9 @@ Elo Upper (H1)=Elo Upper (H1)
 Max Games=Max Games
 Alpha (‰)=Alpha (‰)
 Beta (‰)=Beta (‰)
+Hours=Hours
+Increment Minutes=Increment Minutes
+Moves to Play=Moves to Play
 
 [Translation]
 id=Option
@@ -413,6 +416,8 @@ Lower Elo bound (H0): null hypothesis threshold for SPRT test.\nIf true Elo diff
 Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H1 is accepted (improvement confirmed).=Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H1 is accepted (improvement confirmed).
 Maximum number of games before test terminates inconclusively.\nIf neither H0 nor H1 is accepted within this limit, the result is inconclusive.=Maximum number of games before test terminates inconclusively.\nIf neither H0 nor H1 is accepted within this limit, the result is inconclusive.
 Type II error rate (false negative): probability of accepting H0 when H1 is true.\nLower values mean more confidence but require more games.=Type II error rate (false negative): probability of accepting H0 when H1 is true.\nLower values mean more confidence but require more games.
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
 
 [Translation]
 id=Table
