@@ -163,12 +163,6 @@ namespace QaplaWindows {
         imguiConcurrency_->setPoolAccess(poolAccess_);
     }
 
-    void TournamentData::updateConfiguration() {
-        // Configuration is now automatically saved by each component when changed.
-        // This method is kept for backward compatibility with tournament-window calls,
-        // but no longer needs to do anything for the UI components.
-    }
-
     void TournamentData::updateTournamentResults() {
         if (tournament_) {
             auto roundSections = tournament_->getSections();

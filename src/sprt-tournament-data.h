@@ -25,6 +25,7 @@
 #include "imgui-tournament-pgn.h"
 #include "imgui-tournament-adjudication.h"
 #include "imgui-engine-global-settings.h"
+#include "imgui-sprt-configuration.h"
 #include "imgui-causes-table.h"
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
@@ -249,6 +250,22 @@ namespace QaplaWindows {
         const QaplaTester::SprtConfig& sprtConfig() const;
 
         /**
+         * @brief Returns a reference to the SPRT configuration UI component.
+         * @return Reference to the SPRT configuration UI component.
+         */
+        ImGuiSprtConfiguration& sprtConfiguration() {
+            return *sprtConfiguration_;
+        }
+
+        /**
+         * @brief Returns a const reference to the SPRT configuration UI component.
+         * @return Const reference to the SPRT configuration UI component.
+         */
+        const ImGuiSprtConfiguration& sprtConfiguration() const {
+            return *sprtConfiguration_;
+        }
+
+        /**
          * @brief Sets the engine configurations for the SPRT tournament.
          * @param configurations Vector containing all engine configurations.
          */
@@ -266,13 +283,6 @@ namespace QaplaWindows {
          * @details Creates the tournament and then loads saved results from the configuration.
          */
         void loadTournament();
-
-        /**
-         * @brief Updates the configuration in the Configuration singleton.
-         * @details This method creates Section entries for all SPRT configuration aspects
-         *          and stores them in the Configuration singleton using setSectionList.
-         */
-        void updateConfiguration();
 
         /**
          * @brief Updates the tournament results in the Configuration singleton.
@@ -379,13 +389,6 @@ namespace QaplaWindows {
         void loadEngineSelectionConfig();
 
         /**
-         * @brief Loads the SPRT configuration from the configuration file.
-         * @details Retrieves SPRT settings (elo bounds, alpha, beta, maxGames) from
-         *          the "sprtconfig" section with ID "sprt-tournament".
-         */
-        void loadSprtConfig();
-
-        /**
          * @brief Loads the global engine settings configuration from the configuration file.
          * @details Retrieves global engine and time control settings from the configuration
          *          sections with ID "sprt-tournament".
@@ -403,6 +406,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentPgn> tournamentPgn_;
         std::unique_ptr<ImGuiTournamentAdjudication> tournamentAdjudication_;
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_;
+        std::unique_ptr<ImGuiSprtConfiguration> sprtConfiguration_;
         std::shared_ptr<QaplaTester::SprtManager> sprtManager_;
         std::unique_ptr<QaplaTester::SprtConfig> sprtConfig_;
         std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;

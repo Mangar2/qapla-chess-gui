@@ -19,6 +19,7 @@
 
 #include "sprt-tournament-window.h"
 #include "sprt-tournament-data.h"
+#include "imgui-sprt-configuration.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
 #include "snackbar.h"
@@ -227,37 +228,7 @@ bool SprtTournamentWindow::drawInput() {
     changed |= tournamentData.tournamentOpening().draw(
         { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth, .indent = 10.0F });
 
-    if (ImGuiControls::CollapsingHeaderWithDot("SPRT Configuration", ImGuiTreeNodeFlags_Selected)) {
-        ImGui::PushID("sprtConfig");
-        ImGui::Indent(10.0F);
-
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<int>("Elo Lower (H0)", tournamentData.sprtConfig().eloLower, -1000, 1000);
-        ImGuiControls::hooverTooltip("Lower Elo bound (H0): null hypothesis threshold for SPRT test");
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<int>("Elo Upper (H1)", tournamentData.sprtConfig().eloUpper, -1000, 1000);
-        ImGuiControls::hooverTooltip("Upper Elo bound (H1): alternative hypothesis threshold for SPRT test");
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputPromille("Alpha (‰)", tournamentData.sprtConfig().alpha, 0.001, 0.5, 0.001);
-        ImGuiControls::hooverTooltip("Type I error rate (false positive): probability of rejecting H0 when it's true");
-        ImGui::SameLine();
-        ImGui::Text("(%.3f)", tournamentData.sprtConfig().alpha);
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputPromille("Beta (‰)", tournamentData.sprtConfig().beta, 0.001, 0.5, 0.001);
-        ImGuiControls::hooverTooltip("Type II error rate (false negative): probability of accepting H0 when H1 is true");
-        ImGui::SameLine();
-        ImGui::Text("(%.3f)", tournamentData.sprtConfig().beta);
-        
-        ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::inputInt<uint32_t>("Max Games", tournamentData.sprtConfig().maxGames, 1, 1000000);
-        ImGuiControls::hooverTooltip("Maximum number of games before test terminates inconclusively");
-
-        ImGui::Unindent(10.0F);
-        ImGui::PopID();
-    }
+    changed |= tournamentData.sprtConfiguration().draw();
 
     changed |= tournamentData.globalSettings().drawTimeControl(
         { .controlWidth = inputWidth, .controlIndent = 10.0F }, false);
@@ -281,9 +252,7 @@ void SprtTournamentWindow::draw() {
     ImGui::Indent(10.0F);
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
-    if (drawInput()) {
-        tournamentData.updateConfiguration();
-    }
+    drawInput();
 
     tournamentData.drawMonteCarloTable(ImVec2(size.x, 400.0F));
     tournamentData.drawResultTable(ImVec2(size.x, 100.0F));

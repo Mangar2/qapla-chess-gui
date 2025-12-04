@@ -267,13 +267,6 @@ namespace QaplaWindows {
         }
 
         /**
-         * @brief Updates the configuration in the singleton.
-         * @details This method creates Section entries for all configuration aspects and stores them
-         *          in the Configuration singleton using setSectionList.
-         */
-        void updateConfiguration();
-
-        /**
          * @brief Updates the tournament data in the singleton.
          * @details This method creates Section entries for tournament result data
          */

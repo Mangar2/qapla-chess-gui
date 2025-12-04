@@ -18,6 +18,7 @@
  */
 
 #include "sprt-tournament-data.h"
+#include "imgui-sprt-configuration.h"
 #include "configuration.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
@@ -73,6 +74,7 @@ SprtTournamentData::SprtTournamentData() :
     tournamentPgn_(std::make_unique<ImGuiTournamentPgn>()),
     tournamentAdjudication_(std::make_unique<ImGuiTournamentAdjudication>()),
     globalSettings_(std::make_unique<ImGuiEngineGlobalSettings>()),
+    sprtConfiguration_(std::make_unique<ImGuiSprtConfiguration>()),
     sprtManager_(std::make_unique<SprtManager>()),
     sprtConfig_(std::make_unique<SprtConfig>()),
     imguiConcurrency_(std::make_unique<ImGuiConcurrency>())
@@ -90,6 +92,8 @@ SprtTournamentData::SprtTournamentData() :
     tournamentPgn_->setId("sprt-tournament");
     tournamentAdjudication_->setId("sprt-tournament");
     globalSettings_->setId("sprt-tournament");
+    sprtConfiguration_->setId("sprt-tournament");
+    sprtConfiguration_->setConfig(sprtConfig_.get());
 
     sprtConfig_->eloLower = -5;
     sprtConfig_->eloUpper = 5;
@@ -102,7 +106,7 @@ SprtTournamentData::SprtTournamentData() :
     tournamentOpening_->loadConfiguration();
     tournamentPgn_->loadConfiguration();
     tournamentAdjudication_->loadConfiguration();
-    loadSprtConfig();
+    sprtConfiguration_->loadConfiguration();
     loadGlobalSettingsConfig();
     loadTournament();
 
@@ -164,44 +168,6 @@ void SprtTournamentData::loadEngineSelectionConfig() {
     engineSelect_->setEnginesConfiguration(sections);
 }
 
-void SprtTournamentData::loadSprtConfig() {
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = configData.getSectionList("sprtconfig", "sprt-tournament");
-    if (!sections || sections->empty()) {
-        return;
-    }
-
-    for (const auto& [key, value] : (*sections)[0].entries) {
-        if (key == "eloLower") {
-            sprtConfig_->eloLower = QaplaHelpers::to_int(value).value_or(-5);
-            sprtConfig_->eloLower = std::clamp(sprtConfig_->eloLower, -1000, 1000);
-        }
-        else if (key == "eloUpper") {
-            sprtConfig_->eloUpper = QaplaHelpers::to_int(value).value_or(5);
-            sprtConfig_->eloUpper = std::clamp(sprtConfig_->eloUpper, -1000, 1000);
-        }
-        else if (key == "alpha") {
-            try {
-                sprtConfig_->alpha = std::stod(value);
-                sprtConfig_->alpha = std::clamp(sprtConfig_->alpha, 0.001, 0.5);
-            } catch (...) {
-                sprtConfig_->alpha = 0.05;
-            }
-        }
-        else if (key == "beta") {
-            try {
-                sprtConfig_->beta = std::stod(value);
-                sprtConfig_->beta = std::clamp(sprtConfig_->beta, 0.001, 0.5);
-            } catch (...) {
-                sprtConfig_->beta = 0.05;
-            }
-        }
-        else if (key == "maxGames") {
-            sprtConfig_->maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
-        }
-    }
-}
-
 void SprtTournamentData::loadGlobalSettingsConfig() {
     auto& config = QaplaConfiguration::Configuration::instance();
     
@@ -213,27 +179,6 @@ void SprtTournamentData::loadGlobalSettingsConfig() {
     auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "sprt-tournament")
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     globalSettings_->setTimeControlConfiguration(timeControlSections);
-}
-
-void SprtTournamentData::updateConfiguration() {
-    // SPRT-specific configuration still needs to be saved here
-    QaplaHelpers::IniFile::KeyValueMap sprtEntries{
-        {"id", "sprt-tournament"},
-        {"eloLower", std::to_string(sprtConfig_->eloLower)},
-        {"eloUpper", std::to_string(sprtConfig_->eloUpper)},
-        {"alpha", std::to_string(sprtConfig_->alpha)},
-        {"beta", std::to_string(sprtConfig_->beta)},
-        {"maxGames", std::to_string(sprtConfig_->maxGames)}
-    };
-
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "sprtconfig", "sprt-tournament", {{
-            .name = "sprtconfig",
-            .entries = sprtEntries
-        }});
-
-    // Opening, PGN, and Adjudication configurations are now automatically saved
-    // by each component when changed, so we no longer need to save them here.
 }
 
 void SprtTournamentData::updateTournamentResults() {
@@ -646,7 +591,7 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
         loadEngineSelectionConfig();
         tournamentOpening_->loadConfiguration();
         tournamentPgn_->loadConfiguration();
-        loadSprtConfig();
+        sprtConfiguration_->loadConfiguration();
         loadGlobalSettingsConfig();
 
         // Create tournament based on the configuration and load the tournament data

@@ -19,7 +19,7 @@
 
 #include "chatbot-step-sprt-configuration.h"
 #include "sprt-tournament-data.h"
-#include "sprt-manager.h"
+#include "imgui-sprt-configuration.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
@@ -63,78 +63,19 @@ void ChatbotStepSprtConfiguration::drawConfiguration() {
         ImGui::Spacing();
     }
 
-    auto& sprtConfig = SprtTournamentData::instance().sprtConfig();
-    constexpr float inputWidth = 150.0F;
-
-    ImGui::Indent(10.0F);
-
-    // Elo Lower (H0)
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<int>("Elo Lower (H0)", sprtConfig.eloLower, -1000, 1000);
-    ImGuiControls::hooverTooltip("Lower Elo bound (H0): null hypothesis threshold for SPRT test.\n"
-                                  "If true Elo difference is below this, H0 is accepted (no improvement).");
+    auto& sprtConfiguration = SprtTournamentData::instance().sprtConfiguration();
     
-    // Elo Upper (H1)
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<int>("Elo Upper (H1)", sprtConfig.eloUpper, -1000, 1000);
-    ImGuiControls::hooverTooltip("Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\n"
-                                  "If true Elo difference is above this, H1 is accepted (improvement confirmed).");
+    ImGuiSprtConfiguration::DrawOptions options;
+    options.inputWidth = 150.0F;
+    options.indent = 10.0F;
+    options.alwaysOpen = true;
+    options.showCollapsingHeader = false;
 
-    // Validation hint for Elo bounds
-    if (sprtConfig.eloLower >= sprtConfig.eloUpper) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
-        QaplaWindows::ImGuiControls::textWrapped("Elo Lower must be less than Elo Upper.");
-        ImGui::PopStyleColor();
-    }
-
-    ImGui::Spacing();
-    
-    // Alpha
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputPromille("Alpha (\xe2\x80\xb0)", sprtConfig.alpha, 0.001, 0.5, 0.001);
-    ImGuiControls::hooverTooltip("Type I error rate (false positive): probability of rejecting H0 when it's true.\n"
-                                  "Lower values mean more confidence but require more games.");
-    ImGui::SameLine();
-    ImGui::Text("(%.3f)", sprtConfig.alpha);
-    
-    // Beta
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputPromille("Beta (\xe2\x80\xb0)", sprtConfig.beta, 0.001, 0.5, 0.001);
-    ImGuiControls::hooverTooltip("Type II error rate (false negative): probability of accepting H0 when H1 is true.\n"
-                                  "Lower values mean more confidence but require more games.");
-    ImGui::SameLine();
-    ImGui::Text("(%.3f)", sprtConfig.beta);
-
-    ImGui::Spacing();
-    
-    // Max Games
-    ImGui::SetNextItemWidth(inputWidth);
-    ImGuiControls::inputInt<uint32_t>("Max Games", sprtConfig.maxGames, 1, 1000000);
-    ImGuiControls::hooverTooltip("Maximum number of games before test terminates inconclusively.\n"
-                                  "If neither H0 nor H1 is accepted within this limit, the result is inconclusive.");
-
-    ImGui::Unindent(10.0F);
+    sprtConfiguration.draw(options);
 }
 
 bool ChatbotStepSprtConfiguration::isConfigurationValid() const {
-    const auto& sprtConfig = SprtTournamentData::instance().sprtConfig();
-    
-    // Elo Lower must be less than Elo Upper
-    if (sprtConfig.eloLower >= sprtConfig.eloUpper) {
-        return false;
-    }
-    
-    // Alpha and Beta must be positive
-    if (sprtConfig.alpha <= 0.0 || sprtConfig.beta <= 0.0) {
-        return false;
-    }
-    
-    // Max Games must be at least 1
-    if (sprtConfig.maxGames < 1) {
-        return false;
-    }
-    
-    return true;
+    return SprtTournamentData::instance().sprtConfiguration().isValid();
 }
 
 } // namespace QaplaWindows::ChatBot

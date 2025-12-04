@@ -294,9 +294,7 @@ void TournamentWindow::draw() {
     ImGui::Indent(10.0F);
     auto size = ImGui::GetContentRegionAvail();
     ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
-    if (drawInput()) {
-        tournamentData.updateConfiguration();
-    }
+    drawInput();
     tournamentData.drawRunningTable(ImVec2(size.x, 800.0F));
     tournamentData.drawEloTable(ImVec2(size.x, 800.0F));
     tournamentData.drawCauseTable(ImVec2(size.x, 10000.0F));
