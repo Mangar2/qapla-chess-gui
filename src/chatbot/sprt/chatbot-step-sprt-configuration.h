@@ -52,6 +52,8 @@ private:
      * @return true if configuration is valid, false otherwise.
      */
     [[nodiscard]] bool isConfigurationValid() const;
+
+    bool showMoreOptions_ = false;  ///< Show advanced options (Alpha, Beta)
 };
 
 } // namespace QaplaWindows::ChatBot

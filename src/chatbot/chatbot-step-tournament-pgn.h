@@ -45,6 +45,7 @@ public:
 
 private:
     TournamentType type_;
+    bool showMoreOptions_ = false;  ///< Show advanced options
 
     /**
      * @brief Gets the tournament PGN configuration.

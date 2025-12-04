@@ -56,6 +56,10 @@ Overwrite & Continue=Overwrite & Continue
 Start Tournament=Start Tournament
 Switch to Tournament View=Switch to Tournament View
 Stay in Chatbot=Stay in Chatbot
+Less Options=Less Options
+New SPRT tournament=New SPRT tournament
+Save SPRT tournament=Save SPRT tournament
+Load SPRT tournament=Load SPRT tournament
 
 [Translation]
 id=Checkbox
@@ -93,6 +97,23 @@ Append mode=Append mode
 Save only finished games=Save only finished games
 Minimal tags=Minimal tags
 Concurrency=Concurrency
+First opening=First opening
+Random seed=Random seed
+Switch policy=Switch policy
+Restart=Restart
+Trace=Trace
+Same opening=Same opening
+No color swap=No color swap
+Average Elo=Average Elo
+Include clock=Include clock
+Include eval=Include eval
+Include PV=Include PV
+Include depth=Include depth
+Elo Lower (H0)=Elo Lower (H0)
+Elo Upper (H1)=Elo Upper (H1)
+Max Games=Max Games
+Alpha (‰)=Alpha (‰)
+Beta (‰)=Beta (‰)
 
 [Translation]
 id=Option
@@ -151,6 +172,7 @@ Report Log - Base Name=Report Log - Base Name
 Engine Log - Base Name=Engine Log - Base Name
 Engine Log File Strategy=Engine Log File Strategy
 Language=Language
+History=History
 
 [Translation]
 id=Option
@@ -437,6 +459,14 @@ Run selected engine tests=Run selected engine tests
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
 Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
 Number of games to run in parallel=Number of games to run in parallel
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Lower Elo bound (H0): null hypothesis threshold for SPRT test.\nIf true Elo difference is below this, H0 is accepted (no improvement).=Lower Elo bound (H0): null hypothesis threshold for SPRT test.\nIf true Elo difference is below this, H0 is accepted (no improvement).
+Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H1 is accepted (improvement confirmed).=Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H1 is accepted (improvement confirmed).
+Maximum number of games before test terminates inconclusively.\nIf neither H0 nor H1 is accepted within this limit, the result is inconclusive.=Maximum number of games before test terminates inconclusively.\nIf neither H0 nor H1 is accepted within this limit, the result is inconclusive.
+Type II error rate (false negative): probability of accepting H0 when H1 is true.\nLower values mean more confidence but require more games.=Type II error rate (false negative): probability of accepting H0 when H1 is true.\nLower values mean more confidence but require more games.
 
 [Translation]
 id=Tab
@@ -477,4 +507,8 @@ Configure tournament concurrency and start:=Configure tournament concurrency and
 Tournament started=Tournament started
 The Tournament started successfully!=The Tournament started successfully!
 You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.=You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.
+Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.=Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.
+Nothing to clear.=Nothing to clear.
+Configure the SPRT (Sequential Probability Ratio Test) parameters. These settings define when the test concludes that the engine under test is stronger, weaker, or inconclusive compared to the reference engine.=Configure the SPRT (Sequential Probability Ratio Test) parameters. These settings define when the test concludes that the engine under test is stronger, weaker, or inconclusive compared to the reference engine.
+Successfully parsed opening file using PGN parser.\nFound 1000 opening position(s).=Successfully parsed opening file using PGN parser.\nFound 1000 opening position(s).
 

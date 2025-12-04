@@ -70,8 +70,22 @@ void ChatbotStepSprtConfiguration::drawConfiguration() {
     options.indent = 10.0F;
     options.alwaysOpen = true;
     options.showCollapsingHeader = false;
+    options.showEloLower = true;
+    options.showEloUpper = true;
+    options.showAlpha = showMoreOptions_;
+    options.showBeta = showMoreOptions_;
+    options.showMaxGames = true;
 
     sprtConfiguration.draw(options);
+
+    // More/Less Options button
+    if (!finished_) {
+        ImGui::Spacing();
+        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+            showMoreOptions_ = !showMoreOptions_;
+        }
+    }
 }
 
 bool ChatbotStepSprtConfiguration::isConfigurationValid() const {

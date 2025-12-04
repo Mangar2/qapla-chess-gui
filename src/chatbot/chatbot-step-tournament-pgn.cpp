@@ -50,10 +50,19 @@ std::string ChatbotStepTournamentPgn::draw() {
     
     ImGuiTournamentPgn::DrawOptions options {
         .fileInputWidth = 500.0F,
-        .drawDetails = false,
+        .drawDetails = showMoreOptions_,
         .showCollapsingHeader = false
     };
     tournamentPgn.draw(options);
+
+    // More/Less Options button
+    if (!finished_) {
+        ImGui::Spacing();
+        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+            showMoreOptions_ = !showMoreOptions_;
+        }
+    }
 
     const auto& pgnOptions = tournamentPgn.pgnOptions();
     auto validation = validateFilePath(pgnOptions.file, pgnOptions.append);

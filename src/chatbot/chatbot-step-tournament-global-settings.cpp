@@ -48,15 +48,25 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
     
     auto savedOptions = globalSettings.getOptions();
     
-    // Set simplified options for chatbot
+    // Set simplified options for chatbot, with more options toggle
     auto options = savedOptions;
-    options.showTrace = false;
-    options.showRestart = false;
+    options.showTrace = showMoreOptions_;
+    options.showRestart = showMoreOptions_;
     options.showUseCheckboxes = false;
     options.alwaysOpen = true;
     globalSettings.setOptions(options);
 
     globalSettings.drawGlobalSettings();
+
+    // More/Less Options button for global settings section
+    if (!finished_) {
+        ImGui::Spacing();
+        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+            showMoreOptions_ = !showMoreOptions_;
+        }
+    }
+
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();

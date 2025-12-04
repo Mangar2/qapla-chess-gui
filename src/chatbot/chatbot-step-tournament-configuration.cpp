@@ -73,19 +73,28 @@ void ChatbotStepTournamentConfiguration::drawConfiguration() {
 
     auto& tournamentConfig = TournamentData::instance().tournamentConfiguration();
     
-    // Draw options for chatbot - simplified view
+    // Draw options for chatbot - simplified view, with more options toggle
     ImGuiTournamentConfiguration::DrawOptions options {
         .alwaysOpen = true,
         .showEvent = true,         
         .showType = true,          // Important: gauntlet vs round-robin
         .showRounds = true,        // How many rounds
         .showGamesPerPairing = true, // Games per pairing
-        .showSameOpening = false,   // Additional option, hide for simplicity
-        .showNoColorSwap = false,  // Advanced option, hide for simplicity
-        .showAverageElo = false    // Advanced option, hide for simplicity
+        .showSameOpening = showMoreOptions_,   // Additional option
+        .showNoColorSwap = showMoreOptions_,   // Advanced option
+        .showAverageElo = showMoreOptions_     // Advanced option
     };
 
     tournamentConfig.draw(options, 150.0F, 10.0F);
+
+    // More/Less Options button
+    if (!finished_) {
+        ImGui::Spacing();
+        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+            showMoreOptions_ = !showMoreOptions_;
+        }
+    }
 }
 
 void ChatbotStepTournamentConfiguration::drawGauntletSelection() {

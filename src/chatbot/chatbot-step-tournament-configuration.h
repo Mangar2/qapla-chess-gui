@@ -41,6 +41,8 @@ private:
     int findCurrentGauntletIndex() const;
     bool isGauntletMode() const;
     bool hasValidGauntletSelection() const;
+
+    bool showMoreOptions_ = false;  ///< Show advanced options
 };
 
 } // namespace QaplaWindows::ChatBot
