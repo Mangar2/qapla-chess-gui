@@ -110,6 +110,10 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
         ImGui::PopID();
     }
 
+    if (changed) {
+        updateConfiguration();
+    }
+
     return changed;
 }
 
@@ -169,4 +173,10 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentPgn::getSections() co
         .name = "pgnoutput",
         .entries = pgnEntries
     }};
+}
+
+void ImGuiTournamentPgn::updateConfiguration() const {
+    auto sections = getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "pgnoutput", id_, sections);
 }

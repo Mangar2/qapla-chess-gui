@@ -124,6 +124,10 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     ImGui::Unindent(indent);
     ImGui::PopID();
 
+    if (changed) {
+        updateConfiguration();
+    }
+
     return changed;
 }
 
@@ -184,4 +188,10 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSec
     };
 
     return { QaplaHelpers::IniFile::Section{ .name = "tournament", .entries = entries } };
+}
+
+void ImGuiTournamentConfiguration::updateConfiguration() const {
+    auto sections = getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "tournament", id_, sections);
 }

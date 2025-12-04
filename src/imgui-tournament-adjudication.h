@@ -64,6 +64,11 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
+        /**
+         * @brief Updates the configuration in the Configuration singleton.
+         */
+        void updateConfiguration() const;
+
         QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
         QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::string id_;

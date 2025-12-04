@@ -112,6 +112,11 @@ namespace QaplaWindows {
         [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
+        /**
+         * @brief Updates the configuration in the Configuration singleton.
+         */
+        void updateConfiguration() const;
+
         QaplaTester::TournamentConfig* config_ = nullptr;
         std::string id_;
     };

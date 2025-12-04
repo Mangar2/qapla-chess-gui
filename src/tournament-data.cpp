@@ -164,28 +164,9 @@ namespace QaplaWindows {
     }
 
     void TournamentData::updateConfiguration() {
-
-        // Tournament Config
-        auto tournamentSections = tournamentConfiguration_->getSections();
-        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "tournament", "tournament", tournamentSections);
-
-        auto openingSections = tournamentOpening_->getSections();
-        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "opening", "tournament", openingSections);
-        
-        // PGN Config
-        auto pgnSections = tournamentPgn_->getSections();
-        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "pgnoutput", "tournament", pgnSections);
-
-        // Adjudication Config
-        auto adjudicationSections = tournamentAdjudication_->getSections();
-        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "drawadjudication", "tournament", { adjudicationSections[0] });
-        QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-            "resignadjudication", "tournament", { adjudicationSections[1] });
-
+        // Configuration is now automatically saved by each component when changed.
+        // This method is kept for backward compatibility with tournament-window calls,
+        // but no longer needs to do anything for the UI components.
     }
 
     void TournamentData::updateTournamentResults() {

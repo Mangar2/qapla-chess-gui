@@ -97,6 +97,11 @@ namespace QaplaWindows {
 
     private:
         /**
+         * @brief Updates the configuration in the Configuration singleton.
+         */
+        void updateConfiguration() const;
+
+        /**
          * @brief Draws the opening file input control.
          * @param fileInputWidth Width for file input control
          * @param tutorialContext Tutorial context with highlighting and annotations

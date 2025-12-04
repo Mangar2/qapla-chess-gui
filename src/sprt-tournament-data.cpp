@@ -216,6 +216,7 @@ void SprtTournamentData::loadGlobalSettingsConfig() {
 }
 
 void SprtTournamentData::updateConfiguration() {
+    // SPRT-specific configuration still needs to be saved here
     QaplaHelpers::IniFile::KeyValueMap sprtEntries{
         {"id", "sprt-tournament"},
         {"eloLower", std::to_string(sprtConfig_->eloLower)},
@@ -231,19 +232,8 @@ void SprtTournamentData::updateConfiguration() {
             .entries = sprtEntries
         }});
 
-    auto openingSections = tournamentOpening_->getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "opening", "sprt-tournament", openingSections);
-
-    auto pgnSections = tournamentPgn_->getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "pgnoutput", "sprt-tournament", pgnSections);
-
-    auto adjudicationSections = tournamentAdjudication_->getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "drawadjudication", "sprt-tournament", { adjudicationSections[0] });
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "resignadjudication", "sprt-tournament", { adjudicationSections[1] });
+    // Opening, PGN, and Adjudication configurations are now automatically saved
+    // by each component when changed, so we no longer need to save them here.
 }
 
 void SprtTournamentData::updateTournamentResults() {

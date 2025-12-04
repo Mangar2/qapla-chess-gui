@@ -72,6 +72,10 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
         ImGui::PopID();
     }
 
+    if (changed) {
+        updateConfiguration();
+    }
+
     return changed;
 }
 
@@ -155,4 +159,12 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentAdjudication::getSect
     });
 
     return sections;
+}
+
+void ImGuiTournamentAdjudication::updateConfiguration() const {
+    auto sections = getSections();
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "drawadjudication", id_, { sections[0] });
+    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
+        "resignadjudication", id_, { sections[1] });
 }
