@@ -1,0 +1,101 @@
+/**
+ * @license
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author Volker Böhm
+ * @copyright Copyright (c) 2025 Volker Böhm
+ */
+
+#include "chatbot-epd.h"
+#include "chatbot-step-epd-stop-running.h"
+#include "chatbot-step-epd-select-engines.h"
+#include "chatbot-step-epd-configuration.h"
+#include "chatbot-step-epd-start.h"
+
+#include <algorithm>
+
+namespace QaplaWindows::ChatBot {
+
+void ChatbotEpd::start() {
+    steps_.clear();
+    currentStepIndex_ = 0;
+    stopped_ = false;
+
+    // Install snackbar capture to redirect EPD messages to chat
+    snackbarCapture_.install();
+
+    // Add the initial step to check for running analysis
+    steps_.push_back(std::make_unique<ChatbotStepEpdStopRunning>());
+}
+
+void ChatbotEpd::addAnalysisSteps() {
+    steps_.push_back(std::make_unique<ChatbotStepEpdSelectEngines>());
+    steps_.push_back(std::make_unique<ChatbotStepEpdConfiguration>());
+    steps_.push_back(std::make_unique<ChatbotStepEpdStart>());
+}
+
+bool ChatbotEpd::draw() {
+    bool contentChanged = false;
+    
+    if (stopped_ || steps_.empty()) {
+        return false;
+    }
+
+    // Insert any captured snackbar messages as steps
+    snackbarCapture_.insertCapturedSteps(steps_, std::max<size_t>(1, currentStepIndex_) - 1);
+
+    // Draw all completed steps 
+    for (size_t i = 0; i < currentStepIndex_ && i < steps_.size(); ++i) {
+        static_cast<void>(steps_[i]->draw());
+    }
+
+    // Draw and handle current step
+    if (currentStepIndex_ < steps_.size()) {
+        std::string result = steps_[currentStepIndex_]->draw();
+        
+        if (result == "stop") {
+            stopped_ = true;
+            return false;
+        }
+
+        if (result == "continue") {
+            addAnalysisSteps();
+        }
+        
+        // Advance to next step if current is finished
+        if (steps_.size() > currentStepIndex_ && steps_[currentStepIndex_]->isFinished()) {
+            ++currentStepIndex_;
+            contentChanged = true;
+        }
+    }
+    
+    return contentChanged;
+}
+
+bool ChatbotEpd::isFinished() const {
+    if (stopped_) {
+        return true;
+    }
+    if (steps_.empty()) {
+        return false;
+    }
+    // Finished when past the last step
+    return currentStepIndex_ >= steps_.size();
+}
+
+std::unique_ptr<ChatbotThread> ChatbotEpd::clone() const {
+    return std::make_unique<ChatbotEpd>();
+}
+
+} // namespace QaplaWindows::ChatBot

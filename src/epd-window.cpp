@@ -24,6 +24,7 @@
 #include "tutorial.h"
 #include "os-dialogs.h"
 #include "imgui-controls.h"
+#include "imgui-epd-configuration.h"
 #include "epd-data.h"
 #include "configuration.h"
 
@@ -186,44 +187,28 @@ void QaplaWindows::EpdWindow::executeCommand(const std::string &button)
 void EpdWindow::drawInput()
 {
     constexpr float inputWidth = 200.0F;
-    constexpr int maxSeenPlies = 32;
-    bool modified = false;
+    constexpr int maxConcurrency = 32;
 
-    auto& config = EpdData::instance().config();
+    auto& epdData = EpdData::instance();
 
-    modified |= ImGuiControls::sliderInt<uint32_t>("Concurrency", config.concurrency, 1, config.maxConcurrency);
+    auto concurrency = epdData.getExternalConcurrency();
+    ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, maxConcurrency);
     ImGuiControls::hooverTooltip("Number of positions analyzed in parallel");
-    EpdData::instance().setPoolConcurrency(config.concurrency);
+    epdData.setExternalConcurrency(concurrency);
+    epdData.setPoolConcurrency(concurrency, true);
 
     ImGui::Spacing();
-    EpdData::instance().engineSelect().draw();
+    epdData.engineSelect().draw();
 
-    if (ImGuiControls::CollapsingHeaderWithDot("Configuration", ImGuiTreeNodeFlags_Selected))
-    {
-        constexpr uint64_t maxTimeInS = 3600ULL * 24ULL * 365ULL; 
-        ImGui::Indent(10.0F);
-        ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint32_t>("Seen plies", config.seenPlies, 1, maxSeenPlies);
-        ImGuiControls::hooverTooltip("Number of plies to play from position before starting engine analysis");
-
-        ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, maxTimeInS, 1, 100);
-        ImGuiControls::hooverTooltip("Maximum analysis time per position in seconds");
-
-        ImGui::SetNextItemWidth(inputWidth);
-        modified |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, maxTimeInS, 1, 100);
-        ImGuiControls::hooverTooltip("Minimum analysis time per position in seconds");
-
-        ImGui::Spacing();
-        modified |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath, inputWidth * 2.0F);
-        ImGuiControls::hooverTooltip("Path to EPD or RAW position file to analyze");
-        ImGui::Spacing();
-        ImGui::Unindent(10.0F);
-
-    }
-    if (modified) {
-        EpdData::instance().updateConfiguration();
-    }
+    ImGuiEpdConfiguration epdConfig;
+    ImGuiEpdConfiguration::DrawOptions options {
+        .alwaysOpen = false,
+        .showSeenPlies = true,
+        .showMaxTime = true,
+        .showMinTime = true,
+        .showFilePath = true
+    };
+    epdConfig.draw(options, inputWidth, 10.0F);
 }
 
 void EpdWindow::drawProgress()
@@ -358,7 +343,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 10:
         // Step 9: Running - wait for concurrency to be set to 10
-        if (config.concurrency == 10) {
+        if (epdData.getExternalConcurrency() == 10) {
             highlightedButton_ = "";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }

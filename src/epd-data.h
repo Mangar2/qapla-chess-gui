@@ -127,10 +127,24 @@ namespace QaplaWindows {
         void updateConfiguration() const;
 
         /**
-         * @brief Updates the concurrency setting for the game manager pool.
-         * @param newConcurrency The new concurrency value to set.
+         * @brief Gets the target pool concurrency level.
+         * @return The target concurrency level.
          */
-        void setPoolConcurrency(uint32_t newConcurrency);
+        uint32_t getExternalConcurrency() const;
+
+        /**
+         * @brief Sets the external concurrency value.
+         * @param count The new external concurrency value.
+         */
+        void setExternalConcurrency(uint32_t count);
+
+        /**
+         * @brief Sets the pool concurrency level.
+         * @param count The number of concurrent tasks to allow.
+         * @param nice If true, reduces the number of active managers gradually.
+         * @param direct If true, applies the change immediately without debouncing.
+         */
+        void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**
          * @brief Sets the GameManagerPool instance to use.
@@ -187,7 +201,30 @@ namespace QaplaWindows {
          */
         bool configChanged() const;
 
+        /**
+         * @brief Checks if the EPD analysis is currently starting.
+         * @return true if the analysis is in the starting state, false otherwise.
+         */
+        [[nodiscard]] bool isStarting() const {
+            return state == State::Starting;
+        }
 
+        /**
+         * @brief Checks if the EPD analysis is currently running.
+         * @return true if the analysis is running, false otherwise.
+         */
+        [[nodiscard]] bool isRunning() const {
+            return state == State::Running;
+        }
+
+        /**
+         * @brief Checks if all EPD tests have been completed.
+         * @return true if all tests are finished, false otherwise.
+         */
+        [[nodiscard]] bool isFinished() const {
+            return (state == State::Stopped || state == State::Cleared) && 
+                   totalTests > 0 && remainingTests == 0;
+        }
 
         State state = State::Cleared;
         size_t totalTests = 0;

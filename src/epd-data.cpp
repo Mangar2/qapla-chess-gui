@@ -113,6 +113,9 @@ namespace QaplaWindows {
             value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         engineSelect_->setId("epd");
         engineSelect_->setEnginesConfiguration(engineSections);
+        
+        // Initialize external concurrency from saved config
+        setExternalConcurrency(epdConfig_.concurrency);
     }
 
     void EpdData::updateConfiguration() const {
@@ -122,7 +125,7 @@ namespace QaplaWindows {
                 {"id", "epd"},
                 {"filepath", epdConfig_.filepath},
                 {"maxconcurrency", std::to_string(epdConfig_.maxConcurrency)},
-                {"concurrency", std::to_string(epdConfig_.concurrency)},
+                {"concurrency", std::to_string(imguiConcurrency_->getExternalConcurrency())},
                 {"maxtime", std::to_string(epdConfig_.maxTimeInS)},
                 {"mintime", std::to_string(epdConfig_.minTimeInS)},
                 {"seenplies", std::to_string(epdConfig_.seenPlies)}
@@ -131,9 +134,20 @@ namespace QaplaWindows {
         QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("epd", "epd", { section });
     }
 
-    void EpdData::setPoolConcurrency(uint32_t newConcurrency) {
-        epdConfig_.concurrency = newConcurrency;
-        imguiConcurrency_->update(epdConfig_.concurrency);
+    uint32_t EpdData::getExternalConcurrency() const {
+        return imguiConcurrency_->getExternalConcurrency();
+    }
+
+    void EpdData::setExternalConcurrency(uint32_t count) {
+        imguiConcurrency_->setExternalConcurrency(count);
+    }
+
+    void EpdData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
+        if (!isRunning()) {
+            return;
+        }
+        imguiConcurrency_->update(count, direct);
+        imguiConcurrency_->setNiceStop(nice);
     }
 
     void EpdData::setGameManagerPool(const std::shared_ptr<QaplaTester::GameManagerPool>& pool) {
@@ -216,7 +230,7 @@ namespace QaplaWindows {
         if (state == State::Stopping || state == State::Running) {
             if (poolAccess_->runningGameCount() == 0) {
                 state = State::Stopped;
-                SnackbarManager::instance().showSuccess("Analysis finished.");
+                SnackbarManager::instance().showSuccess("Analysis finished.", false, "epd");
             }
         }
 
@@ -230,37 +244,43 @@ namespace QaplaWindows {
     bool EpdData::mayAnalyze(bool sendMessage) const {
         if (epdConfig_.filepath.empty()) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("No EPD or RAW position file selected.");
+                SnackbarManager::instance().showWarning("No EPD or RAW position file selected.",
+                    false, "epd");
             }
             return false;
         }
         if (epdConfig_.maxTimeInS == 0) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("Max time must be greater than 0.");
+                SnackbarManager::instance().showWarning("Max time must be greater than 0.",
+                    false, "epd");
             }
             return false;
         }
         if (epdConfig_.engines.empty()) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("No engines selected for analysis.");
+                SnackbarManager::instance().showWarning("No engines selected for analysis.",
+                    false, "epd");
             }
             return false;
         }
         if (totalTests > 0 && remainingTests == 0) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.");
+                SnackbarManager::instance().showWarning("All tests have been completed. Clear data before re-analyzing.",
+                    false, "epd");
             }
             return false;
         }
         if (configChanged() && state == EpdData::State::Stopped) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.");
+                SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.",
+                    false, "epd");
             }
             return false;
         }
         if (!poolAccess_->areAllTasksFinished()) {
             if (sendMessage) {
-                SnackbarManager::instance().showWarning("Some tasks are still running. Please wait until they finish.");
+                SnackbarManager::instance().showWarning("Some tasks are still running. Please wait until they finish.",
+                    false, "epd");
             }
             return false;
         }
@@ -284,13 +304,15 @@ namespace QaplaWindows {
             epdManager_->schedule(engineConfig, *poolAccess_);
             scheduledEngines_++;
         }
-        if (epdConfig_.concurrency == 0) {
-            epdConfig_.concurrency = std::max<uint32_t>(1, epdConfig_.concurrency);
-        }
+        
         imguiConcurrency_->init();
         imguiConcurrency_->setActive(true);
+        
+        // Apply the external concurrency setting
+        auto concurrency = std::max<uint32_t>(1, getExternalConcurrency());
+        setPoolConcurrency(concurrency, true, true);
 
-        SnackbarManager::instance().showSuccess("Epd analysis started");
+        SnackbarManager::instance().showSuccess("Epd analysis started", false, "epd");
     }
 
      void EpdData::stopPool(bool graceful) {
@@ -301,7 +323,7 @@ namespace QaplaWindows {
         imguiConcurrency_->setActive(false);
 
         if (state == State::Stopped || state == State::Cleared) {
-            SnackbarManager::instance().showNote("No analysis running.");
+            SnackbarManager::instance().showNote("No analysis running.", false, "epd");
             return;
         }
         auto oldState = state;
@@ -312,14 +334,16 @@ namespace QaplaWindows {
         } 
 
         if (oldState == State::Stopping && graceful) {
-            SnackbarManager::instance().showNote("Analysis is already stopping gracefully.");
+            SnackbarManager::instance().showNote("Analysis is already stopping gracefully.", 
+                false, "epd");
             return;
         }
        
         SnackbarManager::instance().showSuccess(
             graceful ? 
                 "Analysis stopped.\nFinishing ongoing calculations." : 
-                "Analysis stopped"
+                "Analysis stopped",
+            false, "epd"
         );
     }
 
