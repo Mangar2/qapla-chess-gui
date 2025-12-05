@@ -1,5 +1,6 @@
 #include "i18n.h"
 #include "callback-manager.h"
+#include "translation-normalizer.h"
 
 #include <string-helper.h>
 #include <logger.h>
@@ -43,51 +44,43 @@ Translator::~Translator() {
 }
 
 std::string Translator::translate(const std::string& topic, const std::string& key) {
-    // Detect leading/trailing whitespace to preserve it
-    size_t first = key.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos) {
+    TranslationNormalizer normalizer(key);
+    
+    if (normalizer.isEmpty()) {
         return key;
     }
-    // Remove ## and everything after it for calculating last
-    size_t last = key.find_last_not_of(" \t\r\n0123456789");
-    size_t imguiIdPos = key.find("##");
-    if (imguiIdPos != std::string::npos && imguiIdPos != 0) {
-        last = std::min(last, imguiIdPos - 1);
-    }
-    
-    std::string prefix = key.substr(0, first);
-    std::string suffix = key.substr(last + 1);
-    std::string trimmedKey = key.substr(first, last - first + 1);
+
+    const std::string& normalizedKey = normalizer.getNormalizedKey();
 
     std::scoped_lock lock(languageMutex);
     
     auto topicIt = translations.find(topic);
     if (topicIt != translations.end()) {
-        auto keyIt = topicIt->second.find(trimmedKey);
+        auto keyIt = topicIt->second.find(normalizedKey);
         if (keyIt != topicIt->second.end()) {
-            return prefix + keyIt->second + suffix;
+            return normalizer.restorePlaceholders(keyIt->second);
         }
     }
 
 #ifdef QAPLA_DEBUG_I18N
     // In debug mode: Add missing translations directly to all language files
-    auto trimmedKeyFileFormat = toFileFormat(trimmedKey);
+    auto normalizedKeyFileFormat = toFileFormat(normalizedKey);
     auto i18nDir = getI18nSourceDirectory();
     
     for (const auto& lang : {"deu", "eng", "fra"}) {
         auto langFile = i18nDir / (std::string(lang) + ".lang");
-        addMissingTranslationToFile(langFile, topic, trimmedKeyFileFormat, trimmedKeyFileFormat);
+        addMissingTranslationToFile(langFile, topic, normalizedKeyFileFormat, normalizedKeyFileFormat);
     }
     
     // Also add to current translations so we don't write it again
-    translations[topic][trimmedKey] = trimmedKey;
+    translations[topic][normalizedKey] = normalizedKey;
     
     QaplaTester::Logger::reportLogger().log(
-        std::string("Added missing translation [") + topic + "] " + trimmedKey, 
+        std::string("Added missing translation [") + topic + "] " + normalizedKey, 
         TraceLevel::info);
 #else
     // In release mode: Log missing keys to separate file
-    auto trimmedKeyFileFormat = toFileFormat(trimmedKey);
+    auto normalizedKeyFileFormat = toFileFormat(normalizedKey);
     auto sectionListOpt = missingKeys_.getSectionList("Translation", topic);
     if (!sectionListOpt || sectionListOpt->empty()) {
         missingKeys_.addSection({
@@ -99,8 +92,8 @@ std::string Translator::translate(const std::string& topic, const std::string& k
     }
     // There is only one section per name/id in this use case
     auto& section = sectionListOpt->front();
-    if (!section.getValue(trimmedKeyFileFormat)) {
-        section.addEntry(trimmedKeyFileFormat, "");
+    if (!section.getValue(normalizedKeyFileFormat)) {
+        section.addEntry(normalizedKeyFileFormat, "");
         missingKeys_.setSectionList("Translation", topic, *sectionListOpt);
     }
     setModified();

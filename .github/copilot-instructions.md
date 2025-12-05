@@ -6,6 +6,7 @@
 - Only "why" comments, JSDoc for method declarations
 - Max complexity: 20, max nesting: 3
 - Prevent implicit conversions, use same types
+- **Explicit bool conversions**: Never rely on implicit int→bool. Use `!= 0` (preferred) or `static_cast<bool>()` 
 - Always use curly braces for control statements
 - Use `auto` when type is already visible in the line
 
