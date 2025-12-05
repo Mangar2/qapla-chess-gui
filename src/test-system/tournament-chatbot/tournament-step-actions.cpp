@@ -252,6 +252,11 @@ namespace QaplaTest::TournamentChatbot {
         
         if (setupPgnFile) {
             tournamentData.tournamentPgn().pgnOptions().file = getTestPgnPath();
+            // Default to Append mode when setting up file (ensures "Continue" button is available)
+            // Can be overridden by explicit appendMode parameter
+            if (!appendMode.has_value()) {
+                tournamentData.tournamentPgn().pgnOptions().append = true;
+            }
         }
         
         if (appendMode.has_value()) {

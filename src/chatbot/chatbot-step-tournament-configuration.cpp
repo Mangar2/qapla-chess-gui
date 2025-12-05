@@ -55,6 +55,13 @@ std::string ChatbotStepTournamentConfiguration::draw() {
 
     ImGui::SameLine();
 
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
+    }
+
+    ImGui::SameLine();
+
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         return "stop";
@@ -86,15 +93,6 @@ void ChatbotStepTournamentConfiguration::drawConfiguration() {
     };
 
     tournamentConfig.draw(options, 150.0F, 10.0F);
-
-    // More/Less Options button
-    if (!finished_) {
-        ImGui::Spacing();
-        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
-        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
-            showMoreOptions_ = !showMoreOptions_;
-        }
-    }
 }
 
 void ChatbotStepTournamentConfiguration::drawGauntletSelection() {

@@ -157,6 +157,7 @@ UCI_Chess=UCI_Chess
 UCI_LimitStrength=UCI_LimitStrength
 UCI_Elo=UCI_Elo
 Search=Search
+##filePath=##filePath
 
 [Translation]
 id=Option
@@ -540,7 +541,9 @@ Quick selection for common time controls.\nSelecting an option automatically fil
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
 Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
-Number of games per pairing.\nTotal games = games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
 
 [Translation]
 id=Tab

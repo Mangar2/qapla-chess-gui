@@ -55,15 +55,6 @@ std::string ChatbotStepTournamentPgn::draw() {
     };
     tournamentPgn.draw(options);
 
-    // More/Less Options button
-    if (!finished_) {
-        ImGui::Spacing();
-        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
-        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
-            showMoreOptions_ = !showMoreOptions_;
-        }
-    }
-
     const auto& pgnOptions = tournamentPgn.pgnOptions();
     auto validation = validateFilePath(pgnOptions.file, pgnOptions.append);
 
@@ -132,6 +123,13 @@ std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& valida
         finished_ = true;
     }
     ImGui::EndDisabled();
+
+    ImGui::SameLine();
+
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
+    }
 
     ImGui::SameLine();
 

@@ -73,15 +73,6 @@ std::string ChatbotStepTournamentOpening::draw() {
     
     tournamentOpening.draw(drawParams);
 
-    // More/Less Options button
-    if (!finished_) {
-        ImGui::Spacing();
-        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
-        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
-            showMoreOptions_ = !showMoreOptions_;
-        }
-    }
-
     ImGui::Spacing();
 
     // Check if file changed and reset validation state if needed
@@ -160,13 +151,6 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
         ImGui::PopStyleColor();
     }
 
-    // Show/Hide Trace button
-    ImGui::Spacing();
-    const char* traceLabel = showTrace_ ? "Hide Trace" : "Show Trace";
-    if (QaplaWindows::ImGuiControls::textButton(traceLabel)) {
-        showTrace_ = !showTrace_;
-    }
-
     if (showTrace_) {
         ImGui::Spacing();
         std::string traceText = formatTrace();
@@ -184,6 +168,22 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
         finished_ = true;
     }
     ImGui::EndDisabled();
+
+    ImGui::SameLine();
+
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
+    }
+
+    // Show trace button only if validation was performed
+    if (isValidated_ && parseResult_) {
+        ImGui::SameLine();
+        const char* traceLabel = showTrace_ ? "Hide Trace" : "Show Trace";
+        if (QaplaWindows::ImGuiControls::textButton(traceLabel)) {
+            showTrace_ = !showTrace_;
+        }
+    }
 
     ImGui::SameLine();
 

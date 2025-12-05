@@ -57,15 +57,6 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
 
     globalSettings.drawGlobalSettings({}, options);
 
-    // More/Less Options button for global settings section
-    if (!finished_) {
-        ImGui::Spacing();
-        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
-        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
-            showMoreOptions_ = !showMoreOptions_;
-        }
-    }
-
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -82,6 +73,13 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
 
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
+    }
+
+    ImGui::SameLine();
+
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
     }
 
     ImGui::SameLine();
