@@ -66,6 +66,7 @@ Start Analysis=Start Analysis
 Switch to EPD View=Switch to EPD View
 Yes, continue analysis=Yes, continue analysis
 -=-
+Yes, end tournament=Yes, end tournament
 
 [Translation]
 id=Checkbox
@@ -83,6 +84,7 @@ EPD Test=EPD Test
 Multiple Games Test=Multiple Games Test
 Start/Stop Test=Start/Stop Test
 Score from White POV=Score from White POV
+Ponder=Ponder
 
 [Translation]
 id=Input
@@ -130,6 +132,29 @@ ponder=ponder
 MultiPV=MultiPV
 UCI_EngineAbout=UCI_EngineAbout
 qaplaBitbaseCache=qaplaBitbaseCache
+Note Duration=Note Duration
+Success Duration=Success Duration
+Warning Duration=Warning Duration
+Error Duration=Error Duration
+Report Log - Base Name=Report Log - Base Name
+Engine Log - Base Name=Engine Log - Base Name
+Engine Log File Strategy=Engine Log File Strategy
+Language=Language
+Protocol=Protocol
+Time Control=Time Control
+UCI_ShowCurrLine=UCI_ShowCurrLine
+UCI_ShowRefutations=UCI_ShowRefutations
+CPUs=CPUs
+OwnBook=OwnBook
+Logfile=Logfile
+Position Learn=Position Learn
+Position Learn Filename=Position Learn Filename
+Book Learn=Book Learn
+Book Learn Filename=Book Learn Filename
+NalimovCache=NalimovCache
+UCI_Chess=UCI_Chess
+UCI_LimitStrength=UCI_LimitStrength
+UCI_Elo=UCI_Elo
 
 [Translation]
 id=Option
@@ -320,6 +345,11 @@ Extended tournament is running!\n\nLet it finish or click 'Stop' to pause.=Exten
 Tournament Tutorial Complete!\n\nYou've mastered tournament basics!\n\n• Configure engines and settings\n• Run tournaments with concurrency\n• Save and extend tournaments=Tournament Tutorial Complete!\n\nYou've mastered tournament basics!\n\n• Configure engines and settings\n• Run tournaments with concurrency\n• Save and extend tournaments
 Tournament stopped=Tournament stopped
 Analysis stopped=Analysis stopped
+Some tasks are still running. Please wait until they finish.=Some tasks are still running. Please wait until they finish.
+Analysis is already stopping gracefully.=Analysis is already stopping gracefully.
+Configuration changed. Clear data before re-analyzing.=Configuration changed. Clear data before re-analyzing.
+Analysis is stopping. Please wait until it has fully stopped.=Analysis is stopping. Please wait until it has fully stopped.
+Analysis stopped.\nFinishing ongoing calculations.=Analysis stopped.\nFinishing ongoing calculations.
 
 [Translation]
 id=Table
@@ -495,6 +525,9 @@ Number of positions to analyze in parallel=Number of positions to analyze in par
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
 Remove this engine from selection=Remove this engine from selection
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Display name for the engine=Display name for the engine
+Chess engine communication protocol (UCI or XBoard)=Chess engine communication protocol (UCI or XBoard)
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
 
 [Translation]
 id=Tab
@@ -566,4 +599,8 @@ There is an existing EPD analysis that can be continued. Progress: 2 of 100 test
 There is an existing EPD analysis that can be continued. Progress: 8 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 8 of 100 tests completed.\n\nWould you like to continue it?
 There is an existing EPD analysis that can be continued. Progress: 7 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 7 of 100 tests completed.\n\nWould you like to continue it?
 There is an existing EPD analysis that can be continued. Progress: 6 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 6 of 100 tests completed.\n\nWould you like to continue it?
+Analysis finished.=Analysis finished.
+Tournament stopped=Tournament stopped
+A tournament is currently running. Would you like to end it?=A tournament is currently running. Would you like to end it?
+Tournament ended.=Tournament ended.
 

@@ -80,7 +80,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
     } 
     if (button == "Grace")
     {
-         if (epdState == EpdData::State::Stopping) {
+         if (epdState == EpdData::State::Gracefully) {
             return QaplaButton::ButtonState::Active;
         } 
         if (epdState != EpdData::State::Running) {
@@ -316,7 +316,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 7:
         // Step 6: Running again - wait for Grace (Stopping state)
-        if (epdState == EpdData::State::Stopping) {
+        if (epdState == EpdData::State::Gracefully) {
             highlightedButton_ = "";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }

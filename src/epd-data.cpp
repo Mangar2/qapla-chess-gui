@@ -227,7 +227,7 @@ namespace QaplaWindows {
         if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
             state = State::Running;
         }
-        if (state == State::Stopping || state == State::Running) {
+        if (state == State::Stopping || state == State::Gracefully || state == State::Running) {
             if (poolAccess_->runningGameCount() == 0) {
                 state = State::Stopped;
                 SnackbarManager::instance().showSuccess("Analysis finished.", false, "epd");
@@ -273,6 +273,13 @@ namespace QaplaWindows {
         if (configChanged() && state == EpdData::State::Stopped) {
             if (sendMessage) {
                 SnackbarManager::instance().showWarning("Configuration changed. Clear data before re-analyzing.",
+                    false, "epd");
+            }
+            return false;
+        }
+        if (state == State::Stopping || state == State::Gracefully) {
+            if (sendMessage) {
+                SnackbarManager::instance().showWarning("Analysis is stopping. Please wait until it has fully stopped.",
                     false, "epd");
             }
             return false;
@@ -327,13 +334,13 @@ namespace QaplaWindows {
             return;
         }
         auto oldState = state;
-        state = graceful ? State::Stopping : State::Stopped;
+        state = graceful ? State::Gracefully : State::Stopping;
         if (!graceful) {
             // If we are not graceful, we stop all immediately
             poolAccess_->stopAll();
         } 
 
-        if (oldState == State::Stopping && graceful) {
+        if (oldState == State::Gracefully && graceful) {
             SnackbarManager::instance().showNote("Analysis is already stopping gracefully.", 
                 false, "epd");
             return;

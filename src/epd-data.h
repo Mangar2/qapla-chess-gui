@@ -46,6 +46,7 @@ namespace QaplaWindows {
             Starting,
             Running,
             Stopping,
+            Gracefully,
             Stopped,
             Cleared
         };
@@ -215,6 +216,22 @@ namespace QaplaWindows {
          */
         [[nodiscard]] bool isRunning() const {
             return state == State::Running;
+        }
+
+        /**
+         * @brief Checks if the EPD analysis is currently stopping.
+         * @return true if the analysis is stopping, false otherwise.
+         */
+        [[nodiscard]] bool isStopping() const {
+            return state == State::Stopping || state == State::Gracefully;
+        }
+
+        /**
+         * @brief Checks if the EPD analysis is stopped.
+         * @return true if the analysis is stopped or cleared, false otherwise.
+         */
+        [[nodiscard]] bool isStopped() const {
+            return state == State::Stopped || state == State::Cleared;
         }
 
         /**

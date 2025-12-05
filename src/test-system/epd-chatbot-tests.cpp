@@ -93,6 +93,7 @@ namespace QaplaTest {
 
         // Helper to verify analysis is running
         // Waits up to maxWaitSeconds for isRunning() to become true
+        // Uses SleepNoSkip to ensure real waiting even in Fast mode
         bool waitForAnalysisRunning(ImGuiTestContext* ctx, float maxWaitSeconds = 5.0f) {
             auto& epdData = QaplaWindows::EpdData::instance();
             
@@ -100,10 +101,24 @@ namespace QaplaTest {
             float waited = 0.0f;
             constexpr float sleepInterval = 0.1f;
             while (!epdData.isRunning() && waited < maxWaitSeconds) {
-                ctx->Sleep(sleepInterval);
+                ctx->SleepNoSkip(sleepInterval, sleepInterval);
                 waited += sleepInterval;
             }
             return epdData.isRunning();
+        }
+
+        // Waits up to maxWaitSeconds for analysis to fully stop
+        // Uses SleepNoSkip to ensure real waiting even in Fast mode
+        bool waitForAnalysisStopped(ImGuiTestContext* ctx, float maxWaitSeconds = 10.0f) {
+            auto& epdData = QaplaWindows::EpdData::instance();
+            
+            float waited = 0.0f;
+            constexpr float sleepInterval = 0.1f;
+            while (!epdData.isStopped() && waited < maxWaitSeconds) {
+                ctx->SleepNoSkip(sleepInterval, sleepInterval);
+                waited += sleepInterval;
+            }
+            return epdData.isStopped();
         }
 
         // Helper to click an item with existence check - returns false if item not found
@@ -493,9 +508,12 @@ namespace QaplaTest {
             // Wait for analysis to actually start before stopping
             IM_CHECK(waitForAnalysisRunning(ctx, 5.0f));
             
+            // Wait a bit to let engine receive commands (prevents engine crash from rapid start/quit)
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            
             // Stop the analysis (not graceful) to create incomplete state
             epdData.stopPool(false);
-            ctx->Sleep(0.3f);
+            IM_CHECK(waitForAnalysisStopped(ctx, 5.0f));
             
             // Verify we have incomplete analysis - this is a precondition for the test
             IM_CHECK_GT(epdData.totalTests, (size_t)0);
@@ -568,8 +586,11 @@ namespace QaplaTest {
             // Wait for analysis to actually start before stopping
             IM_CHECK(waitForAnalysisRunning(ctx, 5.0f));
             
+            // Wait a bit to let engine receive commands (prevents engine crash from rapid start/quit)
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            
             epdData.stopPool(false);
-            ctx->Sleep(0.3f);
+            IM_CHECK(waitForAnalysisStopped(ctx, 10.0f));
             
             // Verify we have incomplete analysis - precondition
             IM_CHECK_GT(epdData.totalTests, (size_t)0);
@@ -627,8 +648,11 @@ namespace QaplaTest {
             // Wait for analysis to actually start before stopping
             IM_CHECK(waitForAnalysisRunning(ctx, 5.0f));
             
+            // Wait a bit to let engine receive commands (prevents engine crash from rapid start/quit)
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            
             epdData.stopPool(false);
-            ctx->Sleep(0.3f);
+            IM_CHECK(waitForAnalysisStopped(ctx, 10.0f));
             
             // Verify we have incomplete analysis - precondition
             IM_CHECK_GT(epdData.totalTests, (size_t)0);

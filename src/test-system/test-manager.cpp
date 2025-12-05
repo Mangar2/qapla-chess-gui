@@ -20,6 +20,7 @@
 #include "test-system/test-manager.h"
 #include "test-system/regression-tests.h"
 #include "test-system/epd-chatbot-tests.h"
+#include "test-system/tournament-chatbot/tournament-chatbot-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -62,6 +63,7 @@ namespace QaplaTest {
 
         registerRegressionTests(engine_);
         registerEpdChatbotTests(engine_);
+        registerTournamentChatbotTests(engine_);
 #endif
     }
 
