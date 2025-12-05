@@ -19,35 +19,31 @@
 
 #pragma once
 
-#include "../chatbot-thread.h"
 #include "../chatbot-step.h"
-#include "../chatbot-snackbar-capture.h"
-#include <vector>
-#include <memory>
+#include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief A chatbot thread for running EPD position analysis.
+ * @brief Step to ask the user if they want to continue an existing EPD analysis.
+ * 
+ * This step is only active if there are incomplete results from a previous analysis.
+ * If no incomplete analysis exists, this step finishes automatically and proceeds to the menu.
  */
-class ChatbotEpd : public ChatbotThread {
+class ChatbotStepEpdContinueExisting : public ChatbotStep {
 public:
-    [[nodiscard]] std::string getTitle() const override { 
-        return "EPD Analysis"; 
-    }
-    void start() override;
-    bool draw() override;
-    [[nodiscard]] bool isFinished() const override;
-    [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
+    ChatbotStepEpdContinueExisting() = default;
+
+    [[nodiscard]] std::string draw() override;
 
 private:
-    std::vector<std::unique_ptr<ChatbotStep>> steps_;
-    size_t currentStepIndex_ = 0;
-    bool stopped_ = false;
-    SnackbarCapture snackbarCapture_{"epd"};
-    
-    void addAnalysisSteps();
-    void addStartStep();
+    std::string finishedMessage_;
+
+    /**
+     * @brief Checks if there is an existing analysis that can be continued.
+     * @return true if there are incomplete results, false otherwise.
+     */
+    [[nodiscard]] bool hasIncompleteAnalysis() const;
 };
 
 } // namespace QaplaWindows::ChatBot

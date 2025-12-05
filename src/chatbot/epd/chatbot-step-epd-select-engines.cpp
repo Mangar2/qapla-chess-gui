@@ -50,12 +50,14 @@ std::string ChatbotStepEpdSelectEngines::draw() {
     }
     ImGui::Spacing();
 
+    ImGui::PushID("epdEngineSelect");
     auto options = engineSelect.getOptions();
-    engineSelect.getOptions().allowMultipleSelection = true;    // Allow multiple engines
+    engineSelect.getOptions().allowMultipleSelection = false;   // Use simple checkbox selection
     engineSelect.getOptions().directEditMode = true;            // Skips the collapsing header
     engineSelect.getOptions().allowEngineConfiguration = false; // Simplifies the UI
     engineSelect.draw();
     engineSelect.setOptions(options); // Restore options
+    ImGui::PopID();
 
     ImGui::Spacing();
     ImGui::Separator();

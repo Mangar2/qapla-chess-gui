@@ -19,6 +19,7 @@
 
 #include "chatbot-epd.h"
 #include "chatbot-step-epd-stop-running.h"
+#include "chatbot-step-epd-continue-existing.h"
 #include "chatbot-step-epd-select-engines.h"
 #include "chatbot-step-epd-configuration.h"
 #include "chatbot-step-epd-start.h"
@@ -37,11 +38,17 @@ void ChatbotEpd::start() {
 
     // Add the initial step to check for running analysis
     steps_.push_back(std::make_unique<ChatbotStepEpdStopRunning>());
+    // Add the step to check for existing incomplete analysis
+    steps_.push_back(std::make_unique<ChatbotStepEpdContinueExisting>());
 }
 
 void ChatbotEpd::addAnalysisSteps() {
     steps_.push_back(std::make_unique<ChatbotStepEpdSelectEngines>());
     steps_.push_back(std::make_unique<ChatbotStepEpdConfiguration>());
+    steps_.push_back(std::make_unique<ChatbotStepEpdStart>());
+}
+
+void ChatbotEpd::addStartStep() {
     steps_.push_back(std::make_unique<ChatbotStepEpdStart>());
 }
 
@@ -69,8 +76,15 @@ bool ChatbotEpd::draw() {
             return false;
         }
 
-        if (result == "continue") {
+        if (result == "menu") {
+            // From continue-existing: go to full setup
             addAnalysisSteps();
+        } else if (result == "start") {
+            // From continue-existing: skip to start step only
+            addStartStep();
+        } else if (result == "continue") {
+            // From stop-running: go to continue-existing check
+            // (steps already added in start())
         }
         
         // Advance to next step if current is finished

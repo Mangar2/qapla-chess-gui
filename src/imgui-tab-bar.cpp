@@ -139,19 +139,18 @@ namespace QaplaWindows {
     }
     
     void ImGuiTabBar::processMessage(const std::string& message) {
-        if (message == "switch_to_tournament_view") {
-            for (auto& tab : tabs_) {
-                if (tab.name == "Tournament") {
-                    tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
-                        tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
-                }
-            }
-        }
-        if (message == "switch_to_sprt_view") {
-            for (auto& tab : tabs_) {
-                if (tab.name == "Sprt") {
-                    tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
-                        tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+        std::map<std::string, std::string> commands = {
+            { "switch_to_tournament_view", "Tournament" },
+            { "switch_to_sprt_view", "Sprt" },
+            { "switch_to_epd_view", "Epd" }
+        };
+        for (const auto& [cmd, tabName] : commands) {
+            if (message == cmd) {
+                for (auto& tab : tabs_) {
+                    if (tab.name == tabName) {
+                        tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
+                            tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                    }
                 }
             }
         }

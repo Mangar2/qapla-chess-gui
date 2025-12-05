@@ -185,8 +185,27 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
 
-    if (ImGuiControls::collapsingSelection(name, config.selected, flags, drawEngineControls)) {
-        modified = true;
+    if (options_.allowMultipleSelection) {
+        // Multiple selection mode: use "-" button to deselect
+        if (ImGuiControls::textButton("-")) {
+            config.selected = false;
+            modified = true;
+        }
+        ImGuiControls::hooverTooltip("Remove this engine from selection");
+        ImGui::SameLine(0.0F, 4.0F);
+        // Engine names are not translated
+        if (ImGuiControls::CollapsingHeaderWithDot(name.c_str(), flags)) {
+            ImGui::Indent(10.0F);
+            if ((flags & ImGuiTreeNodeFlags_Leaf) == 0) {
+                modified |= drawEngineControls();
+            }
+            ImGui::Unindent(10.0F);
+        }
+    } else {
+        // Single selection mode: use checkbox
+        if (ImGuiControls::collapsingSelection(name, config.selected, flags, drawEngineControls)) {
+            modified = true;
+        }
     }
     
     ImGui::PopID();

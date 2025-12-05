@@ -62,6 +62,10 @@ Save SPRT tournament=Save SPRT tournament
 Load SPRT tournament=Load SPRT tournament
 EPD Analysis=EPD Analysis
 Yes, stop analysis=Yes, stop analysis
+Start Analysis=Start Analysis
+Switch to EPD View=Switch to EPD View
+Yes, continue analysis=Yes, continue analysis
+-=-
 
 [Translation]
 id=Checkbox
@@ -151,6 +155,9 @@ Language Settings=Sprach Einstellungen
 Available Engines=Verfügbare Engines
 Selected Engines=Ausgewählte Engines
 History=History
+Qapla 0.4.0 [ponder]=Qapla 0.4.0 [ponder]
+Qapla 0.4.0=Qapla 0.4.0
+Spike 1.4.1=Spike 1.4.1
 
 [Translation]
 id=Input
@@ -430,6 +437,10 @@ Quick selection for common time controls.\nSelecting an option automatically fil
 Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
 Continue EPD position analysis=Continue EPD position analysis
 Stop EPD analysis immediately=Stop EPD analysis immediately
+Number of positions to analyze in parallel=Number of positions to analyze in parallel
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Remove this engine from selection=Remove this engine from selection
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
 
 [Translation]
 id=Table
@@ -510,4 +521,26 @@ Select engines for the EPD analysis:=Select engines for the EPD analysis:
 An EPD analysis is currently running. Would you like to stop it?=An EPD analysis is currently running. Would you like to stop it?
 EPD analysis stopped.=EPD analysis stopped.
 Analysis stopped=Analysis stopped
+Selected engines for the EPD analysis:=Selected engines for the EPD analysis:
+Configure the EPD analysis settings. Set the analysis time limits and select an EPD or RAW position file.=Configure the EPD analysis settings. Set the analysis time limits and select an EPD or RAW position file.
+Configure EPD analysis concurrency and start:=Configure EPD analysis concurrency and start:
+Configuration changed. Clear data before re-analyzing.=Configuration changed. Clear data before re-analyzing.
+Epd analysis started=Epd analysis started
+The EPD analysis started successfully!=The EPD analysis started successfully!
+You can switch between the running analyses and the chatbot using the tabs at the top of the window. Each position has its own tab, so you can easily navigate between them.=You can switch between the running analyses and the chatbot using the tabs at the top of the window. Each position has its own tab, so you can easily navigate between them.
+EPD Analysis=EPD Analysis
+There is an existing EPD analysis that can be continued. Progress: 8 of 200 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 8 of 200 tests completed.\n\nWould you like to continue it?
+Continuing existing tournament.=Continuing existing tournament.
+There is an existing EPD analysis that can be continued. Progress: 3 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 3 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 0 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 0 of 100 tests completed.\n\nWould you like to continue it?
+Continuing existing EPD analysis.=Continuing existing EPD analysis.
+There is an existing EPD analysis that can be continued. Progress: 5 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 5 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 1 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 1 of 100 tests completed.\n\nWould you like to continue it?
+Some tasks are still running. Please wait until they finish.=Some tasks are still running. Please wait until they finish.
+There is an existing EPD analysis that can be continued. Progress: 11 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 11 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 4 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 4 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 2 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 2 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 8 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 8 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 7 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 7 of 100 tests completed.\n\nWould you like to continue it?
+There is an existing EPD analysis that can be continued. Progress: 6 of 100 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: 6 of 100 tests completed.\n\nWould you like to continue it?
 
