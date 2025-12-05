@@ -86,9 +86,9 @@ namespace QaplaTest {
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
             ctx->Yield(10);
 
-            // Step: PGN - Setup file and continue
-            ctx->LogInfo("Step 7: PGN - Continue");
-            IM_CHECK(executePgnStep(ctx, PgnAction::Continue, true));
+            // Step: PGN - Setup file with Append mode (ensures "Continue" button)
+            ctx->LogInfo("Step 7: PGN - Continue (Append mode)");
+            IM_CHECK(executePgnStep(ctx, PgnAction::Continue, true, true));  // append=true
             ctx->Yield(10);
 
             // Step: Start - Start tournament
@@ -136,13 +136,14 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executePgnStep(ctx, PgnAction::Continue, true));
+            // PGN with Overwrite mode to test "Overwrite & Continue" button
+            IM_CHECK(executePgnStep(ctx, PgnAction::OverwriteContinue, true, false));  // append=false
             ctx->Yield(10);
             IM_CHECK(executeStartStep(ctx, StartAction::StartTournament));
             ctx->Yield(10);
 
-            // Different ending: Switch to tournament view
-            ctx->LogInfo("Final: Switch to tournament View");
+            // Different ending: Switch to Tournament view
+            ctx->LogInfo("Final: Switch to Tournament View");
             IM_CHECK(executeStartStep(ctx, StartAction::SwitchToView));
 
             ctx->LogInfo("=== Test NewTournamentSwitchView PASSED ===");

@@ -244,12 +244,18 @@ namespace QaplaTest::TournamentChatbot {
     // PGN Step
     // =========================================================================
 
-    bool executePgnStep(ImGuiTestContext* ctx, PgnAction action, bool setupPgnFile) {
+    bool executePgnStep(ImGuiTestContext* ctx, PgnAction action, bool setupPgnFile,
+                         std::optional<bool> appendMode) {
         ctx->LogInfo("Executing PGN step...");
 
+        auto& tournamentData = QaplaWindows::TournamentData::instance();
+        
         if (setupPgnFile) {
-            auto& tournamentData = QaplaWindows::TournamentData::instance();
             tournamentData.tournamentPgn().pgnOptions().file = getTestPgnPath();
+        }
+        
+        if (appendMode.has_value()) {
+            tournamentData.tournamentPgn().pgnOptions().append = appendMode.value();
         }
 
         ctx->Yield(5);
@@ -294,7 +300,7 @@ namespace QaplaTest::TournamentChatbot {
                 return waitForTournamentRunning(ctx, 10.0f);
 
             case StartAction::SwitchToView:
-                return safeItemClick(ctx, "**/Switch to tournament View");
+                return safeItemClick(ctx, "**/Switch to Tournament View");
 
             case StartAction::StayInChatbot:
                 return safeItemClick(ctx, "**/Stay in Chatbot");

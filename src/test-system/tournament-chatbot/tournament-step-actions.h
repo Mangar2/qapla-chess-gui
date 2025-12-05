@@ -22,6 +22,7 @@
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
 #include "imgui_te_context.h"
+#include <optional>
 
 namespace QaplaTest::TournamentChatbot {
 
@@ -202,16 +203,18 @@ namespace QaplaTest::TournamentChatbot {
      * @param ctx Test context
      * @param action Which button to click
      * @param setupPgnFile If true, sets a valid PGN file path before action
+     * @param appendMode If specified, sets append mode (true=Append, false=Overwrite)
      * @return true if step executed successfully
      */
-    bool executePgnStep(ImGuiTestContext* ctx, PgnAction action, bool setupPgnFile = true);
+    bool executePgnStep(ImGuiTestContext* ctx, PgnAction action, bool setupPgnFile = true, 
+                        std::optional<bool> appendMode = std::nullopt);
 
     /**
      * @brief Actions for Start step
      */
     enum class StartAction {
         StartTournament,     // Click "Start Tournament"
-        SwitchToView,        // Click "Switch to tournament View" (after start)
+        SwitchToView,        // Click "Switch to Tournament View" (after start)
         StayInChatbot,       // Click "Stay in Chatbot" (after start)
         Cancel               // Click "Cancel"
     };

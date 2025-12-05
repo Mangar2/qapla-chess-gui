@@ -97,6 +97,23 @@ namespace QaplaTest::TournamentChatbot {
             return;
         }
         
+        // Check if first engine is already selected
+        auto& tournamentData = QaplaWindows::TournamentData::instance();
+        auto selectedEngines = tournamentData.engineSelect().getSelectedEngines();
+        
+        bool alreadySelected = false;
+        for (const auto& selected : selectedEngines) {
+            if (selected.config.getCmd() == configs[0].getCmd()) {
+                alreadySelected = true;
+                break;
+            }
+        }
+        
+        if (alreadySelected) {
+            ctx->LogInfo("First engine already selected, skipping");
+            return;
+        }
+        
         // Click the checkbox for the first engine (index 0)
         ctx->ItemClick("**/tournamentEngineSelect/engineSettings/$$0/##select");
         ctx->Yield(5);
@@ -107,6 +124,23 @@ namespace QaplaTest::TournamentChatbot {
         auto configs = configManager.getAllConfigs();
         if (configs.size() < 2) {
             ctx->LogWarning("Not enough engines available to select second");
+            return;
+        }
+        
+        // Check if second engine is already selected
+        auto& tournamentData = QaplaWindows::TournamentData::instance();
+        auto selectedEngines = tournamentData.engineSelect().getSelectedEngines();
+        
+        bool alreadySelected = false;
+        for (const auto& selected : selectedEngines) {
+            if (selected.config.getCmd() == configs[1].getCmd()) {
+                alreadySelected = true;
+                break;
+            }
+        }
+        
+        if (alreadySelected) {
+            ctx->LogInfo("Second engine already selected, skipping");
             return;
         }
         

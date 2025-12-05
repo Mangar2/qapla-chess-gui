@@ -67,6 +67,7 @@ Switch to EPD View=Switch to EPD View
 Yes, continue analysis=Yes, continue analysis
 -=-
 Yes, end tournament=Yes, end tournament
+Hide Trace=Hide Trace
 
 [Translation]
 id=Checkbox
@@ -155,6 +156,7 @@ NalimovCache=NalimovCache
 UCI_Chess=UCI_Chess
 UCI_LimitStrength=UCI_LimitStrength
 UCI_Elo=UCI_Elo
+Search=Search
 
 [Translation]
 id=Option
@@ -350,6 +352,7 @@ Analysis is already stopping gracefully.=Analysis is already stopping gracefully
 Configuration changed. Clear data before re-analyzing.=Configuration changed. Clear data before re-analyzing.
 Analysis is stopping. Please wait until it has fully stopped.=Analysis is stopping. Please wait until it has fully stopped.
 Analysis stopped.\nFinishing ongoing calculations.=Analysis stopped.\nFinishing ongoing calculations.
+Tournament started=Tournament started
 
 [Translation]
 id=Table
@@ -528,6 +531,16 @@ Quick selection for common time controls.\nSelecting an option automatically fil
 Display name for the engine=Display name for the engine
 Chess engine communication protocol (UCI or XBoard)=Chess engine communication protocol (UCI or XBoard)
 Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Load tournament configuration and results from file=Load tournament configuration and results from file
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games=games × rounds=Number of games per pairing.\nTotal games = games × rounds
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms==Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '20.0+0.02' sets Seconds=20, Increment Ms=
+Number of games per pairing.\nTotal games = games × rounds=Number of games per pairing.\nTotal games = games × rounds
 
 [Translation]
 id=Tab
@@ -603,4 +616,10 @@ Analysis finished.=Analysis finished.
 Tournament stopped=Tournament stopped
 A tournament is currently running. Would you like to end it?=A tournament is currently running. Would you like to end it?
 Tournament ended.=Tournament ended.
+No engines selected. You need at least two engines to start a tournament. Please select engines.=No engines selected. You need at least two engines to start a tournament. Please select engines.
+Successfully parsed opening file using EPD parser.\nFound 100 opening position(s).=Successfully parsed opening file using EPD parser.\nFound 100 opening position(s).
+The file exists. New games will be appended to the existing content.=The file exists. New games will be appended to the existing content.
+Tournament finished.=Tournament finished.
+One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.=One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.
+Parser Trace:\nFile: C:\Development\qapla-chess-gui\src\test-system\test-data\wmtest.epd\n\n[EPD] SUCCESS\n  Parser selection: File extension '.epd' matches parser extension '.epd'\n  Full scan: 100 entries, 0 errors (0.0% error rate)\n  Success: 100 game records created=Parser Trace:\nFile: C:\Development\qapla-chess-gui\src\test-system\test-data\wmtest.epd\n\n[EPD] SUCCESS\n  Parser selection: File extension '.epd' matches parser extension '.epd'\n  Full scan: 100 entries, 0 errors (0.0% error rate)\n  Success: 100 game records created
 
