@@ -55,7 +55,6 @@ std::string ChatbotStepEpdStart::draw() {
 
         if (QaplaWindows::ImGuiControls::textButton("Start Analysis")) {
             epdData.analyse();
-            epdData.setPoolConcurrency(concurrency, true, true);
         }
 
         ImGui::SameLine();

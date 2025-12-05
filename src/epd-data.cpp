@@ -143,7 +143,7 @@ namespace QaplaWindows {
     }
 
     void EpdData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
-        if (!isRunning()) {
+        if (!isRunning() && !isStarting()) {
             return;
         }
         imguiConcurrency_->update(count, direct);

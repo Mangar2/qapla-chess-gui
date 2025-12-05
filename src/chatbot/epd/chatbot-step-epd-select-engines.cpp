@@ -71,7 +71,6 @@ std::string ChatbotStepEpdSelectEngines::draw() {
     ImGui::BeginDisabled(!hasEngineSelected);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
-        return "";
     }
     ImGui::EndDisabled();
 
