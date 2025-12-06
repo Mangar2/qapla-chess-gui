@@ -220,6 +220,7 @@ SPRT tournament stopped=SPRT tournament stopped
 Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in the bottom-left corner. They automatically disappear after a few seconds. This is a 'sticky' note - it stays until you close it manually by clicking the X button.=Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in the bottom-left corner. They automatically disappear after a few seconds. This is a 'sticky' note - it stays until you close it manually by clicking the X button.
 Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.=Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.
 To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.=To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.
+Epd analysis started=Epd analysis started
 
 [Translation]
 id=Table
@@ -317,6 +318,7 @@ Remove selected engine from configuration=Remove selected engine from configurat
 Auto-detect engine capabilities and supported options=Auto-detect engine capabilities and supported options
 Save tournament configuration and results to file=Save tournament configuration and results to file
 Load tournament configuration and results from file=Load tournament configuration and results from file
+Stop tournament immediately, aborting running games=Stop tournament immediately, aborting running games
 
 [Translation]
 id=Tab

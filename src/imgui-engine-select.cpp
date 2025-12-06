@@ -187,7 +187,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
 
     if (options_.allowMultipleSelection) {
         // Multiple selection mode: use "-" button to deselect
-        if (ImGuiControls::textButton("-")) {
+        if (ImGuiControls::textButton("-###removeEngine")) {
             config.selected = false;
             modified = true;
         }
@@ -339,7 +339,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             }
             ImGui::PushID(("available_" + std::to_string(index)).c_str());
            
-            if (ImGui::Button("+")) {
+            if (ImGui::Button("+###addEngine")) {
                 // Find if there's a deselected instance of this engine
                 auto it = findDeselectedEngineConfiguration(config);
                 if (it != engineConfigurations_.end()) {

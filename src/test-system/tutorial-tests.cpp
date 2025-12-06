@@ -129,6 +129,11 @@ namespace QaplaTest {
             cleanupTournamentState();
             QaplaWindows::TournamentWindow::clearTournamentTutorialState();
             
+            // Reset global settings to defaults to ensure tutorial conditions trigger
+            auto& tournamentData = QaplaWindows::TournamentData::instance();
+            QaplaWindows::ImGuiEngineGlobalSettings::GlobalConfiguration defaultGlobalConfig;
+            tournamentData.globalSettings().setGlobalConfiguration(defaultGlobalConfig);
+            
             IM_CHECK(hasEnginesAvailable());
 
             // Step 1: Navigate to Chatbot
@@ -190,7 +195,6 @@ namespace QaplaTest {
             // Tutorial wants: Hash=64 MB, global ponder disabled
             ctx->LogInfo("Step 5: Configure Hash to 64 MB");
             
-            auto& tournamentData = QaplaWindows::TournamentData::instance();
             auto& globalConfig = tournamentData.globalSettings().getGlobalConfiguration();
             
             // Set Hash to 64 MB via UI slider
@@ -236,6 +240,81 @@ namespace QaplaTest {
             // Verify tutorial moved to EngineSelect section
             IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedSection_.c_str(), "EngineSelect");
             IM_CHECK(!QaplaWindows::TournamentWindow::globalSettingsTutorial_.highlight);
+
+            // Step 7: Open Engines section
+            ctx->LogInfo("Step 7: Open Engines section");
+            ctx->ItemOpen("**/Engines###Engines");
+            ctx->Yield(3);
+
+            // Step 8: Clean up - remove all previously selected engines
+            ctx->LogInfo("Step 8: Remove all selected engines");
+            
+            // Remove engines until none are left (click "-" buttons)
+            // We'll try up to 10 times to avoid infinite loops
+            for (int attempts = 0; attempts < 10; ++attempts) {
+                // Try to find and click a "-" button
+                if (ctx->ItemExists("**/-###removeEngine")) {
+                    ctx->ItemClick("**/-###removeEngine");
+                    ctx->Yield(3);
+                } else {
+                    // No more "-" buttons found, we're done
+                    break;
+                }
+            }
+            
+            // Step 9: Select two instances of the same engine
+            ctx->LogInfo("Step 9: Select first engine twice via + button");
+            
+            // First engine selection - click "+" button for first engine
+            ctx->ItemClick("**/available_0/+###addEngine");
+            ctx->Yield(5);
+            
+            // Second engine selection - click "+" button again for same engine
+            ctx->ItemClick("**/available_0/+###addEngine");
+            ctx->Yield(5);
+            
+            // Step 10: Enable ponder for first selected engine only
+            // Tutorial requires: two engines with same originalName AND at least one with ponder
+            ctx->LogInfo("Step 10: Enable ponder for first engine");
+            
+            // Verify parent exists first
+            IM_CHECK(ctx->ItemExists("**/Selected Engines###Selected Engines"));
+            ctx->Yield(10); // Give UI time to render engine items
+            
+            // Gather all Ponder checkboxes under Selected Engines
+            ImGuiTestItemList ponderList;
+            ctx->GatherItems(&ponderList, "**/Selected Engines###Selected Engines", -1);
+            
+            ctx->LogInfo("Found %d items total under Selected Engines", ponderList.GetSize());
+            
+            // Find and check first Ponder checkbox only
+            for (int idx = 0; idx < ponderList.GetSize(); ++idx) {
+                auto* item = ponderList.GetByIndex(idx);
+                if (item && strstr(item->DebugLabel, "Ponder") != nullptr) {
+                    ctx->LogInfo("Found Ponder checkbox: ID=0x%08X, Label='%s'", item->ID, item->DebugLabel);
+                    ctx->ItemCheck(ImGuiTestRef(item->ID));
+                    ctx->Yield(5);
+                    break; // Only enable first one
+                }
+            }
+            
+            // Step 10: Wait for tutorial to detect engine configuration
+            ctx->LogInfo("Step 10: Wait for tutorial to detect engines configured");
+            IM_CHECK(waitForTutorialUserInput(ctx, 5.0f));
+            
+            // Step 10b: Click Continue in chatbot
+            ctx->LogInfo("Step 10b: Click Continue for engines");
+            IM_CHECK(waitForContinueButton(ctx, 5.0f));
+            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->Yield(10);
+            
+            // Progress should advance to 4
+            IM_CHECK(waitForTutorialProgress(ctx, 4, 5.0f));
+            ctx->LogInfo("Tutorial advanced to opening configuration, progress: %d", QaplaWindows::TournamentWindow::tutorialProgress_);
+            
+            // Verify tutorial moved to Opening section
+            IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedSection_.c_str(), "Opening");
+            IM_CHECK(QaplaWindows::TournamentWindow::openingTutorial_.highlight);
 
             ctx->LogInfo("=== Test ChatbotPart1GlobalSettings PASSED ===");
             
