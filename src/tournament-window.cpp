@@ -360,7 +360,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         clearTournamentTutorialState();
         return;
         case 1:
-        // Step 0 (autoStart): Tutorial started, tab is highlighted
+        // Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
         Tutorial::instance().requestNextTutorialStep(topicName);
         highlightedButton_ = "";

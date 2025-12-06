@@ -71,6 +71,7 @@ Hide Trace=Hide Trace
 Start SPRT tournament=Start SPRT tournament
 Switch to SPRT tournament View=Switch to SPRT tournament View
 Yes, continue SPRT tournament=Yes, continue SPRT tournament
+Stop Tutorial=Stop Tutorial
 
 [Translation]
 id=Checkbox
@@ -216,6 +217,9 @@ Nothing to clear.=Nothing to clear.
 Success=Success
 SPRT tournament started=SPRT tournament started
 SPRT tournament stopped=SPRT tournament stopped
+Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in the bottom-left corner. They automatically disappear after a few seconds. This is a 'sticky' note - it stays until you close it manually by clicking the X button.=Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in the bottom-left corner. They automatically disappear after a few seconds. This is a 'sticky' note - it stays until you close it manually by clicking the X button.
+Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.=Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.
+To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.=To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.
 
 [Translation]
 id=Table
@@ -298,6 +302,21 @@ Number of games per pairing.\nTotal games \1 games × rounds=Number of games per
 Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line=Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line
 Include time spend for the move\n(if available from engine output)=Include time spend for the move\n(if available from engine output)
 Engine communication logging level (None/All/Command only)=Engine communication logging level (None/All/Command only)
+Whether to restart engine process between games=Whether to restart engine process between games
+Translation is currently work in progress. Only few parts are translated.=Translation is currently work in progress. Only few parts are translated.
+Display duration for informational messages in seconds=Display duration for informational messages in seconds
+Display duration for success messages in seconds=Display duration for success messages in seconds
+Display duration for warning messages in seconds=Display duration for warning messages in seconds
+Display duration for error messages in seconds=Display duration for error messages in seconds
+Tutorial not completed - check to mark as complete=Tutorial not completed - check to mark as complete
+Tutorial completed - uncheck to restart=Tutorial completed - uncheck to restart
+Resets all tutorials to their initial state=Resets all tutorials to their initial state
+Edit value and click Apply to save changes=Edit value and click Apply to save changes
+Start new tournament with current configuration=Start new tournament with current configuration
+Remove selected engine from configuration=Remove selected engine from configuration
+Auto-detect engine capabilities and supported options=Auto-detect engine capabilities and supported options
+Save tournament configuration and results to file=Save tournament configuration and results to file
+Load tournament configuration and results from file=Load tournament configuration and results from file
 
 [Translation]
 id=Tab
@@ -371,4 +390,14 @@ Continuing existing tournament.=Continuing existing tournament.
 A tournament is currently running. Would you like to end it?=A tournament is currently running. Would you like to end it?
 Tournament ended.=Tournament ended.
 Tournament stopped=Tournament stopped
+Select a tutorial to run:=Select a tutorial to run:
+Selected tutorial: Tournament=Selected tutorial: Tournament
+Waiting for tutorial messages...=Waiting for tutorial messages...
+Progress: \1 /=Progress: \1 /
+To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.=To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.
+Welcome to the Tournament Tutorial!\n\nThis tutorial will guide you through setting up and running engine tournaments. You can compare multiple chess engines against each other in round-robin and gauntlet matches.\n\nTip: If you prefer a simpler approach, you can also configure and start tournaments through the Chatbot - just select 'Tournament' from the Chatbot menu. This tutorial covers the expert mode with direct access to all settings.\n\nTo help you through the process, we'll mark the relevant sections and buttons with a red dot as we go along.\nHover over the options for detailed tooltips explaining each setting.\n\nLet's begin! Click on the 'Tournament' tab in the left window to open the tournament configuration.=Welcome to the Tournament Tutorial!\n\nThis tutorial will guide you through setting up and running engine tournaments. You can compare multiple chess engines against each other in round-robin and gauntlet matches.\n\nTip: If you prefer a simpler approach, you can also configure and start tournaments through the Chatbot - just select 'Tournament' from the Chatbot menu. This tutorial covers the expert mode with direct access to all settings.\n\nTo help you through the process, we'll mark the relevant sections and buttons with a red dot as we go along.\nHover over the options for detailed tooltips explaining each setting.\n\nLet's begin! Click on the 'Tournament' tab in the left window to open the tournament configuration.
+Great! You've opened the Tournament tab.=Great! You've opened the Tournament tab.
+Now we'll configure the global engine settings. These settings apply to all engines in the tournament and ensure fair, consistent conditions.\n\nSettings can be set for all engines or individually per engine. We change Hash size globally and pondering per engine:\n• Leave the checkbox near Hash checked and set 'Hash (MB)' to \1\n• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later=Now we'll configure the global engine settings. These settings apply to all engines in the tournament and ensure fair, consistent conditions.\n\nSettings can be set for all engines or individually per engine. We change Hash size globally and pondering per engine:\n• Leave the checkbox near Hash checked and set 'Hash (MB)' to \1\n• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later
+Global settings are configured.=Global settings are configured.
+Now let's select the engines for our tournament. We'll demonstrate specific engine settings: compare the same engine against itself - once with pondering enabled and once without.\n\nIn the 'Engine Selection' section, select the same engine twice (click the '+' button left of 'Available Engine' twice)\nNow you see the same engine twice in the 'Selected Engines' list. Expand the first one and set the check mark for 'Ponder'\nThe names will automatically get a '[ponder]' suffix to distinguish them. Now you can see how pondering affects performance of the engine!=Now let's select the engines for our tournament. We'll demonstrate specific engine settings: compare the same engine against itself - once with pondering enabled and once without.\n\nIn the 'Engine Selection' section, select the same engine twice (click the '+' button left of 'Available Engine' twice)\nNow you see the same engine twice in the 'Selected Engines' list. Expand the first one and set the check mark for 'Ponder'\nThe names will automatically get a '[ponder]' suffix to distinguish them. Now you can see how pondering affects performance of the engine!
 
