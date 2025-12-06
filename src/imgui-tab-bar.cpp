@@ -141,7 +141,7 @@ namespace QaplaWindows {
     void ImGuiTabBar::processMessage(const std::string& message) {
         std::map<std::string, std::string> commands = {
             { "switch_to_tournament_view", "Tournament" },
-            { "switch_to_sprt_view", "Sprt" },
+            { "switch_to_sprt_view", "SPRT" },
             { "switch_to_epd_view", "Epd" }
         };
         for (const auto& [cmd, tabName] : commands) {

@@ -29,7 +29,7 @@ namespace QaplaWindows::ChatBot {
  */
 enum class TournamentType {
     Standard,
-    Sprt
+    SPRT
 };
 
 /**

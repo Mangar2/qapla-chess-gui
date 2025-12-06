@@ -37,7 +37,7 @@ ChatbotStepTournamentSelectEngines::~ChatbotStepTournamentSelectEngines() {
 }
 
 ImGuiEngineSelect& ChatbotStepTournamentSelectEngines::getEngineSelect() {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().engineSelect();
     }
     return TournamentData::instance().engineSelect();

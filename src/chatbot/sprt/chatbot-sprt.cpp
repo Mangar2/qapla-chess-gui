@@ -41,17 +41,17 @@ void ChatbotSprt::start() {
     snackbarCapture_.install();
 
     // Only add the initial steps - more steps are added dynamically based on user choice
-    steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStopRunning>(TournamentType::SPRT));
 }
 
 void ChatbotSprt::addNewSprtSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>(TournamentType::Sprt));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(TournamentType::Sprt));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>(TournamentType::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(TournamentType::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(TournamentType::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
-    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(TournamentType::Sprt));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(TournamentType::Sprt));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::Sprt));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(TournamentType::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(TournamentType::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::SPRT));
 }
 
 bool ChatbotSprt::draw() {
@@ -79,7 +79,7 @@ bool ChatbotSprt::draw() {
         }
 
         if (result == "menu") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentMenu>(TournamentType::Sprt));
+            steps_.push_back(std::make_unique<ChatbotStepTournamentMenu>(TournamentType::SPRT));
         }
         
         if (result == "new") {
@@ -87,15 +87,15 @@ bool ChatbotSprt::draw() {
         }
         
         if (result == "load") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentLoad>(TournamentType::Sprt));
+            steps_.push_back(std::make_unique<ChatbotStepTournamentLoad>(TournamentType::SPRT));
         }
         
         if (result == "start") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::Sprt));
+            steps_.push_back(std::make_unique<ChatbotStepTournamentStart>(TournamentType::SPRT));
         }
 
         if (result == "existing") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>(TournamentType::Sprt));
+            steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>(TournamentType::SPRT));
         }
         
         // Advance to next step if current is finished

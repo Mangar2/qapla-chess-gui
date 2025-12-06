@@ -29,7 +29,7 @@ ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings(Tournam
     : type_(type) {}
 
 ImGuiEngineGlobalSettings& ChatbotStepTournamentGlobalSettings::getGlobalSettings() {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().globalSettings();
     }
     return TournamentData::instance().globalSettings();

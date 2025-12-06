@@ -29,21 +29,21 @@ ChatbotStepTournamentContinueExisting::ChatbotStepTournamentContinueExisting(Tou
     : type_(type) {}
 
 bool ChatbotStepTournamentContinueExisting::hasTasksScheduled() const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().hasResults();
     }
     return TournamentData::instance().hasTasksScheduled();
 }
 
 bool ChatbotStepTournamentContinueExisting::isFinished() const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().isFinished();
     }
     return TournamentData::instance().isFinished();
 }
 
 const char* ChatbotStepTournamentContinueExisting::getTournamentName() const {
-    return (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+    return (type_ == TournamentType::SPRT) ? "SPRT tournament" : "tournament";
 }
 
 std::string ChatbotStepTournamentContinueExisting::draw() {

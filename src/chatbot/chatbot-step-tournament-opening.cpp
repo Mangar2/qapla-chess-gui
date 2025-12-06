@@ -34,14 +34,14 @@ ChatbotStepTournamentOpening::ChatbotStepTournamentOpening(TournamentType type)
     : type_(type) {}
 
 ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().tournamentOpening();
     }
     return TournamentData::instance().tournamentOpening();
 }
 
 const ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().tournamentOpening();
     }
     return TournamentData::instance().tournamentOpening();

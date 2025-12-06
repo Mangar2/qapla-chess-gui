@@ -68,6 +68,9 @@ Yes, continue analysis=Yes, continue analysis
 -=-
 Yes, end tournament=Yes, end tournament
 Hide Trace=Hide Trace
+Start SPRT tournament=Start SPRT tournament
+Switch to SPRT tournament View=Switch to SPRT tournament View
+Yes, continue SPRT tournament=Yes, continue SPRT tournament
 
 [Translation]
 id=Checkbox
@@ -157,6 +160,12 @@ UCI_Chess=UCI_Chess
 UCI_LimitStrength=UCI_LimitStrength
 UCI_Elo=UCI_Elo
 Search=Search
+Elo Lower (H\1)=Elo Lower (H\1)
+Elo Upper (H\1)=Elo Upper (H\1)
+Active=Active
+Min full moves=Min full moves
+Required consecutive moves=Required consecutive moves
+Centipawn threshold=Centipawn threshold
 
 [Translation]
 id=Option
@@ -219,6 +228,8 @@ History=History
 Qapla 0.4.0 [ponder]=Qapla 0.4.0 [ponder]
 Qapla 0.4.0=Qapla 0.4.0
 Spike 1.4.1=Spike 1.4.1
+Spike \1.\2.=Spike \1.\2.
+Qapla \1.\2.=Qapla \1.\2.
 
 [Translation]
 id=Option
@@ -270,6 +281,11 @@ Amoeba 2.4.w64p Report=Amoeba 2.4.w64p Report
 
 [Translation]
 id=Snackbar
+Note=Note
+Nothing to clear.=Nothing to clear.
+Success=Success
+SPRT tournament started=SPRT tournament started
+SPRT tournament stopped=SPRT tournament stopped
 
 [Translation]
 id=Table
@@ -303,6 +319,11 @@ Qapla 0.4.=Qapla 0.4.
 Round=Round
 Game=Game
 Opening=Opening
+Engine in Test=Engine in Test
+Engine to Compare=Engine to Compare
+Rating=Rating
+Games=Games
+Spike \1.\2.=Spike \1.\2.
 
 [Translation]
 id=Tooltip
@@ -317,7 +338,47 @@ Number of consecutive games played per opening.\nCommonly set to 2 to alternate 
 Disable automatic color swap after each game=Disable automatic color swap after each game
 Average Elo level for scaling rating output=Average Elo level for scaling rating output
 Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)=Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)
-
+Add new engine from executable file=Add new engine from executable file
+Allow engines to think during opponent's time=Allow engines to think during opponent's time
+Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '\1.\2+\3.\4' sets Seconds\5\6, Increment Ms\7=Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '\1.\2+\3.\4' sets Seconds\5\6, Increment Ms\7
+Lower Elo bound (H\1): null hypothesis threshold for SPRT test.\nIf true Elo difference is below this, H\2 is accepted (no improvement).=Lower Elo bound (H\1): null hypothesis threshold for SPRT test.\nIf true Elo difference is below this, H\2 is accepted (no improvement).
+Upper Elo bound (H\1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H\2 is accepted (improvement confirmed).=Upper Elo bound (H\1): alternative hypothesis threshold for SPRT test.\nIf true Elo difference is above this, H\2 is accepted (improvement confirmed).
+Maximum number of games before test terminates inconclusively.\nIf neither H\1 nor H\2 is accepted within this limit, the result is inconclusive.=Maximum number of games before test terminates inconclusively.\nIf neither H\1 nor H\2 is accepted within this limit, the result is inconclusive.
+Path to opening file (.epd, .pgn, or raw FEN text)=Path to opening file (.epd, .pgn, or raw FEN text)
+Time control format: seconds+increment (e.g., '\1.\2+\3.\4' for \5s + \6.\7s/move)=Time control format: seconds+increment (e.g., '\1.\2+\3.\4' for \5s + \6.\7s/move)
+Hash table size in megabytes for engine memory=Hash table size in megabytes for engine memory
+How positions are picked from the file:\n  sequential - Use positions in order\n  random - Shuffle the order=How positions are picked from the file:\n  sequential - Use positions in order\n  random - Shuffle the order
+Number of games to run in parallel=Number of games to run in parallel
+If enabled, new games will be appended to the existing PGN file.\nIf disabled, the file is overwritten at the start of each run=If enabled, new games will be appended to the existing PGN file.\nIf disabled, the file is overwritten at the start of each run
+Save only games that were finished (i.e. not crashed or aborted).\nIf disabled, all games are written regardless of status=Save only games that were finished (i.e. not crashed or aborted).\nIf disabled, all games are written regardless of status
+If enabled, saves a minimal PGN with only essential headers and moves —\nomits metadata and annotations=If enabled, saves a minimal PGN with only essential headers and moves —\nomits metadata and annotations
+Clear all SPRT tournament data and results=Clear all SPRT tournament data and results
+Remove this engine from selection=Remove this engine from selection
+Start new SPRT tournament with current configuration=Start new SPRT tournament with current configuration
+Stop SPRT tournament gracefully after current games finish=Stop SPRT tournament gracefully after current games finish
+Stop SPRT tournament or Monte Carlo test immediately=Stop SPRT tournament or Monte Carlo test immediately
+Run Monte Carlo test to estimate SPRT test duration=Run Monte Carlo test to estimate SPRT test duration
+Load SPRT tournament configuration and results from file=Load SPRT tournament configuration and results from file
+Save SPRT tournament configuration and results to file=Save SPRT tournament configuration and results to file
+Type II error rate (false negative): probability of accepting H\1 when H\2 is true.\nLower values mean more confidence but require more games.=Type II error rate (false negative): probability of accepting H\1 when H\2 is true.\nLower values mean more confidence but require more games.
+Seed for random number generator when order is 'random'=Seed for random number generator when order is 'random'
+When a new opening position is selected:\n  default - Fresh sequence per round, reused across pairings\n  encounter - New opening per engine pair (colors don't matter)\n  round - Same opening for all games in the round=When a new opening position is selected:\n  default - Fresh sequence per round, reused across pairings\n  encounter - New opening per engine pair (colors don't matter)\n  round - Same opening for all games in the round
+Include the engine's evaluation score in PGN comments for each move=Include the engine's evaluation score in PGN comments for each move
+Include the full principal variation (PV) in PGN comments.\nUseful for debugging or engine analysis=Include the full principal variation (PV) in PGN comments.\nUseful for debugging or engine analysis
+Include the search depth reached when the move was selected=Include the search depth reached when the move was selected
+Continue SPRT tournament with current configuration=Continue SPRT tournament with current configuration
+Path to the PGN file where all games will be saved.\nThe file will be created if it doesn't exist=Path to the PGN file where all games will be saved.\nThe file will be created if it doesn't exist
+Number of positions to analyze in parallel=Number of positions to analyze in parallel
+Enable global hash size setting for all engines=Enable global hash size setting for all engines
+Enable global restart policy for all engines=Enable global restart policy for all engines
+Enable global trace level for all engines=Enable global trace level for all engines
+Enable global pondering setting for all engines=Enable global pondering setting for all engines
+Index of the first position to use (\1-based).\nUseful for splitting test segments.=Index of the first position to use (\1-based).\nUseful for splitting test segments.
+Optional event name for PGN or logging=Optional event name for PGN or logging
+Number of games per pairing.\nTotal games \1 games × rounds=Number of games per pairing.\nTotal games \1 games × rounds
+Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line=Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line
+Include time spend for the move\n(if available from engine output)=Include time spend for the move\n(if available from engine output)
+Engine communication logging level (None/All/Command only)=Engine communication logging level (None/All/Command only)
 
 [Translation]
 id=Tab
@@ -330,6 +391,7 @@ Test=Test
 Settings=Settings
 Board=Board
 Chatbot=Chatbot
+SPRT=SPRT
 
 [Translation]
 id=Chatbot
@@ -343,3 +405,51 @@ EPD Analysis=EPD Analysis
 
 [Translation]
 id=Text
+What would you like to do?=What would you like to do?
+Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.=Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.
+Nothing to clear.=Nothing to clear.
+You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.=You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.
+Select engines for the tournament:=Select engines for the tournament:
+Selected engines for the tournament:=Selected engines for the tournament:
+Do you want to load additional engines for the tournament?=Do you want to load additional engines for the tournament?
+Configure the SPRT (Sequential Probability Ratio Test) parameters. These settings define when the test concludes that the engine under test is stronger, weaker, or inconclusive compared to the reference engine.=Configure the SPRT (Sequential Probability Ratio Test) parameters. These settings define when the test concludes that the engine under test is stronger, weaker, or inconclusive compared to the reference engine.
+Configure the opening book settings for the tournament. You must specify an opening file (EPD, PGN, or raw FEN).=Configure the opening book settings for the tournament. You must specify an opening file (EPD, PGN, or raw FEN).
+Successfully parsed opening file using PGN parser.\nFound \1 opening position(s).=Successfully parsed opening file using PGN parser.\nFound \1 opening position(s).
+Successfully parsed opening file using EPD parser.\nFound \1 opening position(s).=Successfully parsed opening file using EPD parser.\nFound \1 opening position(s).
+Select the PGN file where tournament results will be saved. All games played during the tournament will be recorded in this file.=Select the PGN file where tournament results will be saved. All games played during the tournament will be recorded in this file.
+Configure SPRT tournament concurrency and start:=Configure SPRT tournament concurrency and start:
+Warning: The file already exists and overwrite mode is enabled. The existing content will be replaced when the tournament starts.=Warning: The file already exists and overwrite mode is enabled. The existing content will be replaced when the tournament starts.
+SPRT tournament started=SPRT tournament started
+The SPRT tournament started successfully!=The SPRT tournament started successfully!
+You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.=You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.
+SPRT tournament stopped=SPRT tournament stopped
+A SPRT tournament is currently running. Would you like to end it?=A SPRT tournament is currently running. Would you like to end it?
+SPRT tournament ended.=SPRT tournament ended.
+Parser Trace:\nFile: C:\Development\qapla-chess-gui\src\test-system\test-data\wmtest.epd\n\n[EPD] SUCCESS\n  Parser selection: File extension '.epd' matches parser extension '.epd'\n  Full scan: \1 entries, \2 errors (\3.\4% error rate)\n  Success: \5 game records created=Parser Trace:\nFile: C:\Development\qapla-chess-gui\src\test-system\test-data\wmtest.epd\n\n[EPD] SUCCESS\n  Parser selection: File extension '.epd' matches parser extension '.epd'\n  Full scan: \1 entries, \2 errors (\3.\4% error rate)\n  Success: \5 game records created
+The file exists. New games will be appended to the existing content.=The file exists. New games will be appended to the existing content.
+There is an existing SPRT tournament that can be continued. Would you like to continue it?=There is an existing SPRT tournament that can be continued. Would you like to continue it?
+Continuing existing SPRT tournament.=Continuing existing SPRT tournament.
+Select engines for the EPD analysis:=Select engines for the EPD analysis:
+Selected engines for the EPD analysis:=Selected engines for the EPD analysis:
+Configure the EPD analysis settings. Set the analysis time limits and select an EPD or RAW position file.=Configure the EPD analysis settings. Set the analysis time limits and select an EPD or RAW position file.
+Configure EPD analysis concurrency and start:=Configure EPD analysis concurrency and start:
+Epd analysis started=Epd analysis started
+The EPD analysis started successfully!=The EPD analysis started successfully!
+You can switch between the running analyses and the chatbot using the tabs at the top of the window. Each position has its own tab, so you can easily navigate between them.=You can switch between the running analyses and the chatbot using the tabs at the top of the window. Each position has its own tab, so you can easily navigate between them.
+An EPD analysis is currently running. Would you like to stop it?=An EPD analysis is currently running. Would you like to stop it?
+EPD analysis stopped.=EPD analysis stopped.
+Analysis stopped=Analysis stopped
+Analysis finished.=Analysis finished.
+There is an existing EPD analysis that can be continued. Progress: \1 of \2 tests completed.\n\nWould you like to continue it?=There is an existing EPD analysis that can be continued. Progress: \1 of \2 tests completed.\n\nWould you like to continue it?
+Continuing existing EPD analysis.=Continuing existing EPD analysis.
+Starting a new tournament will delete the existing one.\nSave the current tournament to a file if you want to keep it.=Starting a new tournament will delete the existing one.\nSave the current tournament to a file if you want to keep it.
+Configure the tournament settings. Choose the tournament type, number of rounds, and games per pairing.=Configure the tournament settings. Choose the tournament type, number of rounds, and games per pairing.
+Configure tournament concurrency and start:=Configure tournament concurrency and start:
+Tournament started=Tournament started
+The Tournament started successfully!=The Tournament started successfully!
+There is an existing tournament that can be continued. Would you like to continue it?=There is an existing tournament that can be continued. Would you like to continue it?
+Continuing existing tournament.=Continuing existing tournament.
+A tournament is currently running. Would you like to end it?=A tournament is currently running. Would you like to end it?
+Tournament ended.=Tournament ended.
+Tournament stopped=Tournament stopped
+

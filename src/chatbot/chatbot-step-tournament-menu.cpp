@@ -30,7 +30,7 @@ ChatbotStepTournamentMenu::ChatbotStepTournamentMenu(TournamentType type)
     : type_(type) {}
 
 void ChatbotStepTournamentMenu::clearTournament() {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         SprtTournamentData::instance().clear();
     } else {
         TournamentData::instance().clear(false);
@@ -38,7 +38,7 @@ void ChatbotStepTournamentMenu::clearTournament() {
 }
 
 void ChatbotStepTournamentMenu::saveTournament(const std::string& path) {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         SprtTournamentData::saveTournament(path);
     } else {
         TournamentData::saveTournament(path);
@@ -46,14 +46,14 @@ void ChatbotStepTournamentMenu::saveTournament(const std::string& path) {
 }
 
 std::pair<std::string, std::string> ChatbotStepTournamentMenu::getFileFilter() const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return {"Qapla SPRT Files", "qsprt"};
     }
     return {"Qapla Tournament Files", "qtour"};
 }
 
 const char* ChatbotStepTournamentMenu::getTournamentName() const {
-    return (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+    return (type_ == TournamentType::SPRT) ? "SPRT tournament" : "tournament";
 }
 
 std::string ChatbotStepTournamentMenu::draw() {

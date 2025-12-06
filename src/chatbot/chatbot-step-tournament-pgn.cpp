@@ -31,7 +31,7 @@ ChatbotStepTournamentPgn::ChatbotStepTournamentPgn(TournamentType type)
     : type_(type) {}
 
 ImGuiTournamentPgn& ChatbotStepTournamentPgn::getTournamentPgn() {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().tournamentPgn();
     }
     return TournamentData::instance().tournamentPgn();

@@ -30,14 +30,14 @@ ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning(TournamentTyp
     : type_(type) {}
 
 bool ChatbotStepTournamentStopRunning::isRunning() const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         return SprtTournamentData::instance().isRunning();
     }
     return TournamentData::instance().isRunning();
 }
 
 void ChatbotStepTournamentStopRunning::stopPool(bool graceful) const {
-    if (type_ == TournamentType::Sprt) {
+    if (type_ == TournamentType::SPRT) {
         SprtTournamentData::instance().stopPool(graceful);
     } else {
         TournamentData::instance().stopPool(graceful);
@@ -55,7 +55,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
         return "existing";
     }
 
-    const char* tournamentName = (type_ == TournamentType::Sprt) ? "SPRT tournament" : "tournament";
+    const char* tournamentName = (type_ == TournamentType::SPRT) ? "SPRT tournament" : "tournament";
     std::string message = std::string("A ") + tournamentName + " is currently running. Would you like to end it?";
     QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     

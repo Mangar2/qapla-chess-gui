@@ -46,6 +46,13 @@ std::string ChatbotStepSprtConfiguration::draw() {
 
     ImGui::SameLine();
 
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
+    }
+
+    ImGui::SameLine();
+
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         return "stop";
@@ -77,15 +84,7 @@ void ChatbotStepSprtConfiguration::drawConfiguration() {
     options.showMaxGames = true;
 
     sprtConfiguration.draw(options);
-
-    // More/Less Options button
-    if (!finished_) {
-        ImGui::Spacing();
-        const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
-        if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
-            showMoreOptions_ = !showMoreOptions_;
-        }
-    }
+    
 }
 
 bool ChatbotStepSprtConfiguration::isConfigurationValid() const {
