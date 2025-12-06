@@ -35,6 +35,7 @@ std::string ChatbotStepOptionList::draw() {
     const int max_per_row = 4;
     size_t rows = (num_options + max_per_row - 1) / max_per_row;
 
+    ImGui::PushID("Chatbot");
     for (size_t row = 0; row < rows; ++row) {
         size_t start = row * max_per_row;
         size_t end = std::min(start + max_per_row, num_options);
@@ -57,11 +58,13 @@ std::string ChatbotStepOptionList::draw() {
                     options_[i].onSelected();
                 }
                 finished_ = true;
+                ImGui::PopID();
                 return "";
             }
             if (i < end - 1) ImGui::SameLine();
         }
     }
+    ImGui::PopID();
     return "";
 }
 

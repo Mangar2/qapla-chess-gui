@@ -177,7 +177,7 @@ namespace QaplaTest::SprtTournamentChatbot {
                 return itemClick(ctx, "**/###Continue");
 
             case LoadEngineAction::Cancel:
-                return itemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }

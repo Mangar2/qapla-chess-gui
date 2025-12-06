@@ -82,7 +82,7 @@ namespace QaplaTest::TournamentChatbot {
         }
         ctx->Yield(10);
 
-        if (!itemClick(ctx, "**/###Tournament")) {
+        if (!itemClick(ctx, "**/Chatbot/###Tournament")) {
             return false;
         }
         ctx->Yield(10);

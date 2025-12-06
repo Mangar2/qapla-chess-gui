@@ -121,15 +121,6 @@ namespace QaplaTest {
             return epdData.isStopped();
         }
 
-        // Helper to click an item with existence check - returns false if item not found
-        bool itemClick(ImGuiTestContext* ctx, const char* ref) {
-            if (!ctx->ItemExists(ref)) {
-                ctx->LogError("Item not found: %s", ref);
-                return false;
-            }
-            ctx->ItemClick(ref);
-            return true;
-        }
     }
 
     void registerEpdChatbotTests(ImGuiTestEngine* engine) {

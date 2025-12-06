@@ -35,14 +35,6 @@
 
 namespace QaplaWindows::ImGuiControls {
 
-    std::string createLabel(const std::string& topic, const std::string& label) {
-        std::string modLabel = label;
-        if (std::string_view(modLabel).find("###") == std::string_view::npos) {
-            modLabel += std::format("###{}", modLabel);
-        }
-        return Translator::instance().translate(topic, modLabel);
-    }
-
     void hooverTooltip(const std::string& text) {
         if (ImGui::IsItemHovered() && !text.empty()) {
             auto translatedText = Translator::instance().translate("Tooltip", text);

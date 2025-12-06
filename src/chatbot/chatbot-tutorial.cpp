@@ -106,11 +106,13 @@ std::string ChatbotStepTutorialSelect::draw() {
     ImGuiControls::textWrapped("Select a tutorial to run:");
     ImGui::Spacing();
 
+    ImGui::PushID("Tutorial");
     // Draw tutorial buttons from vector
     for (const auto& tutorialName : availableTutorials_) {
         if (ImGuiControls::textButton(tutorialName.c_str())) {
             selectedTutorialName_ = tutorialName;
             finished_ = true;
+            ImGui::PopID();
             return tutorialName;  // Return the selected tutorial name
         }
         ImGui::Spacing();
@@ -120,8 +122,10 @@ std::string ChatbotStepTutorialSelect::draw() {
     if (ImGuiControls::textButton("Cancel")) {
         selectedTutorialName_.clear();
         finished_ = true;
+        ImGui::PopID();
         return "stop";
     }
+    ImGui::PopID();
 
     return "";
 }

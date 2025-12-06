@@ -190,16 +190,16 @@ namespace QaplaTest::TournamentChatbot {
 
         switch (action) {
             case ConfigurationAction::Continue:
-                return itemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case ConfigurationAction::MoreOptions:
-                return itemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case ConfigurationAction::LessOptions:
-                return itemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case ConfigurationAction::Cancel:
-                return itemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -220,22 +220,22 @@ namespace QaplaTest::TournamentChatbot {
 
         switch (action) {
             case OpeningAction::Continue:
-                return itemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case OpeningAction::MoreOptions:
-                return itemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case OpeningAction::LessOptions:
-                return itemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case OpeningAction::ShowTrace:
-                return itemClick(ctx, "**/Show Trace");
+                return itemClick(ctx, "**/###Show Trace");
 
             case OpeningAction::HideTrace:
-                return itemClick(ctx, "**/Hide Trace");
+                return itemClick(ctx, "**/###Hide Trace");
 
             case OpeningAction::Cancel:
-                return itemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -267,22 +267,22 @@ namespace QaplaTest::TournamentChatbot {
 
         switch (action) {
             case PgnAction::Continue:
-                return itemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case PgnAction::OverwriteContinue:
-                if (ctx->ItemExists("**/Overwrite & Continue")) {
-                    return itemClick(ctx, "**/Overwrite & Continue");
+                if (ctx->ItemExists("**/###Overwrite & Continue")) {
+                    return itemClick(ctx, "**/###Overwrite & Continue");
                 }
-                return itemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case PgnAction::MoreOptions:
-                return itemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case PgnAction::LessOptions:
-                return itemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case PgnAction::Cancel:
-                return itemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -297,7 +297,7 @@ namespace QaplaTest::TournamentChatbot {
 
         switch (action) {
             case StartAction::StartTournament:
-                if (!itemClick(ctx, "**/Start Tournament")) {
+                if (!itemClick(ctx, "**/###Start Tournament")) {
                     return false;
                 }
                 ctx->Yield(10);
@@ -305,13 +305,13 @@ namespace QaplaTest::TournamentChatbot {
                 return waitForTournamentRunning(ctx, 10.0f);
 
             case StartAction::SwitchToView:
-                return itemClick(ctx, "**/Switch to Tournament View");
+                return itemClick(ctx, "**/###Switch to Tournament View");
 
             case StartAction::StayInChatbot:
-                return itemClick(ctx, "**/Stay in Chatbot");
+                return itemClick(ctx, "**/###Stay in Chatbot");
 
             case StartAction::Cancel:
-                return itemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }

@@ -90,6 +90,7 @@ Multiple Games Test=Multiple Games Test
 Start/Stop Test=Start/Stop Test
 Score from White POV=Score from White POV
 Ponder=Ponder
+Gauntlet=Gauntlet
 
 [Translation]
 id=Input
@@ -167,7 +168,7 @@ Active=Active
 Min full moves=Min full moves
 Required consecutive moves=Required consecutive moves
 Centipawn threshold=Centipawn threshold
-##filePath#####filePath=##filePath#####filePath
+##directoryPath#####directoryPath=##directoryPath#####directoryPath
 
 [Translation]
 id=Option
@@ -232,6 +233,7 @@ Qapla 0.4.0=Qapla 0.4.0
 Spike 1.4.1=Spike 1.4.1
 Spike \1.\2.=Spike \1.\2.
 Qapla \1.\2.=Qapla \1.\2.
+Spike \1.\2.\3 [ponder]=Spike \1.\2.\3 [ponder]
 
 [Translation]
 id=Option
@@ -405,6 +407,10 @@ Number of plies to play from position before starting engine analysis=Number of 
 Minimum analysis time per position in seconds=Minimum analysis time per position in seconds
 Maximum analysis time per position in seconds=Maximum analysis time per position in seconds
 Path to EPD or RAW position file to analyze=Path to EPD or RAW position file to analyze
+Allow engine to think during opponent's time=Allow engine to think during opponent's time
+Engine reports scores from white's perspective regardless of side to move=Engine reports scores from white's perspective regardless of side to move
+Display name for the engine=Display name for the engine
+Mark this engine to play against all others in gauntlet mode=Mark this engine to play against all others in gauntlet mode
 
 [Translation]
 id=Tab
@@ -488,4 +494,8 @@ Great! You've opened the Tournament tab.=Great! You've opened the Tournament tab
 Now we'll configure the global engine settings. These settings apply to all engines in the tournament and ensure fair, consistent conditions.\n\nSettings can be set for all engines or individually per engine. We change Hash size globally and pondering per engine:\n• Leave the checkbox near Hash checked and set 'Hash (MB)' to \1\n• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later=Now we'll configure the global engine settings. These settings apply to all engines in the tournament and ensure fair, consistent conditions.\n\nSettings can be set for all engines or individually per engine. We change Hash size globally and pondering per engine:\n• Leave the checkbox near Hash checked and set 'Hash (MB)' to \1\n• Uncheck the checkbox next to Ponder - this lets us control pondering per engine later
 Global settings are configured.=Global settings are configured.
 Now let's select the engines for our tournament. We'll demonstrate specific engine settings: compare the same engine against itself - once with pondering enabled and once without.\n\nIn the 'Engine Selection' section, select the same engine twice (click the '+' button left of 'Available Engine' twice)\nNow you see the same engine twice in the 'Selected Engines' list. Expand the first one and set the check mark for 'Ponder'\nThe names will automatically get a '[ponder]' suffix to distinguish them. Now you can see how pondering affects performance of the engine!=Now let's select the engines for our tournament. We'll demonstrate specific engine settings: compare the same engine against itself - once with pondering enabled and once without.\n\nIn the 'Engine Selection' section, select the same engine twice (click the '+' button left of 'Available Engine' twice)\nNow you see the same engine twice in the 'Selected Engines' list. Expand the first one and set the check mark for 'Ponder'\nThe names will automatically get a '[ponder]' suffix to distinguish them. Now you can see how pondering affects performance of the engine!
+An opening file is required. Please select a valid EPD, PGN, or FEN file.=An opening file is required. Please select a valid EPD, PGN, or FEN file.
+Please enter a valid file path. The directory must exist.=Please enter a valid file path. The directory must exist.
+Engines are selected!=Engines are selected!
+Now we need opening positions. Without openings, every game would start from the standard chess position, leading to repetitive games.\n\nIn the 'Opening' section:\n• Click on 'Opening file' and select a file with opening positions\n• Supported formats: .epd (EPD positions), .pgn (game moves), or raw FEN strings\nThe format is auto-detected based on file extension and file content.\n\nOpening books ensure variety and test engines across different positions.=Now we need opening positions. Without openings, every game would start from the standard chess position, leading to repetitive games.\n\nIn the 'Opening' section:\n• Click on 'Opening file' and select a file with opening positions\n• Supported formats: .epd (EPD positions), .pgn (game moves), or raw FEN strings\nThe format is auto-detected based on file extension and file content.\n\nOpening books ensure variety and test engines across different positions.
 

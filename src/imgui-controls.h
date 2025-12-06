@@ -35,6 +35,23 @@
 namespace QaplaWindows::ImGuiControls {
 
     /**
+     * @brief Creates a translated label with a unique identifier.
+     * 
+     * If the label does not contain "###", it appends it to ensure uniqueness.
+     * 
+     * @param topic The translation topic (e.g., "Button", "Input").
+     * @param label The label text to translate.
+     * @return The translated label with unique identifier.
+     */
+    inline std::string createLabel(const std::string& topic, const std::string& label) {
+        std::string modLabel = label;
+        if (std::string_view(modLabel).find("###") == std::string_view::npos) {
+            modLabel += std::format("###{}", modLabel);
+        }
+        return Translator::instance().translate(topic, modLabel);
+    }
+
+    /**
      * @brief Displays a tooltip when hovering over the last item.
      * 
      * It translates the tooltip text before displaying.
@@ -116,9 +133,9 @@ namespace QaplaWindows::ImGuiControls {
 		assert(min < max && "Min must be less than max");
 
         int tempValue = static_cast<int>(value);
-        auto translatedLabel = Translator::instance().translate("Input", label);
-
-        bool modified = ImGui::InputInt(translatedLabel.c_str(), &tempValue, step, stepFast, flags);
+        
+        auto modLabel = createLabel("Input", label);
+        bool modified = ImGui::InputInt(modLabel.c_str(), &tempValue, step, stepFast, flags);
 
         if (tempValue < static_cast<int>(min)) tempValue = static_cast<int>(min);
         if (tempValue > static_cast<int>(max)) tempValue = static_cast<int>(max);
@@ -147,8 +164,8 @@ namespace QaplaWindows::ImGuiControls {
 
         // Convert value to int for ImGui::SliderInt
         int tempValue = static_cast<int>(value);
-        auto translatedLabel = Translator::instance().translate("Input", label);
-        bool modified = ImGui::SliderInt(translatedLabel.c_str(), &tempValue, static_cast<int>(min), static_cast<int>(max), format);
+        auto modLabel = createLabel("Input", label);
+        bool modified = ImGui::SliderInt(modLabel.c_str(), &tempValue, static_cast<int>(min), static_cast<int>(max), format);
 
         // Update the original value if it was modified
         if (modified) {
