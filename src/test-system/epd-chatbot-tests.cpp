@@ -122,7 +122,7 @@ namespace QaplaTest {
         }
 
         // Helper to click an item with existence check - returns false if item not found
-        bool safeItemClick(ImGuiTestContext* ctx, const char* ref) {
+        bool itemClick(ImGuiTestContext* ctx, const char* ref) {
             if (!ctx->ItemExists(ref)) {
                 ctx->LogError("Item not found: %s", ref);
                 return false;
@@ -154,12 +154,12 @@ namespace QaplaTest {
 
             // Step 1: Navigate to Chatbot tab
             ctx->LogInfo("Step 1: Navigating to Chatbot tab...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             // Step 2: Select EPD Analysis from menu
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Step 3: Since no analysis is running, it should skip to engine selection
@@ -169,18 +169,18 @@ namespace QaplaTest {
 
             // Step 4: Click Continue to proceed to configuration
             ctx->LogInfo("Step 4: Clicking Continue after engine selection...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             // Step 5: Configuration should be shown, click Continue 
             // (EPD file path is already set via setupEpdTestConfiguration)
             ctx->LogInfo("Step 5: Clicking Continue after configuration...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             // Step 6: Click Start Analysis
             ctx->LogInfo("Step 6: Clicking Start Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/Start Analysis"));
+            ctx->ItemClick("**/###Start Analysis");
             ctx->Yield(30); // Wait for analysis to start
 
             // Step 7: Verify analysis is running
@@ -189,7 +189,7 @@ namespace QaplaTest {
 
             // Step 8: Click "Stay in Chatbot" to finish the flow
             ctx->LogInfo("Step 8: Clicking Stay in Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Stay in Chatbot"));
+            ctx->ItemClick("**/###Stay in Chatbot");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test StartAnalysis PASSED ===");
@@ -231,17 +231,17 @@ namespace QaplaTest {
 
             // Now open the chatbot and select EPD Analysis
             ctx->LogInfo("Step 1: Navigating to Chatbot with running analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Step 3: Should see "An EPD analysis is currently running" dialog
             // Click "Yes, stop analysis"
             ctx->LogInfo("Step 3: Clicking 'Yes, stop analysis'...");
-            IM_CHECK(safeItemClick(ctx, "**/Yes, stop analysis"));
+            ctx->ItemClick("**/###Yes, stop analysis");
             ctx->Yield(20);
 
             // Verify analysis stopped
@@ -251,7 +251,7 @@ namespace QaplaTest {
             // Step 4: Should now be at engine selection
             // Cancel to exit the flow
             ctx->LogInfo("Step 4: Clicking Cancel to exit flow...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test StopRunning PASSED ===");
@@ -289,16 +289,16 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Click Cancel to keep analysis running
             ctx->LogInfo("Step 3: Clicking Cancel to keep analysis running...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(10);
 
             // Verify analysis is still running
@@ -324,16 +324,16 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Cancel at engine selection without selecting any engine
             ctx->LogInfo("Step 3: Clicking Cancel at engine selection...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test AtEngineSelection PASSED ===");
@@ -355,11 +355,11 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Select engine
@@ -368,12 +368,12 @@ namespace QaplaTest {
 
             // Continue to configuration
             ctx->LogInfo("Step 4: Continue to configuration...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             // Cancel at configuration
             ctx->LogInfo("Step 5: Clicking Cancel at configuration...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test AtConfiguration PASSED ===");
@@ -395,27 +395,27 @@ namespace QaplaTest {
 
             // Navigate through the flow
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
             ctx->LogInfo("Step 4: Continue to configuration...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 5: Continue to start...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             // Cancel at start step
             ctx->LogInfo("Step 6: Clicking Cancel at start step...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             // Verify no analysis was started
@@ -444,26 +444,26 @@ namespace QaplaTest {
 
             // Navigate through the complete flow
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
             ctx->LogInfo("Step 4: Continue to configuration...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 5: Continue to start...");
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 6: Start Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/Start Analysis"));
+            ctx->ItemClick("**/###Start Analysis");
             ctx->Yield(30);
 
             // Verify analysis is running before switching view
@@ -472,7 +472,7 @@ namespace QaplaTest {
 
             // Click "Switch to EPD View"
             ctx->LogInfo("Step 7: Clicking Switch to EPD View...");
-            IM_CHECK(safeItemClick(ctx, "**/Switch to EPD View"));
+            ctx->ItemClick("**/###Switch to EPD View");
             ctx->Yield(10);
 
             ctx->LogInfo("=== Test SwitchToEpdView PASSED ===");
@@ -524,23 +524,23 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Should see the "continue existing" dialog
             ctx->LogInfo("Step 3: Clicking 'Yes, continue analysis'...");
-            IM_CHECK(ctx->ItemExists("**/Yes, continue analysis"));
-            ctx->ItemClick("**/Yes, continue analysis");
+            IM_CHECK(ctx->ItemExists("**/###Yes, continue analysis"));
+            ctx->ItemClick("**/###Yes, continue analysis");
             ctx->Yield(10);
 
             // Should jump to start step, click Start Analysis
             ctx->LogInfo("Step 4: Clicking 'Start Analysis'...");
-            IM_CHECK(ctx->ItemExists("**/Start Analysis"));
-            ctx->ItemClick("**/Start Analysis");
+            IM_CHECK(ctx->ItemExists("**/###Start Analysis"));
+            ctx->ItemClick("**/###Start Analysis");
             ctx->Yield(30);
 
             // Verify analysis is running
@@ -549,8 +549,8 @@ namespace QaplaTest {
 
             // Stay in chatbot
             ctx->LogInfo("Step 5: Clicking 'Stay in Chatbot'...");
-            IM_CHECK(ctx->ItemExists("**/Stay in Chatbot"));
-            ctx->ItemClick("**/Stay in Chatbot");
+            IM_CHECK(ctx->ItemExists("**/###Stay in Chatbot"));
+            ctx->ItemClick("**/###Stay in Chatbot");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test ExistingYes PASSED ===");
@@ -598,21 +598,21 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Click "No" to start fresh setup
             ctx->LogInfo("Step 3: Clicking 'No' to start fresh...");
-            IM_CHECK(safeItemClick(ctx, "**/No"));
+            ctx->ItemClick("**/###No");
             ctx->Yield(10);
 
             // Should now be at engine selection - verify by clicking Cancel
             ctx->LogInfo("Step 4: At engine selection, clicking Cancel...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test ExistingNo PASSED ===");
@@ -662,16 +662,16 @@ namespace QaplaTest {
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Click "Cancel" to exit entire flow
             ctx->LogInfo("Step 3: Clicking 'Cancel' to exit flow...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             // Verify incomplete analysis state is preserved
@@ -701,17 +701,17 @@ namespace QaplaTest {
             
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
-            IM_CHECK(safeItemClick(ctx, "**/Chatbot###Chatbot"));
+            ctx->ItemClick("**/###Chatbot");
             ctx->Yield(10);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
-            IM_CHECK(safeItemClick(ctx, "**/EPD Analysis"));
+            ctx->ItemClick("**/###EPD Analysis");
             ctx->Yield(10);
 
             // Should be at engine selection (no continue dialog shown)
             // Verify by looking for Cancel button (present in engine selection)
             ctx->LogInfo("Step 3: Verifying we're at engine selection (no continue dialog)...");
-            IM_CHECK(safeItemClick(ctx, "**/Cancel"));
+            ctx->ItemClick("**/###Cancel");
             ctx->Yield(5);
 
             ctx->LogInfo("=== Test NoDialogWhenComplete PASSED ===");

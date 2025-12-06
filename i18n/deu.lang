@@ -167,6 +167,7 @@ Active=Active
 Min full moves=Min full moves
 Required consecutive moves=Required consecutive moves
 Centipawn threshold=Centipawn threshold
+##filePath#####filePath=##filePath#####filePath
 
 [Translation]
 id=Option
@@ -327,6 +328,10 @@ Auto-detect engine capabilities and supported options=Auto-detect engine capabil
 Save tournament configuration and results to file=Save tournament configuration and results to file
 Load tournament configuration and results from file=Load tournament configuration and results from file
 Stop tournament immediately, aborting running games=Stop tournament immediately, aborting running games
+Number of plies to play from position before starting engine analysis=Number of plies to play from position before starting engine analysis
+Minimum analysis time per position in seconds=Minimum analysis time per position in seconds
+Maximum analysis time per position in seconds=Maximum analysis time per position in seconds
+Path to EPD or RAW position file to analyze=Path to EPD or RAW position file to analyze
 
 [Translation]
 id=Table

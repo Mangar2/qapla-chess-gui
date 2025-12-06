@@ -49,23 +49,10 @@ namespace QaplaTest {
             tournamentData.clear(false);
         }
 
-        // Helper to click an item with existence check
-        bool safeItemClick(ImGuiTestContext* ctx, const char* ref) {
-            if (!ctx->ItemExists(ref)) {
-                ctx->LogError("Item not found: %s", ref);
-                return false;
-            }
-            ctx->ItemClick(ref);
-            return true;
-        }
-
         // Helper to navigate to Chatbot window
-        bool navigateToChatbot(ImGuiTestContext* ctx) {
-            if (!safeItemClick(ctx, "**/Chatbot###Chatbot")) {
-                return false;
-            }
+        void navigateToChatbot(ImGuiTestContext* ctx) {
+            ctx->ItemClick("**/Chatbot###Chatbot");
             ctx->Yield(10);
-            return true;
         }
 
         // Helper to wait for tutorial progress to reach a specific step
@@ -106,11 +93,11 @@ namespace QaplaTest {
         bool waitForContinueButton(ImGuiTestContext* ctx, float maxWaitSeconds = 5.0f) {
             float waited = 0.0f;
             constexpr float sleepInterval = 0.1f;
-            while (!ctx->ItemExists("**/Continue") && waited < maxWaitSeconds) {
+            while (!ctx->ItemExists("**/###Continue") && waited < maxWaitSeconds) {
                 ctx->SleepNoSkip(sleepInterval, sleepInterval);
                 waited += sleepInterval;
             }
-            return ctx->ItemExists("**/Continue");
+            return ctx->ItemExists("**/###Continue");
         }
     }
 
@@ -138,18 +125,18 @@ namespace QaplaTest {
 
             // Step 1: Navigate to Chatbot
             ctx->LogInfo("Step 1: Navigate to Chatbot");
-            IM_CHECK(navigateToChatbot(ctx));
-            ctx->Yield(10);
+            navigateToChatbot(ctx);
+            ctx->Yield(5);
 
             // Step 2: Click on "Tutorial" button in chatbot menu
             ctx->LogInfo("Step 2: Click Tutorial button");
-            IM_CHECK(safeItemClick(ctx, "**/Tutorial"));
-            ctx->Yield(10);
+            ctx->ItemClick("**/###Tutorial");
+            ctx->Yield(5);
 
             // Step 3: Select "Tournament" tutorial from the list
             ctx->LogInfo("Step 3: Select Tournament tutorial");
-            IM_CHECK(safeItemClick(ctx, "**/Tournament"));
-            ctx->Yield(10);
+            ctx->ItemClick("**/###Tournament");
+            ctx->Yield(5);
 
             // Tutorial should now be started
             // tutorialProgress_ should advance from 0 to 1
@@ -158,8 +145,8 @@ namespace QaplaTest {
 
             // Step 4: Open Tournament tab (tutorial is waiting for this)
             ctx->LogInfo("Step 4: Click Tournament tab");
-            IM_CHECK(safeItemClick(ctx, "**/Tournament###Tournament"));
-            ctx->Yield(10);
+            ctx->ItemClick("**/###Tournament");
+            ctx->Yield(5);
 
             // Step 4a: Wait for tutorial to request user input (doWaitForUserInput() becomes true)
             ctx->LogInfo("Step 4a: Wait for tutorial to request user input");
@@ -170,8 +157,8 @@ namespace QaplaTest {
             // Step 4b: Wait for Continue button to appear and click it
             ctx->LogInfo("Step 4b: Wait for Continue button in chatbot");
             IM_CHECK(waitForContinueButton(ctx, 5.0f));
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
-            ctx->Yield(10);
+            ctx->ItemClick("**/###Continue");
+            ctx->Yield(5);
             
             // NOW the progress should advance to step 2
             IM_CHECK(waitForTutorialProgress(ctx, 2, 5.0f));
@@ -188,8 +175,8 @@ namespace QaplaTest {
 
             // Step 4d: Open the GlobalSettings CollapsingHeader
             ctx->LogInfo("Step 4d: Open GlobalSettings section");
-            ctx->ItemOpen("**/Global Engine Settings###Global Engine Settings");
-            ctx->Yield(3);
+            ctx->ItemOpen("**/###Global Engine Settings");
+            ctx->Yield(2);
 
             // Step 5: Configure global settings as requested by tutorial
             // Tutorial wants: Hash=64 MB, global ponder disabled
@@ -199,8 +186,8 @@ namespace QaplaTest {
             
             // Set Hash to 64 MB via UI slider
             // Path to Hash slider: ImGui::PushID("Hash (MB)") -> ##value
-            ctx->ItemInputValue("**/Hash (MB)", 64);
-            ctx->Yield(5);
+            ctx->ItemInputValue("**/###Hash (MB)", 64);
+            ctx->Yield(2);
             
             // Verify Hash is set
             IM_CHECK_EQ(globalConfig.hashSizeMB, 64U);
@@ -213,8 +200,8 @@ namespace QaplaTest {
             // We need to click it to uncheck it
             // Path: ImGui::PushID("Ponder") -> ##enableGlobal checkbox
             if (globalConfig.useGlobalPonder) {
-                ctx->ItemUncheck("**/##usePonder");
-                ctx->Yield(5);
+                ctx->ItemUncheck("**/### ##usePonder");
+                ctx->Yield(2);
             }
             
             // Verify global ponder is disabled
@@ -230,8 +217,8 @@ namespace QaplaTest {
             // Step 6b: Wait for and click Continue button in chatbot
             ctx->LogInfo("Step 6b: Wait for Continue button in chatbot");
             IM_CHECK(waitForContinueButton(ctx, 5.0f));
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
-            ctx->Yield(10);
+            ctx->ItemClick("**/###Continue");
+            ctx->Yield(3);
             
             // NOW progress advances to 3
             IM_CHECK(waitForTutorialProgress(ctx, 3, 5.0f));
@@ -243,7 +230,7 @@ namespace QaplaTest {
 
             // Step 7: Open Engines section
             ctx->LogInfo("Step 7: Open Engines section");
-            ctx->ItemOpen("**/Engines###Engines");
+            ctx->ItemOpen("**/###Engines");
             ctx->Yield(3);
 
             // Step 8: Clean up - remove all previously selected engines
@@ -267,36 +254,19 @@ namespace QaplaTest {
             
             // First engine selection - click "+" button for first engine
             ctx->ItemClick("**/available_0/+###addEngine");
-            ctx->Yield(5);
-            
             // Second engine selection - click "+" button again for same engine
             ctx->ItemClick("**/available_0/+###addEngine");
-            ctx->Yield(5);
+            ctx->Yield(2);
+
+            IM_CHECK(ctx->ItemExists("**/spike1.4.1###0selected"));
+            IM_CHECK(ctx->ItemExists("**/###0selected"));
             
             // Step 10: Enable ponder for first selected engine only
             // Tutorial requires: two engines with same originalName AND at least one with ponder
             ctx->LogInfo("Step 10: Enable ponder for first engine");
             
-            // Verify parent exists first
-            IM_CHECK(ctx->ItemExists("**/Selected Engines###Selected Engines"));
-            ctx->Yield(10); // Give UI time to render engine items
-            
-            // Gather all Ponder checkboxes under Selected Engines
-            ImGuiTestItemList ponderList;
-            ctx->GatherItems(&ponderList, "**/Selected Engines###Selected Engines", -1);
-            
-            ctx->LogInfo("Found %d items total under Selected Engines", ponderList.GetSize());
-            
-            // Find and check first Ponder checkbox only
-            for (int idx = 0; idx < ponderList.GetSize(); ++idx) {
-                auto* item = ponderList.GetByIndex(idx);
-                if (item && strstr(item->DebugLabel, "Ponder") != nullptr) {
-                    ctx->LogInfo("Found Ponder checkbox: ID=0x%08X, Label='%s'", item->ID, item->DebugLabel);
-                    ctx->ItemCheck(ImGuiTestRef(item->ID));
-                    ctx->Yield(5);
-                    break; // Only enable first one
-                }
-            }
+            ctx->ItemOpen("**/###0selected");
+            ctx->Yield(2);
             
             // Step 10: Wait for tutorial to detect engine configuration
             ctx->LogInfo("Step 10: Wait for tutorial to detect engines configured");
@@ -305,7 +275,7 @@ namespace QaplaTest {
             // Step 10b: Click Continue in chatbot
             ctx->LogInfo("Step 10b: Click Continue for engines");
             IM_CHECK(waitForContinueButton(ctx, 5.0f));
-            IM_CHECK(safeItemClick(ctx, "**/Continue"));
+            ctx->ItemClick("**/###Continue");
             ctx->Yield(10);
             
             // Progress should advance to 4

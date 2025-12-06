@@ -65,7 +65,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         return sprtTournamentData.hasResults();
     }
 
-    bool safeItemClick(ImGuiTestContext* ctx, const char* ref) {
+    bool itemClick(ImGuiTestContext* ctx, const char* ref) {
         if (!ctx->ItemExists(ref)) {
             ctx->LogError("Item not found: %s", ref);
             return false;
@@ -89,12 +89,12 @@ namespace QaplaTest::SprtTournamentChatbot {
     }
 
     bool navigateToSprtTournamentChatbot(ImGuiTestContext* ctx) {
-        if (!safeItemClick(ctx, "**/Chatbot###Chatbot")) {
+        if (!itemClick(ctx, "**/Chatbot###Chatbot")) {
             return false;
         }
         ctx->Yield(10);
 
-        if (!safeItemClick(ctx, "**/SPRT Tournament")) {
+        if (!itemClick(ctx, "**/###SPRT Tournament")) {
             return false;
         }
         ctx->Yield(10);

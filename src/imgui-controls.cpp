@@ -35,6 +35,14 @@
 
 namespace QaplaWindows::ImGuiControls {
 
+    std::string createLabel(const std::string& topic, const std::string& label) {
+        std::string modLabel = label;
+        if (std::string_view(modLabel).find("###") == std::string_view::npos) {
+            modLabel += std::format("###{}", modLabel);
+        }
+        return Translator::instance().translate(topic, modLabel);
+    }
+
     void hooverTooltip(const std::string& text) {
         if (ImGui::IsItemHovered() && !text.empty()) {
             auto translatedText = Translator::instance().translate("Tooltip", text);
@@ -43,13 +51,13 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool checkbox(const char* label, bool& value) {
-        auto translatedLabel = Translator::instance().translate("Checkbox", label);
-        return ImGui::Checkbox(translatedLabel.c_str(), &value);
+        auto modLabel = createLabel("Checkbox", label);
+        return ImGui::Checkbox(modLabel.c_str(), &value);
     }
 
     bool textButton(const char* label, ImVec2 size) {
-        auto translatedLabel = Translator::instance().translate("Button", label);
-        return ImGui::Button(translatedLabel.c_str(), size);
+        auto modLabel = createLabel("Button", label);
+        return ImGui::Button(modLabel.c_str(), size);
     }
 
     void textWrapped(const std::string& text) {
@@ -87,8 +95,9 @@ namespace QaplaWindows::ImGuiControls {
         void* userData) {
         std::string buffer = value;
         buffer.resize(1024);  // Fixed buffer size
-        auto translatedLabel = Translator::instance().translate("Input", label);
-        if (ImGui::InputText(translatedLabel.c_str(), buffer.data(), buffer.size(), flags, callback, userData)) {
+
+        auto modLabel = createLabel("Input", label);
+        if (ImGui::InputText(modLabel.c_str(), buffer.data(), buffer.size(), flags, callback, userData)) {
             size_t nullPos = buffer.find('\0');
             return buffer.substr(0, nullPos);
         }
@@ -118,9 +127,10 @@ namespace QaplaWindows::ImGuiControls {
         int32_t promilleMin = static_cast<int32_t>(min * 1000.0);
         int32_t promilleMax = static_cast<int32_t>(max * 1000.0);
         int32_t promilleStep = static_cast<int32_t>(step * 1000.0);
-        auto translatedLabel = Translator::instance().translate("Input", label);
+        
+        auto modLabel = createLabel("Input", label);
 
-        bool modified = ImGui::InputInt(translatedLabel.c_str(), &promilleValue, promilleStep, promilleStep * 10);
+        bool modified = ImGui::InputInt(modLabel.c_str(), &promilleValue, promilleStep, promilleStep * 10);
 
         promilleValue = std::clamp(promilleValue, promilleMin, promilleMax);
 
@@ -224,8 +234,9 @@ namespace QaplaWindows::ImGuiControls {
     bool selectionBox(const char* label, int& currentItem, const std::vector<std::string>& options) {
         bool modified = false;
         bool isIndex = currentItem >= 0 && currentItem < static_cast<int>(options.size());
-        auto translatedLabel = Translator::instance().translate("Input", label);
-        if (ImGui::BeginCombo(translatedLabel.c_str(), isIndex ? options[currentItem].c_str() : "Custom"
+        
+        auto modLabel = createLabel("Input", label);
+        if (ImGui::BeginCombo(modLabel.c_str(), isIndex ? options[currentItem].c_str() : "Custom"
         )) {
             for (size_t i = 0; i < options.size(); ++i) {
                 bool isSelected = (currentItem == static_cast<int>(i));
@@ -520,11 +531,9 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags, bool showDot) {
-        
-        auto translatedLabel = Translator::instance().translate("Section", label);
-        auto headerText = std::format("{}###{}", translatedLabel, label);
 
-        bool result = ImGui::CollapsingHeader(headerText.c_str(), flags);
+        auto modLabel = createLabel("Section", label);
+        bool result = ImGui::CollapsingHeader(modLabel.c_str(), flags);
         
         if (showDot) {
             constexpr float dotOffsetX = 20.0F;  // More offset for CollapsingHeader arrow
@@ -547,8 +556,8 @@ namespace QaplaWindows::ImGuiControls {
 
     int optionSelector(const std::vector<std::string>& options) {
         for (size_t i = 0; i < options.size(); ++i) {
-            auto translatedText = Translator::instance().translate("Option", options[i]);
-            if (textButton(translatedText.c_str())) {
+            auto modLabel = createLabel("Option", options[i]);
+            if (textButton(modLabel.c_str())) {
                 return static_cast<int>(i);
             }
         }

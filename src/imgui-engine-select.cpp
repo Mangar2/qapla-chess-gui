@@ -194,7 +194,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         ImGuiControls::hooverTooltip("Remove this engine from selection");
         ImGui::SameLine(0.0F, 4.0F);
         // Engine names are not translated
-        if (ImGuiControls::CollapsingHeaderWithDot(name.c_str(), flags)) {
+        if (ImGuiControls::CollapsingHeaderWithDot((name + "selected").c_str(), flags)) {
             ImGui::Indent(10.0F);
             if ((flags & ImGuiTreeNodeFlags_Leaf) == 0) {
                 modified |= drawEngineControls();

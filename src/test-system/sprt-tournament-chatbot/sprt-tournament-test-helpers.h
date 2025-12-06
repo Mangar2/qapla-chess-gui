@@ -79,7 +79,7 @@ namespace QaplaTest::SprtTournamentChatbot {
      * @brief Safely clicks an item with existence check
      * @return false if item not found (test should use IM_CHECK on result)
      */
-    bool safeItemClick(ImGuiTestContext* ctx, const char* ref);
+    bool itemClick(ImGuiTestContext* ctx, const char* ref);
 
     /**
      * @brief Checks if engines are available in the system

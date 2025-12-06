@@ -39,7 +39,7 @@ namespace QaplaTest::SprtTournamentChatbot {
             case StopRunningAction::EndTournament:
                 // Note: This is a bug in the source code - it uses hardcoded "Yes, end tournament"
                 // instead of using getTournamentName()
-                if (!safeItemClick(ctx, "**/Yes, end tournament")) {
+                if (!itemClick(ctx, "**/###Yes, end tournament")) {
                     return false;
                 }
                 ctx->Yield(10);
@@ -47,7 +47,7 @@ namespace QaplaTest::SprtTournamentChatbot {
                 return waitForSprtTournamentStopped(ctx, 10.0f);
 
             case StopRunningAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -62,13 +62,13 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case ContinueExistingAction::YesContinue:
-                return safeItemClick(ctx, "**/Yes, continue SPRT tournament");
+                return itemClick(ctx, "**/###Yes, continue SPRT tournament");
 
             case ContinueExistingAction::No:
-                return safeItemClick(ctx, "**/No");
+                return itemClick(ctx, "**/###No");
 
             case ContinueExistingAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -83,18 +83,18 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case MenuAction::NewTournament:
-                return safeItemClick(ctx, "**/New SPRT tournament");
+                return itemClick(ctx, "**/###New SPRT tournament");
 
             case MenuAction::SaveTournament:
                 // Note: This opens a file dialog which cannot be automated
-                return safeItemClick(ctx, "**/Save SPRT tournament");
+                return itemClick(ctx, "**/###Save SPRT tournament");
 
             case MenuAction::LoadTournament:
                 // Note: This opens a file dialog which cannot be automated
-                return safeItemClick(ctx, "**/Load SPRT tournament");
+                return itemClick(ctx, "**/###Load SPRT tournament");
 
             case MenuAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -109,16 +109,16 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case GlobalSettingsAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case GlobalSettingsAction::MoreOptions:
-                return safeItemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case GlobalSettingsAction::LessOptions:
-                return safeItemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case GlobalSettingsAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -138,10 +138,10 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case SelectEnginesAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case SelectEnginesAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -157,27 +157,27 @@ namespace QaplaTest::SprtTournamentChatbot {
         switch (action) {
             case LoadEngineAction::AddEngines:
                 // Note: Opens file dialog
-                return safeItemClick(ctx, "**/Add Engines");
+                return itemClick(ctx, "**/###Add Engines");
 
             case LoadEngineAction::DetectContinue:
-                if (ctx->ItemExists("**/Detect & Continue")) {
-                    return safeItemClick(ctx, "**/Detect & Continue");
+                if (ctx->ItemExists("**/###Detect & Continue")) {
+                    return itemClick(ctx, "**/###Detect & Continue");
                 }
                 ctx->LogInfo("Detect & Continue not available (all engines detected)");
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case LoadEngineAction::SkipDetection:
-                if (ctx->ItemExists("**/Skip Detection")) {
-                    return safeItemClick(ctx, "**/Skip Detection");
+                if (ctx->ItemExists("**/###Skip Detection")) {
+                    return itemClick(ctx, "**/###Skip Detection");
                 }
                 ctx->LogInfo("Skip Detection not available");
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case LoadEngineAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case LoadEngineAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/Cancel");
         }
         return false;
     }
@@ -192,16 +192,16 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case SprtConfigurationAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case SprtConfigurationAction::MoreOptions:
-                return safeItemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case SprtConfigurationAction::LessOptions:
-                return safeItemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case SprtConfigurationAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -222,22 +222,22 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case OpeningAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case OpeningAction::MoreOptions:
-                return safeItemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case OpeningAction::LessOptions:
-                return safeItemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case OpeningAction::ShowTrace:
-                return safeItemClick(ctx, "**/Show Trace");
+                return itemClick(ctx, "**/###Show Trace");
 
             case OpeningAction::HideTrace:
-                return safeItemClick(ctx, "**/Hide Trace");
+                return itemClick(ctx, "**/###Hide Trace");
 
             case OpeningAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -269,22 +269,22 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case PgnAction::Continue:
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case PgnAction::OverwriteContinue:
-                if (ctx->ItemExists("**/Overwrite & Continue")) {
-                    return safeItemClick(ctx, "**/Overwrite & Continue");
+                if (ctx->ItemExists("**/###Overwrite & Continue")) {
+                    return itemClick(ctx, "**/###Overwrite & Continue");
                 }
-                return safeItemClick(ctx, "**/Continue");
+                return itemClick(ctx, "**/###Continue");
 
             case PgnAction::MoreOptions:
-                return safeItemClick(ctx, "**/More Options");
+                return itemClick(ctx, "**/###More Options");
 
             case PgnAction::LessOptions:
-                return safeItemClick(ctx, "**/Less Options");
+                return itemClick(ctx, "**/###Less Options");
 
             case PgnAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
@@ -299,7 +299,7 @@ namespace QaplaTest::SprtTournamentChatbot {
 
         switch (action) {
             case StartAction::StartTournament:
-                if (!safeItemClick(ctx, "**/Start SPRT tournament")) {
+                if (!itemClick(ctx, "**/###Start SPRT tournament")) {
                     return false;
                 }
                 ctx->Yield(10);
@@ -307,13 +307,13 @@ namespace QaplaTest::SprtTournamentChatbot {
                 return waitForSprtTournamentRunning(ctx, 10.0f);
 
             case StartAction::SwitchToView:
-                return safeItemClick(ctx, "**/Switch to SPRT tournament View");
+                return itemClick(ctx, "**/###Switch to SPRT tournament View");
 
             case StartAction::StayInChatbot:
-                return safeItemClick(ctx, "**/Stay in Chatbot");
+                return itemClick(ctx, "**/###Stay in Chatbot");
 
             case StartAction::Cancel:
-                return safeItemClick(ctx, "**/Cancel");
+                return itemClick(ctx, "**/###Cancel");
         }
         return false;
     }
