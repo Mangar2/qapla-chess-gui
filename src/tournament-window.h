@@ -51,8 +51,19 @@ namespace QaplaWindows {
          * @brief Advances the Tournament tutorial based on user actions.
          * @param clickedButton The button that was clicked (empty string for state checks)
          */
+        struct HighlightInfo {
+            std::string highlightedButton = {};
+            std::string highlightedSection = {};
+            Tutorial::TutorialContext globalSettingsTutorial = {};
+            Tutorial::TutorialContext openingTutorial = {};
+            Tutorial::TutorialContext tournamentTutorial = {};
+            Tutorial::TutorialContext timeControlTutorial = {};
+            Tutorial::TutorialContext pgnTutorial = {};
+        };
+
         static void showNextTournamentTutorialStep(const std::string& clickedButton);
         static void clearTournamentTutorialState();
+        static void applyHighlighting(const HighlightInfo& info);
 
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for Tournament tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial

@@ -18,7 +18,7 @@ Swap=Swap
 Restart=Restart
 Log=Log
 Run=Run
-Clear=Reset
+Clear=Clear
 Grace=Grace
 Open=Open
 Recent=Recent
@@ -81,6 +81,7 @@ Sprache wählen=Sprache wählen
 Nachrichten=Nachrichten
 EPD=EPD
 Epd=Epd
+More...=More...
 
 [Translation]
 id=Checkbox
@@ -177,6 +178,8 @@ Active=Active
 Min full moves=Min full moves
 Required consecutive moves=Required consecutive moves
 Centipawn threshold=Centipawn threshold
+Number of Games=Number of Games
+##filePath#####filePath=##filePath#####filePath
 
 [Translation]
 id=Option
@@ -272,21 +275,6 @@ Snackbar Settings=Snackbar Settings
 Tutorial Progress=Tutorial Progress
 Logger Settings=Logger Settings
 Language Settings=Language Settings
-Amoeba 2.4.w64p=Amoeba 2.4.w64p
-Counter 3.=Counter 3.
-Critter 0.52b 64-bit=Critter 0.52b 64-bit
-Fruit 2.3.=Fruit 2.3.
-Leorik 2.=Leorik 2.
-Marvin 3.2.=Marvin 3.2.
-Midnight 5.=Midnight 5.
-Pingu 3.0.=Pingu 3.0.
-Polaris 1.6.=Polaris 1.6.
-Stockfish=Stockfish
-Viridithas 3.0.=Viridithas 3.0.
-Yakka v1.=Yakka v1.
-Qapla 0.4.=Qapla 0.4.
-Diagnostic Engine 1.=Diagnostic Engine 1.
-Spike 1.4.=Spike 1.4.
 Blitz Time=Blitz Time
 Tournament Time=Tournament Time
 Time per Move=Time per Move
@@ -310,6 +298,10 @@ Warning=Warning
 All tests have been completed. Clear data before re-analyzing.=All tests have been completed. Clear data before re-analyzing.
 Analysis stopped=Analysis stopped
 Analysis stopped.\nFinishing ongoing calculations.=Analysis stopped.\nFinishing ongoing calculations.
+Welcome to the EPD Analysis Tutorial!\n\nEPD (Extended Position Description) analysis lets you test how well chess engines solve tactical positions. This is different from tournaments - instead of playing full games, engines analyze predefined positions and try to find the correct move or evaluation.\n\nEPD files contain positions with expected solutions. Engines score points when they find the correct move within the time limit. This helps you:\n• Evaluate tactical strength across different engines\n• Test engines on specific position types (tactics, endgames, etc.)\n• Compare analysis quality rather than playing strength\n\nTo help you through the process, we'll mark relevant buttons with a red dot as needed.\n\nLet's begin! Click on the 'EPD' tab in the left window to open the analysis configuration.=Welcome to the EPD Analysis Tutorial!\n\nEPD (Extended Position Description) analysis lets you test how well chess engines solve tactical positions. This is different from tournaments - instead of playing full games, engines analyze predefined positions and try to find the correct move or evaluation.\n\nEPD files contain positions with expected solutions. Engines score points when they find the correct move within the time limit. This helps you:\n• Evaluate tactical strength across different engines\n• Test engines on specific position types (tactics, endgames, etc.)\n• Compare analysis quality rather than playing strength\n\nTo help you through the process, we'll mark relevant buttons with a red dot as needed.\n\nLet's begin! Click on the 'EPD' tab in the left window to open the analysis configuration.
+Tournament stopped=Tournament stopped
+Great! The EPD Analysis window is now open.=Great! The EPD Analysis window is now open.
+Engines selected! Let's configure the analysis parameters.=Engines selected! Let's configure the analysis parameters.
 
 [Translation]
 id=Table
@@ -588,4 +580,5 @@ Fresh analysis started!=Fresh analysis started!
 The analysis is running again with fresh results. Now let's explore concurrency - one of the most powerful features for speeding up analysis.\n\nMove the 'Concurrency' slider at the top to \1.\n\nConcurrency determines how many positions are analyzed simultaneously:\n• Concurrency \2: Positions analyzed one at a time (slowest, least CPU usage)\n• Concurrency \3: \4 positions analyzed in parallel (\5× faster!)\n\nWith concurrency \6, you'll see \7 board tabs appear - one for each parallel analysis. Each tab shows a different engine working on a different position. You can click any tab to watch that specific analysis.\n\nNote: Set concurrency based on your CPU cores. Too high may slow down your system.=The analysis is running again with fresh results. Now let's explore concurrency - one of the most powerful features for speeding up analysis.\n\nMove the 'Concurrency' slider at the top to \1.\n\nConcurrency determines how many positions are analyzed simultaneously:\n• Concurrency \2: Positions analyzed one at a time (slowest, least CPU usage)\n• Concurrency \3: \4 positions analyzed in parallel (\5× faster!)\n\nWith concurrency \6, you'll see \7 board tabs appear - one for each parallel analysis. Each tab shows a different engine working on a different position. You can click any tab to watch that specific analysis.\n\nNote: Set concurrency based on your CPU cores. Too high may slow down your system.
 Concurrency increased - analysis is now much faster!=Concurrency increased - analysis is now much faster!
 Congratulations! You've completed the EPD Analysis Tutorial!\n\nYou've learned how to:\n• Select engines for tactical testing\n• Configure analysis parameters (time limits, seen plies, test files)\n• Start, stop, and continue analyses\n• Use graceful stopping for clean exits\n• Clear and restart tests\n• Adjust concurrency for faster results\n\nImportant notes:\n• Results are auto-saved after each position\n• You can stop/continue anytime without losing progress\n• Results cannot be resumed after application restart (config is saved, but progress is reset)\n• Higher concurrency \1 faster completion, but more CPU usage\n• The progress bar and results table update in real time\n\nTry different EPD test suites to evaluate your engines on various tactical themes. Happy analyzing!=Congratulations! You've completed the EPD Analysis Tutorial!\n\nYou've learned how to:\n• Select engines for tactical testing\n• Configure analysis parameters (time limits, seen plies, test files)\n• Start, stop, and continue analyses\n• Use graceful stopping for clean exits\n• Clear and restart tests\n• Adjust concurrency for faster results\n\nImportant notes:\n• Results are auto-saved after each position\n• You can stop/continue anytime without losing progress\n• Results cannot be resumed after application restart (config is saved, but progress is reset)\n• Higher concurrency \1 faster completion, but more CPU usage\n• The progress bar and results table update in real time\n\nTry different EPD test suites to evaluate your engines on various tactical themes. Happy analyzing!
+Showing \1 of \2 messages:=Showing \1 of \2 messages:
 

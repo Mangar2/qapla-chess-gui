@@ -55,8 +55,15 @@ namespace QaplaWindows
          * @brief Advances the EPD tutorial based on user actions.
          * @param clickedButton The button that was clicked (empty string for state checks)
          */
+        struct HighlightInfo {
+            std::string highlightedButton = {};
+            std::string highlightedSection = {};
+            Tutorial::TutorialContext configurationTutorial = {};
+        };
+
         static void showNextEpdTutorialStep(const std::string& clickedButton);
         static void clearEpdTutorialState();
+        static void applyHighlighting(const HighlightInfo& info);
 
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for EPD tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial

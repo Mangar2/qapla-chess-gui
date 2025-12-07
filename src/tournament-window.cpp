@@ -349,6 +349,28 @@ void TournamentWindow::clearTournamentTutorialState() {
     pgnTutorial_.clear();
 }
 
+void TournamentWindow::applyHighlighting(const HighlightInfo& info) {
+    if (Tutorial::instance().doWaitForUserInput()) {
+        // Clear all highlights when waiting for user input
+        highlightedButton_.clear();
+        highlightedSection_.clear();
+        globalSettingsTutorial_.clear();
+        openingTutorial_.clear();
+        tournamentTutorial_.clear();
+        timeControlTutorial_.clear();
+        pgnTutorial_.clear();
+    } else {
+        // Set highlights from info
+        highlightedButton_ = info.highlightedButton;
+        highlightedSection_ = info.highlightedSection;
+        globalSettingsTutorial_ = info.globalSettingsTutorial;
+        openingTutorial_ = info.openingTutorial;
+        tournamentTutorial_ = info.tournamentTutorial;
+        timeControlTutorial_ = info.timeControlTutorial;
+        pgnTutorial_ = info.pgnTutorial;
+    }
+}
+
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     auto topicName = Tutorial::TutorialName::Tournament;
@@ -363,50 +385,69 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
         Tutorial::instance().requestNextTutorialStep(topicName);
-        highlightedButton_ = "";
-        highlightedSection_ = "GlobalSettings";
-        globalSettingsTutorial_.highlight = true;
-        globalSettingsTutorial_.annotations["Hash (MB)"] = "Set to: 64";
-        globalSettingsTutorial_.annotations["Ponder"] = "Uncheck 'Enable global pondering'";
         return;
         
         case 2:
+        applyHighlighting({
+            .highlightedSection = "GlobalSettings",
+            .globalSettingsTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Hash (MB)", "Set to: 64"},
+                    {"Ponder", "Uncheck 'Enable global pondering'"}
+                }
+            }
+        });
+        
         // Step 1: Configure global settings
         // Check if hash is 64 MB and global ponder is disabled
         if (tournamentData.globalSettings().getGlobalConfiguration().hashSizeMB == 64 && 
             !tournamentData.globalSettings().getGlobalConfiguration().useGlobalPonder) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            globalSettingsTutorial_.clear();
-            highlightedSection_ = "EngineSelect";
         }
         return;
         
         case 3:
+        applyHighlighting({.highlightedSection = "EngineSelect"});
+        
         // Step 2: Select two engines with the same originalName and ponder enabled
         if (hasTwoSameEnginesWithPonder()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedSection_ = "Opening";
-            openingTutorial_.highlight = true;
-            openingTutorial_.annotations["Opening file"] = "Select any opening file";
         }
         return;
         
         case 4:
+        applyHighlighting({
+            .highlightedSection = "Opening",
+            .openingTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Opening file", "Select any opening file"}
+                }
+            }
+        });
+        
         // Step 3: Configure opening file
         // Check if opening file is set (ignore format check as requested)
         if (!tournamentData.tournamentOpening().openings().file.empty()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            openingTutorial_.clear();
-            highlightedSection_ = "Tournament";
-            tournamentTutorial_.highlight = true;
-            tournamentTutorial_.annotations["Type"] = "Set to: round-robin";
-            tournamentTutorial_.annotations["Rounds"] = "Set to: 2";
-            tournamentTutorial_.annotations["Games per pairing"] = "Set to: 2";
-            tournamentTutorial_.annotations["Same opening"] = "Set to: 2";
         }
         return;
         
         case 5:
+        applyHighlighting({
+            .highlightedSection = "Tournament",
+            .tournamentTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Type", "Set to: round-robin"},
+                    {"Rounds", "Set to: 2"},
+                    {"Games per pairing", "Set to: 2"},
+                    {"Same opening", "Set to: 2"}
+                }
+            }
+        });
+        
         // Step 4: Configure tournament settings
         // Check: type=round-robin, rounds=2, games=2, repeat=2
         if (tournamentData.config().type == "round-robin" &&
@@ -414,67 +455,83 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             tournamentData.config().games == 2 &&
             tournamentData.config().repeat == 2) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            tournamentTutorial_.clear();
-            highlightedSection_ = "TimeControl";
-            timeControlTutorial_.highlight = true;
-            timeControlTutorial_.annotations["Predefined time control"] = "Select: 20.0+0.02";
         }
         return;
         
         case 6:
+        applyHighlighting({
+            .highlightedSection = "TimeControl",
+            .timeControlTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Predefined time control", "Select: 20.0+0.02"}
+                }
+            }
+        });
+        
         // Step 5: Configure time control
         // Check if time control is set to "20.0+0.02"
         if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            timeControlTutorial_.clear();
-            highlightedSection_ = "Pgn";
-            pgnTutorial_.highlight = true;
-            pgnTutorial_.annotations["Pgn file"] = "Select output file";
         }
         return;
         
         case 7:
+        applyHighlighting({
+            .highlightedSection = "Pgn",
+            .pgnTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Pgn file", "Select output file"}
+                }
+            }
+        });
+        
         // Step 6: Set PGN output file
         if (!tournamentData.tournamentPgn().pgnOptions().file.empty()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            pgnTutorial_.clear();
-            highlightedSection_ = "";
         }
         return;
         
         case 8:
+        applyHighlighting({});
+        
         // Step 7: Set concurrency to 4
         if (tournamentData.getExternalConcurrency() == 4) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "RunGraceContinue";
         }
         return;
         
         case 9:
+        applyHighlighting({.highlightedButton = "RunGraceContinue"});
+        
         // Step 8: Start tournament - check if running
         if (tournamentData.isRunning()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "";
         }
         return;
         
         case 10:
+        applyHighlighting({});
+        
         // Step 9: Wait for tournament to finish - check if NOT running and has tasks scheduled
         if (!tournamentData.isRunning() && tournamentData.hasTasksScheduled()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "Save As";
         }
         return;
         
         case 11:
+        applyHighlighting({.highlightedButton = "Save As"});
+        
         // Step 10: Save tournament - advance when "Save As" button is clicked
         if (clickedButton == "Save As") {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "";
         }
         return;
         
         case 12:
+        applyHighlighting({});
+        
         // Step 11: Add third engine - check if at least 3 engines are selected
         {
             const auto& configs = tournamentData.engineSelect().getEngineConfigurations();
@@ -486,25 +543,29 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             }
             if (selectedCount >= 3) {
                 Tutorial::instance().requestNextTutorialStep(topicName);
-                highlightedButton_ = "RunGraceContinue";
             }
         }
         return;
         
         case 13:
+        applyHighlighting({.highlightedButton = "RunGraceContinue"});
+        
         // Step 12: Continue tournament - check if running
         if (tournamentData.isRunning()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "";
         }
         return;
         
         case 14:
+        applyHighlighting({});
+        
         // Step 13: Final step - tournament running or finished
         Tutorial::instance().requestNextTutorialStep(topicName);
         return;
         
         case 15:
+        applyHighlighting({});
+        
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
             clearTournamentTutorialState();
             Tutorial::instance().finishTutorial(topicName);
@@ -512,6 +573,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         return;
                                 
         default:
+        applyHighlighting({});
         clearTournamentTutorialState();
         return;
     }

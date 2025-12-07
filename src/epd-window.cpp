@@ -266,6 +266,21 @@ void EpdWindow::clearEpdTutorialState() {
     configurationTutorial_.clear();
 }
 
+void EpdWindow::applyHighlighting(const HighlightInfo& info) {
+    if (Tutorial::instance().doWaitForUserInput()) {
+        // Clear all highlights when waiting for user input
+        highlightedButton_.clear();
+        highlightedSection_.clear();
+        enginesTutorial_.clear();
+        configurationTutorial_.clear();
+    } else {
+        // Set highlights from info
+        highlightedButton_ = info.highlightedButton;
+        highlightedSection_ = info.highlightedSection;
+        configurationTutorial_ = info.configurationTutorial;
+    }
+}
+
 void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     constexpr auto tutorialName = Tutorial::TutorialName::Epd;
     
@@ -281,107 +296,107 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         // Step 0 (autoStart): Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
         Tutorial::instance().requestNextTutorialStep(tutorialName);
-        highlightedButton_ = "";
-        highlightedSection_ = "EngineSelect";
         return;
         
         case 2:
+        applyHighlighting({.highlightedSection = "EngineSelect"});
+
         // Step 1: Tab opened - explain EPD and ask to select two engines
         if (config.engines.size() >= 2) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
-            highlightedButton_ = "";
-            highlightedSection_ = "Configuration";
-            configurationTutorial_.highlight = true;
-            configurationTutorial_.annotations["Seen plies"] = "Set to: 3";
-            configurationTutorial_.annotations["Max time"] = "Set to: 10";
-            configurationTutorial_.annotations["Min time"] = "Set to: 1";
-            configurationTutorial_.annotations["FilePath"] = "Select any EPD or RAW file";
-        } else {
-            highlightedSection_ = "EngineSelect";
-        }
+        } 
         return;
         
         case 3:
+        applyHighlighting({
+            .highlightedSection = "Configuration",
+            .configurationTutorial = {
+                .highlight = true,
+                .annotations = {
+                    {"Seen plies", "Set to: 3"},
+                    {"Max time", "Set to: 10"},
+                    {"Min time", "Set to: 1"},
+                    {"FilePath", "Select any EPD or RAW file"}
+                }
+            }
+        });
+
         // Step 2: Two engines selected - configure parameters
-        if (config.seenPlies == 3 && 
-            config.maxTimeInS == 10 && 
-            config.minTimeInS == 1 && 
+        if (config.seenPlies == 3 && config.maxTimeInS == 10 && config.minTimeInS == 1 && 
             !config.filepath.empty()) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
-            configurationTutorial_.clear();
-            highlightedSection_ = "";
-            highlightedButton_ = "Run/Stop";
         }
         return;
         
         case 4:
         // Step 3: Configuration complete - wait for analysis to start
+        applyHighlighting({.highlightedButton = "Run/Stop"});
         if (epdState == EpdData::State::Running) {
-            highlightedButton_ = "Run/Stop";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 5:
         // Step 4: Analysis running - wait for it to stop
+        applyHighlighting({.highlightedButton = "Run/Stop"});
         if (epdState == EpdData::State::Stopped) {
-            highlightedButton_ = "Run/Stop";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 6:
         // Step 5: Stopped - wait for Continue (Running again)
+        applyHighlighting({.highlightedButton = "Run/Stop"});
         if (epdState == EpdData::State::Running) {
-            highlightedButton_ = "Grace";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 7:
         // Step 6: Running again - wait for Grace (Stopping state)
+        applyHighlighting({.highlightedButton = "Grace"});
         if (epdState == EpdData::State::Gracefully) {
-            highlightedButton_ = "";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 8:
         // Step 7: Grace active - wait for fully stopped, then highlight Clear
+        applyHighlighting({});
         if (epdState == EpdData::State::Stopped) {
-            highlightedButton_ = "Clear";
+            applyHighlighting({.highlightedButton = "Clear"});
         }
         if (epdState == EpdData::State::Cleared) {
-            highlightedButton_ = "Run/Stop";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 9:
         // Step 8: Cleared - wait for Analyze again (Running)
+         applyHighlighting({.highlightedButton = "Run/Stop"});
         if (epdState == EpdData::State::Running) {
-            highlightedButton_ = "";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 10:
         // Step 9: Running - wait for concurrency to be set to 10
+        applyHighlighting({});
         if (epdData.getExternalConcurrency() == 10) {
-            highlightedButton_ = "";
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
         
         case 11:
+        applyHighlighting({.highlightedButton = "Run/Stop"});
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
-            highlightedButton_ = "";
             clearEpdTutorialState();
             Tutorial::instance().finishTutorial(tutorialName);
         }
         return;
                                 
         default:
+        applyHighlighting({});
         clearEpdTutorialState();
         return;
     }
