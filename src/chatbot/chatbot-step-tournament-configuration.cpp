@@ -59,6 +59,7 @@ std::string ChatbotStepTournamentConfiguration::draw() {
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced tournament options such as same opening, no color swap and average ELO.");
 
     ImGui::SameLine();
 

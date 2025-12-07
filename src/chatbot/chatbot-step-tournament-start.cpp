@@ -100,6 +100,7 @@ std::string ChatbotStepTournamentStart::draw() {
             startTournament();
             setPoolConcurrency(static_cast<uint32_t>(concurrency), true, true);
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Start the tournament now with the specified concurrency and engine settings.");
 
         ImGui::SameLine();
 
@@ -125,10 +126,12 @@ std::string ChatbotStepTournamentStart::draw() {
             StaticCallbacks::message().invokeAll(getSwitchViewMessage());
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Switch to the tournament view to inspect running games and progress.");
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Remain in the chatbot interface. You can switch to tournament view later via the tabs.");
     }
     return "";
 }

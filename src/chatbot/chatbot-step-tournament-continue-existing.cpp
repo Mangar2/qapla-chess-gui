@@ -71,6 +71,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
         finished_ = true;
         return "start";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Resume the existing tournament and continue scheduled tasks.");
     
     ImGui::SameLine();
     if (QaplaWindows::ImGuiControls::textButton("No")) {
@@ -78,6 +79,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
         finished_ = true;
         return "menu";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Do not continue the existing tournament; return to the menu.");
 
     ImGui::SameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {

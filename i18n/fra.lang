@@ -386,6 +386,19 @@ Clear all EPD analysis results=Clear all EPD analysis results
 Maximum plies to play from PGN opening before engines take over.\nOnly applicable for PGN input.\n  all - Play full PGN sequence\n  \1 - Engines start from PGN start position\n  N - Play N plies, then engines continue=Maximum plies to play from PGN opening before engines take over.\nOnly applicable for PGN input.\n  all - Play full PGN sequence\n  \1 - Engines start from PGN start position\n  N - Play N plies, then engines continue
 Disable automatic color swap after each game=Disable automatic color swap after each game
 Average Elo level for scaling rating output=Average Elo level for scaling rating output
+Select option: Nachrichten=Select option: Nachrichten
+Select option: Sprache wählen=Select option: Sprache wählen
+Select option: Turnier=Select option: Turnier
+Resume the existing tournament and continue scheduled tasks.=Resume the existing tournament and continue scheduled tasks.
+Do not continue the existing tournament; return to the menu.=Do not continue the existing tournament; return to the menu.
+Save the current tournament to a file so you can load it later.=Save the current tournament to a file so you can load it later.
+Create a new tournament. The currently loaded tournament will be discarded unless you save it first.=Create a new tournament. The currently loaded tournament will be discarded unless you save it first.
+Show or hide advanced global engine settings, such as traces and restart behavior.=Show or hide advanced global engine settings, such as traces and restart behavior.
+Open a file dialog to add one or more engine binaries to the engine list.=Open a file dialog to add one or more engine binaries to the engine list.
+Automatically detect engine capabilities (options) now and continue.=Automatically detect engine capabilities (options) now and continue.
+Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.=Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.
+Start the tournament now with the specified concurrency and engine settings.=Start the tournament now with the specified concurrency and engine settings.
+Switch to the tournament view to inspect running games and progress.=Switch to the tournament view to inspect running games and progress.
 
 [Translation]
 id=Tab
@@ -555,4 +568,5 @@ Tutorial=Tutorial
 EPD Analysis=EPD Analysis
 Tournament=Tournament
 C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe=C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe
+C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe=C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe
 

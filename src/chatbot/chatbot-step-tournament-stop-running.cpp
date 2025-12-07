@@ -69,6 +69,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
         finished_ = true;
         return "menu";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.");
 
     ImGui::SameLine();
 

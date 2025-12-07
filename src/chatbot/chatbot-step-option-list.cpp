@@ -59,6 +59,9 @@ std::string ChatbotStepOptionList::draw() {
                 ImGui::PopID();
                 return "";
             }
+            if (options_[i].text != "Continue" && options_[i].text != "Cancel") {
+                QaplaWindows::ImGuiControls::hooverTooltip(std::string("Select option: ") + options_[i].text);
+            }
             if (i < end - 1) ImGui::SameLine();
         }
     }

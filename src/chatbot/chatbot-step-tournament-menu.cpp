@@ -79,6 +79,7 @@ std::string ChatbotStepTournamentMenu::draw() {
         finished_ = true;
         return "new";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Create a new tournament. The currently loaded tournament will be discarded unless you save it first.");
 
     ImGui::SameLine();
 
@@ -91,6 +92,7 @@ std::string ChatbotStepTournamentMenu::draw() {
             saved_ = true;
         }
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Save the current tournament to a file so you can load it later.");
 
     ImGui::SameLine();
     std::string loadButtonLabel = std::string("Load ") + getTournamentName();
@@ -98,6 +100,7 @@ std::string ChatbotStepTournamentMenu::draw() {
         finished_ = true;
         return "load";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Load a previously saved tournament from disk and replace the current tournament.");
 
     ImGui::SameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {

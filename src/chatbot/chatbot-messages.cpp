@@ -92,6 +92,7 @@ std::string ChatbotStepMessages::draw() {
         if (ImGuiControls::textButton("Close")) {
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Close the message window and return to the previous view.");
         return "";
     }
 
@@ -156,6 +157,7 @@ std::string ChatbotStepMessages::draw() {
         if (ImGuiControls::textButton("More...")) {
             displayCount_ *= 2;  // Double the display count
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Load older messages from history (double the display count).");
         ImGui::SameLine();
     }
     
@@ -163,6 +165,7 @@ std::string ChatbotStepMessages::draw() {
     if (ImGuiControls::textButton("Close")) {
         finished_ = true;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Close the message window and return to the previous view.");
     
     return "";
 }

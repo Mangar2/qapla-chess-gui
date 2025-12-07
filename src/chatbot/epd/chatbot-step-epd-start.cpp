@@ -56,6 +56,7 @@ std::string ChatbotStepEpdStart::draw() {
         if (QaplaWindows::ImGuiControls::textButton("Start Analysis")) {
             epdData.analyse();
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Begin analyzing the selected EPD/RAW positions using configured engines and concurrency.");
 
         ImGui::SameLine();
 
@@ -78,10 +79,12 @@ std::string ChatbotStepEpdStart::draw() {
             StaticCallbacks::message().invokeAll("switch_to_epd_view");
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Open the EPD view to monitor running analyses and navigate positions.");
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Remain in the chatbot interface; you can switch to EPD view later.");
     }
     return "";
 }

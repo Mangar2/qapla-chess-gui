@@ -50,6 +50,7 @@ std::string ChatbotStepSprtConfiguration::draw() {
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced SPRT configuration options (Alpha, Beta, etc.).");
 
     ImGui::SameLine();
 

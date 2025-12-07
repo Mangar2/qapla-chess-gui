@@ -65,6 +65,7 @@ std::string ChatbotStepEpdContinueExisting::draw() {
         finished_ = true;
         return "start";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Resume the incomplete EPD analysis and continue the remaining tests.");
     
     ImGui::SameLine();
     if (QaplaWindows::ImGuiControls::textButton("No")) {
@@ -72,6 +73,7 @@ std::string ChatbotStepEpdContinueExisting::draw() {
         finished_ = true;
         return "menu";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Do not continue the existing analysis; return to the menu.");
 
     ImGui::SameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {

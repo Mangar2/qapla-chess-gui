@@ -81,6 +81,7 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced global engine settings, such as traces and restart behavior.");
 
     ImGui::SameLine();
 

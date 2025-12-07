@@ -83,6 +83,7 @@ void ChatbotStepLoadEngine::drawInput() {
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Open a file dialog to add one or more engine binaries to the engine list.");
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
@@ -98,6 +99,7 @@ void ChatbotStepLoadEngine::drawInput() {
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Open a file dialog to add one or more engine binaries to the engine list.");
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
@@ -110,6 +112,7 @@ void ChatbotStepLoadEngine::drawInput() {
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Open a file dialog to add one or more engine binaries to the engine list.");
         
         bool needsDetection = !ImGuiEngineSelect::areAllEnginesDetected();
         
@@ -119,11 +122,15 @@ void ChatbotStepLoadEngine::drawInput() {
                 startDetection();
                 state_ = State::Detecting;
             }
+            QaplaWindows::ImGuiControls::hooverTooltip("Automatically detect engine capabilities (options) now and continue.");
         }
         
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton(needsDetection ? "Skip Detection" : "Continue")) {
             finished_ = true;
+        }
+        if (needsDetection) {
+            QaplaWindows::ImGuiControls::hooverTooltip("Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.");
         }
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {

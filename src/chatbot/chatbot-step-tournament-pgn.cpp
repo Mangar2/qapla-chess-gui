@@ -122,6 +122,9 @@ std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& valida
     if (QaplaWindows::ImGuiControls::textButton(continueLabel)) {
         finished_ = true;
     }
+    if (std::string(continueLabel) == "Overwrite & Continue") {
+        QaplaWindows::ImGuiControls::hooverTooltip("This will overwrite the specified PGN file with new results. Make sure this is what you want before continuing.");
+    }
     ImGui::EndDisabled();
 
     ImGui::SameLine();
@@ -130,6 +133,7 @@ std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& valida
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide additional PGN options (append mode, headers, etc.).");
 
     ImGui::SameLine();
 

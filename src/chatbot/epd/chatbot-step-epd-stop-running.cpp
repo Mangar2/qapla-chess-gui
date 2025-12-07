@@ -49,6 +49,7 @@ std::string ChatbotStepEpdStopRunning::draw() {
         finished_ = true;
         return "continue";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Stop the running EPD analysis and cancel remaining positions. Use gracefully if you need to preserve partial results.");
 
     ImGui::SameLine();
 

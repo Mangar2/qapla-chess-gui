@@ -294,6 +294,7 @@ std::string ChatbotStepTutorialRunner::draw() {
             finished_ = true;
             return "stop";
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Stop and exit the tutorial. Progress may be lost; saved settings remain.");
         return "";
     }
 
@@ -306,6 +307,7 @@ std::string ChatbotStepTutorialRunner::draw() {
             removeFilter();
             finished_ = true;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Close the tutorial dialog and return to the main UI.");
     } else {
         // Show progress
         ImGuiControls::textDisabled(std::format("Progress: {} / {}", entry.counter, entry.messages.size()));
@@ -318,6 +320,7 @@ std::string ChatbotStepTutorialRunner::draw() {
             finished_ = true;
             return "stop";
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Stop and exit the tutorial. Progress may be lost; saved settings remain.");
     }
 
     return "";

@@ -34,6 +34,7 @@ std::string ChatbotStepFinish::draw() {
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         finished_ = true;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Finish the current step and close this dialog.");
     return "";
 }
 

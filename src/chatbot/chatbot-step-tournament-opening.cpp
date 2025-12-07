@@ -175,6 +175,7 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide additional opening options (plies, first opening, random seed, and switch policy).");
 
     // Show trace button only if validation was performed
     if (isValidated_ && parseResult_) {
@@ -183,6 +184,7 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
         if (QaplaWindows::ImGuiControls::textButton(traceLabel)) {
             showTrace_ = !showTrace_;
         }
+        QaplaWindows::ImGuiControls::hooverTooltip("Toggle the parser trace output to help diagnose issues when parsing opening files.");
     }
 
     ImGui::SameLine();
