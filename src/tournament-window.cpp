@@ -530,7 +530,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         return;
         
         case 12:
-        applyHighlighting({});
+        applyHighlighting({.highlightedSection = "EngineSelect"});
         
         // Step 11: Add third engine - check if at least 3 engines are selected
         {

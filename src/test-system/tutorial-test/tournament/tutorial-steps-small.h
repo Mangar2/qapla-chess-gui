@@ -30,7 +30,7 @@ namespace QaplaTest::TutorialTest {
         ctx->LogInfo("Step 1: Open Tournament Tab");
         
         // Click Tournament tab
-        ctx->ItemClick("**/###Tournament");
+        ctx->ItemClick("**/QaplaTabBar/###Tournament");
         ctx->Yield();
 
         // Click Continue and advance to step 2

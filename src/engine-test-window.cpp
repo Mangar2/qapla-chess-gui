@@ -76,7 +76,7 @@ std::vector<QaplaTester::EngineConfig> EngineTestWindow::getSelectedEngineConfig
 }
 
 static std::string getButtonText(const std::string& button, EngineTests::State testState) {
-    if (button == "Run/Stop")
+    if (button == "RunStop")
     {
         if (testState == EngineTests::State::Running) {
             return "Stop";
@@ -87,7 +87,7 @@ static std::string getButtonText(const std::string& button, EngineTests::State t
 }
 
 static QaplaButton::ButtonState getButtonState(const std::string& button, EngineTests::State testState) {
-    if (button == "Run/Stop")
+    if (button == "RunStop")
     {
         if (testState == EngineTests::State::Running) {
             return QaplaButton::ButtonState::Active;
@@ -108,7 +108,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, Engine
 
 static void drawButtonIcon(const std::string& button, EngineTests::State testState, 
     QaplaButton::ButtonState buttonState, ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
-    if (button == "Run/Stop") {
+    if (button == "RunStop") {
         if (testState == EngineTests::State::Running) {
             QaplaButton::drawStop(drawList, topLeft, size, buttonState);
             ImGuiControls::hooverTooltip("Stop engine tests immediately");
@@ -125,14 +125,14 @@ static void drawButtonIcon(const std::string& button, EngineTests::State testSta
 static void handleButtonClick(const std::string& button, EngineTests::State testState, 
     const std::vector<QaplaTester::EngineConfig>& selectedEngines) {
     try {
-        if (button == "Run/Stop" && testState != EngineTests::State::Running) {
+        if (button == "RunStop" && testState != EngineTests::State::Running) {
             // Start tests
             if (selectedEngines.empty()) {
                 SnackbarManager::instance().showError("Please select at least one engine");
             } else {
                 EngineTests::instance().runTests(selectedEngines);
             }
-        } else if (button == "Run/Stop" && testState == EngineTests::State::Running) {
+        } else if (button == "RunStop" && testState == EngineTests::State::Running) {
             // Stop tests
             EngineTests::instance().stop();
         } else if (button == "Clear") {
@@ -160,7 +160,7 @@ void EngineTestWindow::drawButtons()
     auto testState = EngineTests::instance().getState();
     auto selectedEngines = getSelectedEngineConfigurations();
     
-    for (const std::string button : {"Run/Stop", "Clear"})
+    for (const std::string button : {"RunStop", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
         

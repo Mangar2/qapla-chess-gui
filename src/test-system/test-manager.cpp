@@ -22,7 +22,8 @@
 #include "test-system/epd-chatbot-tests.h"
 #include "test-system/tournament-chatbot/tournament-chatbot-tests.h"
 #include "test-system/sprt-tournament-chatbot/sprt-tournament-chatbot-tests.h"
-#include "test-system/tutorial-test/tutorial-tests.h"
+#include "test-system/tutorial-test/tournament/tutorial-tests.h"
+#include "test-system/tutorial-test/epd/tutorial-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -68,6 +69,7 @@ namespace QaplaTest {
         registerTournamentChatbotTests(engine_);
         registerSprtTournamentChatbotTests(engine_);
         registerTutorialTests(engine_);
+        registerEpdTutorialTests(engine_);
 #endif
     }
 

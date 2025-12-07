@@ -49,7 +49,7 @@ EpdWindow::~EpdWindow() = default;
 
 static std::string getButtonText(const std::string& button, EpdData::State epdState) {
     auto& epdData = EpdData::instance();
-    if (button == "Run/Stop")
+    if (button == "RunStop")
     {
         if (epdState == EpdData::State::Running) {
             return "Stop";
@@ -66,7 +66,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, EpdDat
         return QaplaButton::ButtonState::Highlighted;
     }
     
-    if (button == "Run/Stop")
+    if (button == "RunStop")
     {
         auto& epdData = EpdData::instance();
 
@@ -110,7 +110,7 @@ std::string EpdWindow::drawButtons()
     
     std::string clickedButton;
     
-    for (const std::string button : {"Run/Stop", "Grace", "Clear"})
+    for (const std::string button : {"RunStop", "Grace", "Clear"})
     {
         ImGui::SetCursorScreenPos(pos);
         
@@ -121,7 +121,7 @@ std::string EpdWindow::drawButtons()
             [&button, buttonState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
             {
                 auto epdState = EpdData::instance().state;
-                if (button == "Run/Stop")
+                if (button == "RunStop")
                 {
                     if (epdState == EpdData::State::Running) {
                         QaplaButton::drawStop(drawList, topLeft, size, buttonState);
@@ -160,11 +160,11 @@ void QaplaWindows::EpdWindow::executeCommand(const std::string &button)
         try
         {
             auto epdState = EpdData::instance().state;
-            if (button == "Run/Stop" && epdState != EpdData::State::Running)
+            if (button == "RunStop" && epdState != EpdData::State::Running)
             {
                 EpdData::instance().analyse();
             }
-            else if (button == "Run/Stop" && epdState == EpdData::State::Running)
+            else if (button == "RunStop" && epdState == EpdData::State::Running)
             {
                 EpdData::instance().stopPool(false);
             }
@@ -330,7 +330,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 4:
         // Step 3: Configuration complete - wait for analysis to start
-        applyHighlighting({.highlightedButton = "Run/Stop"});
+        applyHighlighting({.highlightedButton = "RunStop"});
         if (epdState == EpdData::State::Running) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
@@ -338,7 +338,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 5:
         // Step 4: Analysis running - wait for it to stop
-        applyHighlighting({.highlightedButton = "Run/Stop"});
+        applyHighlighting({.highlightedButton = "RunStop"});
         if (epdState == EpdData::State::Stopped) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
@@ -346,7 +346,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 6:
         // Step 5: Stopped - wait for Continue (Running again)
-        applyHighlighting({.highlightedButton = "Run/Stop"});
+        applyHighlighting({.highlightedButton = "RunStop"});
         if (epdState == EpdData::State::Running) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
@@ -373,7 +373,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         
         case 9:
         // Step 8: Cleared - wait for Analyze again (Running)
-         applyHighlighting({.highlightedButton = "Run/Stop"});
+         applyHighlighting({.highlightedButton = "RunStop"});
         if (epdState == EpdData::State::Running) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
@@ -388,7 +388,7 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         return;
         
         case 11:
-        applyHighlighting({.highlightedButton = "Run/Stop"});
+        applyHighlighting({.highlightedButton = "RunStop"});
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
             clearEpdTutorialState();
             Tutorial::instance().finishTutorial(tutorialName);
@@ -425,7 +425,6 @@ static auto epdWindowTutorialInit = []() {
               "In the 'Engines' section:\n"
               "• Select at least two engines from your configured engines\n"
               "• Click the '+' button next to each engine you want to test\n\n"
-              "The more engines you select, the better you can compare their tactical abilities. "
               "All selected engines will analyze the same positions under identical conditions for a fair comparison.",
               .success = "Engines selected! Let's configure the analysis parameters.",
               .type = SnackbarManager::SnackbarType::Note },
@@ -433,11 +432,7 @@ static auto epdWindowTutorialInit = []() {
               "• 'Seen plies': 3 - engines must find the solution within 3 search iterations\n"
               "• 'Max time': 10 seconds - maximum time per position\n"
               "• 'Min time': 1 second - minimum analysis time even if solution is found earlier\n"
-              "• 'EPD file': Click and select a test suite file (.epd or .raw format)\n\n"
-              "The seen plies setting is important: engines get points when they find the correct move "
-              "and keep it as their top choice for at least 3 consecutive search depths. This filters out "
-              "lucky guesses and ensures the engine truly understands the position.\n\n"
-              "Popular test suites include: WAC (Win At Chess), ERET, or custom tactical position sets.",
+              "• 'EPD file': Click and select a test suite file (.epd or .raw format)\n\n",
               .success = "Configuration is complete!",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "Everything is configured - time to start the analysis!\n\n"
@@ -453,7 +448,6 @@ static auto epdWindowTutorialInit = []() {
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "The analysis is now active! You can see the engines working through the position set.\n\n"
               "Notice the board tabs at the top - click any tab to watch that engine's current analysis live. "
-              "You'll see the principal variation, evaluation, and search depth updating in real time.\n\n"
               "Let's practice stopping and resuming:\n"
               "• Click the 'Stop' button (same location as Analyze) to pause the analysis\n\n"
               "Stopping is instant - current positions are saved, and you can continue exactly where you left off. "
@@ -464,53 +458,29 @@ static auto epdWindowTutorialInit = []() {
               "what has been analyzed so far.\n\n"
               "Now let's resume:\n"
               "• Click the 'Continue' button (same button as before)\n\n"
-              "The analysis will pick up exactly where it stopped - same position, same progress. "
-              "No work is repeated, no results are lost. This makes it easy to run long test suites "
-              "over multiple sessions.\n\n"
               "You can stop and continue as many times as needed!",
               .success = "Analysis resumed!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "The analysis is running again. Now let's learn about graceful stopping - "
-              "a feature that's useful when you want to stop cleanly.\n\n"
+            { .text = "The analysis is running again. Now let's learn about graceful stopping\n\n "
               "Click the 'Grace' button in the toolbar.\n\n"
-              "Graceful stop is different from regular stop:\n"
-              "• Regular Stop: Interrupts analysis immediately, current position may be incomplete\n"
-              "• Grace: Lets current positions finish completely, then stops\n\n"
-              "This ensures all results are complete and valid. When multiple positions run in parallel "
-              "(with concurrency > 1), Grace waits for all active positions to finish analyzing before stopping. "
-              "No new positions are started during Grace mode.",
+              "Graceful stop lets current positions finish completely, then stops.\n",
               .success = "Grace mode activated - current analyses are finishing.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Grace mode is active! Watch the progress bar - you'll see it's not starting new positions, "
-              "but current ones are still completing.\n\n"
-              "If you have concurrency set higher than 1, you'll see multiple board tabs. Each tab shows "
-              "one engine analyzing one position in parallel. This speeds up the entire test suite significantly.\n\n"
+            { .text = "Grace mode is active!\n\n"
               "Wait for the analysis to fully stop (all current positions complete).\n\n"
-              "Once stopped, let's try the 'Clear' button:\n"
-              "• Click 'Clear' to delete all results and start fresh\n\n"
+              "• Once stopped, click 'Clear' to delete all results and start fresh\n\n"
               "Clear is useful when you want to re-run the test with different settings or engines. "
               "It removes all progress but keeps your configuration.",
               .success = "Analysis stopped gracefully.",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "Results have been cleared! The results table is empty, and the progress bar is reset.\n\n"
-              "Your configuration (engines, time limits, EPD file) is still intact - only the results were removed. "
-              "This makes it easy to quickly re-run tests with the same settings.\n\n"
               "Let's start again:\n"
-              "• Click 'Analyze' to begin a fresh analysis\n\n"
-              "The engines will start analyzing from the first position again. All previous results are gone, "
-              "giving you a clean slate.",
+              "• Click 'Analyze' to begin a fresh analysis\n\n",
               .success = "Fresh analysis started!",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "The analysis is running again with fresh results. Now let's explore concurrency - "
-              "one of the most powerful features for speeding up analysis.\n\n"
-              "Move the 'Concurrency' slider at the top to 10.\n\n"
               "Concurrency determines how many positions are analyzed simultaneously:\n"
-              "• Concurrency 1: Positions analyzed one at a time (slowest, least CPU usage)\n"
-              "• Concurrency 10: 10 positions analyzed in parallel (10× faster!)\n\n"
-              "With concurrency 10, you'll see 10 board tabs appear - one for each parallel analysis. "
-              "Each tab shows a different engine working on a different position. You can click any tab "
-              "to watch that specific analysis.\n\n"
-              "Note: Set concurrency based on your CPU cores. Too high may slow down your system.",
+              "Move the 'Concurrency' slider at the top to 10.\n\n",
               .success = "Concurrency increased - analysis is now much faster!",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "Congratulations! You've completed the EPD Analysis Tutorial!\n\n"
