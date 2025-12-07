@@ -366,47 +366,127 @@ static auto epdWindowTutorialInit = []() {
         .name = Tutorial::TutorialName::Epd,
         .displayName = "EPD Analysis",
         .messages = {
-            { .text = "Run engine position tests with EPD files.\n"
-              "These tests evaluate engine strength on tactical positions.\n\n"
-              "Click the 'EPD' tab to open this window.",
+            { .text = "Welcome to the EPD Analysis Tutorial!\n\n"
+              "EPD (Extended Position Description) analysis lets you test how well chess engines solve tactical positions. "
+              "This is different from tournaments - instead of playing full games, engines analyze predefined positions "
+              "and try to find the correct move or evaluation.\n\n"
+              "EPD files contain positions with expected solutions. Engines score points when they find the correct move "
+              "within the time limit. This helps you:\n"
+              "• Evaluate tactical strength across different engines\n"
+              "• Test engines on specific position types (tactics, endgames, etc.)\n"
+              "• Compare analysis quality rather than playing strength\n\n"
+              "To help you through the process, we'll mark relevant buttons with a red dot as needed.\n\n"
+              "Let's begin! Click on the 'EPD' tab in the left window to open the analysis configuration.",
+              .success = "Great! The EPD Analysis window is now open.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "EPD window is now open.\n\n"
-              "Open 'Engines' section and select two engines.",
+            { .text = "Now let's select the engines to test. You can compare multiple engines to see which "
+              "performs better on tactical positions.\n\n"
+              "In the 'Engines' section:\n"
+              "• Select at least two engines from your configured engines\n"
+              "• Click the '+' button next to each engine you want to test\n\n"
+              "The more engines you select, the better you can compare their tactical abilities. "
+              "All selected engines will analyze the same positions under identical conditions for a fair comparison.",
+              .success = "Engines selected! Let's configure the analysis parameters.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Configure test parameters in 'Configuration':\n"
-              "• Seen plies: 3\n"
-              "• Max time: 10s, Min time: 1s\n"
-              "• Select an EPD or RAW file",
+            { .text = "Time to configure how the analysis should run. In the 'Configuration' section, set:\n\n"
+              "• 'Seen plies': 3 - engines must find the solution within 3 search iterations\n"
+              "• 'Max time': 10 seconds - maximum time per position\n"
+              "• 'Min time': 1 second - minimum analysis time even if solution is found earlier\n"
+              "• 'EPD file': Click and select a test suite file (.epd or .raw format)\n\n"
+              "The seen plies setting is important: engines get points when they find the correct move "
+              "and keep it as their top choice for at least 3 consecutive search depths. This filters out "
+              "lucky guesses and ensures the engine truly understands the position.\n\n"
+              "Popular test suites include: WAC (Win At Chess), ERET, or custom tactical position sets.",
+              .success = "Configuration is complete!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Configuration complete!\n\n"
-              "Click 'Analyze' to start the test.",
+            { .text = "Everything is configured - time to start the analysis!\n\n"
+              "Click the 'Analyze' button (play icon) in the toolbar to begin.\n\n"
+              "Once started:\n"
+              "• Engines will analyze each position from the EPD file sequentially\n"
+              "• The progress bar shows how many positions have been completed\n"
+              "• Board tabs will appear showing current analysis (one per concurrent analysis)\n"
+              "• The results table updates in real time, showing solved/total positions for each engine\n"
+              "• Results are automatically saved at each position\n\n"
+              "You can stop and continue anytime - progress is never lost!",
+              .success = "Analysis is running! Watch the engines solve positions.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Analysis is running!\n\n"
-              "Click 'Stop' to pause. Progress is auto-saved.",
+            { .text = "The analysis is now active! You can see the engines working through the position set.\n\n"
+              "Notice the board tabs at the top - click any tab to watch that engine's current analysis live. "
+              "You'll see the principal variation, evaluation, and search depth updating in real time.\n\n"
+              "Let's practice stopping and resuming:\n"
+              "• Click the 'Stop' button (same location as Analyze) to pause the analysis\n\n"
+              "Stopping is instant - current positions are saved, and you can continue exactly where you left off. "
+              "This is useful if you need your CPU for other tasks or want to review results so far.",
+              .success = "Analysis paused. Notice the button now shows 'Continue'.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Stopped. Button now shows 'Continue'.\n\n"
-              "Click 'Continue' to resume.",
+            { .text = "The analysis is paused, and all progress is safely saved. The results table shows "
+              "what has been analyzed so far.\n\n"
+              "Now let's resume:\n"
+              "• Click the 'Continue' button (same button as before)\n\n"
+              "The analysis will pick up exactly where it stopped - same position, same progress. "
+              "No work is repeated, no results are lost. This makes it easy to run long test suites "
+              "over multiple sessions.\n\n"
+              "You can stop and continue as many times as needed!",
+              .success = "Analysis resumed!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Analysis resumed!\n\n"
-              "Click 'Grace' for graceful stop.\n"
-              "Finishes current tests, skips new ones.",
+            { .text = "The analysis is running again. Now let's learn about graceful stopping - "
+              "a feature that's useful when you want to stop cleanly.\n\n"
+              "Click the 'Grace' button in the toolbar.\n\n"
+              "Graceful stop is different from regular stop:\n"
+              "• Regular Stop: Interrupts analysis immediately, current position may be incomplete\n"
+              "• Grace: Lets current positions finish completely, then stops\n\n"
+              "This ensures all results are complete and valid. When multiple positions run in parallel "
+              "(with concurrency > 1), Grace waits for all active positions to finish analyzing before stopping. "
+              "No new positions are started during Grace mode.",
+              .success = "Grace mode activated - current analyses are finishing.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Grace mode! Tests finishing.\n\n"
-              "Board tabs show parallel analyses.\n"
-              "When stopped, click 'Clear' to delete results.",
+            { .text = "Grace mode is active! Watch the progress bar - you'll see it's not starting new positions, "
+              "but current ones are still completing.\n\n"
+              "If you have concurrency set higher than 1, you'll see multiple board tabs. Each tab shows "
+              "one engine analyzing one position in parallel. This speeds up the entire test suite significantly.\n\n"
+              "Wait for the analysis to fully stop (all current positions complete).\n\n"
+              "Once stopped, let's try the 'Clear' button:\n"
+              "• Click 'Clear' to delete all results and start fresh\n\n"
+              "Clear is useful when you want to re-run the test with different settings or engines. "
+              "It removes all progress but keeps your configuration.",
+              .success = "Analysis stopped gracefully.",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Results cleared!\n\n"
-              "Click 'Analyze' to restart.",
+            { .text = "Results have been cleared! The results table is empty, and the progress bar is reset.\n\n"
+              "Your configuration (engines, time limits, EPD file) is still intact - only the results were removed. "
+              "This makes it easy to quickly re-run tests with the same settings.\n\n"
+              "Let's start again:\n"
+              "• Click 'Analyze' to begin a fresh analysis\n\n"
+              "The engines will start analyzing from the first position again. All previous results are gone, "
+              "giving you a clean slate.",
+              .success = "Fresh analysis started!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "Analysis running!\n\n"
-              "Move 'Concurrency' slider to 10.\n"
-              "Creates 10 parallel analyses with board tabs.",
+            { .text = "The analysis is running again with fresh results. Now let's explore concurrency - "
+              "one of the most powerful features for speeding up analysis.\n\n"
+              "Move the 'Concurrency' slider at the top to 10.\n\n"
+              "Concurrency determines how many positions are analyzed simultaneously:\n"
+              "• Concurrency 1: Positions analyzed one at a time (slowest, least CPU usage)\n"
+              "• Concurrency 10: 10 positions analyzed in parallel (10× faster!)\n\n"
+              "With concurrency 10, you'll see 10 board tabs appear - one for each parallel analysis. "
+              "Each tab shows a different engine working on a different position. You can click any tab "
+              "to watch that specific analysis.\n\n"
+              "Note: Set concurrency based on your CPU cores. Too high may slow down your system.",
+              .success = "Concurrency increased - analysis is now much faster!",
               .type = SnackbarManager::SnackbarType::Note },
-            { .text = "EPD Analysis Complete!\n\n"
-              "Well done!\n\n"
-              "• Results auto-save on exit\n"
-              "• Cannot resume after restart\n"
-              "• Progress bar shows completion",
+            { .text = "Congratulations! You've completed the EPD Analysis Tutorial!\n\n"
+              "You've learned how to:\n"
+              "• Select engines for tactical testing\n"
+              "• Configure analysis parameters (time limits, seen plies, test files)\n"
+              "• Start, stop, and continue analyses\n"
+              "• Use graceful stopping for clean exits\n"
+              "• Clear and restart tests\n"
+              "• Adjust concurrency for faster results\n\n"
+              "Important notes:\n"
+              "• Results are auto-saved after each position\n"
+              "• You can stop/continue anytime without losing progress\n"
+              "• Results cannot be resumed after application restart (config is saved, but progress is reset)\n"
+              "• Higher concurrency = faster completion, but more CPU usage\n"
+              "• The progress bar and results table update in real time\n\n"
+              "Try different EPD test suites to evaluate your engines on various tactical themes. Happy analyzing!",
               .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {

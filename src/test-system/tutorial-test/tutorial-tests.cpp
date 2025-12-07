@@ -89,7 +89,7 @@ namespace QaplaTest {
             navigateToChatbot(ctx);
             ctx->ItemClick("**/###Tutorial");
             ctx->Yield(2);
-            ctx->ItemClick("**/Tutorial/###Tournament");
+            ctx->ItemClick("**/Chatbot/###Tournament");
             ctx->Yield(2);
             
             // Wait for tutorial to start
