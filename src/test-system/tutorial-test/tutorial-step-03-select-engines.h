@@ -34,8 +34,8 @@ namespace QaplaTest::TutorialTest {
         ctx->Yield();
 
         // Select first engine twice via + button
-        ctx->ItemClick("**/###addEngine", 0, ImGuiTestOpFlags_NoError);
-        ctx->ItemClick("**/###addEngine", 0, ImGuiTestOpFlags_NoError);
+        ctx->ItemClick("**/available_0/###addEngine", 0, ImGuiTestOpFlags_NoError);
+        ctx->ItemClick("**/available_0/###addEngine", 0, ImGuiTestOpFlags_NoError);
         ctx->Yield();
 
         // Open first selected engine to enable ponder
@@ -43,6 +43,14 @@ namespace QaplaTest::TutorialTest {
         ctx->Yield();
         
         ctx->ItemCheck("**/###Ponder");
+        ctx->Yield();
+
+        // Close the engine configuration
+        ctx->ItemClose("**/###0selected");
+        ctx->Yield();
+        
+        // Close Engines section
+        ctx->ItemClose("**/###Engines");
         ctx->Yield();
 
         // Click Continue and advance to step 4

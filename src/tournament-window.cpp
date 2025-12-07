@@ -48,7 +48,7 @@ static void drawSingleButton(
     ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
 {
-    if (button == "Run/Grace/Continue")
+    if (button == "RunGraceContinue")
     {
         if (running)
         {
@@ -91,11 +91,11 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
         return QaplaButton::ButtonState::Highlighted;
     }
     
-    if (button == "Run/Grace/Continue" && TournamentData::instance().getState() == TournamentData::State::GracefulStopping) {
+    if (button == "RunGraceContinue" && TournamentData::instance().getState() == TournamentData::State::GracefulStopping) {
         return QaplaButton::ButtonState::Active;
     }
     
-    if (button == "Run/Grace/Continue" && TournamentData::instance().isFinished()) {
+    if (button == "RunGraceContinue" && TournamentData::instance().isFinished()) {
         return QaplaButton::ButtonState::Disabled;
     }
     
@@ -129,12 +129,12 @@ std::string TournamentWindow::drawButtons() {
     
     std::string clickedButton;
     
-    for (const std::string button : { "Run/Grace/Continue", "Stop", "Clear", "Load", "Save As" }) {
+    for (const std::string button : { "RunGraceContinue", "Stop", "Clear", "Load", "Save As" }) {
         ImGui::SetCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
         auto label = button;
         
-        if (label == "Run/Grace/Continue") {
+        if (label == "RunGraceContinue") {
             label = running ? "Grace" : "Run";
             if (!running && TournamentData::instance().hasTasksScheduled()) {
                 label = "Continue";
@@ -163,7 +163,7 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
     {
         try
         {
-            if (button == "Run/Grace/Continue")
+            if (button == "RunGraceContinue")
             {
                 bool running = TournamentData::instance().isRunning();
                 if (running)
@@ -446,7 +446,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         // Step 7: Set concurrency to 4
         if (tournamentData.getExternalConcurrency() == 4) {
             Tutorial::instance().requestNextTutorialStep(topicName);
-            highlightedButton_ = "Run/Grace/Continue";
+            highlightedButton_ = "RunGraceContinue";
         }
         return;
         
@@ -459,7 +459,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         return;
         
         case 10:
-        // Step 9: Wait for tournament to finish - check if NOT running and has results
+        // Step 9: Wait for tournament to finish - check if NOT running and has tasks scheduled
         if (!tournamentData.isRunning() && tournamentData.hasTasksScheduled()) {
             Tutorial::instance().requestNextTutorialStep(topicName);
             highlightedButton_ = "Save As";
@@ -486,7 +486,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             }
             if (selectedCount >= 3) {
                 Tutorial::instance().requestNextTutorialStep(topicName);
-                highlightedButton_ = "Run/Grace/Continue";
+                highlightedButton_ = "RunGraceContinue";
             }
         }
         return;

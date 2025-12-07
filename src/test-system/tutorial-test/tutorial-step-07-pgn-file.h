@@ -31,11 +31,19 @@ namespace QaplaTest::TutorialTest {
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
+        // Open PGN section
+        ctx->ItemOpen("**/###Pgn");
+        ctx->Yield();
+
         // Set PGN file programmatically
-        tournamentData.tournamentPgn().pgnOptions().file = "test-tutorial-output.pgn";
+        tournamentData.tournamentPgn().pgnOptions().file = "log/test-tutorial-output.pgn";
         
         // Verify PGN file is set
         IM_CHECK(!tournamentData.tournamentPgn().pgnOptions().file.empty());
+
+        // Close PGN section
+        ctx->ItemClose("**/###Pgn");
+        ctx->Yield();
 
         // Click Continue and advance to step 8
         clickContinueAndAdvance(ctx, 8);

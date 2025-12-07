@@ -57,6 +57,7 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     if (options.showType) {
         ImGui::SetNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Type", config_->type, { "gauntlet", "round-robin" });
+        //changed |= ImGuiControls::inputText("Type", config_->type);
         ImGuiControls::hooverTooltip(
             "Tournament type:\n"
             "  gauntlet - One engine plays against all others\n"

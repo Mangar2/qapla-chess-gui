@@ -34,6 +34,38 @@ using namespace QaplaTest::TutorialTest;
 
 namespace QaplaTest {
 
+    static void resetTestData() {
+        // Clear all selected engines
+        auto& tournamentData = QaplaWindows::TournamentData::instance();
+        auto& engineSelect = tournamentData.engineSelect();
+        auto configs = engineSelect.getEngineConfigurations();
+        for (auto& cfg : configs) {
+            cfg.selected = false;
+            cfg.config.setPonder(false);
+        }
+        engineSelect.setEngineConfigurations(configs);
+        
+        // Reset global settings to defaults
+        QaplaWindows::ImGuiEngineGlobalSettings::GlobalConfiguration defaultGlobalConfig;
+        tournamentData.globalSettings().setGlobalConfiguration(defaultGlobalConfig);
+        
+        // Reset opening configuration to defaults
+        QaplaTester::Openings defaultOpenings;
+        tournamentData.tournamentOpening().openings() = defaultOpenings;
+        
+        // Reset tournament configuration to defaults
+        QaplaTester::TournamentConfig defaultTournamentConfig;
+        tournamentData.config() = defaultTournamentConfig;
+        
+        // Reset time control to default
+        QaplaWindows::ImGuiEngineGlobalSettings::TimeControlSettings defaultTimeControl;
+        tournamentData.globalSettings().setTimeControlSettings(defaultTimeControl);
+        
+        // Reset PGN configuration to defaults
+        QaplaTester::PgnSave::Options defaultPgnOptions;
+        tournamentData.tournamentPgn().pgnOptions() = defaultPgnOptions;
+    }
+
     void registerTutorialTests(ImGuiTestEngine* engine) {
         ImGuiTest* tst = nullptr;
 
@@ -48,19 +80,7 @@ namespace QaplaTest {
             // Precondition: Clean state and engines available
             cleanupTournamentState();
             QaplaWindows::TournamentWindow::clearTournamentTutorialState();
-            
-            // Clear all selected engines
-            auto& tournamentData = QaplaWindows::TournamentData::instance();
-            auto& engineSelect = tournamentData.engineSelect();
-            auto configs = engineSelect.getEngineConfigurations();
-            for (auto& cfg : configs) {
-                cfg.selected = false;
-            }
-            engineSelect.setEngineConfigurations(configs);
-            
-            // Reset global settings to defaults
-            QaplaWindows::ImGuiEngineGlobalSettings::GlobalConfiguration defaultGlobalConfig;
-            tournamentData.globalSettings().setGlobalConfiguration(defaultGlobalConfig);
+            resetTestData();
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -68,14 +88,13 @@ namespace QaplaTest {
             ctx->LogInfo("Starting Tutorial via Chatbot");
             navigateToChatbot(ctx);
             ctx->ItemClick("**/###Tutorial");
-            ctx->Yield();
-            ctx->ItemClick("**/###Tournament");
-            ctx->Yield();
+            ctx->Yield(2);
+            ctx->ItemClick("**/Tutorial/###Tournament");
+            ctx->Yield(2);
             
             // Wait for tutorial to start
             IM_CHECK(waitForTutorialProgress(ctx, 1, 5.0f));
             ctx->LogInfo("Tutorial started, progress: %d", QaplaWindows::TournamentWindow::tutorialProgress_);
-
             // Execute all tutorial steps
             executeStep01_OpenTournamentTab(ctx);
             executeStep02_ConfigureGlobalSettings(ctx);

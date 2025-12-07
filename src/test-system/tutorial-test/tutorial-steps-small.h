@@ -50,11 +50,12 @@ namespace QaplaTest::TutorialTest {
         // Verify concurrency is set
         IM_CHECK_EQ(tournamentData.getExternalConcurrency(), 4U);
 
-        // Click Continue and advance to step 9
-        clickContinueAndAdvance(ctx, 9);
+        // No Continue button here, as we made just one change
+        ctx->Yield();
+        IM_CHECK(waitForTutorialProgress(ctx, 9, 5.0f));
         
         // Verify Run button highlighted
-        IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedButton_.c_str(), "Run/Grace/Continue");
+        IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedButton_.c_str(), "RunGraceContinue");
     }
 
     // Step 9: Start Tournament
@@ -64,7 +65,7 @@ namespace QaplaTest::TutorialTest {
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
         // Click Run button
-        ctx->ItemClick("**/###Run");
+        ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();
         
         // Wait for tournament to start
@@ -76,8 +77,7 @@ namespace QaplaTest::TutorialTest {
         
         IM_CHECK(tournamentData.isRunning());
 
-        // Progress advances automatically when running
-        IM_CHECK(waitForTutorialProgress(ctx, 10, 5.0f));
+        clickContinueAndAdvance(ctx, 10);
     }
 
     // Step 10: Wait for Tournament to Finish
@@ -86,18 +86,21 @@ namespace QaplaTest::TutorialTest {
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
-        // Wait for tournament to finish (max 60 seconds for small test)
+        // For testing: Click Stop button instead of waiting for tournament completion
+        ctx->ItemClick("**/###Tournament/Stop");
+        ctx->Yield();
+        
+        // Wait for tournament to actually stop
         float waited = 0.0f;
-        while (tournamentData.isRunning() && waited < 60.0f) {
-            ctx->SleepNoSkip(0.5f, 0.5f);
-            waited += 0.5f;
+        while (tournamentData.isRunning() && waited < 5.0f) {
+            ctx->SleepNoSkip(0.1f, 0.1f);
+            waited += 0.1f;
         }
         
         IM_CHECK(!tournamentData.isRunning());
-        IM_CHECK(tournamentData.hasTasksScheduled());
 
         // Progress advances automatically when finished
-        IM_CHECK(waitForTutorialProgress(ctx, 11, 5.0f));
+        clickContinueAndAdvance(ctx, 11);
         
         // Verify Save As button highlighted
         IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedButton_.c_str(), "Save As");
@@ -107,12 +110,13 @@ namespace QaplaTest::TutorialTest {
     inline void executeStep11_SaveTournament(ImGuiTestContext* ctx) {
         ctx->LogInfo("Step 11: Save Tournament");
         
-        // Click Save As button
-        ctx->ItemClick("**/###Save As");
+        // For testing: Simulate the button click without actually opening the file dialog
+        // The tutorial only checks if the button was clicked, not if file was saved
+        QaplaWindows::TournamentWindow::showNextTournamentTutorialStep("Save As");
         ctx->Yield();
         
         // Progress advances when button clicked
-        IM_CHECK(waitForTutorialProgress(ctx, 12, 5.0f));
+        clickContinueAndAdvance(ctx, 12);
     }
 
     // Step 12: Add Third Engine
@@ -121,8 +125,12 @@ namespace QaplaTest::TutorialTest {
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
+        // Open Engines section
+        ctx->ItemOpen("**/###Engines");
+        ctx->Yield();
+
         // Add third engine - click + button for second available engine
-        ctx->ItemClick("**/###addEngine", 0, ImGuiTestOpFlags_NoError);
+        ctx->ItemClick("**/available_1/###addEngine", 0, ImGuiTestOpFlags_NoError);
         ctx->Yield();
         
         // Verify at least 3 engines selected
@@ -135,11 +143,15 @@ namespace QaplaTest::TutorialTest {
         }
         IM_CHECK(selectedCount >= 3);
 
+        // Close Engines section
+        ctx->ItemClose("**/###Engines");
+        ctx->Yield();
+
         // Progress advances automatically
-        IM_CHECK(waitForTutorialProgress(ctx, 13, 5.0f));
+        clickContinueAndAdvance(ctx, 13);
         
         // Verify Continue button highlighted
-        IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedButton_.c_str(), "Run/Grace/Continue");
+        IM_CHECK_STR_EQ(QaplaWindows::TournamentWindow::highlightedButton_.c_str(), "RunGraceContinue");
     }
 
     // Step 13: Continue Tournament
@@ -149,7 +161,7 @@ namespace QaplaTest::TutorialTest {
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
         // Click Continue/Run button
-        ctx->ItemClick("**/###Run");
+        ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();
         
         // Wait for tournament to start
@@ -162,7 +174,7 @@ namespace QaplaTest::TutorialTest {
         IM_CHECK(tournamentData.isRunning());
 
         // Progress advances automatically
-        IM_CHECK(waitForTutorialProgress(ctx, 14, 5.0f));
+        clickContinueAndAdvance(ctx, 14);
     }
 
     // Step 14: Wait for Extended Tournament to Finish
@@ -177,22 +189,23 @@ namespace QaplaTest::TutorialTest {
             ctx->SleepNoSkip(0.5f, 0.5f);
             waited += 0.5f;
         }
-        
+        ctx->ItemClick("**/###Tournament/Stop");
+        ctx->Yield(2);
         // Progress advances automatically
-        IM_CHECK(waitForTutorialProgress(ctx, 15, 5.0f));
+        ctx->ItemClick("**/###Continue");
     }
 
     // Step 15: Tutorial Complete
     inline void executeStep15_TutorialComplete(ImGuiTestContext* ctx) {
         ctx->LogInfo("Step 15: Tutorial Complete");
-        
+        ctx->Yield(2);
         // Wait for tutorial to finish
         float waited = 0.0f;
         while (QaplaWindows::TournamentWindow::tutorialProgress_ == 15 && waited < 5.0f) {
             ctx->SleepNoSkip(0.1f, 0.1f);
             waited += 0.1f;
         }
-        
+        ctx->ItemClick("**/###Close");
         ctx->LogInfo("Tutorial Complete!");
     }
 

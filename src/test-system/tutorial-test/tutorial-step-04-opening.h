@@ -32,6 +32,10 @@ namespace QaplaTest::TutorialTest {
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
+        // Open Opening section
+        ctx->ItemOpen("**/###Opening");
+        ctx->Yield();
+
         // Find any .epd file in the workspace
         std::filesystem::path openingFile;
         for (const auto& entry : std::filesystem::recursive_directory_iterator(".")) {
@@ -52,6 +56,10 @@ namespace QaplaTest::TutorialTest {
         
         // Verify opening file is set
         IM_CHECK(!tournamentData.tournamentOpening().openings().file.empty());
+
+        // Close Opening section
+        ctx->ItemClose("**/###Opening");
+        ctx->Yield();
 
         // Click Continue and advance to step 5
         clickContinueAndAdvance(ctx, 5);

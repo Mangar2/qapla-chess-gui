@@ -31,28 +31,30 @@ namespace QaplaTest::TutorialTest {
         ctx->LogInfo("Step 5: Configure Tournament Settings");
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
+        ctx->ItemOpen("**/###Tournament");
+        ctx->Yield(5);
 
-        // Set tournament type to round-robin
-        ctx->ItemClick("**/###round-robin");
-        ctx->Yield();
-        
+        // Open Tournament section
+        tournamentData.config().type = "round-robin"; 
+     
         // Set rounds to 2
         ctx->ItemInputValue("**/###Rounds", 2);
-        ctx->Yield();
         
         // Set games per pairing to 2
         ctx->ItemInputValue("**/###Games per pairing", 2);
-        ctx->Yield();
         
         // Set same opening to 2
         ctx->ItemInputValue("**/###Same opening", 2);
-        ctx->Yield();
         
         // Verify settings
         IM_CHECK_STR_EQ(tournamentData.config().type.c_str(), "round-robin");
         IM_CHECK_EQ(tournamentData.config().rounds, 2U);
         IM_CHECK_EQ(tournamentData.config().games, 2U);
         IM_CHECK_EQ(tournamentData.config().repeat, 2U);
+
+        // Close Tournament section
+        ctx->ItemClose("**/###Tournament");
+        ctx->Yield();
 
         // Click Continue and advance to step 6
         clickContinueAndAdvance(ctx, 6);

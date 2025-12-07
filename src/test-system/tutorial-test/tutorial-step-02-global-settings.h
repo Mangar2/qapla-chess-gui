@@ -50,12 +50,16 @@ namespace QaplaTest::TutorialTest {
 
         // Disable global pondering via checkbox
         if (globalConfig.useGlobalPonder) {
-            ctx->ItemUncheck("**/###usePonder");
+            ctx->ItemUncheck("**/##usePonder");
             ctx->Yield();
         }
         
         // Verify global ponder is disabled
         IM_CHECK(!globalConfig.useGlobalPonder);
+
+        // Close the GlobalSettings section
+        ctx->ItemClose("**/###Global Engine Settings");
+        ctx->Yield();
 
         // Click Continue and advance to step 3
         clickContinueAndAdvance(ctx, 3);

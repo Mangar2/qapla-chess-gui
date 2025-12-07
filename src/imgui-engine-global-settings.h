@@ -157,7 +157,9 @@ namespace QaplaWindows {
          * @brief Returns the current time control settings
          * @return Reference to the current time control settings
          */
-        const TimeControlSettings& getTimeControlSettings() const { return timeControlSettings_; }
+        const TimeControlSettings& getTimeControlSettings() const { 
+            return timeControlSettings_; 
+        }
 
         /**
          * @brief Sets the time control settings

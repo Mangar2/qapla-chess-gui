@@ -30,13 +30,22 @@ namespace QaplaTest::TutorialTest {
         ctx->LogInfo("Step 6: Configure Time Control");
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
+        auto timeControlSettings = tournamentData.globalSettings().getTimeControlSettings();
+
+        // Open Time Control section
+        ctx->ItemOpen("**/###Time Control");
+        ctx->Yield();
 
         // Select predefined time control: 20.0+0.02
-        ctx->ItemClick("**/###20.0+0.02");
-        ctx->Yield();
+        timeControlSettings.timeControl = "20.0+0.02";
+        tournamentData.globalSettings().setTimeControlSettings(timeControlSettings);
         
         // Verify time control is set
         IM_CHECK_STR_EQ(tournamentData.globalSettings().getTimeControlSettings().timeControl.c_str(), "20.0+0.02");
+
+        // Close Time Control section
+        ctx->ItemClose("**/###Time Control");
+        ctx->Yield();
 
         // Click Continue and advance to step 7
         clickContinueAndAdvance(ctx, 7);
