@@ -30,7 +30,7 @@ Continue=Weiter
 Ok=OK
 Copy=Kopieren
 Paste=Einfügen
-Cancel=Stop
+Cancel=Abbrechen
 RGC=RGC
 Browse=Durchsuchen
 Apply=Übernehmen
@@ -84,6 +84,10 @@ Epd=Epd
 More...=More...
 Detect & Continue=Detect & Continue
 Skip Detection=Skip Detection
+Deutsch=Deutsch
+English=English
+Français=Français
+Finish=Finish
 
 [Translation]
 id=Checkbox
@@ -388,6 +392,8 @@ EPD analysis progress: positions analyzed / total positions=EPD analysis progres
 Stop EPD analysis gracefully after current positions finish=Stop EPD analysis gracefully after current positions finish
 Clear all EPD analysis results=Clear all EPD analysis results
 Maximum plies to play from PGN opening before engines take over.\nOnly applicable for PGN input.\n  all - Play full PGN sequence\n  \1 - Engines start from PGN start position\n  N - Play N plies, then engines continue=Maximum plies to play from PGN opening before engines take over.\nOnly applicable for PGN input.\n  all - Play full PGN sequence\n  \1 - Engines start from PGN start position\n  N - Play N plies, then engines continue
+Disable automatic color swap after each game=Disable automatic color swap after each game
+Average Elo level for scaling rating output=Average Elo level for scaling rating output
 
 [Translation]
 id=Table
@@ -587,4 +593,11 @@ Added Engines:=Added Engines:
 C:\Chess\cutechess-cli\qapla\1.\2\amoeba-win\3.exe=C:\Chess\cutechess-cli\qapla\1.\2\amoeba-win\3.exe
 C:\Chess\cutechess-cli\qapla\1.\2\Counter-v\3.\4-windows-\5.exe=C:\Chess\cutechess-cli\qapla\1.\2\Counter-v\3.\4-windows-\5.exe
 We are now checking the engines and reading their options (auto-detect)...=We are now checking the engines and reading their options (auto-detect)...
+No messages in history.=No messages in history.
+Thank you! Your language has been set. You can now continue using the application.=Thank you! Your language has been set. You can now continue using the application.
+Choose Language=Choose Language
+Tutorial=Tutorial
+EPD Analysis=EPD Analysis
+Tournament=Tournament
+C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe=C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe
 
