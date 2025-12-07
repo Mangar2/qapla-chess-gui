@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 GitHub Copilot
  */
 
-#include "chatbot-step-tournament-select-engines.h"
+#include "chatbot-step-select-engines.h"
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
 #include "epd-data.h"
@@ -30,15 +30,15 @@ using QaplaTester::EngineWorkerFactory;
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentSelectEngines::ChatbotStepTournamentSelectEngines(
+ChatbotStepSelectEngines::ChatbotStepSelectEngines(
     EngineSelectContext context)
     : context_(context) {}
 
-ChatbotStepTournamentSelectEngines::~ChatbotStepTournamentSelectEngines() {
+ChatbotStepSelectEngines::~ChatbotStepSelectEngines() {
     getEngineSelect().setAlwaysShowEngines(false);
 }
 
-ImGuiEngineSelect& ChatbotStepTournamentSelectEngines::getEngineSelect() {
+ImGuiEngineSelect& ChatbotStepSelectEngines::getEngineSelect() {
     if (context_ == EngineSelectContext::EpdAnalysis) {
         return EpdData::instance().engineSelect();
     }
@@ -48,11 +48,11 @@ ImGuiEngineSelect& ChatbotStepTournamentSelectEngines::getEngineSelect() {
     return TournamentData::instance().engineSelect();
 }
 
-const char* ChatbotStepTournamentSelectEngines::getContextName() const {
+const char* ChatbotStepSelectEngines::getContextName() const {
     return context_ == EngineSelectContext::EpdAnalysis ? "EPD analysis" : "tournament";
 }
 
-std::string ChatbotStepTournamentSelectEngines::draw() {
+std::string ChatbotStepSelectEngines::draw() {
 
     auto& engineSelect = getEngineSelect();
 

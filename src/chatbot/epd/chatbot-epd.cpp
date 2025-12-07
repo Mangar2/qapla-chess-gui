@@ -20,8 +20,8 @@
 #include "chatbot-epd.h"
 #include "chatbot-step-epd-stop-running.h"
 #include "chatbot-step-epd-continue-existing.h"
-#include "../chatbot-step-tournament-select-engines.h"
-#include "../chatbot-step-tournament-load-engine.h"
+#include "../chatbot-step-select-engines.h"
+#include "../chatbot-step-load-engine.h"
 #include "chatbot-step-epd-configuration.h"
 #include "chatbot-step-epd-start.h"
 
@@ -44,9 +44,9 @@ void ChatbotEpd::start() {
 }
 
 void ChatbotEpd::addAnalysisSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(
         EngineSelectContext::EpdAnalysis));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(
         EngineSelectContext::EpdAnalysis, 1));
     steps_.push_back(std::make_unique<ChatbotStepEpdConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepEpdStart>());

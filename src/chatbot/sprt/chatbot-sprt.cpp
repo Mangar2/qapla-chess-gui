@@ -22,8 +22,8 @@
 #include "../chatbot-step-tournament-continue-existing.h"
 #include "../chatbot-step-tournament-menu.h"
 #include "../chatbot-step-tournament-global-settings.h"
-#include "../chatbot-step-tournament-select-engines.h"
-#include "../chatbot-step-tournament-load-engine.h"
+#include "../chatbot-step-select-engines.h"
+#include "../chatbot-step-load-engine.h"
 #include "../chatbot-step-tournament-load.h"
 #include "../chatbot-step-tournament-opening.h"
 #include "../chatbot-step-tournament-pgn.h"
@@ -46,8 +46,8 @@ void ChatbotSprt::start() {
 
 void ChatbotSprt::addNewSprtSteps() {
     steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>(EngineSelectContext::SPRT));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentSelectEngines>(EngineSelectContext::SPRT));
-    steps_.push_back(std::make_unique<ChatbotStepTournamentLoadEngine>(EngineSelectContext::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(EngineSelectContext::SPRT));
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(EngineSelectContext::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(EngineSelectContext::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(EngineSelectContext::SPRT));

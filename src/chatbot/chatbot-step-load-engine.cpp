@@ -17,7 +17,7 @@
  * @copyright Copyright (c) 2025 GitHub Copilot
  */
 
-#include "chatbot-step-tournament-load-engine.h"
+#include "chatbot-step-load-engine.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 #include "engine-worker-factory.h"
@@ -32,11 +32,11 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine(
+ChatbotStepLoadEngine::ChatbotStepLoadEngine(
     EngineSelectContext context, size_t minEngines)
     : context_(context), minEngines_(minEngines) {}
 
-ImGuiEngineSelect& ChatbotStepTournamentLoadEngine::getEngineSelect() {
+ImGuiEngineSelect& ChatbotStepLoadEngine::getEngineSelect() {
     if (context_ == EngineSelectContext::EpdAnalysis) {
         return EpdData::instance().engineSelect();
     }
@@ -46,11 +46,11 @@ ImGuiEngineSelect& ChatbotStepTournamentLoadEngine::getEngineSelect() {
     return TournamentData::instance().engineSelect();
 }
 
-const char* ChatbotStepTournamentLoadEngine::getContextName() const {
+const char* ChatbotStepLoadEngine::getContextName() const {
     return context_ == EngineSelectContext::EpdAnalysis ? "analysis" : "tournament";
 }
 
-std::string ChatbotStepTournamentLoadEngine::draw() {
+std::string ChatbotStepLoadEngine::draw() {
     if (finished_) {
          return result_;
     }
@@ -69,7 +69,7 @@ std::string ChatbotStepTournamentLoadEngine::draw() {
     return result_;
 }
 
-void ChatbotStepTournamentLoadEngine::drawInput() {
+void ChatbotStepLoadEngine::drawInput() {
     auto selectedEngines = getEngineSelect().getSelectedEngines();
     size_t numSelected = selectedEngines.size();
     showAddedEngines();
@@ -133,7 +133,7 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
     }
 }
 
-void ChatbotStepTournamentLoadEngine::showAddedEngines()
+void ChatbotStepLoadEngine::showAddedEngines()
 {
     if (addedEnginePaths_.empty()) {
         return;
@@ -148,7 +148,7 @@ void ChatbotStepTournamentLoadEngine::showAddedEngines()
     }
 }
 
-void ChatbotStepTournamentLoadEngine::addEngines() {
+void ChatbotStepLoadEngine::addEngines() {
     auto& engineSelect = getEngineSelect();
     auto added = engineSelect.addEngines(true);
     for (const auto& path : added) {
@@ -156,7 +156,7 @@ void ChatbotStepTournamentLoadEngine::addEngines() {
     }
 }
 
-void ChatbotStepTournamentLoadEngine::startDetection() {
+void ChatbotStepLoadEngine::startDetection() {
     try {
         QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
         detectionStarted_ = true;
@@ -167,7 +167,7 @@ void ChatbotStepTournamentLoadEngine::startDetection() {
     QaplaConfiguration::Configuration::instance().setModified();
 }
 
-void ChatbotStepTournamentLoadEngine::drawDetecting() {
+void ChatbotStepLoadEngine::drawDetecting() {
     QaplaWindows::ImGuiControls::textWrapped("We are now checking the engines and reading their options (auto-detect)...");
     
     bool detecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
