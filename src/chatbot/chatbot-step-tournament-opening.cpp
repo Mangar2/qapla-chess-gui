@@ -30,18 +30,18 @@ namespace QaplaWindows::ChatBot {
 
 constexpr uint64_t MAX_VALIDATION_GAMES = 10000;
 
-ChatbotStepTournamentOpening::ChatbotStepTournamentOpening(TournamentType type)
+ChatbotStepTournamentOpening::ChatbotStepTournamentOpening(EngineSelectContext type)
     : type_(type) {}
 
 ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().tournamentOpening();
     }
     return TournamentData::instance().tournamentOpening();
 }
 
 const ImGuiTournamentOpening& ChatbotStepTournamentOpening::getTournamentOpening() const {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().tournamentOpening();
     }
     return TournamentData::instance().tournamentOpening();

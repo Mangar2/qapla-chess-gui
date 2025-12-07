@@ -22,6 +22,7 @@
 #include "chatbot-step.h"
 #include "chatbot-step-tournament-stop-running.h"
 #include <string>
+#include <functional>
 
 namespace QaplaWindows {
     class ImGuiEngineSelect;
@@ -31,23 +32,32 @@ namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to select engines from the list of available engines.
- * Supports both standard tournaments and SPRT tournaments.
+ * Supports tournaments, SPRT tournaments, and EPD analysis.
  */
 class ChatbotStepTournamentSelectEngines : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentSelectEngines(TournamentType type = TournamentType::Standard);
+    using EngineSelectFactory = std::function<ImGuiEngineSelect&()>;
+
+    explicit ChatbotStepTournamentSelectEngines(
+        EngineSelectContext context = EngineSelectContext::Standard);
     ~ChatbotStepTournamentSelectEngines() override;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    EngineSelectContext context_;
 
     /**
-     * @brief Gets the engine selection for the tournament.
+     * @brief Gets the engine selection based on context and type.
      * @return Reference to the engine selection.
      */
     [[nodiscard]] ImGuiEngineSelect& getEngineSelect();
+    
+    /**
+     * @brief Gets the context name for UI text.
+     * @return "tournament" or "EPD analysis"
+     */
+    [[nodiscard]] const char* getContextName() const;
 };
 
 } // namespace QaplaWindows::ChatBot

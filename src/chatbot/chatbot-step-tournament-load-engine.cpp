@@ -24,6 +24,7 @@
 #include "configuration.h"
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
+#include "epd-data.h"
 #include "snackbar.h"
 #include <imgui.h>
 #include <format>
@@ -31,14 +32,22 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine(TournamentType type)
-    : type_(type) {}
+ChatbotStepTournamentLoadEngine::ChatbotStepTournamentLoadEngine(
+    EngineSelectContext context, size_t minEngines)
+    : context_(context), minEngines_(minEngines) {}
 
 ImGuiEngineSelect& ChatbotStepTournamentLoadEngine::getEngineSelect() {
-    if (type_ == TournamentType::SPRT) {
+    if (context_ == EngineSelectContext::EpdAnalysis) {
+        return EpdData::instance().engineSelect();
+    }
+    if (context_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().engineSelect();
     }
     return TournamentData::instance().engineSelect();
+}
+
+const char* ChatbotStepTournamentLoadEngine::getContextName() const {
+    return context_ == EngineSelectContext::EpdAnalysis ? "analysis" : "tournament";
 }
 
 std::string ChatbotStepTournamentLoadEngine::draw() {
@@ -67,7 +76,9 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
 
     // We automatically select engines that were added thus numSelected includes them
     if (numSelected == 0) {
-        QaplaWindows::ImGuiControls::textWrapped("No engines selected. You need at least two engines to start a tournament. Please select engines.");
+        QaplaWindows::ImGuiControls::textWrapped(
+            std::format("No engines selected. You need at least {} engine{} to start {}. Please select engines.",
+                minEngines_, minEngines_ == 1 ? "" : "s", getContextName()).c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
@@ -77,8 +88,12 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
             finished_ = true;
             result_ = "stop";
         }
-    } else if (numSelected == 1) {
-        QaplaWindows::ImGuiControls::textWrapped("One engine selected. You need at least two engines to start a tournament. Please select at least one more engine.");
+    } else if (numSelected < minEngines_) {
+        QaplaWindows::ImGuiControls::textWrapped(
+            std::format("{} engine{} selected. You need at least {} to start {}. Please select at least {} more engine{}.",
+                numSelected, numSelected == 1 ? "" : "s",
+                minEngines_, getContextName(),
+                minEngines_ - numSelected, (minEngines_ - numSelected) == 1 ? "" : "s").c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
@@ -88,8 +103,9 @@ void ChatbotStepTournamentLoadEngine::drawInput() {
             finished_ = true;
             result_ = "stop";
         }
-    } else { // numSelected >= 2
-        QaplaWindows::ImGuiControls::textWrapped("Do you want to load additional engines for the tournament?");
+    } else { // numSelected >= minEngines_
+        QaplaWindows::ImGuiControls::textWrapped(
+            std::format("Do you want to load additional engines for the {}?", getContextName()).c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();

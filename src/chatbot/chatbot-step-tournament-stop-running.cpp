@@ -26,18 +26,18 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning(TournamentType type)
-    : type_(type) {}
+ChatbotStepTournamentStopRunning::ChatbotStepTournamentStopRunning(EngineSelectContext context)
+    : context_(context) {}
 
 bool ChatbotStepTournamentStopRunning::isRunning() const {
-    if (type_ == TournamentType::SPRT) {
+    if (context_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().isRunning();
     }
     return TournamentData::instance().isRunning();
 }
 
 void ChatbotStepTournamentStopRunning::stopPool(bool graceful) const {
-    if (type_ == TournamentType::SPRT) {
+    if (context_ == EngineSelectContext::SPRT) {
         SprtTournamentData::instance().stopPool(graceful);
     } else {
         TournamentData::instance().stopPool(graceful);
@@ -55,7 +55,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
         return "existing";
     }
 
-    const char* tournamentName = (type_ == TournamentType::SPRT) ? "SPRT tournament" : "tournament";
+    const char* tournamentName = (context_ == EngineSelectContext::SPRT) ? "SPRT tournament" : "tournament";
     std::string message = std::string("A ") + tournamentName + " is currently running. Would you like to end it?";
     QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     

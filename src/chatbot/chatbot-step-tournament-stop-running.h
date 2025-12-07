@@ -25,11 +25,12 @@
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Enum to distinguish between standard tournament and SPRT tournament.
+ * @brief Enum to distinguish the engine select context.
  */
-enum class TournamentType {
+enum class EngineSelectContext {
     Standard,
-    SPRT
+    SPRT,
+    EpdAnalysis
 };
 
 /**
@@ -40,12 +41,12 @@ enum class TournamentType {
  */
 class ChatbotStepTournamentStopRunning : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentStopRunning(TournamentType type = TournamentType::Standard);
+    explicit ChatbotStepTournamentStopRunning(EngineSelectContext context = EngineSelectContext::Standard);
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    EngineSelectContext context_;
     std::string finishedMessage_;
 
     /**

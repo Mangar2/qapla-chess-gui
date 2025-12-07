@@ -26,7 +26,7 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentLoad::ChatbotStepTournamentLoad(TournamentType type)
+ChatbotStepTournamentLoad::ChatbotStepTournamentLoad(EngineSelectContext type)
     : type_(type) {}
 
 std::string ChatbotStepTournamentLoad::draw() {
@@ -35,7 +35,7 @@ std::string ChatbotStepTournamentLoad::draw() {
     }
 
     std::vector<std::pair<std::string, std::string>> filters;
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         filters = { {"Qapla SPRT Tournament Files", "*.qsprt"}, {"All Files", "*.*"} };
     } else {
         filters = { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} };
@@ -43,7 +43,7 @@ std::string ChatbotStepTournamentLoad::draw() {
 
     auto selectedPath = OsDialogs::openFileDialog(false, filters);
     if (!selectedPath.empty() && !selectedPath[0].empty()) {
-        if (type_ == TournamentType::SPRT) {
+        if (type_ == EngineSelectContext::SPRT) {
             SprtTournamentData::instance().loadTournament(selectedPath[0]);
         } else {
             TournamentData::instance().loadTournament(selectedPath[0]);

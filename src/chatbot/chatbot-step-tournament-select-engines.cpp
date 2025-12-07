@@ -20,6 +20,7 @@
 #include "chatbot-step-tournament-select-engines.h"
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
+#include "epd-data.h"
 #include "imgui-controls.h"
 #include "i18n.h"
 #include "engine-worker-factory.h"
@@ -29,18 +30,26 @@ using QaplaTester::EngineWorkerFactory;
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentSelectEngines::ChatbotStepTournamentSelectEngines(TournamentType type)
-    : type_(type) {}
+ChatbotStepTournamentSelectEngines::ChatbotStepTournamentSelectEngines(
+    EngineSelectContext context)
+    : context_(context) {}
 
 ChatbotStepTournamentSelectEngines::~ChatbotStepTournamentSelectEngines() {
     getEngineSelect().setAlwaysShowEngines(false);
 }
 
 ImGuiEngineSelect& ChatbotStepTournamentSelectEngines::getEngineSelect() {
-    if (type_ == TournamentType::SPRT) {
+    if (context_ == EngineSelectContext::EpdAnalysis) {
+        return EpdData::instance().engineSelect();
+    }
+    if (context_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().engineSelect();
     }
     return TournamentData::instance().engineSelect();
+}
+
+const char* ChatbotStepTournamentSelectEngines::getContextName() const {
+    return context_ == EngineSelectContext::EpdAnalysis ? "EPD analysis" : "tournament";
 }
 
 std::string ChatbotStepTournamentSelectEngines::draw() {
@@ -56,9 +65,11 @@ std::string ChatbotStepTournamentSelectEngines::draw() {
     }
 
     if (!finished_) {
-        QaplaWindows::ImGuiControls::textWrapped("Select engines for the tournament:");
+        QaplaWindows::ImGuiControls::textWrapped(
+            std::format("Select engines for the {}:", getContextName()).c_str());
     } else {
-        QaplaWindows::ImGuiControls::textWrapped("Selected engines for the tournament:");
+        QaplaWindows::ImGuiControls::textWrapped(
+            std::format("Selected engines for the {}:", getContextName()).c_str());
     }
     ImGui::Spacing();
 

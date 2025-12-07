@@ -13,13 +13,13 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepTournamentStart : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentStart(TournamentType type = TournamentType::Standard);
+    explicit ChatbotStepTournamentStart(EngineSelectContext type = EngineSelectContext::Standard);
     ~ChatbotStepTournamentStart() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    EngineSelectContext type_;
 
     /**
      * @brief Checks if the tournament is finished.

@@ -32,16 +32,19 @@ namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to load additional engines from disk.
- * Supports both standard tournaments and SPRT tournaments.
+ * Supports tournaments, SPRT tournaments, and EPD analysis.
  */
 class ChatbotStepTournamentLoadEngine : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentLoadEngine(TournamentType type = TournamentType::Standard);
+    explicit ChatbotStepTournamentLoadEngine(
+        EngineSelectContext context = EngineSelectContext::Standard,
+        size_t minEngines = 2);
     ~ChatbotStepTournamentLoadEngine() override = default;
 
     [[nodiscard]] std::string draw() override;
 private:
-    TournamentType type_;
+    EngineSelectContext context_;
+    size_t minEngines_;
     std::string result_;
     
     enum class State {
@@ -59,6 +62,12 @@ private:
      * @return Reference to the engine selection.
      */
     [[nodiscard]] ImGuiEngineSelect& getEngineSelect();
+    
+    /**
+     * @brief Gets the context name for UI text.
+     * @return "tournament" or "analysis"
+     */
+    [[nodiscard]] const char* getContextName() const;
 
     void drawInput();
     void showAddedEngines();

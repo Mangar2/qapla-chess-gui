@@ -31,12 +31,12 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepTournamentLoad : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentLoad(TournamentType type = TournamentType::Standard);
+    explicit ChatbotStepTournamentLoad(EngineSelectContext type = EngineSelectContext::Standard);
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    EngineSelectContext type_;
 };
 
 } // namespace QaplaWindows::ChatBot

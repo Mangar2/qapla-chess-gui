@@ -25,11 +25,11 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings(TournamentType type)
+ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings(EngineSelectContext type)
     : type_(type) {}
 
 ImGuiEngineGlobalSettings& ChatbotStepTournamentGlobalSettings::getGlobalSettings() {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().globalSettings();
     }
     return TournamentData::instance().globalSettings();

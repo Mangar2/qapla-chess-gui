@@ -9,32 +9,32 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentStart::ChatbotStepTournamentStart(TournamentType type)
+ChatbotStepTournamentStart::ChatbotStepTournamentStart(EngineSelectContext type)
     : type_(type) {}
 
 bool ChatbotStepTournamentStart::isStarting() const {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().isStarting();
     }
     return TournamentData::instance().isStarting();
 }
 
 bool ChatbotStepTournamentStart::isRunning() const {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().isRunning();
     }
     return TournamentData::instance().isRunning();
 }
 
 uint32_t ChatbotStepTournamentStart::getExternalConcurrency() const {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().getExternalConcurrency();
     }
     return TournamentData::instance().getExternalConcurrency();
 }
 
 void ChatbotStepTournamentStart::setExternalConcurrency(uint32_t count) {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         SprtTournamentData::instance().setExternalConcurrency(count);
     } else {
         TournamentData::instance().setExternalConcurrency(count);
@@ -42,7 +42,7 @@ void ChatbotStepTournamentStart::setExternalConcurrency(uint32_t count) {
 }
 
 void ChatbotStepTournamentStart::startTournament() {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         SprtTournamentData::instance().startTournament();
     } else {
         TournamentData::instance().startTournament();
@@ -50,7 +50,7 @@ void ChatbotStepTournamentStart::startTournament() {
 }
 
 void ChatbotStepTournamentStart::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         SprtTournamentData::instance().setPoolConcurrency(count, nice, direct);
     } else {
         TournamentData::instance().setPoolConcurrency(count, nice, direct);
@@ -58,11 +58,11 @@ void ChatbotStepTournamentStart::setPoolConcurrency(uint32_t count, bool nice, b
 }
 
 const char* ChatbotStepTournamentStart::getTournamentName() const {
-    return (type_ == TournamentType::SPRT) ? "SPRT tournament" : "tournament";
+    return (type_ == EngineSelectContext::SPRT) ? "SPRT tournament" : "tournament";
 }
 
 const char* ChatbotStepTournamentStart::getSwitchViewMessage() const {
-    return (type_ == TournamentType::SPRT) ? "switch_to_sprt_view" : "switch_to_tournament_view";
+    return (type_ == EngineSelectContext::SPRT) ? "switch_to_sprt_view" : "switch_to_tournament_view";
 }
 
 std::string ChatbotStepTournamentStart::draw() {

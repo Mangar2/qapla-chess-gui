@@ -82,6 +82,8 @@ Nachrichten=Nachrichten
 EPD=EPD
 Epd=Epd
 More...=More...
+Detect & Continue=Detect & Continue
+Skip Detection=Skip Detection
 
 [Translation]
 id=Checkbox
@@ -179,7 +181,9 @@ Min full moves=Min full moves
 Required consecutive moves=Required consecutive moves
 Centipawn threshold=Centipawn threshold
 Number of Games=Number of Games
-##filePath#####filePath=##filePath#####filePath
+Ponder=Ponder
+Log=Log
+UCI_AnalyseMode=UCI_AnalyseMode
 
 [Translation]
 id=Option
@@ -248,6 +252,8 @@ Spike 1.4.1=Spike 1.4.1
 Spike \1.\2.=Spike \1.\2.
 Qapla \1.\2.=Qapla \1.\2.
 Spike \1.\2.\3 [ponder]=Spike \1.\2.\3 [ponder]
+amoeba-win\1.exe=amoeba-win\1.exe
+Counter-v\1.\2-windows-\3.exe=Counter-v\1.\2-windows-\3.exe
 
 [Translation]
 id=Option
@@ -303,6 +309,8 @@ Tournament stopped=Tournament stopped
 Great! The EPD Analysis window is now open.=Great! The EPD Analysis window is now open.
 Engines selected! Let's configure the analysis parameters.=Engines selected! Let's configure the analysis parameters.
 No EPD or RAW position file selected.=No EPD or RAW position file selected.
+Starting engine autodetection.\nThis may take a while...=Starting engine autodetection.\nThis may take a while...
+Engine autodetection completed.=Engine autodetection completed.
 
 [Translation]
 id=Table
@@ -590,4 +598,9 @@ The analysis is running again. Now let's learn about graceful stopping\n\n Click
 Grace mode is active!\n\nWait for the analysis to fully stop (all current positions complete).\n\n• Once stopped, click 'Clear' to delete all results and start fresh\n\nClear is useful when you want to re-run the test with different settings or engines. It removes all progress but keeps your configuration.=Grace mode is active!\n\nWait for the analysis to fully stop (all current positions complete).\n\n• Once stopped, click 'Clear' to delete all results and start fresh\n\nClear is useful when you want to re-run the test with different settings or engines. It removes all progress but keeps your configuration.
 Results have been cleared! The results table is empty, and the progress bar is reset.\n\nLet's start again:\n• Click 'Analyze' to begin a fresh analysis=Results have been cleared! The results table is empty, and the progress bar is reset.\n\nLet's start again:\n• Click 'Analyze' to begin a fresh analysis
 The analysis is running again with fresh results. Now let's explore concurrency - Concurrency determines how many positions are analyzed simultaneously:\nMove the 'Concurrency' slider at the top to \1.=The analysis is running again with fresh results. Now let's explore concurrency - Concurrency determines how many positions are analyzed simultaneously:\nMove the 'Concurrency' slider at the top to \1.
+Do you want to load additional engines for the analysis?=Do you want to load additional engines for the analysis?
+Added Engines:=Added Engines:
+C:\Chess\cutechess-cli\qapla\1.\2\amoeba-win\3.exe=C:\Chess\cutechess-cli\qapla\1.\2\amoeba-win\3.exe
+C:\Chess\cutechess-cli\qapla\1.\2\Counter-v\3.\4-windows-\5.exe=C:\Chess\cutechess-cli\qapla\1.\2\Counter-v\3.\4-windows-\5.exe
+We are now checking the engines and reading their options (auto-detect)...=We are now checking the engines and reading their options (auto-detect)...
 

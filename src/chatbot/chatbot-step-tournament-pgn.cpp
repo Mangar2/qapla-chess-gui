@@ -27,11 +27,11 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentPgn::ChatbotStepTournamentPgn(TournamentType type)
+ChatbotStepTournamentPgn::ChatbotStepTournamentPgn(EngineSelectContext type)
     : type_(type) {}
 
 ImGuiTournamentPgn& ChatbotStepTournamentPgn::getTournamentPgn() {
-    if (type_ == TournamentType::SPRT) {
+    if (type_ == EngineSelectContext::SPRT) {
         return SprtTournamentData::instance().tournamentPgn();
     }
     return TournamentData::instance().tournamentPgn();

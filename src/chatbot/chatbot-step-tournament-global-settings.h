@@ -34,13 +34,13 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepTournamentGlobalSettings : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentGlobalSettings(TournamentType type = TournamentType::Standard);
+    explicit ChatbotStepTournamentGlobalSettings(EngineSelectContext type = EngineSelectContext::Standard);
     ~ChatbotStepTournamentGlobalSettings() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    TournamentType type_;
+    EngineSelectContext type_;
     bool showMoreOptions_ = false;  ///< Show advanced options
 
     /**
