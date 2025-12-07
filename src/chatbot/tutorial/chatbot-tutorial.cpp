@@ -54,6 +54,27 @@ std::string getTutorialDisplayName(Tutorial::TutorialName name) {
     }
 }
 
+static std::string getTutorialTopicName(Tutorial::TutorialName name) {
+    switch (name) {
+        case Tutorial::TutorialName::Tournament:
+            return "tournament";
+        case Tutorial::TutorialName::EngineSetup:
+            return "engine";
+        case Tutorial::TutorialName::BoardEngines:
+            return "board";
+        case Tutorial::TutorialName::BoardWindow:
+            return "board";
+        case Tutorial::TutorialName::BoardCutPaste:
+            return "board";
+        case Tutorial::TutorialName::Epd:
+            return "epd";
+        case Tutorial::TutorialName::Snackbar:
+            return "snackbar";
+        default:
+            return "";
+    }
+}
+
 } // anonymous namespace
 
 // ============================================================================
@@ -197,7 +218,7 @@ void ChatbotStepTutorialRunner::installFilter() {
     filterHandle_ = SnackbarManager::instance().registerFilterCallback(
         [this](const SnackbarManager::SnackbarEntry& entry) -> bool {
             // Capture messages from "tutorial" topic or the specific tutorial topic
-            if (entry.topic == "tutorial") {
+            if (entry.topic == "tutorial" || entry.topic == getTutorialTopicName(tutorialName_) ) {
                 capturedMessages_.push_back(entry);
                 return false;  // Don't display in snackbar, we show it in chat
             }

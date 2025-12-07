@@ -22,6 +22,7 @@
 #include "embedded-window.h"
 #include "interactive-board-window.h"
 #include "imgui-engine-select.h"
+#include "tutorial.h"
 #include <memory>
 
 namespace QaplaWindows
@@ -55,9 +56,13 @@ namespace QaplaWindows
          * @param clickedButton The button that was clicked (empty string for state checks)
          */
         static void showNextEpdTutorialStep(const std::string& clickedButton);
+        static void clearEpdTutorialState();
 
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for EPD tutorial
         static inline std::string highlightedButton_ = ""; ///< Button to highlight for tutorial
+        static inline std::string highlightedSection_ = ""; ///< Section to highlight for tutorial
+        static inline Tutorial::TutorialContext enginesTutorial_; ///< Tutorial context for Engines section
+        static inline Tutorial::TutorialContext configurationTutorial_; ///< Tutorial context for Configuration section
         
     private:
         static std::string drawButtons();

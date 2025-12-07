@@ -198,7 +198,8 @@ void EpdWindow::drawInput()
     epdData.setPoolConcurrency(concurrency, true);
 
     ImGui::Spacing();
-    epdData.engineSelect().draw();
+    const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
+    epdData.engineSelect().draw(highlightEngineSelect);
 
     ImGuiEpdConfiguration epdConfig;
     ImGuiEpdConfiguration::DrawOptions options {
@@ -208,7 +209,8 @@ void EpdWindow::drawInput()
         .showMinTime = true,
         .showFilePath = true
     };
-    epdConfig.draw(options, inputWidth, 10.0F);
+    configurationTutorial_.highlight = (highlightedSection_ == "Configuration");
+    epdConfig.draw(options, inputWidth, 10.0F, configurationTutorial_);
 }
 
 void EpdWindow::drawProgress()
@@ -256,6 +258,14 @@ bool EpdWindow::highlighted() const {
     return tutorialProgress_ == 1;
 }
 
+void EpdWindow::clearEpdTutorialState() {
+    tutorialProgress_ = 0;
+    highlightedButton_.clear();
+    highlightedSection_.clear();
+    enginesTutorial_.clear();
+    configurationTutorial_.clear();
+}
+
 void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clickedButton) {
     constexpr auto tutorialName = Tutorial::TutorialName::Epd;
     
@@ -264,11 +274,15 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
     auto epdState = epdData.state;
     
     switch (tutorialProgress_) {
+        case 0:
+        clearEpdTutorialState();
+        return;
         case 1:
         // Step 0 (autoStart): Tutorial started, tab is highlighted
         // When draw() is called, the tab is open -> advance to next step
         Tutorial::instance().requestNextTutorialStep(tutorialName);
         highlightedButton_ = "";
+        highlightedSection_ = "EngineSelect";
         return;
         
         case 2:
@@ -276,6 +290,14 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         if (config.engines.size() >= 2) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
             highlightedButton_ = "";
+            highlightedSection_ = "Configuration";
+            configurationTutorial_.highlight = true;
+            configurationTutorial_.annotations["Seen plies"] = "Set to: 3";
+            configurationTutorial_.annotations["Max time"] = "Set to: 10";
+            configurationTutorial_.annotations["Min time"] = "Set to: 1";
+            configurationTutorial_.annotations["FilePath"] = "Select any EPD or RAW file";
+        } else {
+            highlightedSection_ = "EngineSelect";
         }
         return;
         
@@ -286,6 +308,8 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
             config.minTimeInS == 1 && 
             !config.filepath.empty()) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
+            configurationTutorial_.clear();
+            highlightedSection_ = "";
             highlightedButton_ = "Run/Stop";
         }
         return;
@@ -352,11 +376,13 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         case 11:
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
             highlightedButton_ = "";
+            clearEpdTutorialState();
             Tutorial::instance().finishTutorial(tutorialName);
         }
         return;
                                 
         default:
+        clearEpdTutorialState();
         return;
     }
 }
@@ -492,7 +518,7 @@ static auto epdWindowTutorialInit = []() {
         .getProgressCounter = []() -> uint32_t& {
             return EpdWindow::tutorialProgress_;
         },
-        .autoStart = true
+        .autoStart = false
     });
     return true;
 }();
