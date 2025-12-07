@@ -26,6 +26,36 @@
 
 namespace QaplaWindows::ChatBot {
 
+namespace {
+
+/**
+ * @brief Gets the display name for a tutorial.
+ * @param name The tutorial name.
+ * @return The display name string.
+ */
+std::string getTutorialDisplayName(Tutorial::TutorialName name) {
+    switch (name) {
+        case Tutorial::TutorialName::Tournament:
+            return "Tournament";
+        case Tutorial::TutorialName::EngineSetup:
+            return "Engine Setup";
+        case Tutorial::TutorialName::BoardEngines:
+            return "Board Engines";
+        case Tutorial::TutorialName::BoardWindow:
+            return "Board Window";
+        case Tutorial::TutorialName::BoardCutPaste:
+            return "Board Cut & Paste";
+        case Tutorial::TutorialName::Epd:
+            return "EPD Analysis";
+        case Tutorial::TutorialName::Snackbar:
+            return "Snackbar";
+        default:
+            return "";
+    }
+}
+
+} // anonymous namespace
+
 // ============================================================================
 // ChatbotTutorial implementation
 // ============================================================================
@@ -59,12 +89,11 @@ bool ChatbotTutorial::draw() {
         }
 
         if (steps_[currentStepIndex_]->isFinished()) {
-            // If this was the selection step, add the runner step based on result
-            if (currentStepIndex_ == 0 && !result.empty() && result != "stop") {
-                auto selectedTutorial = Tutorial::stringToTutorialName(result);
-                if (selectedTutorial != Tutorial::TutorialName::Count) {
-                    // User selected a tutorial, add the runner step
-                    steps_.push_back(std::make_unique<ChatbotStepTutorialRunner>(selectedTutorial));
+            // If this was the selection step, add the runner step based on selected tutorial
+            if (currentStepIndex_ == 0) {
+                auto* selectionStep = dynamic_cast<ChatbotStepTutorialSelect*>(steps_[0].get());
+                if (selectionStep != nullptr && selectionStep->getSelectedTutorial() != Tutorial::TutorialName::Count) {
+                    steps_.push_back(std::make_unique<ChatbotStepTutorialRunner>(selectionStep->getSelectedTutorial()));
                 }
             }
             ++currentStepIndex_;
@@ -87,47 +116,63 @@ std::unique_ptr<ChatbotThread> ChatbotTutorial::clone() const {
 // ChatbotStepTutorialSelect implementation
 // ============================================================================
 
-const std::vector<std::string> ChatbotStepTutorialSelect::availableTutorials_ = {
-    "Tournament"
+const std::vector<Tutorial::TutorialName> ChatbotStepTutorialSelect::availableTutorials_ = {
+    Tutorial::TutorialName::Tournament,
+    Tutorial::TutorialName::Epd
 };
+
+ChatbotStepTutorialSelect::ChatbotStepTutorialSelect() {
+    // Build options for selection
+    std::vector<ChatbotStepOptionList::Option> options;
+    options.reserve(availableTutorials_.size() + 1);
+    
+    for (size_t idx = 0; idx < availableTutorials_.size(); ++idx) {
+        const auto tutorialName = availableTutorials_[idx];
+        options.push_back({
+            getTutorialDisplayName(tutorialName),
+            [this, idx]() {
+                selectedTutorial_ = availableTutorials_[idx];
+            }
+        });
+    }
+    
+    // Add cancel option
+    options.push_back({
+        "Cancel",
+        []() { /* selectedTutorial_ remains Count */ }
+    });
+    
+    // Create option selector
+    optionSelector_ = std::make_unique<ChatbotStepOptionList>(
+        "Select a tutorial to run:",
+        std::move(options)
+    );
+}
 
 std::string ChatbotStepTutorialSelect::draw() {
     if (finished_) {
         // Show what was selected
-        if (!selectedTutorialName_.empty()) {
+        if (selectedTutorial_ != Tutorial::TutorialName::Count) {
             ImGuiControls::textWrapped(
-                std::format("Selected tutorial: {}", selectedTutorialName_));
+                std::format("Selected tutorial: {}", getTutorialDisplayName(selectedTutorial_)));
         } else {
             ImGuiControls::textWrapped("Tutorial selection cancelled.");
         }
         return "";
     }
 
-    ImGuiControls::textWrapped("Select a tutorial to run:");
-    ImGui::Spacing();
-
-    ImGui::PushID("Tutorial");
-    // Draw tutorial buttons from vector
-    for (const auto& tutorialName : availableTutorials_) {
-        if (ImGuiControls::textButton(tutorialName.c_str())) {
-            selectedTutorialName_ = tutorialName;
-            finished_ = true;
-            ImGui::PopID();
-            return tutorialName;  // Return the selected tutorial name
-        }
-        ImGui::Spacing();
-    }
-
-    // Cancel button
-    if (ImGuiControls::textButton("Cancel")) {
-        selectedTutorialName_.clear();
+    // Delegate to option selector
+    const std::string result = optionSelector_->draw();
+    
+    if (optionSelector_->isFinished()) {
         finished_ = true;
-        ImGui::PopID();
-        return "stop";
+        // If cancel was selected, return "stop"
+        if (selectedTutorial_ == Tutorial::TutorialName::Count) {
+            return "stop";
+        }
     }
-    ImGui::PopID();
-
-    return "";
+    
+    return result;
 }
 
 // ============================================================================
@@ -136,33 +181,11 @@ std::string ChatbotStepTutorialSelect::draw() {
 
 ChatbotStepTutorialRunner::ChatbotStepTutorialRunner(Tutorial::TutorialName tutorialName)
     : tutorialName_(tutorialName)
-    , tutorialTopicName_(getTutorialTopicName(tutorialName))
 {
 }
 
 ChatbotStepTutorialRunner::~ChatbotStepTutorialRunner() {
     removeFilter();
-}
-
-std::string ChatbotStepTutorialRunner::getTutorialTopicName(Tutorial::TutorialName name) {
-    switch (name) {
-        case Tutorial::TutorialName::Tournament:
-            return "tournament";
-        case Tutorial::TutorialName::EngineSetup:
-            return "engine";
-        case Tutorial::TutorialName::BoardEngines:
-            return "board";
-        case Tutorial::TutorialName::BoardWindow:
-            return "board";
-        case Tutorial::TutorialName::BoardCutPaste:
-            return "board";
-        case Tutorial::TutorialName::Epd:
-            return "epd";
-        case Tutorial::TutorialName::Snackbar:
-            return "snackbar";
-        default:
-            return "";
-    }
 }
 
 void ChatbotStepTutorialRunner::installFilter() {
@@ -174,7 +197,7 @@ void ChatbotStepTutorialRunner::installFilter() {
     filterHandle_ = SnackbarManager::instance().registerFilterCallback(
         [this](const SnackbarManager::SnackbarEntry& entry) -> bool {
             // Capture messages from "tutorial" topic or the specific tutorial topic
-            if (entry.topic == "tutorial" || entry.topic == tutorialTopicName_) {
+            if (entry.topic == "tutorial") {
                 capturedMessages_.push_back(entry);
                 return false;  // Don't display in snackbar, we show it in chat
             }

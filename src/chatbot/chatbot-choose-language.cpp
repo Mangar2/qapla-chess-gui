@@ -18,7 +18,7 @@
  */
 
 #include "chatbot-choose-language.h"
-#include "chatbot-step-select-option.h"
+#include "chatbot-step-option-list.h"
 #include "chatbot-step-finish.h"
 #include "configuration.h"
 #include "i18n.h"
@@ -27,26 +27,26 @@
 namespace QaplaWindows::ChatBot {
 
 void ChatbotChooseLanguage::start() {
-    std::map<std::string, std::string> langMap = {
+    static const std::map<std::string, std::string> langMap = {
         {"English", "eng"},
         {"Deutsch", "deu"},
         {"Français", "fra"}
     };
-    std::vector<std::string> languageNames;
+    
+    std::vector<ChatbotStepOptionList::Option> options;
     for (const auto& [name, code] : langMap) {
-        languageNames.push_back(name);
+        options.push_back({
+            name,
+            [code]() {
+                QaplaConfiguration::Configuration::updateLanguageConfiguration(code);
+                Translator::instance().setLanguageCode(code);
+            }
+        });
     }
 
-    steps_.push_back(std::make_unique<ChatbotStepSelectOption>(
+    steps_.push_back(std::make_unique<ChatbotStepOptionList>(
         "Please select your preferred language:",
-        languageNames,
-        [langMap](int index) {
-            auto it = langMap.begin();
-            std::advance(it, index);
-            const auto& [name, code] = *it;
-            QaplaConfiguration::Configuration::updateLanguageConfiguration(code);
-            Translator::instance().setLanguageCode(code);
-        }
+        std::move(options)
     ));
 
     steps_.push_back(std::make_unique<ChatbotStepFinish>(

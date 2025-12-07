@@ -21,7 +21,7 @@
 #include "chatbot-step-option-list.h"
 #include "chatbot-choose-language.h"
 #include "chatbot-tournament.h"
-#include "chatbot-tutorial.h"
+#include "tutorial/chatbot-tutorial.h"
 #include "chatbot-messages.h"
 #include "sprt/chatbot-sprt.h"
 #include "epd/chatbot-epd.h"

@@ -73,6 +73,14 @@ Switch to SPRT tournament View=Switch to SPRT tournament View
 Yes, continue SPRT tournament=Yes, continue SPRT tournament
 Stop Tutorial=Stop Tutorial
 Close=Close
+Turnier=Turnier
+SPRT Turnier=SPRT Turnier
+EPD Analyse=EPD Analyse
+Lernprogramm=Lernprogramm
+Sprache wählen=Sprache wählen
+Nachrichten=Nachrichten
+EPD=EPD
+Epd=Epd
 
 [Translation]
 id=Checkbox
@@ -172,7 +180,6 @@ UCI_LimitStrength=UCI_LimitStrength
 UCI_Elo=UCI_Elo
 Elo Lower (H\1)=Elo Lower (H\1)
 Elo Upper (H\1)=Elo Upper (H\1)
-##filePath#####filePath=##filePath#####filePath
 
 [Translation]
 id=Option
@@ -181,6 +188,9 @@ Inactive=Inactif
 Test=Test
 Active=Actif
 No=Non
+Tournament=Tournament
+EPD Analysis=EPD Analysis
+Cancel=Cancel
 
 [Translation]
 id=Section
@@ -225,6 +235,7 @@ Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in 
 Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.=Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.
 To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.=To use this chess GUI, you need chess engines.\nClick the 'Add' button in the engines tab to select engine executables. You can select multiple engines at once in the file dialog.\n\nPlease add \1 or more engines to continue.
 Epd analysis started=Epd analysis started
+Analysis finished.=Analysis finished.
 
 [Translation]
 id=Table
@@ -263,6 +274,7 @@ Engine to Compare=Engine to Compare
 Rating=Rating
 Games=Games
 Spike \1.\2.=Spike \1.\2.
+Qapla \1.\2.=Qapla \1.\2.
 
 [Translation]
 id=Tooltip
@@ -333,6 +345,21 @@ Display name for the engine=Display name for the engine
 Mark this engine to play against all others in gauntlet mode=Mark this engine to play against all others in gauntlet mode
 Stop tournament gracefully after current games finish=Stop tournament gracefully after current games finish
 Continue tournament with current configuration=Continue tournament with current configuration
+All engine instance communication is logged to a single file=All engine instance communication is logged to a single file
+Übersetzung ist derzeit in Arbeit. Nur wenige Teile sind übersetzt.=Übersetzung ist derzeit in Arbeit. Nur wenige Teile sind übersetzt.
+Clear all tournament data and results=Clear all tournament data and results
+Number of games running in parallel=Number of games running in parallel
+Add this engine to tournament selection=Add this engine to tournament selection
+Tournament type:\n  gauntlet - One engine plays against all others\n  round-robin - Every engine plays against every other engine=Tournament type:\n  gauntlet - One engine plays against all others\n  round-robin - Every engine plays against every other engine
+Repeat all pairings this many times=Repeat all pairings this many times
+Tournament progress: games played / total games=Tournament progress: games played / total games
+Number of positions analyzed in parallel=Number of positions analyzed in parallel
+Start EPD position analysis=Start EPD position analysis
+Stop EPD analysis immediately=Stop EPD analysis immediately
+Continue EPD position analysis=Continue EPD position analysis
+EPD analysis progress: positions analyzed / total positions=EPD analysis progress: positions analyzed / total positions
+Stop EPD analysis gracefully after current positions finish=Stop EPD analysis gracefully after current positions finish
+Clear all EPD analysis results=Clear all EPD analysis results
 
 [Translation]
 id=Tab
@@ -444,4 +471,18 @@ Extended tournament is running!=Extended tournament is running!
 The new games are being played. Only the pairings involving the new engine are scheduled - previous results remain intact.\n\nLet it finish, or click 'Stop' if you want to end early.\n\nTip: You can stop gracefully with 'Grace' - current games finish normally, no new games start. This preserves all game results.=The new games are being played. Only the pairings involving the new engine are scheduled - previous results remain intact.\n\nLet it finish, or click 'Stop' if you want to end early.\n\nTip: You can stop gracefully with 'Grace' - current games finish normally, no new games start. This preserves all game results.
 Congratulations! Tournament Tutorial Complete!=Congratulations! Tournament Tutorial Complete!
 You've learned the essentials of running engine tournaments:\n\n• Configure global settings for fair conditions\n• Select and compare multiple engines\n• Set up openings, time controls, and output\n• Run tournaments with parallel games\n• Save, load, and extend tournaments\n\nExplore the Adjudication settings to auto-end drawn or won games early. Try different tournament types like 'gauntlet' where one engine plays all others.\n\nHappy testing!=You've learned the essentials of running engine tournaments:\n\n• Configure global settings for fair conditions\n• Select and compare multiple engines\n• Set up openings, time controls, and output\n• Run tournaments with parallel games\n• Save, load, and extend tournaments\n\nExplore the Adjudication settings to auto-end drawn or won games early. Try different tournament types like 'gauntlet' where one engine plays all others.\n\nHappy testing!
+Selected tutorial: Epd=Selected tutorial: Epd
+Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.=Run engine position tests with EPD files.\nThese tests evaluate engine strength on tactical positions.\n\nClick the 'EPD' tab to open this window.
+EPD window is now open.\n\nOpen 'Engines' section and select two engines.=EPD window is now open.\n\nOpen 'Engines' section and select two engines.
+Configure test parameters in 'Configuration':\n• Seen plies: \1\n• Max time: \2s, Min time: \3s\n• Select an EPD or RAW file=Configure test parameters in 'Configuration':\n• Seen plies: \1\n• Max time: \2s, Min time: \3s\n• Select an EPD or RAW file
+Configuration complete!\n\nClick 'Analyze' to start the test.=Configuration complete!\n\nClick 'Analyze' to start the test.
+Analysis is running!\n\nClick 'Stop' to pause. Progress is auto-saved.=Analysis is running!\n\nClick 'Stop' to pause. Progress is auto-saved.
+Stopped. Button now shows 'Continue'.\n\nClick 'Continue' to resume.=Stopped. Button now shows 'Continue'.\n\nClick 'Continue' to resume.
+Analysis resumed!\n\nClick 'Grace' for graceful stop.\nFinishes current tests, skips new ones.=Analysis resumed!\n\nClick 'Grace' for graceful stop.\nFinishes current tests, skips new ones.
+Analysis stopped.\nFinishing ongoing calculations.=Analysis stopped.\nFinishing ongoing calculations.
+Grace mode! Tests finishing.\n\nBoard tabs show parallel analyses.\nWhen stopped, click 'Clear' to delete results.=Grace mode! Tests finishing.\n\nBoard tabs show parallel analyses.\nWhen stopped, click 'Clear' to delete results.
+Results cleared!\n\nClick 'Analyze' to restart.=Results cleared!\n\nClick 'Analyze' to restart.
+Analysis running!\n\nMove 'Concurrency' slider to \1.\nCreates \2 parallel analyses with board tabs.=Analysis running!\n\nMove 'Concurrency' slider to \1.\nCreates \2 parallel analyses with board tabs.
+EPD Analysis Complete!\n\nWell done!\n\n• Results auto-save on exit\n• Cannot resume after restart\n• Progress bar shows completion=EPD Analysis Complete!\n\nWell done!\n\n• Results auto-save on exit\n• Cannot resume after restart\n• Progress bar shows completion
+Selected tutorial: EPD Analysis=Selected tutorial: EPD Analysis
 

@@ -19,8 +19,9 @@
 
 #pragma once
 
-#include "chatbot-thread.h"
-#include "chatbot-step.h"
+#include "../chatbot-thread.h"
+#include "../chatbot-step.h"
+#include "../chatbot-step-option-list.h"
 #include "snackbar.h"
 #include "tutorial.h"
 
@@ -54,16 +55,28 @@ private:
 
 /**
  * @brief A chatbot step for selecting which tutorial to run.
+ * 
+ * Uses ChatbotStepOptionList for the actual selection UI.
  */
 class ChatbotStepTutorialSelect : public ChatbotStep {
 public:
+    ChatbotStepTutorialSelect();
     [[nodiscard]] std::string draw() override;
+    
+    /**
+     * @brief Gets the selected tutorial.
+     * @return The selected tutorial, or Count if none/cancelled.
+     */
+    [[nodiscard]] Tutorial::TutorialName getSelectedTutorial() const {
+        return selectedTutorial_;
+    }
 
 private:
-    /// List of available tutorials to display as buttons
-    static const std::vector<std::string> availableTutorials_;
+    /// List of available tutorials
+    static const std::vector<Tutorial::TutorialName> availableTutorials_;
     
-    std::string selectedTutorialName_;  ///< Name of selected tutorial (for display after selection)
+    std::unique_ptr<ChatbotStepOptionList> optionSelector_;
+    Tutorial::TutorialName selectedTutorial_ = Tutorial::TutorialName::Count;
 };
 
 /**
@@ -86,16 +99,8 @@ public:
 private:
     Tutorial::TutorialName tutorialName_;
     std::vector<SnackbarManager::SnackbarEntry> capturedMessages_;
-    std::string tutorialTopicName_;  ///< The topic name for the tutorial (e.g., "tournament")
     std::unique_ptr<Callback::UnregisterHandle> filterHandle_;  ///< RAII handle for filter callback
     bool tutorialStarted_ = false;
-
-    /**
-     * @brief Gets the topic name for a tutorial.
-     * @param name The tutorial name.
-     * @return The topic name string (lowercase).
-     */
-    static std::string getTutorialTopicName(Tutorial::TutorialName name);
 
     /**
      * @brief Installs the filter callback on the SnackbarManager.
