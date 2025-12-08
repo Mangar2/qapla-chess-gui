@@ -20,10 +20,10 @@
 #include "autosavable.h"
 #include "logger.h"
 #include "timer.h"
+#include "os-helpers.h"
 
 #include <filesystem>
 #include <iostream>
-#include <cstdlib>
 
 using namespace QaplaHelpers;
 using QaplaTester::Logger;
@@ -248,19 +248,5 @@ std::string Autosavable::defaultDirectoryProvider() {
 }
 
 std::string Autosavable::getConfigDirectory() {
-    namespace fs = std::filesystem;
-
-#ifdef _WIN32
-    char* buf = nullptr;
-    size_t sz = 0;
-    if (_dupenv_s(&buf, &sz, "LOCALAPPDATA") == 0 && buf != nullptr) {
-        std::string path(buf);
-        free(buf);
-        return path + "/qapla-chess-gui";
-    }
-    // Fallback, if LOCALAPPDATA is not set
-    return std::string(".") + "/qapla-chess-gui";
-#else
-    return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";
-#endif
+    return OsHelpers::getConfigDirectory();
 }

@@ -73,12 +73,21 @@ std::string ChatbotStepTournamentStopRunning::draw() {
 
     ImGui::SameLine();
 
+    if (QaplaWindows::ImGuiControls::textButton("Show Results")) {
+        finished_ = true;
+        return "show-result";
+    }
+    QaplaWindows::ImGuiControls::hooverTooltip("View detailed tournament results.");
+
+    ImGui::SameLine();
+
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = std::string(tournamentName) + " continues.";
         finishedMessage_[0] = static_cast<char>(std::toupper(finishedMessage_[0]));
         finished_ = true;
         return "stop";
     }
+    QaplaWindows::ImGuiControls::hooverTooltip("Keep the tournament running and close the chatbot.");
     
     return "";
 }

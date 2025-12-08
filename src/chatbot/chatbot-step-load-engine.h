@@ -20,7 +20,6 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include "chatbot-step-tournament-stop-running.h"
 #include <vector>
 #include <string>
 

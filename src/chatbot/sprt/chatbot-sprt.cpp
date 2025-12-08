@@ -28,6 +28,7 @@
 #include "../chatbot-step-tournament-opening.h"
 #include "../chatbot-step-tournament-pgn.h"
 #include "../chatbot-step-tournament-start.h"
+#include "../chatbot-step-tournament-result.h"
 #include "chatbot-step-sprt-configuration.h"
 
 namespace QaplaWindows::ChatBot {
@@ -96,6 +97,13 @@ bool ChatbotSprt::draw() {
 
         if (result == "existing") {
             steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>(EngineSelectContext::SPRT));
+        }
+
+        if (result == "show-result") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentResult>(
+                EngineSelectContext::SPRT,
+                "SPRT Tournament Results"
+            ));
         }
         
         // Advance to next step if current is finished

@@ -250,6 +250,12 @@ namespace QaplaWindows {
         const QaplaTester::SprtConfig& sprtConfig() const;
 
         /**
+         * @brief Returns a const reference to the tournament results.
+         * @return Const reference to the current tournament results (as TournamentResult).
+         */
+        QaplaTester::TournamentResult getTournamentResult() const;
+
+        /**
          * @brief Returns a reference to the SPRT configuration UI component.
          * @return Reference to the SPRT configuration UI component.
          */

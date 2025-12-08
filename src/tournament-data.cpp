@@ -173,6 +173,10 @@ namespace QaplaWindows {
         }
     }
 
+    const QaplaTester::TournamentResult& TournamentData::getTournamentResult() const {
+        return result_->getResult();
+    }
+
     void TournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
         engineConfigurations_ = configurations;
         if (!loadedTournamentData_) {

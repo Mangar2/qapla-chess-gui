@@ -202,6 +202,13 @@ const SprtConfig& SprtTournamentData::sprtConfig() const {
     return *sprtConfig_;
 }
 
+QaplaTester::TournamentResult SprtTournamentData::getTournamentResult() const {
+    if (sprtManager_) {
+        return sprtManager_->getResult();
+    }
+    return QaplaTester::TournamentResult{};
+}
+
 bool SprtTournamentData::createTournament(bool verbose) {
     try {
         // Build engine configurations with global settings applied

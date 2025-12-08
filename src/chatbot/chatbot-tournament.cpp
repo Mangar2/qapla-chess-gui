@@ -29,6 +29,7 @@
 #include "chatbot-step-tournament-opening.h"
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
+#include "chatbot-step-tournament-result.h"
 
 #include <algorithm>
 
@@ -98,6 +99,13 @@ bool ChatbotTournament::draw() {
 
         if (result == "existing") {
             steps_.push_back(std::make_unique<ChatbotStepTournamentContinueExisting>());
+        }
+
+        if (result == "show-result") {
+            steps_.push_back(std::make_unique<ChatbotStepTournamentResult>(
+                EngineSelectContext::Standard,
+                "Tournament Results"
+            ));
         }
         
         // Advance to next step if current is finished

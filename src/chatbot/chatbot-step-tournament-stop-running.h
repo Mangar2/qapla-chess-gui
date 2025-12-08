@@ -25,15 +25,6 @@
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Enum to distinguish the engine select context.
- */
-enum class EngineSelectContext {
-    Standard,
-    SPRT,
-    EpdAnalysis
-};
-
-/**
  * @brief Step to check if a tournament is running and offer to stop it.
  * 
  * If no tournament is running, this step finishes automatically.

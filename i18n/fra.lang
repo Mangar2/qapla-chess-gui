@@ -90,6 +90,8 @@ Français=Français
 Finish=Finish
 View HTML result=View HTML result
 Save...=Save...
+Show Results=Show Results
+View Detailed Results (HTML)=View Detailed Results (HTML)
 
 [Translation]
 id=Checkbox
@@ -409,6 +411,9 @@ Close the message window and return to the previous view.=Close the message wind
 Remain in the chatbot interface. You can switch to tournament view later via the tabs.=Remain in the chatbot interface. You can switch to tournament view later via the tabs.
 End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.=End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.
 Select option: EPD Analyse=Select option: EPD Analyse
+View detailed tournament results.=View detailed tournament results.
+Open a detailed HTML report with full tournament results table in your default browser.=Open a detailed HTML report with full tournament results table in your default browser.
+Continue to the next step.=Continue to the next step.
 
 [Translation]
 id=Tab
@@ -579,4 +584,5 @@ EPD Analysis=EPD Analysis
 Tournament=Tournament
 C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe=C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe
 C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe=C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe
+Tournament Results (Tournament Results)\n\nTotal games played: \1\nEngines: \2\n\nTop \3:\n\4. Spike \5.\6.\7 [ponder] - \8.\9% (\10 Elo ±\11)\n\12. Spike \13.\14.\15 - \16.\17% (\18 Elo ±\19)=Tournament Results (Tournament Results)\n\nTotal games played: \1\nEngines: \2\n\nTop \3:\n\4. Spike \5.\6.\7 [ponder] - \8.\9% (\10 Elo ±\11)\n\12. Spike \13.\14.\15 - \16.\17% (\18 Elo ±\19)
 

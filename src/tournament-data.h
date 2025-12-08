@@ -267,6 +267,12 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Returns a const reference to the tournament results.
+         * @return Const reference to the current tournament results.
+         */
+        const QaplaTester::TournamentResult& getTournamentResult() const;
+
+        /**
          * @brief Updates the tournament data in the singleton.
          * @details This method creates Section entries for tournament result data
          */

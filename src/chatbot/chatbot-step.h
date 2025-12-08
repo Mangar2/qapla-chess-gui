@@ -32,6 +32,15 @@ namespace StepColors {
 }
 
 /**
+ * @brief Enum to distinguish the engine select context for chatbot flows.
+ */
+enum class EngineSelectContext {
+    Standard,      ///< Standard tournament
+    SPRT,          ///< SPRT (Sequential Probability Ratio Test) tournament
+    EpdAnalysis    ///< EPD test suite analysis
+};
+
+/**
  * @brief Interface for a single step in a chatbot conversation.
  * 
  * A step represents a single interaction or action within a chatbot thread.
