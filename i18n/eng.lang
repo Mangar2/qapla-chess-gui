@@ -88,6 +88,8 @@ Deutsch=Deutsch
 English=English
 Français=Français
 Finish=Finish
+View HTML result=View HTML result
+Save...=Save...
 
 [Translation]
 id=Checkbox
@@ -258,6 +260,8 @@ Qapla \1.\2.=Qapla \1.\2.
 Spike \1.\2.\3 [ponder]=Spike \1.\2.\3 [ponder]
 amoeba-win\1.exe=amoeba-win\1.exe
 Counter-v\1.\2-windows-\3.exe=Counter-v\1.\2-windows-\3.exe
+Critter_\1.\2b_\3bit.exe=Critter_\1.\2b_\3bit.exe
+Fruit-\1-\2-\3.exe=Fruit-\1-\2-\3.exe
 
 [Translation]
 id=Option
@@ -315,6 +319,7 @@ Engines selected! Let's configure the analysis parameters.=Engines selected! Let
 No EPD or RAW position file selected.=No EPD or RAW position file selected.
 Starting engine autodetection.\nThis may take a while...=Starting engine autodetection.\nThis may take a while...
 Engine autodetection completed.=Engine autodetection completed.
+Tournament started=Tournament started
 
 [Translation]
 id=Table
@@ -458,6 +463,11 @@ Automatically detect engine capabilities (options) now and continue.=Automatical
 Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.=Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.
 Start the tournament now with the specified concurrency and engine settings.=Start the tournament now with the specified concurrency and engine settings.
 Switch to the tournament view to inspect running games and progress.=Switch to the tournament view to inspect running games and progress.
+Select option: SPRT Turnier=Select option: SPRT Turnier
+Close the message window and return to the previous view.=Close the message window and return to the previous view.
+Remain in the chatbot interface. You can switch to tournament view later via the tabs.=Remain in the chatbot interface. You can switch to tournament view later via the tabs.
+End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.=End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.
+Select option: EPD Analyse=Select option: EPD Analyse
 
 [Translation]
 id=Tab
