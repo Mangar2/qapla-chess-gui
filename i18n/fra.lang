@@ -414,6 +414,8 @@ Select option: EPD Analyse=Select option: EPD Analyse
 View detailed tournament results.=View detailed tournament results.
 Open a detailed HTML report with full tournament results table in your default browser.=Open a detailed HTML report with full tournament results table in your default browser.
 Continue to the next step.=Continue to the next step.
+Select option: Lernprogramm=Select option: Lernprogramm
+Open a detailed HTML report with full SPRT tournament results in your default browser.=Open a detailed HTML report with full SPRT tournament results in your default browser.
 
 [Translation]
 id=Tab
@@ -585,4 +587,5 @@ Tournament=Tournament
 C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe=C:\Chess\cutechess-cli\qapla\1.\2\Critter_\3.\4b_\5bit.exe
 C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe=C:\Chess\cutechess-cli\qapla\1.\2\Fruit-\3-\4-\5.exe
 Tournament Results (Tournament Results)\n\nTotal games played: \1\nEngines: \2\n\nTop \3:\n\4. Spike \5.\6.\7 [ponder] - \8.\9% (\10 Elo ±\11)\n\12. Spike \13.\14.\15 - \16.\17% (\18 Elo ±\19)=Tournament Results (Tournament Results)\n\nTotal games played: \1\nEngines: \2\n\nTop \3:\n\4. Spike \5.\6.\7 [ponder] - \8.\9% (\10 Elo ±\11)\n\12. Spike \13.\14.\15 - \16.\17% (\18 Elo ±\19)
+SPRT (Sequential Probability Ratio Test) compares two engines to determine if one is significantly stronger. The test continues until a decision is reached or the maximum number of games is played.=SPRT (Sequential Probability Ratio Test) compares two engines to determine if one is significantly stronger. The test continues until a decision is reached or the maximum number of games is played.
 

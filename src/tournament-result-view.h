@@ -34,6 +34,22 @@ namespace QaplaWindows {
  */
 class TournamentResultView {
 public:
+    /**
+     * @brief Metadata for tournament HTML export.
+     */
+    struct TournamentMetadata {
+        std::string startTime;       ///< Tournament start date/time
+        std::string latestUpdate;    ///< Last update date/time
+        std::string site;            ///< Site/hostname
+        std::string country;         ///< Country
+        std::string level;           ///< Time control level (e.g., "Blitz 1/1")
+        std::string hardware;        ///< Hardware description
+        std::string operatingSystem; ///< OS description
+        std::string pgnFile;         ///< PGN filename
+        std::string tableCreator;    ///< Tool used to create table
+        bool tournamentFinished = false; ///< Tournament completion status
+    };
+
     TournamentResultView() = delete;
     ~TournamentResultView() = delete;
 
@@ -46,11 +62,13 @@ public:
      * @param result Tournament result structure to render
      * @param title Title for the HTML document
      * @param includePairwise If true, a pair-wise duel matrix is produced.
+     * @param metadata Optional tournament metadata for footer information.
      * @return A string containing the complete HTML output.
      */
     static std::string formatHtml(const QaplaTester::TournamentResult &result,
                                   const std::string &title = "Tournament",
-                                  bool includePairwise = true);
+                                  bool includePairwise = true,
+                                  const TournamentMetadata* metadata = nullptr);
 
     /**
      * @brief Produces a compact plain-text summary similar to `printSummary()`.

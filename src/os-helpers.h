@@ -56,6 +56,42 @@ public:
      * @param path File path or URL to open.
      */
     static void openInShell(const std::string& path);
+
+    /**
+     * @brief Gets the hostname of the system.
+     * 
+     * @return Hostname as string, or "Unknown" if unavailable.
+     */
+    static std::string getHostname();
+
+    /**
+     * @brief Gets the operating system name and version.
+     * 
+     * Returns platform-specific OS information:
+     * - Windows: "Windows <version> <edition> (Build <build>) <arch>"
+     * - Linux: Distribution and kernel version
+     * - macOS: "macOS <version>"
+     * 
+     * @return OS description string.
+     */
+    static std::string getOperatingSystem();
+
+    /**
+     * @brief Gets hardware information (CPU model and memory).
+     * 
+     * Returns CPU model and total system memory:
+     * - Example: "Intel(R) Core(TM) i5-11400H @ 2.70GHz mit 15,6 GB Speicher"
+     * 
+     * @return Hardware description string.
+     */
+    static std::string getHardwareInfo();
+
+    /**
+     * @brief Gets the country/location based on system locale.
+     * 
+     * @return Country name or "Unknown" if unavailable.
+     */
+    static std::string getCountry();
 };
 
 } // namespace QaplaHelpers

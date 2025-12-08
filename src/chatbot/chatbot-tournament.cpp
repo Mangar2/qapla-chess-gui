@@ -29,7 +29,7 @@
 #include "chatbot-step-tournament-opening.h"
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
-#include "chatbot-step-tournament-result.h"
+#include "chatbot-step-standard-tournament-result.h"
 
 #include <algorithm>
 
@@ -102,8 +102,7 @@ bool ChatbotTournament::draw() {
         }
 
         if (result == "show-result") {
-            steps_.push_back(std::make_unique<ChatbotStepTournamentResult>(
-                EngineSelectContext::Standard,
+            steps_.push_back(std::make_unique<ChatbotStepStandardTournamentResult>(
                 "Tournament Results"
             ));
         }

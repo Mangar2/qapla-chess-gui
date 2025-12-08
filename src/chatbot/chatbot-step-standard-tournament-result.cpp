@@ -17,10 +17,9 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-step-tournament-result.h"
+#include "chatbot-step-standard-tournament-result.h"
 #include "../tournament-result-view.h"
 #include "../tournament-data.h"
-#include "../sprt-tournament-data.h"
 #include "../os-helpers.h"
 #include "../imgui-controls.h"
 
@@ -34,34 +33,29 @@
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentResult::ChatbotStepTournamentResult(
-    EngineSelectContext context,
-    std::string title)
-    : context_(context)
-    , title_(std::move(title))
+ChatbotStepStandardTournamentResult::ChatbotStepStandardTournamentResult(std::string title)
+    : title_(std::move(title))
 {
 }
 
-QaplaTester::TournamentResult ChatbotStepTournamentResult::getTournamentResult() const {
-    switch (context_) {
-        case EngineSelectContext::Standard:
-            return TournamentData::instance().getTournamentResult();
-        case EngineSelectContext::SPRT:
-            return SprtTournamentData::instance().getTournamentResult();
-        default:
-            return TournamentData::instance().getTournamentResult();
-    }
-}
-
-std::string ChatbotStepTournamentResult::draw() {
+std::string ChatbotStepStandardTournamentResult::draw() {
     if (finished_) {
         return "";
     }
 
-    // Show text summary
-    std::string summary = formatTextSummary();
-    QaplaWindows::ImGuiControls::textWrapped(summary.c_str());
-
+    auto& tournamentData = TournamentData::instance();
+    
+    // Display tournament progress
+    uint32_t totalGames = tournamentData.getTotalGames();
+    uint32_t playedGames = tournamentData.getPlayedGames();
+    
+    ImGui::Text("Tournament Progress: %u / %u games completed", playedGames, totalGames);
+    ImGui::Spacing();
+    
+    // Display the ELO rating table (same as in tournament window)
+    ImVec2 tableSize(0.0F, 300.0F);
+    tournamentData.drawEloTable(tableSize);
+    
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -89,10 +83,10 @@ std::string ChatbotStepTournamentResult::draw() {
     return "";
 }
 
-std::string ChatbotStepTournamentResult::generateHtmlReport() {
+std::string ChatbotStepStandardTournamentResult::generateHtmlReport() {
     try {
-        // Get tournament result
-        const auto& result = getTournamentResult();
+        auto& tournamentData = TournamentData::instance();
+        const auto& result = tournamentData.getTournamentResult();
 
         // Build metadata
         TournamentResultView::TournamentMetadata metadata;
@@ -100,18 +94,18 @@ std::string ChatbotStepTournamentResult::generateHtmlReport() {
         // Get current time for latest update
         auto now = std::chrono::system_clock::now();
         auto timeT = std::chrono::system_clock::to_time_t(now);
-        std::tm tm = {};
+        std::tm tmNow = {};
 #ifdef _WIN32
-        localtime_s(&tm, &timeT);
+        localtime_s(&tmNow, &timeT);
 #else
-        localtime_r(&timeT, &tm);
+        localtime_r(&timeT, &tmNow);
 #endif
         std::ostringstream oss;
-        oss << std::put_time(&tm, "%Y.%m.%d, %H:%M:%S");
+        oss << std::put_time(&tmNow, "%Y.%m.%d, %H:%M:%S");
         metadata.latestUpdate = oss.str();
         
         // TODO: Get actual start time from tournament data if available
-        metadata.startTime = metadata.latestUpdate; // Placeholder
+        metadata.startTime = metadata.latestUpdate;
         
         // Get system information
         metadata.site = QaplaHelpers::OsHelpers::getHostname();
@@ -119,27 +113,19 @@ std::string ChatbotStepTournamentResult::generateHtmlReport() {
         metadata.hardware = QaplaHelpers::OsHelpers::getHardwareInfo();
         metadata.operatingSystem = QaplaHelpers::OsHelpers::getOperatingSystem();
         
-        // TODO: Get time control from tournament config
-        metadata.level = "Blitz 1/1"; // Placeholder
+        // Get time control from tournament settings
+        const auto& timeControl = tournamentData.globalSettings().getTimeControlSettings();
+        metadata.level = std::format("Blitz {}", timeControl.timeControl);
         
         // Set PGN file if applicable
         // TODO: Get actual PGN filename from tournament data
-        metadata.pgnFile = ""; // Placeholder
+        metadata.pgnFile = "";
         
         // Set table creator
         metadata.tableCreator = "Qapla Chess GUI";
         
         // Check if tournament is finished
-        switch (context_) {
-            case EngineSelectContext::Standard:
-                metadata.tournamentFinished = TournamentData::instance().getState() == TournamentData::State::Stopped;
-                break;
-            case EngineSelectContext::SPRT:
-                metadata.tournamentFinished = SprtTournamentData::instance().state() == SprtTournamentData::State::Stopped;
-                break;
-            default:
-                metadata.tournamentFinished = false;
-        }
+        metadata.tournamentFinished = tournamentData.getState() == TournamentData::State::Stopped;
 
         // Generate HTML with metadata
         std::string html = TournamentResultView::formatHtml(result, title_, true, &metadata);
@@ -163,47 +149,6 @@ std::string ChatbotStepTournamentResult::generateHtmlReport() {
     }
     catch (...) {
         return "";
-    }
-}
-
-std::string ChatbotStepTournamentResult::formatTextSummary() const {
-    try {
-        const auto& result = getTournamentResult();
-        
-        // Get top 3 engines from the result
-        auto scoredEngines = result.scoredEngines();
-        
-        if (scoredEngines.empty()) {
-            return "No tournament results available yet.";
-        }
-
-        // Count total games
-        int totalGames = 0;
-        for (const auto& scored : scoredEngines) {
-            totalGames += static_cast<int>(scored.total);
-        }
-        totalGames /= 2; // Each game is counted twice
-
-        std::string summary = std::format("Tournament Results ({})\n\n", title_);
-        summary += std::format("Total games played: {}\n", totalGames);
-        summary += std::format("Engines: {}\n\n", scoredEngines.size());
-        summary += "Top 3:\n";
-
-        int rank = 1;
-        for (size_t idx = 0; idx < std::min<size_t>(3, scoredEngines.size()); ++idx) {
-            const auto& scored = scoredEngines[idx];
-            summary += std::format("{}. {} - {:.1f}% ({:.0f} Elo ±{})\n",
-                rank++,
-                scored.engineName,
-                scored.score * 100.0,
-                scored.elo,
-                static_cast<int>(scored.error));
-        }
-
-        return summary;
-    }
-    catch (...) {
-        return "Error retrieving tournament results.";
     }
 }
 
