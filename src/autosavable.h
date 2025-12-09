@@ -23,6 +23,8 @@
 #include <fstream>
 #include <functional>
 
+#include "callback-manager.h"
+
 namespace QaplaHelpers {
 
     /**
@@ -192,6 +194,8 @@ namespace QaplaHelpers {
         uint64_t autosaveIntervalMs_;               ///< Auto-save interval in milliseconds
         
         std::function<std::string()> directoryProvider_;  ///< Function to get the directory path
+
+        std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> unregisterHandle_;  ///< Handle to unregister autosave callback
 
         /**
          * @brief Minimum file size ratio to consider main file valid.

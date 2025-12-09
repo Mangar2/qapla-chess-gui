@@ -21,6 +21,7 @@
 #include "logger.h"
 #include "timer.h"
 #include "os-helpers.h"
+#include "callback-manager.h"
 
 #include <filesystem>
 #include <iostream>
@@ -39,6 +40,9 @@ Autosavable::Autosavable(std::string filename,
     , directoryProvider_(directoryProvider ? directoryProvider : defaultDirectoryProvider)
 {
     updateFilePaths();
+    unregisterHandle_ = QaplaWindows::StaticCallbacks::autosave().registerCallback([this]() {
+        this->autosave();
+    }); 
 }
 
 void Autosavable::autosave() {

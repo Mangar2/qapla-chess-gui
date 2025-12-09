@@ -127,6 +127,14 @@ std::string ChatbotStepTournamentStart::draw() {
             finished_ = true;
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Switch to the tournament view to inspect running games and progress.");
+        
+        ImGui::SameLine();
+        if (QaplaWindows::ImGuiControls::textButton("Show Results")) {
+            finished_ = true;
+            return "show-result";
+        }
+        QaplaWindows::ImGuiControls::hooverTooltip("View the current tournament results.");
+        
         ImGui::SameLine();
         if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;

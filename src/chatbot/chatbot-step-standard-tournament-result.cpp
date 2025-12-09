@@ -57,6 +57,11 @@ std::string ChatbotStepStandardTournamentResult::draw() {
     tournamentData.drawEloTable(tableSize);
     
     ImGui::Spacing();
+    
+    // Display the results matrix table
+    tournamentData.drawMatrixTable(tableSize);
+    
+    ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 

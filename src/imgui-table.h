@@ -216,6 +216,14 @@ namespace QaplaWindows {
 		}
 
         /**
+         * @brief Resizes the number of columns in the table.
+         * @param newSize New number of columns.
+         */
+        void resizeColumns(size_t newSize) {
+            columns_.resize(newSize);
+        }
+
+        /**
 		 * @brief Returns the currently selected row index.
          */
         std::optional<size_t> getSelectedRow() {

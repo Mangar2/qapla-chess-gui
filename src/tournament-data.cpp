@@ -20,6 +20,7 @@
 
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
+#include "tournament-result-view.h"
 #include "viewer-board-window.h"
 #include "viewer-board-window-list.h"
 #include "snackbar.h"
@@ -58,7 +59,8 @@ namespace QaplaWindows {
                 { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
                 { .name = "Elo", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Error", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true },
+                { .name = "%", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
             }
         ),
@@ -84,6 +86,16 @@ namespace QaplaWindows {
                 { .name = "Saveable", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
                 { .name = "Total Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true }
             }
+        ),
+        matrixTable_(
+            "Results Matrix",
+            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders,
+            std::vector<ImGuiTable::ColumnDef>{
+                { .name = "Rank", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Engine", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true },
+                { .name = "%", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+            }
         )
     { 
         setGameManagerPool(std::make_shared<GameManagerPool>());
@@ -104,6 +116,8 @@ namespace QaplaWindows {
         tournamentAdjudication_->setId("tournament");
         tournamentConfiguration_->setId("tournament");
         tournamentConfiguration_->setConfig(config_.get());
+        matrixTable_.setFont(FontManager::ibmPlexMonoIndex);
+        eloTable_.setFont(FontManager::ibmPlexMonoIndex);
 
         // Set up callbacks
         setupCallbacks();
@@ -308,10 +322,78 @@ namespace QaplaWindows {
             } else {
                 row.push_back("+/- " + std::to_string(scored.error));
             }
-            row.push_back(std::format("{:.1f}%", scored.score * 100.0));
+            row.push_back(scored.formatScore());
+            row.push_back(std::format("{:.1f}", scored.getPercentage()));
             row.push_back(std::format("{:.0F}", scored.total));
             eloTable_.push(row);
 		}
+    }
+
+    void TournamentData::populateMatrixTable() {
+        matrixTable_.clear();
+
+        const auto& scoredEngines = result_->getScoredEngines();
+        if (scoredEngines.empty()) {
+            return;
+        }
+
+        // Build list of engine names in rank order
+        std::vector<std::string> engineNames;
+        engineNames.reserve(scoredEngines.size());
+        for (const auto& scored : scoredEngines) {
+            engineNames.push_back(scored.engineName);
+        }
+
+        // Build duels map and compute Sonneborn-Berger scores
+        auto& tournamentResult = result_->getResult();
+        std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> duelsMap;
+        TournamentResultView::buildDuelsMap(engineNames, tournamentResult, duelsMap);
+        
+        std::unordered_map<std::string, double> sbScores;
+        TournamentResultView::computeSonnebornBerger(scoredEngines, tournamentResult, sbScores);
+
+        // Update column headers dynamically: opponent columns (abbreviated) + S-B
+        size_t totalColumns = 4 + engineNames.size() + 1; // 4 fixed + engines + S-B
+        matrixTable_.resizeColumns(totalColumns);
+        
+        // Add column for each opponent (abbreviated name)
+        size_t colIndex = 4; // Start after the 4 fixed columns
+        for (const auto& name : engineNames) {
+            std::string abbrev = TournamentResultView::abbreviateEngineName(name);
+            matrixTable_.setColumnHead(colIndex++, { .name = abbrev, .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
+        }
+        
+        // S-B column
+        matrixTable_.setColumnHead(colIndex, { .name = "S-B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
+
+        // Build data rows
+        size_t rank = 1;
+        for (const auto& scored : scoredEngines) {
+            std::vector<std::string> row;
+            
+            // Rank
+            row.push_back(std::format("{:02d}", rank));
+            
+            // Engine name
+            row.push_back(scored.engineName);
+            
+            // Score (points / total games) - using new method
+            row.push_back(scored.formatScore());
+            
+            // Percentage - using new method
+            row.push_back(std::format("{:.1f}", scored.getPercentage()));
+            
+            // Pairwise results against each opponent
+            for (const auto& opponent : engineNames) {
+                row.push_back(TournamentResultView::formatPairwiseResult(scored.engineName, opponent, duelsMap));
+            }
+            
+            // Sonneborn-Berger score
+            row.push_back(std::format("{:.2f}", sbScores[scored.engineName]));
+            
+            matrixTable_.push(row);
+            rank++;
+        }
     }
 
     void TournamentData::populateCauseTable() {
@@ -410,6 +492,7 @@ namespace QaplaWindows {
                 populateEloTable();
                 populateCauseTable();
                 populateAdjudicationTable();
+                populateMatrixTable();
             }
             populateRunningTable();
             boardWindowList_.populateViews();
@@ -453,6 +536,13 @@ namespace QaplaWindows {
             return std::nullopt;
         }
         return eloTable_.draw(size, true);
+    }
+
+    std::optional<size_t> TournamentData::drawMatrixTable(const ImVec2& size) {
+        if (matrixTable_.size() == 0) {
+            return std::nullopt;
+        }
+        return matrixTable_.draw(size, true);
     }
 
     void TournamentData::activateBoardView(size_t gameIndex) {

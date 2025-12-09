@@ -18,11 +18,11 @@
 
 #pragma once
 
+#include "tournament-result.h"
+
 #include <string>
 #include <vector>
 #include <unordered_map>
-
-namespace QaplaTester { class TournamentResult; }
 
 namespace QaplaWindows {
 
@@ -81,6 +81,47 @@ public:
      */
     static std::string formatCsv(const QaplaTester::TournamentResult &result,
                                  int averageElo = 2600);
+
+    /**
+     * @brief Builds a map of all duel results between engines.
+     * @param names List of engine names to process
+     * @param result Tournament result to extract duels from
+     * @param duelsMap Output map: engineA -> engineB -> duel result
+     */
+    static void buildDuelsMap(
+        const std::vector<std::string> &names,
+        const QaplaTester::TournamentResult &result,
+        std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> &duelsMap);
+
+    /**
+     * @brief Computes Sonneborn-Berger tiebreak scores for all engines.
+     * @param list List of scored engines
+     * @param result Tournament result to extract duels from
+     * @param sbScores Output map: engineName -> Sonneborn-Berger score
+     */
+    static void computeSonnebornBerger(
+        const std::vector<QaplaTester::TournamentResult::Scored> &list,
+        const QaplaTester::TournamentResult &result,
+        std::unordered_map<std::string, double> &sbScores);
+
+    /**
+     * @brief Abbreviates an engine name to first 2 characters.
+     * @param name Full engine name
+     * @return Abbreviated name (2 characters or less)
+     */
+    static std::string abbreviateEngineName(const std::string &name);
+
+    /**
+     * @brief Formats the pairwise result between two engines.
+     * @param engineName Name of the first engine
+     * @param opponent Name of the opponent engine
+     * @param duelsMap Map of all duel results
+     * @return Formatted string like "2-1-1" or "· · · · ·" for diagonal/missing
+     */
+    static std::string formatPairwiseResult(
+        const std::string &engineName,
+        const std::string &opponent,
+        const std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> &duelsMap);
 };
 
 } // namespace QaplaWindows

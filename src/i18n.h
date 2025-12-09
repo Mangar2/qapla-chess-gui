@@ -9,6 +9,7 @@
 
 #include "autosavable.h"
 #include "callback-manager.h"
+#include "translation-key.h"
 
 namespace QaplaWindows {
 
@@ -107,10 +108,43 @@ private:
 
     void loadLanguageFromStream(std::istream& stream);
 
+#ifdef QAPLA_DEBUG_I18N
+    /**
+     * @brief Marks a translation for timestamp update (deferred until save).
+     * @param langCode The language code (e.g., "deu", "eng").
+     * @param topic The topic category.
+     * @param lookupKey The lookup key (original string or hash).
+     * @param normalizedKey The normalized key for creating new entries.
+     * @param isOldFormat True if this is converting from old format.
+     */
+    void markTimestampUpdate(const std::string& langCode,
+                            const std::string& topic,
+                            const std::string& lookupKey,
+                            const std::string& normalizedKey,
+                            bool isOldFormat);
+    
+    /**
+     * @brief Applies pending timestamp updates to language files.
+     */
+    void applyPendingUpdates();
+#endif
+
     using TranslationMap = std::unordered_map<std::string, std::string>;
     using TopicMap = std::unordered_map<std::string, TranslationMap>;
     
     TopicMap translations;
+    
+#ifdef QAPLA_DEBUG_I18N
+    // Track pending timestamp updates per language file
+    struct TimestampUpdate {
+        std::string topic;
+        std::string lookupKey;
+        std::string normalizedKey;
+        bool isOldFormat;
+    };
+    std::unordered_map<std::string, std::vector<TimestampUpdate>> pendingUpdates_;
+#endif
+    
     mutable QaplaHelpers::ConfigData missingKeys_;
     mutable std::mutex languageMutex;
     std::string languageDirectory = "lang";

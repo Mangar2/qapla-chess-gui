@@ -311,6 +311,11 @@ public:
         return instance;
     }
 
+    static Callback::Manager<>& autosave() {
+        static Callback::Manager<> instance;
+        return instance;
+    }
+
     static Callback::Manager<std::string>& message() {
         static Callback::Manager<std::string> instance;
         return instance;

@@ -121,6 +121,13 @@ namespace QaplaWindows {
         std::optional<size_t> drawEloTable(const ImVec2& size);
 
         /**
+         * @brief Draws the tournament results matrix table.
+         * @param size Size of the table to draw.
+         * @return The index of the selected row, or std::nullopt if no row was selected.
+         */
+        std::optional<size_t> drawMatrixTable(const ImVec2& size);
+
+        /**
          * @brief Draws the table displaying the running tournament pairings.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
@@ -425,6 +432,7 @@ namespace QaplaWindows {
         void activateBoardView(size_t gameIndex);
 
         void populateEloTable();
+        void populateMatrixTable();
 		void populateRunningTable();
         void populateCauseTable();
 
@@ -458,6 +466,7 @@ namespace QaplaWindows {
         ImGuiTable runningTable_;
         ImGuiCausesTable causesTable_;
         ImGuiTable adjudicationTable_;
+        ImGuiTable matrixTable_;
 
         State state_ = State::Stopped;
         bool loadedTournamentData_ = false;

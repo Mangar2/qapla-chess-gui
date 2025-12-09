@@ -1,6 +1,7 @@
 #include "i18n.h"
 #include "callback-manager.h"
 #include "translation-normalizer.h"
+#include "translation-key.h"
 
 #include <string-helper.h>
 #include <logger.h>
@@ -51,32 +52,42 @@ std::string Translator::translate(const std::string& topic, const std::string& k
     }
 
     const std::string& normalizedKey = normalizer.getNormalizedKey();
+    TranslationKey translationKey(normalizedKey);
+    std::string lookupKey = translationKey.getLookupKey();
 
     std::scoped_lock lock(languageMutex);
     
     auto topicIt = translations.find(topic);
     if (topicIt != translations.end()) {
-        auto keyIt = topicIt->second.find(normalizedKey);
+        auto keyIt = topicIt->second.find(lookupKey);
         if (keyIt != topicIt->second.end()) {
+#ifdef QAPLA_DEBUG_I18N
+            // Mark for timestamp update (deferred until save)
+            for (const auto& lang : {"deu", "eng", "fra"}) {
+                markTimestampUpdate(lang, topic, lookupKey, normalizedKey, false);
+            }
+            setModified();
+#endif
             return normalizer.restorePlaceholders(keyIt->second);
         }
     }
 
 #ifdef QAPLA_DEBUG_I18N
     // In debug mode: Add missing translations directly to all language files
-    auto normalizedKeyFileFormat = toFileFormat(normalizedKey);
     auto i18nDir = getI18nSourceDirectory();
+    std::string currentDate = TranslationKey::getCurrentDate();
+    std::string keyString = translationKey.getKeyString(currentDate);
     
     for (const auto& lang : {"deu", "eng", "fra"}) {
         auto langFile = i18nDir / (std::string(lang) + ".lang");
-        addMissingTranslationToFile(langFile, topic, normalizedKeyFileFormat, normalizedKeyFileFormat);
+        addMissingTranslationToFile(langFile, topic, keyString, toFileFormat(normalizedKey));
     }
     
     // Also add to current translations so we don't write it again
-    translations[topic][normalizedKey] = normalizedKey;
+    translations[topic][lookupKey] = normalizedKey;
     
     QaplaTester::Logger::reportLogger().log(
-        std::string("Added missing translation [") + topic + "] " + normalizedKey, 
+        std::string("Added missing translation [") + topic + "] " + keyString, 
         TraceLevel::info);
 #else
     // In release mode: Log missing keys to separate file
@@ -128,11 +139,16 @@ void Translator::loadLanguageFromStream(std::istream& stream) {
         const auto& topic = topicOpt.value();
         auto& topicTranslations = translations[topic];
         
-        for (const auto& [key, value] : section.entries) {
-            if (key == "id") {
+        for (const auto& [keyStr, value] : section.entries) {
+            if (keyStr == "id") {
                 continue;
             }
-            topicTranslations[fromFileFormat(key)] = fromFileFormat(value);
+            
+            // Parse key (supports both old "key" and new {s:"key",t:"..."} formats)
+            auto [lookupKey, timestamp] = TranslationKey::parseKeyString(keyStr);
+            
+            // Store translation using lookup key
+            topicTranslations[lookupKey] = fromFileFormat(value);
         }
     }
 }
@@ -233,6 +249,9 @@ std::string Translator::getLanguageCode() const {
 
 void Translator::saveData(std::ofstream& out) {
     std::scoped_lock lock(languageMutex);
+#ifdef QAPLA_DEBUG_I18N
+    applyPendingUpdates();
+#endif
     missingKeys_.save(out);
 }
 
@@ -290,6 +309,133 @@ std::filesystem::path Translator::getI18nSourceDirectory() const {
     return exePath / "i18n";
 }
 
+void Translator::markTimestampUpdate(const std::string& langCode,
+                                     const std::string& topic,
+                                     const std::string& lookupKey,
+                                     const std::string& normalizedKey,
+                                     bool isOldFormat) {
+    // Check if already pending
+    auto& updates = pendingUpdates_[langCode];
+    for (const auto& update : updates) {
+        if (update.topic == topic && update.lookupKey == lookupKey) {
+            return; // Already marked
+        }
+    }
+    
+    updates.push_back(TimestampUpdate{
+        .topic = topic,
+        .lookupKey = lookupKey,
+        .normalizedKey = normalizedKey,
+        .isOldFormat = isOldFormat
+    });
+}
+
+void Translator::applyPendingUpdates() {
+    if (pendingUpdates_.empty()) {
+        return;
+    }
+    
+    auto i18nDir = getI18nSourceDirectory();
+    std::string currentDate = TranslationKey::getCurrentDate();
+    
+    for (const auto& [langCode, updates] : pendingUpdates_) {
+        if (updates.empty()) {
+            continue;
+        }
+        
+        auto langFile = i18nDir / (langCode + ".lang");
+        if (!std::filesystem::exists(langFile)) {
+            continue;
+        }
+        
+        // Load file
+        std::ifstream inFile(langFile);
+        if (!inFile.is_open()) {
+            continue;
+        }
+        
+        auto sectionList = QaplaHelpers::IniFile::load(inFile);
+        inFile.close();
+        
+        bool modified = false;
+        
+        // Apply all updates for this language
+        for (const auto& update : updates) {
+            // Find the section
+            for (auto& section : sectionList) {
+                if (section.name != "Translation") {
+                    continue;
+                }
+                auto topicOpt = section.getValue("id");
+                if (!topicOpt.has_value() || topicOpt.value() != update.topic) {
+                    continue;
+                }
+                
+                // Find and update the key
+                for (auto& [keyStr, value] : section.entries) {
+                    if (keyStr == "id") {
+                        continue;
+                    }
+                    
+                    auto [existingLookup, existingTimestamp] = TranslationKey::parseKeyString(keyStr);
+                    
+                    if (existingLookup == update.lookupKey) {
+                        // OLD FORMAT: Convert to new format
+                        if (existingTimestamp.empty()) {
+                            TranslationKey translationKey(update.normalizedKey);
+                            std::string newKey = translationKey.getKeyString(currentDate);
+                            
+                            for (auto& entry : section.entries) {
+                                if (entry.first == keyStr) {
+                                    entry.first = newKey;
+                                    modified = true;
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        
+                        // NEW FORMAT: Update timestamp if different
+                        if (existingTimestamp != currentDate) {
+                            if (keyStr[0] == '{') {
+                                size_t tPos = keyStr.find(",t:\"");
+                                if (tPos != std::string::npos) {
+                                    size_t tStart = tPos + 4;
+                                    size_t tEnd = keyStr.find("\"", tStart);
+                                    if (tEnd != std::string::npos) {
+                                        std::string newKey = keyStr.substr(0, tStart) + currentDate + keyStr.substr(tEnd);
+                                        
+                                        for (auto& entry : section.entries) {
+                                            if (entry.first == keyStr) {
+                                                entry.first = newKey;
+                                                modified = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        
+        // Write back if modified
+        if (modified) {
+            std::ofstream outFile(langFile);
+            if (outFile.is_open()) {
+                QaplaHelpers::IniFile::saveSections(outFile, sectionList);
+            }
+        }
+    }
+    
+    // Clear pending updates
+    pendingUpdates_.clear();
+}
+
 void Translator::addMissingTranslationToFile(const std::filesystem::path& filepath, 
                                              const std::string& topic, 
                                              const std::string& key, 
@@ -310,6 +456,9 @@ void Translator::addMissingTranslationToFile(const std::filesystem::path& filepa
     auto sectionList = QaplaHelpers::IniFile::load(inFile);
     inFile.close();
     
+    // Parse the key to check if it already exists (handle both formats)
+    auto [lookupKey, timestamp] = TranslationKey::parseKeyString(key);
+    
     // Find or create the section for this topic
     bool foundSection = false;
     for (auto& section : sectionList) {
@@ -321,8 +470,17 @@ void Translator::addMissingTranslationToFile(const std::filesystem::path& filepa
             continue;
         }
         
-        // Check if key already exists
-        if (section.getValue(key).has_value()) {
+        // Check if key already exists (check both old and new formats)
+        bool keyExists = false;
+        for (const auto& [existingKey, existingValue] : section.entries) {
+            auto [existingLookup, existingTimestamp] = TranslationKey::parseKeyString(existingKey);
+            if (existingLookup == lookupKey) {
+                keyExists = true;
+                break;
+            }
+        }
+        
+        if (keyExists) {
             return; // Key already exists, nothing to do
         }
         

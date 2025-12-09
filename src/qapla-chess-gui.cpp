@@ -282,8 +282,7 @@ namespace {
             
             testManager.onPostSwap();
 
-            QaplaConfiguration::Configuration::instance().autosave();
-            QaplaWindows::EpdData::instance().autosave();
+            QaplaWindows::StaticCallbacks::autosave().invokeAll();
             
             frameRateLimiter.waitForNextFrame();
         }
