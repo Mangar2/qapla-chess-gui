@@ -28,7 +28,7 @@
 #include "../chatbot-step-tournament-opening.h"
 #include "../chatbot-step-tournament-pgn.h"
 #include "../chatbot-step-tournament-start.h"
-#include "../chatbot-step-sprt-tournament-result.h"
+#include "chatbot-step-sprt-tournament-result.h"
 #include "chatbot-step-sprt-configuration.h"
 
 namespace QaplaWindows::ChatBot {

@@ -14,6 +14,8 @@ namespace QaplaWindows {
 
 using namespace QaplaTester;
 
+namespace {
+
 static double pointsFromScore(const TournamentResult::Scored &s) {
     return s.score * s.total;
 }
@@ -34,14 +36,15 @@ static std::string escapeHtml(const std::string &s) {
     return out;
 }
 
-std::string TournamentResultView::formatHtml(const TournamentResult &result, const std::string &title, bool includePairwise, const TournamentResultView::TournamentMetadata* metadata)
-{
-    // Work on a non-const copy when we need to call non-const helpers
-    TournamentResult r = result;
+static std::string abbreviateEngineName(const std::string &name) {
+    // Use only first 2 letters
+    if (name.length() >= 2) {
+        return name.substr(0, 2);
+    }
+    return name;
+}
 
-    std::ostringstream oss;
-    
-    // HTML header with Arena-style CSS
+static void writeHtmlHeader(std::ostringstream &oss, const std::string &title) {
     oss << "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n"
         << "<html><head>\n"
         << "<meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n"
@@ -57,55 +60,48 @@ std::string TournamentResultView::formatHtml(const TournamentResult &result, con
         << "</style>\n"
         << "</head>\n"
         << "<body>\n";
-
-    // Title
     oss << "<h1>" << escapeHtml(title) << "</h1>\n\n";
+}
 
-    // Compute rated list (ranked by score, then S-B)
-    std::vector<TournamentResult::Scored> list = r.computeAllElos(2600, 50, false);
-
-    // Map for quick lookups
-    std::unordered_map<std::string, TournamentResult::Scored> scoredMap;
-    std::vector<std::string> names;
-    for (const auto &s : list) {
-        scoredMap[s.engineName] = s;
-        names.push_back(s.engineName);
-    }
-
-    // Build a map for pair-wise duels: map[name][opponent] -> EngineDuelResult
-    std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> duelsMap;
-    for (const auto &name : names) {
-        if (auto opt = r.forEngine(name)) {
-            for (const auto &d : opt->duels) {
-                duelsMap[name][d.getEngineB()] = d;
-            }
-        }
-    }
-
-    // Compute S-B (Sonneborn–Berger) score
-    std::unordered_map<std::string, double> totalPoints;
-    for (const auto &s : list) {
-        totalPoints[s.engineName] = pointsFromScore(s);
-    }
-
-    std::unordered_map<std::string, double> sbScores;
-    for (const auto &s : list) {
-        double sb = 0.0;
-        if (auto opt = r.forEngine(s.engineName)) {
-            for (const auto &d : opt->duels) {
-                // points earned by s against this opponent
-                double pts = d.winsEngineA + 0.5 * d.draws;
-                double oppPoints = totalPoints[d.getEngineB()];
-                sb += pts * oppPoints;
-            }
-        }
-        sbScores[s.engineName] = sb;
-    }
-
-    // Build the main tournament table
-    oss << "<table class=\"tbstyle\" border=\"1\" cellspacing=\"0\" cellpadding=\"2\">\n";
+static void buildDuelsMap(
+    const std::vector<std::string> &names,
+    TournamentResult &result,
+    std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> &duelsMap) {
     
-    // Table header with abbreviated column names for pairwise matches
+    for (const auto &name : names) {
+        if (auto opt = result.forEngine(name)) {
+            for (const auto &duel : opt->duels) {
+                duelsMap[name][duel.getEngineB()] = duel;
+            }
+        }
+    }
+}
+
+static void computeSonnebornBerger(
+    const std::vector<TournamentResult::Scored> &list,
+    TournamentResult &result,
+    std::unordered_map<std::string, double> &sbScores) {
+    
+    std::unordered_map<std::string, double> totalPoints;
+    for (const auto &scored : list) {
+        totalPoints[scored.engineName] = pointsFromScore(scored);
+    }
+    
+    for (const auto &scored : list) {
+        double snb = 0.0;
+        if (auto opt = result.forEngine(scored.engineName)) {
+            for (const auto &duel : opt->duels) {
+                double pts = duel.winsEngineA + 0.5 * duel.draws;
+                double oppPoints = totalPoints[duel.getEngineB()];
+                snb += pts * oppPoints;
+            }
+        }
+        sbScores[scored.engineName] = snb;
+    }
+}
+
+static void writeTableHeader(std::ostringstream &oss, bool includePairwise, const std::vector<std::string> &names) {
+    oss << "<table class=\"tbstyle\" border=\"1\" cellspacing=\"0\" cellpadding=\"2\">\n";
     oss << "<tr>";
     oss << "<th>Rank</th>";
     oss << "<th>Engine</th>";
@@ -113,155 +109,196 @@ std::string TournamentResultView::formatHtml(const TournamentResult &result, con
     oss << "<th>%</th>";
     
     if (includePairwise) {
-        // Add abbreviated engine names as column headers
-        for (const auto &n : names) {
-            // Create abbreviation from first 2 letters of each word
-            std::string abbrev;
-            std::istringstream iss(n);
-            std::string word;
-            while (iss >> word && abbrev.length() < 6) {
-                if (word.length() >= 2) {
-                    abbrev += word.substr(0, 2);
-                } else if (word.length() == 1) {
-                    abbrev += word;
-                }
-            }
-            if (abbrev.empty()) {
-                abbrev = n.length() >= 2 ? n.substr(0, 2) : n;
-            }
+        for (const auto &name : names) {
+            std::string abbrev = abbreviateEngineName(name);
             oss << std::format("<th>{}</th>", escapeHtml(abbrev));
         }
     }
     
     oss << "<th>S-B</th>";
     oss << "</tr>\n";
+}
 
-    // Table rows
-    int rank = 1;
+static void writePairwiseCell(
+    std::ostringstream &oss,
+    const std::string &engineName,
+    const std::string &opponent,
+    const std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> &duelsMap) {
+    
+    if (engineName == opponent) {
+        oss << "<td align=\"center\">&middot; &middot; &middot; &middot; &middot;</td>";
+        return;
+    }
+    
+    auto itRow = duelsMap.find(engineName);
+    std::string cel;
+    if (itRow != duelsMap.end()) {
+        auto itCol = itRow->second.find(opponent);
+        if (itCol != itRow->second.end()) {
+            const auto &duel = itCol->second;
+            cel = std::format("{}-{}-{}", duel.winsEngineA, duel.draws, duel.winsEngineB);
+        }
+    }
+    
+    if (cel.empty()) {
+        oss << "<td align=\"center\">&middot; &middot; &middot; &middot; &middot;</td>";
+    } else {
+        oss << std::format("<td align=\"center\">{}</td>", cel);
+    }
+}
+
+static void writeTableRow(
+    std::ostringstream &oss,
+    int rank,
+    const TournamentResult::Scored &scored,
+    bool includePairwise,
+    const std::vector<std::string> &names,
+    const std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> &duelsMap,
+    const std::unordered_map<std::string, double> &sbScores) {
+    
     const int maxRank = 99;
-    for (const auto &s : list) {
-        double pct = s.score * 100.0;
-        double pts = pointsFromScore(s);
-        int totalGames = static_cast<int>(s.total);
-        
-        oss << "<tr>";
-        
-        // Rank (formatted with leading zero if < 10)
-        if (rank <= maxRank) {
-            oss << std::format("<td align=\"right\"><b>{:02d}</b></td>", rank);
-        } else {
-            oss << std::format("<td align=\"right\"><b>{}</b></td>", rank);
+    double pct = scored.score * 100.0;
+    double pts = pointsFromScore(scored);
+    int totalGames = static_cast<int>(scored.total);
+    
+    oss << "<tr>";
+    
+    if (rank <= maxRank) {
+        oss << std::format("<td align=\"right\"><b>{:02d}</b></td>", rank);
+    } else {
+        oss << std::format("<td align=\"right\"><b>{}</b></td>", rank);
+    }
+    
+    oss << std::format("<td>{}</td>", escapeHtml(scored.engineName));
+    oss << std::format("<td align=\"right\">{:.1f}/{}</td>", pts, totalGames);
+    oss << std::format("<td align=\"right\">{:.1f}</td>", pct);
+    
+    if (includePairwise) {
+        for (const auto &opponent : names) {
+            writePairwiseCell(oss, scored.engineName, opponent, duelsMap);
         }
+    }
+    
+    oss << std::format("<td align=\"right\">{:.2f}</td>", sbScores.at(scored.engineName));
+    oss << "</tr>\n";
+}
+
+static void writeTableBody(
+    std::ostringstream &oss,
+    const std::vector<TournamentResult::Scored> &list,
+    bool includePairwise,
+    const std::vector<std::string> &names,
+    const std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> &duelsMap,
+    const std::unordered_map<std::string, double> &sbScores) {
+    
+    int rank = 1;
+    for (const auto &scored : list) {
+        writeTableRow(oss, rank, scored, includePairwise, names, duelsMap, sbScores);
         rank++;
-        
-        // Engine name (left-aligned)
-        oss << std::format("<td>{}</td>", escapeHtml(s.engineName));
-        
-        // Score (right-aligned)
-        oss << std::format("<td align=\"right\">{:.1f}/{}</td>", pts, totalGames);
-        
-        // Percentage (right-aligned)
-        oss << std::format("<td align=\"right\">{:.1f}</td>", pct);
-        
-        // Pairwise results
-        if (includePairwise) {
-            for (const auto &other : names) {
-                if (other == s.engineName) {
-                    // Self-match: use centered dots
-                    oss << "<td align=\"center\">&middot; &middot; &middot; &middot; &middot;</td>";
-                    continue;
-                }
-                
-                auto itRow = duelsMap.find(s.engineName);
-                std::string cell;
-                if (itRow != duelsMap.end()) {
-                    auto it = itRow->second.find(other);
-                    if (it != itRow->second.end()) {
-                        const auto &d = it->second;
-                        cell = std::format("{}-{}-{}", d.winsEngineA, d.draws, d.winsEngineB);
-                    }
-                }
-                
-                if (cell.empty()) {
-                    // No games played
-                    oss << "<td align=\"center\">&middot; &middot; &middot; &middot; &middot;</td>";
-                } else {
-                    oss << std::format("<td align=\"center\">{}</td>", cell);
-                }
-            }
-        }
-        
-        // S-B score (right-aligned with 2 decimals)
-        oss << std::format("<td align=\"right\">{:.2f}</td>", sbScores[s.engineName]);
-        
-        oss << "</tr>\n";
     }
     
     oss << "</table>\n\n";
+}
 
-    // Footer with tournament statistics
-    double games = 0.0;
-    for (const auto &s : list) { games += s.total; }
-    // every game is counted twice (once per engine) so divide by 2 to get actual number
-    int totalGames = static_cast<int>(std::round(games / 2.0));
+static void writeFooterStatistics(
+    std::ostringstream &oss,
+    const std::vector<TournamentResult::Scored> &list,
+    const TournamentResultView::TournamentMetadata* metadata) {
+    
+    double gms = 0.0;
+    for (const auto &scored : list) {
+        gms += scored.total;
+    }
+    int totalGames = static_cast<int>(std::round(gms / 2.0));
     
     oss << std::format("<p><b>{} games played", totalGames);
     if (metadata != nullptr && metadata->tournamentFinished) {
         oss << " / Tournament finished";
     }
     oss << "</b></p>\n\n";
+}
 
-    // Additional metadata if provided
-    if (metadata != nullptr) {
-        oss << "<p>\n";
-        
-        if (!metadata->startTime.empty()) {
-            oss << std::format("<b>Tournament start:</b> {}<br>\n", escapeHtml(metadata->startTime));
-        }
-        
-        if (!metadata->latestUpdate.empty()) {
-            oss << std::format("<b>Latest update:</b> {}<br>\n", escapeHtml(metadata->latestUpdate));
-        }
-        
-        if (!metadata->site.empty() || !metadata->country.empty()) {
-            oss << "<b>Site/ Country:</b> ";
-            if (!metadata->site.empty()) {
-                oss << escapeHtml(metadata->site);
-            }
-            if (!metadata->country.empty()) {
-                if (!metadata->site.empty()) {
-                    oss << ", ";
-                }
-                oss << escapeHtml(metadata->country);
-            }
-            oss << "<br>\n";
-        }
-        
-        if (!metadata->level.empty()) {
-            oss << std::format("<b>Level:</b> {}<br>\n", escapeHtml(metadata->level));
-        }
-        
-        if (!metadata->hardware.empty()) {
-            oss << std::format("<b>Hardware:</b> {}<br>\n", escapeHtml(metadata->hardware));
-        }
-        
-        if (!metadata->operatingSystem.empty()) {
-            oss << std::format("<b>Operating system:</b> {}<br>\n", escapeHtml(metadata->operatingSystem));
-        }
-        
-        if (!metadata->pgnFile.empty()) {
-            oss << std::format("<b>PGN File:</b> <a href=\"{}\">{}</a><br>\n", 
-                              escapeHtml(metadata->pgnFile), escapeHtml(metadata->pgnFile));
-        }
-        
-        if (!metadata->tableCreator.empty()) {
-            oss << std::format("<b>Table created with:</b> <a href=\"https://github.com/Mangar2/qapla-chess-gui\">{}</a><br>\n",
-                              escapeHtml(metadata->tableCreator));
-        }
-        
-        oss << "</p>\n";
+static void writeMetadataSection(std::ostringstream &oss, const TournamentResultView::TournamentMetadata* metadata) {
+    if (metadata == nullptr) {
+        return;
     }
+    
+    oss << "<p>\n";
+    
+    if (!metadata->startTime.empty()) {
+        oss << std::format("<b>Tournament start:</b> {}<br>\n", escapeHtml(metadata->startTime));
+    }
+    
+    if (!metadata->latestUpdate.empty()) {
+        oss << std::format("<b>Latest update:</b> {}<br>\n", escapeHtml(metadata->latestUpdate));
+    }
+    
+    if (!metadata->site.empty() || !metadata->country.empty()) {
+        oss << "<b>Site/ Country:</b> ";
+        if (!metadata->site.empty()) {
+            oss << escapeHtml(metadata->site);
+        }
+        if (!metadata->country.empty()) {
+            if (!metadata->site.empty()) {
+                oss << ", ";
+            }
+            oss << escapeHtml(metadata->country);
+        }
+        oss << "<br>\n";
+    }
+    
+    if (!metadata->level.empty()) {
+        oss << std::format("<b>Level:</b> {}<br>\n", escapeHtml(metadata->level));
+    }
+    
+    if (!metadata->hardware.empty()) {
+        oss << std::format("<b>Hardware:</b> {}<br>\n", escapeHtml(metadata->hardware));
+    }
+    
+    if (!metadata->operatingSystem.empty()) {
+        oss << std::format("<b>Operating system:</b> {}<br>\n", escapeHtml(metadata->operatingSystem));
+    }
+    
+    if (!metadata->pgnFile.empty()) {
+        oss << std::format("<b>PGN File:</b> <a href=\"{}\">{}</a><br>\n", 
+                          escapeHtml(metadata->pgnFile), escapeHtml(metadata->pgnFile));
+    }
+    
+    if (!metadata->tableCreator.empty()) {
+        oss << std::format("<b>Table created with:</b> <a href=\"https://github.com/Mangar2/qapla-chess-gui\">{}</a><br>\n",
+                          escapeHtml(metadata->tableCreator));
+    }
+    
+    oss << "</p>\n";
+}
 
+} // unnamed namespace
+
+std::string TournamentResultView::formatHtml(const TournamentResult &result, const std::string &title, bool includePairwise, const TournamentResultView::TournamentMetadata* metadata)
+{
+    TournamentResult res = result;
+    std::ostringstream oss;
+    
+    writeHtmlHeader(oss, title);
+    
+    std::vector<TournamentResult::Scored> lst = res.computeAllElos(2600, 50, false);
+    
+    std::vector<std::string> nms;
+    for (const auto &scored : lst) {
+        nms.push_back(scored.engineName);
+    }
+    
+    std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> dulsMap;
+    buildDuelsMap(nms, res, dulsMap);
+    
+    std::unordered_map<std::string, double> sbScrs;
+    computeSonnebornBerger(lst, res, sbScrs);
+    
+    writeTableHeader(oss, includePairwise, nms);
+    writeTableBody(oss, lst, includePairwise, nms, dulsMap, sbScrs);
+    writeFooterStatistics(oss, lst, metadata);
+    writeMetadataSection(oss, metadata);
+    
     oss << "</body></html>\n";
     return oss.str();
 }

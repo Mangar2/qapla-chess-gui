@@ -62,10 +62,7 @@ std::string ChatbotStepStandardTournamentResult::draw() {
 
     // Button to view detailed HTML results
     if (QaplaWindows::ImGuiControls::textButton("View Detailed Results (HTML)")) {
-        if (!htmlGenerated_) {
-            htmlPath_ = generateHtmlReport();
-            htmlGenerated_ = true;
-        }
+        htmlPath_ = generateHtmlReport();
         if (!htmlPath_.empty()) {
             QaplaHelpers::OsHelpers::openInShell(htmlPath_);
         }

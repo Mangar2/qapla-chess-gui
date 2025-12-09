@@ -44,7 +44,6 @@ public:
 
 private:
     std::string title_;
-    bool htmlGenerated_ = false;
     std::string htmlPath_;
 
     /**

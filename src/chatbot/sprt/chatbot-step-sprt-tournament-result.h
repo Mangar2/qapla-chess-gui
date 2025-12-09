@@ -19,56 +19,39 @@
 
 #pragma once
 
-#include "chatbot-step.h"
+#include "../chatbot-step.h"
 #include <string>
-
 
 namespace QaplaTester { class TournamentResult; }
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Reusable chatbot step to display tournament results.
+ * @brief Chatbot step to display SPRT tournament results.
  * 
- * Shows a text summary of tournament results in the chatbot and provides
- * a button to view detailed HTML results in the default browser.
+ * Shows SPRT-specific result tables (duel result, SPRT test result) directly
+ * in the chatbot window with explanatory text, and provides a button to view
+ * detailed HTML results in the default browser.
  */
-class ChatbotStepTournamentResult : public ChatbotStep {
+class ChatbotStepSprtTournamentResult : public ChatbotStep {
 public:
     /**
-     * @brief Constructor for tournament result display step.
-     * @param context The engine select context (Standard or SPRT).
-     * @param title Title for the HTML report (default: "Tournament Results").
+     * @brief Constructor for SPRT tournament result display step.
+     * @param title Title for the HTML report (default: "SPRT Tournament Results").
      */
-    explicit ChatbotStepTournamentResult(
-        EngineSelectContext context = EngineSelectContext::Standard,
-        std::string title = "Tournament Results");
+    explicit ChatbotStepSprtTournamentResult(std::string title = "SPRT Tournament Results");
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    EngineSelectContext context_;
     std::string title_;
-    bool htmlGenerated_ = false;
     std::string htmlPath_;
-
-    /**
-     * @brief Gets the tournament result based on context.
-     * @return The current tournament result.
-     */
-    QaplaTester::TournamentResult getTournamentResult() const;
 
     /**
      * @brief Generates HTML report and saves it to config directory.
      * @return Path to the generated HTML file.
      */
     std::string generateHtmlReport();
-
-    /**
-     * @brief Formats a plain text summary of the results.
-     * @return Plain text summary string.
-     */
-    std::string formatTextSummary() const;
 };
 
 } // namespace QaplaWindows::ChatBot

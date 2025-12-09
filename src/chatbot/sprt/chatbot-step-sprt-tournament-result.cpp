@@ -18,10 +18,12 @@
  */
 
 #include "chatbot-step-sprt-tournament-result.h"
-#include "../tournament-result-view.h"
-#include "../sprt-tournament-data.h"
-#include "../os-helpers.h"
-#include "../imgui-controls.h"
+#include "../../tournament-result-view.h"
+#include "../../sprt-tournament-data.h"
+#include "../../os-helpers.h"
+#include "../../imgui-controls.h"
+
+#include <sprt-manager.h>
 
 #include <imgui.h>
 #include <filesystem>
@@ -53,6 +55,19 @@ std::string ChatbotStepSprtTournamentResult::draw() {
     
     ImGui::Spacing();
     
+    // Explanation of the SPRT bounds display (e.g., "-2.94 < -0.03 < 2.94")
+    auto eloLower = sprtData.sprtConfig().eloLower;
+    auto eloUpper = sprtData.sprtConfig().eloUpper;
+    auto maxGames = sprtData.sprtConfig().maxGames;
+    QaplaWindows::ImGuiControls::textWrapped(std::format(
+        "The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n" 
+        "If LLR falls below lowerbound, then the engine is not {} elo stronger (H0 accepted).\n"
+        "If LLR exceeds upperbound, then the engine is at least {} elo stronger (H1 accepted).\n"
+        "The test continues as long as LLR stays between the bounds and the maximum number of games ({}) is not reached.", 
+        eloLower, eloUpper, maxGames));
+
+    ImGui::Spacing();
+        
     // Display SPRT test result table
     ImGui::Text("SPRT Test Result:");
     ImVec2 sprtTableSize(0.0F, 100.0F);
@@ -71,10 +86,7 @@ std::string ChatbotStepSprtTournamentResult::draw() {
 
     // Button to view detailed HTML results
     if (QaplaWindows::ImGuiControls::textButton("View Detailed Results (HTML)")) {
-        if (!htmlGenerated_) {
-            htmlPath_ = generateHtmlReport();
-            htmlGenerated_ = true;
-        }
+        htmlPath_ = generateHtmlReport();
         if (!htmlPath_.empty()) {
             QaplaHelpers::OsHelpers::openInShell(htmlPath_);
         }
