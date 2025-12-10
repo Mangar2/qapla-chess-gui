@@ -17,7 +17,11 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 #include "board-workspace.h"
+#include "snackbar.h"
+
 #include <imgui.h>
+
+#include <format>
 
 namespace QaplaWindows {
 
@@ -62,7 +66,19 @@ namespace QaplaWindows {
                 ImGuiWindowFlags_NoNavFocus);
 
             if (rootWindow) {
-                rootWindow->draw();
+                if (ImGui::BeginChild("root")) {
+                    try {
+                        rootWindow->draw();
+                    }
+                    catch (const std::exception& e) {
+                        SnackbarManager::instance().showError(
+                            std::format("Error in root window: {}", e.what()));
+                    }
+                    catch (...) {
+                        SnackbarManager::instance().showError("Unknown error in root window");
+                    }
+                }
+                ImGui::EndChild();
             }
 
             ImGui::End();
