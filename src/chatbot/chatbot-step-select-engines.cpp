@@ -74,9 +74,20 @@ std::string ChatbotStepSelectEngines::draw() {
     ImGui::Spacing();
 
     auto options = engineSelect.getOptions();
-    engineSelect.getOptions().allowMultipleSelection = false; // Simplifies engine selection
-    engineSelect.getOptions().directEditMode = true;          // Scips the collapsing header
-    engineSelect.getOptions().allowEngineConfiguration = false; // Simplefies the UI
+
+    if (!showMoreOptions_) {
+        // Simplified view: single selection, no engine configuration editing
+        auto& mutableOptions = engineSelect.getOptions();
+        mutableOptions.allowMultipleSelection = false;
+        mutableOptions.directEditMode = true;
+        mutableOptions.allowEngineConfiguration = false;
+    } else {
+        // Advanced view: use full engine selection with configuration editing and multi-select
+        auto& mutableOptions = engineSelect.getOptions();
+        mutableOptions.directEditMode = true;
+        mutableOptions.allowEngineConfiguration = true;
+        mutableOptions.allowMultipleSelection = true;
+    }
     ImGui::PushID("tournamentEngineSelect");
     engineSelect.draw();
     ImGui::PopID();
@@ -93,6 +104,13 @@ std::string ChatbotStepSelectEngines::draw() {
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
         return "";
+    }
+
+    ImGui::SameLine();
+
+    const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
+    if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
+        showMoreOptions_ = !showMoreOptions_;
     }
 
     ImGui::SameLine();

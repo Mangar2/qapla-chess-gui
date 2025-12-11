@@ -25,6 +25,7 @@
 #include "chatbot-messages.h"
 #include "sprt/chatbot-sprt.h"
 #include "epd/chatbot-epd.h"
+#include "board/chatbot-board.h"
 #include "i18n.h"
 #include "imgui-controls.h"
 #include "snackbar.h"
@@ -44,6 +45,7 @@ ChatbotWindow::ChatbotWindow() {
     registerThread(std::make_unique<ChatbotTournament>());
     registerThread(std::make_unique<ChatbotSprt>());
     registerThread(std::make_unique<ChatbotEpd>());
+    registerThread(std::make_unique<ChatbotBoard>());
     registerThread(std::make_unique<ChatbotTutorial>());
     registerThread(std::make_unique<ChatbotChooseLanguage>());
     registerThread(std::make_unique<ChatbotMessages>());

@@ -24,6 +24,7 @@
 #include "imgui-popup.h"
 #include "engine-setup-window.h"
 #include "callback-manager.h"
+#include "instance-manager.h"
 #include "time-control-window.h"
 #include "pgn-auto-saver.h"
 #include "callback-manager.h"
@@ -161,6 +162,25 @@ namespace QaplaWindows
 			savePgnGame();
 		}
 
+		/**
+		 * @brief Returns the global instance manager for interactive boards.
+		 */
+		static QaplaWindows::InstanceManager<uint32_t, InteractiveBoardWindow>& getInstanceManager();
+
+		/**
+		 * @brief Returns the board instance for the given id or nullptr.
+		 */
+		static InteractiveBoardWindow* getBoard(uint32_t id);
+
+		/**
+		 * @brief Creates a new board via the global message system and returns its id.
+		 *
+		 * This helper encapsulates the logic of taking a snapshot of existing
+		 * board ids, sending the "create_board" message, and then determining
+		 * which new id was registered.
+		 */
+		static std::optional<uint32_t> createBoardViaMessage();
+
 	private:
 
 		/**
@@ -218,6 +238,9 @@ namespace QaplaWindows
 		 * @param move The move to execute.
 		 */
 		void doMove(const QaplaTester::MoveRecord& move);
+
+		using InstanceHandle = QaplaWindows::InstanceManager<uint32_t, InteractiveBoardWindow>::HandlePtr;
+		InstanceHandle instanceHandle_{};
 
 		/**
 		 * @brief Sets the current move index.

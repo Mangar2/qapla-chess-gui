@@ -45,6 +45,7 @@ public:
 
 private:
     EngineSelectContext context_;
+    bool showMoreOptions_ = false;
 
     /**
      * @brief Gets the engine selection based on context and type.

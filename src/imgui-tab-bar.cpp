@@ -68,18 +68,22 @@ namespace QaplaWindows {
     void ImGuiTabBar::draw() {
         if (ImGui::BeginTabBar("QaplaTabBar", ImGuiTabBarFlags_Reorderable)) {
             // Draw all tabs
-            for (auto it = tabs_.begin(); it != tabs_.end(); ) {
+
+            auto maxIndex = tabs_.size();
+            std::optional<size_t> closeIndex;
+            for (auto index = size_t{0}; index < maxIndex; ++index) {
+                auto& tab = tabs_[index];
                 bool open = true;
                 
                 // Set flags based on whether tab is closable
-                ImGuiTabItemFlags flags = it->defaultTabFlags;
-                it->defaultTabFlags &= ~ImGuiTabItemFlags_SetSelected;
+                ImGuiTabItemFlags flags = tab.defaultTabFlags;
+                tab.defaultTabFlags &= ~ImGuiTabItemFlags_SetSelected;
                 bool closable = flags & ImGuiTabItemFlags_NoAssumedClosure;
 
                 // Check if window is highlighted
-                bool isHighlighted = it->window && it->window->highlighted();
-                auto translatedName = Translator::instance().translate("Tab", it->name);
-                auto tabItemText = std::format("{}###{}", translatedName, it->name);
+                bool isHighlighted = tab.window && tab.window->highlighted();
+                auto translatedName = Translator::instance().translate("Tab", tab.name);
+                auto tabItemText = std::format("{}###{}", translatedName, tab.name);
                 bool tabIsActive = ImGui::BeginTabItem(tabItemText.c_str(), closable ? &open : nullptr, flags);
                 
                 // Draw dot if window is highlighted (after BeginTabItem, independent of whether tab is active)
@@ -91,18 +95,21 @@ namespace QaplaWindows {
                 
                 if (tabIsActive) {
                     // Always use callback (which is created for EmbeddedWindows too)
-                    if (it->callback) {
-                        it->callback();
+                    if (tab.callback) {
+                        tab.callback();
                     }
                     ImGui::EndTabItem();
                 }
                 
-                // Remove tab if it was closed
+                // Mark tab for deletion if closed
                 if (closable && !open) {
-                    it = tabs_.erase(it);
-                } else {
-                    ++it;
+                    closeIndex = index;
                 }
+            }
+            
+            // Remove closed tabs in a separate loop
+            if (closeIndex.has_value()) {
+                tabs_.erase(tabs_.begin() + *closeIndex);
             }
             
             // Add + button if callback is set

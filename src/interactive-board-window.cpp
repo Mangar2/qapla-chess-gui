@@ -47,6 +47,8 @@
 #include <engine-worker-factory.h>
 #include <game-manager-pool.h>
 
+#include <algorithm>
+
 #include <GLFW/glfw3.h>
 
 using namespace QaplaTester;
@@ -102,11 +104,36 @@ InteractiveBoardWindow::~InteractiveBoardWindow() {
 std::unique_ptr<InteractiveBoardWindow> InteractiveBoardWindow::createInstance() {
 	static uint32_t id = 1;
 	auto instance = std::make_unique<InteractiveBoardWindow>(id);
+	instance->instanceHandle_ = getInstanceManager().registerInstance(id, instance.get());
 	instance->saveCallbackHandle_ = StaticCallbacks::save().registerCallback([instancePtr = instance.get()]() {
 		instancePtr->save();
 	});
 	++id;
 	return instance;
+}
+
+QaplaWindows::InstanceManager<uint32_t, InteractiveBoardWindow>& InteractiveBoardWindow::getInstanceManager() {
+	static QaplaWindows::InstanceManager<uint32_t, InteractiveBoardWindow> manager;
+	return manager;
+}
+
+InteractiveBoardWindow* InteractiveBoardWindow::getBoard(uint32_t id) {
+	return getInstanceManager().get(id);
+}
+
+std::optional<uint32_t> InteractiveBoardWindow::createBoardViaMessage() {
+	auto& manager = getInstanceManager();
+	auto before = manager.getKeys();
+
+	StaticCallbacks::message().invokeAll("create_board");
+
+	auto after = manager.getKeys();
+	for (auto id : after) {
+		if (std::find(before.begin(), before.end(), id) == before.end()) {
+			return id;
+		}
+	}
+	return std::nullopt;
 }
 
 void InteractiveBoardWindow::loadGlobalEngineConfiguration(const std::string &idStr)

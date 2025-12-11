@@ -28,6 +28,7 @@
 #include "epd-data.h"
 #include "viewer-board-window-list.h"
 #include "engine-test-window.h"
+#include "imgui-board-tab-bar.h"
 #include "tournament-window.h"
 #include "sprt-tournament-window.h"
 #include "imgui-tab-bar.h"
@@ -181,24 +182,7 @@ namespace {
         QaplaWindows::BoardWorkspace workspace;
         workspace.maximize(true);
 
-        auto boardTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        auto instances = QaplaWindows::InteractiveBoardWindow::loadInstances();
-        size_t index = 0;
-        boardTabBar->addTab("Chatbot", std::make_unique<QaplaWindows::ChatBot::ChatbotWindow>());
-        for (auto& instance : instances) {
-            auto title = instance->getTitle();
-            boardTabBar->addTab(title, std::move(instance), 
-                index == 0 ? ImGuiTabItemFlags_None : ImGuiTabItemFlags_NoAssumedClosure);
-            index++;
-        }
-        boardTabBar->setAddTabCallback([&](QaplaWindows::ImGuiTabBar& tb) {
-            auto instance = QaplaWindows::InteractiveBoardWindow::createInstance();
-            auto title = instance->getTitle();
-            tb.addTab(title, std::move(instance), ImGuiTabItemFlags_NoAssumedClosure | ImGuiTabItemFlags_SetSelected);
-        });
-        boardTabBar->setDynamicTabsCallback([&]() {
-            QaplaWindows::ViewerBoardWindowList::drawAllTabs();
-        });
+        auto boardTabBar = std::make_unique<QaplaWindows::ImGuiBoardTabBar>();
 
 		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
         taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(false));
