@@ -213,6 +213,7 @@ namespace {
             "main", ImGuiWindowFlags_None);
 		mainContainer->setRight(std::move(boardTabBar));
 		mainContainer->setLeft(std::move(taskTabBar));
+        mainContainer->setPresetWidth(400.0F, true);
 
         workspace.setRootWindow(std::move(mainContainer));
         return workspace;

@@ -71,6 +71,10 @@ namespace QaplaWindows {
 
         /**
          * @brief Sets a preset width for either the left or right panel
+         * 
+         * When window size increases the panel will grow automatically up to the preset width.
+         * When window size decreases the panel will not shrink below the preset width.
+         * 
          * @param width The width to set in pixels
          * @param isLeft If true, sets width for left panel; if false, sets width for right panel
          */

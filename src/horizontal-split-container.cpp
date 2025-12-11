@@ -89,7 +89,7 @@ namespace QaplaWindows {
     float HorizontalSplitContainer::computeLeftWidth(ImVec2 avail) {
         constexpr float imguiPadding = 13.0F; 
         float availableWidth = std::max(avail.x - splitterWidth_ - imguiPadding, 2 * minSize_);
-        float width = leftWidth_;
+        float leftWidth = leftWidth_;
 
         // If left panel is fixed, return the fixed width
         if (leftFixed_) {
@@ -98,20 +98,30 @@ namespace QaplaWindows {
 
         // If right panel is fixed, compute left width based on remaining space
         if (rightFixed_) {
-            width = availableWidth - rightPresetWidth_;
+            leftWidth = availableWidth - rightPresetWidth_;
         } else if (rightPresetWidth_ != 0) {
             if (rightWidth_ == 0) {
-                width = availableWidth - rightPresetWidth_;
+                leftWidth = availableWidth - rightPresetWidth_;
             } else {
                 auto availDelta = avail.x - availX_;
-                width += availDelta;
+                auto rightWidth = availableWidth - leftWidth - availDelta;
+                rightWidth = std::max(rightWidth, std::min(rightWidth + 
+                    std::max(availDelta, 0.0F), rightPresetWidth_));
+                leftWidth = availableWidth - rightWidth;
             }
-        }
+        } else if (leftPresetWidth_ != 0) {
+            if (leftWidth_ == 0) {
+                leftWidth = leftPresetWidth_;
+            } else {
+                auto availDelta = std::max(avail.x - availX_, 0.0F);
+                leftWidth = std::max(leftWidth_, std::min(leftWidth + availDelta, leftPresetWidth_));
+            }
+        } 
 
         availX_ = avail.x;
-        width = std::max(width, minSize_);
-        width = std::min(width, availableWidth - minSize_);
-        return width;
+        leftWidth = std::max(leftWidth, minSize_);
+        leftWidth = std::min(leftWidth, availableWidth - minSize_);
+        return leftWidth;
     }
 
     void HorizontalSplitContainer::draw() {
