@@ -49,8 +49,11 @@ void ChatbotEpd::addAnalysisSteps() {
         return &EpdData::instance().getEngineSelect();
     };
     steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "EPD analysis"));
-    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(
-        EngineSelectContext::EpdAnalysis, 1));
+    
+    auto engineLoadProvider = []() -> ImGuiEngineSelect* {
+        return &EpdData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineLoadProvider, 1, "analysis"));
     steps_.push_back(std::make_unique<ChatbotStepEpdConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepEpdStart>());
 }

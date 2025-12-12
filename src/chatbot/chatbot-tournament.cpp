@@ -58,7 +58,11 @@ void ChatbotTournament::addNewTournamentSteps() {
         return &TournamentData::instance().getEngineSelect();
     };
     steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "tournament"));
-    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>());
+    
+    auto engineLoadProvider = []() -> ImGuiEngineSelect* {
+        return &TournamentData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineLoadProvider, 2, "tournament"));
     steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>());

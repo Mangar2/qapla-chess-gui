@@ -56,7 +56,11 @@ void ChatbotSprt::addNewSprtSteps() {
         return &SprtTournamentData::instance().getEngineSelect();
     };
     steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "SPRT tournament"));
-    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(EngineSelectContext::SPRT));
+    
+    auto engineLoadProvider = []() -> ImGuiEngineSelect* {
+        return &SprtTournamentData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineLoadProvider, 2, "SPRT tournament"));
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(EngineSelectContext::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(EngineSelectContext::SPRT));

@@ -3,6 +3,7 @@
 #include "chatbot-step-board-select.h"
 #include "../chatbot-step-global-settings.h"
 #include "../chatbot-step-select-engines.h"
+#include "../chatbot-step-load-engine.h"
 #include "chatbot-step-board-set-engines.h"
 
 #include "../../interactive-board-window.h"
@@ -46,7 +47,11 @@ void ChatbotBoard::start() {
     };
     steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "board"));
     
+    // Add load-engine step (reusing engineSelectProvider)
+    steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineSelectProvider, 1, "board"));
+    
     // Add step to activate the selected engines (board-specific, no UI)
+    // This must come AFTER load-engine step
     auto boardProvider = [this]() -> InteractiveBoardWindow* {
         if (!boardId_.has_value()) {
             return nullptr;

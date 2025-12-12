@@ -18,13 +18,11 @@
  */
 
 #include "chatbot-step-load-engine.h"
+#include "imgui-engine-select.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 #include "engine-worker-factory.h"
 #include "configuration.h"
-#include "tournament-data.h"
-#include "sprt-tournament-data.h"
-#include "epd-data.h"
 #include "snackbar.h"
 #include <imgui.h>
 #include <format>
@@ -33,26 +31,28 @@
 namespace QaplaWindows::ChatBot {
 
 ChatbotStepLoadEngine::ChatbotStepLoadEngine(
-    EngineSelectContext context, size_t minEngines)
-    : context_(context), minEngines_(minEngines) {}
+    EngineSelectProvider provider,
+    size_t minEngines,
+    const char* contextName)
+    : provider_(std::move(provider)),
+      minEngines_(minEngines),
+      contextName_(contextName) {}
 
-ImGuiEngineSelect& ChatbotStepLoadEngine::getEngineSelect() {
-    if (context_ == EngineSelectContext::EpdAnalysis) {
-        return EpdData::instance().getEngineSelect();
-    }
-    if (context_ == EngineSelectContext::SPRT) {
-        return SprtTournamentData::instance().getEngineSelect();
-    }
-    return TournamentData::instance().getEngineSelect();
-}
-
-const char* ChatbotStepLoadEngine::getContextName() const {
-    return context_ == EngineSelectContext::EpdAnalysis ? "analysis" : "tournament";
+ImGuiEngineSelect* ChatbotStepLoadEngine::getEngineSelect() {
+    return provider_();
 }
 
 std::string ChatbotStepLoadEngine::draw() {
     if (finished_) {
          return result_;
+    }
+    
+    // Check if target still exists
+    auto* engineSelect = getEngineSelect();
+    if (engineSelect == nullptr) {
+        QaplaWindows::ImGuiControls::textWrapped("Error: Target no longer exists.");
+        finished_ = true;
+        return "stop";
     }
 
     switch (state_) {
@@ -70,7 +70,14 @@ std::string ChatbotStepLoadEngine::draw() {
 }
 
 void ChatbotStepLoadEngine::drawInput() {
-    auto selectedEngines = getEngineSelect().getSelectedEngines();
+    auto* engineSelect = getEngineSelect();
+    if (engineSelect == nullptr) {
+        finished_ = true;
+        result_ = "stop";
+        return;
+    }
+    
+    auto selectedEngines = engineSelect->getSelectedEngines();
     size_t numSelected = selectedEngines.size();
     showAddedEngines();
 
@@ -78,7 +85,7 @@ void ChatbotStepLoadEngine::drawInput() {
     if (numSelected == 0) {
         QaplaWindows::ImGuiControls::textWrapped(
             std::format("No engines selected. You need at least {} engine{} to start {}. Please select engines.",
-                minEngines_, minEngines_ == 1 ? "" : "s", getContextName()).c_str());
+                minEngines_, minEngines_ == 1 ? "" : "s", contextName_).c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
@@ -93,7 +100,7 @@ void ChatbotStepLoadEngine::drawInput() {
         QaplaWindows::ImGuiControls::textWrapped(
             std::format("{} engine{} selected. You need at least {} to start {}. Please select at least {} more engine{}.",
                 numSelected, numSelected == 1 ? "" : "s",
-                minEngines_, getContextName(),
+                minEngines_, contextName_,
                 minEngines_ - numSelected, (minEngines_ - numSelected) == 1 ? "" : "s").c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
@@ -107,7 +114,7 @@ void ChatbotStepLoadEngine::drawInput() {
         }
     } else { // numSelected >= minEngines_
         QaplaWindows::ImGuiControls::textWrapped(
-            std::format("Do you want to load additional engines for the {}?", getContextName()).c_str());
+            std::format("Do you want to load additional engines for the {}?", contextName_).c_str());
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
@@ -156,8 +163,11 @@ void ChatbotStepLoadEngine::showAddedEngines()
 }
 
 void ChatbotStepLoadEngine::addEngines() {
-    auto& engineSelect = getEngineSelect();
-    auto added = engineSelect.addEngines(true);
+    auto* engineSelect = getEngineSelect();
+    if (engineSelect == nullptr) {
+        return;
+    }
+    auto added = engineSelect->addEngines(true);
     for (const auto& path : added) {
         addedEnginePaths_.push_back(path);
     }

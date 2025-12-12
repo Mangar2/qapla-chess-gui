@@ -20,6 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include <functional>
 #include <vector>
 #include <string>
 
@@ -31,19 +32,33 @@ namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to load additional engines from disk.
- * Supports tournaments, SPRT tournaments, and EPD analysis.
+ * Supports tournaments, SPRT tournaments, EPD analysis, and interactive boards via callback.
  */
 class ChatbotStepLoadEngine : public ChatbotStep {
 public:
+    /**
+     * @brief Callback function type that returns a reference to engine selection.
+     * The callback may return nullptr if the target object no longer exists.
+     */
+    using EngineSelectProvider = std::function<ImGuiEngineSelect*()>;
+
+    /**
+     * @brief Constructs with an engine select provider callback.
+     * @param provider Callback to retrieve the engine selection.
+     * @param minEngines Minimum number of engines required.
+     * @param contextName Name to display in UI (e.g., "tournament", "analysis", "board").
+     */
     explicit ChatbotStepLoadEngine(
-        EngineSelectContext context = EngineSelectContext::Standard,
-        size_t minEngines = 2);
+        EngineSelectProvider provider,
+        size_t minEngines = 2,
+        const char* contextName = "tournament");
     ~ChatbotStepLoadEngine() override = default;
 
     [[nodiscard]] std::string draw() override;
 private:
-    EngineSelectContext context_;
-    size_t minEngines_;
+    EngineSelectProvider provider_;  ///< Callback for engine selection
+    size_t minEngines_;              ///< Minimum engines required
+    const char* contextName_;        ///< Context name for UI text
     std::string result_;
     
     enum class State {
@@ -57,16 +72,10 @@ private:
     bool detectionStarted_ = false;
 
     /**
-     * @brief Gets the engine selection for the tournament.
-     * @return Reference to the engine selection.
+     * @brief Gets the engine selection from the provider.
+     * @return Pointer to engine selection, or nullptr if target no longer exists.
      */
-    [[nodiscard]] ImGuiEngineSelect& getEngineSelect();
-    
-    /**
-     * @brief Gets the context name for UI text.
-     * @return "tournament" or "analysis"
-     */
-    [[nodiscard]] const char* getContextName() const;
+    [[nodiscard]] ImGuiEngineSelect* getEngineSelect();
 
     void drawInput();
     void showAddedEngines();

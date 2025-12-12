@@ -49,7 +49,7 @@ Copy FEN=Copier FEN
 {s:"New tournament",t:"2025-12-09"}=New tournament
 {s:"Save tournament",t:"2025-12-09"}=Save tournament
 {s:"Load tournament",t:"2025-12-09"}=Load tournament
-{s:"Add Engines",t:"2025-12-11"}=Add Engines
+{s:"Add Engines",t:"2025-12-12"}=Add Engines
 {s:"More Options",t:"2025-12-12"}=More Options
 {s:"Show Trace",t:"2025-12-11"}=Show Trace
 {s:"Overwrite & Continue",t:"2025-12-11"}=Overwrite & Continue
@@ -422,7 +422,7 @@ Average Elo level for scaling rating output=Average Elo level for scaling rating
 {s:"Save the current tournament to a file so you can load it later.",t:"2025-12-11"}=Save the current tournament to a file so you can load it later.
 Create a new tournament. The currently loaded tournament will be discarded unless you save it first.=Create a new tournament. The currently loaded tournament will be discarded unless you save it first.
 Show or hide advanced global engine settings, such as traces and restart behavior.=Show or hide advanced global engine settings, such as traces and restart behavior.
-{s:"Open a file dialog to add one or more engine binaries to the engine list.",t:"2025-12-11"}=Open a file dialog to add one or more engine binaries to the engine list.
+{s:"Open a file dialog to add one or more engine binaries to the engine list.",t:"2025-12-12"}=Open a file dialog to add one or more engine binaries to the engine list.
 Automatically detect engine capabilities (options) now and continue.=Automatically detect engine capabilities (options) now and continue.
 Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.=Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.
 {s:"Start the tournament now with the specified concurrency and engine settings.",t:"2025-12-09"}=Start the tournament now with the specified concurrency and engine settings.
@@ -682,4 +682,5 @@ The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n
 {s:"Board selection completed.",t:"2025-12-12"}=Board selection completed.
 {s:"Select engines for the board:",t:"2025-12-12"}=Select engines for the board:
 {s:"Selected engines for the board:",t:"2025-12-12"}=Selected engines for the board:
+{s:"Do you want to load additional engines for the board?",t:"2025-12-12"}=Do you want to load additional engines for the board?
 
