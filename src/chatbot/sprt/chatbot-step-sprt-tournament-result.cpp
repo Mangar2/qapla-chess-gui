@@ -135,7 +135,7 @@ std::string ChatbotStepSprtTournamentResult::generateHtmlReport() {
         metadata.operatingSystem = QaplaHelpers::OsHelpers::getOperatingSystem();
         
         // Get time control from SPRT settings
-        const auto& timeControl = sprtData.globalSettings().getTimeControlSettings();
+        const auto& timeControl = sprtData.getGlobalSettings().getTimeControlSettings();
         metadata.level = std::format("Blitz {}", timeControl.timeControl);
         
         // Set PGN file if applicable

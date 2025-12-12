@@ -31,33 +31,38 @@ namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to select engines from the list of available engines.
- * Supports tournaments, SPRT tournaments, and EPD analysis.
+ * Supports tournaments, SPRT tournaments, EPD analysis, and interactive boards via callback.
  */
 class ChatbotStepSelectEngines : public ChatbotStep {
 public:
-    using EngineSelectFactory = std::function<ImGuiEngineSelect&()>;
+    /**
+     * @brief Callback function type that returns a reference to engine selection.
+     * The callback may return nullptr if the target object no longer exists.
+     */
+    using EngineSelectProvider = std::function<ImGuiEngineSelect*()>;
 
+    /**
+     * @brief Constructs with an engine select provider callback.
+     * @param provider Callback to retrieve the engine selection.
+     * @param contextName Name to display in UI (e.g., "tournament", "EPD analysis", "board").
+     */
     explicit ChatbotStepSelectEngines(
-        EngineSelectContext context = EngineSelectContext::Standard);
+        EngineSelectProvider provider,
+        const char* contextName = "tournament");
     ~ChatbotStepSelectEngines() override;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    EngineSelectContext context_;
-    bool showMoreOptions_ = false;
+    EngineSelectProvider provider_;   ///< Callback for engine selection
+    const char* contextName_;         ///< Context name for UI text
+    bool showMoreOptions_ = false;    ///< Show advanced options
 
     /**
-     * @brief Gets the engine selection based on context and type.
-     * @return Reference to the engine selection.
+     * @brief Gets the engine selection from the provider.
+     * @return Pointer to engine selection, or nullptr if target no longer exists.
      */
-    [[nodiscard]] ImGuiEngineSelect& getEngineSelect();
-    
-    /**
-     * @brief Gets the context name for UI text.
-     * @return "tournament" or "EPD analysis"
-     */
-    [[nodiscard]] const char* getContextName() const;
+    [[nodiscard]] ImGuiEngineSelect* getEngineSelect();
 };
 
 } // namespace QaplaWindows::ChatBot

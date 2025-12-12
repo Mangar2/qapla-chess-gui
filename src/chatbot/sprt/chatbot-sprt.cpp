@@ -21,7 +21,7 @@
 #include "../chatbot-step-tournament-stop-running.h"
 #include "../chatbot-step-tournament-continue-existing.h"
 #include "../chatbot-step-tournament-menu.h"
-#include "../chatbot-step-tournament-global-settings.h"
+#include "../chatbot-step-global-settings.h"
 #include "../chatbot-step-select-engines.h"
 #include "../chatbot-step-load-engine.h"
 #include "../chatbot-step-tournament-load.h"
@@ -30,6 +30,7 @@
 #include "../chatbot-step-tournament-start.h"
 #include "chatbot-step-sprt-tournament-result.h"
 #include "chatbot-step-sprt-configuration.h"
+#include "../../sprt-tournament-data.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -46,8 +47,15 @@ void ChatbotSprt::start() {
 }
 
 void ChatbotSprt::addNewSprtSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>(EngineSelectContext::SPRT));
-    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(EngineSelectContext::SPRT));
+    auto globalSettingsProvider = []() -> ImGuiEngineGlobalSettings* {
+        return &SprtTournamentData::instance().getGlobalSettings();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepGlobalSettings>(globalSettingsProvider));
+    
+    auto engineSelectProvider = []() -> ImGuiEngineSelect* {
+        return &SprtTournamentData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "SPRT tournament"));
     steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(EngineSelectContext::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(EngineSelectContext::SPRT));

@@ -24,6 +24,7 @@
 #include "../chatbot-step-load-engine.h"
 #include "chatbot-step-epd-configuration.h"
 #include "chatbot-step-epd-start.h"
+#include "../../epd-data.h"
 
 #include <algorithm>
 
@@ -44,8 +45,10 @@ void ChatbotEpd::start() {
 }
 
 void ChatbotEpd::addAnalysisSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(
-        EngineSelectContext::EpdAnalysis));
+    auto engineSelectProvider = []() -> ImGuiEngineSelect* {
+        return &EpdData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "EPD analysis"));
     steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(
         EngineSelectContext::EpdAnalysis, 1));
     steps_.push_back(std::make_unique<ChatbotStepEpdConfiguration>());

@@ -79,7 +79,7 @@ namespace QaplaTest {
             
             // Check if already selected in EpdData
             auto& epdData = QaplaWindows::EpdData::instance();
-            auto selectedEngines = epdData.engineSelect().getSelectedEngines();
+            auto selectedEngines = epdData.getEngineSelect().getSelectedEngines();
             if (!selectedEngines.empty()) {
                 ctx->LogInfo("Engine already selected, skipping selection");
                 return;

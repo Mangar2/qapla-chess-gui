@@ -22,7 +22,7 @@
 #include "chatbot-step-tournament-continue-existing.h"
 #include "chatbot-step-tournament-menu.h"
 #include "chatbot-step-tournament-load.h"
-#include "chatbot-step-tournament-global-settings.h"
+#include "chatbot-step-global-settings.h"
 #include "chatbot-step-select-engines.h"
 #include "chatbot-step-load-engine.h"
 #include "chatbot-step-tournament-configuration.h"
@@ -30,6 +30,7 @@
 #include "chatbot-step-tournament-pgn.h"
 #include "chatbot-step-tournament-start.h"
 #include "chatbot-step-standard-tournament-result.h"
+#include "../tournament-data.h"
 
 #include <algorithm>
 
@@ -48,8 +49,15 @@ void ChatbotTournament::start() {
 }
 
 void ChatbotTournament::addNewTournamentSteps() {
-    steps_.push_back(std::make_unique<ChatbotStepTournamentGlobalSettings>());
-    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>());
+    auto globalSettingsProvider = []() -> ImGuiEngineGlobalSettings* {
+        return &TournamentData::instance().getGlobalSettings();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepGlobalSettings>(globalSettingsProvider));
+    
+    auto engineSelectProvider = []() -> ImGuiEngineSelect* {
+        return &TournamentData::instance().getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "tournament"));
     steps_.push_back(std::make_unique<ChatbotStepLoadEngine>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>());

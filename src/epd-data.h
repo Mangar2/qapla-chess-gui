@@ -117,7 +117,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the engine selection.
          * @return Reference to the engine selection.
          */
-        ImGuiEngineSelect& engineSelect() {
+        ImGuiEngineSelect& getEngineSelect() {
             return *engineSelect_;
         }
         

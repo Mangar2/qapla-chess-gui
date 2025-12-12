@@ -1,6 +1,9 @@
 #include "chatbot-board.h"
 #include "../chatbot-step.h"
 #include "chatbot-step-board-select.h"
+#include "../chatbot-step-global-settings.h"
+#include "../chatbot-step-select-engines.h"
+#include "chatbot-step-board-set-engines.h"
 
 #include "../../interactive-board-window.h"
 
@@ -15,6 +18,42 @@ void ChatbotBoard::start() {
     boardCreated_ = false;
 
     steps_.push_back(std::make_unique<ChatbotStepBoardSelect>());
+    
+    // Add global settings step with a callback that provides the board's settings
+    // The callback returns nullptr if the board no longer exists
+    auto globalSettingsProvider = [this]() -> ImGuiEngineGlobalSettings* {
+        if (!boardId_.has_value()) {
+            return nullptr;
+        }
+        auto* board = InteractiveBoardWindow::getBoard(*boardId_);
+        if (board == nullptr) {
+            return nullptr;
+        }
+        return &board->getGlobalSettings();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepGlobalSettings>(globalSettingsProvider));
+    
+    // Add engine selection step with a callback that provides the board's engine selection
+    auto engineSelectProvider = [this]() -> ImGuiEngineSelect* {
+        if (!boardId_.has_value()) {
+            return nullptr;
+        }
+        auto* board = InteractiveBoardWindow::getBoard(*boardId_);
+        if (board == nullptr) {
+            return nullptr;
+        }
+        return &board->getEngineSelect();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepSelectEngines>(engineSelectProvider, "board"));
+    
+    // Add step to activate the selected engines (board-specific, no UI)
+    auto boardProvider = [this]() -> InteractiveBoardWindow* {
+        if (!boardId_.has_value()) {
+            return nullptr;
+        }
+        return InteractiveBoardWindow::getBoard(*boardId_);
+    };
+    steps_.push_back(std::make_unique<ChatbotStepBoardSetEngines>(boardProvider));
 }
 
 bool ChatbotBoard::draw() {
@@ -41,13 +80,24 @@ bool ChatbotBoard::draw() {
         // Store board selection token from first step, e.g. "board:1" or "board:new"
         if (selectedBoardToken_.empty() && result.rfind("board:", 0) == 0) {
             selectedBoardToken_ = result;
-        }
-
-        if (!boardCreated_ && selectedBoardToken_ == "board:new") {
-            auto newBoardId = QaplaWindows::InteractiveBoardWindow::createBoardViaMessage();
-            if (newBoardId.has_value()) {
-                boardId_ = *newBoardId;
-                boardCreated_ = true;
+            
+            // Parse board ID from token
+            if (selectedBoardToken_ == "board:new") {
+                auto newBoardId = QaplaWindows::InteractiveBoardWindow::createBoardViaMessage();
+                if (newBoardId.has_value()) {
+                    boardId_ = *newBoardId;
+                    boardCreated_ = true;
+                }
+            } else {
+                // Extract ID from "board:<id>" format
+                try {
+                    auto idStr = selectedBoardToken_.substr(6);  // Skip "board:"
+                    boardId_ = static_cast<uint32_t>(std::stoul(idStr));
+                } catch (...) {
+                    // Invalid format, stop
+                    stopped_ = true;
+                    return false;
+                }
             }
         }
 

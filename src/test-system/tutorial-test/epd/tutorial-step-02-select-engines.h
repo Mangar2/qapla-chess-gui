@@ -46,7 +46,7 @@ namespace QaplaTest::EpdTutorialTest {
         ctx->Yield();
 
         // Verify at least 2 engines selected
-        const auto& configs = epdData.engineSelect().getEngineConfigurations();
+        const auto& configs = epdData.getEngineSelect().getEngineConfigurations();
         int selectedCount = 0;
         for (const auto& engineConfig : configs) {
             if (engineConfig.selected) {

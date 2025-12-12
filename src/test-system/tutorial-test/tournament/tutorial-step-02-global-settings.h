@@ -30,7 +30,7 @@ namespace QaplaTest::TutorialTest {
         ctx->LogInfo("Step 2: Configure Global Settings");
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
-        auto& globalConfig = tournamentData.globalSettings().getGlobalConfiguration();
+        auto& globalConfig = tournamentData.getGlobalSettings().getGlobalConfiguration();
         
         // Wait for GlobalSettings section to be highlighted
         IM_CHECK(waitForHighlightedSection(ctx, "GlobalSettings", 5.0f));

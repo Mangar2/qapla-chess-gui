@@ -107,7 +107,7 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
         ImGui::Spacing();
     }
 
-    auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
+    auto selectedEngines = TournamentData::instance().getEngineSelect().getSelectedEngines();
     
     if (selectedEngines.empty()) {
         QaplaWindows::ImGuiControls::textWrapped("No engines selected for the tournament.");
@@ -146,9 +146,9 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
 }
 
 void ChatbotStepTournamentConfiguration::applyGauntletSelection(int selectedIndex) {
-    auto& engineSelect = TournamentData::instance().engineSelect();
-    auto configurations = engineSelect.getEngineConfigurations();
-    auto selectedEngines = engineSelect.getSelectedEngines();
+    auto& getEngineSelect = TournamentData::instance().getEngineSelect();
+    auto configurations = getEngineSelect.getEngineConfigurations();
+    auto selectedEngines = getEngineSelect.getSelectedEngines();
     
     if (selectedIndex < 0 || selectedIndex >= static_cast<int>(selectedEngines.size())) {
         return;
@@ -166,11 +166,11 @@ void ChatbotStepTournamentConfiguration::applyGauntletSelection(int selectedInde
         }
     }
     
-    engineSelect.setEngineConfigurations(configurations);
+    getEngineSelect.setEngineConfigurations(configurations);
 }
 
 int ChatbotStepTournamentConfiguration::findCurrentGauntletIndex() const {
-    auto selectedEngines = TournamentData::instance().engineSelect().getSelectedEngines();
+    auto selectedEngines = TournamentData::instance().getEngineSelect().getSelectedEngines();
     
     for (int i = 0; i < static_cast<int>(selectedEngines.size()); ++i) {
         if (selectedEngines[i].config.isGauntlet()) {

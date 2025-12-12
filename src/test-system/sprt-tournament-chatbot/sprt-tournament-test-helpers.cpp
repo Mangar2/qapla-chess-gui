@@ -111,7 +111,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         // Check if first engine is already selected
         auto& sprtTournamentData = QaplaWindows::SprtTournamentData::instance();
-        auto selectedEngines = sprtTournamentData.engineSelect().getSelectedEngines();
+        auto selectedEngines = sprtTournamentData.getEngineSelect().getSelectedEngines();
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
@@ -141,7 +141,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         // Check if second engine is already selected
         auto& sprtTournamentData = QaplaWindows::SprtTournamentData::instance();
-        auto selectedEngines = sprtTournamentData.engineSelect().getSelectedEngines();
+        auto selectedEngines = sprtTournamentData.getEngineSelect().getSelectedEngines();
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
@@ -188,7 +188,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         engineConfigs.push_back(config2);
         
         // Set the engine configurations
-        sprtTournamentData.engineSelect().setEngineConfigurations(engineConfigs);
+        sprtTournamentData.getEngineSelect().setEngineConfigurations(engineConfigs);
 
         // Set opening file
         auto& opening = sprtTournamentData.tournamentOpening();
@@ -199,7 +199,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         pgn.pgnOptions().file = getTestPgnPath();
 
         // Set time control to 1+0.01 (1 second + 10ms per move)
-        auto& globalSettings = sprtTournamentData.globalSettings();
+        auto& globalSettings = sprtTournamentData.getGlobalSettings();
         QaplaWindows::ImGuiEngineGlobalSettings::TimeControlSettings tcSettings;
         tcSettings.timeControl = "1.0+0.01";
         globalSettings.setTimeControlSettings(tcSettings);

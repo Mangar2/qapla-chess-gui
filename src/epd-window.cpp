@@ -199,7 +199,7 @@ void EpdWindow::drawInput()
 
     ImGui::Spacing();
     const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
-    epdData.engineSelect().draw(highlightEngineSelect);
+    epdData.getEngineSelect().draw(highlightEngineSelect);
 
     ImGuiEpdConfiguration epdConfig;
     ImGuiEpdConfiguration::DrawOptions options {

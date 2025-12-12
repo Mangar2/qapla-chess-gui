@@ -99,7 +99,7 @@ namespace QaplaTest::TournamentChatbot {
         
         // Check if first engine is already selected
         auto& tournamentData = QaplaWindows::TournamentData::instance();
-        auto selectedEngines = tournamentData.engineSelect().getSelectedEngines();
+        auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
@@ -129,7 +129,7 @@ namespace QaplaTest::TournamentChatbot {
         
         // Check if second engine is already selected
         auto& tournamentData = QaplaWindows::TournamentData::instance();
-        auto selectedEngines = tournamentData.engineSelect().getSelectedEngines();
+        auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
@@ -176,7 +176,7 @@ namespace QaplaTest::TournamentChatbot {
         engineConfigs.push_back(config2);
         
         // Set the engine configurations via the proper API
-        tournamentData.engineSelect().setEngineConfigurations(engineConfigs);
+        tournamentData.getEngineSelect().setEngineConfigurations(engineConfigs);
 
         // Set opening file
         auto& opening = tournamentData.tournamentOpening();

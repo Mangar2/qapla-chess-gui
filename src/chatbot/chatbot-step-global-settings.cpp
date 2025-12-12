@@ -17,25 +17,21 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-step-tournament-global-settings.h"
-#include "tournament-data.h"
-#include "sprt-tournament-data.h"
+#include "chatbot-step-global-settings.h"
+#include "imgui-engine-global-settings.h"
 #include "imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepTournamentGlobalSettings::ChatbotStepTournamentGlobalSettings(EngineSelectContext type)
-    : type_(type) {}
+ChatbotStepGlobalSettings::ChatbotStepGlobalSettings(SettingsProvider provider)
+    : provider_(std::move(provider)) {}
 
-ImGuiEngineGlobalSettings& ChatbotStepTournamentGlobalSettings::getGlobalSettings() {
-    if (type_ == EngineSelectContext::SPRT) {
-        return SprtTournamentData::instance().globalSettings();
-    }
-    return TournamentData::instance().globalSettings();
+ImGuiEngineGlobalSettings* ChatbotStepGlobalSettings::getGlobalSettings() {
+    return provider_();
 }
 
-std::string ChatbotStepTournamentGlobalSettings::draw() {
+std::string ChatbotStepGlobalSettings::draw() {
 
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped(
@@ -44,7 +40,14 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
         ImGui::Spacing();
     }
 
-    auto& globalSettings = getGlobalSettings();
+    auto* globalSettings = getGlobalSettings();
+    
+    // Check if target still exists (e.g., board not closed)
+    if (globalSettings == nullptr) {
+        QaplaWindows::ImGuiControls::textWrapped("Error: Target no longer exists.");
+        finished_ = true;
+        return "stop";
+    }
     
     // Set simplified options for chatbot, with more options toggle
     ImGuiEngineGlobalSettings::Options options;
@@ -55,13 +58,13 @@ std::string ChatbotStepTournamentGlobalSettings::draw() {
     options.showUseCheckboxes = false;
     options.alwaysOpen = true;
 
-    globalSettings.drawGlobalSettings({}, options);
+    globalSettings->drawGlobalSettings({}, options);
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    globalSettings.drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true, true);
+    globalSettings->drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true, true);
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();

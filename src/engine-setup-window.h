@@ -136,6 +136,38 @@ namespace QaplaWindows {
             engineSelect_.getOptions().allowMultipleSelection = enabled;
         }
 
+    	/**
+         * @brief Returns a reference to the engine selection.
+         * @return Reference to the engine selection.
+         */
+        ImGuiEngineSelect& getEngineSelect() {
+            return engineSelect_;
+        }
+
+        /**
+         * @brief Returns a const reference to the engine selection.
+         * @return Const reference to the engine selection.
+         */
+        const ImGuiEngineSelect& getEngineSelect() const {
+            return engineSelect_;
+        }
+
+        /**
+         * @brief Returns a reference to the global engine settings.
+         * @return Reference to the global engine settings.
+         */
+        ImGuiEngineGlobalSettings& getGlobalSettings() {
+            return globalSettings_;
+        }
+
+        /**
+         * @brief Returns a const reference to the global engine settings.
+         * @return Const reference to the global engine settings.
+         */
+        const ImGuiEngineGlobalSettings& getGlobalSettings() const {
+            return globalSettings_;
+        }
+
         /**
          * @brief Sets whether the action buttons are shown.
          * @param show True to show buttons, false to hide.

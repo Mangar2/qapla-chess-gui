@@ -20,6 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
+#include <functional>
 
 namespace QaplaWindows {
     class ImGuiEngineGlobalSettings;
@@ -29,24 +30,34 @@ namespace QaplaWindows::ChatBot {
 
 /**
  * @brief Step to configure global engine settings (hash, time control).
- * Supports both standard tournaments and SPRT tournaments.
+ * Supports tournaments, SPRT, EPD, and interactive boards via callback.
  */
-class ChatbotStepTournamentGlobalSettings : public ChatbotStep {
+class ChatbotStepGlobalSettings : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentGlobalSettings(EngineSelectContext type = EngineSelectContext::Standard);
-    ~ChatbotStepTournamentGlobalSettings() override = default;
+    /**
+     * @brief Callback function type that returns a reference to global settings.
+     * The callback may return nullptr if the target object no longer exists.
+     */
+    using SettingsProvider = std::function<ImGuiEngineGlobalSettings*()>;
+
+    /**
+     * @brief Constructs with a settings provider callback.
+     */
+    explicit ChatbotStepGlobalSettings(SettingsProvider provider);
+    
+    ~ChatbotStepGlobalSettings() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    EngineSelectContext type_;
-    bool showMoreOptions_ = false;  ///< Show advanced options
+    SettingsProvider provider_;        ///< Callback for settings
+    bool showMoreOptions_ = false;     ///< Show advanced options
 
     /**
-     * @brief Gets the global settings for the tournament.
-     * @return Reference to the global settings.
+     * @brief Gets the global settings from the provider.
+     * @return Pointer to global settings, or nullptr if target no longer exists.
      */
-    [[nodiscard]] ImGuiEngineGlobalSettings& getGlobalSettings();
+    [[nodiscard]] ImGuiEngineGlobalSettings* getGlobalSettings();
 };
 
 } // namespace QaplaWindows::ChatBot

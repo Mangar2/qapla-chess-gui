@@ -142,9 +142,8 @@ namespace QaplaWindows
 
 		/**
 		 * @brief Sets the engines to use
-		 * @param engines Vector of EngineConfig objects representing the engines to set.
 		 */
-		void setEngines(const std::vector<QaplaTester::EngineConfig> &engines);
+		void setActiveEngines();
 
 		/**
 		 * @brief Renders the interactive board window and its components.
@@ -180,6 +179,41 @@ namespace QaplaWindows
 		 * which new id was registered.
 		 */
 		static std::optional<uint32_t> createBoardViaMessage();
+
+		/**
+         * @brief Returns a reference to the engine selection.
+         * @return Reference to the engine selection.
+         */
+        ImGuiEngineSelect& getEngineSelect() {
+            return engineSetupWindow_->content().getEngineSelect();
+        }
+
+        /**
+         * @brief Returns a const reference to the engine selection.
+         * @return Const reference to the engine selection.
+         */
+        const ImGuiEngineSelect& getEngineSelect() const {
+            return engineSetupWindow_->content().getEngineSelect();
+        }
+
+	    /**
+         * @brief Returns a reference to the global engine settings.
+         * @return Reference to the global engine settings.
+         */
+        ImGuiEngineGlobalSettings& getGlobalSettings() {
+            return engineSetupWindow_->content().getGlobalSettings();
+        }
+
+        /**
+         * @brief Returns a const reference to the global engine settings.
+         * @return Const reference to the global engine settings.
+         */
+        void setGlobalSettings(const ImGuiEngineGlobalSettings& settings) {
+            engineSetupWindow_->content().getGlobalSettings() = settings;
+        }
+
+		//void 
+		//setEngines(engineSetupWindow_->content().getActiveEngines());
 
 	private:
 
@@ -312,7 +346,7 @@ namespace QaplaWindows
 		std::unique_ptr<EmbeddedWindow> mainWindow_ = nullptr;
 		std::unique_ptr<BoardWindow> boardWindow_;
 		std::unique_ptr<EngineWindow> engineWindow_;
-		std::unique_ptr<ImGuiPopup<EngineSetupWindow>> setupWindow_;
+		std::unique_ptr<ImGuiPopup<EngineSetupWindow>> engineSetupWindow_;
 		std::unique_ptr<ImGuiPopup<TimeControlWindow>> timeControlWindow_;
 
 		std::unique_ptr<ImGuiClock> imGuiClock_;

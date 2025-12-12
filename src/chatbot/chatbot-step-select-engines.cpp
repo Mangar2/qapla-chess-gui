@@ -18,9 +18,7 @@
  */
 
 #include "chatbot-step-select-engines.h"
-#include "tournament-data.h"
-#include "sprt-tournament-data.h"
-#include "epd-data.h"
+#include "imgui-engine-select.h"
 #include "imgui-controls.h"
 #include "i18n.h"
 #include "engine-worker-factory.h"
@@ -31,30 +29,31 @@ using QaplaTester::EngineWorkerFactory;
 namespace QaplaWindows::ChatBot {
 
 ChatbotStepSelectEngines::ChatbotStepSelectEngines(
-    EngineSelectContext context)
-    : context_(context) {}
+    EngineSelectProvider provider,
+    const char* contextName)
+    : provider_(std::move(provider)), contextName_(contextName) {}
 
 ChatbotStepSelectEngines::~ChatbotStepSelectEngines() {
-    getEngineSelect().setAlwaysShowEngines(false);
+    auto* engineSelect = getEngineSelect();
+    if (engineSelect != nullptr) {
+        engineSelect->setAlwaysShowEngines(false);
+    }
 }
 
-ImGuiEngineSelect& ChatbotStepSelectEngines::getEngineSelect() {
-    if (context_ == EngineSelectContext::EpdAnalysis) {
-        return EpdData::instance().engineSelect();
-    }
-    if (context_ == EngineSelectContext::SPRT) {
-        return SprtTournamentData::instance().engineSelect();
-    }
-    return TournamentData::instance().engineSelect();
-}
-
-const char* ChatbotStepSelectEngines::getContextName() const {
-    return context_ == EngineSelectContext::EpdAnalysis ? "EPD analysis" : "tournament";
+ImGuiEngineSelect* ChatbotStepSelectEngines::getEngineSelect() {
+    return provider_();
 }
 
 std::string ChatbotStepSelectEngines::draw() {
 
-    auto& engineSelect = getEngineSelect();
+    auto* engineSelect = getEngineSelect();
+    
+    // Check if target still exists (e.g., board not closed)
+    if (engineSelect == nullptr) {
+        QaplaWindows::ImGuiControls::textWrapped("Error: Target no longer exists.");
+        finished_ = true;
+        return "stop";
+    }
 
     // Prüfe, ob Engines verfügbar sind
     auto& configManager = EngineWorkerFactory::getConfigManager();
@@ -66,32 +65,32 @@ std::string ChatbotStepSelectEngines::draw() {
 
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped(
-            std::format("Select engines for the {}:", getContextName()).c_str());
+            std::format("Select engines for the {}:", contextName_).c_str());
     } else {
         QaplaWindows::ImGuiControls::textWrapped(
-            std::format("Selected engines for the {}:", getContextName()).c_str());
+            std::format("Selected engines for the {}:", contextName_).c_str());
     }
     ImGui::Spacing();
 
-    auto options = engineSelect.getOptions();
+    auto options = engineSelect->getOptions();
 
     if (!showMoreOptions_) {
         // Simplified view: single selection, no engine configuration editing
-        auto& mutableOptions = engineSelect.getOptions();
+        auto& mutableOptions = engineSelect->getOptions();
         mutableOptions.allowMultipleSelection = false;
         mutableOptions.directEditMode = true;
         mutableOptions.allowEngineConfiguration = false;
     } else {
         // Advanced view: use full engine selection with configuration editing and multi-select
-        auto& mutableOptions = engineSelect.getOptions();
+        auto& mutableOptions = engineSelect->getOptions();
         mutableOptions.directEditMode = true;
         mutableOptions.allowEngineConfiguration = true;
         mutableOptions.allowMultipleSelection = true;
     }
     ImGui::PushID("tournamentEngineSelect");
-    engineSelect.draw();
+    engineSelect->draw();
     ImGui::PopID();
-    engineSelect.setOptions(options); // Restore options
+    engineSelect->setOptions(options); // Restore options
 
     ImGui::Spacing();
     ImGui::Separator();

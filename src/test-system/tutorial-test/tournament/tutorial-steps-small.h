@@ -134,7 +134,7 @@ namespace QaplaTest::TutorialTest {
         ctx->Yield();
         
         // Verify at least 3 engines selected
-        const auto& configs = tournamentData.engineSelect().getEngineConfigurations();
+        const auto& configs = tournamentData.getEngineSelect().getEngineConfigurations();
         int selectedCount = 0;
         for (const auto& engineConfig : configs) {
             if (engineConfig.selected) {

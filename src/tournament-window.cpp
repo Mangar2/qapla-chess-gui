@@ -239,11 +239,11 @@ bool TournamentWindow::drawInput() {
     bool changed = false;
 
     globalSettingsTutorial_.highlight = (highlightedSection_ == "GlobalSettings");
-    changed |= tournamentData.globalSettings().drawGlobalSettings(
+    changed |= tournamentData.getGlobalSettings().drawGlobalSettings(
         { .controlWidth = inputWidth, .controlIndent = 10.0F }, {}, globalSettingsTutorial_);
     
     const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
-    changed |= tournamentData.engineSelect().draw(highlightEngineSelect);
+    changed |= tournamentData.getEngineSelect().draw(highlightEngineSelect);
     
     openingTutorial_.highlight = (highlightedSection_ == "Opening");
     changed |= tournamentData.tournamentOpening().draw(
@@ -253,7 +253,7 @@ bool TournamentWindow::drawInput() {
     changed |= tournamentData.tournamentConfiguration().draw({}, inputWidth, 10.0F, tournamentTutorial_);
     
     timeControlTutorial_.highlight = (highlightedSection_ == "TimeControl");
-    changed |= tournamentData.globalSettings().drawTimeControl(
+    changed |= tournamentData.getGlobalSettings().drawTimeControl(
         { .controlWidth = inputWidth, .controlIndent = 10.0F }, false, false, timeControlTutorial_);
     
     pgnTutorial_.highlight = (highlightedSection_ == "Pgn");
@@ -314,7 +314,7 @@ bool TournamentWindow::highlighted() const {
 }
 
 bool TournamentWindow::hasTwoSameEnginesWithPonder() {
-    const auto& configs = TournamentData::instance().engineSelect().getEngineConfigurations();
+    const auto& configs = TournamentData::instance().getEngineSelect().getEngineConfigurations();
     
     // Check if we have at least 2 selected engines with same originalName
     long long index = 0;
@@ -401,8 +401,8 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         
         // Step 1: Configure global settings
         // Check if hash is 64 MB and global ponder is disabled
-        if (tournamentData.globalSettings().getGlobalConfiguration().hashSizeMB == 64 && 
-            !tournamentData.globalSettings().getGlobalConfiguration().useGlobalPonder) {
+        if (tournamentData.getGlobalSettings().getGlobalConfiguration().hashSizeMB == 64 && 
+            !tournamentData.getGlobalSettings().getGlobalConfiguration().useGlobalPonder) {
             Tutorial::instance().requestNextTutorialStep(topicName);
         }
         return;
@@ -471,7 +471,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         
         // Step 5: Configure time control
         // Check if time control is set to "20.0+0.02"
-        if (tournamentData.globalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
+        if (tournamentData.getGlobalSettings().getTimeControlSettings().timeControl == "20.0+0.02") {
             Tutorial::instance().requestNextTutorialStep(topicName);
         }
         return;
@@ -534,7 +534,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
         
         // Step 11: Add third engine - check if at least 3 engines are selected
         {
-            const auto& configs = tournamentData.engineSelect().getEngineConfigurations();
+            const auto& configs = tournamentData.getEngineSelect().getEngineConfigurations();
             int selectedCount = 0;
             for (const auto& engineConfig : configs) {
                 if (engineConfig.selected) {

@@ -37,17 +37,17 @@ namespace QaplaTest {
     static void resetTestData() {
         // Clear all selected engines
         auto& tournamentData = QaplaWindows::TournamentData::instance();
-        auto& engineSelect = tournamentData.engineSelect();
-        auto configs = engineSelect.getEngineConfigurations();
+        auto& getEngineSelect = tournamentData.getEngineSelect();
+        auto configs = getEngineSelect.getEngineConfigurations();
         for (auto& cfg : configs) {
             cfg.selected = false;
             cfg.config.setPonder(false);
         }
-        engineSelect.setEngineConfigurations(configs);
+        getEngineSelect.setEngineConfigurations(configs);
         
         // Reset global settings to defaults
         QaplaWindows::ImGuiEngineGlobalSettings::GlobalConfiguration defaultGlobalConfig;
-        tournamentData.globalSettings().setGlobalConfiguration(defaultGlobalConfig);
+        tournamentData.getGlobalSettings().setGlobalConfiguration(defaultGlobalConfig);
         
         // Reset opening configuration to defaults
         QaplaTester::Openings defaultOpenings;
@@ -59,7 +59,7 @@ namespace QaplaTest {
         
         // Reset time control to default
         QaplaWindows::ImGuiEngineGlobalSettings::TimeControlSettings defaultTimeControl;
-        tournamentData.globalSettings().setTimeControlSettings(defaultTimeControl);
+        tournamentData.getGlobalSettings().setTimeControlSettings(defaultTimeControl);
         
         // Reset PGN configuration to defaults
         QaplaTester::PgnSave::Options defaultPgnOptions;

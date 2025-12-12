@@ -161,7 +161,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the engine selection.
          * @return Reference to the engine selection.
          */
-        ImGuiEngineSelect& engineSelect() {
+        ImGuiEngineSelect& getEngineSelect() {
             return *engineSelect_;
         }
 
@@ -169,7 +169,7 @@ namespace QaplaWindows {
          * @brief Returns a const reference to the engine selection.
          * @return Const reference to the engine selection.
          */
-        const ImGuiEngineSelect& engineSelect() const {
+        const ImGuiEngineSelect& getEngineSelect() const {
             return *engineSelect_;
         }
 
@@ -225,7 +225,7 @@ namespace QaplaWindows {
          * @brief Returns a reference to the global engine settings.
          * @return Reference to the global engine settings.
          */
-        ImGuiEngineGlobalSettings& globalSettings() {
+        ImGuiEngineGlobalSettings& getGlobalSettings() {
             return *globalSettings_;
         }
 
@@ -233,7 +233,7 @@ namespace QaplaWindows {
          * @brief Returns a const reference to the global engine settings.
          * @return Const reference to the global engine settings.
          */
-        const ImGuiEngineGlobalSettings& globalSettings() const {
+        const ImGuiEngineGlobalSettings& getGlobalSettings() const {
             return *globalSettings_;
         }
 

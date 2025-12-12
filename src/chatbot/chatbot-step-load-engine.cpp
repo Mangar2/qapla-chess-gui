@@ -38,12 +38,12 @@ ChatbotStepLoadEngine::ChatbotStepLoadEngine(
 
 ImGuiEngineSelect& ChatbotStepLoadEngine::getEngineSelect() {
     if (context_ == EngineSelectContext::EpdAnalysis) {
-        return EpdData::instance().engineSelect();
+        return EpdData::instance().getEngineSelect();
     }
     if (context_ == EngineSelectContext::SPRT) {
-        return SprtTournamentData::instance().engineSelect();
+        return SprtTournamentData::instance().getEngineSelect();
     }
-    return TournamentData::instance().engineSelect();
+    return TournamentData::instance().getEngineSelect();
 }
 
 const char* ChatbotStepLoadEngine::getContextName() const {

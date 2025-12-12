@@ -60,7 +60,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	  computeTask_(std::make_unique<ComputeTask>()),
 	  boardWindow_(std::make_unique<BoardWindow>()),
 	  engineWindow_(std::make_unique<EngineWindow>()),
-	  setupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
+	  engineSetupWindow_(std::make_unique<ImGuiPopup<EngineSetupWindow>>(
 		ImGuiPopup<EngineSetupWindow>::Config{ 
 			.title = "Select Engines",
 			.okButton = true,
@@ -84,10 +84,10 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 	timeControlWindow_->content().setFromConfiguration("board" + std::to_string(id_));
 	timeControl_ = timeControlWindow_->content().getSelectedTimeControl();
 	computeTask_->setTimeControl(timeControl_);
-	setupWindow_->content().setDirectEditMode(false);
-	setupWindow_->content().setAllowMultipleSelection(true);
-	setupWindow_->content().setShowButtons(false);
-	setupWindow_->content().setId("board" + std::to_string(id_));
+	engineSetupWindow_->content().setDirectEditMode(false);
+	engineSetupWindow_->content().setAllowMultipleSelection(true);
+	engineSetupWindow_->content().setShowButtons(false);
+	engineSetupWindow_->content().setId("board" + std::to_string(id_));
 	setPosition(true);
 	initSplitterWindows();
 }
@@ -141,15 +141,15 @@ void InteractiveBoardWindow::loadGlobalEngineConfiguration(const std::string &id
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
 	auto globalSettings = config.getSectionList("eachengine", idStr);
 	if (globalSettings) {
-		setupWindow_->content().setGlobalConfiguration(*globalSettings);
+		engineSetupWindow_->content().setGlobalConfiguration(*globalSettings);
 	}
 }
 
 void InteractiveBoardWindow::loadBoardEnginesConfiguration(
 	const QaplaHelpers::IniFile::SectionList &sectionList)
 {
-	setupWindow_->content().setEnginesConfiguration(sectionList);
-	setEngines(setupWindow_->content().getActiveEngines());
+	engineSetupWindow_->content().setEnginesConfiguration(sectionList);
+	setActiveEngines();
 }
 
 std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
@@ -249,7 +249,7 @@ void InteractiveBoardWindow::initSplitterWindows()
 					stopEngine(id);
 				}
 				else if (command == "Config") {
-					setupWindow_->open();
+					engineSetupWindow_->open();
 				}
 				else if (command == "Swap") {
 					swapEngines();
@@ -394,15 +394,15 @@ void InteractiveBoardWindow::swapEngines() {
 }
 
 void InteractiveBoardWindow::drawEngineSelectionPopup() {
-	if (!setupWindow_) {
+	if (!engineSetupWindow_) {
 		return;
 	}
-	setupWindow_->draw("Use", "Cancel");
-    if (auto confirmed = setupWindow_->confirmed()) {
+	engineSetupWindow_->draw("Use", "Cancel");
+    if (auto confirmed = engineSetupWindow_->confirmed()) {
         if (*confirmed) {
-			setEngines(setupWindow_->content().getActiveEngines());
+			setActiveEngines();
         }
-        setupWindow_->resetConfirmation();
+        engineSetupWindow_->resetConfirmation();
     }
 }
 
@@ -569,8 +569,9 @@ void InteractiveBoardWindow::restartEngine(const std::string &id)
 	computeTask_->restartEngine(id);
 }
 
-void InteractiveBoardWindow::setEngines(const std::vector<EngineConfig> &engines)
+void InteractiveBoardWindow::setActiveEngines()
 {
+	const auto& engines = engineSetupWindow_->content().getActiveEngines();
 	if (engines.empty())
 	{
 		computeTask_->initEngines(EngineList{});

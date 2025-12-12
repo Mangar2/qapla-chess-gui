@@ -34,12 +34,12 @@ namespace QaplaTest {
         auto& epdData = QaplaWindows::EpdData::instance();
         
         // Clear all selected engines
-        auto& engineSelect = epdData.engineSelect();
-        auto configs = engineSelect.getEngineConfigurations();
+        auto& getEngineSelect = epdData.getEngineSelect();
+        auto configs = getEngineSelect.getEngineConfigurations();
         for (auto& cfg : configs) {
             cfg.selected = false;
         }
-        engineSelect.setEngineConfigurations(configs);
+        getEngineSelect.setEngineConfigurations(configs);
         
         // Reset configuration to defaults
         auto& config = epdData.config();
