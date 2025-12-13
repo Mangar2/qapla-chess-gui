@@ -212,6 +212,14 @@ namespace QaplaWindows
             engineSetupWindow_->content().getGlobalSettings() = settings;
         }
 
+        /**
+         * @brief Returns a reference to the time control window.
+         * @return Reference to the time control window.
+         */
+        TimeControlWindow& getTimeControlWindow() {
+            return timeControlWindow_->content();
+        }
+
 		//void 
 		//setEngines(engineSetupWindow_->content().getActiveEngines());
 

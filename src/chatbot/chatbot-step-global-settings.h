@@ -42,8 +42,10 @@ public:
 
     /**
      * @brief Constructs with a settings provider callback.
+     * @param provider Callback that provides the global settings
+     * @param showTimeControl Whether to show time control settings (default: true)
      */
-    explicit ChatbotStepGlobalSettings(SettingsProvider provider);
+    explicit ChatbotStepGlobalSettings(SettingsProvider provider, bool showTimeControl = true);
     
     ~ChatbotStepGlobalSettings() override = default;
 
@@ -51,6 +53,7 @@ public:
 
 private:
     SettingsProvider provider_;        ///< Callback for settings
+    bool showTimeControl_ = true;      ///< Show time control settings
     bool showMoreOptions_ = false;     ///< Show advanced options
 
     /**

@@ -17,65 +17,52 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "chatbot-step-global-settings.h"
-#include "imgui-engine-global-settings.h"
-#include "imgui-controls.h"
+#include "chatbot-step-board-time-control.h"
+#include "../../time-control-window.h"
+#include "../../imgui-controls.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
 
-ChatbotStepGlobalSettings::ChatbotStepGlobalSettings(SettingsProvider provider, bool showTimeControl)
-    : provider_(std::move(provider)), showTimeControl_(showTimeControl) {}
+ChatbotStepBoardTimeControl::ChatbotStepBoardTimeControl(TimeControlProvider provider)
+    : provider_(std::move(provider)) {}
 
-ImGuiEngineGlobalSettings* ChatbotStepGlobalSettings::getGlobalSettings() {
+TimeControlWindow* ChatbotStepBoardTimeControl::getTimeControlWindow() {
     return provider_();
 }
 
-std::string ChatbotStepGlobalSettings::draw() {
+std::string ChatbotStepBoardTimeControl::draw() {
 
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped(
-            "You can configure global engine settings such as hash size and time control here. "
-            "These settings will apply to all engines participating in the tournament.");
+            "Configure the time control for your board game. "
+            "By default, you can choose a Blitz time setting. "
+            "Click 'More Options' to access all time control modes.");
         ImGui::Spacing();
     }
 
-    auto* globalSettings = getGlobalSettings();
+    auto* timeControlWindow = getTimeControlWindow();
     
     // Check if target still exists (e.g., board not closed)
-    if (globalSettings == nullptr) {
-        QaplaWindows::ImGuiControls::textWrapped("Error: Target no longer exists.");
+    if (timeControlWindow == nullptr) {
+        QaplaWindows::ImGuiControls::textWrapped("Error: Board no longer exists.");
         finished_ = true;
         return "stop";
     }
     
-    // Set simplified options for chatbot, with more options toggle
-    ImGuiEngineGlobalSettings::Options options;
-    options.showHash = true;
-    options.showPonder = true;
-    options.showTrace = showMoreOptions_;
-    options.showRestart = showMoreOptions_;
-    options.showUseCheckboxes = false;
-    options.alwaysOpen = true;
-
-    globalSettings->drawGlobalSettings({}, options);
-
-    if (showTimeControl_) {
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-
-        globalSettings->drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true, true);
-    }
-
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    // Draw time control with options
+    TimeControlWindow::DrawOptions options;
+    options.showOnlyBlitz = !showMoreOptions_;
+    
+    timeControlWindow->draw(options);
 
     if (finished_) {
         return "";
     }
 
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
@@ -87,7 +74,9 @@ std::string ChatbotStepGlobalSettings::draw() {
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
-    QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced global engine settings, such as traces and restart behavior.");
+    QaplaWindows::ImGuiControls::hooverTooltip(
+        "Show or hide advanced time control options, such as Tournament, "
+        "Time per Move, Fixed Depth, and Nodes per Move.");
 
     ImGui::SameLine();
 

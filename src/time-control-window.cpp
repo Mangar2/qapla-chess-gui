@@ -38,7 +38,6 @@ using namespace QaplaWindows;
 constexpr uint64_t millisecondsInMinute = 60000;
 constexpr int millisecondsInSecond = 1000;
 constexpr float baseIndent = 10.0F;  
-constexpr float inputIndent = 32.0F;  // Indentation for input fields
 constexpr float inputWidth = 150.0F;  // Width for input fields
 constexpr int fastStep = 10;
 
@@ -146,63 +145,83 @@ std::string TimeControlWindow::computeActiveButtonId() const {
     }
 }
 
-void TimeControlWindow::draw() {
-    std::string activeButtonId = computeActiveButtonId();
+void TimeControlWindow::draw(const DrawOptions& options) {
     ImGui::Spacing();
     constexpr float rightBorder = 5.0F;
     ImGui::Indent(10.0F);
     auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("TimeControlWindow", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    ImGui::BeginChild("TimeControlWindow", ImVec2(size.x - rightBorder, 0), 
+        ImGuiChildFlags_AutoResizeY);
     
-    // Lambda to handle radio buttons and collapsing headers
-    auto drawSection = [&](const char* radioButtonId, const char* headerLabel,  
-        TimeControl& timeControl, auto drawFunction) {
-        if (ImGui::RadioButton(radioButtonId, activeButtonId == radioButtonId)) {
-            if (std::string(radioButtonId) == "##blitz") {
-                timeControlSettings_.selected = SelectedTimeControl::Blitz;
-            }
-            else if (std::string(radioButtonId) == "##tournament") {
-                timeControlSettings_.selected = SelectedTimeControl::Tournament;
-            }
-            else if (std::string(radioButtonId) == "##timePerMove") {
-                timeControlSettings_.selected = SelectedTimeControl::TimePerMove;
-            }
-            else if (std::string(radioButtonId) == "##fixedDepth") {
-                timeControlSettings_.selected = SelectedTimeControl::FixedDepth;
-            }
-            else if (std::string(radioButtonId) == "##nodesPerMove") {
-                timeControlSettings_.selected = SelectedTimeControl::NodesPerMove;
-            }
-            else {
-				throw(std::runtime_error("Unknown radio button ID: " + std::string(radioButtonId)));
-            }
-        }
-        ImGui::SameLine();
-        if (ImGuiControls::CollapsingHeaderWithDot(headerLabel)) {
-			ImGui::PushID(headerLabel);
-            ImGui::Indent(inputIndent);
-            ImGui::PushItemWidth(inputWidth);
-            timeControl = drawFunction(timeControl);
-            ImGui::PopItemWidth();
-			ImGui::Unindent(inputIndent);
-            ImGui::PopID();
-        }
-    };
-
-    // Draw each section
-    drawSection("##blitz", "Blitz Time", timeControlSettings_.blitzTime,
-        [&](const TimeControl& timeControl) { return drawBlitzTime(timeControl); });
-	drawSection("##tournament", "Tournament Time", timeControlSettings_.tournamentTime,
-        [&](const TimeControl& timeControl) { return drawTournamentTime(timeControl); });
-	drawSection("##timePerMove", "Time per Move", timeControlSettings_.timePerMove,
-        [&](const TimeControl& timeControl) { return drawTimePerMove(timeControl); });
-	drawSection("##fixedDepth", "Fixed Depth", timeControlSettings_.fixedDepth,
-        [&](const TimeControl& timeControl) { return drawFixedDepth(timeControl); });
-	drawSection("##nodesPerMove", "Nodes per Move", timeControlSettings_.nodesPerMove,
-        [&](const TimeControl& timeControl) { return drawNodesPerMove(timeControl); });
-
+    if (options.showOnlyBlitz) {
+        // Simplified view: only draw Blitz time control without selection
+        drawTimeControlSettings(options);
+    } else {
+        // Full view: draw selection and all time controls
+        drawTimeControlSelection();
+        drawTimeControlSettings(options);
+    }
+    
     ImGui::EndChild();
     ImGui::Unindent(baseIndent);
+}
+
+void TimeControlWindow::drawTimeControlSelection() {
+    std::string activeButtonId = computeActiveButtonId();
+    
+    auto handleRadioButton = [&](const char* radioButtonId, const char* label, SelectedTimeControl selection) {
+        if (ImGui::RadioButton(radioButtonId, activeButtonId == radioButtonId)) {
+            timeControlSettings_.selected = selection;
+        }
+        ImGui::SameLine();
+        ImGui::TextUnformatted(label);
+    };
+    
+    handleRadioButton("##blitz", "Blitz Time", SelectedTimeControl::Blitz);
+    handleRadioButton("##tournament", "Tournament Time", SelectedTimeControl::Tournament);
+    handleRadioButton("##timePerMove", "Time per Move", SelectedTimeControl::TimePerMove);
+    handleRadioButton("##fixedDepth", "Fixed Depth", SelectedTimeControl::FixedDepth);
+    handleRadioButton("##nodesPerMove", "Nodes per Move", SelectedTimeControl::NodesPerMove);
+    
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+}
+
+void TimeControlWindow::drawTimeControlSettings(const DrawOptions& options) {
+
+    ImGui::PushItemWidth(inputWidth);
+
+    if (options.showOnlyBlitz) {
+        // Simplified view: only Blitz
+        timeControlSettings_.blitzTime = drawBlitzTime(timeControlSettings_.blitzTime); 
+    } else {
+        // Full view: draw based on selection
+        switch (timeControlSettings_.selected) {
+            case SelectedTimeControl::Blitz:
+                timeControlSettings_.blitzTime = drawBlitzTime(timeControlSettings_.blitzTime); 
+                break;
+            case SelectedTimeControl::Tournament:
+                timeControlSettings_.tournamentTime = drawTournamentTime(timeControlSettings_.tournamentTime); 
+                break;
+            case SelectedTimeControl::TimePerMove:
+                timeControlSettings_.timePerMove = drawTimePerMove(timeControlSettings_.timePerMove);
+                break;
+            case SelectedTimeControl::FixedDepth:
+                timeControlSettings_.fixedDepth = drawFixedDepth(timeControlSettings_.fixedDepth);
+                break;
+            case SelectedTimeControl::NodesPerMove:
+                timeControlSettings_.nodesPerMove = drawNodesPerMove(timeControlSettings_.nodesPerMove);
+                break;
+        }
+    }
+    ImGui::PopItemWidth();
+
+}
+
+void TimeControlWindow::draw() {
+    // Default draw without options (full view)
+    draw(DrawOptions{});
 }
 
 TimeSegment TimeControlWindow::editTimeSegment(const TimeSegment& segment, bool blitz) {

@@ -99,7 +99,20 @@ namespace QaplaWindows {
          */
         ~TimeControlWindow() override;
 
-        void draw() override;        
+        /**
+         * @brief Options for drawing time control settings.
+         */
+        struct DrawOptions {
+            bool showOnlyBlitz = false;       ///< Show only Blitz time control (simplified view)
+        };
+
+        void draw() override;
+        
+        /**
+         * @brief Draws time control settings with options for simplified or full view.
+         * @param options Drawing options (e.g., simplified view with only Blitz)
+         */
+        void draw(const DrawOptions& options);        
         
         /**
          * @brief Gets the currently selected time control.
@@ -179,6 +192,17 @@ private:        std::string computeActiveButtonId() const;
          * @return TimeControl The updated time control settings after user interaction.
          */
     static QaplaTester::TimeControl drawNodesPerMove(const QaplaTester::TimeControl& currentTimeControl);
+
+    /**
+     * @brief Draws radio button selection for time control type.
+     */
+    void drawTimeControlSelection();
+
+    /**
+     * @brief Draws the selected time control settings.
+     * @param options Draw options
+     */
+    void drawTimeControlSettings(const DrawOptions& options);
 
     TimeControlSettings timeControlSettings_;
 };} // namespace QaplaWindows

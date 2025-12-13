@@ -2,6 +2,7 @@
 #include "../chatbot-step.h"
 #include "chatbot-step-board-select.h"
 #include "../chatbot-step-global-settings.h"
+#include "chatbot-step-board-time-control.h"
 #include "../chatbot-step-select-engines.h"
 #include "../chatbot-step-load-engine.h"
 #include "chatbot-step-board-set-engines.h"
@@ -32,7 +33,20 @@ void ChatbotBoard::start() {
         }
         return &board->getGlobalSettings();
     };
-    steps_.push_back(std::make_unique<ChatbotStepGlobalSettings>(globalSettingsProvider));
+    steps_.push_back(std::make_unique<ChatbotStepGlobalSettings>(globalSettingsProvider, false));
+    
+    // Add time control step with a callback that provides the board's time control window
+    auto timeControlProvider = [this]() -> TimeControlWindow* {
+        if (!boardId_.has_value()) {
+            return nullptr;
+        }
+        auto* board = InteractiveBoardWindow::getBoard(*boardId_);
+        if (board == nullptr) {
+            return nullptr;
+        }
+        return &board->getTimeControlWindow();
+    };
+    steps_.push_back(std::make_unique<ChatbotStepBoardTimeControl>(timeControlProvider));
     
     // Add engine selection step with a callback that provides the board's engine selection
     auto engineSelectProvider = [this]() -> ImGuiEngineSelect* {
