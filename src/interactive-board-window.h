@@ -104,6 +104,14 @@ namespace QaplaWindows
 		}
 
 		/**
+		 * @brief Returns the ID of the board.
+		 * @return The board ID.
+		 */
+		uint32_t getId() const {
+			return id_;
+		}
+
+		/**
 		 * @brief Sets the position of the game.
 		 * @param startPosition If true, sets the position to the starting position.
 		 * @param fen Optional: FEN string to set the position. Must be provided if startPosition is false.

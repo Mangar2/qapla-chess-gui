@@ -49,18 +49,20 @@ ImGuiBoardTabBar::ImGuiBoardTabBar() {
         ViewerBoardWindowList::drawAllTabs();
     });
 
-    // Handle create_board message from chatbot
+    // Handle create_board and switch_to_board messages from chatbot
     messageHandle_ = StaticCallbacks::message().registerCallback(
         [this](const std::string& message) {
-            if (message != "create_board") {
-                return;
+            if (message == "create_board") {
+                auto instance = InteractiveBoardWindow::createInstance();
+                auto title = instance->getTitle();
+                addTab(
+                    title,
+                    std::move(instance),
+                    ImGuiTabItemFlags_NoAssumedClosure);
+            } else if (message.rfind("switch_to_board_", 0) == 0) {
+                // Extract board ID from message and switch to board tab
+                processMessage(message);
             }
-            auto instance = InteractiveBoardWindow::createInstance();
-            auto title = instance->getTitle();
-            addTab(
-                title,
-                std::move(instance),
-                ImGuiTabItemFlags_NoAssumedClosure);
         });
 }
 

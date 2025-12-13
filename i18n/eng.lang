@@ -87,7 +87,7 @@ Skip Detection=Skip Detection
 {s:"Deutsch",t:"2025-12-11"}=Deutsch
 {s:"English",t:"2025-12-11"}=English
 {s:"Français",t:"2025-12-11"}=Français
-{s:"Finish",t:"2025-12-11"}=Finish
+{s:"Finish",t:"2025-12-13"}=Finish
 View HTML result=View HTML result
 Save...=Save...
 {s:"Show Results",t:"2025-12-11"}=Show Results
@@ -96,6 +96,7 @@ Save...=Save...
 {s:"Board",t:"2025-12-13"}=Board
 {s:"Use Board",t:"2025-12-13"}=Use Board
 {s:"Create new board",t:"2025-12-13"}=Create new board
+{s:"Switch to Board View",t:"2025-12-13"}=Switch to Board View
 
 [Translation]
 id=Checkbox
@@ -537,16 +538,18 @@ Chess engine communication protocol (UCI or XBoard)=Chess engine communication p
 {s:"Stop all engine activity",t:"2025-12-13"}=Stop all engine activity
 {s:"Let both engines play against each other automatically",t:"2025-12-13"}=Let both engines play against each other automatically
 {s:"Configure time control settings for the game",t:"2025-12-13"}=Configure time control settings for the game
-{s:"Stop the engine calculation",t:"2025-12-12"}=Stop the engine calculation
-{s:"Restart the engine process",t:"2025-12-12"}=Restart the engine process
+{s:"Stop the engine calculation",t:"2025-12-13"}=Stop the engine calculation
+{s:"Restart the engine process",t:"2025-12-13"}=Restart the engine process
 {s:"Open engine configuration to select and manage engines",t:"2025-12-12"}=Open engine configuration to select and manage engines
-{s:"Toggle engine communication log display",t:"2025-12-12"}=Toggle engine communication log display
+{s:"Toggle engine communication log display",t:"2025-12-13"}=Toggle engine communication log display
 {s:"Select option: EPD Analysis",t:"2025-12-13"}=Select option: EPD Analysis
-{s:"Start a new game from the initial position",t:"2025-12-12"}=Start a new game from the initial position
+{s:"Start a new game from the initial position",t:"2025-12-13"}=Start a new game from the initial position
 {h:"caec1135",s:"Show or hide advanced time control options, such a",t:"2025-12-13"}=Show or hide advanced time control options, such as Tournament, Time per Move, Fixed Depth, and Nodes per Move.
 {s:"Make both engines analyze the position without making moves",t:"2025-12-13"}=Make both engines analyze the position without making moves
 {s:"Swap the engines playing white and black",t:"2025-12-13"}=Swap the engines playing white and black
 {s:"Show additional commands and options",t:"2025-12-13"}=Show additional commands and options
+{s:"Open the board view to start playing or analyzing positions.",t:"2025-12-13"}=Open the board view to start playing or analyzing positions.
+{s:"Return to the main menu. You can access the board later via the tabs.",t:"2025-12-13"}=Return to the main menu. You can access the board later via the tabs.
 
 [Translation]
 id=Tab
@@ -747,4 +750,7 @@ The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n
 {s:"Selected engines for the board:",t:"2025-12-13"}=Selected engines for the board:
 {s:"Do you want to load additional engines for the board?",t:"2025-12-13"}=Do you want to load additional engines for the board?
 {h:"b1b431f2",s:"Configure the time control for your board game. By",t:"2025-12-13"}=Configure the time control for your board game. By default, you can choose a Blitz time setting. Click 'More Options' to access all time control modes.
+{s:"Board setup complete! You can now:",t:"2025-12-13"}=Board setup complete! You can now:
+{s:"• Switch to the board view to start playing or analyzing",t:"2025-12-13"}=• Switch to the board view to start playing or analyzing
+{s:"• Return to the main menu to configure something else",t:"2025-12-13"}=• Return to the main menu to configure something else
 

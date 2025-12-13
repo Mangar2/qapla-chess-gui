@@ -161,6 +161,24 @@ namespace QaplaWindows {
                 }
             }
         }
+        
+        // Handle board switching messages (format: "switch_to_board_<id>")
+        if (message.rfind("switch_to_board_", 0) == 0) {
+            try {
+                auto idStr = message.substr(16);  // Skip "switch_to_board_"
+                auto boardId = static_cast<uint32_t>(std::stoul(idStr));
+                std::string boardName = "Board " + std::to_string(boardId);
+                for (auto& tab : tabs_) {
+                    if (tab.name == boardName) {
+                        tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
+                            tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                        break;
+                    }
+                }
+            } catch (...) {
+                // Invalid board ID, ignore
+            }
+        }
     }
 
 } // namespace QaplaWindows

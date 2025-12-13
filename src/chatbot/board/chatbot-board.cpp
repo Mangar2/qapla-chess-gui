@@ -5,7 +5,7 @@
 #include "chatbot-step-board-time-control.h"
 #include "../chatbot-step-select-engines.h"
 #include "../chatbot-step-load-engine.h"
-#include "chatbot-step-board-set-engines.h"
+#include "chatbot-step-board-finish.h"
 
 #include "../../interactive-board-window.h"
 
@@ -64,15 +64,15 @@ void ChatbotBoard::start() {
     // Add load-engine step (reusing engineSelectProvider)
     steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineSelectProvider, 1, "board"));
     
-    // Add step to activate the selected engines (board-specific, no UI)
-    // This must come AFTER load-engine step
+    // Add final step offering to switch to board view or finish
+    // This step will activate engines when user clicks a button
     auto boardProvider = [this]() -> InteractiveBoardWindow* {
         if (!boardId_.has_value()) {
             return nullptr;
         }
         return InteractiveBoardWindow::getBoard(*boardId_);
     };
-    steps_.push_back(std::make_unique<ChatbotStepBoardSetEngines>(boardProvider));
+    steps_.push_back(std::make_unique<ChatbotStepBoardFinish>(boardProvider));
 }
 
 bool ChatbotBoard::draw() {
