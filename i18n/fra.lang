@@ -57,9 +57,9 @@ Copy FEN=Copier FEN
 {s:"Switch to Tournament View",t:"2025-12-09"}=Switch to Tournament View
 {s:"Stay in Chatbot",t:"2025-12-09"}=Stay in Chatbot
 {s:"Less Options",t:"2025-12-14"}=Less Options
-{s:"New SPRT tournament",t:"2025-12-11"}=New SPRT tournament
-{s:"Save SPRT tournament",t:"2025-12-11"}=Save SPRT tournament
-{s:"Load SPRT tournament",t:"2025-12-11"}=Load SPRT tournament
+{s:"New SPRT tournament",t:"2025-12-14"}=New SPRT tournament
+{s:"Save SPRT tournament",t:"2025-12-14"}=Save SPRT tournament
+{s:"Load SPRT tournament",t:"2025-12-14"}=Load SPRT tournament
 {s:"EPD Analysis",t:"2025-12-14"}=EPD Analysis
 Yes, stop analysis=Yes, stop analysis
 {s:"Start Analysis",t:"2025-12-14"}=Start Analysis
@@ -441,7 +441,7 @@ Average Elo level for scaling rating output=Average Elo level for scaling rating
 {s:"Select option: Turnier",t:"2025-12-14"}=Select option: Turnier
 {s:"Resume the existing tournament and continue scheduled tasks.",t:"2025-12-14"}=Resume the existing tournament and continue scheduled tasks.
 {s:"Do not continue the existing tournament; return to the menu.",t:"2025-12-11"}=Do not continue the existing tournament; return to the menu.
-{s:"Save the current tournament to a file so you can load it later.",t:"2025-12-11"}=Save the current tournament to a file so you can load it later.
+{s:"Save the current tournament to a file so you can load it later.",t:"2025-12-14"}=Save the current tournament to a file so you can load it later.
 Create a new tournament. The currently loaded tournament will be discarded unless you save it first.=Create a new tournament. The currently loaded tournament will be discarded unless you save it first.
 Show or hide advanced global engine settings, such as traces and restart behavior.=Show or hide advanced global engine settings, such as traces and restart behavior.
 {s:"Open a file dialog to add one or more engine binaries to the engine list.",t:"2025-12-14"}=Open a file dialog to add one or more engine binaries to the engine list.
@@ -468,7 +468,7 @@ Load a previously saved tournament from disk and replace the current tournament.
 {h:"2f481d1c",s:"Open a detailed HTML report with full tournament r",t:"2025-12-09"}=Open a detailed HTML report with full tournament results table in your default browser.
 {s:"View the current tournament results.",t:"2025-12-09"}=View the current tournament results.
 {s:"Make the engine play for the current side",t:"2025-12-14"}=Make the engine play for the current side
-{h:"587c143b",s:"Create a new tournament. The currently loaded tour",t:"2025-12-11"}=Create a new tournament. The currently loaded tournament will be discarded unless you save it first.
+{h:"587c143b",s:"Create a new tournament. The currently loaded tour",t:"2025-12-14"}=Create a new tournament. The currently loaded tournament will be discarded unless you save it first.
 {h:"5f117fbc",s:"Time control format: seconds+increment (e.g., '\\1.",t:"2025-12-14"}=Time control format: seconds+increment (e.g., '\1.\2+\3.\4' for \5s + \6.\7s/move)
 {h:"aceeef03",s:"Quick selection for common time controls.\nSelectin",t:"2025-12-12"}=Quick selection for common time controls.\nSelecting an option automatically fills the input fields above.\nExample: '\1.\2+\3.\4' sets Seconds\5\6, Increment Ms\7
 {h:"e20d96bd",s:"Lower Elo bound (H\\1): null hypothesis threshold f",t:"2025-12-11"}=Lower Elo bound (H\1): null hypothesis threshold for SPRT test.\nIf true Elo difference is below this, H\2 is accepted (no improvement).
@@ -488,7 +488,7 @@ Load a previously saved tournament from disk and replace the current tournament.
 {s:"Select option: SPRT Tournament",t:"2025-12-14"}=Select option: SPRT Tournament
 {s:"Select option: Messages",t:"2025-12-14"}=Select option: Messages
 {s:"Select option: Tutorial",t:"2025-12-14"}=Select option: Tutorial
-{h:"34293611",s:"Load a previously saved tournament from disk and r",t:"2025-12-11"}=Load a previously saved tournament from disk and replace the current tournament.
+{h:"34293611",s:"Load a previously saved tournament from disk and r",t:"2025-12-14"}=Load a previously saved tournament from disk and replace the current tournament.
 {s:"Select option: Choose Language",t:"2025-12-14"}=Select option: Choose Language
 {s:"Select directory for log files",t:"2025-12-11"}=Select directory for log files
 {h:"d7516611",s:"When a new opening position is selected:\n  default",t:"2025-12-11"}=When a new opening position is selected:\n  default - Fresh sequence per round, reused across pairings\n  encounter - New opening per engine pair (colors don't matter)\n  round - Same opening for all games in the round
@@ -522,6 +522,7 @@ Load a previously saved tournament from disk and replace the current tournament.
 {h:"6c61366c",s:"Tournament type:\n  gauntlet - One engine plays aga",t:"2025-12-14"}=Tournament type:\n  gauntlet - One engine plays against all others\n  round-robin - Every engine plays against every other engine
 {s:"Number of games per pairing.\nTotal games \\1 games × rounds",t:"2025-12-14"}=Number of games per pairing.\nTotal games \1 games × rounds
 {h:"21ecd6b3",s:"Number of consecutive games played per opening.\nCo",t:"2025-12-14"}=Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line
+{s:"Select option: Français",t:"2025-12-14"}=Select option: Français
 
 [Translation]
 id=Tab
@@ -553,7 +554,7 @@ id=Chatbot
 
 [Translation]
 id=Text
-{s:"What would you like to do?",t:"2025-12-11"}=What would you like to do?
+{s:"What would you like to do?",t:"2025-12-14"}=What would you like to do?
 Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.=Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.
 Nothing to clear.=Nothing to clear.
 You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.=You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.
@@ -707,7 +708,7 @@ The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n
 {h:"34845690",s:"You can switch between all running games and the c",t:"2025-12-09"}=You can switch between all running games and the chatbot using the tabs at the top of the window. Each game has its own tab, so you can easily navigate between them.
 {h:"1b77c9dc",s:"Starting a new tournament will delete the existing",t:"2025-12-09"}=Starting a new tournament will delete the existing one.\nSave the current tournament to a file if you want to keep it.
 {h:"02a2ad47",s:"There is an existing SPRT tournament that can be c",t:"2025-12-11"}=There is an existing SPRT tournament that can be continued. Would you like to continue it?
-{h:"2f07bc6f",s:"Starting a new SPRT tournament will delete the exi",t:"2025-12-11"}=Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.
+{h:"2f07bc6f",s:"Starting a new SPRT tournament will delete the exi",t:"2025-12-14"}=Starting a new SPRT tournament will delete the existing one.\nSave the current SPRT tournament to a file if you want to keep it.
 {s:"All SPRT tournament results have been cleared.",t:"2025-12-11"}=All SPRT tournament results have been cleared.
 {h:"b9a8084e",s:"You can configure global engine settings such as h",t:"2025-12-14"}=You can configure global engine settings such as hash size and time control here. These settings will apply to all engines participating in the tournament.
 {h:"c64a914c",s:"Configure the SPRT (Sequential Probability Ratio T",t:"2025-12-11"}=Configure the SPRT (Sequential Probability Ratio Test) parameters. These settings define when the test concludes that the engine under test is stronger, weaker, or inconclusive compared to the reference engine.
@@ -774,4 +775,25 @@ The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n
 {s:"Engine autodetection completed.",t:"2025-12-14"}=Engine autodetection completed.
 {s:"Tournament finished.",t:"2025-12-14"}=Tournament finished.
 {s:"Tournament is not running.",t:"2025-12-14"}=Tournament is not running.
+
+[Translation]
+id=TextButton
+{s:"Tournament",t:"2025-12-14"}=Tournament
+{s:"SPRT Tournament",t:"2025-12-14"}=SPRT Tournament
+{s:"EPD Analysis",t:"2025-12-14"}=EPD Analysis
+{s:"Board",t:"2025-12-14"}=Board
+{s:"Tutorial",t:"2025-12-14"}=Tutorial
+{s:"Choose Language",t:"2025-12-14"}=Choose Language
+{s:"Messages",t:"2025-12-14"}=Messages
+{s:"Deutsch",t:"2025-12-14"}=Deutsch
+{s:"English",t:"2025-12-14"}=English
+{s:"Français",t:"2025-12-14"}=Français
+{s:"Turnier",t:"2025-12-14"}=Turnier
+{s:"SPRT Turnier",t:"2025-12-14"}=SPRT Turnier
+{s:"EPD Analyse",t:"2025-12-14"}=EPD Analyse
+{s:"Lernprogramm",t:"2025-12-14"}=Lernprogramm
+{s:"Sprache wählen",t:"2025-12-14"}=Sprache wählen
+{s:"Nachrichten",t:"2025-12-14"}=Nachrichten
+{s:"Add Engines",t:"2025-12-14"}=Add Engines
+{s:"Cancel",t:"2025-12-14"}=Cancel
 

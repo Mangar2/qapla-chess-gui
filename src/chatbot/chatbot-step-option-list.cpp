@@ -19,6 +19,7 @@
 
 #include "chatbot-step-option-list.h"
 #include "imgui-controls.h"
+#include "imgui-helper/imgui-text-button.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {
@@ -34,15 +35,15 @@ std::string ChatbotStepOptionList::draw() {
     size_t num_options = options_.size();
     const int max_per_row = 4;
     size_t rows = (num_options + max_per_row - 1) / max_per_row;
+    std::vector<ImGuiTextButton> buttons;
 
-    // Berechne die maximale Button-Breite über alle Buttons
-    float max_button_width = 0.0f;
+    // Calculate maximum button width using TextButton::calcSize()
+    float max_button_width = 0.0F;
     for (const auto& option : options_) {
-        float text_width = ImGui::CalcTextSize(option.text.c_str()).x;
-        float button_width_calc = text_width + 2 * ImGui::GetStyle().FramePadding.x;
-        if (button_width_calc > max_button_width) {
-            max_button_width = button_width_calc;
-        }
+        ImGuiTextButton button { .label = option.text };
+        ImVec2 size = button.calcSize();
+        max_button_width = std::max(max_button_width, size.x);
+        buttons.push_back(button);
     }
 
     ImGui::PushID("Chatbot");
@@ -51,18 +52,19 @@ std::string ChatbotStepOptionList::draw() {
         size_t end = std::min(start + max_per_row, num_options);
 
         for (size_t i = start; i < end; ++i) {
-            if (QaplaWindows::ImGuiControls::textButton(options_[i].text.c_str(), ImVec2(max_button_width, 0))) {
+            auto& button = buttons[i];
+            if (button.draw(ImVec2(max_button_width, 0))) {
                 if (options_[i].onSelected) {
                     options_[i].onSelected();
                 }
                 finished_ = true;
-                ImGui::PopID();
-                return "";
             }
             if (options_[i].text != "Continue" && options_[i].text != "Cancel") {
                 QaplaWindows::ImGuiControls::hooverTooltip(std::string("Select option: ") + options_[i].text);
             }
-            if (i < end - 1) ImGui::SameLine();
+            if (i < end - 1) {
+                ImGui::SameLine();
+            }
         }
     }
     ImGui::PopID();
