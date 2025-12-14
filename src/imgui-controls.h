@@ -358,9 +358,10 @@ namespace QaplaWindows::ImGuiControls {
      * @param label Label of the collapsing header.
      * @param flags Optional ImGuiTreeNodeFlags.
      * @param showDot If true, a red dot is displayed in the upper right corner.
+     * @param translate If true, the label is translated.
      * @return True if the header is open, false otherwise.
      */
-    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false);
+    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false, bool translate = true);
 
     /**
      * @brief Custom TabItem that can display a red dot in the upper right corner.

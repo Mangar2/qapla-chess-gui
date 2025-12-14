@@ -195,7 +195,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         ImGuiControls::hooverTooltip("Remove this engine from selection");
         ImGui::SameLine(0.0F, 4.0F);
         // Engine names are not translated
-        if (ImGuiControls::CollapsingHeaderWithDot((name + "selected").c_str(), flags)) {
+        if (ImGuiControls::CollapsingHeaderWithDot((name + "selected").c_str(), flags, false, false)) {
             ImGui::Indent(10.0F);
             if ((flags & ImGuiTreeNodeFlags_Leaf) == 0) {
                 modified |= drawEngineControls();
@@ -331,7 +331,7 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
     bool modified = false;
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
         (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
-    if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", flags)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", flags, false, false)) {
         ImGui::Indent(10.0F);
         
         // Draw all selected engines with checkboxes
@@ -355,7 +355,7 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
     bool modified = false;
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
         (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
-    if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", flags)) {
+    if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", flags, false, false)) {
         ImGui::Indent(10.0F);
         
         auto& configManager = EngineWorkerFactory::getConfigManagerMutable();

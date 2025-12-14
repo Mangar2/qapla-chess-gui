@@ -228,12 +228,6 @@ id=Section
 {s:"Available Engines",t:"2025-12-14"}=Verfügbare Engines
 {s:"Selected Engines",t:"2025-12-14"}=Ausgewählte Engines
 {s:"History",t:"2025-12-14"}=History
-{s:"Spike \\1.\\2.",t:"2025-12-14"}=Spike \1.\2.
-{s:"Qapla \\1.\\2.",t:"2025-12-14"}=Qapla \1.\2.
-{s:"Counter-v\\1.\\2-windows-\\3.exe",t:"2025-12-11"}=Counter-v\1.\2-windows-\3.exe
-{s:"Fruit \\1.\\2.",t:"2025-12-12"}=Fruit \1.\2.
-{s:"Diagnostic Engine \\1.",t:"2025-12-14"}=Diagnostic Engine \1.
-{s:"Diagnostic Engine \\1.\\2 [ponder]",t:"2025-12-14"}=Diagnostic Engine \1.\2 [ponder]
 
 [Translation]
 id=Input

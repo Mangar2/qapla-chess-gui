@@ -522,9 +522,9 @@ namespace QaplaWindows::ImGuiControls {
         }   
     }
 
-    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags, bool showDot) {
+    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags, bool showDot, bool translate) {
 
-        auto modLabel = createLabel("Section", label);
+        auto modLabel = translate ? createLabel("Section", label) : std::string(label);
         bool result = ImGui::CollapsingHeader(modLabel.c_str(), flags);
         
         if (showDot) {
