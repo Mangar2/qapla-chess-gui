@@ -69,9 +69,8 @@ EngineSetupWindow::EngineSetupWindow(bool showGlobalControls)
 EngineSetupWindow::~EngineSetupWindow() = default;
 
 bool EngineSetupWindow::highlighted() const {
-    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-    auto configs = configManager.getAllConfigs();
-    return configs.empty();
+    // Show highlight after tutorial start message only
+    return tutorialProgress_ == 1;
 }
 
 std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() const {
@@ -259,12 +258,16 @@ void EngineSetupWindow::draw() {
 static auto engineSetupTutorialInit = []() {
     Tutorial::instance().setEntry({
         .name = Tutorial::TutorialName::EngineSetup,
-        .displayName = "Engine Setup",
+        .displayName = "Add Engines",
         .messages = {
-            { .text = "To use this chess GUI, you need chess engines.\n"
-              "Click the 'Add' button in the engines tab to select engine executables. "
+            { .text = "Welcome to the Engine Setup Tutorial!\n\n"
+              "To use this chess GUI, you need to configure chess engines first.\n"
+              "This tutorial will guide you through the process.\n\n"
+              "Let's begin! Click on the 'Engines' tab in the left window to open the engine configuration.",
+              .type = SnackbarManager::SnackbarType::Note },
+            { .text = "Click the 'Add' button to select engine executables.\n"
               "You can select multiple engines at once in the file dialog.\n\n"
-              "Please add 2 or more engines to continue.",
+              "Please add at least 2 (more) engines to continue.",
               .type = SnackbarManager::SnackbarType::Note },
             { .text = "Great! You have added engines.\n"
               "Now click the 'Detect' button to automatically read all options from your engines.\n"
@@ -279,41 +282,61 @@ static auto engineSetupTutorialInit = []() {
         .getProgressCounter = []() -> uint32_t& {
             return EngineSetupWindow::tutorialProgress_;
         },
-        .autoStart = true
+        .autoStart = false
     });
     return true;
 }();
 
+void EngineSetupWindow::clearEngineSetupTutorialState() {
+    tutorialProgress_ = 0;
+    initialEngineCount_ = 0;
+}
+
 void EngineSetupWindow::showNextTutorialStep() {
     constexpr auto tutorialName = Tutorial::TutorialName::EngineSetup;
+    const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    const auto configs = configManager.getAllConfigs();
+    const auto engineCount = configs.size();
+    
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().requestNextTutorialStep(tutorialName);
+        clearEngineSetupTutorialState();
         return;
         case 1:
-        {
-            const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-            const auto configs = configManager.getAllConfigs();
-            if (configs.size() >= 2) {
-                Tutorial::instance().requestNextTutorialStep(tutorialName);
-            }
-        }
+        // Tutorial started, tab is highlighted
+        // When draw() is called, the tab is open -> advance to next step
+        initialEngineCount_ = static_cast<uint32_t>(engineCount);
+        Tutorial::instance().requestNextTutorialStep(tutorialName);
         return;
         case 2:
         {
-            const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-            if (capabilities.areAllEnginesDetected()) {
+            // We allow the user to remove engines and add them again to fulfill the requirement
+            initialEngineCount_ = std::min(initialEngineCount_, static_cast<uint32_t>(engineCount));
+            // Wait for 2 more engines than at start
+            if (engineCount >= initialEngineCount_ + 2) {
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
             }
         }
         return;
         case 3:
-        if (!SnackbarManager::instance().isTutorialMessageVisible()) {
-            Tutorial::instance().finishTutorial(tutorialName);
+        {
+            // Wait for detect to complete
+            const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+            if (engineCount >= initialEngineCount_ + 2 && capabilities.areAllEnginesDetected()) {
+                Tutorial::instance().requestNextTutorialStep(tutorialName);
+            }
+        }
+        return;
+        case 4:
+        {
+            // Wait for completion message to disappear
+            if (!SnackbarManager::instance().isTutorialMessageVisible()) {
+                Tutorial::instance().finishTutorial(tutorialName);
+            }
         }
         return;
         default:
-        // No other case defined, intentionally left blank
+        clearEngineSetupTutorialState();
         return;
     }
 }

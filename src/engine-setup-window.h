@@ -176,7 +176,13 @@ namespace QaplaWindows {
             showButtons_ = show;
         }
 
+        /**
+         * @brief Clears engine setup tutorial state.
+         */
+        static void clearEngineSetupTutorialState();
+
         static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for the tutorial
+        static inline uint32_t initialEngineCount_ = 0; ///< Initial engine count when tutorial started
     private:
         void drawButtons();
         bool drawGlobalSettings();

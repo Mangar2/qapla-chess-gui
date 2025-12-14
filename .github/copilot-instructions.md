@@ -34,6 +34,12 @@ cmake --preset release && cmake --build --preset release
 
 Test builds define `IMGUI_ENABLE_TEST_ENGINE` - tests in [src/test-system](src/test-system).
 
+**IMPORTANT**: When modifying or creating tests, always build and verify with the `test` preset:
+```bash
+cmake --preset test && cmake --build --preset test
+```
+The default build does NOT include test engine support and will compile successfully even with test-related errors.
+
 ## ImGui & UI Conventions
 - **Use wrappers from [imgui-controls.h](src/imgui-controls.h)** instead of raw ImGui calls - provides consistent styling, i18n support, and behavior.
 - **i18n**: All user-facing text uses `Translator::instance().translate(topic, key)`. In debug mode, missing translations are auto-added to `.lang` files with timestamps.

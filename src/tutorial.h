@@ -52,7 +52,7 @@ public:
         std::string success{};
         SnackbarManager::SnackbarType type;
         bool sticky = false;
-        bool waitForUserInput = true;
+        bool waitForUserInput = false;
     };
 
     enum class TutorialName {

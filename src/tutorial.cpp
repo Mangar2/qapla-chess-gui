@@ -29,7 +29,7 @@ namespace QaplaWindows {
 bool Tutorial::allPrecedingCompleted(TutorialName name) const {
     const size_t currentIndex = toIndex(name);
     
-    for (size_t i = 0; i < currentIndex; ++i) {
+    for (size_t i = 0; i < std::min(currentIndex, static_cast<size_t>(TutorialName::EngineSetup)); ++i) {
         if (!entries_[i].completed()) {
             return false;
         }
@@ -148,7 +148,7 @@ void Tutorial::loadConfiguration() {
     if (!sections.empty()) {
         const auto& section = sections[0];
         
-        for (size_t i = 0; i < static_cast<size_t>(TutorialName::Epd); ++i) {
+        for (size_t i = 0; i <= static_cast<size_t>(TutorialName::Snackbar); ++i) {
             auto& entry = entries_[i];
 
             // Use displayName + Index as Config-Key for Uniqueness
@@ -160,7 +160,7 @@ void Tutorial::loadConfiguration() {
         }
     }
 
-    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Epd); ++i) {
+    for (size_t i = 0; i <= static_cast<size_t>(TutorialName::Snackbar); ++i) {
         auto name = static_cast<TutorialName>(i);
         if (mayStart(name)) {
             entries_[i].getProgressCounter() = 1;
@@ -176,7 +176,7 @@ void Tutorial::saveConfiguration() const {
         }
     };
     
-    for (size_t i = 0; i < static_cast<size_t>(TutorialName::Epd); ++i) {
+    for (size_t i = 0; i <= static_cast<size_t>(TutorialName::Snackbar); ++i) {
         const auto& entry = entries_[i];
         auto configName = entry.displayName + std::to_string(i);
         section.entries.emplace_back(std::move(configName), std::to_string(entry.counter));

@@ -38,7 +38,7 @@ std::string getTutorialDisplayName(Tutorial::TutorialName name) {
         case Tutorial::TutorialName::Tournament:
             return "Tournament";
         case Tutorial::TutorialName::EngineSetup:
-            return "Engine Setup";
+            return "Add Engines";
         case Tutorial::TutorialName::BoardEngines:
             return "Board Engines";
         case Tutorial::TutorialName::BoardWindow:
@@ -139,7 +139,8 @@ std::unique_ptr<ChatbotThread> ChatbotTutorial::clone() const {
 
 const std::vector<Tutorial::TutorialName> ChatbotStepTutorialSelect::availableTutorials_ = {
     Tutorial::TutorialName::Tournament,
-    Tutorial::TutorialName::Epd
+    Tutorial::TutorialName::Epd,
+    Tutorial::TutorialName::EngineSetup
 };
 
 ChatbotStepTutorialSelect::ChatbotStepTutorialSelect() {

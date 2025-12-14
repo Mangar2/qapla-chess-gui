@@ -66,6 +66,9 @@ install(TARGETS diagnostic-engine
 add_custom_command(TARGET diagnostic-engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:diagnostic-engine>
+        ${CMAKE_BINARY_DIR}/bin/diagnostic-engine${CMAKE_EXECUTABLE_SUFFIX}
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:diagnostic-engine>
         ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-lossontime${CMAKE_EXECUTABLE_SUFFIX}
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:diagnostic-engine>
@@ -73,10 +76,11 @@ add_custom_command(TARGET diagnostic-engine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:diagnostic-engine>
         ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-noinit${CMAKE_EXECUTABLE_SUFFIX}
-    COMMENT "Creating diagnostic-engine mode variants (lossontime, loop, noinit)"
+    COMMENT "Creating diagnostic-engine mode variants (normal, lossontime, loop, noinit)"
 )
 
 install(FILES 
+    ${CMAKE_BINARY_DIR}/bin/diagnostic-engine${CMAKE_EXECUTABLE_SUFFIX}
     ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-lossontime${CMAKE_EXECUTABLE_SUFFIX}
     ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-loop${CMAKE_EXECUTABLE_SUFFIX}
     ${CMAKE_BINARY_DIR}/bin/diagnostic-engine-noinit${CMAKE_EXECUTABLE_SUFFIX}

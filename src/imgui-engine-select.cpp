@@ -25,6 +25,7 @@
 #include "engine-config-manager.h"
 #include "os-dialogs.h"
 #include "logger.h"
+#include "snackbar.h"
 
 using QaplaTester::EngineWorkerFactory;
 using QaplaTester::EngineConfig;
@@ -128,7 +129,7 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
             }
         }
 
-        if (drawEngineConfiguration(engine, index))
+        if (drawEngineConfiguration(engine, static_cast<int>(index)))
         {
             modified = true;
 
@@ -247,9 +248,24 @@ std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
     }
     
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    std::vector<std::string> addedEngines;
+    std::vector<std::string> duplicateEngines;
     
     for (const auto& path : commands) {
         auto newConfig = EngineConfig::createFromPath(path);
+        
+        // Check if engine already exists in engineConfigurations_
+        auto existing = std::ranges::find_if(engineConfigurations_,
+            [&newConfig](const EngineConfiguration& configured) {
+                return configured.config.getCmd() == newConfig.getCmd() && 
+                       configured.config.getProtocol() == newConfig.getProtocol();
+            });
+        
+        if (existing != engineConfigurations_.end()) {
+            duplicateEngines.push_back(newConfig.getName());
+            continue;
+        }
+        
         configManager.addConfig(newConfig);
         
         EngineConfiguration newEngine = {
@@ -258,11 +274,24 @@ std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
             .originalName = newConfig.getName()
         };
         engineConfigurations_.push_back(newEngine);
+        addedEngines.push_back(path);
     }
     
-    notifyConfigurationChanged();
-    QaplaConfiguration::Configuration::instance().setModified();
-    return commands;
+    if (!duplicateEngines.empty()) {
+        std::string message = "Engine already exists in this list:\n";
+        for (const auto& name : duplicateEngines) {
+            message += "- " + name + "\n";
+        }
+        message += "\nYou can add the same engine multiple times\nin other windows with different configurations,\nbut here each engine can only appear once.";
+        SnackbarManager::instance().showError(message);
+    }
+    
+    if (!addedEngines.empty()) {
+        notifyConfigurationChanged();
+        QaplaConfiguration::Configuration::instance().setModified();
+    }
+    
+    return addedEngines;
 }
 
 bool ImGuiEngineSelect::areAllEnginesDetected() {
