@@ -276,7 +276,7 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
     bool changed = false;
     ImGui::Separator();
     ImGui::Text("Engine Options:");
-    
+    ImGui::PushID("EngineOptions");
     auto optionMap = config.getOptionValues();
     for (const auto& option : options) {
         auto it = optionMap.find(option.name);
@@ -286,6 +286,7 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
             config.setOptionValue(option.name, value);
         }
     }
+    ImGui::PopID();
     
     return changed;
 }

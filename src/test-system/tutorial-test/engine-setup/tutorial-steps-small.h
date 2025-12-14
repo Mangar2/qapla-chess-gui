@@ -164,14 +164,15 @@ namespace QaplaTest::EngineSetupTutorialTest {
             IM_ERRORF("Engine detection failed - not all engines were successfully detected");
             return;
         }
+        ctx->Yield(5);
 
         // Wait for tutorial to complete (progress = 4) - only reached if detection succeeded
-        IM_CHECK(waitForTutorialProgress(ctx, 4, 5.0f));
+        IM_CHECK(waitForTutorialProgress(ctx, 0, 5.0f));
         
         // Verify we have 2 engines configured
         auto configs = configManager.getAllConfigs();
         IM_CHECK_EQ(configs.size(), static_cast<size_t>(2));
-        
+        ctx->ItemClick("**/###Close");
         ctx->LogInfo("Tutorial successfully completed with 2 detected engines");
     }
 

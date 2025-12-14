@@ -161,7 +161,7 @@ namespace QaplaTest::EpdTutorialTest {
             ctx->SleepNoSkip(0.1f, 0.1f);
             waited += 0.1f;
         }
-        
+        ctx->ItemClick("**/###Close");
         ctx->LogInfo("EPD Tutorial Complete!");
     }
 

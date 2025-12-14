@@ -419,7 +419,8 @@ static auto epdWindowTutorialInit = []() {
               "To help you through the process, we'll mark relevant buttons with a red dot as needed.\n\n"
               "Let's begin! Click on the 'EPD' tab in the left window to open the analysis configuration.",
               .success = "Great! The EPD Analysis window is now open.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "Now let's select the engines to test. You can compare multiple engines to see which "
               "performs better on tactical positions.\n\n"
               "In the 'Engines' section:\n"
@@ -427,14 +428,16 @@ static auto epdWindowTutorialInit = []() {
               "• Click the '+' button next to each engine you want to test\n\n"
               "All selected engines will analyze the same positions under identical conditions for a fair comparison.",
               .success = "Engines selected! Let's configure the analysis parameters.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "Time to configure how the analysis should run. In the 'Configuration' section, set:\n\n"
               "• 'Seen plies': 3 - engines must find the solution within 3 search iterations\n"
               "• 'Max time': 10 seconds - maximum time per position\n"
               "• 'Min time': 1 second - minimum analysis time even if solution is found earlier\n"
               "• 'EPD file': Click and select a test suite file (.epd or .raw format)\n\n",
               .success = "Configuration is complete!",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "Everything is configured - time to start the analysis!\n\n"
               "Click the 'Analyze' button (play icon) in the toolbar to begin.\n\n"
               "Once started:\n"
@@ -445,7 +448,8 @@ static auto epdWindowTutorialInit = []() {
               "• Results are automatically saved at each position\n\n"
               "You can stop and continue anytime - progress is never lost!",
               .success = "Analysis is running! Watch the engines solve positions.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "The analysis is now active! You can see the engines working through the position set.\n\n"
               "Notice the board tabs at the top - click any tab to watch that engine's current analysis live. "
               "Let's practice stopping and resuming:\n"
@@ -453,36 +457,42 @@ static auto epdWindowTutorialInit = []() {
               "Stopping is instant - current positions are saved, and you can continue exactly where you left off. "
               "This is useful if you need your CPU for other tasks or want to review results so far.",
               .success = "Analysis paused. Notice the button now shows 'Continue'.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "The analysis is paused, and all progress is safely saved. The results table shows "
               "what has been analyzed so far.\n\n"
               "Now let's resume:\n"
               "• Click the 'Continue' button (same button as before)\n\n"
               "You can stop and continue as many times as needed!",
               .success = "Analysis resumed!",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "The analysis is running again. Now let's learn about graceful stopping\n\n "
               "Click the 'Grace' button in the toolbar.\n\n"
               "Graceful stop lets current positions finish completely, then stops.\n",
               .success = "Grace mode activated - current analyses are finishing.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note, 
+              .waitForUserInput = true },
             { .text = "Grace mode is active!\n\n"
               "Wait for the analysis to fully stop (all current positions complete).\n\n"
               "• Once stopped, click 'Clear' to delete all results and start fresh\n\n"
               "Clear is useful when you want to re-run the test with different settings or engines. "
               "It removes all progress but keeps your configuration.",
               .success = "Analysis stopped gracefully.",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "Results have been cleared! The results table is empty, and the progress bar is reset.\n\n"
               "Let's start again:\n"
               "• Click 'Analyze' to begin a fresh analysis\n\n",
               .success = "Fresh analysis started!",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "The analysis is running again with fresh results. Now let's explore concurrency - "
               "Concurrency determines how many positions are analyzed simultaneously:\n"
               "Move the 'Concurrency' slider at the top to 10.\n\n",
               .success = "Concurrency increased - analysis is now much faster!",
-              .type = SnackbarManager::SnackbarType::Note },
+              .type = SnackbarManager::SnackbarType::Note,
+              .waitForUserInput = true },
             { .text = "Congratulations! You've completed the EPD Analysis Tutorial!\n\n"
               "You've learned how to:\n"
               "• Select engines for tactical testing\n"

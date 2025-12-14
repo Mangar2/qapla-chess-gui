@@ -112,19 +112,19 @@ void EngineCapabilities::markAsNotSupported(const std::vector<EngineConfig>& fai
         }
         message += " - " + config.getCmd() + "\n";
     }
-    SnackbarManager::instance().showWarning(message);
+    SnackbarManager::instance().showWarning(message, false, "engine");
 }
 
 void EngineCapabilities::autoDetect() {
     std::thread([this]() {
         auto configs = collectMissingCapabilities();
         if (configs.empty()) {
-            SnackbarManager::instance().showNote("No new engines found.");
+            SnackbarManager::instance().showNote("No new engines found.", false, "engine");
             return;
         }
         detecting_ = true;
-        SnackbarManager::instance().showNote("Starting engine autodetection.\nThis may take a while...");
-
+        SnackbarManager::instance().showNote("Starting engine autodetection.\nThis may take a while...", 
+            false, "engine");
         // First try with the protocol already set in the config
         configs = detectWithProtocol(configs, std::nullopt);
 
@@ -138,7 +138,7 @@ void EngineCapabilities::autoDetect() {
         if (!configs.empty()) {
             markAsNotSupported(configs);
         } else {
-            SnackbarManager::instance().showSuccess("Engine autodetection completed.");
+            SnackbarManager::instance().showSuccess("Engine autodetection completed.", false, "engine");
         }
         detecting_ = false;
     }).detach();

@@ -58,6 +58,10 @@ namespace QaplaTest::EngineSetupTutorialTest {
             ctx->SleepNoSkip(sleepInterval, sleepInterval);
             waited += sleepInterval;
         }
+        if (targetProgress == 0) {
+            // Finish state, must be exactly 0 
+            return QaplaWindows::EngineSetupWindow::tutorialProgress_ == 0;
+        }
         return QaplaWindows::EngineSetupWindow::tutorialProgress_ >= targetProgress;
     }
 

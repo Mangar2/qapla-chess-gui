@@ -191,8 +191,6 @@ namespace QaplaTest::TutorialTest {
         }
         ctx->ItemClick("**/###Tournament/Stop");
         ctx->Yield(2);
-        // Progress advances automatically
-        ctx->ItemClick("**/###Continue");
     }
 
     // Step 15: Tutorial Complete

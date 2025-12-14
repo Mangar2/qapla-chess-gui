@@ -35,7 +35,7 @@ namespace QaplaTest::TutorialTest {
     inline bool hasEnginesAvailable() {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
-        return configs.size() >= 3; // Need at least 3 for full tutorial
+        return configs.size() >= 2; // Need at least 2 for full tutorial
     }
 
     // Helper to cleanup tournament state
@@ -53,15 +53,24 @@ namespace QaplaTest::TutorialTest {
         ctx->Yield();
     }
 
+    inline uint32_t getTutorialProgress(uint32_t targetProgress) {
+        auto progress = QaplaWindows::TournamentWindow::tutorialProgress_;
+        if (progress == 0 && targetProgress > 1) {
+            // Tutorial finished
+            return targetProgress;
+        }
+        return progress;
+    }
+
     // Helper to wait for tutorial progress to reach a specific step
     inline bool waitForTutorialProgress(ImGuiTestContext* ctx, uint32_t targetProgress, float maxWaitSeconds = 5.0f) {
         float waited = 0.0f;
         constexpr float sleepInterval = 0.1f;
-        while (QaplaWindows::TournamentWindow::tutorialProgress_ < targetProgress && waited < maxWaitSeconds) {
+        while (getTutorialProgress(targetProgress) < targetProgress && waited < maxWaitSeconds) {
             ctx->SleepNoSkip(sleepInterval, sleepInterval);
             waited += sleepInterval;
         }
-        return QaplaWindows::TournamentWindow::tutorialProgress_ >= targetProgress;
+        return getTutorialProgress(targetProgress) >= targetProgress;
     }
 
     // Helper to wait for tutorial to request user input (when Continue button should appear)

@@ -227,7 +227,8 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
             QaplaConfiguration::Configuration::instance().getEngineCapabilities().autoDetect();
         } catch (const std::exception& ex) {
             SnackbarManager::instance().showWarning(
-                std::format("Engine auto-detect failed,\nsome engines may not be detected\n {}", ex.what()));
+                std::format("Engine auto-detect failed,\nsome engines may not be detected\n {}", ex.what()),
+                false, "engine");
         }
         QaplaConfiguration::Configuration::instance().setModified();
     }
