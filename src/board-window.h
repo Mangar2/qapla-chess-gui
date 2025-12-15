@@ -69,7 +69,7 @@ namespace QaplaWindows
          */
         void showNextCutPasteTutorialStep(const std::string& clickedButton);
 
-        static inline uint32_t tutorialProgress_ = 0; ///< Progress counter for board controls tutorial
+        static inline uint32_t tutorialBoardProgress_ = 0; ///< Progress counter for board controls tutorial
         static inline uint32_t tutorialCutPasteProgress_ = 0; ///< Progress counter for cut&paste tutorial
 
     private:
@@ -166,6 +166,23 @@ namespace QaplaWindows
          * @return true if any command is highlighted
          */
         static bool hasHighlightedCommand(const std::vector<QaplaButton::PopupCommand>& moreCommands);
+
+        /**
+         * @brief Clears the tutorial state for this board window.
+         */
+        void clearBoardTutorialState();
+
+        /**
+         * @brief Clears the cut&paste tutorial state for this board window.
+         */
+        void clearCutPasteTutorialState();
+
+        /**
+         * @brief Applies highlighting to the specified button.
+         * 
+         * @param hightlightedButton The button to highlight
+         */
+        void applyHighlighting(std::string hightlightedButton = "");
 
         bool setupMode_ = false;
         std::string boardId_;

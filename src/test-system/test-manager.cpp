@@ -25,6 +25,7 @@
 #include "test-system/tutorial-test/tournament/tutorial-tests.h"
 #include "test-system/tutorial-test/epd/tutorial-tests.h"
 #include "test-system/tutorial-test/engine-setup/tutorial-tests.h"
+#include "test-system/tutorial-test/board-window/tutorial-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -65,13 +66,13 @@ namespace QaplaTest {
         ImGuiTestEngine_Start(engine_, ImGui::GetCurrentContext());
         ImGuiTestEngine_InstallDefaultCrashHandler();
 
-        registerRegressionTests(engine_);
         registerEpdChatbotTests(engine_);
         registerTournamentChatbotTests(engine_);
         registerSprtTournamentChatbotTests(engine_);
         registerTutorialTests(engine_);
         registerEpdTutorialTests(engine_);
         registerEngineSetupTutorialTests(engine_);
+        registerBoardWindowTutorialTests(engine_);
 #endif
     }
 

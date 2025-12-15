@@ -115,7 +115,7 @@ namespace QaplaTest::TournamentChatbot {
         }
         
         // Click the checkbox for the first engine (index 0)
-        ctx->ItemClick("**/tournamentEngineSelect/engineSettings/$$0/##select");
+        ctx->ItemClick("**/tutorial/engineSettings/$$0/##select");
         ctx->Yield(5);
     }
 
@@ -145,7 +145,7 @@ namespace QaplaTest::TournamentChatbot {
         }
         
         // Click the checkbox for the second engine (index 1)
-        ctx->ItemClick("**/tournamentEngineSelect/engineSettings/$$1/##select");
+        ctx->ItemClick("**/tutorial/engineSettings/$$1/##select");
         ctx->Yield(5);
     }
 

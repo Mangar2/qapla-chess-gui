@@ -22,23 +22,21 @@
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
 #include "../tutorial-test-common.h"
-#include "engine-setup-window.h"
-#include "configuration.h"
-#include "imgui-engine-select.h"
+#include "board-window.h"
 
-namespace QaplaTest::EngineSetupTutorialTest {
+namespace QaplaTest::BoardWindowTutorialTest {
 
     using namespace TutorialTestCommon;
 
     /**
-     * @brief Cleans up engine setup tutorial state
+     * @brief Cleans up board window tutorial state by resetting the static progress counter
      */
-    inline void cleanupEngineSetupState() {
-        QaplaWindows::EngineSetupWindow::clearEngineSetupTutorialState();
+    inline void cleanupBoardWindowState() {
+        QaplaWindows::BoardWindow::tutorialBoardProgress_ = 0;
     }
 
     /**
-     * @brief Waits for tutorial progress to reach a specific step
+     * @brief Waits for the board window tutorial progress to reach a specific step
      * @param ctx The ImGui test context
      * @param targetProgress The target progress value to wait for
      * @param maxWaitSeconds Maximum wait time in real seconds
@@ -46,24 +44,23 @@ namespace QaplaTest::EngineSetupTutorialTest {
      */
     inline bool waitForTutorialProgress(ImGuiTestContext* ctx, uint32_t targetProgress, float maxWaitSeconds = 5.0f) {
         bool result = TutorialTestCommon::waitForTutorialProgress(
-            ctx, QaplaWindows::EngineSetupWindow::tutorialProgress_, targetProgress, maxWaitSeconds);
+            ctx, QaplaWindows::BoardWindow::tutorialBoardProgress_, targetProgress, maxWaitSeconds);
         
+        if (targetProgress == 0) {
+            return QaplaWindows::BoardWindow::tutorialBoardProgress_ == 0;
+        }
         return result;
     }
 
     /**
-     * @brief Waits for detection to complete
+     * @brief Switches to the board view (Board 1 tab)
      * @param ctx The ImGui test context
-     * @param maxWaitSeconds Maximum wait time in real seconds
-     * @return true (always, detection happens in background)
      */
-    inline bool waitForDetectionComplete(ImGuiTestContext* ctx, float maxWaitSeconds = 20.0f) {
-        return waitForCondition(ctx, []() {
-            auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-            return !capabilities.isDetecting();
-        }, maxWaitSeconds);
+    inline void switchToBoardView(ImGuiTestContext* ctx) {
+        ctx->ItemClick("**/QaplaTabBar/###Board 1");
+        ctx->Yield();
     }
 
-} // namespace QaplaTest::EngineSetupTutorialTest
+} // namespace QaplaTest::BoardWindowTutorialTest
 
 #endif // IMGUI_ENABLE_TEST_ENGINE

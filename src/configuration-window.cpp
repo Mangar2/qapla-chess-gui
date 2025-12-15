@@ -190,7 +190,7 @@ void ConfigurationWindow::drawTutorialConfig()
         auto tutorialName = static_cast<Tutorial::TutorialName>(i);
         auto& entry = Tutorial::instance().getEntry(tutorialName);
         
-        bool completed = entry.completed();
+        bool completed = !entry.running();
         if (ImGui::Checkbox(entry.displayName.c_str(), &completed)) {
             if (completed) {
                 Tutorial::instance().finishTutorial(tutorialName);

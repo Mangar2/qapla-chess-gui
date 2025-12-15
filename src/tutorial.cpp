@@ -30,7 +30,7 @@ bool Tutorial::allPrecedingCompleted(TutorialName name) const {
     const size_t currentIndex = toIndex(name);
     
     for (size_t i = 0; i < std::min(currentIndex, static_cast<size_t>(TutorialName::EngineSetup)); ++i) {
-        if (!entries_[i].completed()) {
+        if (entries_[i].running()) {
             return false;
         }
     }
@@ -65,8 +65,8 @@ void Tutorial::showLastTutorialStep(TutorialName name) {
 
 void Tutorial::requestNextTutorialStep(TutorialName name,  bool mayWaitForUserInput) {
     auto& entry = entries_[toIndex(name)];
-    
-    if (entry.completed()) {
+
+    if (entry.counter >= entry.messages.size()) {
         return;
     }
     
@@ -89,7 +89,7 @@ void Tutorial::requestNextTutorialStep(TutorialName name,  bool mayWaitForUserIn
 void Tutorial::finishTutorial(TutorialName name) {
     auto& entry = entries_[toIndex(name)];
     
-    if (entry.completed()) {
+    if (!entry.running()) {
         return;
     }
     

@@ -165,9 +165,10 @@ namespace QaplaTest::EngineSetupTutorialTest {
             return;
         }
         ctx->Yield(5);
-
-        // Wait for tutorial to complete (progress = 4) - only reached if detection succeeded
-        IM_CHECK(waitForTutorialProgress(ctx, 0, 5.0f));
+        
+        auto& tutorial = QaplaWindows::Tutorial::instance();
+        const auto& entry = tutorial.getEntry(QaplaWindows::Tutorial::TutorialName::EngineSetup);
+        IM_CHECK(!entry.running());
         
         // Verify we have 2 engines configured
         auto configs = configManager.getAllConfigs();

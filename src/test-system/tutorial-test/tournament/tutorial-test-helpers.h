@@ -21,24 +21,18 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
-#include <imgui.h>
-#include "imgui_te_engine.h"
-#include "imgui_te_context.h"
+#include "../tutorial-test-common.h"
 #include "tutorial.h"
 #include "tournament-window.h"
 #include "tournament-data.h"
-#include "engine-worker-factory.h"
 
 namespace QaplaTest::TutorialTest {
 
-    // Helper to check if engines are available
-    inline bool hasEnginesAvailable() {
-        auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
-        auto configs = configManager.getAllConfigs();
-        return configs.size() >= 2; // Need at least 2 for full tutorial
-    }
+    using namespace TutorialTestCommon;
 
-    // Helper to cleanup tournament state
+    /**
+     * @brief Cleans up tournament state
+     */
     inline void cleanupTournamentState() {
         auto& tournamentData = QaplaWindows::TournamentData::instance();
         if (tournamentData.isRunning() || tournamentData.isStarting()) {
@@ -47,12 +41,11 @@ namespace QaplaTest::TutorialTest {
         tournamentData.clear(false);
     }
 
-    // Helper to navigate to Chatbot window
-    inline void navigateToChatbot(ImGuiTestContext* ctx) {
-        ctx->ItemClick("**/###Chatbot");
-        ctx->Yield();
-    }
-
+    /**
+     * @brief Gets the effective tutorial progress, handling finished state
+     * @param targetProgress The target progress to compare against
+     * @return The effective tutorial progress value
+     */
     inline uint32_t getTutorialProgress(uint32_t targetProgress) {
         auto progress = QaplaWindows::TournamentWindow::tutorialProgress_;
         if (progress == 0 && targetProgress > 1) {
@@ -62,52 +55,62 @@ namespace QaplaTest::TutorialTest {
         return progress;
     }
 
-    // Helper to wait for tutorial progress to reach a specific step
+    /**
+     * @brief Waits for tutorial progress to reach a specific step
+     * @param ctx The ImGui test context
+     * @param targetProgress The target progress value to wait for
+     * @param maxWaitSeconds Maximum wait time in real seconds
+     * @return true if target progress was reached
+     */
     inline bool waitForTutorialProgress(ImGuiTestContext* ctx, uint32_t targetProgress, float maxWaitSeconds = 5.0f) {
-        float waited = 0.0f;
-        constexpr float sleepInterval = 0.1f;
-        while (getTutorialProgress(targetProgress) < targetProgress && waited < maxWaitSeconds) {
-            ctx->SleepNoSkip(sleepInterval, sleepInterval);
-            waited += sleepInterval;
-        }
-        return getTutorialProgress(targetProgress) >= targetProgress;
+        return waitForCondition(ctx, [targetProgress]() {
+            return getTutorialProgress(targetProgress) >= targetProgress;
+        }, maxWaitSeconds);
     }
 
-    // Helper to wait for tutorial to request user input (when Continue button should appear)
+    /**
+     * @brief Waits for tutorial to request user input (when Continue button should appear)
+     * @param ctx The ImGui test context
+     * @param maxWaitSeconds Maximum wait time in real seconds
+     * @return true if tutorial is waiting for user input
+     */
     inline bool waitForTutorialUserInput(ImGuiTestContext* ctx, float maxWaitSeconds = 5.0f) {
-        float waited = 0.0f;
-        constexpr float sleepInterval = 0.1f;
         auto& tutorial = QaplaWindows::Tutorial::instance();
-        while (!tutorial.doWaitForUserInput() && waited < maxWaitSeconds) {
-            ctx->SleepNoSkip(sleepInterval, sleepInterval);
-            waited += sleepInterval;
-        }
-        return tutorial.doWaitForUserInput();
+        return waitForCondition(ctx, [&tutorial]() {
+            return tutorial.doWaitForUserInput();
+        }, maxWaitSeconds);
     }
 
-    // Helper to wait for highlighted section to change
+    /**
+     * @brief Waits for highlighted section to change
+     * @param ctx The ImGui test context
+     * @param expectedSection The expected section name
+     * @param maxWaitSeconds Maximum wait time in real seconds
+     * @return true if expected section is highlighted
+     */
     inline bool waitForHighlightedSection(ImGuiTestContext* ctx, const std::string& expectedSection, float maxWaitSeconds = 5.0f) {
-        float waited = 0.0f;
-        constexpr float sleepInterval = 0.1f;
-        while (QaplaWindows::TournamentWindow::highlightedSection_ != expectedSection && waited < maxWaitSeconds) {
-            ctx->SleepNoSkip(sleepInterval, sleepInterval);
-            waited += sleepInterval;
-        }
-        return QaplaWindows::TournamentWindow::highlightedSection_ == expectedSection;
+        return waitForCondition(ctx, [&expectedSection]() {
+            return QaplaWindows::TournamentWindow::highlightedSection_ == expectedSection;
+        }, maxWaitSeconds);
     }
 
-    // Helper to wait for "Continue" button to appear (when tutorial waits for user input)
+    /**
+     * @brief Waits for "Continue" button to appear
+     * @param ctx The ImGui test context
+     * @param maxWaitSeconds Maximum wait time in real seconds
+     * @return true if Continue button exists
+     */
     inline bool waitForContinueButton(ImGuiTestContext* ctx, float maxWaitSeconds = 5.0f) {
-        float waited = 0.0f;
-        constexpr float sleepInterval = 0.1f;
-        while (!ctx->ItemExists("**/###Continue") && waited < maxWaitSeconds) {
-            ctx->SleepNoSkip(sleepInterval, sleepInterval);
-            waited += sleepInterval;
-        }
-        return ctx->ItemExists("**/###Continue");
+        return waitForCondition(ctx, [ctx]() {
+            return ctx->ItemExists("**/###Continue");
+        }, maxWaitSeconds);
     }
 
-    // Helper to click Continue button and wait for progress
+    /**
+     * @brief Clicks Continue button and waits for progress
+     * @param ctx The ImGui test context
+     * @param expectedProgress The expected progress after clicking
+     */
     inline void clickContinueAndAdvance(ImGuiTestContext* ctx, uint32_t expectedProgress) {
         IM_CHECK(waitForTutorialUserInput(ctx, 5.0f));
         IM_CHECK(waitForContinueButton(ctx, 5.0f));

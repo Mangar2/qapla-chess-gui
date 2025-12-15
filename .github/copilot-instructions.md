@@ -62,9 +62,13 @@ The default build does NOT include test engine support and will compile successf
 
 ## imgui_test_engine Tests
 - **Critical**: Use `IM_CHECK(condition)` for assertions - `ctx->LogError()` does NOT fail tests!
-- Check item existence before clicking:
+- **Do NOT check ItemExists before clicking** - `ItemClick` already fails the test if the item doesn't exist:
   ```cpp
-  IM_CHECK(ctx->ItemExists("**/Button"));
+  // WRONG - redundant check:
+  // IM_CHECK(ctx->ItemExists("**/Button"));
+  // ctx->ItemClick("**/Button");
+  
+  // CORRECT - just click directly:
   ctx->ItemClick("**/Button");
   ```
 - Use `IM_CHECK_EQ`, `IM_CHECK_GT`, etc. for comparisons

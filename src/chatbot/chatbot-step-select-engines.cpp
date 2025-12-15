@@ -87,7 +87,7 @@ std::string ChatbotStepSelectEngines::draw() {
         mutableOptions.allowEngineConfiguration = true;
         mutableOptions.allowMultipleSelection = true;
     }
-    ImGui::PushID("tournamentEngineSelect");
+    ImGui::PushID("tutorial");
     engineSelect->draw();
     ImGui::PopID();
     engineSelect->setOptions(options); // Restore options

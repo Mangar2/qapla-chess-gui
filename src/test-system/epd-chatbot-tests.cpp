@@ -67,7 +67,7 @@ namespace QaplaTest {
 
         // Helper to select first engine via UI checkbox
         // In simple selection mode, engines are shown with checkboxes
-        // Uses specific path through epdEngineSelect PushID to avoid conflicts with other engine selects
+        // Uses specific path through tutorial PushID to avoid conflicts with other engine selects
         void selectFirstEngineViaUI(ImGuiTestContext* ctx) {
             // Get the first available engine name
             auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
@@ -86,9 +86,8 @@ namespace QaplaTest {
             }
             
             // Click the checkbox for the first engine (index 0)
-            // Path: epdEngineSelect PushID -> engineSettings PushID -> engine index 0 -> ##select checkbox
-            ctx->ItemClick("**/epdEngineSelect/engineSettings/$$0/##select");
-            ctx->Yield(5);
+            ctx->ItemClick("**/tutorial/engineSettings/$$0/##select");
+            ctx->Yield(2);
         }
 
         // Helper to verify analysis is running
@@ -146,28 +145,32 @@ namespace QaplaTest {
             // Step 1: Navigate to Chatbot tab
             ctx->LogInfo("Step 1: Navigating to Chatbot tab...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Step 2: Select EPD Analysis from menu
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Step 3: Since no analysis is running, it should skip to engine selection
             // Select first available engine using checkbox
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
-            // Step 4: Click Continue to proceed to configuration
+            // Step 4: Click Continue to proceed to selection of additional engines
             ctx->LogInfo("Step 4: Clicking Continue after engine selection...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
+            // Step 4.1: Click Continue to proceed to configuration
+            ctx->LogInfo("Step 4.1: Clicking Continue after additional engine selection...");
+            ctx->ItemClick("**/###Continue");
+            ctx->Yield(2);
 
             // Step 5: Configuration should be shown, click Continue 
             // (EPD file path is already set via setupEpdTestConfiguration)
             ctx->LogInfo("Step 5: Clicking Continue after configuration...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Step 6: Click Start Analysis
             ctx->LogInfo("Step 6: Clicking Start Analysis...");
@@ -223,11 +226,11 @@ namespace QaplaTest {
             // Now open the chatbot and select EPD Analysis
             ctx->LogInfo("Step 1: Navigating to Chatbot with running analysis...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Step 3: Should see "An EPD analysis is currently running" dialog
             // Click "Yes, stop analysis"
@@ -281,16 +284,16 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Click Cancel to keep analysis running
             ctx->LogInfo("Step 3: Clicking Cancel to keep analysis running...");
             ctx->ItemClick("**/###Cancel");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Verify analysis is still running
             IM_CHECK(epdData.isRunning());
@@ -316,11 +319,11 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Cancel at engine selection without selecting any engine
             ctx->LogInfo("Step 3: Clicking Cancel at engine selection...");
@@ -347,20 +350,22 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Select engine
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
             // Continue to configuration
-            ctx->LogInfo("Step 4: Continue to configuration...");
+            ctx->LogInfo("Step 4: Continue to additional engines...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
+            ctx->LogInfo("Step 4.1: Continue to configuration...");
+            ctx->ItemClick("**/###Continue");
 
             // Cancel at configuration
             ctx->LogInfo("Step 5: Clicking Cancel at configuration...");
@@ -387,22 +392,22 @@ namespace QaplaTest {
             // Navigate through the flow
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
             ctx->LogInfo("Step 4: Continue to configuration...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 5: Continue to start...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Cancel at start step
             ctx->LogInfo("Step 6: Clicking Cancel at start step...");
@@ -436,22 +441,24 @@ namespace QaplaTest {
             // Navigate through the complete flow
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 3: Selecting engine...");
             selectFirstEngineViaUI(ctx);
 
-            ctx->LogInfo("Step 4: Continue to configuration...");
+            ctx->LogInfo("Step 4: Continue to additional engines...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
+            ctx->LogInfo("Step 4.1: Continue to configuration...");
+            ctx->ItemClick("**/###Continue");
 
             ctx->LogInfo("Step 5: Continue to start...");
             ctx->ItemClick("**/###Continue");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 6: Start Analysis...");
             ctx->ItemClick("**/###Start Analysis");
@@ -464,7 +471,7 @@ namespace QaplaTest {
             // Click "Switch to EPD View"
             ctx->LogInfo("Step 7: Clicking Switch to EPD View...");
             ctx->ItemClick("**/###Switch to EPD View");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("=== Test SwitchToEpdView PASSED ===");
             
@@ -516,17 +523,17 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/Chatbot###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Should see the "continue existing" dialog
             ctx->LogInfo("Step 3: Clicking 'Yes, continue analysis'...");
             IM_CHECK(ctx->ItemExists("**/###Yes, continue analysis"));
             ctx->ItemClick("**/###Yes, continue analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Should jump to start step, click Start Analysis
             ctx->LogInfo("Step 4: Clicking 'Start Analysis'...");
@@ -590,16 +597,16 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Click "No" to start fresh setup
             ctx->LogInfo("Step 3: Clicking 'No' to start fresh...");
             ctx->ItemClick("**/###No");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Should now be at engine selection - verify by clicking Cancel
             ctx->LogInfo("Step 4: At engine selection, clicking Cancel...");
@@ -654,11 +661,11 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Click "Cancel" to exit entire flow
             ctx->LogInfo("Step 3: Clicking 'Cancel' to exit flow...");
@@ -693,11 +700,11 @@ namespace QaplaTest {
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");
             ctx->ItemClick("**/###Chatbot");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             ctx->LogInfo("Step 2: Selecting EPD Analysis...");
             ctx->ItemClick("**/###EPD Analysis");
-            ctx->Yield(10);
+            ctx->Yield(2);
 
             // Should be at engine selection (no continue dialog shown)
             // Verify by looking for Cancel button (present in engine selection)

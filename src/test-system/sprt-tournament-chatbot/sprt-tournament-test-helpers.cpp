@@ -127,7 +127,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         }
         
         // Click the checkbox for the first engine (index 0)
-        ctx->ItemClick("**/sprtTournamentEngineSelect/engineSettings/$$0/##select");
+        ctx->ItemClick("**/sprttutorial/engineSettings/$$0/##select");
         ctx->Yield(5);
     }
 
@@ -157,7 +157,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         }
         
         // Click the checkbox for the second engine (index 1)
-        ctx->ItemClick("**/sprtTournamentEngineSelect/engineSettings/$$1/##select");
+        ctx->ItemClick("**/sprttutorial/engineSettings/$$1/##select");
         ctx->Yield(5);
     }
 

@@ -398,12 +398,17 @@ namespace QaplaWindows
 
     std::string BoardWindow::drawButtons(const std::string& status)
     {
-        if (setupMode_) {
-            return drawSetupButtons();
-        } 
         showNextCutPasteTutorialStep("");
         showNextBoardTutorialStep("");
-        return drawBoardButtons(status);
+        std::string result;
+        ImGui::PushID("Board");
+        if (setupMode_) {
+            result = drawSetupButtons();
+        } else {
+            result = drawBoardButtons(status);
+        }
+        ImGui::PopID();
+        return result;
     }
 
     static auto boardWindowTutorialInit = []() {
@@ -440,12 +445,11 @@ namespace QaplaWindows
                 { .text = "Click 'Stop' one more time to end the auto-play.",
                   .type = SnackbarManager::SnackbarType::Note },
                 { .text = "Board Controls Complete!\n\n"
-                  "Well done! You now know Play, Stop, Analyze, and Auto.\n\n"
-                  "Next tutorial: Learn Cut & Paste to save and load positions.",
+                  "Well done! You now know Play, Stop, Analyze, and Auto.\n\n",
                   .type = SnackbarManager::SnackbarType::Success }
             },
             .getProgressCounter = []() -> uint32_t& {
-                return BoardWindow::tutorialProgress_;
+                return BoardWindow::tutorialBoardProgress_;
             },
             .autoStart = false
         });
@@ -485,8 +489,8 @@ namespace QaplaWindows
                   "Tip: Hover over Board 2 tab to see the close button (×).",
                   .type = SnackbarManager::SnackbarType::Note },
                 { .text = "You've learned Cut & Paste and multi-board management!\n"
-                  "You can copy FEN, PGN, PGN+PV, and paste various formats.\n\n"
-                  "Use tabs to manage multiple boards. Board 1 cannot be closed.",
+                  "You can copy FEN, PGN, PGN+PV, and paste various formats.\n"
+                  "Use tabs to manage multiple boards.",
                   .type = SnackbarManager::SnackbarType::Success }
             },
             .getProgressCounter = []() -> uint32_t& {
@@ -497,6 +501,29 @@ namespace QaplaWindows
         return true;
     }();
 
+    void BoardWindow::clearBoardTutorialState() {
+        tutorialBoardProgress_ = 0;
+        if (tutorialBoardProgress_ == 0 && tutorialCutPasteProgress_ == 0) {
+            highlightedButton_.clear();
+        }
+    }
+
+    void BoardWindow::clearCutPasteTutorialState() {
+        tutorialCutPasteProgress_ = 0;
+        if (tutorialBoardProgress_ == 0 && tutorialCutPasteProgress_ == 0) {
+            highlightedButton_.clear();
+        }
+    }
+
+    void BoardWindow::applyHighlighting(std::string hightlightedButton) {
+        if (Tutorial::instance().doWaitForUserInput()) {
+            highlightedButton_.clear();
+        } else {
+            // Set highlights from info
+            highlightedButton_ = hightlightedButton;
+        }
+    }
+
     // NOLINTNEXTLINE(readability-function-cognitive-complexity)
     void BoardWindow::showNextBoardTutorialStep(const std::string& clickedButton) {
         if (this != tutorialInstance_) {
@@ -505,19 +532,15 @@ namespace QaplaWindows
         
         constexpr auto tutorialName = Tutorial::TutorialName::BoardWindow;
         
-        switch (tutorialProgress_) {
+        switch (tutorialBoardProgress_) {
             case 0:
-            Tutorial::instance().requestNextTutorialStep(tutorialName);
-            tutorialSubStep_ = 0;
-            if (tutorialProgress_ == 1) { 
-                highlightedButton_ = "Play";
-            }
+            clearBoardTutorialState();
             return;
             
             case 1:
             // Step 1: User clicks play and engine makes a move
+            applyHighlighting(tutorialSubStep_ == 0 ? "Play" : "");
             if (tutorialSubStep_ == 0 && clickedButton == "Play") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
@@ -531,81 +554,76 @@ namespace QaplaWindows
             
             case 2:
             // Step 2: User makes a move and engine replies automatically. 
+            applyHighlighting("");
             if (gameState_->getHalfmovesPlayed() > 2) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Play";
                 return;
             }
             return;
             
             case 3:
             // Step 3: User clicks Play again - engine switches to the other side
+            applyHighlighting(tutorialSubStep_ == 0 ? "Play" : "");
             if (tutorialSubStep_ == 0 && clickedButton == "Play") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 3) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Stop";
                 return;
             }
             return;
             
             case 4:
             // Step 4: User clicks Stop and makes a manual move without engine playing
+            applyHighlighting(tutorialSubStep_ == 0 ? "Stop" : "");
             if (tutorialSubStep_ == 0 && clickedButton == "Stop") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 1;
                 return;
             }
             if (tutorialSubStep_ == 1 && gameState_->getHalfmovesPlayed() > 4) {
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Analyze";
                 return;
             }
             return;
             
             case 5:
             // Step 5: User clicks Analyze - both engines analyze without making moves
+            applyHighlighting("Analyze");
             if (clickedButton == "Analyze") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Stop";
                 return;
             }
             return;
             
             case 6:
             // Step 6: User clicks Stop to end the analysis
+            applyHighlighting("Stop");
             if (clickedButton == "Stop") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Auto";
                 return;
             }
             return;
             
             case 7:
             // Step 7: User clicks Auto - both engines play against each other automatically
+            applyHighlighting("Auto");
             if (clickedButton == "Auto") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Stop";
                 return;
             }
             return;
             
             case 8:
             // Step 8: User clicks Stop to end auto-play
+            applyHighlighting("Stop");
             if (clickedButton == "Stop") {
-                highlightedButton_ = "";
                 tutorialSubStep_ = 0;
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 return;
@@ -613,6 +631,7 @@ namespace QaplaWindows
             return;
             
             case 9:
+            applyHighlighting("");
             if (!SnackbarManager::instance().isTutorialMessageVisible()) {
                 Tutorial::instance().finishTutorial(tutorialName);
             }
@@ -648,16 +667,13 @@ namespace QaplaWindows
         switch (tutorialCutPasteProgress_) {
             case 0:
             // Initial step - show first message
-            Tutorial::instance().requestNextTutorialStep(tutorialName);
-            if (tutorialCutPasteProgress_ == 1) { 
-                highlightedButton_ = "Time";
-            }
+            clearCutPasteTutorialState();
             return;
             
             case 1:
             // Step 1: User clicks Time button
+            applyHighlighting("Time");
             if (clickedButton == "Time") {
-                highlightedButton_ = "";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 return;
             }
@@ -665,47 +681,44 @@ namespace QaplaWindows
             
             case 2:
             // Step 2: User confirms Time Control popup
+            applyHighlighting("");
             if (clickedButton == "Time Control Confirmed") {
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Setup";
                 return;
             }
             return;
             
             case 3:
             // Step 3: User clicks Setup to enter setup mode
+            applyHighlighting("Setup");
             if (clickedButton == "Setup") {
-                highlightedButton_ = "";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Clear";
                 return;
             }
             return;
             
             case 4:
             // Step 4: User clicks Clear to remove all pieces
+            applyHighlighting("Clear");
             if (clickedButton == "Clear") {
-                highlightedButton_ = "";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Ok";
                 return;
             }
             return;
             
             case 5:
             // Step 5: User places pieces and clicks Ok
+            applyHighlighting("Ok");
             if (clickedButton == "Ok" && !setupMode_) {
-                highlightedButton_ = "";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
-                highlightedButton_ = "Analyze";
                 return;
             }
             return;
             
             case 6:
             // Step 6: User clicks Analyze and waits
+            applyHighlighting("Analyze");
             if (clickedButton == "Analyze") {
-                highlightedButton_ = "Stop";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 return;
             }
@@ -713,15 +726,16 @@ namespace QaplaWindows
 
             case 7:
             // Step 7: User clicks Stop
+            applyHighlighting("Stop");
             if (clickedButton == "Stop") {
-                highlightedButton_ = "";
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 return;
             }
             return;
             
             case 8:
-            // Step 7: User clicks on engine list row to copy PV
+            // Step 8: User clicks on engine list row to copy PV
+            applyHighlighting("");
             if (hasValidStringInClipboard()) {
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 return;
@@ -729,7 +743,8 @@ namespace QaplaWindows
             return;
             
             case 9:
-            // Step 8: Second board instance created (triggered from constructor)
+            // Step 9: Second board instance created (triggered from constructor)
+            applyHighlighting("");
             if (clickedButton == "new instance") {
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
                 // Highlight Paste button in the SECONDARY instance
@@ -741,15 +756,19 @@ namespace QaplaWindows
             return;
             
             case 10:
-            if (this == secondaryTutorialInstance_ && clickedButton == "Paste") {
-                highlightedButton_ = "";
-                Tutorial::instance().requestNextTutorialStep(tutorialName);
-                return;
+            // Step 10: User pastes in secondary board
+            if (this == secondaryTutorialInstance_) {
+                applyHighlighting("Paste");
+                if (clickedButton == "Paste") {
+                    Tutorial::instance().requestNextTutorialStep(tutorialName);
+                    return;
+                }
             }
             return;
             
             case 11:
-            // Letzte Message wurde angezeigt - warte bis User sie schließt
+            // Final message shown - wait until user dismisses it
+            applyHighlighting("");
             if (!SnackbarManager::instance().isTutorialMessageVisible()) {
                 Tutorial::instance().finishTutorial(tutorialName);
             }

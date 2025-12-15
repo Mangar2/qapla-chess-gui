@@ -27,6 +27,7 @@
 
 #include <vector>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace QaplaWindows::ChatBot {
@@ -54,6 +55,14 @@ private:
 };
 
 /**
+ * @brief Configuration for a tutorial including where it should run.
+ */
+struct TutorialConfig {
+    Tutorial::TutorialName name;   ///< Tutorial identifier
+    bool runsInChatbot;            ///< true: runs in chatbot, false: runs via snackbar
+};
+
+/**
  * @brief A chatbot step for selecting which tutorial to run.
  * 
  * Uses ChatbotStepOptionList for the actual selection UI.
@@ -64,19 +73,19 @@ public:
     [[nodiscard]] std::string draw() override;
     
     /**
-     * @brief Gets the selected tutorial.
-     * @return The selected tutorial, or Count if none/cancelled.
+     * @brief Gets the selected tutorial configuration.
+     * @return The selected tutorial config, or nullopt if none/cancelled.
      */
-    [[nodiscard]] Tutorial::TutorialName getSelectedTutorial() const {
+    [[nodiscard]] std::optional<TutorialConfig> getSelectedTutorial() const {
         return selectedTutorial_;
     }
 
 private:
-    /// List of available tutorials
-    static const std::vector<Tutorial::TutorialName> availableTutorials_;
+    /// List of available tutorials with their configuration
+    static const std::vector<TutorialConfig> availableTutorials_;
     
     std::unique_ptr<ChatbotStepOptionList> optionSelector_;
-    Tutorial::TutorialName selectedTutorial_ = Tutorial::TutorialName::Count;
+    std::optional<TutorialConfig> selectedTutorial_;
 };
 
 /**
@@ -111,6 +120,29 @@ private:
      * @brief Removes the filter callback from the SnackbarManager.
      */
     void removeFilter();
+};
+
+/**
+ * @brief A chatbot step that informs the user about a snackbar-based tutorial.
+ * 
+ * For tutorials that don't run in the chatbot, this step explains that
+ * messages will appear as snackbars while the board stays in the foreground,
+ * and provides buttons to switch to the board or cancel.
+ */
+class ChatbotStepTutorialSnackbarInfo : public ChatbotStep {
+public:
+    /**
+     * @brief Constructs the info step for a snackbar-based tutorial.
+     * @param tutorialName The tutorial to run via snackbar.
+     */
+    explicit ChatbotStepTutorialSnackbarInfo(Tutorial::TutorialName tutorialName);
+    ~ChatbotStepTutorialSnackbarInfo() override = default;
+
+    [[nodiscard]] std::string draw() override;
+
+private:
+    Tutorial::TutorialName tutorialName_;
+    bool tutorialStarted_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

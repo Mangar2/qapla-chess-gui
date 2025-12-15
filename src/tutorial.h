@@ -81,13 +81,13 @@ public:
             getProgressCounter() = 0;
         }
         void finish() {
-            if (!completed()) {
+            if (running()) {
                 counter = static_cast<uint32_t>(messages.size()) + 1;
                 getProgressCounter() = counter;
             }
         }
-        bool completed() const {
-            return counter > messages.size();
+        bool running() const {
+            return counter > 0 && counter < messages.size();
         }
         void showNextMessage() {
             if (counter < messages.size() && counter < getProgressCounter()) {
