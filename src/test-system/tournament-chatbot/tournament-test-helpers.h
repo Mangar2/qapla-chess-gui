@@ -81,6 +81,16 @@ namespace QaplaTest::TournamentChatbot {
     bool hasEnginesAvailable();
 
     /**
+     * @brief Resets the chatbot window to its initial state.
+     * 
+     * Clears all active and completed threads, returning to the main menu.
+     * Call this at the start of each chatbot test to ensure clean state.
+     * 
+     * @param ctx The ImGui test context for logging.
+     */
+    void resetChatbotToInitialState(ImGuiTestContext* ctx);
+
+    /**
      * @brief Cleans up tournament state - call at start AND end of tests
      */
     void cleanupTournamentState();

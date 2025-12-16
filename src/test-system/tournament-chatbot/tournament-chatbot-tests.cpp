@@ -50,6 +50,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Complete New Tournament Flow ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Navigate to Tournament Chatbot
@@ -118,6 +119,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: New Tournament with Switch to View ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -164,6 +166,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Menu ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
             ctx->Yield(10);
@@ -183,6 +186,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at GlobalSettings ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
             ctx->Yield(10);
@@ -205,6 +209,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at SelectEngines ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -230,6 +235,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Configuration ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -259,6 +265,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Opening ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -290,6 +297,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at PGN ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -323,6 +331,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Start ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));
@@ -366,6 +375,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Tournament - Yes ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Create incomplete tournament state
@@ -409,6 +419,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Tournament - No ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             createIncompleteTournamentState(ctx);
@@ -439,6 +450,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Tournament - Cancel ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             createIncompleteTournamentState(ctx);
@@ -476,6 +488,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Stop Running Tournament - End ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Create and start a tournament
@@ -517,6 +530,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Stop Running Tournament - Keep Running ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             createIncompleteTournamentState(ctx);
@@ -556,6 +570,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Toggle All Options ===");
             
             cleanupTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToTournamentChatbot(ctx));

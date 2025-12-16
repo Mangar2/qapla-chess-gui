@@ -25,6 +25,7 @@
 #include "imgui_te_context.h"
 #include "epd-data.h"
 #include "engine-worker-factory.h"
+#include "chatbot/chatbot-window.h"
 
 #include <filesystem>
 
@@ -63,6 +64,13 @@ namespace QaplaTest {
                 epdData.stopPool(false);
             }
             epdData.clear();
+        }
+
+        // Helper to reset chatbot to initial state
+        void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+            ctx->LogInfo("Resetting chatbot to initial state");
+            QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+            ctx->Yield();
         }
 
         // Helper to select first engine via UI checkbox
@@ -136,6 +144,7 @@ namespace QaplaTest {
             
             // Precondition: Clean state
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -202,6 +211,7 @@ namespace QaplaTest {
             
             // Precondition: Start an analysis first
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -262,6 +272,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Stop Running Dialog ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -313,6 +324,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Engine Selection ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -342,6 +354,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Configuration Step ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -384,6 +397,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Cancel at Start Step ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -433,6 +447,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Switch to EPD View after Start ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -487,6 +502,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Analysis - Yes ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -565,6 +581,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Analysis - No (New Setup) ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -627,6 +644,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing Analysis - Cancel ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 
@@ -690,6 +708,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: No Continue Dialog When Analysis Complete ===");
             
             cleanupEpdState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 

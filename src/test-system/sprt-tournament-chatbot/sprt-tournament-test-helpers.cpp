@@ -25,6 +25,7 @@
 #include "engine-worker-factory.h"
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
+#include "chatbot/chatbot-window.h"
 #include <imgui.h>
 
 namespace QaplaTest::SprtTournamentChatbot {
@@ -88,6 +89,12 @@ namespace QaplaTest::SprtTournamentChatbot {
         sprtTournamentData.clear();
     }
 
+    void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Resetting chatbot to initial state");
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield();
+    }
+
     bool navigateToSprtTournamentChatbot(ImGuiTestContext* ctx) {
         if (!itemClick(ctx, "**/Chatbot###Chatbot")) {
             return false;
@@ -127,7 +134,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         }
         
         // Click the checkbox for the first engine (index 0)
-        ctx->ItemClick("**/sprttutorial/engineSettings/$$0/##select");
+        ctx->ItemClick("**/tutorial/engineSettings/$$0/##select");
         ctx->Yield(5);
     }
 
@@ -157,7 +164,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         }
         
         // Click the checkbox for the second engine (index 1)
-        ctx->ItemClick("**/sprttutorial/engineSettings/$$1/##select");
+        ctx->ItemClick("**/tutorial/engineSettings/$$1/##select");
         ctx->Yield(5);
     }
 

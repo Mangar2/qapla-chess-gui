@@ -68,6 +68,7 @@ namespace QaplaTest {
             cleanupEpdState();
             QaplaWindows::EpdWindow::clearEpdTutorialState();
             resetEpdTestData();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 

@@ -83,9 +83,14 @@ void ChatbotStepLoadEngine::drawInput() {
 
     // We automatically select engines that were added thus numSelected includes them
     if (numSelected == 0) {
-        QaplaWindows::ImGuiControls::textWrapped(
-            std::format("No engines selected. You need at least {} engine{} to start {}. Please select engines.",
-                minEngines_, minEngines_ == 1 ? "" : "s", contextName_).c_str());
+        if (minEngines_ > 0) {
+            QaplaWindows::ImGuiControls::textWrapped(
+                std::format("No engines added. You need at least {} engine{} to start {}. Please add engines.",
+                    minEngines_, minEngines_ == 1 ? "" : "s", contextName_).c_str());
+        } else {
+            QaplaWindows::ImGuiControls::textWrapped(
+                "No engines added. You can add engines now if you like.");
+        }
         ImGui::Spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();

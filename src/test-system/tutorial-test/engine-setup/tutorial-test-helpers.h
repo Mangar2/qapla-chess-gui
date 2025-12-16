@@ -25,6 +25,7 @@
 #include "engine-setup-window.h"
 #include "configuration.h"
 #include "imgui-engine-select.h"
+#include "chatbot/chatbot-window.h"
 
 namespace QaplaTest::EngineSetupTutorialTest {
 
@@ -35,6 +36,20 @@ namespace QaplaTest::EngineSetupTutorialTest {
      */
     inline void cleanupEngineSetupState() {
         QaplaWindows::EngineSetupWindow::clearEngineSetupTutorialState();
+    }
+
+    /**
+     * @brief Resets the chatbot window to its initial state.
+     * 
+     * Clears all active and completed threads, returning to the main menu.
+     * Call this at the start of each chatbot test to ensure clean state.
+     * 
+     * @param ctx The ImGui test context for logging.
+     */
+    inline void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Resetting chatbot to initial state");
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield();
     }
 
     /**

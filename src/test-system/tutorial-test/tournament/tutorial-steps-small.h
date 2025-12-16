@@ -159,7 +159,7 @@ namespace QaplaTest::TutorialTest {
         ctx->LogInfo("Step 13: Continue Tournament");
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
-
+        ctx->Yield(2);
         // Click Continue/Run button
         ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();

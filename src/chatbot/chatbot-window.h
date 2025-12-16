@@ -43,6 +43,23 @@ public:
      */
     void registerThread(std::unique_ptr<ChatbotThread> thread);
 
+    /**
+     * @brief Gets the singleton instance of the ChatbotWindow.
+     * @return Pointer to the singleton instance.
+     */
+    static ChatbotWindow* instance() {
+        static ChatbotWindow instance;
+        return &instance;
+    }
+
+    /**
+     * @brief Resets the chatbot to its initial state.
+     * 
+     * Clears all active and completed threads, returning to the main menu.
+     * Use this in tests to ensure a clean starting state.
+     */
+    void reset();
+
 private:
     /**
      * @brief Starts a new instance of the given thread prototype.
@@ -54,6 +71,13 @@ private:
      * @brief Resets the window to the main menu state.
      */
     void resetToMainMenu();
+
+    /**
+     * @brief Initializes the registered thread prototypes.
+     * 
+     * Creates fresh instances of all available chatbot threads.
+     */
+    void initializeThreads();
 
     std::vector<std::unique_ptr<ChatbotThread>> registeredThreads_;
     std::vector<std::unique_ptr<ChatbotThread>> completedThreads_;

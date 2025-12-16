@@ -25,6 +25,7 @@
 #include "engine-worker-factory.h"
 #include "tournament.h"
 #include "imgui-engine-select.h"
+#include "chatbot/chatbot-window.h"
 #include <imgui.h>
 
 namespace QaplaTest::TournamentChatbot {
@@ -74,6 +75,12 @@ namespace QaplaTest::TournamentChatbot {
             tournamentData.stopPool(false);
         }
         tournamentData.clear(false);
+    }
+
+    void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Resetting chatbot to initial state");
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield();
     }
 
     bool navigateToTournamentChatbot(ImGuiTestContext* ctx) {

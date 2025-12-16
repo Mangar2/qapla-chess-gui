@@ -24,7 +24,7 @@ namespace QaplaWindows {
 
 ImGuiBoardTabBar::ImGuiBoardTabBar() {
     // Load and add all board instances
-    addTab("Chatbot", std::make_unique<ChatBot::ChatbotWindow>());
+    addTab("Chatbot", ChatBot::ChatbotWindow::instance());
     
     auto instances = InteractiveBoardWindow::loadInstances();
     for (size_t index = 0; index < instances.size(); ++index) {

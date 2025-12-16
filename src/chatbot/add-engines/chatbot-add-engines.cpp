@@ -21,6 +21,9 @@
 #include "chatbot-step-add-engines-welcome.h"
 #include "../chatbot-step-load-engine.h"
 #include "../chatbot-step-finish.h"
+#include "engine-worker-factory.h"
+
+using QaplaTester::EngineWorkerFactory;
 
 namespace QaplaWindows::ChatBot {
 
@@ -38,10 +41,23 @@ ChatbotAddEngines::ChatbotAddEngines() {
     options.allowMultipleSelection = false;
     options.directEditMode = true;
     options.enginesDefaultOpen = true;
-    options.allowEngineConfiguration = false;
+    options.allowEngineConfiguration = true;
     
     engineSelect_ = std::make_unique<QaplaWindows::ImGuiEngineSelect>(options);
     engineSelect_->setId("add-engines-chatbot");
+    
+    // Initialize with all existing engines to enable duplicate detection
+    auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
+    auto configs = configManager.getAllConfigs();
+    std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration> existingEngines;
+    for (const auto& config : configs) {
+        existingEngines.push_back({
+            .config = config,
+            .selected = false,
+            .originalName = config.getName()
+        });
+    }
+    engineSelect_->setEngineConfigurations(existingEngines);
 }
 
 void ChatbotAddEngines::start() {

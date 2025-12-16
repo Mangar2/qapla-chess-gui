@@ -43,15 +43,20 @@ constexpr float RIGHT_MARGIN = 5.0F;
 constexpr float LEFT_MARGIN = 10.0F;
 
 ChatbotWindow::ChatbotWindow() {
-    registerThread(std::make_unique<ChatbotTournament>());
-    registerThread(std::make_unique<ChatbotSprt>());
-    registerThread(std::make_unique<ChatbotEpd>());
-    registerThread(std::make_unique<ChatbotBoard>());
-    registerThread(std::make_unique<ChatbotAddEngines>());
-    registerThread(std::make_unique<ChatbotTutorial>());
-    registerThread(std::make_unique<ChatbotChooseLanguage>());
-    registerThread(std::make_unique<ChatbotMessages>());
+    initializeThreads();
     resetToMainMenu();
+}
+
+void ChatbotWindow::initializeThreads() {
+    registeredThreads_.clear();
+    registeredThreads_.push_back(std::make_unique<ChatbotTournament>());
+    registeredThreads_.push_back(std::make_unique<ChatbotSprt>());
+    registeredThreads_.push_back(std::make_unique<ChatbotEpd>());
+    registeredThreads_.push_back(std::make_unique<ChatbotBoard>());
+    registeredThreads_.push_back(std::make_unique<ChatbotAddEngines>());
+    registeredThreads_.push_back(std::make_unique<ChatbotTutorial>());
+    registeredThreads_.push_back(std::make_unique<ChatbotChooseLanguage>());
+    registeredThreads_.push_back(std::make_unique<ChatbotMessages>());
 }
 
 void ChatbotWindow::registerThread(std::unique_ptr<ChatbotThread> thread) {
@@ -83,6 +88,13 @@ void ChatbotWindow::resetToMainMenu() {
         std::move(options)
     );
     lastCursorY_ = 0.0F;  // Reset scroll tracking when content is cleared
+}
+
+void ChatbotWindow::reset() {
+    activeThread_.reset();
+    completedThreads_.clear();
+    initializeThreads();
+    resetToMainMenu();
 }
 
 void ChatbotWindow::draw() {

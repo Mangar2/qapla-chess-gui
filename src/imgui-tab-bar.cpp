@@ -43,12 +43,23 @@ namespace QaplaWindows {
             [windowPtr]() { windowPtr->draw(); }
         ) : nullptr;
         
-        tabs_.emplace_back(Tab{ name, windowPtr, std::move(callback), flags });
+        tabs_.emplace_back(Tab{ name, windowPtr, nullptr, std::move(callback), flags });
+    }
+
+    void ImGuiTabBar::addTab(const std::string& name, EmbeddedWindow* window, 
+        ImGuiTabItemFlags flags) {
+        // Non-owning: caller manages lifetime
+        // Capture raw pointer - safe as long as caller ensures lifetime
+        auto callback = window ? std::function<void()>(
+            [window]() { window->draw(); }
+        ) : nullptr;
+        
+        tabs_.emplace_back(Tab{ name, nullptr, window, std::move(callback), flags });
     }
 
     void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback, 
         ImGuiTabItemFlags flags) {
-        tabs_.emplace_back(Tab{ name, nullptr, std::move(callback), flags });
+        tabs_.emplace_back(Tab{ name, nullptr, nullptr, std::move(callback), flags });
     }
 
     bool ImGuiTabBar::removeTab(const std::string& name) {
@@ -56,8 +67,8 @@ namespace QaplaWindows {
             [&name](const Tab& tab) { return tab.name == name; });
         
         if (it != tabs_.end()) {
-            if (it->window) {
-                it->window->save();
+            if (auto* window = it->getWindow()) {
+                window->save();
             }
             tabs_.erase(it);
             return true;
@@ -81,7 +92,8 @@ namespace QaplaWindows {
                 bool closable = flags & ImGuiTabItemFlags_NoAssumedClosure;
 
                 // Check if window is highlighted
-                bool isHighlighted = tab.window && tab.window->highlighted();
+                auto* window = tab.getWindow();
+                bool isHighlighted = window && window->highlighted();
                 auto translatedName = Translator::instance().translate("Tab", tab.name);
                 auto tabItemText = std::format("{}###{}", translatedName, tab.name);
                 bool tabIsActive = ImGui::BeginTabItem(tabItemText.c_str(), closable ? &open : nullptr, flags);

@@ -43,6 +43,7 @@ namespace QaplaTest {
             
             // Precondition: Clean state and engines available
             cleanupBoardWindowState();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
             ctx->LogInfo("Engines available: OK");

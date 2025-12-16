@@ -25,6 +25,7 @@
 #include "tutorial.h"
 #include "epd-window.h"
 #include "epd-data.h"
+#include "chatbot/chatbot-window.h"
 
 namespace QaplaTest::EpdTutorialTest {
 
@@ -40,7 +41,19 @@ namespace QaplaTest::EpdTutorialTest {
         }
         epdData.clear();
     }
-
+    /**
+     * @brief Resets the chatbot window to its initial state.
+     * 
+     * Clears all active and completed threads, returning to the main menu.
+     * Call this at the start of each chatbot test to ensure clean state.
+     * 
+     * @param ctx The ImGui test context for logging.
+     */
+    inline void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Resetting chatbot to initial state");
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield();
+    }
     /**
      * @brief Waits for tutorial progress to reach a specific step
      * @param ctx The ImGui test context

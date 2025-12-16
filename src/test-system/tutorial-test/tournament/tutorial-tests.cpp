@@ -81,6 +81,7 @@ namespace QaplaTest {
             cleanupTournamentState();
             QaplaWindows::TournamentWindow::clearTournamentTutorialState();
             resetTestData();
+            resetChatbotToInitialState(ctx);
             
             IM_CHECK(hasEnginesAvailable());
 

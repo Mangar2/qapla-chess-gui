@@ -52,6 +52,7 @@ namespace QaplaTest {
             cleanupEngineSetupState();
             QaplaWindows::EngineSetupWindow::clearEngineSetupTutorialState();
             resetEngineSetupTestData();
+            resetChatbotToInitialState(ctx);
 
             // Navigate to Chatbot and start tutorial
             ctx->LogInfo("Starting Tutorial via Chatbot");

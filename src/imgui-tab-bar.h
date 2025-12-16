@@ -45,7 +45,7 @@ namespace QaplaWindows {
         ~ImGuiTabBar() override = default;
 
         /**
-         * @brief Add a tab with an EmbeddedWindow.
+         * @brief Add a tab with an EmbeddedWindow (owning).
          * 
          * Creates a tab that displays the content of the provided EmbeddedWindow.
          * The window's lifetime is managed by the tab bar - it will be destroyed
@@ -56,6 +56,20 @@ namespace QaplaWindows {
          * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
          */
         void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window,
+            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
+
+        /**
+         * @brief Add a tab with an EmbeddedWindow (non-owning).
+         * 
+         * Creates a tab that displays the content of the provided EmbeddedWindow.
+         * The window's lifetime is NOT managed by the tab bar - caller retains ownership.
+         * Use this for singleton windows or externally managed instances.
+         * 
+         * @param name The display name of the tab
+         * @param window Raw pointer to the EmbeddedWindow (ownership NOT transferred)
+         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
+         */
+        void addTab(const std::string& name, EmbeddedWindow* window,
             ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
 
         /**
@@ -141,11 +155,17 @@ namespace QaplaWindows {
     private:
         struct Tab {
             std::string name;
-            // We keep the window here to manage its lifetime
-            // Using shared_ptr allows the callback to safely reference the window
-            std::shared_ptr<EmbeddedWindow> window;
+            // Owning window (managed lifetime)
+            std::shared_ptr<EmbeddedWindow> ownedWindow;
+            // Non-owning window pointer (external lifetime)
+            EmbeddedWindow* nonOwnedWindow = nullptr;
             std::function<void()> callback;
             ImGuiTabItemFlags defaultTabFlags = ImGuiTabItemFlags_None;
+            
+            // Helper to get the actual window pointer regardless of ownership
+            EmbeddedWindow* getWindow() const {
+                return ownedWindow ? ownedWindow.get() : nonOwnedWindow;
+            }
         };
         std::vector<Tab> tabs_;
         std::function<void()> dynamicTabsCallback_;

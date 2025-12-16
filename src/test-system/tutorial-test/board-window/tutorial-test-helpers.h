@@ -23,6 +23,7 @@
 
 #include "../tutorial-test-common.h"
 #include "board-window.h"
+#include "chatbot/chatbot-window.h"
 
 namespace QaplaTest::BoardWindowTutorialTest {
 
@@ -33,6 +34,20 @@ namespace QaplaTest::BoardWindowTutorialTest {
      */
     inline void cleanupBoardWindowState() {
         QaplaWindows::BoardWindow::tutorialBoardProgress_ = 0;
+    }
+
+    /**
+     * @brief Resets the chatbot window to its initial state.
+     * 
+     * Clears all active and completed threads, returning to the main menu.
+     * Call this at the start of each chatbot test to ensure clean state.
+     * 
+     * @param ctx The ImGui test context for logging.
+     */
+    inline void resetChatbotToInitialState(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Resetting chatbot to initial state");
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield();
     }
 
     /**

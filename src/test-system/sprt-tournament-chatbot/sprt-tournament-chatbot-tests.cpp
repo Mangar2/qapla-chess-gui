@@ -52,6 +52,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Complete New SPRT Tournament Flow ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Navigate to SPRT Tournament Chatbot
@@ -119,6 +120,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: New SPRT Tournament with Switch to View ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToSprtTournamentChatbot(ctx));
@@ -166,6 +168,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: All Cancel Buttons ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Cancel at Menu
@@ -302,6 +305,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing SPRT Tournament - Yes and No ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Create incomplete tournament state WITH actual results
@@ -372,6 +376,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Continue Existing SPRT Tournament - Cancel ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             createIncompleteSprtTournamentState(ctx);
@@ -409,6 +414,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Stop Running SPRT Tournament - End ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             // Create and start a tournament
@@ -450,6 +456,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Stop Running SPRT Tournament - Keep Running ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             createIncompleteSprtTournamentState(ctx);
@@ -488,6 +495,7 @@ namespace QaplaTest {
             ctx->LogInfo("=== Test: Toggle All Options ===");
             
             cleanupSprtTournamentState();
+            resetChatbotToInitialState(ctx);
             IM_CHECK(hasEnginesAvailable());
 
             IM_CHECK(navigateToSprtTournamentChatbot(ctx));
