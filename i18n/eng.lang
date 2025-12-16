@@ -626,7 +626,7 @@ Load a previously saved tournament from disk and replace the current tournament.
 {h:"6c61366c",s:"Tournament type:\n  gauntlet - One engine plays aga",t:"2025-12-16"}=Tournament type:\n  gauntlet - One engine plays against all others\n  round-robin - Every engine plays against every other engine
 {s:"Number of games per pairing.\nTotal games \\1 games × rounds",t:"2025-12-16"}=Number of games per pairing.\nTotal games \1 games × rounds
 {h:"21ecd6b3",s:"Number of consecutive games played per opening.\nCo",t:"2025-12-16"}=Number of consecutive games played per opening.\nCommonly set to \1 to alternate colors with the same line
-{s:"Select option: Français",t:"2025-12-14"}=Select option: Français
+{s:"Select option: Français",t:"2025-12-16"}=Select option: Français
 {s:"Swap White and Black engines",t:"2025-12-16"}=Swap White and Black engines
 {s:"Select option: Board Window",t:"2025-12-16"}=Select option: Board Window
 {s:"Select option: Board Engines",t:"2025-12-16"}=Select option: Board Engines
