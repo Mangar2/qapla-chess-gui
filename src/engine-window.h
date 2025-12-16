@@ -58,14 +58,28 @@ namespace QaplaWindows {
          * @param enginesAvailable Flag indicating if there are any engines available.
          * @return The required indent for the button area.
          */
-        static std::string drawConfigButtonArea(bool noEnginesSelected, bool enginesAvailable);
+        std::string drawConfigButtonArea(bool noEnginesSelected, bool enginesAvailable);
 
         /**
          * @brief Checks and manages the engine window tutorial progression.
          * @param configCommandIssued Whether the Config button was clicked.
          * @param activeEngines The currently active engines.
          */
-        static void showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
+        void showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines);
+
+        /**
+         * @brief Clears the tutorial state for this engine window.
+         */
+        void clearTutorialState();
+
+        /**
+         * @brief Applies highlighting to the specified button.
+         * 
+         * @param hightlightedButton The button to highlight
+         */
+        void applyHighlighting(std::string hightlightedButton);
+
+        std::string highlightedButton_;
 
     };
 

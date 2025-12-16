@@ -52,7 +52,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
 
     ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY));
     auto state = QaplaButton::ButtonState::Normal;
-    if (noEnginesSelected && enginesAvailable) {
+    if ((noEnginesSelected || highlightedButton_ == "Config") && enginesAvailable) {
         state = QaplaButton::ButtonState::Highlighted;
     }
     if (QaplaButton::drawIconButton("Config", "Config", buttonSize, state,
@@ -119,8 +119,7 @@ static auto engineWindowTutorialInit = []() {
               "Now please select two different engines to continue.",
               .type =SnackbarManager::SnackbarType::Note },
             { .text = "Engine Window Complete!\n\n"
-              "Excellent! You've successfully selected engines for playing.\n"
-              "Next we will use the engines.",
+              "Excellent! You've successfully selected engines for playing.\n",
               .type = SnackbarManager::SnackbarType::Success }
         },
         .getProgressCounter = []() -> uint32_t& {
@@ -131,19 +130,36 @@ static auto engineWindowTutorialInit = []() {
     return true;
 }();
 
+void EngineWindow::clearTutorialState() {
+    tutorialProgress_ = 0;
+    highlightedButton_.clear();
+}
+
+void EngineWindow::applyHighlighting(std::string hightlightedButton) {
+    if (Tutorial::instance().doWaitForUserInput()) {
+        highlightedButton_.clear();
+    } else {
+        // Set highlights from info
+        highlightedButton_ = hightlightedButton;
+    }
+}
+
 void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vector<QaplaTester::EngineConfig>& activeEngines) {
     constexpr auto tutorialName = Tutorial::TutorialName::BoardEngines;
     switch (tutorialProgress_) {
         case 0:
-        Tutorial::instance().requestNextTutorialStep(tutorialName);
+        clearTutorialState();
         return;
         case 1:
+        applyHighlighting("Config");
         if (configCommandIssued) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;
+
         case 2:
         {
+            applyHighlighting("");
             std::set<std::string> uniqueEngines;
             for (const auto& engine : activeEngines) {
                 uniqueEngines.insert(engine.getCmd());
@@ -153,12 +169,15 @@ void EngineWindow::showNextTutorialStep(bool configCommandIssued, const std::vec
             }
         }
         return;
+
         case 3:
         if (!SnackbarManager::instance().isTutorialMessageVisible()) {
             Tutorial::instance().finishTutorial(tutorialName);
         }
         return;
+
         default:
+        clearTutorialState();
         return;
     }
 }

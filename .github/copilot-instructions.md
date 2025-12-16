@@ -32,13 +32,10 @@ cmake --preset test && cmake --build --preset test
 cmake --preset release && cmake --build --preset release
 ```
 
-Test builds define `IMGUI_ENABLE_TEST_ENGINE` - tests in [src/test-system](src/test-system).
-
-**IMPORTANT**: When modifying or creating tests, always build and verify with the `test` preset:
-```bash
-cmake --preset test && cmake --build --preset test
-```
-The default build does NOT include test engine support and will compile successfully even with test-related errors.
+**IMPORTANT**: 
+- All `.cpp` files in `src/` are automatically included via `GLOB_RECURSE` - no manual CMakeLists.txt edits needed for new files.
+- Do NOT attempt to launch or test the GUI application - focus only on code implementation and build verification.
+- When modifying or creating tests, always build and verify with the `test` preset (the default build does NOT include test engine support).
 
 ## ImGui & UI Conventions
 - **Use wrappers from [imgui-controls.h](src/imgui-controls.h)** instead of raw ImGui calls - provides consistent styling, i18n support, and behavior.
