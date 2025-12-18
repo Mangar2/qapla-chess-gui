@@ -9,28 +9,24 @@ namespace QaplaWindows::ChatBot {
 
 std::string ChatbotStepBoardSelect::draw() {
     if (!finished_) {
-        QaplaWindows::ImGuiControls::textWrapped(
-            Translator::instance().translate("Chatbot", "Select the board you want to use.").c_str());
+        QaplaWindows::ImGuiControls::textWrapped("Select the board you want to use.");
         ImGui::Spacing();
-
-        if (QaplaWindows::ImGuiControls::textButton(
-                Translator::instance().translate("Chatbot", "Use Board 1").c_str())) {
+        
+        if (QaplaWindows::ImGuiControls::textButton("Use Board 1")) {
             finished_ = true;
             return "board:1";
         }
 
         ImGui::SameLine();
 
-        if (QaplaWindows::ImGuiControls::textButton(
-                Translator::instance().translate("Chatbot", "Create new board").c_str())) {
+        if (QaplaWindows::ImGuiControls::textButton("Create new board")) {
             finished_ = true;
             return "board:new";
         }
 
         ImGui::Spacing();
     } else {
-        QaplaWindows::ImGuiControls::textWrapped(
-            Translator::instance().translate("Chatbot", "Board selection completed.").c_str());
+        QaplaWindows::ImGuiControls::textWrapped("Board selection completed.");
     }
 
     return "";

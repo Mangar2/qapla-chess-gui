@@ -29,7 +29,7 @@ ChatbotStepOptionList::ChatbotStepOptionList(std::string prompt, std::vector<Opt
 }
 
 std::string ChatbotStepOptionList::draw() {
-    ImGui::TextWrapped("%s", prompt_.c_str());
+    ImGuiControls::textWrapped(prompt_);
     ImGui::Spacing();
 
     size_t num_options = options_.size();

@@ -109,7 +109,8 @@ void ConfigurationWindow::draw()
     }
     
     ImGui::Spacing();
-
+    /*
+    // Disabled for now, tutorials are started in the chatbot now
     if (ImGuiControls::CollapsingHeaderWithDot("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawTutorialConfig();
@@ -117,7 +118,7 @@ void ConfigurationWindow::draw()
     }
     
     ImGui::Spacing();
-
+    */
     if (ImGuiControls::CollapsingHeaderWithDot("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Indent(10.0F);
         drawLoggerConfig();

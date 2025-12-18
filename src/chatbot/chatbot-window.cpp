@@ -77,14 +77,14 @@ void ChatbotWindow::resetToMainMenu() {
         // Capture raw pointer to avoid reference invalidation on vector resize
         ChatbotThread* ptr = thread.get();
         options.push_back({
-            Translator::instance().translate("Chatbot", thread->getTitle()),
+            thread->getTitle(),
             [this, ptr]() { 
                 startThread(*ptr); 
             }
         });
     }
     mainMenuStep_ = std::make_unique<ChatbotStepOptionList>(
-        Translator::instance().translate("Chatbot", "How can I help you?"),
+        "How can I help you?",
         std::move(options)
     );
     lastCursorY_ = 0.0F;  // Reset scroll tracking when content is cleared

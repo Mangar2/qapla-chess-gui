@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../../test-common.h"
 #include "tutorial-test-helpers.h"
 
 namespace QaplaTest::TutorialTest {
@@ -68,14 +69,9 @@ namespace QaplaTest::TutorialTest {
         ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();
         
-        // Wait for tournament to start
-        float waited = 0.0f;
-        while (!tournamentData.isRunning() && waited < 10.0f) {
-            ctx->SleepNoSkip(0.1f, 0.1f);
-            waited += 0.1f;
-        }
-        
-        IM_CHECK(tournamentData.isRunning());
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [&tournamentData]() {
+            return tournamentData.isRunning();
+        }, 10.0f));
 
         clickContinueAndAdvance(ctx, 10);
     }
@@ -90,14 +86,9 @@ namespace QaplaTest::TutorialTest {
         ctx->ItemClick("**/###Tournament/Stop");
         ctx->Yield();
         
-        // Wait for tournament to actually stop
-        float waited = 0.0f;
-        while (tournamentData.isRunning() && waited < 5.0f) {
-            ctx->SleepNoSkip(0.1f, 0.1f);
-            waited += 0.1f;
-        }
-        
-        IM_CHECK(!tournamentData.isRunning());
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [&tournamentData]() {
+            return !tournamentData.isRunning();
+        }, 5.0f));
 
         // Progress advances automatically when finished
         clickContinueAndAdvance(ctx, 11);
@@ -164,14 +155,9 @@ namespace QaplaTest::TutorialTest {
         ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();
         
-        // Wait for tournament to start
-        float waited = 0.0f;
-        while (!tournamentData.isRunning() && waited < 10.0f) {
-            ctx->SleepNoSkip(0.1f, 0.1f);
-            waited += 0.1f;
-        }
-        
-        IM_CHECK(tournamentData.isRunning());
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [&tournamentData]() {
+            return tournamentData.isRunning();
+        }, 10.0f));
 
         // Progress advances automatically
         clickContinueAndAdvance(ctx, 14);
@@ -183,12 +169,9 @@ namespace QaplaTest::TutorialTest {
         
         auto& tournamentData = QaplaWindows::TournamentData::instance();
 
-        // Wait for tournament to finish (max 60 seconds)
-        float waited = 0.0f;
-        while (tournamentData.isRunning() && waited < 60.0f) {
-            ctx->SleepNoSkip(0.5f, 0.5f);
-            waited += 0.5f;
-        }
+        QaplaTest::Common::waitForCondition(ctx, [&tournamentData]() {
+            return !tournamentData.isRunning();
+        }, 60.0f, 0.5f);
         ctx->ItemClick("**/###Tournament/Stop");
         ctx->Yield(2);
     }
@@ -197,12 +180,9 @@ namespace QaplaTest::TutorialTest {
     inline void executeStep15_TutorialComplete(ImGuiTestContext* ctx) {
         ctx->LogInfo("Step 15: Tutorial Complete");
         ctx->Yield(2);
-        // Wait for tutorial to finish
-        float waited = 0.0f;
-        while (QaplaWindows::TournamentWindow::tutorialProgress_ == 15 && waited < 5.0f) {
-            ctx->SleepNoSkip(0.1f, 0.1f);
-            waited += 0.1f;
-        }
+        QaplaTest::Common::waitForCondition(ctx, []() {
+            return QaplaWindows::TournamentWindow::tutorialProgress_ != 15U;
+        }, 5.0f);
         ctx->ItemClick("**/###Close");
         ctx->LogInfo("Tutorial Complete!");
     }
