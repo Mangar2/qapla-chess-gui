@@ -34,10 +34,6 @@ ChatbotStepSelectEngines::ChatbotStepSelectEngines(
     : provider_(std::move(provider)), contextName_(contextName) {}
 
 ChatbotStepSelectEngines::~ChatbotStepSelectEngines() {
-    auto* engineSelect = getEngineSelect();
-    if (engineSelect != nullptr) {
-        engineSelect->setAlwaysShowEngines(false);
-    }
 }
 
 ImGuiEngineSelect* ChatbotStepSelectEngines::getEngineSelect() {
