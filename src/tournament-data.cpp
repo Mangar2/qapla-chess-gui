@@ -592,13 +592,18 @@ namespace QaplaWindows {
         imguiConcurrency_->setActive(false);
 
         auto oldState = state_;
-        state_ = graceful ? State::GracefulStopping : State::Stopped;
+        state_ = graceful ? State::GracefulStopping : State::Stopping;
         if (!graceful) {
             // If we are not graceful, we stop all immediately
             poolAccess_->stopAll();
         }
-
+        if (oldState == State::Stopping) {
+            SnackbarManager::instance().showNote("Tournament is already stopping.", 
+                false, "tournament");
+            return;
+        }
         if (oldState == State::Stopped) {
+            state_ = State::Stopped;
             SnackbarManager::instance().showNote("Tournament is not running.", 
                 false, "tournament");
             return;

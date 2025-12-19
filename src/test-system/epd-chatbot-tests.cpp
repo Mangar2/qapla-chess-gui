@@ -251,7 +251,7 @@ namespace QaplaTest {
             // Verify analysis stopped
             IM_CHECK(!epdData.isRunning());
             ctx->LogInfo("Analysis stopped successfully!");
-
+            ctx->Yield(20);
             // Step 4: Should now be at engine selection
             // Cancel to exit the flow
             ctx->LogInfo("Step 4: Clicking Cancel to exit flow...");

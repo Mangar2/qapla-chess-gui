@@ -154,6 +154,9 @@ namespace QaplaTest::TutorialTest {
         // Click Continue/Run button
         ctx->ItemClick("**/###Tournament/RunGraceContinue");
         ctx->Yield();
+        // Set concurrency to 6
+        ctx->ItemInputValue("**/###Concurrency", 6);
+        ctx->Yield();
         
         IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [&tournamentData]() {
             return tournamentData.isRunning();

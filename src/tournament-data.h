@@ -64,7 +64,8 @@ namespace QaplaWindows {
             Stopped,
             Starting,
             Running,
-            GracefulStopping
+            GracefulStopping,
+            Stopping
         };
 
         TournamentData();

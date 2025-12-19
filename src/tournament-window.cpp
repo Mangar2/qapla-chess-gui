@@ -90,16 +90,25 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
     if (!TournamentWindow::highlightedButton_.empty() && button == TournamentWindow::highlightedButton_) {
         return QaplaButton::ButtonState::Highlighted;
     }
+    auto state = TournamentData::instance().getState();
     
-    if (button == "RunGraceContinue" && TournamentData::instance().getState() == TournamentData::State::GracefulStopping) {
+    if (button == "RunGraceContinue" && state == TournamentData::State::GracefulStopping) {
         return QaplaButton::ButtonState::Active;
     }
     
     if (button == "RunGraceContinue" && TournamentData::instance().isFinished()) {
         return QaplaButton::ButtonState::Disabled;
     }
+
+    if (button == "RunGraceContinue" && state == TournamentData::State::Stopping) {
+        return QaplaButton::ButtonState::Disabled;
+    }
     
     if ((button == "Stop") && !TournamentData::instance().isRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+
+    if ((button == "Stop") && state == TournamentData::State::Stopping) {
         return QaplaButton::ButtonState::Disabled;
     }
     
