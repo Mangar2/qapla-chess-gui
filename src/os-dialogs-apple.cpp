@@ -294,8 +294,7 @@ void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
     }
 }
 
-#endif
 
 } // namespace QaplaWindows
 
-
+#endif
