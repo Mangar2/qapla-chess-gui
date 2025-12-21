@@ -84,16 +84,10 @@ namespace QaplaTest::EngineSetupTutorialTest {
         }
 
         // Verify detection FAILED (as expected with fake engines)
-        if (QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected()) {
-            IM_ERRORF("Detection succeeded but should have failed with fake engines");
-            return;
-        }
+        IM_CHECK(!QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected());
 
         // Verify we did NOT reach step 4 (because detection failed)
-        if (QaplaWindows::EngineSetupWindow::tutorialProgress_ >= 4) {
-            IM_ERRORF("Tutorial reached step 4 despite detection failure");
-            return;
-        }
+        IM_CHECK(QaplaWindows::EngineSetupWindow::tutorialProgress_ < 4);
 
         ctx->LogInfo("Detection correctly failed - tutorial did not advance to step 4");
     }
@@ -114,10 +108,7 @@ namespace QaplaTest::EngineSetupTutorialTest {
         ctx->Yield();
 
         // Verify we still did NOT reach step 4 after removal
-        if (QaplaWindows::EngineSetupWindow::tutorialProgress_ >= 4) {
-            IM_ERRORF("Tutorial reached step 4 after removing engines - tutorial was 'cheated'");
-            return;
-        }
+        IM_CHECK(QaplaWindows::EngineSetupWindow::tutorialProgress_ < 4);
 
         ctx->LogInfo("Tutorial correctly still at step 3 after engine removal");
     }
@@ -160,10 +151,7 @@ namespace QaplaTest::EngineSetupTutorialTest {
         }
 
         // Verify detection was successful
-        if (!QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected()) {
-            IM_ERRORF("Engine detection failed - not all engines were successfully detected");
-            return;
-        }
+        IM_CHECK(QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected());
         ctx->Yield(5);
         
         auto& tutorial = QaplaWindows::Tutorial::instance();
