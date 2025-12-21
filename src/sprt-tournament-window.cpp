@@ -91,6 +91,36 @@ static void drawSingleButton(
     }
 }
 
+static QaplaButton::ButtonState getButtonState(const std::string& button) {
+    auto state = SprtTournamentData::instance().state();
+    
+    if (button == "RGC" && state == SprtTournamentData::State::GracefulStopping) {
+        return QaplaButton::ButtonState::Active;
+    }
+    
+    if (button == "RGC" && !SprtTournamentData::instance().mayStartTournament(false)) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if ((button == "Stop") && !SprtTournamentData::instance().isAnyRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if (button == "Clear" && !SprtTournamentData::instance().hasResults()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if (button == "Test" && SprtTournamentData::instance().isAnyRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    if ((button == "Load" || button == "Save As") && SprtTournamentData::instance().isAnyRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+    
+    return QaplaButton::ButtonState::Normal;
+}
+
 
 void SprtTournamentWindow::drawButtons() {
     constexpr float space = 3.0F;
@@ -116,25 +146,7 @@ void SprtTournamentWindow::drawButtons() {
             label = "Continue";
         }
 
-        auto state = QaplaButton::ButtonState::Normal;
-        if (button == "RGC" && SprtTournamentData::instance().state() == SprtTournamentData::State::GracefulStopping) {
-            state = QaplaButton::ButtonState::Active;
-        }
-        if (button == "RGC" && SprtTournamentData::instance().isMonteCarloTestRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if ((button == "Stop") && !SprtTournamentData::instance().isAnyRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if (button == "Clear" && !SprtTournamentData::instance().hasResults()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if (button == "Test" && SprtTournamentData::instance().isAnyRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
-        if ((button == "Load" || button == "Save As") && SprtTournamentData::instance().isAnyRunning()) {
-            state = QaplaButton::ButtonState::Disabled;
-        }
+        auto state = getButtonState(button);
 
         if (QaplaButton::drawIconButton(button, label, buttonSize, state,
                 [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
@@ -156,8 +168,6 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
             bool running = SprtTournamentData::instance().isRunning();
             if (running) {
                 SprtTournamentData::instance().stopPool(true);
-            } else if (SprtTournamentData::instance().isMonteCarloTestRunning()) {
-                SnackbarManager::instance().showNote("Cannot start tournament while Monte Carlo test is running.");
             } else {
                 SprtTournamentData::instance().startTournament();
             }

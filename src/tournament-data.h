@@ -376,6 +376,13 @@ namespace QaplaWindows {
         bool createTournament(bool verbose);
 
         /**
+         * @brief Checks if the tournament can be started and shows appropriate error messages.
+         * @param verbose If true, error messages will be shown via SnackbarManager.
+         * @return True if tournament can be started, false otherwise.
+         */
+        bool mayStartTournament(bool verbose);
+
+        /**
          * @brief Builds a list of selected engines with global settings applied.
          * @return Vector of EngineConfig for all selected engines.
          */

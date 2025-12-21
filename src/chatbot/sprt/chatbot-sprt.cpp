@@ -30,6 +30,7 @@
 #include "../chatbot-step-tournament-start.h"
 #include "chatbot-step-sprt-tournament-result.h"
 #include "chatbot-step-sprt-configuration.h"
+#include "chatbot-step-sprt-select-gauntlet.h"
 #include "../../sprt-tournament-data.h"
 
 namespace QaplaWindows::ChatBot {
@@ -61,6 +62,7 @@ void ChatbotSprt::addNewSprtSteps() {
         return &SprtTournamentData::instance().getEngineSelect();
     };
     steps_.push_back(std::make_unique<ChatbotStepLoadEngine>(engineLoadProvider, 2, "SPRT tournament"));
+    steps_.push_back(std::make_unique<ChatbotStepSprtSelectGauntlet>());
     steps_.push_back(std::make_unique<ChatbotStepSprtConfiguration>());
     steps_.push_back(std::make_unique<ChatbotStepTournamentOpening>(EngineSelectContext::SPRT));
     steps_.push_back(std::make_unique<ChatbotStepTournamentPgn>(EngineSelectContext::SPRT));

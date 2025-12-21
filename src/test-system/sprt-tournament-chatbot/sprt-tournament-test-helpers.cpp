@@ -186,11 +186,13 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         QaplaWindows::ImGuiEngineSelect::EngineConfiguration config1;
         config1.config = QaplaTester::EngineConfig(configs[0]);
+        config1.config.setGauntlet(true);  // First engine is gauntlet (engine under test)
         config1.selected = true;
         engineConfigs.push_back(config1);
         
         QaplaWindows::ImGuiEngineSelect::EngineConfiguration config2;
         config2.config = QaplaTester::EngineConfig(configs[1]);
+        config2.config.setGauntlet(false);  // Second engine is comparison
         config2.selected = true;
         engineConfigs.push_back(config2);
         

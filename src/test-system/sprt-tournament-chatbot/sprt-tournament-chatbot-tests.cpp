@@ -74,10 +74,9 @@ namespace QaplaTest {
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
 
-            // Step: LoadEngine - Skip detection
-            ctx->LogInfo("Step 4: LoadEngine - Skip Detection");
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::SkipDetection));
-            ctx->Yield(10);
+            // Step: ConfigureEngines - Load and select gauntlet
+            ctx->LogInfo("Step 4: ConfigureEngines - Load & Select Gauntlet");
+            IM_CHECK(executeConfigureEnginesStep(ctx));
 
             // Step: SprtConfiguration - Continue with defaults
             ctx->LogInfo("Step 5: SprtConfiguration - Continue");
@@ -133,8 +132,7 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
             IM_CHECK(executeSprtConfigurationStep(ctx, SprtConfigurationAction::Continue));
             ctx->Yield(10);
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
@@ -221,8 +219,7 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
             IM_CHECK(executeSprtConfigurationStep(ctx, SprtConfigurationAction::Cancel));
             ctx->Yield(5);
 
@@ -236,8 +233,7 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
             IM_CHECK(executeSprtConfigurationStep(ctx, SprtConfigurationAction::Continue));
             ctx->Yield(10);
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Cancel, false));
@@ -253,8 +249,7 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
             IM_CHECK(executeSprtConfigurationStep(ctx, SprtConfigurationAction::Continue));
             ctx->Yield(10);
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
@@ -272,8 +267,7 @@ namespace QaplaTest {
             ctx->Yield(10);
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
             IM_CHECK(executeSprtConfigurationStep(ctx, SprtConfigurationAction::Continue));
             ctx->Yield(10);
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
@@ -516,8 +510,7 @@ namespace QaplaTest {
             // SelectEngines
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
-            IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::Continue));
-            ctx->Yield(10);
+            IM_CHECK(executeConfigureEnginesStep(ctx));
 
             // SprtConfiguration: Toggle More/Less
             ctx->LogInfo("SprtConfiguration: Toggle More Options");

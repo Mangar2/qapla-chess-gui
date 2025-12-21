@@ -258,27 +258,40 @@ namespace QaplaWindows {
         return true;
     }
 
-    void TournamentData::startTournament(bool verbose) {
+    bool TournamentData::mayStartTournament(bool verbose) {
         if (!tournament_) {
-            SnackbarManager::instance().showError("Internal error, tournament not initialized", 
-                false, "tournament");
-            return;
-        }
-        if (getTotalGames() == 0) {
-            if (config_->type == "gauntlet") {
-                SnackbarManager::instance().showError("No games to play in tournament\n"
-                    "Did you forget to set at least one engine as gauntlet engine?", 
-                    false, "tournament");
-            } else {
-                SnackbarManager::instance().showError("No games to play in tournament\n"
-                    "You need at least two engines to play a tournament", 
+            if (verbose) {
+                SnackbarManager::instance().showError("Internal error, tournament not initialized", 
                     false, "tournament");
             }
-            return;
+            return false;
+        }
+        if (getTotalGames() == 0) {
+            if (verbose) {
+                if (config_->type == "gauntlet") {
+                    SnackbarManager::instance().showError("No games to play in tournament\n"
+                        "Did you forget to set at least one engine as gauntlet engine?", 
+                        false, "tournament");
+                } else {
+                    SnackbarManager::instance().showError("No games to play in tournament\n"
+                        "You need at least two engines to play a tournament", 
+                        false, "tournament");
+                }
+            }
+            return false;
         }
         if (isFinished()) {
-            SnackbarManager::instance().showNote("Tournament already finished", 
-                false, "tournament");
+            if (verbose) {
+                SnackbarManager::instance().showNote("Tournament already finished", 
+                    false, "tournament");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    void TournamentData::startTournament(bool verbose) {
+        if (!mayStartTournament(verbose)) {
             return;
         }
         if (!createTournament(true)) {

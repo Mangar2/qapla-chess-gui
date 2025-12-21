@@ -239,7 +239,7 @@ bool SprtTournamentData::createTournament(bool verbose) {
             PgnSave::tournament().setOptions(tournamentPgn_->pgnOptions());
             QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
             QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
-            sprtManager_->createTournament(selectedEngines[0], selectedEngines[1], *sprtConfig_);
+            sprtManager_->createTournament(selectedEngines, *sprtConfig_);
             
             // Clear Monte Carlo results when creating new tournament
             sprtManager_->clearMonteCarloResult();
@@ -267,18 +267,77 @@ void SprtTournamentData::loadTournament() {
     }
 }
 
-void SprtTournamentData::startTournament() {
+bool SprtTournamentData::mayStartTournament(bool verbose) {
     if (!sprtManager_) {
-        SnackbarManager::instance().showError("Internal error, SPRT manager not initialized", 
-            false, "sprt-tournament");
+        if (verbose) {
+            SnackbarManager::instance().showError("Internal error, SPRT manager not initialized", 
+                false, "sprt-tournament");
+        }
+        return false;
+    }
+
+    if (isMonteCarloTestRunning()) {
+        if (verbose) {
+            SnackbarManager::instance().showNote("Cannot start tournament while Monte Carlo test is running.",
+                false, "sprt-tournament");
+        }
+        return false;
+    }
+
+    // Count gauntlet and non-gauntlet engines
+    int gauntletCount = 0;
+    int nonGauntletCount = 0;
+    
+    for (const auto& config : engineConfigurations_) {
+        if (!config.selected) {
+            continue;
+        }
+        if (config.config.isGauntlet()) {
+            ++gauntletCount;
+        } else {
+            ++nonGauntletCount;
+        }
+    }
+
+    // Validate gauntlet configuration
+    if (gauntletCount != 1 || nonGauntletCount != 1) {
+        if (verbose) {
+            if (gauntletCount == 0) {
+                SnackbarManager::instance().showError(
+                    "SPRT tournament requires exactly one engine marked as gauntlet (engine under test).\n"
+                    "Please select the gauntlet checkbox for the engine you want to test.",
+                    false, "sprt-tournament");
+            } else if (nonGauntletCount == 0) {
+                SnackbarManager::instance().showError(
+                    "SPRT tournament requires exactly one engine NOT marked as gauntlet (comparison engine).\n"
+                    "Please uncheck the gauntlet checkbox for the comparison engine.",
+                    false, "sprt-tournament");
+            } else {
+                SnackbarManager::instance().showError(
+                    "SPRT tournament requires exactly one gauntlet engine and one non-gauntlet engine.\n"
+                    "Currently selected: " + std::to_string(gauntletCount) + " gauntlet, " +
+                    std::to_string(nonGauntletCount) + " non-gauntlet engines.",
+                    false, "sprt-tournament");
+            }
+        }
+        return false;
+    }
+
+    if (isFinished()) {
+        if (verbose) {
+            SnackbarManager::instance().showNote("Tournament already finished", 
+                false, "sprt-tournament");
+        }
+        return false;
+    }
+    return true;
+}
+
+void SprtTournamentData::startTournament() {
+    if (!mayStartTournament(true)) {
         return;
     }
     if (!createTournament(true)) {
-        return;
-    }
-    if (isFinished()) {
-        SnackbarManager::instance().showNote("Tournament already finished", 
-            false, "sprt-tournament");
         return;
     }
 

@@ -149,6 +149,34 @@ namespace QaplaTest::SprtTournamentChatbot {
     bool executeLoadEngineStep(ImGuiTestContext* ctx, LoadEngineAction action);
 
     /**
+     * @brief Combined helper: Executes LoadEngine + SelectGauntlet steps with default Continue actions.
+     * @details This helper combines the engine loading and gauntlet selection steps into one call.
+     *          Use this for standard flow tests. For testing individual step behavior, use the
+     *          separate executeLoadEngineStep() and executeSelectGauntletStep() functions.
+     * @param ctx Test context
+     * @return true if both steps executed successfully
+     */
+    bool executeConfigureEnginesStep(ImGuiTestContext* ctx);
+
+    /**
+     * @brief Actions for SelectGauntlet step
+     */
+    enum class SelectGauntletAction {
+        SelectFirst,   // Select first engine as gauntlet
+        SelectSecond,  // Select second engine as gauntlet
+        Continue,      // Click "Continue" (requires gauntlet selected)
+        Cancel         // Click "Cancel"
+    };
+
+    /**
+     * @brief Executes the SelectGauntlet step with specified action
+     * @param ctx Test context
+     * @param action Which button/selection to perform
+     * @return true if step executed successfully
+     */
+    bool executeSelectGauntletStep(ImGuiTestContext* ctx, SelectGauntletAction action);
+
+    /**
      * @brief Actions for SprtConfiguration step
      */
     enum class SprtConfigurationAction {

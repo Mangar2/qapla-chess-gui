@@ -285,6 +285,14 @@ namespace QaplaWindows {
         bool createTournament(bool verbose);
 
         /**
+         * @brief Checks if the SPRT tournament can be started.
+         * @details Validates that exactly one engine has gauntlet flag set and one doesn't.
+         * @param verbose If true, error messages will be shown via SnackbarManager.
+         * @return True if tournament can be started, false otherwise.
+         */
+        bool mayStartTournament(bool verbose);
+
+        /**
          * @brief Loads tournament results from configuration.
          * @details Creates the tournament and then loads saved results from the configuration.
          */

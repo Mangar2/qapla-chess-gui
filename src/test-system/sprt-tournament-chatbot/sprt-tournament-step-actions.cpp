@@ -183,6 +183,66 @@ namespace QaplaTest::SprtTournamentChatbot {
     }
 
     // =========================================================================
+    // SelectGauntlet Step
+    // =========================================================================
+
+    bool executeSelectGauntletStep(ImGuiTestContext* ctx, SelectGauntletAction action) {
+        ctx->LogInfo("Executing SelectGauntlet step...");
+        ctx->Yield(5);
+
+        switch (action) {
+            case SelectGauntletAction::SelectFirst: {
+                // Open combo and select first engine
+                ctx->ItemClick("**/##GauntletEngine");
+                ctx->Yield(2);
+                // Click first selectable (index 0)
+                ctx->ItemClick("/$FOCUSED/**/Selectable_00");
+                ctx->Yield(2);
+                return true;
+            }
+
+            case SelectGauntletAction::SelectSecond: {
+                // Open combo and select second engine
+                ctx->ItemClick("**/##GauntletEngine");
+                ctx->Yield(2);
+                // Click second selectable (index 1)
+                ctx->ItemClick("/$FOCUSED/**/Selectable_01");
+                ctx->Yield(2);
+                return true;
+            }
+
+            case SelectGauntletAction::Continue:
+                return itemClick(ctx, "**/###Continue");
+
+            case SelectGauntletAction::Cancel:
+                return itemClick(ctx, "**/###Cancel");
+        }
+        return false;
+    }
+
+    // =========================================================================
+    // ConfigureEngines - Combined LoadEngine + SelectGauntlet
+    // =========================================================================
+
+    bool executeConfigureEnginesStep(ImGuiTestContext* ctx) {
+        ctx->LogInfo("Executing ConfigureEngines (LoadEngine + SelectGauntlet)...");
+        
+        // Execute LoadEngine step
+        if (!executeLoadEngineStep(ctx, LoadEngineAction::Continue)) {
+            return false;
+        }
+        ctx->Yield(10);
+        
+        // Execute SelectGauntlet step
+        if (!executeSelectGauntletStep(ctx, SelectGauntletAction::Continue)) {
+            return false;
+        }
+        ctx->Yield(10);
+        
+        return true;
+    }
+
+    // =========================================================================
     // SprtConfiguration Step
     // =========================================================================
 
