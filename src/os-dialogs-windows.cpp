@@ -27,34 +27,10 @@
  * - Passes HWND to dialog functions (IFileOpenDialog::Show, OPENFILENAME::hwndOwner)
  * - Dialogs are properly parented and stay on top of main window
  * 
- * -----------------------------------------------------------------------------
- * 
- * MACOS (TODO):
- * - Current: Uses runModal which shows dialog as independent modal window
- * - Problem: Dialog can slip behind other applications
- * - Solution: Use Sheet-Dialogs that attach to the parent window:
- *   1. Get NSWindow* via glfwGetCocoaWindow(glfwGetCurrentContext())
- *   2. Use [panel beginSheetModalForWindow:parent completionHandler:^(...){...}]
- *   3. This is async - fits perfectly with openFileDialogAsync() API
- *   4. For sync version: Use [NSApp runModalForWindow:] + [NSApp stopModal] in callback
- *      to block until dialog closes
- * 
- * -----------------------------------------------------------------------------
- * 
- * LINUX (TODO):
- * - Current: Uses GTK dialogs with nullptr as parent
- * - Problem: GTK expects GtkWindow*, but GLFW gives X11 Window handle
- *   These are incompatible types from different toolkits
- * - Solution: Use XDG Desktop Portal via GDBus (part of GLib, already available via GTK):
- *   1. Call org.freedesktop.portal.FileChooser via D-Bus
- *   2. Portal shows native desktop dialog (GTK on GNOME, Qt on KDE)
- *   3. No parent window needed - Portal handles modality
- *   4. Async by design - fits openFileDialogAsync() API perfectly
- *   5. For sync version: Use GMainLoop to wait for D-Bus response
- *   Reference: https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.FileChooser.html
- * 
  * =============================================================================
  */
+
+#ifdef _WIN32
 
 #include "os-dialogs.h"
 #include "../extern/qapla-engine-tester/src/string-helper.h"
@@ -67,7 +43,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #include <windows.h>
@@ -194,21 +169,6 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     return results;
 }
 
-#elif defined(__APPLE__)
-#include <vector>
-#include <string>
-#include <objc/objc.h>
-#include <objc/message.h>
-#include <objc/runtime.h>
-
-#if __LP64__
-using NSInteger  = long;
-using NSUInteger = unsigned long;
-#else
-using NSInteger  = int;
-using NSUInteger = unsigned int;
-#endif
-
 std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     const std::vector<std::pair<std::string, std::string>>& filters) {
     std::vector<std::string> results;
@@ -303,11 +263,6 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     return results;
 }
 
-#else
-std::vector<std::string> OsDialogs::openFileDialog(bool) {
-    return {};
-}
-#endif
 
 /**
  * Adds the appropriate extension to the file path if missing based on the selected filter.
@@ -328,8 +283,6 @@ static std::string addExtensionIfMissing(const std::string& path,
     }
     return path + "." + ext;
 }
-
-#ifdef _WIN32
 
 std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
         const std::string& defaultPath) 
@@ -364,20 +317,8 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     return {};
 }
 
-#elif defined(__APPLE__)
-#include <objc/objc.h>
-#include <objc/message.h>
-#include <objc/runtime.h>
-#include <filesystem>
-
-#if __LP64__
-using NSInteger  = long;
-using NSUInteger = unsigned long;
-#else
 using NSInteger  = int;
 using NSUInteger = unsigned int;
-#endif
-
 std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
         const std::string& defaultPath) 
 {
@@ -480,17 +421,10 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     return result;
 }
 
-#else
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>&, const std::string&) {
-    return {};
-}
-#endif
 
 // ============================================================================
 // FOLDER SELECTION DIALOG
 // ============================================================================
-
-#ifdef _WIN32
 
 std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     std::string result;
@@ -550,91 +484,13 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     return result;
 }
 
-#elif defined(__APPLE__)
-
-std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
-    std::string result;
-
-    // pool = [[NSAutoreleasePool alloc] init];
-    Class NSAutoreleasePool = (Class)objc_getClass("NSAutoreleasePool");
-    id pool = ((id(*)(Class, SEL))objc_msgSend)(NSAutoreleasePool, sel_registerName("alloc"));
-    pool = ((id(*)(id, SEL))objc_msgSend)(pool, sel_registerName("init"));
-
-    Class NSOpenPanel = (Class)objc_getClass("NSOpenPanel");
-    id panel = ((id(*)(Class, SEL))objc_msgSend)(NSOpenPanel, sel_registerName("openPanel"));
-
-    // Only allow folders
-    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseFiles:"), (BOOL)0);
-    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setCanChooseDirectories:"), (BOOL)1);
-    ((void(*)(id, SEL, BOOL))objc_msgSend)(panel, sel_registerName("setAllowsMultipleSelection:"), (BOOL)0);
-
-    // Set default path if provided
-    if (!defaultPath.empty()) {
-        id nsPath = ((id(*)(Class, SEL, const char*))objc_msgSend)(
-            (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), defaultPath.c_str());
-        id dirUrl = ((id(*)(Class, SEL, id))objc_msgSend)(
-            (Class)objc_getClass("NSURL"), sel_registerName("fileURLWithPath:"), nsPath);
-        ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setDirectoryURL:"), dirUrl);
-    }
-
-    // NSModalResponseOK == 1
-    NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
-    if (r == 1) {
-        id urls = ((id(*)(id, SEL))objc_msgSend)(panel, sel_registerName("URLs"));
-        NSUInteger count = ((NSUInteger(*)(id, SEL))objc_msgSend)(urls, sel_registerName("count"));
-        if (count > 0) {
-            id url = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), 0);
-            id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
-            const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-            if (cstr) result = cstr;
-        }
-    }
-
-    // [pool drain];
-    ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
-    return result;
-}
-
-#elif defined(__linux__)
-
-std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
-    gtk_init(nullptr, nullptr);
-    GtkWidget* dialog = gtk_file_chooser_dialog_new("Select Folder", nullptr,
-        GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-        "_Cancel", GTK_RESPONSE_CANCEL,
-        "_Select", GTK_RESPONSE_ACCEPT,
-        nullptr);
-
-    // Set default path if provided
-    if (!defaultPath.empty()) {
-        gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), defaultPath.c_str());
-    }
-
-    std::string result;
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        char* foldername = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        if (foldername) {
-            result = foldername;
-            g_free(foldername);
-        }
-    }
-
-    gtk_widget_destroy(dialog);
-    while (gtk_events_pending()) gtk_main_iteration();
-    return result;
-}
-
-#else
 
 std::string OsDialogs::selectFolderDialog(const std::string&) {
     return {};
 }
 
-#endif
-
 
 std::string OsDialogs::getConfigDirectory() {
-#ifdef _WIN32
     // Try using Windows API first (most robust)
     char path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, path))) {
@@ -654,29 +510,6 @@ std::string OsDialogs::getConfigDirectory() {
     
     // Last fallback for Windows
     return "./qapla-chess-gui";
-#else
-    // Try environment variable first
-    const char* homeDir = getenv("HOME");
-    
-    // Fallback to passwd if HOME not set
-    if (homeDir == nullptr) {
-        struct passwd pwd;
-        struct passwd* result = nullptr;
-        char buffer[4096];
-        
-        if (getpwuid_r(getuid(), &pwd, buffer, sizeof(buffer), &result) == 0 && result != nullptr) {
-            homeDir = pwd.pw_dir;
-        }
-    }
-    
-    if (homeDir != nullptr) {
-        std::filesystem::path configPath(homeDir);
-        configPath /= ".qapla-chess-gui";
-        return configPath.string();
-    }
-    
-    return "";
-#endif
 }
 
 // ============================================================================
@@ -715,5 +548,7 @@ void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
 }
 
 } // namespace QaplaWindows
+
+#endif // _WIN32
 
 
