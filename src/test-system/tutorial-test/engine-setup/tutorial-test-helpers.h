@@ -32,6 +32,34 @@ namespace QaplaTest::EngineSetupTutorialTest {
     using namespace TutorialTestCommon;
 
     /**
+     * @brief RAII guard that backs up engine configurations on construction
+     *        and restores them on destruction (even if test fails)
+     */
+    struct EngineConfigGuard {
+        std::vector<QaplaTester::EngineConfig> backup;
+        
+        EngineConfigGuard() {
+            auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+            backup = configManager.getAllConfigs();
+        }
+        
+        ~EngineConfigGuard() {
+            auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+            
+            // Clear current configs
+            auto configs = configManager.getAllConfigs();
+            for (const auto& cfg : configs) {
+                configManager.removeConfig(cfg);
+            }
+            
+            // Restore backup
+            for (const auto& cfg : backup) {
+                configManager.addConfig(cfg);
+            }
+        }
+    };
+
+    /**
      * @brief Cleans up engine setup tutorial state
      */
     inline void cleanupEngineSetupState() {

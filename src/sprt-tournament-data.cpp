@@ -323,13 +323,7 @@ bool SprtTournamentData::mayStartTournament(bool verbose) {
         return false;
     }
 
-    if (isFinished()) {
-        if (verbose) {
-            SnackbarManager::instance().showNote("Tournament already finished", 
-                false, "sprt-tournament");
-        }
-        return false;
-    }
+
     return true;
 }
 
@@ -339,6 +333,10 @@ void SprtTournamentData::startTournament() {
     }
     if (!createTournament(true)) {
         return;
+    }
+    if (isFinished()) {
+        SnackbarManager::instance().showNote("Tournament already finished", 
+            false, "sprt-tournament");
     }
 
     state_ = State::Starting;

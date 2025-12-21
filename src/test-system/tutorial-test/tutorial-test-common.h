@@ -27,19 +27,11 @@
 #include "tutorial.h"
 #include "snackbar.h"
 #include "engine-worker-factory.h"
+#include "../test-common.h"
 
 namespace QaplaTest::TutorialTestCommon {
 
-    /**
-     * @brief Frame step for SleepNoSkip - corresponds to ~60fps
-     * This ensures proper real-time waiting in polling loops
-     */
-    constexpr float FRAME_STEP = 1.0f / 60.0f;
-
-    /**
-     * @brief Default sleep interval for polling loops (100ms real time)
-     */
-    constexpr float SLEEP_INTERVAL = 0.1f;
+    using QaplaTest::Common::waitForCondition;
 
     /**
      * @brief Checks if at least two engines are available
@@ -58,23 +50,6 @@ namespace QaplaTest::TutorialTestCommon {
     inline void navigateToChatbot(ImGuiTestContext* ctx) {
         ctx->ItemClick("**/###Chatbot");
         ctx->Yield();
-    }
-
-    /**
-     * @brief Waits for a condition to become true with proper real-time waiting
-     * @param ctx The ImGui test context
-     * @param condition Function that returns true when condition is met
-     * @param maxWaitSeconds Maximum wait time in real seconds
-     * @return true if condition was met within timeout
-     */
-    template<typename Func>
-    inline bool waitForCondition(ImGuiTestContext* ctx, Func condition, float maxWaitSeconds = 5.0f) {
-        float waited = 0.0f;
-        while (!condition() && waited < maxWaitSeconds) {
-            ctx->SleepNoSkip(SLEEP_INTERVAL, FRAME_STEP);
-            waited += SLEEP_INTERVAL;
-        }
-        return condition();
     }
 
     /**

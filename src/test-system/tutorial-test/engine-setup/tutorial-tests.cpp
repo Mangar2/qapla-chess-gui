@@ -48,6 +48,9 @@ namespace QaplaTest {
         tst->TestFunc = [](ImGuiTestContext* ctx) {
             ctx->LogInfo("=== Test: Engine Setup Tutorial - Complete Flow ===");
             
+            // RAII guard: backs up engine configs and restores them when test ends (success or failure)
+            EngineConfigGuard configGuard;
+            
             // Precondition: Clean state
             cleanupEngineSetupState();
             QaplaWindows::EngineSetupWindow::clearEngineSetupTutorialState();
@@ -78,6 +81,8 @@ namespace QaplaTest {
             // Cleanup
             cleanupEngineSetupState();
             QaplaWindows::EngineSetupWindow::clearEngineSetupTutorialState();
+            
+            // Note: configGuard destructor will automatically restore engine configs
         };
     } // registerEngineSetupTutorialTests
 
