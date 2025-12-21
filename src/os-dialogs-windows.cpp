@@ -19,13 +19,12 @@
 
 /**
  * =============================================================================
- * PLATFORM-SPECIFIC IMPLEMENTATION NOTES
+ * WINDOWS IMPLEMENTATION
  * =============================================================================
  * 
- * WINDOWS (implemented):
- * - Uses glfwGetWin32Window() to get native HWND from current GLFW context
- * - Passes HWND to dialog functions (IFileOpenDialog::Show, OPENFILENAME::hwndOwner)
- * - Dialogs are properly parented and stay on top of main window
+ * Uses glfwGetWin32Window() to get native HWND from current GLFW context
+ * Passes HWND to dialog functions (IFileOpenDialog::Show, OPENFILENAME::hwndOwner)
+ * Dialogs are properly parented and stay on top of main window
  * 
  * =============================================================================
  */
@@ -169,101 +168,6 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     return results;
 }
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) {
-    std::vector<std::string> results;
-
-    // pool = [[NSAutoreleasePool alloc] init];
-    Class NSAutoreleasePool = (Class)objc_getClass("NSAutoreleasePool");
-    id pool = ((id(*)(Class, SEL))objc_msgSend)(NSAutoreleasePool, sel_registerName("alloc"));
-    pool = ((id(*)(id, SEL))objc_msgSend)(pool, sel_registerName("init"));
-
-    Class NSOpenPanel = (Class)objc_getClass("NSOpenPanel");
-    id panel = ((id(*)(Class, SEL))objc_msgSend)(NSOpenPanel, sel_registerName("openPanel"));
-
-    ((void(*)(id, SEL, BOOL))objc_msgSend)(
-        panel, sel_registerName("setAllowsMultipleSelection:"), multiple ? (BOOL)1 : (BOOL)0);
-
-    // Set file type filters (NSOpenPanel only supports extensions, not descriptions)
-    if (!filters.empty()) {
-        Class NSMutableArray = (Class)objc_getClass("NSMutableArray");
-        id allowedTypes = ((id(*)(Class, SEL))objc_msgSend)(NSMutableArray, sel_registerName("array"));
-        
-        for (const auto& filter : filters) {
-            // Extract file extensions from pattern (e.g., "*.pgn" -> "pgn")
-            std::string pattern = filter.second;
-            if (pattern.find("*.") == 0 && pattern.length() > 2) {
-                std::string ext = pattern.substr(2);
-                Class NSString = (Class)objc_getClass("NSString");
-                id extStr = ((id(*)(Class, SEL, const char*, NSUInteger))objc_msgSend)(
-                    NSString, sel_registerName("stringWithUTF8String:"), ext.c_str());
-                ((void(*)(id, SEL, id))objc_msgSend)(allowedTypes, sel_registerName("addObject:"), extStr);
-            }
-        }
-        
-        if (((NSUInteger(*)(id, SEL))objc_msgSend)(allowedTypes, sel_registerName("count")) > 0) {
-            ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setAllowedFileTypes:"), allowedTypes);
-        }
-    }
-
-    // NSModalResponseOK == 1
-    NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
-    if (r == 1) {
-        id urls = ((id(*)(id, SEL))objc_msgSend)(panel, sel_registerName("URLs"));
-        NSUInteger count = ((NSUInteger(*)(id, SEL))objc_msgSend)(urls, sel_registerName("count"));
-        for (NSUInteger i = 0; i < count; ++i) {
-            id url  = ((id(*)(id, SEL, NSUInteger))objc_msgSend)(urls, sel_registerName("objectAtIndex:"), i);
-            id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
-            const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-            if (cstr) results.emplace_back(cstr);
-        }
-    }
-
-    // [pool drain];  (alternativ: release)
-    ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
-    return results;
-}
-
-#elif defined(__linux__)
-
-#include <gtk/gtk.h>
-
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) {
-    std::vector<std::string> results;
-
-    gtk_init(nullptr, nullptr);
-    GtkWidget* dialog = gtk_file_chooser_dialog_new("Open File", nullptr,
-        GTK_FILE_CHOOSER_ACTION_OPEN,
-        "_Cancel", GTK_RESPONSE_CANCEL,
-        "_Open", GTK_RESPONSE_ACCEPT,
-        nullptr);
-
-    gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), multiple);
-
-    // Set file type filters if provided
-    for (const auto& filter : filters) {
-        GtkFileFilter* gtkFilter = gtk_file_filter_new();
-        gtk_file_filter_set_name(gtkFilter, filter.first.c_str());
-        gtk_file_filter_add_pattern(gtkFilter, filter.second.c_str());
-        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtkFilter);
-    }
-
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
-        for (GSList* iter = files; iter != nullptr; iter = iter->next) {
-            results.emplace_back((char*)iter->data);
-            g_free(iter->data);
-        }
-        g_slist_free(files);
-    }
-    gtk_widget_destroy(dialog);
-    while (gtk_events_pending()) gtk_main_iteration();
-
-    return results;
-}
-
-
 /**
  * Adds the appropriate extension to the file path if missing based on the selected filter.
  * @param path The original file path.
@@ -316,111 +220,6 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     }
     return {};
 }
-
-using NSInteger  = int;
-using NSUInteger = unsigned int;
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath) 
-{
-    std::string result;
-
-    Class poolClass = (Class)objc_getClass("NSAutoreleasePool");
-    id pool = ((id(*)(Class, SEL))objc_msgSend)(poolClass, sel_registerName("alloc"));
-    pool = ((id(*)(id, SEL))objc_msgSend)(pool, sel_registerName("init"));
-
-    Class panelClass = (Class)objc_getClass("NSSavePanel");
-    id panel = ((id(*)(Class, SEL))objc_msgSend)(panelClass, sel_registerName("savePanel"));
-
-    if (!filters.empty()) {
-        id filterArray = ((id(*)(Class, SEL))objc_msgSend)((Class)objc_getClass("NSMutableArray"), sel_registerName("array"));
-        for (const auto& [desc, ext] : filters) {
-            id nsExt = ((id(*)(Class, SEL, const char*))objc_msgSend)(
-                (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), ext.c_str());
-            ((void(*)(id, SEL, id))objc_msgSend)(filterArray, sel_registerName("addObject:"), nsExt);
-        }
-        ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setAllowedFileTypes:"), filterArray);
-    }
-
-    if (!defaultPath.empty()) {
-        std::filesystem::path path(defaultPath);
-        if (path.has_parent_path()) {
-            id nsDir = ((id(*)(Class, SEL, const char*))objc_msgSend)((Class)objc_getClass("NSString"),
-                        sel_registerName("stringWithUTF8String:"), path.parent_path().string().c_str());
-            id dirUrl = ((id(*)(Class, SEL, id))objc_msgSend)((Class)objc_getClass("NSURL"),
-                        sel_registerName("fileURLWithPath:"), nsDir);
-            ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setDirectoryURL:"), dirUrl);
-        }
-        if (path.has_filename()) {
-            id nsName = ((id(*)(Class, SEL, const char*))objc_msgSend)((Class)objc_getClass("NSString"),
-                        sel_registerName("stringWithUTF8String:"), path.filename().string().c_str());
-            ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setNameFieldStringValue:"), nsName);
-        }
-    }
-
-    NSInteger r = ((NSInteger(*)(id, SEL))objc_msgSend)(panel, sel_registerName("runModal"));
-    if (r == 1) {
-        id url = ((id(*)(id, SEL))objc_msgSend)(panel, sel_registerName("URL"));
-        id path = ((id(*)(id, SEL))objc_msgSend)(url, sel_registerName("path"));
-        const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
-        if (cstr) {
-            result = cstr;
-            if (filters.size() == 1 && filters[0].second != "*") {
-                result = addExtensionIfMissing(result, filters, 0);
-            }
-        }
-    }
-
-    ((void(*)(id, SEL))objc_msgSend)(pool, sel_registerName("drain"));
-    return result;
-}
-
-#elif defined(__linux__)
-#include <gtk/gtk.h>
-#include <filesystem>
-#include <pwd.h>
-#include <unistd.h>
-
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath) 
-{
-    gtk_init(nullptr, nullptr);
-    GtkWidget* dialog = gtk_file_chooser_dialog_new("Save File", nullptr,
-        GTK_FILE_CHOOSER_ACTION_SAVE,
-        "_Cancel", GTK_RESPONSE_CANCEL,
-        "_Save", GTK_RESPONSE_ACCEPT,
-        nullptr);
-
-    if (!defaultPath.empty()) {
-        gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), defaultPath.c_str());
-    }
-
-    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
-
-    for (const auto& [desc, ext] : filters) {
-        GtkFileFilter* filter = gtk_file_filter_new();
-        gtk_file_filter_set_name(filter, desc.c_str());
-        std::string pattern = "*." + ext;
-        gtk_file_filter_add_pattern(filter, pattern.c_str());
-        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-    }
-
-    std::string result;
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        if (filename) {
-            result = filename;
-            if (filters.size() == 1 && filters[0].second != "*") {
-                result = addExtensionIfMissing(result, filters, 0);
-            }
-            g_free(filename);
-        }
-    }
-
-    gtk_widget_destroy(dialog);
-    while (gtk_events_pending()) gtk_main_iteration();
-    return result;
-}
-
 
 // ============================================================================
 // FOLDER SELECTION DIALOG
@@ -484,12 +283,6 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     return result;
 }
 
-
-std::string OsDialogs::selectFolderDialog(const std::string&) {
-    return {};
-}
-
-
 std::string OsDialogs::getConfigDirectory() {
     // Try using Windows API first (most robust)
     char path[MAX_PATH];
@@ -515,8 +308,7 @@ std::string OsDialogs::getConfigDirectory() {
 // ============================================================================
 // ASYNC DIALOG IMPLEMENTATIONS
 // ============================================================================
-// For Windows and Linux: Simply call the synchronous version and pass result to callback.
-// For macOS: Could be implemented with native async sheets in the future.
+// Simply call the synchronous version and pass result to callback.
 
 void OsDialogs::openFileDialogAsync(OpenFileCallback callback,
     bool multiple,
