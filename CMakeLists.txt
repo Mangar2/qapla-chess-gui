@@ -93,6 +93,25 @@ file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
 list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
 
 # --------------------------------
+# i18n-Dateien automatisch generieren (nur unter Windows)
+# --------------------------------
+if(WIN32)
+    set(I18N_LANGUAGES deu eng fra)
+    foreach(lang ${I18N_LANGUAGES})
+        add_custom_command(
+            OUTPUT 
+                ${CMAKE_SOURCE_DIR}/i18n/${lang}-lang.h 
+                ${CMAKE_SOURCE_DIR}/i18n/${lang}-lang.cpp
+            COMMAND qapla-chess-tools --embed input=${lang}.lang name=${lang}_lang header=${lang}-lang.h source=${lang}-lang.cpp
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/i18n
+            DEPENDS ${CMAKE_SOURCE_DIR}/i18n/${lang}.lang
+            COMMENT "Embedding ${lang}.lang"
+            VERBATIM
+        )
+    endforeach()
+endif()
+
+# --------------------------------
 # Eigene Quelldateien
 # --------------------------------
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
