@@ -164,19 +164,19 @@ namespace {
     }
 
     /**
-     * @brief Sets the application icon for the window (needed for taskbar on Windows)
+     * @brief Sets the application icon for the window
      * 
-     * While resources.rc embeds the icon in the .exe (visible in file explorer),
-     * Windows taskbar requires the icon to be set at runtime via glfwSetWindowIcon.
-     * Uses embedded logo data instead of loading from file.
+     * Uses embedded logo data (40x40 pixels). GLFW handles platform differences:
+     * - Windows: Sets taskbar icon (resources.rc only affects file explorer)
+     * - Linux/X11: Sets _NET_WM_ICON property
+     * - Wayland/macOS: Handled by GLFW appropriately
      */
     void setWindowIcon(GLFWwindow* window) {
-#ifdef _WIN32
         int width{};
         int height{};
         int channels{};
         
-        // Load from embedded binary data (logo.png compiled into executable)
+        // Decode from embedded binary data (logo.png compiled into executable)
         // IMPORTANT: Force 4 channels (RGBA) as required by GLFW
         unsigned char* pixels = stbi_load_from_memory(
             reinterpret_cast<const unsigned char*>(logopng),
@@ -190,15 +190,13 @@ namespace {
             icon.height = height;
             icon.pixels = pixels;
             
-            // Set the icon - this overrides the default icon from resources.rc
             glfwSetWindowIcon(window, 1, &icon);
             
             stbi_image_free(pixels);
         } else {
-            std::cerr << "ERROR: Failed to load window icon from embedded data\n";
+            std::cerr << "ERROR: Failed to decode window icon from embedded data\n";
             std::cerr << "STB Error: " << stbi_failure_reason() << "\n";
         }
-#endif
     }
 
     void initImGui(GLFWwindow* window) {
