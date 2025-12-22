@@ -121,9 +121,16 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 )
 
 # --------------------------------
+# Windows Icon Resource
+# --------------------------------
+if(WIN32)
+    set(RESOURCE_FILES resources.rc)
+endif()
+
+# --------------------------------
 # Executable
 # --------------------------------
-add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES})
+add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES} ${RESOURCE_FILES})
 
 # --------------------------------
 # Includes & Libs

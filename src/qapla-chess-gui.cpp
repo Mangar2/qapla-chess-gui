@@ -45,6 +45,7 @@
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
 #include "chatbot/chatbot-window.h"
+#include "data/logo-data.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -57,6 +58,8 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
+
+#include "../extern/stb/stb_image.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 #include "imgui_te_engine.h"
@@ -160,6 +163,44 @@ namespace {
         std::cout << "OpenGL Version: " << version << std::endl;
     }
 
+    /**
+     * @brief Sets the application icon for the window (needed for taskbar on Windows)
+     * 
+     * While resources.rc embeds the icon in the .exe (visible in file explorer),
+     * Windows taskbar requires the icon to be set at runtime via glfwSetWindowIcon.
+     * Uses embedded logo data instead of loading from file.
+     */
+    void setWindowIcon(GLFWwindow* window) {
+#ifdef _WIN32
+        int width{};
+        int height{};
+        int channels{};
+        
+        // Load from embedded binary data (logo.png compiled into executable)
+        // IMPORTANT: Force 4 channels (RGBA) as required by GLFW
+        unsigned char* pixels = stbi_load_from_memory(
+            reinterpret_cast<const unsigned char*>(logopng),
+            static_cast<int>(logopngSize),
+            &width, &height, &channels, 4
+        );
+        
+        if (pixels != nullptr) {
+            GLFWimage icon;
+            icon.width = width;
+            icon.height = height;
+            icon.pixels = pixels;
+            
+            // Set the icon - this overrides the default icon from resources.rc
+            glfwSetWindowIcon(window, 1, &icon);
+            
+            stbi_image_free(pixels);
+        } else {
+            std::cerr << "ERROR: Failed to load window icon from embedded data\n";
+            std::cerr << "STB Error: " << stbi_failure_reason() << "\n";
+        }
+#endif
+    }
+
     void initImGui(GLFWwindow* window) {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -214,6 +255,7 @@ namespace {
 
         auto* window = initGlfwContext();
         initGlad();
+        setWindowIcon(window);
         initImGui(window);
         try {
             // Load embedded background image
