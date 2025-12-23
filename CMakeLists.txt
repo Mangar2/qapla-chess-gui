@@ -185,9 +185,9 @@ option(QAPLA_BUILD_UNIT_TESTS "Build unit tests with Catch2" ON)
 if(QAPLA_BUILD_UNIT_TESTS)
   add_subdirectory(extern/Catch2)
   
-  # Unit test sources
+  # Unit test sources for qapla-chess-gui and qapla-engine-tester
   file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS
-    test/unit/*.cpp
+    src/test-system/unit/*.cpp
   )
   
   if(UNIT_TEST_SOURCES)

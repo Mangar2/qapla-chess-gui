@@ -42,7 +42,6 @@
 #include "adjudication-manager.h"
 #include "imgui-table.h"
 
-#include <imgui.h>
 #include <format>
 
 
