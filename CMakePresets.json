@@ -69,6 +69,12 @@
       "displayName": "Build Diagnostic Engine Only",
       "configurePreset": "default",
       "targets": ["diagnostic-engine"]
+    },
+    {
+      "name": "unit",
+      "displayName": "Build Unit Tests Only",
+      "configurePreset": "default",
+      "targets": ["unit-tests"]
     }
   ]
 }

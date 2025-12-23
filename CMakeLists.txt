@@ -119,6 +119,8 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
     src/*.c
     i18n/*.cpp
 )
+# Unit-Test-Dateien ausschließen (nur für unit-tests Target)
+list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*/test-system/unit/.*")
 
 # --------------------------------
 # Windows Icon Resource
