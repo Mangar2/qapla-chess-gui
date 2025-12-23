@@ -14,3 +14,6 @@
 [submodule "extern/imgui_test_engine"]
 	path = extern/imgui_test_engine
 	url = https://github.com/ocornut/imgui_test_engine.git
+[submodule "extern/Catch2"]
+	path = extern/Catch2
+	url = https://github.com/catchorg/Catch2.git

@@ -178,6 +178,45 @@ elseif(UNIX)
 endif()
 
 # --------------------------------
+# Catch2 (Unit Testing Framework)
+# --------------------------------
+option(QAPLA_BUILD_UNIT_TESTS "Build unit tests with Catch2" ON)
+
+if(QAPLA_BUILD_UNIT_TESTS)
+  add_subdirectory(extern/Catch2)
+  
+  # Unit test sources
+  file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS
+    test/unit/*.cpp
+  )
+  
+  if(UNIT_TEST_SOURCES)
+    add_executable(unit-tests ${UNIT_TEST_SOURCES})
+    
+    target_include_directories(unit-tests PRIVATE
+      src
+      i18n
+      extern/qapla-engine-tester/src
+    )
+    
+    target_link_libraries(unit-tests PRIVATE 
+      Catch2::Catch2WithMain
+    )
+    
+    # Link qapla-engine-tester sources (shared logic)
+    target_sources(unit-tests PRIVATE ${QAPLA_TESTER_SOURCES})
+    
+    # Compiler flags matching main executable
+    target_compile_features(unit-tests PRIVATE cxx_std_20)
+    
+    # Enable CTest integration (optional)
+    include(CTest)
+    include(Catch)
+    catch_discover_tests(unit-tests)
+  endif()
+endif()
+
+# --------------------------------
 # Diagnostic Engine (separate executable)
 # --------------------------------
 add_subdirectory(diagnostic-engine)
