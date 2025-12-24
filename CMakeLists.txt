@@ -93,9 +93,9 @@ file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
 list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
 
 # --------------------------------
-# i18n-Dateien automatisch generieren (nur unter Windows)
+# i18n-Dateien automatisch generieren (nur bei Release-Builds unter Windows)
 # --------------------------------
-if(WIN32)
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
     set(I18N_LANGUAGES deu eng fra)
     foreach(lang ${I18N_LANGUAGES})
         add_custom_command(
@@ -193,7 +193,12 @@ if(QAPLA_BUILD_UNIT_TESTS)
   )
   
   if(UNIT_TEST_SOURCES)
-    add_executable(unit-tests ${UNIT_TEST_SOURCES})
+    # GUI sources needed by unit tests
+    set(GUI_TEST_DEPENDENCIES
+      src/tournament-result-incremental.cpp
+    )
+    
+    add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})
     
     target_include_directories(unit-tests PRIVATE
       src
