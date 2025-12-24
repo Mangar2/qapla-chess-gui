@@ -25,58 +25,133 @@
 using QaplaTester::Tournament;
 using namespace QaplaWindows;
 
-bool TournamentResultIncremental::poll(const Tournament& tournament, double baseElo) {
-	if (tournament.getUpdateCount() == tournamentUpdateCount_) {
-		return false;
+void TournamentResultIncremental::addFinishedPairTournament(size_t pairIndex, const Tournament& tournament) {
+	auto pairTournament = tournament.getPairTournament(pairIndex);
+	if (!pairTournament || !(*pairTournament)->isFinished()) {
+		return;
 	}
-	gamesLeft_ = false;
-	constexpr size_t extraChecks = 10; // Number of extra results to fetch
-	tournamentUpdateCount_ = tournament.getUpdateCount();
+	auto resultToAdd = (*pairTournament)->getResult();
+	playedGamesFromCompletedPairs_ += static_cast<uint32_t>(resultToAdd.total());
+	finishedResultsAggregate_.add(resultToAdd);
+	engineNames_.insert(resultToAdd.getEngineA());
+	engineNames_.insert(resultToAdd.getEngineB());
+}
 
-	if (totalScheduledGames_ == 0 || pairTournaments_ != tournament.pairTournamentCount()) {
-		pairTournaments_ = tournament.pairTournamentCount();
-		totalScheduledGames_ = 0;
-		// Count all games (both finished and scheduled) from all pair tournaments
-		for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
-			totalScheduledGames_ += (*pairTournament)->getConfig().games;
+void TournamentResultIncremental::handleModification(const Tournament& tournament, double baseElo) {
+	clear();
+	
+	pairTournaments_ = tournament.pairTournamentCount();
+	
+	// Calculate total scheduled games
+	totalScheduledGames_ = 0;
+	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+		totalScheduledGames_ += (*pairTournament)->getConfig().games;
+	}
+	
+	// Add all finished pair tournaments and collect unfinished indices
+	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+		if ((*pairTournament)->isFinished()) {
+			addFinishedPairTournament(i, tournament);
+		} else {
+			notFinishedIndices_.push_back(i);
 		}
 	}
-
-	// We store all results that are consecutively finished
-	while (auto pairTournament = tournament.getPairTournament(currentIndex_)) {
-		if (!(*pairTournament)->isFinished()) {
-			break;
+	
+	// Add all partial results from unfinished pair tournaments
+	totalResult_ = finishedResultsAggregate_;
+	playedGamesFromPartialPairs_ = 0;
+	for (auto idx : notFinishedIndices_) {
+		auto pairTournament = tournament.getPairTournament(idx);
+		if (!pairTournament) {
+			continue;
 		}
 		auto resultToAdd = (*pairTournament)->getResult();
-		playedGamesFromCompletedPairs_ += static_cast<uint32_t>(resultToAdd.total());
-		finishedResultsAggregate_.add(resultToAdd);
-		engineNames_.insert(resultToAdd.getEngineA());
-		engineNames_.insert(resultToAdd.getEngineB());
-		updateCount_++;
+		playedGamesFromPartialPairs_ += static_cast<uint32_t>(resultToAdd.total());
+		if (resultToAdd.total() > 0) {
+			totalResult_.add(resultToAdd);
+			engineNames_.insert(resultToAdd.getEngineA());
+			engineNames_.insert(resultToAdd.getEngineB());
+		}
+	}
+	
+	gamesLeft_ = !notFinishedIndices_.empty();
+	currentIndex_ = 0;
+	totalResult_.computeAllElos(baseElo, 10, true);
+}
+
+bool TournamentResultIncremental::poll(const Tournament& tournament, double baseElo) {
+	auto [isModified, isUpdated] = changeTracker_.checkModification(tournament.getChangeTracker());
+	
+	if (!isUpdated) {
+		return false;
+	}
+	
+	changeTracker_.updateFrom(tournament.getChangeTracker());
+	
+	if (isModified) {
+		handleModification(tournament, baseElo);
+		return true;
+	}
+	
+	// Update case: check for newly finished tournaments
+	gamesLeft_ = false;
+	constexpr size_t extraChecks = 10; // Number of extra results to fetch
+	
+	// Process notFinishedIndices_ list to find newly finished tournaments
+	while (currentIndex_ < notFinishedIndices_.size()) {
+		size_t pairIndex = notFinishedIndices_[currentIndex_];
+		auto pairTournament = tournament.getPairTournament(pairIndex);
+		
+		if (!pairTournament || !(*pairTournament)->isFinished()) {
+			break;
+		}
+		
+		addFinishedPairTournament(pairIndex, tournament);
 		currentIndex_++;
 	}
-
-	// We add all results that are not consecutively finished including partial results
+	
+	// Rebuild totalResult_ with all results (finished + partial)
 	totalResult_ = finishedResultsAggregate_;
 	playedGamesFromPartialPairs_ = 0;
 	size_t extra = extraChecks;
-	for (size_t i = currentIndex_; auto pairTournament = tournament.getPairTournament(i); ++i) {
+	
+	for (size_t i = currentIndex_; i < notFinishedIndices_.size(); ++i) {
+		size_t pairIndex = notFinishedIndices_[i];
+		auto pairTournament = tournament.getPairTournament(pairIndex);
+		
+		if (!pairTournament) {
+			continue;
+		}
+		
 		auto resultToAdd = (*pairTournament)->getResult();
 		playedGamesFromPartialPairs_ += static_cast<uint32_t>(resultToAdd.total());
 		gamesLeft_ = true;
+		
 		if (resultToAdd.total() == 0) {
 			extra--;
 			if (extra == 0) {
-				break; 
+				break;
 			}
 			continue;
 		}
+		
 		totalResult_.add(resultToAdd);
 		engineNames_.insert(resultToAdd.getEngineA());
 		engineNames_.insert(resultToAdd.getEngineB());
 	}
-
+	
 	totalResult_.computeAllElos(baseElo, 10, true);
 	return true;
 }
 
+
+ void TournamentResultIncremental::clear() {
+	finishedResultsAggregate_.clear();
+	totalResult_.clear();
+	engineNames_.clear();
+	notFinishedIndices_.clear();
+	currentIndex_ = 0;
+	totalScheduledGames_ = 0;
+	playedGamesFromCompletedPairs_ = 0;
+	playedGamesFromPartialPairs_ = 0;
+}

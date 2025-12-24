@@ -300,10 +300,6 @@ namespace QaplaWindows {
         state_ = State::Starting;
 
         poolAccess_->clearAll();
-        // Result is incremental and does not support incremental handling of changed tournaments
-        // This will not delete results, but force the incremental result to reprocess all results
-        result_->clear();
-        
         tournament_->scheduleAll(0, false, *poolAccess_);
         eloTable_.clear();
         populateEloTable();

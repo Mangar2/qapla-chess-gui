@@ -20,6 +20,7 @@
 #pragma once
 
 #include "tournament-result.h"
+#include "change-tracker.h"
 
 #include <unordered_set>
 
@@ -34,28 +35,6 @@ namespace QaplaWindows {
     public: 
         bool poll(const QaplaTester::Tournament& tournament, double baseElo);
 
-        /*
-		 * @brief clears the internal state, removing all results and resetting counters.
-         */
-        void clear() {
-            finishedResultsAggregate_.clear();
-			totalResult_.clear();
-            updateCount_ = 0;
-            currentIndex_ = 0;
-            totalScheduledGames_ = 0;
-            playedGamesFromCompletedPairs_ = 0;
-            playedGamesFromPartialPairs_ = 0;
-            tournamentUpdateCount_ = 0;
-		}
-
-		/**
-		 * @brief Returns the update count of the tournament results.
-		 * @return The total number of updates for change detection.
-         */
-        uint64_t getUpdateCount() const {
-            return updateCount_;
-		}
-		
         /**
 		 * @brief Returns the total aggregated result of the tournament. 
          * 
@@ -107,14 +86,34 @@ namespace QaplaWindows {
 			
 
     private:
+        /**
+         * @brief Clears the internal state, removing all results and resetting counters.
+         * @note This is private as it's only called internally by handleModification().
+         * External callers should rely on poll() to detect modifications automatically.
+         */
+        void clear();
+
+        /**
+         * @brief Adds a finished pair tournament to the finished results aggregate.
+         * @param pairIndex Index of the pair tournament
+         * @param tournament Tournament containing the pair tournament
+         */
+        void addFinishedPairTournament(size_t pairIndex, const QaplaTester::Tournament& tournament);
+
+        /**
+         * @brief Handles tournament modification by rebuilding all state.
+         * @param tournament Tournament to process
+         * @param baseElo Base Elo rating for calculations
+         */
+        void handleModification(const QaplaTester::Tournament& tournament, double baseElo);
 
         QaplaTester::TournamentResult finishedResultsAggregate_;
 		QaplaTester::TournamentResult totalResult_; ///< total sum of finalized and non finalized results
         std::unordered_set<std::string> engineNames_;
+        std::vector<size_t> notFinishedIndices_; ///< Indices of pair tournaments that are not finished
 
-		uint64_t updateCount_ = 0; ///< Number of updates 
-		size_t currentIndex_ = 0; 
-		size_t tournamentUpdateCount_ = 0; ///< Tournament update count, used to track changes
+		size_t currentIndex_ = 0; ///< Index into notFinishedIndices_ (not direct pair tournament index)
+		QaplaTester::ChangeTracker changeTracker_;
 		bool gamesLeft_ = false; ///< Flag to indicate if the tournament is currently running
         
         uint32_t totalScheduledGames_ = 0; ///< Total number of games scheduled in the tournament

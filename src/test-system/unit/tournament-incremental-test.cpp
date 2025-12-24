@@ -29,6 +29,128 @@ using namespace QaplaWindows;
 
 TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
     
+    SECTION("Single pair: one game then all remaining") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "EngineA"},
+            {.name = "EngineB"}
+        });
+        engines[0].setGauntlet(true);
+        
+        TournamentConfig config{
+            .event = "Single Pair Test",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 10,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
+        };
+        
+        TournamentBuilder builder(engines, config);
+        TournamentResultIncremental incremental;
+        
+        // Initial poll
+        incremental.poll(builder.tournament, 2600.0);
+        REQUIRE(incremental.getTotalScheduledGames() == 10);
+        REQUIRE(incremental.getPlayedGames() == 0);
+        REQUIRE(incremental.hasGamesLeft());
+        
+        // 1. Play first game only
+        builder.playGame(0, GameResult::WhiteWins);
+        incremental.poll(builder.tournament, 2600.0);
+        
+        REQUIRE(incremental.getTotalScheduledGames() == 10);
+        REQUIRE(incremental.getPlayedGames() == 1);
+        REQUIRE(incremental.hasGamesLeft());
+        
+        auto result = incremental.getResult();
+        REQUIRE(result.forEngine("EngineA")->aggregate("EngineA").total() == 1);
+        REQUIRE(result.forEngine("EngineA")->aggregate("EngineA").winsEngineA == 1);
+        
+        // 2. Play all remaining 9 games at once
+        builder.playGames(0, std::vector<GameResult>{
+            GameResult::Draw, GameResult::BlackWins, GameResult::WhiteWins,
+            GameResult::Draw, GameResult::WhiteWins, GameResult::BlackWins,
+            GameResult::WhiteWins, GameResult::Draw, GameResult::WhiteWins
+        });
+        incremental.poll(builder.tournament, 2600.0);
+        
+        REQUIRE(incremental.getTotalScheduledGames() == 10);
+        REQUIRE(incremental.getPlayedGames() == 10);
+        REQUIRE(!incremental.hasGamesLeft());
+        
+        result = incremental.getResult();
+        auto engineA = result.forEngine("EngineA");
+        REQUIRE(engineA.has_value());
+        auto agg = engineA->aggregate("EngineA");
+        REQUIRE(agg.total() == 10);
+        REQUIRE(agg.winsEngineA == 1);  // Only game 1 is a win for EngineA (white)
+        REQUIRE(agg.draws == 3);        // Games 2, 5, 9
+        REQUIRE(agg.winsEngineB == 6);  // EngineA loses games 3,4,6,7,8,10
+    }
+    
+    SECTION("Multiple rounds with non-uniform progress") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "Alpha"},
+            {.name = "Beta"}
+        });
+        engines[0].setGauntlet(true);
+        
+        TournamentConfig config{
+            .event = "Multi-Round Mixed Progress",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 5,
+            .rounds = 4,
+            .repeat = 1,
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
+        };
+        
+        TournamentBuilder builder(engines, config);
+        TournamentResultIncremental incremental;
+        
+        // Initial poll
+        incremental.poll(builder.tournament, 2600.0);
+        REQUIRE(incremental.getTotalScheduledGames() == 20); // 1 pair × 4 rounds × 5 games
+        
+        // Round 1 (pair 0): Play 1 game
+        builder.playGame(0, GameResult::WhiteWins);
+        
+        // Round 2 (pair 1): Play 2 games
+        builder.playGame(1, GameResult::Draw);
+        builder.playGame(1, GameResult::BlackWins);
+        
+        // Round 3 (pair 2): Play 0 games (skip)
+        
+        // Round 4 (pair 3): Play all 5 games at once
+        builder.playAllGames(3, std::vector<GameResult>{
+            GameResult::WhiteWins, GameResult::Draw, GameResult::WhiteWins,
+            GameResult::BlackWins, GameResult::WhiteWins
+        });
+        
+        // Poll and verify all three key outputs
+        incremental.poll(builder.tournament, 2600.0);
+        
+        REQUIRE(incremental.getTotalScheduledGames() == 20);
+        REQUIRE(incremental.getPlayedGames() == 8); // 1 + 2 + 0 + 5
+        REQUIRE(incremental.hasGamesLeft()); // Rounds 1-3 still incomplete
+        
+        auto result = incremental.getResult();
+        auto alpha = result.forEngine("Alpha");
+        REQUIRE(alpha.has_value());
+        auto agg = alpha->aggregate("Alpha");
+        REQUIRE(agg.total() == 8);
+        REQUIRE(agg.winsEngineA == 6);  // 1 + 1 + 4 WhiteWins where Alpha is white
+        REQUIRE(agg.draws == 2);        // 1 Draw from pair 1 + 1 Draw from pair 3
+        REQUIRE(agg.winsEngineB == 0);  // 0 losses for Alpha
+    }
+    
     SECTION("Poll updates when games are added") {
         auto engines = createEngines(std::vector<TestEngineParams>{
             {.name = "EngineA"},
@@ -188,7 +310,7 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         REQUIRE(alpha->aggregate("Alpha").total() == 5);
     }
     
-    SECTION("Update count increments only on actual changes") {
+    SECTION("Partial then complete pairing") {
         auto engines = createEngines(std::vector<TestEngineParams>{
             {.name = "Engine1"},
             {.name = "Engine2"}
@@ -196,7 +318,7 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         engines[0].setGauntlet(true);
         
         TournamentConfig config{
-            .event = "Update Count Test",
+            .event = "Partial Complete Test",
             .type = "gauntlet",
             .tournamentFilename = "",
             .games = 3,
@@ -213,74 +335,58 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         
         // Initial poll
         incremental.poll(builder.tournament, 2600.0);
-        uint64_t updateCount1 = incremental.getUpdateCount();
-        REQUIRE(updateCount1 == 0); // No completed pairs yet
+        REQUIRE(incremental.getTotalScheduledGames() == 3);
+        REQUIRE(incremental.getPlayedGames() == 0);
+        REQUIRE(incremental.hasGamesLeft());
         
         // Play game but pairing not finished
         builder.playGame(0, GameResult::WhiteWins);
         incremental.poll(builder.tournament, 2600.0);
-        uint64_t updateCount2 = incremental.getUpdateCount();
-        REQUIRE(updateCount2 == 0); // Still no completed pairs
+        REQUIRE(incremental.getPlayedGames() == 1);
+        REQUIRE(incremental.hasGamesLeft());
         
         // Complete the pairing
         builder.playGame(0, GameResult::Draw);
         builder.playGame(0, GameResult::WhiteWins);
         incremental.poll(builder.tournament, 2600.0);
-        uint64_t updateCount3 = incremental.getUpdateCount();
-        REQUIRE(updateCount3 == 1); // First pair completed
+        REQUIRE(incremental.getTotalScheduledGames() == 3);
+        REQUIRE(incremental.getPlayedGames() == 3);
+        REQUIRE(!incremental.hasGamesLeft());
         
-        // Poll again without changes
+        auto result = incremental.getResult();
+        
+        // Verify TournamentResult contains both engines
+        auto engineNames = result.engineNames();
+        REQUIRE(engineNames.size() == 2);
+        REQUIRE(std::find(engineNames.begin(), engineNames.end(), "Engine1") != engineNames.end());
+        REQUIRE(std::find(engineNames.begin(), engineNames.end(), "Engine2") != engineNames.end());
+        
+        // Verify Engine1 results (gauntlet)
+        auto eng1 = result.forEngine("Engine1");
+        REQUIRE(eng1.has_value());
+        auto agg1 = eng1->aggregate("Engine1");
+        REQUIRE(agg1.total() == 3);
+        REQUIRE(agg1.winsEngineA == 2);  // 2x WhiteWins
+        REQUIRE(agg1.draws == 1);        // 1x Draw
+        REQUIRE(agg1.winsEngineB == 0);
+        
+        // Verify Engine2 results (challenger)
+        auto eng2 = result.forEngine("Engine2");
+        REQUIRE(eng2.has_value());
+        auto agg2 = eng2->aggregate("Engine2");
+        REQUIRE(agg2.total() == 3);
+        REQUIRE(agg2.winsEngineA == 0);
+        REQUIRE(agg2.draws == 1);
+        REQUIRE(agg2.winsEngineB == 2);
+        
+        // Poll again without changes - should remain stable
         incremental.poll(builder.tournament, 2600.0);
-        uint64_t updateCount4 = incremental.getUpdateCount();
-        REQUIRE(updateCount4 == 1); // No change
+        REQUIRE(incremental.getPlayedGames() == 3);
+        REQUIRE(!incremental.hasGamesLeft());
     }
-    
-    SECTION("Clear resets all state") {
-        auto engines = createEngines(std::vector<TestEngineParams>{
-            {.name = "EngineX"},
-            {.name = "EngineY"}
-        });
-        engines[0].setGauntlet(true);
         
-        TournamentConfig config{
-            .event = "Clear Test",
-            .type = "gauntlet",
-            .tournamentFilename = "",
-            .games = 2,
-            .rounds = 1,
-            .repeat = 1,
-            .openings = Openings{
-                .file = "src/test-system/unit/test-openings.pgn",
-                .plies = 1
-            }
-        };
-        
-        TournamentBuilder builder(engines, config);
-        TournamentResultIncremental incremental;
-        
-        // Build up some state
-        incremental.poll(builder.tournament, 2600.0);
-        builder.playGame(0, GameResult::WhiteWins);
-        builder.playGame(0, GameResult::Draw);
-        incremental.poll(builder.tournament, 2600.0);
-        
-        REQUIRE(incremental.getPlayedGames() > 0);
-        REQUIRE(incremental.getTotalScheduledGames() > 0);
-        
-        // Clear and verify
-        incremental.clear();
-        REQUIRE(incremental.getUpdateCount() == 0);
-        REQUIRE(incremental.getPlayedGames() == 0);
-        REQUIRE(incremental.getTotalScheduledGames() == 0);
-        
-        // Poll should rebuild state from tournament (which still has the games)
-        incremental.poll(builder.tournament, 2600.0);
-        REQUIRE(incremental.getTotalScheduledGames() == 2);
-        REQUIRE(incremental.getPlayedGames() == 2); // Games are still in the tournament
-    }
-    
-    SECTION("Clear followed by tournament change (adding engine) - exposes bug") {
-        // Build initial tournament with 2 engines, 3 rounds, 100 games per round
+    SECTION("Adding gauntlet engine preserves existing games") {
+        // 1. Create tournament: 1 gauntlet (Champion) + 20 challengers, 3 rounds, 100 games/round
         auto engines = createEngines(std::vector<TestEngineParams>{
             {.name = "Champion", .isGauntlet = true}
         });
@@ -305,14 +411,14 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         TournamentBuilder builder(engines, config);
         TournamentResultIncremental incremental;
         
-        // Generate all 300 games (1 pairing × 3 rounds × 100 games)
+        // Play all 6000 games (20 pairings × 3 rounds × 100 games)
         for (size_t round = 0; round < 3; round++) {
             for (size_t pair = 0; pair < 20; pair++) {
                 builder.playGames(pair + round * 20, std::vector<GameResult>(100, GameResult::WhiteWins));
             }
         }
         
-        // Poll should see all games
+        // Initial poll sees all 6000 games
         incremental.poll(builder.tournament, 2600.0);
         REQUIRE(incremental.getTotalScheduledGames() == 6000);
         REQUIRE(incremental.getPlayedGames() == 6000);
@@ -322,28 +428,20 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         REQUIRE(champion1.has_value());
         REQUIRE(champion1->aggregate("Champion").total() == 6000);
         
-        // Clear incremental state
-        incremental.clear();
-        REQUIRE(incremental.getPlayedGames() == 0);
-        
-        // Add a third engine to the same tournament (recreate with more engines)
+        // 2. Add second gauntlet engine to expand tournament
         engines.push_back(createEngine(
             TestEngineParams{.name = "ChampionNew", .isGauntlet = true}));
         
-        // Recreate tournament with same config but more engines
+        // createTournament is state-preserving: old games remain
         builder.tournament.createTournament(engines, config);
         
-        // Poll with the modified tournament
-        // BUG: TournamentResultIncremental may not correctly restore state after clear()
-        // when tournament structure has changed
+        // 3. Poll after tournament expansion (modification detected)
         incremental.poll(builder.tournament, 2600.0);
         
-        // New tournament structure: 2 opponents × 3 rounds × 100 games = 600 total
+        // New tournament structure: 2 gauntlets × 20 challengers × 3 rounds × 100 games = 12000 total
         REQUIRE(incremental.getTotalScheduledGames() == 12000);
         
-        // BUG EXPECTED HERE: The 300 games from Champion vs Challenger1 still exist
-        // in the tournament, but incremental might not see them correctly after
-        // clear() and structure change
+        // 4. Existing 6000 games from Champion vs Challengers remain intact
         REQUIRE(incremental.getPlayedGames() == 6000);
     }
 }
