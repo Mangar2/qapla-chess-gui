@@ -72,7 +72,10 @@ TEST_CASE("Tournament gauntlet game count", "[engine-tester][tournament]") {
             .games = 2,
             .rounds = 1,
             .repeat = 1,
-            .openings = Openings{.file = "src/test-system/unit/test-openings.pgn"}
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
         };
         
         Tournament tournament;
@@ -101,7 +104,10 @@ TEST_CASE("Tournament gauntlet game count", "[engine-tester][tournament]") {
             .games = 2,
             .rounds = 3,
             .repeat = 1,
-            .openings = Openings{.file = "src/test-system/unit/test-openings.pgn"}
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
         };
         
         Tournament tournament;

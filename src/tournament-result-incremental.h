@@ -45,6 +45,7 @@ namespace QaplaWindows {
             totalScheduledGames_ = 0;
             playedGamesFromCompletedPairs_ = 0;
             playedGamesFromPartialPairs_ = 0;
+            tournamentUpdateCount_ = 0;
 		}
 
 		/**
