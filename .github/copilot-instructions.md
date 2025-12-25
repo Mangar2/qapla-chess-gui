@@ -80,3 +80,9 @@ The [extern/qapla-engine-tester](extern/qapla-engine-tester) sources are compile
 - `Tournament`, `SprtManager`: Run tournament logic
 - `EpdReader`: Analyzes EPD positions
 - **Access pattern**: GUI uses `GameManagerPoolAccess` wrapper to support both singleton and shared_ptr instances.
+
+## Unit-Test Design Principles
+- **Test only public interface**: Unit-tests verify behavior through public methods only - never access private members
+- **Read implementation first**: Before writing tests, read the `.cpp` file to identify which logic is owned vs. delegated - only test owned logic
+- **Minimal test coverage**: Design the smallest set of tests that covers all code paths and edge cases
+- **Test ordering**: Basic functionality tests first, edge cases and special scenarios last
