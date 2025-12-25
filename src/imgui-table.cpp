@@ -322,9 +322,26 @@ namespace QaplaWindows {
         }
     }
 
+    ImFont* ImGuiTable::getSelectedFont() const {
+        if (fontIndex_ == FontManager::interVariableIndex && FontManager::interVariable != nullptr) {
+            return FontManager::interVariable;
+        }
+        if (fontIndex_ == FontManager::ibmPlexMonoIndex && FontManager::ibmPlexMono != nullptr) {
+            return FontManager::ibmPlexMono;
+        }
+        return nullptr;
+    }
+
     std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) {
+        constexpr float HORIZONTAL_SCROLLBAR_HEIGHT = 20.0F;
         std::optional<size_t> clickedRow;
         ImVec2 tableSize = size;
+
+        ImFont* selectedFont = getSelectedFont();
+        if (selectedFont != nullptr) {
+            ImGui::PushFont(selectedFont);
+        }
+
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
 
         std::optional<size_t> keyboardRow;
@@ -337,26 +354,17 @@ namespace QaplaWindows {
             handleFiltering();
         }
 
+        // Enables us to shrink the table height to fit the content
         if (shrink) {
-            tableSize.y = std::min(tableSize.y, static_cast<float>(indexManager_.size() + 2) * rowHeight);
+            tableSize.y = std::min(tableSize.y, 
+                static_cast<float>(indexManager_.size() + 1) * rowHeight // + 1 for header row
+                + HORIZONTAL_SCROLLBAR_HEIGHT
+            );
         }
 
-        // Calculate visible rows
         auto visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
         if (visibleRows == 0) {
             visibleRows = 1; // Fallback
-        }
-
-        // Push the selected font if not using default system font
-        ImFont* selectedFont = nullptr;
-        if (fontIndex_ == FontManager::interVariableIndex && FontManager::interVariable != nullptr) {
-            selectedFont = FontManager::interVariable;
-        } else if (fontIndex_ == FontManager::ibmPlexMonoIndex && FontManager::ibmPlexMono != nullptr) {
-            selectedFont = FontManager::ibmPlexMono;
-        }
-        
-        if (selectedFont != nullptr) {
-            ImGui::PushFont(selectedFont);
         }
 
         if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
@@ -369,11 +377,12 @@ namespace QaplaWindows {
             ImGui::EndTable();
         }
 
-        // Pop the font if we pushed one
         if (selectedFont != nullptr) {
             ImGui::PopFont();
         }
         
+        // Maintain the hight of the table without filtering by adding a dummy element
+        // This prevents the UI from jumping when filtering is applied/removed
         if (keepSize_) {
             size_t totalRows = rows_.size();
             size_t filteredRows = indexManager_.size();

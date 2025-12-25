@@ -273,6 +273,7 @@ namespace QaplaWindows {
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;
+        ImFont* getSelectedFont() const;
 
         /** 
          * @brief Performs any necessary updates after external changes.
