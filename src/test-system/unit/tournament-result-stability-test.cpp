@@ -69,6 +69,11 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(agg1.winsEngineB == 0);
         REQUIRE(agg1.draws == 1);
         
+        // Verify pair tournament is finished
+        auto pair1 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair1.has_value());
+        REQUIRE((*pair1)->isFinished());
+        
         // Now reduce to 2 games per round
         config.games = 2;
         builder.tournament.createTournament(engines, config);
@@ -82,6 +87,11 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(agg2.winsEngineA == 3);
         REQUIRE(agg2.winsEngineB == 0);
         REQUIRE(agg2.draws == 1);
+        
+        // Pair tournament should now be marked as finished (4 games played, 2 required)
+        auto pair2 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair2.has_value());
+        REQUIRE((*pair2)->isFinished());
     }
     
     SECTION("Results remain stable when adding new engine") {
@@ -117,6 +127,11 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(agg1.winsEngineA == 1);
         REQUIRE(agg1.draws == 1);
         
+        // Pair tournament should be finished
+        auto pair1 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair1.has_value());
+        REQUIRE((*pair1)->isFinished());
+        
         // Add a new opponent
         auto newEngines = createEngines(std::vector<TestEngineParams>{
             {.name = "MainEngine"},
@@ -138,6 +153,16 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         
         // New pairing should have 0 games
         REQUIRE(builder.pairTournamentCount() == 2);
+        
+        // First pair tournament should still be finished
+        auto pair2a = builder.tournament.getPairTournament(0);
+        REQUIRE(pair2a.has_value());
+        REQUIRE((*pair2a)->isFinished());
+        
+        // Second pair tournament (new opponent) should not be finished
+        auto pair2b = builder.tournament.getPairTournament(1);
+        REQUIRE(pair2b.has_value());
+        REQUIRE(!(*pair2b)->isFinished());
     }
     
     SECTION("Results disappear when engine is removed") {
@@ -173,6 +198,14 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         auto agg1 = gauntlet1->aggregate("GauntletEngine");
         REQUIRE(agg1.total() == 4); // 2 games with each opponent
         
+        // Both pair tournaments should be finished
+        auto pair1a = builder.tournament.getPairTournament(0);
+        REQUIRE(pair1a.has_value());
+        REQUIRE((*pair1a)->isFinished());
+        auto pair1b = builder.tournament.getPairTournament(1);
+        REQUIRE(pair1b.has_value());
+        REQUIRE((*pair1b)->isFinished());
+        
         // Remove Opponent2
         auto reducedEngines = createEngines(std::vector<TestEngineParams>{
             {.name = "GauntletEngine"},
@@ -194,6 +227,11 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         // Opponent2 should not be in results anymore
         auto opponent2Result = result2.forEngine("Opponent2");
         REQUIRE(!opponent2Result.has_value());
+        
+        // The remaining pair tournament should still be finished
+        auto pair2 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair2.has_value());
+        REQUIRE((*pair2)->isFinished());
     }
     
     SECTION("Results of removed rounds disappear") {
@@ -235,6 +273,13 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(agg1.winsEngineB == 1);
         REQUIRE(agg1.draws == 2);
         
+        // All three pair tournaments should be finished
+        for (size_t i = 0; i < 3; ++i) {
+            auto pair = builder.tournament.getPairTournament(i);
+            REQUIRE(pair.has_value());
+            REQUIRE((*pair)->isFinished());
+        }
+        
         // Reduce to 1 round
         config.rounds = 1;
         builder.tournament.createTournament(engines, config);
@@ -251,6 +296,11 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(agg2.winsEngineA == 1);
         REQUIRE(agg2.draws == 1);
         REQUIRE(agg2.winsEngineB == 0);
+        
+        // The remaining pair tournament should still be finished
+        auto pair2 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair2.has_value());
+        REQUIRE((*pair2)->isFinished());
     }
     
     SECTION("Complex scenario: modify multiple parameters") {
@@ -295,6 +345,13 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(beta1.has_value());
         REQUIRE(beta1->aggregate("Beta").total() == 6);
         
+        // All four pair tournaments should be finished
+        for (size_t i = 0; i < 4; ++i) {
+            auto pair = builder.tournament.getPairTournament(i);
+            REQUIRE(pair.has_value());
+            REQUIRE((*pair)->isFinished());
+        }
+        
         // Now: Remove Beta, reduce rounds to 1, reduce games to 2
         auto newEngines = createEngines(std::vector<TestEngineParams>{
             {.name = "Alpha"},
@@ -319,5 +376,67 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         // Beta should be gone
         auto beta2 = result2.forEngine("Beta");
         REQUIRE(!beta2.has_value());
+        
+        // The remaining pair tournament should be marked as finished (3 games played, 2 required)
+        auto pair2 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair2.has_value());
+        REQUIRE((*pair2)->isFinished());
+    }
+    
+    SECTION("Unterminated game keeps isFinished false after adding engine") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "Gauntlet"},
+            {.name = "Opponent1"}
+        });
+        engines[0].setGauntlet(true);
+        
+        TournamentConfig config{
+            .event = "Unterminated Stability Test",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 2,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
+        };
+        
+        TournamentBuilder builder(engines, config);
+        
+        // Play game 1 as unterminated
+        builder.playGame(0, GameResult::Unterminated, GameEndCause::Ongoing);
+        
+        // Play game 2 as finished
+        builder.playGame(0, GameResult::WhiteWins, GameEndCause::Checkmate);
+        
+        // Verify first pair tournament is not finished (1 unterminated game)
+        auto pair1 = builder.tournament.getPairTournament(0);
+        REQUIRE(pair1.has_value());
+        REQUIRE(!(*pair1)->isFinished());
+        
+        // Add a third engine
+        auto newEngines = createEngines(std::vector<TestEngineParams>{
+            {.name = "Gauntlet"},
+            {.name = "Opponent1"},
+            {.name = "Opponent2"}
+        });
+        newEngines[0].setGauntlet(true);
+        
+        builder.tournament.createTournament(newEngines, config);
+        
+        // Should now have 2 pairings
+        REQUIRE(builder.pairTournamentCount() == 2);
+        
+        // First pair tournament should still not be finished (unterminated game preserved)
+        auto pair1AfterAdd = builder.tournament.getPairTournament(0);
+        REQUIRE(pair1AfterAdd.has_value());
+        REQUIRE(!(*pair1AfterAdd)->isFinished());
+        
+        // Second pair tournament (new) should also not be finished (no games played)
+        auto pair2 = builder.tournament.getPairTournament(1);
+        REQUIRE(pair2.has_value());
+        REQUIRE(!(*pair2)->isFinished());
     }
 }

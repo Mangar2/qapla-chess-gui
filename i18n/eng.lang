@@ -1,8 +1,8 @@
 [Translation]
 id=Button
-{s:"Add",t:"2025-12-23"}=Add
-{s:"Remove",t:"2025-12-23"}=Remove
-{s:"Detect",t:"2025-12-23"}=Detect
+{s:"Add",t:"2025-12-25"}=Add
+{s:"Remove",t:"2025-12-25"}=Remove
+{s:"Detect",t:"2025-12-25"}=Detect
 {s:"New",t:"2025-12-19"}=New
 {s:"Now",t:"2025-12-19"}=Now
 {s:"Stop",t:"2025-12-23"}=Stop
@@ -545,15 +545,15 @@ id=Tooltip
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2025-12-23"}=Engines
-{s:"Tournament",t:"2025-12-23"}=Tournament
-{s:"Pgn",t:"2025-12-23"}=Pgn
-{s:"Epd",t:"2025-12-23"}=Epd
-{s:"Test",t:"2025-12-23"}=Test
-{s:"Settings",t:"2025-12-23"}=Settings
-{s:"Board",t:"2025-12-23"}=Board
-{s:"Chatbot",t:"2025-12-23"}=Chatbot
-{s:"SPRT",t:"2025-12-23"}=SPRT
+{s:"Engines",t:"2025-12-25"}=Engines
+{s:"Tournament",t:"2025-12-25"}=Tournament
+{s:"Pgn",t:"2025-12-25"}=Pgn
+{s:"Epd",t:"2025-12-25"}=Epd
+{s:"Test",t:"2025-12-25"}=Test
+{s:"Settings",t:"2025-12-25"}=Settings
+{s:"Board",t:"2025-12-25"}=Board
+{s:"Chatbot",t:"2025-12-25"}=Chatbot
+{s:"SPRT",t:"2025-12-25"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -749,7 +749,7 @@ id=Text
 {s:"No engines added. You can add engines now if you like.",t:"2025-12-16"}=No engines added. You can add engines now if you like.
 {s:"C:\\Chess\\cutechess-cli\\qapla\\1.\\2\\Leorik-\\3.\\4.exe",t:"2025-12-16"}=C:\Chess\cutechess-cli\qapla\1.\2\Leorik-\3.\4.exe
 {s:"Messages",t:"2025-12-16"}=Messages
-{s:"How can I help you?",t:"2025-12-23"}=How can I help you?
+{s:"How can I help you?",t:"2025-12-25"}=How can I help you?
 {s:"Select a tutorial to run:",t:"2025-12-21"}=Select a tutorial to run:
 {s:"Please select your preferred language:",t:"2025-12-19"}=Please select your preferred language:
 {h:"b0ade7c5",s:"Select which engine should be tested (gauntlet eng",t:"2025-12-21"}=Select which engine should be tested (gauntlet engine). This is the engine whose performance will be measured. The other engine will be used as the comparison baseline.
@@ -762,13 +762,13 @@ id=Text
 
 [Translation]
 id=TextButton
-{s:"Tournament",t:"2025-12-23"}=Tournament
-{s:"SPRT Tournament",t:"2025-12-23"}=SPRT Tournament
-{s:"EPD Analysis",t:"2025-12-23"}=EPD Analysis
-{s:"Board",t:"2025-12-23"}=Board
-{s:"Tutorial",t:"2025-12-23"}=Tutorial
-{s:"Choose Language",t:"2025-12-23"}=Choose Language
-{s:"Messages",t:"2025-12-23"}=Messages
+{s:"Tournament",t:"2025-12-25"}=Tournament
+{s:"SPRT Tournament",t:"2025-12-25"}=SPRT Tournament
+{s:"EPD Analysis",t:"2025-12-25"}=EPD Analysis
+{s:"Board",t:"2025-12-25"}=Board
+{s:"Tutorial",t:"2025-12-25"}=Tutorial
+{s:"Choose Language",t:"2025-12-25"}=Choose Language
+{s:"Messages",t:"2025-12-25"}=Messages
 {s:"Deutsch",t:"2025-12-19"}=Deutsch
 {s:"English",t:"2025-12-19"}=English
 {s:"Français",t:"2025-12-19"}=Français
@@ -778,7 +778,7 @@ id=TextButton
 {s:"Lernprogramm",t:"2025-12-18"}=Lernprogramm
 {s:"Sprache wählen",t:"2025-12-18"}=Sprache wählen
 {s:"Nachrichten",t:"2025-12-18"}=Nachrichten
-{s:"Add Engines",t:"2025-12-23"}=Add Engines
+{s:"Add Engines",t:"2025-12-25"}=Add Engines
 {s:"Cancel",t:"2025-12-21"}=Cancel
 {s:"Board Engines",t:"2025-12-21"}=Board Engines
 {s:"Board Window",t:"2025-12-21"}=Board Window

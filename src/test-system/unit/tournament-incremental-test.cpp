@@ -394,5 +394,25 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
         
         // 4. Existing 6000 games from Champion vs Challengers remain intact
         REQUIRE(incremental.getPlayedGames() == 6000);
+
+        auto incResult = incremental.getResult();
+        auto tourResult = builder.tournament.getResult();
+        REQUIRE(incResult.forEngine("Champion") == tourResult.forEngine("Champion"));
+        
+        // 5. Play first game for ChampionNew in round 1 (pair 20: first pair of new gauntlet)
+        // Note: all games of round 1 are scheduled before round 2 starts
+        builder.playGame(20, GameResult::WhiteWins);
+        
+        // Poll after adding new game
+        incremental.poll(builder.tournament, 2600.0);
+        
+        // Total played games should now be 6001
+        REQUIRE(incremental.getPlayedGames() == 6001);
+        
+        // Verify Champion's games are still intact after adding ChampionNew game
+        auto incResult2 = incremental.getResult();
+        auto tourResult2 = builder.tournament.getResult();
+        REQUIRE(incResult2.forEngine("Champion") == tourResult2.forEngine("Champion"));
+
     }
 }

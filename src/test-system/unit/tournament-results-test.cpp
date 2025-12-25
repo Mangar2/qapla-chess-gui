@@ -25,7 +25,7 @@
 using namespace QaplaTester;
 using namespace QaplaTester::Test;
 
-TEST_CASE("Tournament result management", "[engine-tester][tournament]") {
+TEST_CASE("Tournament result", "[engine-tester][tournament]") {
     
     SECTION("Set and retrieve results for half of the games") {
         // Create a gauntlet tournament with 1 gauntlet and 2 opponents
@@ -123,5 +123,43 @@ TEST_CASE("Tournament result management", "[engine-tester][tournament]") {
         auto agg2 = gauntlet2Result->aggregate("Gauntlet2");
         REQUIRE(agg2.total() == 1);
         REQUIRE(agg2.draws == 1);
+    }
+    
+    SECTION("Unterminated game prevents tournament from being finished") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "EngineA"},
+            {.name = "EngineB"}
+        });
+        engines[0].setGauntlet(true);
+        
+        TournamentConfig config{
+            .event = "Unterminated Game Test",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 2,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
+        };
+        
+        TournamentBuilder builder(engines, config);
+        
+        // Play game 1 as unterminated (explicitly)
+        builder.playGame(0, GameResult::Unterminated, GameEndCause::Ongoing);
+        
+        // Play game 2 as finished
+        builder.playGame(0, GameResult::WhiteWins, GameEndCause::Checkmate);
+        
+        // Get pair tournament and verify it's not finished
+        auto pairTournament = builder.tournament.getPairTournament(0);
+        REQUIRE(pairTournament.has_value());
+        REQUIRE(!(*pairTournament)->isFinished());
+        
+        // Verify we have results for both games
+        auto result = (*pairTournament)->getResult();
+        REQUIRE(result.total() == 1); // Only 1 finished game counts
     }
 }
