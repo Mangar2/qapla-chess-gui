@@ -134,6 +134,14 @@ void ConfigurationWindow::draw()
     }
     
     ImGui::Spacing();
+    
+    if (ImGuiControls::CollapsingHeaderWithDot("Performance Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0F);
+        drawPerformanceConfig();
+        ImGui::Unindent(10.0F);
+    }
+    
+    ImGui::Spacing();
 }
 
 void ConfigurationWindow::drawSnackbarConfig()
@@ -211,6 +219,27 @@ void ConfigurationWindow::drawTutorialConfig()
         Tutorial::instance().resetAll();
     }
     ImGuiControls::hooverTooltip("Resets all tutorials to their initial state");
+}
+
+void ConfigurationWindow::drawPerformanceConfig()
+{
+    ImGui::Spacing();
+
+    bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
+    if (ImGui::Checkbox("Remote Desktop Mode", &remoteDesktopMode)) {
+        QaplaConfiguration::Configuration::setRemoteDesktopMode(remoteDesktopMode);
+        SnackbarManager::instance().showNote(
+            "Please restart the application for this change to take effect",
+            false, "performance"
+        );
+    }
+    ImGuiControls::hooverTooltip(
+        "Optimizes performance for Remote Desktop / RDP / X11 forwarding\n"
+        "- Reduces frame rate from 60 to 30 FPS\n"
+        "- Disables VSync for better responsiveness\n"
+        "- Removes decorative background image\n"
+        "Requires restart to apply changes."
+    );
 }
 
 void ConfigurationWindow::drawLoggerConfig()

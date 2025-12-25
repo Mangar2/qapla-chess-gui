@@ -356,7 +356,7 @@ namespace QaplaWindows {
         
         float pairwiseColumnWidth = widestResult.empty()
             ? 80.0F
-            : matrixTable_.calculateTextWidth(widestResult, 20.0F);
+            : matrixTable_.calculateTextWidth(widestResult, 35.0F);
         
         size_t colIndex = fixedColumns; 
         for (const auto& scored : scoredEngines) {

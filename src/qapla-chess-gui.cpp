@@ -66,7 +66,9 @@
 #include "imgui_te_ui.h"
 #endif
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <csignal>
 #include <cstdlib>
 #endif
@@ -80,8 +82,6 @@ namespace {
     /**
      * @brief Frame rate limiter to ensure consistent frame timing across platforms
      * 
-     * VSync (glfwSwapInterval) doesn't work reliably on all platforms/drivers,
-     * especially on Linux. This class provides a fallback frame rate limiter.
      */
     class FrameRateLimiter {
     public:
@@ -105,7 +105,6 @@ namespace {
         double targetFrameTime_;
         double lastFrameTime_;
     };
-
    
     void glfwErrorCallback(int error, const char* description) {
         std::cerr << "GLFW Error " << error << ": " << description << '\n';
@@ -147,7 +146,17 @@ namespace {
         }
 
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
+        
+        // VSync is counterproductive in Remote Desktop scenarios
+        // as it adds latency on top of network latency
+        // Check configuration setting instead of auto-detection
+        if (QaplaConfiguration::Configuration::isRemoteDesktopMode()) {
+            glfwSwapInterval(0); // Disable VSync for RDP
+            std::cout << "Remote Desktop mode enabled (from config) - VSync disabled\n";
+        } else {
+            glfwSwapInterval(1);
+        }
+        
         return window;
     }
 
@@ -266,7 +275,13 @@ namespace {
         QaplaTest::TestManager testManager;
         testManager.init();
 
-        FrameRateLimiter frameRateLimiter(60.0);
+        // Reduce frame rate for Remote Desktop to decrease CPU load and network traffic
+        bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
+        FrameRateLimiter frameRateLimiter(remoteDesktopMode ? 30.0 : 60.0);
+        
+        if (remoteDesktopMode) {
+            std::cout << "Remote Desktop mode active (from config) - reduced to 30 FPS\n";
+        }
         
         while (glfwWindowShouldClose(window) == 0) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
@@ -282,12 +297,15 @@ namespace {
             glClearColor(0.1F, 0.1F, 0.1F, 1.0F);
             glClear(GL_COLOR_BUFFER_BIT);
             
-            drawBackgroundImage();
+            // Skip background image in Remote Desktop for better performance
+            if (!remoteDesktopMode) {
+                drawBackgroundImage();
+            }
+            
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
                 std::cerr << "OpenGL ERROR: " << std::hex << err << "\n";
             }
-
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -326,7 +344,6 @@ namespace {
 } // namespace
 
 #ifdef _WIN32
-#include <windows.h>
 #include <io.h>
 #include <fcntl.h>
 

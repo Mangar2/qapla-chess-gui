@@ -159,3 +159,28 @@ void Configuration::updateLanguageConfiguration(const std::string& languageCode)
     
     Configuration::instance().getConfigData().setSectionList("languagesettings", "general", { section });
 }
+
+bool Configuration::isRemoteDesktopMode() {
+    auto sections = Configuration::instance().
+        getConfigData().getSectionList("performance", "general").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        std::string value = section.getValue("remotedesktopmode").value_or("false");
+        return (value == "true" || value == "1");
+    }
+    return false;
+}
+
+void Configuration::setRemoteDesktopMode(bool enabled) {
+    QaplaHelpers::IniFile::Section section {
+        .name = "performance",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "general"},
+            {"remotedesktopmode", enabled ? "true" : "false"}
+        }
+    };
+    
+    Configuration::instance().getConfigData().setSectionList("performance", "general", { section });
+    Configuration::instance().setModified();
+}

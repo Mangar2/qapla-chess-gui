@@ -88,6 +88,11 @@ namespace QaplaWindows
          */
         void drawLoggerConfig();
 
+        /**
+         * @brief Draws the performance configuration section
+         */
+        static void drawPerformanceConfig();
+
         BufferedTextInput reportBaseNameInput_;  ///< Buffered input for report log base name
         BufferedTextInput engineBaseNameInput_;  ///< Buffered input for engine log base name
     };

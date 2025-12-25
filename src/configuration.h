@@ -94,6 +94,18 @@ namespace QaplaConfiguration {
          */
         static void updateLanguageConfiguration(const std::string& language);
 
+        /**
+         * @brief Gets the Remote Desktop mode setting
+         * @return true if Remote Desktop optimization is enabled
+         */
+        static bool isRemoteDesktopMode();
+
+        /**
+         * @brief Sets the Remote Desktop mode setting
+         * @param enabled true to enable Remote Desktop optimization
+         */
+        static void setRemoteDesktopMode(bool enabled);
+
     protected:
         /**
          * @brief Saves configuration data to the output stream.
