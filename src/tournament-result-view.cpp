@@ -46,10 +46,11 @@ std::string TournamentResultView::abbreviateEngineName(const std::string &name) 
     return name;
 }
 
-void TournamentResultView::buildDuelsMap(
+std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> TournamentResultView::buildDuelsMap(
     const std::vector<std::string> &names,
-    const TournamentResult &result,
-    std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> &duelsMap) {
+    const TournamentResult &result) {
+    
+    decltype(buildDuelsMap(names, result)) duelsMap;
     
     for (const auto &name : names) {
         if (auto opt = result.forEngine(name)) {
@@ -58,6 +59,7 @@ void TournamentResultView::buildDuelsMap(
             }
         }
     }
+    return duelsMap;
 }
 
 void TournamentResultView::computeSonnebornBerger(
@@ -303,8 +305,7 @@ std::string TournamentResultView::formatHtml(const TournamentResult &result, con
         nms.push_back(scored.engineName);
     }
     
-    std::unordered_map<std::string, std::unordered_map<std::string, EngineDuelResult>> dulsMap;
-    TournamentResultView::buildDuelsMap(nms, res, dulsMap);
+    auto dulsMap = TournamentResultView::buildDuelsMap(nms, res);
     
     std::unordered_map<std::string, double> sbScrs;
     TournamentResultView::computeSonnebornBerger(lst, res, sbScrs);

@@ -86,12 +86,11 @@ public:
      * @brief Builds a map of all duel results between engines.
      * @param names List of engine names to process
      * @param result Tournament result to extract duels from
-     * @param duelsMap Output map: engineA -> engineB -> duel result
+     * @return Map: engineA -> engineB -> duel result
      */
-    static void buildDuelsMap(
+    static std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> buildDuelsMap(
         const std::vector<std::string> &names,
-        const QaplaTester::TournamentResult &result,
-        std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> &duelsMap);
+        const QaplaTester::TournamentResult &result);
 
     /**
      * @brief Computes Sonneborn-Berger tiebreak scores for all engines.

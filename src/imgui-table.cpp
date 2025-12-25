@@ -166,6 +166,19 @@ namespace QaplaWindows {
     ImGuiTable::~ImGuiTable() = default;
 
 
+    float ImGuiTable::calculateTextWidth(const std::string& text, float padding) const {
+        ImFont* font = nullptr;
+        if (fontIndex_ >= 0 && fontIndex_ < ImGui::GetIO().Fonts->Fonts.Size) {
+            font = ImGui::GetIO().Fonts->Fonts[fontIndex_];
+        }
+        
+        if (font != nullptr) {
+            float fontSize = ImGui::GetFontSize();
+            return font->CalcTextSizeA(fontSize, FLT_MAX, 0.0F, text.c_str()).x + padding;
+        }
+        return ImGui::CalcTextSize(text.c_str()).x + padding;
+    }
+
     static void alignRight(const std::string& content) {
         float colWidth = ImGui::GetColumnWidth();
         float textWidth = ImGui::CalcTextSize(content.c_str()).x;

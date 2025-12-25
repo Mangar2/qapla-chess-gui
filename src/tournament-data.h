@@ -442,6 +442,15 @@ namespace QaplaWindows {
         void populateEloTable();
         void populateMatrixTable();
 		void populateRunningTable();
+
+        /**
+         * @brief Builds the data rows for the matrix table.
+         * Computes all necessary data internally (duelsMap, sbScores) from result_.
+         * @param scoredEngines Vector of scored engines sorted by rank.
+         * @return The widest pairwise result string for column width calculation.
+         */
+        std::string buildMatrixTableRows(
+            const std::vector<QaplaTester::TournamentResult::Scored>& scoredEngines);
         void populateCauseTable();
 
         void populateAdjudicationTable();

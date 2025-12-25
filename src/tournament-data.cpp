@@ -338,6 +338,7 @@ namespace QaplaWindows {
     }
 
     void TournamentData::populateMatrixTable() {
+        constexpr size_t fixedColumns = 4; // Rank, Engine, Score, %
         matrixTable_.clear();
 
         const auto& scoredEngines = result_->getScoredEngines();
@@ -345,63 +346,75 @@ namespace QaplaWindows {
             return;
         }
 
-        // Build list of engine names in rank order
+        // Build rows first to determine widest pairwise result for optimal column sizing.
+        // Note: ImGuiTable stores rows independently of column definitions - column count
+        // is only enforced during rendering, not during data insertion.
+        std::string widestResult = buildMatrixTableRows(scoredEngines);
+
+        size_t totalColumns = fixedColumns + scoredEngines.size() + 1; // +1 for S-B column
+        matrixTable_.resizeColumns(totalColumns);
+        
+        float pairwiseColumnWidth = widestResult.empty()
+            ? 80.0F
+            : matrixTable_.calculateTextWidth(widestResult, 20.0F);
+        
+        size_t colIndex = fixedColumns; 
+        for (const auto& scored : scoredEngines) {
+            std::string abbrev = TournamentResultView::abbreviateEngineName(scored.engineName);
+            matrixTable_.setColumnHead(colIndex++, { 
+                .name = abbrev, 
+                .flags = ImGuiTableColumnFlags_WidthFixed, 
+                .width = pairwiseColumnWidth, 
+                .alignRight = true 
+            });
+        }
+        
+        matrixTable_.setColumnHead(colIndex, { .name = "S-B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
+    }
+
+    std::string TournamentData::buildMatrixTableRows(
+        const std::vector<QaplaTester::TournamentResult::Scored>& scoredEngines) {
+        
         std::vector<std::string> engineNames;
         engineNames.reserve(scoredEngines.size());
         for (const auto& scored : scoredEngines) {
             engineNames.push_back(scored.engineName);
         }
-
-        // Build duels map and compute Sonneborn-Berger scores
-        auto& tournamentResult = result_->getResult();
-        std::unordered_map<std::string, std::unordered_map<std::string, QaplaTester::EngineDuelResult>> duelsMap;
-        TournamentResultView::buildDuelsMap(engineNames, tournamentResult, duelsMap);
+        
+        const auto& tournamentResult = result_->getResult();
+        auto duelsMap = TournamentResultView::buildDuelsMap(engineNames, tournamentResult);
         
         std::unordered_map<std::string, double> sbScores;
         TournamentResultView::computeSonnebornBerger(scoredEngines, tournamentResult, sbScores);
-
-        // Update column headers dynamically: opponent columns (abbreviated) + S-B
-        size_t totalColumns = 4 + engineNames.size() + 1; // 4 fixed + engines + S-B
-        matrixTable_.resizeColumns(totalColumns);
         
-        // Add column for each opponent (abbreviated name)
-        size_t colIndex = 4; // Start after the 4 fixed columns
-        for (const auto& name : engineNames) {
-            std::string abbrev = TournamentResultView::abbreviateEngineName(name);
-            matrixTable_.setColumnHead(colIndex++, { .name = abbrev, .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
-        }
-        
-        // S-B column
-        matrixTable_.setColumnHead(colIndex, { .name = "S-B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
-
-        // Build data rows
+        std::string widestResult;
+        size_t maxLength = 0;
         size_t rank = 1;
+        
         for (const auto& scored : scoredEngines) {
             std::vector<std::string> row;
             
-            // Rank
             row.push_back(std::format("{:02d}", rank));
-            
-            // Engine name
             row.push_back(scored.engineName);
-            
-            // Score (points / total games) - using new method
             row.push_back(scored.formatScore());
-            
-            // Percentage - using new method
             row.push_back(std::format("{:.1f}", scored.getPercentage()));
             
-            // Pairwise results against each opponent
             for (const auto& opponent : engineNames) {
-                row.push_back(TournamentResultView::formatPairwiseResult(scored.engineName, opponent, duelsMap));
+                std::string result = TournamentResultView::formatPairwiseResult(scored.engineName, opponent, duelsMap);
+                if (result.length() > maxLength) {
+                    maxLength = result.length();
+                    widestResult = result;
+                }
+                row.push_back(result);
             }
             
-            // Sonneborn-Berger score
-            row.push_back(std::format("{:.2f}", sbScores[scored.engineName]));
+            row.push_back(std::format("{:.2f}", sbScores.at(scored.engineName)));
             
             matrixTable_.push(row);
             rank++;
         }
+        
+        return widestResult;
     }
 
     void TournamentData::populateCauseTable() {

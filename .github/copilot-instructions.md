@@ -12,7 +12,7 @@
 ## C++ Code Style
 - C++20 - use ranges, format, nodiscard
 - Min identifier length: 3 chars
-- Only "why" comments; JSDoc for method declarations
+- Only "why" comments (no comments describing what the code lines does); Still JSDoc for method declarations
 - Max complexity: 20, max nesting: 3
 - Prevent implicit conversions, use same types
 - **Explicit bool conversions**: Never rely on implicit int→bool. Use `!= 0` (preferred) or `static_cast<bool>()`

@@ -261,6 +261,15 @@ namespace QaplaWindows {
             scrollToRow_ = row; 
         }
 
+        /**
+         * @brief Calculates the pixel width of a text string with optional padding.
+         * Uses the table's configured font for accurate measurement.
+         * @param text The text to measure.
+         * @param padding Additional padding in pixels to add to the width.
+         * @return The total width in pixels.
+         */
+        float calculateTextWidth(const std::string& text, float padding = 10.0F) const;
+
     private:
         void accentuateCurrentRow(size_t rowIndex) const;
         void drawRow(size_t rowIndex) const;

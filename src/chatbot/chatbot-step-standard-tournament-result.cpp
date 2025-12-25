@@ -53,7 +53,8 @@ std::string ChatbotStepStandardTournamentResult::draw() {
     ImGui::Spacing();
     
     // Display the ELO rating table (same as in tournament window)
-    ImVec2 tableSize(0.0F, 300.0F);
+    
+    ImVec2 tableSize(0.0F, 3000.0F);
     tournamentData.drawEloTable(tableSize);
     
     ImGui::Spacing();
