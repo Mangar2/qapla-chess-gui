@@ -46,11 +46,10 @@
 #include "test-system/test-manager.h"
 #include "chatbot/chatbot-window.h"
 #include "data/logo-data.h"
+#include "imgui-frame-rate-limiter.h"
 
 #include <iostream>
 #include <stdexcept>
-#include <thread>
-#include <chrono>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -76,36 +75,10 @@
 using QaplaTester::Logger;
 using QaplaTester::TraceLevel;
 using QaplaTester::GameManagerPool;
+using QaplaWindows::ImGuiFrameRateLimiter;
 
 namespace {
 
-    /**
-     * @brief Frame rate limiter to ensure consistent frame timing across platforms
-     * 
-     */
-    class FrameRateLimiter {
-    public:
-        explicit FrameRateLimiter(double targetFps = 60.0) 
-            : targetFrameTime_(1.0 / targetFps)
-            , lastFrameTime_(glfwGetTime()) {}
-
-        void waitForNextFrame() {
-            const double currentTime = glfwGetTime();
-            const double deltaTime = currentTime - lastFrameTime_;
-            
-            if (deltaTime < targetFrameTime_) {
-                const double sleepTime = targetFrameTime_ - deltaTime;
-                std::this_thread::sleep_for(std::chrono::duration<double>(sleepTime));
-            }
-            
-            lastFrameTime_ = glfwGetTime();
-        }
-
-    private:
-        double targetFrameTime_;
-        double lastFrameTime_;
-    };
-   
     void glfwErrorCallback(int error, const char* description) {
         std::cerr << "GLFW Error " << error << ": " << description << '\n';
     }
@@ -275,13 +248,11 @@ namespace {
         QaplaTest::TestManager testManager;
         testManager.init();
 
-        // Reduce frame rate for Remote Desktop to decrease CPU load and network traffic
         bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
-        FrameRateLimiter frameRateLimiter(remoteDesktopMode ? 30.0 : 60.0);
+        auto frameRateLimiter = ImGuiFrameRateLimiter::forMode(remoteDesktopMode);
         
-        if (remoteDesktopMode) {
-            std::cout << "Remote Desktop mode active (from config) - reduced to 30 FPS\n";
-        }
+        std::cout << (remoteDesktopMode ? "Remote Desktop mode - " : "Normal mode - ")
+                  << frameRateLimiter.getModeDescription() << "\n";
         
         while (glfwWindowShouldClose(window) == 0) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
@@ -310,6 +281,10 @@ namespace {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
+            
+            // Frame rate limiter needs to be called after ImGui::NewFrame()
+            // so it can access ImGuiIO for activity detection
+            frameRateLimiter.waitForNextFrame();
 
             QaplaWindows::StaticCallbacks::poll().invokeAll();
 
@@ -326,8 +301,6 @@ namespace {
             testManager.onPostSwap();
 
             QaplaWindows::StaticCallbacks::autosave().invokeAll();
-            
-            frameRateLimiter.waitForNextFrame();
         }
 
         testManager.stop();
