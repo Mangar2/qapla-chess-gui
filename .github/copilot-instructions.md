@@ -2,10 +2,13 @@
 
 ## Checking in Code for Qapla Chess GUI
 If I ask you to checkin:
-- use git commit -a -m to checkin. You do not need to stage updated submodule references.
-- Remember to switch to the right directory for each checkin.
-- First check in any changes to qapla-engine-tester. Use a single git command. 
-- Then check in any changes to qapla-chess-gui. Use a single git command.
+- use git commit -a -m to checkin. You do not need to stage files or updated submodule references.
+- First check in any changes to qapla-engine-tester:
+  - `cd extern\qapla-engine-tester`
+  - `git commit -a -m "commit message"`
+- Then check in any changes to qapla-chess-gui:
+  - `cd ..\..` (zurück ins Hauptverzeichnis)
+  - `git commit -a -m "commit message"`
 - Never include changes in language files in the checkin comment.
 
 ## Project Overview
