@@ -237,8 +237,8 @@ bool SprtTournamentData::createTournament(bool verbose) {
         // Set PGN output options and create tournament
         if (sprtManager_) {
             PgnSave::tournament().setOptions(tournamentPgn_->pgnOptions());
-            QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
-            QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
+            poolAccess_->getAdjudicationManager().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
+            poolAccess_->getAdjudicationManager().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             sprtManager_->createTournament(selectedEngines, *sprtConfig_);
             
             // Clear Monte Carlo results when creating new tournament

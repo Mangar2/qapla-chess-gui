@@ -244,8 +244,8 @@ namespace QaplaWindows {
             auto selectedEngines = getSelectedEngines();
 
             PgnSave::tournament().setOptions(pgnConfig());
-            QaplaTester::AdjudicationManager::poolInstance().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
-            QaplaTester::AdjudicationManager::poolInstance().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
+            poolAccess_->getAdjudicationManager().setDrawAdjudicationConfig(tournamentAdjudication_->drawConfig());
+            poolAccess_->getAdjudicationManager().setResignAdjudicationConfig(tournamentAdjudication_->resignConfig());
             tournament_->createTournament(selectedEngines, *config_);
         } catch (const std::exception& ex) {
             if (verbose) {
@@ -431,7 +431,7 @@ namespace QaplaWindows {
     void TournamentData::populateAdjudicationTable() {
         adjudicationTable_.clear();
         
-        auto results = QaplaTester::AdjudicationManager::poolInstance().computeTestResults();
+        auto results = poolAccess_->getAdjudicationManager().computeTestResults();
 
         populateDrawTest(results);
         populateResignTest(results);
