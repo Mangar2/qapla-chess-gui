@@ -1,5 +1,7 @@
 # Copilot Instructions
 
+Always use english language for any comment in checkin and code.
+
 ## Checking in Code for Qapla Chess GUI
 If I ask you to checkin:
 - use git commit -a -m to checkin. You do not need to stage files or updated submodule references.

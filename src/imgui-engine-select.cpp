@@ -431,11 +431,17 @@ void ImGuiEngineSelect::updateConfiguration() const {
             {"author", engine.config.getAuthor()},
             {"cmd", engine.config.getCmd()},
             {"proto", to_string(engine.config.getProtocol())},
+            
         };
 
         // Only store non-default or enabled options to keep the configuration concise
         const auto& config = engine.config;
-        entries.emplace_back("dir", engine.config.getDir());
+        if (!engine.config.getDir().empty()) {
+            entries.emplace_back("dir", engine.config.getDir());
+        }
+        if (!engine.config.getArgs().empty()) {
+            entries.emplace_back("args", engine.config.getArgs());
+        }
         if (config.getRestartOption() != RestartOption::EngineDecides) {
             entries.emplace_back("restart", to_string(config.getRestartOption()));
         }
