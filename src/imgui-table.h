@@ -38,12 +38,20 @@ namespace QaplaWindows {
     class ImGuiTable {
     public:
         struct ColumnDef {
-            std::string name; 
+            std::string name;
             ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
-            float width = 0.0F; 
-            bool alignRight = false; 
+            float width = 0.0F;
+            bool alignRight = false;
+            bool compute = false; ///< If true, compute width from content
             std::function<void(std::string&, bool&)> customRender = nullptr;
         };
+    /**
+     * @brief Computes the optimal width for a column based on the longest entry (including header).
+     * @param colIdx Index of the column to compute.
+     * @param padding Extra padding in pixels.
+     * @return The computed width in pixels.
+     */
+    float computeColumnWidth(size_t colIdx, float padding = 10.0F) const;
 
     public:
         ImGuiTable();

@@ -234,7 +234,14 @@ namespace QaplaWindows {
     void ImGuiTable::setupTable() const {
         ImGui::TableSetupScrollFreeze(0, 1);
         for (size_t i = 0; i < columns_.size(); ++i) {
-            ImGui::TableSetupColumn(columns_[i].name.c_str(), columns_[i].flags, columns_[i].width, i);
+            float colWidth = columns_[i].width;
+            if (columns_[i].compute) {
+                float computed = computeColumnWidth(i);
+                if (computed > colWidth) {
+                    colWidth = computed;
+                }
+            }
+            ImGui::TableSetupColumn(columns_[i].name.c_str(), columns_[i].flags, colWidth, static_cast<int>(i));
         }
     }
 
@@ -505,5 +512,22 @@ namespace QaplaWindows {
         
         return indexManager_.getCurrentRow();
     }
+
+    float ImGuiTable::computeColumnWidth(size_t colIdx, float padding) const {
+        if (colIdx >= columns_.size()) {
+            return 0.0F;
+        }
+        float maxWidth = calculateTextWidth(columns_[colIdx].name, padding);
+        for (const auto& row : rows_) {
+            if (colIdx < row.size()) {
+                float w = calculateTextWidth(row[colIdx], padding);
+                if (w > maxWidth) {
+                    maxWidth = w;
+                }
+            }
+        }
+        return maxWidth;
+    }
+
 
 }
