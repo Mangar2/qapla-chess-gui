@@ -1,5 +1,11 @@
 # Copilot Instructions
 
+## Checking in Code for Qapla Chess GUI
+If I ask you to checkin:
+- First check in any changes to qapla-engine-tester. Use a single git command. 
+- Then check in any changes to qapla-chess-gui. Use a single git command.
+- Never include changes in language files in the checkin comment.
+
 ## Project Overview
 **Qapla Chess GUI** is a professional chess interface for **engine developers and testers**, built with C++20, ImGui, OpenGL, and GLFW. The GUI wraps the command-line [qapla-engine-tester](extern/qapla-engine-tester) to provide visual tournament management, SPRT testing, and EPD analysis with real-time game observation.
 
