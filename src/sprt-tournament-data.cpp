@@ -43,8 +43,8 @@ SprtTournamentData::SprtTournamentData() :
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
                 { .name = "Rating", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                 { .name = "Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
             }
@@ -53,8 +53,8 @@ SprtTournamentData::SprtTournamentData() :
             "SprtResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
+                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
                 { .name = "Result", .flags = ImGuiTableColumnFlags_WidthStretch }
             }
         ),
