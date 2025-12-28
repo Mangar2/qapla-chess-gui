@@ -117,6 +117,24 @@ inline bool drawEngineDirectory(QaplaTester::EngineConfig& config, bool enabled)
 }
 
 /**
+ * @brief Draws an engine command-line arguments input control
+ * @param config Engine configuration to modify
+ * @param enabled Whether the control is enabled
+ * @return True if the value was changed
+ */
+inline bool drawEngineArguments(QaplaTester::EngineConfig& config, bool enabled) {
+    if (!enabled) return false;
+    
+    std::string args = config.getArgs();
+    if (ImGuiControls::inputText("Arguments", args)) {
+        config.setArgs(args);
+        return true;
+    }
+    ImGuiControls::hooverTooltip("Command-line arguments to pass to the engine executable");
+    return false;
+}
+
+/**
  * @brief Draws a protocol selection combo box
  * @param config Engine configuration to modify
  * @param enabled Whether the control is enabled

@@ -166,6 +166,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         if (configModified && options_.allowNameEdit) {
             config.originalName = config.config.getName();
         }
+        configModified |= ImGuiEngineControls::drawEngineArguments(config.config, options_.allowEngineOptionsEdit);
         configModified |= ImGuiEngineControls::drawEngineGauntlet(config.config, options_.allowGauntletEdit);
         configModified |= ImGuiEngineControls::drawEnginePonder(config.config, options_.allowPonderEdit);
         configModified |= ImGuiEngineControls::drawEngineScoreFromWhitePov(config.config, options_.allowScoreFromWhitePovEdit);
