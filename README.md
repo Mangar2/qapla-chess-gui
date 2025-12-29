@@ -14,36 +14,75 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Resumable & Extendable** - Tournaments can be interrupted and resumed later, or extended with additional rounds
 - **Gauntlet & Round-Robin** formats with comprehensive rating tracking
 - **Live Monitoring** - Watch any ongoing game via tab-based interface; switch between games in real-time
+- **Result Matrix** - View comprehensive tournament results in matrix format via chatbot
+- **Interactive Chatbot** - Get help using the GUI with the integrated assistant
 
 #### Position Analysis
 - **Multi-threaded EPD Analysis** - Analyze positions from EPD files using multiple engines in parallel
 - **UCI Engine Testing** - Comprehensive engine compliance and behavior validation
 - **Extensive Logging** - Detailed protocol communication and engine behavior tracking
+- **Auto-detect Opening Formats** - Automatic detection of opening file formats (PGN, EPD, FEN)
 
 #### Game Management
-- **PGN Support** - Load, filter, and analyze PGN game databases
+- **PGN Support** - Load, filter, and analyze PGN game databases with proper time control handling
 - **Multiple Board Workspaces** - Open and manage multiple games/positions simultaneously via tabs
-- **Advanced Filtering** - Search and filter games by various criteria
+- **Advanced Filtering** - Search and filter games by various criteria with persistent filter states
+- **Detailed Tab Information** - Hover tooltips showing round, game, engines, and position details
 
 #### User Experience
-- **Integrated Tutorial** - Built-in help system for new users
+- **Integrated Tutorial** - Built-in help system with clear button for new users
 - **Comprehensive Settings** - All features of the command-line engine tester accessible via GUI
 - **Real-time Control** - Adjust concurrency, monitor progress, and control running tournaments on the fly
 - **Modern Interface** - Clean, responsive UI with OpenGL rendering
-- **Initial Multilingual Support** - Basic localization support (English, Deutsch, Français). Select your preferred language in the Settings; translations are work-in-progress and may be incomplete.
+- **Multilingual Support** - Localization support (English, Deutsch, Français) with language selector in Settings
+- **Comprehensive Tooltips** - Helpful tooltips on all controls
+- **Smart File Dialogs** - File filtering by appropriate extensions for tournaments and SPRT tests
+- **Remote Desktop Optimization** - Option to reduce GUI resource usage when using remote desktop on Linux
 
 ### Architecture
 
 All tournament and testing capabilities are powered by the integrated **[qapla-engine-tester](https://github.com/Mangar2/qapla-engine-tester)** engine, which provides:
-- UCI protocol support with full pondering capability
-- Flexible opening book formats (PGN, EPD, raw FEN)
-- Statistical testing and tournament automation
-- Engine behavior analysis and compliance checking
+- UInstallation
 
-The GUI wraps these powerful command-line features in an intuitive, visual interface while adding multi-board management and real-time game observation capabilities.
+**No installation required!** The compiled executable is a self-contained, portable application.
 
-## Portable Application
+### How to Use
 
+1. Build the executable using the build instructions below
+2. Copy the resulting executable from the build directory to any location
+3. Run it directly - all dependencies are statically linked and fonts/assets are embedded
+
+**Windows:**
+- Copy `qapla-chess-gui.exe` from the build directory
+- Run directly by double-clicking
+
+**Linux:**
+- Copy `qapla-chess-gui` from the build directory
+- Make executable if needed: `chmod +x qapla-chess-gui`
+- Run directly: `./qapla-chess-gui`
+- Works on X11 window systems
+
+**macOS:**
+- Copy `qapla-chess-gui` from the build directory
+- Run directly: `./qapla-chess-gui`
+
+### Configuration Files
+
+The application creates a configuration directory on first run:
+- **Windows:** `%USERPROFILE%\.qapla-chess-gui\`
+- **Linux:** `~/.qapla-chess-gui/`
+- **macOS:** `~/.qapla-chess-gui/`
+
+This directory contains:
+- `qapla-chess-gui.ini` - User settings
+- Language files (`.lang`) for translations
+- Log files
+
+## Supported Platforms
+
+- **Windows** (tested)
+- **Linux** (X11 with CMake support, tested)
+- **macOS** (with Clang/LLVM, tested
 **No installation required!** The compiled executable is a self-contained, portable application. Simply copy the executable file anywhere and run it directly from that location. All fonts and assets are embedded in the binary.
 
 ## Supported Platforms
