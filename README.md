@@ -39,6 +39,16 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Smart File Dialogs** - File filtering by appropriate extensions for tournaments and SPRT tests
 - **Remote Desktop Optimization** - Option to reduce GUI resource usage when using remote desktop on Linux
 
+## Screenshots
+
+### SPRT Tournament with Parallel Games
+
+The GUI supports running multiple games in parallel during SPRT tournaments. You can switch between the currently running games using the tab control at the top of the board workspace.
+
+![SPRT Tournament](assets/screenshots/SPRT_Tournament.png)
+
+*SPRT tournament running 15 parallel games with real-time game monitoring*
+
 ### Architecture
 
 All tournament and testing capabilities are powered by the integrated **[qapla-engine-tester](https://github.com/Mangar2/qapla-engine-tester)** engine, which provides:
