@@ -41,6 +41,22 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 
 ## Screenshots
 
+### Tournament Management
+
+The tournament interface provides comprehensive control and monitoring capabilities. Concurrency can be adjusted at any time via slider during tournament execution. Multiple tables display running games, Elo ratings with error margins (±), and game termination reasons. All running games can be monitored either through tabs or by selecting from the running games table. The termination reasons table supports full-text search for analysis.
+
+![Tournament](assets/screenshots/Tournament.png)
+
+*Tournament interface showing concurrent games, Elo ratings, and termination analysis*
+
+### Board Analysis with Multiple Engine Setups
+
+Multiple classic chess boards with different engine configurations can be used in parallel, even while tournaments are running. This is particularly useful for engine developers: principal variations (PV) can be copied with a mouse click and pasted into another board, where the variation can be stepped through move by move.
+
+![Board](assets/screenshots/Board.png)
+
+*Board workspace with engine analysis and PV navigation capabilities*
+
 ### SPRT Tournament with Parallel Games
 
 The GUI supports running multiple games in parallel during SPRT tournaments. You can switch between the currently running games using the tab control at the top of the board workspace.
