@@ -271,7 +271,16 @@ void SprtTournamentWindow::draw() {
 
     tournamentData.drawMonteCarloTable(ImVec2(size.x, 400.0F));
     tournamentData.drawResultTable(ImVec2(size.x, 100.0F));
-    tournamentData.drawSprtTable(ImVec2(size.x, 100.0F));
+    
+    bool showAllModels = tournamentData.showAllSprtModels();
+    if (ImGuiControls::checkbox("Show all SPRT model variants", showAllModels)) {
+        tournamentData.setShowAllSprtModels(showAllModels);
+    }
+    ImGuiControls::hooverTooltip(
+        "Display all SPRT calculation variants (normalized, logistic, bayesian with trinomial/pentanomial).\n"
+        "When disabled, only the configured model is shown.");
+    
+    tournamentData.drawSprtTable(ImVec2(size.x, 150.0F));
     tournamentData.drawCauseTable(ImVec2(size.x, windowMaxHeight));
 
     ImGui::EndChild();

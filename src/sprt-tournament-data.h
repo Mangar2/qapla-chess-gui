@@ -250,6 +250,22 @@ namespace QaplaWindows {
         const QaplaTester::SprtConfig& sprtConfig() const;
 
         /**
+         * @brief Sets whether to show all SPRT model variants in the table.
+         * @param show True to show all variants, false to show only configured variant.
+         */
+        void setShowAllSprtModels(bool show) {
+            showAllSprtModels_ = show;
+        }
+
+        /**
+         * @brief Returns whether all SPRT model variants are shown.
+         * @return True if all variants are shown, false otherwise.
+         */
+        bool showAllSprtModels() const {
+            return showAllSprtModels_;
+        }
+
+        /**
          * @brief Returns a const reference to the tournament results.
          * @return Const reference to the current tournament results (as TournamentResult).
          */
@@ -434,6 +450,7 @@ namespace QaplaWindows {
         ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
 
         State state_ = State::Stopped;
+        bool showAllSprtModels_ = false;
 
         // List of all section names used
         static constexpr std::array<const char*, 9> sectionNames = {

@@ -513,10 +513,10 @@ void SprtTournamentData::populateSprtTable() {
     }
 
     auto duelResult = sprtManager_->getDuelResult();
-    bool hasEnoughGamesForPenta = (duelResult.total() >= 2) && tournamentOpening_->openings().policy != "default";
+    bool hasEnoughGamesForPenta = (duelResult.total() >= 2);
     
     // Lambda to create a row for a specific SPRT variant
-    auto addSprtRow = [&](const std::string& model, bool usePenta) {
+    auto addSprtRow = [&](const std::string& model, bool usePenta, bool isDefault = false) {
         // Skip pentanomial for bayesian or if not enough games
         if (usePenta && (model == "bayesian" || !hasEnoughGamesForPenta)) {
             return;
@@ -531,6 +531,9 @@ void SprtTournamentData::populateSprtTable() {
         if (usePenta) {
             modelInfo += " (penta)";
         }
+        if (isDefault) {
+            modelInfo += " [used]";
+        }
         row.push_back(modelInfo);
         
         // Remaining columns
@@ -542,20 +545,23 @@ void SprtTournamentData::populateSprtTable() {
     };
 
     // Add configured variant first
-    addSprtRow(sprtConfig_->model, sprtConfig_->pentanomial);
+    addSprtRow(sprtConfig_->model, sprtConfig_->pentanomial, true);
     
-    // Add all model variants with trinomial
-    for (const auto& model : {"normalized", "logistic", "bayesian"}) {
-        if (model != sprtConfig_->model || sprtConfig_->pentanomial) {
-            addSprtRow(model, false);
+    // Add all other model variants only if showAllSprtModels_ is enabled
+    if (showAllSprtModels_) {
+        // Add all model variants with trinomial
+        for (const auto& model : {"normalized", "logistic", "bayesian"}) {
+            if (model != sprtConfig_->model || sprtConfig_->pentanomial) {
+                addSprtRow(model, false);
+            }
         }
-    }
-    
-    // Add normalized and logistic with pentanomial
-    if (hasEnoughGamesForPenta) {
-        for (const auto& model : {"normalized", "logistic"}) {
-            if (model != sprtConfig_->model || !sprtConfig_->pentanomial) {
-                addSprtRow(model, true);
+        
+        // Add normalized and logistic with pentanomial
+        if (hasEnoughGamesForPenta) {
+            for (const auto& model : {"normalized", "logistic"}) {
+                if (model != sprtConfig_->model || !sprtConfig_->pentanomial) {
+                    addSprtRow(model, true);
+                }
             }
         }
     }
