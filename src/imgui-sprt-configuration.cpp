@@ -70,6 +70,16 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
 
         ImGui::Spacing();
 
+        if (options.showModel) {
+            changed |= drawModel(options.inputWidth);
+        }
+
+        if (options.showPentanomial) {
+            changed |= drawPentanomial();
+        }
+
+        ImGui::Spacing();
+
         if (options.showMaxGames) {
             changed |= drawMaxGames(options.inputWidth);
         }
@@ -134,6 +144,50 @@ bool ImGuiSprtConfiguration::drawMaxGames(float inputWidth) {
     return changed;
 }
 
+bool ImGuiSprtConfiguration::drawModel(float inputWidth) {
+    ImGui::SetNextItemWidth(inputWidth);
+    static const std::vector<std::string> modelOptions = {"normalized", "logistic", "bayesian"};
+    bool changed = ImGuiControls::selectionBox("SPRT Model", config_->model, modelOptions);
+    ImGuiControls::hooverTooltip(
+        "SPRT calculation model:\n"
+        "- normalized: Recommended for most cases (supports pentanomial)\n"
+        "- logistic: Logistic Elo model (supports pentanomial)\n"
+        "- bayesian: BayesElo model (trinomial only)");
+    
+    // Auto-disable pentanomial if bayesian is selected
+    if (changed && config_->model == "bayesian" && config_->pentanomial) {
+        config_->pentanomial = false;
+    }
+    
+    return changed;
+}
+
+bool ImGuiSprtConfiguration::drawPentanomial() {
+    // Gray out checkbox if bayesian is selected
+    bool isBayesian = (config_->model == "bayesian");
+    if (isBayesian) {
+        ImGui::BeginDisabled();
+    }
+    
+    bool changed = ImGuiControls::checkbox("Use Pentanomial", config_->pentanomial);
+    ImGuiControls::hooverTooltip(
+        "Use pentanomial statistics instead of trinomial.\n"
+        "Pentanomial provides more accurate results for paired openings.\n"
+        "Note: Not available with bayesian model.");
+    
+    if (isBayesian) {
+        ImGui::EndDisabled();
+    }
+    
+    // Show warning if pentanomial is selected with bayesian
+    if (config_->pentanomial && isBayesian) {
+        ImGui::SameLine();
+        ImGuiControls::annotate("Not available with bayesian model");
+    }
+    
+    return changed;
+}
+
 void ImGuiSprtConfiguration::loadConfiguration() {
     if (config_ == nullptr) {
         return;
@@ -173,6 +227,15 @@ void ImGuiSprtConfiguration::loadConfiguration() {
         else if (key == "maxGames") {
             config_->maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
         }
+        else if (key == "model") {
+            config_->model = value;
+            if (config_->model != "normalized" && config_->model != "logistic" && config_->model != "bayesian") {
+                config_->model = "normalized";
+            }
+        }
+        else if (key == "pentanomial") {
+            config_->pentanomial = (value == "true" || value == "1");
+        }
     }
 }
 
@@ -187,7 +250,9 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiSprtConfiguration::getSections(
         {"eloUpper", std::to_string(config_->eloUpper)},
         {"alpha", std::to_string(config_->alpha)},
         {"beta", std::to_string(config_->beta)},
-        {"maxGames", std::to_string(config_->maxGames)}
+        {"maxGames", std::to_string(config_->maxGames)},
+        {"model", config_->model},
+        {"pentanomial", config_->pentanomial ? "true" : "false"}
     };
 
     return { QaplaHelpers::IniFile::Section{ .name = "sprtconfig", .entries = entries } };

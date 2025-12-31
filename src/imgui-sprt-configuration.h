@@ -49,7 +49,8 @@ namespace QaplaWindows {
             DrawOptions() : 
                 inputWidth(150.0F), indent(10.0F), alwaysOpen(false),
                 showEloLower(true), showEloUpper(true), showAlpha(true),
-                showBeta(true), showMaxGames(true), showCollapsingHeader(true)
+                showBeta(true), showMaxGames(true), showModel(true),
+                showPentanomial(true), showCollapsingHeader(true)
             {}
 
             float inputWidth = 150.0F;       ///< Width of input controls
@@ -60,6 +61,8 @@ namespace QaplaWindows {
             bool showAlpha = true;           ///< Show Alpha input
             bool showBeta = true;            ///< Show Beta input
             bool showMaxGames = true;        ///< Show Max Games input
+            bool showModel = true;           ///< Show Model selection
+            bool showPentanomial = true;     ///< Show Pentanomial checkbox
             bool showCollapsingHeader = true; ///< Whether to show collapsing header
         };
 
@@ -162,6 +165,19 @@ namespace QaplaWindows {
          * @return True if the value was changed, false otherwise.
          */
         bool drawMaxGames(float inputWidth);
+
+        /**
+         * @brief Draws the Model selection control.
+         * @param inputWidth Width for input control.
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawModel(float inputWidth);
+
+        /**
+         * @brief Draws the Pentanomial checkbox control.
+         * @return True if the value was changed, false otherwise.
+         */
+        bool drawPentanomial();
 
         QaplaTester::SprtConfig* config_ = nullptr;
         std::string id_;
