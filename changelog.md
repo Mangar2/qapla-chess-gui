@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.2.0] - 2025-11-23
+## [0.3.0] - 2025-12-31
+
+### Added
+- **Pentanomial SPRT support**: Added pentanomial statistics collection for paired games (WW, WD, WL, DD, LD, LL counters)
+- **Multiple Elo calculation models**: Support for normalized, logistic, and bayesian SPRT models
+- **Enhanced SPRT table**: Displays all model/pentanomial variants for comparison
+- **Model selection UI**: Added dropdown to select SPRT calculation model (normalized/logistic/bayesian)
+- **Pentanomial checkbox**: UI control to enable/disable pentanomial statistics (auto-disabled for bayesian model)
+
+### Changed
+- **SPRT calculation**: Integrated fastchess SPRT implementation with support for multiple models and pentanomial statistics
+- **Tournament persistence**: Pentanomial statistics are now recalculated when loading saved tournaments
+- **Monte Carlo test button**: Improved tooltip with detailed explanation and automatic disable when pentanomial mode is active
+
+### Fixed
+- **Configuration validation**: Added checks for pentanomial requirements (swapColors must be enabled, minimum 2 games)
+- **Model compatibility**: Bayesian model properly limited to trinomial statistics only
+
+## [0.2.0] - 2025-12-28
 
 - Corrected display of "wins on time"
 - Added horizontal scrollbar in the move list
