@@ -21,6 +21,8 @@ extern/stb/
 /assets/textures/
 /build/
 /engines/
+/.vscode/
+/output/
 
 # VS Code user settings lokal
 .vscode/settings.json
