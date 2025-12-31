@@ -87,7 +87,10 @@ static void drawSingleButton(
     if (button == "Test")
     {
         QaplaButton::drawTest(drawList, topLeft, size, state);
-        ImGuiControls::hooverTooltip("Run Monte Carlo test to estimate SPRT test duration");
+        ImGuiControls::hooverTooltip(
+            "Run Monte Carlo simulation to estimate SPRT test performance.\n"
+            "Tests multiple Elo differences to predict decision rates and game counts.\n"
+            "Note: Only available for trinomial statistics (pentanomial not supported).");
     }
 }
 
@@ -110,7 +113,8 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
         return QaplaButton::ButtonState::Disabled;
     }
     
-    if (button == "Test" && SprtTournamentData::instance().isAnyRunning()) {
+    if (button == "Test" && (SprtTournamentData::instance().isAnyRunning() || 
+                              SprtTournamentData::instance().sprtConfig().pentanomial)) {
         return QaplaButton::ButtonState::Disabled;
     }
     
