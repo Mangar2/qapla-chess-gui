@@ -164,6 +164,7 @@ This project uses the following libraries as Git submodules in the `extern/` dir
 - **[GLAD](https://github.com/Dav1dde/glad)** - OpenGL Loader (MIT License)
 - **[stb](https://github.com/nothings/stb)** - Image loading (Public Domain)
 - **[qapla-engine-tester](https://github.com/Mangar2/qapla-engine-tester)** - Engine testing framework
+- **[fastchess SPRT](https://github.com/Disservin/fastchess)** - SPRT algorithms for statistical engine testing (MIT License)
 
 Sources are automatically included via Git submodules and compiled with CMake.
 
@@ -205,6 +206,7 @@ The external libraries and assets used have their own respective licenses:
 - **ImGui:** MIT
 - **GLAD:** MIT
 - **stb:** Public Domain
+- **fastchess SPRT:** MIT
 - **Chess Merida Font:** Public Domain (Unlicense)
 - **Inter Font:** SIL Open Font License 1.1
 - **IBM Plex Mono:** SIL Open Font License 1.1
