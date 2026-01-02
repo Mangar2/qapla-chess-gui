@@ -26,6 +26,7 @@
 #include "ini-file.h"
 #include "string-helper.h"
 #include "sprt-manager.h"
+#include "sprt-calculation.h"
 #include "engine-option.h"
 #include "pgn-io.h"
 #include "pgn-save.h"
@@ -54,6 +55,7 @@ SprtTournamentData::SprtTournamentData() :
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
                 { .name = "Type", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .compute = true },
+                { .name = "Status", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 70.0F, .compute = true },
                 { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
                 { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
                 { .name = "Result", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F, .compute = true }
@@ -344,6 +346,7 @@ void SprtTournamentData::startTournament() {
 
     poolAccess_->clearAll();
     state_ = State::Starting;
+    
     sprtManager_->schedule(sprtManager_, imguiConcurrency_->getExternalConcurrency(), *poolAccess_);
     imguiConcurrency_->init();
     imguiConcurrency_->setActive(true);
@@ -512,21 +515,16 @@ void SprtTournamentData::populateSprtTable() {
         return;
     }
 
-    auto duelResult = sprtManager_->getDuelResult();
-    bool hasEnoughGamesForPenta = (duelResult.total() >= 2);
+    const auto& allResults = sprtManager_->getSprtResults();
     
-    // Lambda to create a row for a specific SPRT variant
-    auto addSprtRow = [&](const std::string& model, bool usePenta, bool isDefault = false) {
-        // Skip pentanomial for bayesian or if not enough games
-        if (usePenta && (model == "bayesian" || !hasEnoughGamesForPenta)) {
-            return;
-        }
-        
-        SprtResult sprtResult = sprtManager_->computeSprt(model, usePenta);
-        
+    if (allResults.empty()) {
+        return;
+    }
+
+    auto addSprtRowFromResult = [&](const SprtResult& sprtResult, const std::string& model, 
+                                     bool usePenta, bool isDefault = false) {
         std::vector<std::string> row;
         
-        // First column: Model and pentanomial flag
         std::string modelInfo = model;
         if (usePenta) {
             modelInfo += " (penta)";
@@ -536,7 +534,15 @@ void SprtTournamentData::populateSprtTable() {
         }
         row.push_back(modelInfo);
         
-        // Remaining columns
+        std::string status;
+        if (sprtResult.isFinished()) {
+            status = "Finished";
+        } else if (sprtResult.isRunning()) {
+            status = "Running";
+        } else {
+            status = "Not Started";
+        }
+        row.push_back(status);
         row.push_back(sprtResult.engineA);
         row.push_back(sprtResult.engineB);
         row.push_back(sprtResult.info);
@@ -544,23 +550,47 @@ void SprtTournamentData::populateSprtTable() {
         sprtTable_.push(row);
     };
 
-    // Add configured variant first
-    addSprtRow(sprtConfig_->model, sprtConfig_->pentanomial, true);
-    
-    // Add all other model variants only if showAllSprtModels_ is enabled
-    if (showAllSprtModels_) {
-        // Add all model variants with trinomial
-        for (const auto& model : {"normalized", "logistic", "bayesian"}) {
-            if (model != sprtConfig_->model || sprtConfig_->pentanomial) {
-                addSprtRow(model, false);
-            }
+    for (size_t roundIndex = 0; roundIndex < allResults.size(); ++roundIndex) {
+        const auto& resultsForRound = allResults[roundIndex];
+        
+        if (resultsForRound.empty()) {
+            continue;
         }
         
-        // Add normalized and logistic with pentanomial
-        if (hasEnoughGamesForPenta) {
-            for (const auto& model : {"normalized", "logistic"}) {
-                if (model != sprtConfig_->model || !sprtConfig_->pentanomial) {
-                    addSprtRow(model, true);
+        bool hasEnoughGamesForPenta = (resultsForRound.size() > 3);
+        
+        auto findResult = [&](const std::string& model, bool usePenta) -> const SprtResult* {
+            for (const auto& result : resultsForRound) {
+                if (result.model == model && result.pentanomial == usePenta) {
+                    return &result;
+                }
+            }
+            return nullptr;
+        };
+
+        const SprtResult* configuredResult = findResult(sprtConfig_->model, sprtConfig_->pentanomial);
+        if (configuredResult != nullptr) {
+            addSprtRowFromResult(*configuredResult, sprtConfig_->model, sprtConfig_->pentanomial, true);
+        }
+        
+        if (showAllSprtModels_) {
+            for (const auto& model : {"normalized", "logistic", "bayesian"}) {
+                if (model != sprtConfig_->model || sprtConfig_->pentanomial) {
+                    const SprtResult* result = findResult(model, false);
+                    if (result != nullptr) {
+                        addSprtRowFromResult(*result, model, false);
+                    }
+                }
+            }
+            
+            if (hasEnoughGamesForPenta) {
+                for (const auto& model : {"normalized", "logistic"}) {
+                    if (model != sprtConfig_->model || !sprtConfig_->pentanomial) {
+                        const SprtResult* result = findResult(model, true);
+                        if (result != nullptr) {
+                            addSprtRowFromResult(*result, model, true);
+                        }
+                    }
                 }
             }
         }
