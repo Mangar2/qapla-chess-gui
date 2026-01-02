@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026
 
 ### Added
+- **SprtEnginesResult struct**: New data structure to hold trinomial and pentanomial statistics for SPRT testing
+- **simulateGamePair method**: Extracts game pair simulation logic for cleaner Monte Carlo code
 - **Pentanomial SPRT support**: Added pentanomial statistics collection for paired games (WW, WD, WL, DD, LD, LL counters)
 - **Multiple Elo calculation models**: Support for normalized, logistic, and bayesian SPRT models
 - **Enhanced SPRT table**: Displays all model/pentanomial variants for comparison
@@ -15,14 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pentanomial checkbox**: UI control to enable/disable pentanomial statistics (auto-disabled for bayesian model)
 
 ### Changed
+- **SPRT ELO configuration**: Changed ELO bounds (eloLower, eloUpper) from integer to float for more precise SPRT testing
+- **Monte Carlo simulation**: Rewritten to simulate game pairs (white/black swaps) with full pentanomial statistics support
+- **Monte Carlo simulation**: Updated to use float ELO values with step sizes rounded to one decimal place
+- **Monte Carlo simulation**: Added white advantage bias (0.05 expected score) to simulate realistic color influence on game outcomes
+- **Float input control**: Added new `inputFloat()` control to imgui-controls with default step=0.1 and stepFast=1.0
 - **SPRT calculation**: Integrated fastchess SPRT implementation with support for multiple models and pentanomial statistics
 - **Tournament persistence**: Pentanomial statistics are now recalculated when loading saved tournaments
-- **Monte Carlo test button**: Improved tooltip with detailed explanation and automatic disable when pentanomial mode is active
-- **SPRT ELO configuration**: Changed ELO bounds (eloLower, eloUpper) from integer to float for more precise SPRT testing
-
-### Fixed
-- **Configuration validation**: Added checks for pentanomial requirements (swapColors must be enabled, minimum 2 games)
-- **Model compatibility**: Bayesian model properly limited to trinomial statistics only
+- **Monte Carlo test**: Now supports pentanomial statistics when enabled in configuration
 
 ## [0.2.0] - 2025-12-28
 

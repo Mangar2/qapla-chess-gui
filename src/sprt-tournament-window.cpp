@@ -113,8 +113,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
         return QaplaButton::ButtonState::Disabled;
     }
     
-    if (button == "Test" && (SprtTournamentData::instance().isAnyRunning() || 
-                              SprtTournamentData::instance().sprtConfig().pentanomial)) {
+    if (button == "Test" && SprtTournamentData::instance().isAnyRunning()) {
         return QaplaButton::ButtonState::Disabled;
     }
     
