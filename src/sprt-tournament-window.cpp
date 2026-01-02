@@ -273,8 +273,10 @@ void SprtTournamentWindow::draw() {
     tournamentData.drawResultTable(ImVec2(size.x, 100.0F));
     
     bool showAllModels = tournamentData.showAllSprtModels();
-    if (ImGuiControls::checkbox("Show all SPRT model variants", showAllModels)) {
-        tournamentData.setShowAllSprtModels(showAllModels);
+    if (tournamentData.hasResults()) {
+        if (ImGuiControls::checkbox("Show all SPRT model variants", showAllModels)) {
+            tournamentData.setShowAllSprtModels(showAllModels);
+        }
     }
     ImGuiControls::hooverTooltip(
         "Display all SPRT calculation variants (normalized, logistic, bayesian with trinomial/pentanomial).\n"

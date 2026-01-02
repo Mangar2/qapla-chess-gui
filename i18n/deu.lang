@@ -92,7 +92,7 @@ id=Button
 {s:"Switch to Board View",t:"2025-12-16"}=Zur Brettansicht wechseln
 {s:"Engine Setup",t:"2025-12-14"}=Engine-Einrichtung
 {s:"Switch to Board & Start",t:"2025-12-18"}=Zur Brettansicht wechseln und starten
-{s:"More...",t:"2025-12-21"}=More...
+{s:"More...",t:"2025-12-21"}=Mehr...
 
 [Translation]
 id=Checkbox
@@ -112,7 +112,7 @@ id=Checkbox
 {s:"Score from White POV",t:"2025-12-28"}=Punktestand aus Sicht von Weiß
 {s:"Ponder",t:"2025-12-28"}=Ponder
 {s:"Gauntlet",t:"2025-12-28"}=Gauntlet-Modus
-{s:"Use Pentanomial",t:"2025-12-31"}=Use Pentanomial
+{s:"Use Pentanomial",t:"2025-12-31"}=Benutze Pentanomial
 
 [Translation]
 id=Input

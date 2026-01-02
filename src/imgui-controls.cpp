@@ -111,6 +111,19 @@ namespace QaplaWindows::ImGuiControls {
         return false;
     }
 
+    bool inputFloat(const char* label, float& value, float min, float max, 
+        float step, float stepFast, ImGuiInputTextFlags flags) {
+        assert(min < max && "Min must be less than max");
+
+        auto modLabel = createLabel("Input", label);
+        bool modified = ImGui::InputFloat(modLabel.c_str(), &value, step, stepFast, "%.1f", flags);
+
+        if (value < min) value = min;
+        if (value > max) value = max;
+
+        return modified;
+    }
+
     bool inputPromille(const char* label, double& value, double min, double max, double step) {
         assert(min < max && "Min must be less than max");
         assert(step > 0.0 && "Step must be positive");

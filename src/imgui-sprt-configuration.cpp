@@ -97,7 +97,7 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
 
 bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
     ImGui::SetNextItemWidth(inputWidth);
-    bool changed = ImGuiControls::inputInt<int>("Elo Lower (H0)", config_->eloLower, -1000, 1000);
+    bool changed = ImGuiControls::inputFloat("Elo Lower (H0)", config_->eloLower, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Lower Elo bound (H0): null hypothesis threshold for SPRT test.\n"
         "If true Elo difference is below this, H0 is accepted (no improvement).");
@@ -106,7 +106,7 @@ bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
 
 bool ImGuiSprtConfiguration::drawEloUpper(float inputWidth) {
     ImGui::SetNextItemWidth(inputWidth);
-    bool changed = ImGuiControls::inputInt<int>("Elo Upper (H1)", config_->eloUpper, -1000, 1000);
+    bool changed = ImGuiControls::inputFloat("Elo Upper (H1)", config_->eloUpper, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\n"
         "If true Elo difference is above this, H1 is accepted (improvement confirmed).");
@@ -201,16 +201,16 @@ void ImGuiSprtConfiguration::loadConfiguration() {
 
     for (const auto& [key, value] : (*sections)[0].entries) {
         if (key == "eloLower") {
-            config_->eloLower = QaplaHelpers::to_int(value).value_or(-5);
-            config_->eloLower = std::clamp(config_->eloLower, -1000, 1000);
+            config_->eloLower = QaplaHelpers::to_float(value).value_or(0.0F);
+            config_->eloLower = std::clamp(config_->eloLower, -1000.0F, 1000.0F);
         }
         else if (key == "eloUpper") {
-            config_->eloUpper = QaplaHelpers::to_int(value).value_or(5);
-            config_->eloUpper = std::clamp(config_->eloUpper, -1000, 1000);
+            config_->eloUpper = QaplaHelpers::to_float(value).value_or(5.0F);
+            config_->eloUpper = std::clamp(config_->eloUpper, -1000.0F, 1000.0F);
         }
         else if (key == "alpha") {
             try {
-                config_->alpha = std::stod(value);
+                config_->alpha =  QaplaHelpers::to_float(value).value_or(0.05F);
                 config_->alpha = std::clamp(config_->alpha, 0.001, 0.5);
             } catch (...) {
                 config_->alpha = 0.05;
@@ -218,7 +218,7 @@ void ImGuiSprtConfiguration::loadConfiguration() {
         }
         else if (key == "beta") {
             try {
-                config_->beta = std::stod(value);
+                config_->beta = QaplaHelpers::to_float(value).value_or(0.05F);
                 config_->beta = std::clamp(config_->beta, 0.001, 0.5);
             } catch (...) {
                 config_->beta = 0.05;

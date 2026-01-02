@@ -132,8 +132,8 @@ namespace QaplaWindows {
         }
 
         /**
-         * @brief Checks if there are tasks scheduled.
-         * @return true if tasks are scheduled, false otherwise
+         * @brief Checks if there are tasks scheduled and results available.
+         * @return true if tasks are scheduled and results are available, false otherwise
          */
         bool hasResults() const;
 

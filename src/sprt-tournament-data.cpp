@@ -96,8 +96,8 @@ SprtTournamentData::SprtTournamentData() :
     sprtConfiguration_->setId("sprt-tournament");
     sprtConfiguration_->setConfig(sprtConfig_.get());
 
-    sprtConfig_->eloLower = -5;
-    sprtConfig_->eloUpper = 5;
+    sprtConfig_->eloLower = 0.0F;
+    sprtConfig_->eloUpper = 3.0F;
     sprtConfig_->alpha = 0.05;
     sprtConfig_->beta = 0.05;
     sprtConfig_->maxGames = 100000;

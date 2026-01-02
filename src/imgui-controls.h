@@ -148,6 +148,20 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     /**
+     * @brief Wrapper around ImGui::InputFloat with min/max validation for float values.
+     * @param label Label to display next to the input box.
+     * @param value Reference to the float value to modify.
+     * @param min Minimum allowed value.
+     * @param max Maximum allowed value.
+     * @param step Step size for increment/decrement (default: 0.1F).
+     * @param stepFast Step size for fast increment/decrement (default: 1.0F).
+     * @param flags Optional ImGuiInputTextFlags.
+     * @return True if the value was modified, false otherwise.
+     */
+    bool inputFloat(const char* label, float& value, float min, float max, 
+        float step = 0.1F, float stepFast = 1.0F, ImGuiInputTextFlags flags = 0);
+
+    /**
      * @brief Template for SliderInt with min/max validation for various integer types.
      * @tparam T Integer type (e.g., int, short, long).
      * @param label Label to display next to the slider.
