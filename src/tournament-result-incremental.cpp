@@ -19,7 +19,7 @@
 
 #include "tournament-result-incremental.h"
 
-#include "tournament/tournament.h"
+#include <tournament/tournament.h>
 #include <game-manager/tournament-result.h>
 
 using QaplaTester::Tournament;

@@ -23,7 +23,7 @@
 #include "../../os-helpers.h"
 #include "../../imgui-controls.h"
 
-#include "sprt/sprt-manager.h"
+#include <sprt/sprt-manager.h>
 
 #include <imgui.h>
 #include <filesystem>

@@ -23,14 +23,18 @@
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
+#include <sprt/sprt-manager.h>
+#include <sprt/sprt-calculation.h>
+#include <sprt/sprt-tournament-file.h>
+
+#include <game-manager/game-manager-pool.h>
+#include <engine-handling/engine-option.h>
+
 #include <base-elements/ini-file.h>
 #include <base-elements/string-helper.h>
-#include "sprt/sprt-manager.h"
-#include "sprt/sprt-calculation.h"
-#include <engine-handling/engine-option.h>
+
 #include <opening/pgn-io.h>
 #include <opening/pgn-save.h>
-#include <game-manager/game-manager-pool.h>
 
 #include <algorithm>
 #include <format>
@@ -664,31 +668,8 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
     }
 
     try {
-        std::ofstream out(filename, std::ios::trunc);
-        if (!out) {
-            SnackbarManager::instance().showError("Failed to open file for writing: " + filename,
-                false, "sprt-tournament");
-            return;
-        }
-
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-
-        // Save each section type (all with id "sprt-tournament")
-        for (const auto& sectionName : sectionNames) {
-            auto sections = configData.getSectionList(sectionName, "sprt-tournament");
-            if (sections && !sections->empty()) {
-                for (const auto& section : *sections) {
-                    QaplaHelpers::IniFile::saveSection(out, section);
-                }
-            }
-        }
-
-        out.close();
-        if (!out) {
-            SnackbarManager::instance().showError("Error while writing to file: " + filename,
-                false, "sprt-tournament");
-            return;
-        }
+        QaplaTester::SprtTournamentFile::save(filename, configData, "sprt-tournament");
 
         SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,
             false, "sprt-tournament");
@@ -707,26 +688,8 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
     }
 
     try {
-        std::ifstream in(filename);
-        if (!in) {
-            SnackbarManager::instance().showError("Failed to open file for reading: " + filename,
-                false, "sprt-tournament");
-            return;
-        }
-
-        // Load all sections from the file
-        QaplaHelpers::ConfigData configData;
-        configData.load(in);
-        in.close();
-
-        // Transfer sections to the global configuration
-        for (const auto& sectionName : sectionNames) {
-            auto sections = configData.getSectionList(sectionName, "sprt-tournament");
-            if (sections && !sections->empty()) {
-                QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-                    sectionName, "sprt-tournament", *sections);
-            }
-        }
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        QaplaTester::SprtTournamentFile::load(filename, configData, "sprt-tournament");
 
         // Reload configuration from the updated singleton
         loadEngineSelectionConfig();

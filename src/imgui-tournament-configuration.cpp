@@ -21,7 +21,8 @@
 #include "imgui-controls.h"
 #include "configuration.h"
 #include <base-elements/string-helper.h>
-#include "tournament/tournament.h"
+#include <tournament/tournament.h>
+#include <config-file/tournament-config-file.h>
 
 #include <imgui.h>
 #include <string>
@@ -138,37 +139,7 @@ void ImGuiTournamentConfiguration::loadConfiguration() {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = configData.getSectionList("tournament", id_);
-    if (!sections || sections->empty()) {
-        return;
-    }
-
-    for (const auto& [key, value] : (*sections)[0].entries) {
-        if (key == "event") {
-            config_->event = value;
-        }
-        else if (key == "type") {
-            config_->type = value;
-        }
-        else if (key == "rounds") {
-            config_->rounds = QaplaHelpers::to_uint32(value).value_or(1);
-        }
-        else if (key == "games") {
-            config_->games = QaplaHelpers::to_uint32(value).value_or(1);
-        }
-        else if (key == "repeat") {
-            config_->repeat = QaplaHelpers::to_uint32(value).value_or(1);
-        }
-        else if (key == "noSwap") {
-            config_->noSwap = (value == "true");
-        }
-        else if (key == "averageElo") {
-            config_->averageElo = QaplaHelpers::to_int(value).value_or(0);
-        }
-        else if (key == "saveInterval") {
-            config_->saveInterval = QaplaHelpers::to_uint32(value).value_or(10);
-        }
-    }
+    QaplaTester::TournamentConfigFile::loadFromConfigData(configData, *config_, id_);
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSections() const {
@@ -176,23 +147,14 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSec
         return {};
     }
 
-    QaplaHelpers::IniFile::KeyValueMap entries{
-        {"id", id_},
-        {"event", config_->event},
-        {"type", config_->type},
-        {"rounds", std::to_string(config_->rounds)},
-        {"games", std::to_string(config_->games)},
-        {"repeat", std::to_string(config_->repeat)},
-        {"noSwap", config_->noSwap ? "true" : "false"},
-        {"averageElo", std::to_string(config_->averageElo)},
-        {"saveInterval", std::to_string(config_->saveInterval)}
-    };
-
-    return { QaplaHelpers::IniFile::Section{ .name = "tournament", .entries = entries } };
+    return QaplaTester::TournamentConfigFile::getSections(*config_, id_);
 }
 
 void ImGuiTournamentConfiguration::updateConfiguration() const {
-    auto sections = getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "tournament", id_, sections);
+    if (config_ == nullptr) {
+        return;
+    }
+
+    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    QaplaTester::TournamentConfigFile::saveToConfigData(configData, *config_, id_);
 }

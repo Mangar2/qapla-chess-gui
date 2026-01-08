@@ -21,6 +21,7 @@
 #include "imgui-controls.h"
 #include "configuration.h"
 
+#include <config-file/adjudication-config.h>
 #include <base-elements/string-helper.h>
 
 #include <imgui.h>
@@ -81,90 +82,19 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
 
 void ImGuiTournamentAdjudication::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    
-    // Load draw adjudication configuration
     auto drawSections = configData.getSectionList("drawadjudication", id_);
-    if (drawSections && !drawSections->empty()) {
-        for (const auto& [key, value] : (*drawSections)[0].entries) {
-            if (key == "active") {
-                drawConfig_.active = (value == "true");
-            }
-            else if (key == "minFullMoves") {
-                drawConfig_.minFullMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "requiredConsecutiveMoves") {
-                drawConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "centipawnThreshold") {
-                drawConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
-            }
-            else if (key == "testOnly") {
-                drawConfig_.testOnly = (value == "true");
-            }
-        }
-    }
-
-    // Load resign adjudication configuration
     auto resignSections = configData.getSectionList("resignadjudication", id_);
-    if (resignSections && !resignSections->empty()) {
-        for (const auto& [key, value] : (*resignSections)[0].entries) {
-            if (key == "active") {
-                resignConfig_.active = (value == "true");
-            }
-            else if (key == "requiredConsecutiveMoves") {
-                resignConfig_.requiredConsecutiveMoves = QaplaHelpers::to_uint32(value).value_or(0);
-            }
-            else if (key == "centipawnThreshold") {
-                resignConfig_.centipawnThreshold = QaplaHelpers::to_int(value).value_or(0);
-            }
-            else if (key == "twoSided") {
-                resignConfig_.twoSided = (value == "true");
-            }
-            else if (key == "testOnly") {
-                resignConfig_.testOnly = (value == "true");
-            }
-        }
-    }
+    QaplaTester::AdjudicationConfig::loadFromSections(
+        drawSections.value_or(std::vector<QaplaHelpers::IniFile::Section>{}),
+        resignSections.value_or(std::vector<QaplaHelpers::IniFile::Section>{}),
+        drawConfig_, resignConfig_);
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentAdjudication::getSections() const {
-    std::vector<QaplaHelpers::IniFile::Section> sections;
-
-    // Draw adjudication section
-    QaplaHelpers::IniFile::KeyValueMap drawEntries{
-        {"id", id_},
-        {"active", drawConfig_.active ? "true" : "false"},
-        {"minFullMoves", std::to_string(drawConfig_.minFullMoves)},
-        {"requiredConsecutiveMoves", std::to_string(drawConfig_.requiredConsecutiveMoves)},
-        {"centipawnThreshold", std::to_string(drawConfig_.centipawnThreshold)},
-        {"testOnly", drawConfig_.testOnly ? "true" : "false"}
-    };
-    sections.push_back({
-        .name = "drawadjudication",
-        .entries = drawEntries
-    });
-
-    // Resign adjudication section
-    QaplaHelpers::IniFile::KeyValueMap resignEntries{
-        {"id", id_},
-        {"active", resignConfig_.active ? "true" : "false"},
-        {"requiredConsecutiveMoves", std::to_string(resignConfig_.requiredConsecutiveMoves)},
-        {"centipawnThreshold", std::to_string(resignConfig_.centipawnThreshold)},
-        {"twoSided", resignConfig_.twoSided ? "true" : "false"},
-        {"testOnly", resignConfig_.testOnly ? "true" : "false"}
-    };
-    sections.push_back({
-        .name = "resignadjudication",
-        .entries = resignEntries
-    });
-
-    return sections;
+    return QaplaTester::AdjudicationConfig::getSections(drawConfig_, resignConfig_, id_);
 }
 
 void ImGuiTournamentAdjudication::updateConfiguration() const {
-    auto sections = getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "drawadjudication", id_, { sections[0] });
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "resignadjudication", id_, { sections[1] });
+    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    QaplaTester::AdjudicationConfig::saveToConfigData(configData, drawConfig_, resignConfig_, id_);
 }

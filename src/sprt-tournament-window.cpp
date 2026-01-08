@@ -32,8 +32,8 @@
 #include <chess-game/game-record.h>
 #include <base-elements/string-helper.h>
 #include <chess-game/engine-event.h>
-#include "tournament/tournament.h"
-#include "sprt/sprt-manager.h"
+#include <tournament/tournament.h>
+#include <sprt/sprt-manager.h>
 
 #include <imgui.h>
 

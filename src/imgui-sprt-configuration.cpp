@@ -20,8 +20,11 @@
 #include "imgui-sprt-configuration.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+
+#include <sprt/sprt-manager.h>
+#include <sprt/sprt-config-file.h>
+
 #include <base-elements/string-helper.h>
-#include "sprt/sprt-manager.h"
 
 #include <imgui.h>
 #include <string>
@@ -194,74 +197,22 @@ void ImGuiSprtConfiguration::loadConfiguration() {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = configData.getSectionList("sprtconfig", id_);
-    if (!sections || sections->empty()) {
-        return;
-    }
-
-    for (const auto& [key, value] : (*sections)[0].entries) {
-        if (key == "eloLower") {
-            config_->eloLower = QaplaHelpers::to_float(value).value_or(0.0F);
-            config_->eloLower = std::clamp(config_->eloLower, -1000.0F, 1000.0F);
-        }
-        else if (key == "eloUpper") {
-            config_->eloUpper = QaplaHelpers::to_float(value).value_or(5.0F);
-            config_->eloUpper = std::clamp(config_->eloUpper, -1000.0F, 1000.0F);
-        }
-        else if (key == "alpha") {
-            try {
-                config_->alpha =  QaplaHelpers::to_float(value).value_or(0.05F);
-                config_->alpha = std::clamp(config_->alpha, 0.001, 0.5);
-            } catch (...) {
-                config_->alpha = 0.05;
-            }
-        }
-        else if (key == "beta") {
-            try {
-                config_->beta = QaplaHelpers::to_float(value).value_or(0.05F);
-                config_->beta = std::clamp(config_->beta, 0.001, 0.5);
-            } catch (...) {
-                config_->beta = 0.05;
-            }
-        }
-        else if (key == "maxGames") {
-            config_->maxGames = QaplaHelpers::to_uint32(value).value_or(100000);
-        }
-        else if (key == "model") {
-            config_->model = value;
-            if (config_->model != "normalized" && config_->model != "logistic" && config_->model != "bayesian") {
-                config_->model = "normalized";
-            }
-        }
-        else if (key == "pentanomial") {
-            config_->pentanomial = (value == "true" || value == "1");
-        }
-    }
+    QaplaTester::SprtConfigFile::loadFromConfigData(configData, *config_, id_);
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiSprtConfiguration::getSections() const {
     if (config_ == nullptr) {
         return {};
     }
-
-    QaplaHelpers::IniFile::KeyValueMap entries{
-        {"id", id_},
-        {"eloLower", std::to_string(config_->eloLower)},
-        {"eloUpper", std::to_string(config_->eloUpper)},
-        {"alpha", std::to_string(config_->alpha)},
-        {"beta", std::to_string(config_->beta)},
-        {"maxGames", std::to_string(config_->maxGames)},
-        {"model", config_->model},
-        {"pentanomial", config_->pentanomial ? "true" : "false"}
-    };
-
-    return { QaplaHelpers::IniFile::Section{ .name = "sprtconfig", .entries = entries } };
+    return QaplaTester::SprtConfigFile::getSections(*config_, id_);
 }
 
 void ImGuiSprtConfiguration::updateConfiguration() const {
-    auto sections = getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "sprtconfig", id_, sections);
+    if (config_ == nullptr) {
+        return;
+    }
+    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    QaplaTester::SprtConfigFile::saveToConfigData(configData, *config_, id_);
 }
 
 bool ImGuiSprtConfiguration::isValid() const {

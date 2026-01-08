@@ -20,7 +20,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "test-system/unit/unit-test-helpers.h"
 #include "test-system/unit/tournament-test-helpers.h"
-#include "tournament/tournament.h"
+#include <tournament/tournament.h>
 #include "tournament-result-incremental.h"
 
 using namespace QaplaTester;

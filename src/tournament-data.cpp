@@ -33,7 +33,8 @@
 #include <engine-handling/engine-option.h>
 #include <engine-handling/engine-worker-factory.h>
 
-#include "tournament/tournament.h"
+#include <tournament/tournament.h>
+#include <tournament/tournament-file.h>
 #include <game-manager/tournament-result.h>
 
 #include <game-manager/game-manager-pool.h>
@@ -738,32 +739,9 @@ namespace QaplaWindows {
         }
 
         try {
-            std::ofstream out(filename, std::ios::trunc);
-            if (!out) {
-                SnackbarManager::instance().showError("Failed to open file for writing: " + filename, 
-                    false, "tournament");
-                return;
-            }
-
             auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-
-            // Save each section type (all with id "tournament")
-            for (const auto& sectionName : sectionNames) {
-                auto sections = configData.getSectionList(sectionName, "tournament");
-                if (sections && !sections->empty()) {
-                    for (const auto& section : *sections) {
-                        QaplaHelpers::IniFile::saveSection(out, section);
-                    }
-                }
-            }
-
-            out.close();
-            if (!out) {
-                SnackbarManager::instance().showError("Error while writing to file: " + filename,
-                    false, "tournament");
-                return;
-            }
-
+            QaplaTester::TournamentFile::save(filename, configData, "tournament");
+            
             SnackbarManager::instance().showSuccess("Tournament saved to: " + filename, 
                 false, "tournament");
         }
@@ -781,26 +759,8 @@ namespace QaplaWindows {
         }
 
         try {
-            std::ifstream in(filename);
-            if (!in) {
-                SnackbarManager::instance().showError("Failed to open file for reading: " + filename, 
-                    false, "tournament");
-                return;
-            }
-
-            // Load all sections from the file
-            QaplaHelpers::ConfigData configData;
-            configData.load(in);
-            in.close();
-
-            // Transfer sections to the global configuration
-            for (const auto& sectionName : sectionNames) {
-                auto sections = configData.getSectionList(sectionName, "tournament");
-                if (sections && !sections->empty()) {
-                    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-                        sectionName, "tournament", *sections);
-                }
-            }
+            auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+            QaplaTester::TournamentFile::load(filename, configData, "tournament");
 
             // Reload configuration from the updated singleton
             loadConfig();

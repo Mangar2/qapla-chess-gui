@@ -32,7 +32,7 @@
 #include <chess-game/game-record.h>
 #include <base-elements/string-helper.h>
 #include <chess-game/engine-event.h>
-#include "tournament/tournament.h"
+#include <tournament/tournament.h>
 
 #include <imgui.h>
 

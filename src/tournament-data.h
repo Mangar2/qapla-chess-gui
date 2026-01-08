@@ -488,19 +488,6 @@ namespace QaplaWindows {
         State state_ = State::Stopped;
         bool loadedTournamentData_ = false;
 
-        // List of all section names used
-        static constexpr std::array<const char*, 9> sectionNames = {
-            "eachengine",
-            "engineselection",
-            "tournament",
-            "opening",
-            "pgnoutput",
-            "drawadjudication",
-            "resignadjudication",
-            "timecontroloptions",
-            "round"
-        };
-
     };
 
 }

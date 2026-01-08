@@ -22,6 +22,7 @@
 #include "configuration.h"
 #include "tutorial.h"
 
+#include <config-file/opening-config.h>
 #include <base-elements/string-helper.h>
 
 #include <imgui.h>
@@ -185,55 +186,14 @@ bool ImGuiTournamentOpening::drawSwitchPolicy(float inputWidth,
 
 void ImGuiTournamentOpening::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = configData.getSectionList("opening", id_);
-    if (!sections || sections->empty()) {
-        return;
-    }
-
-    for (const auto& [key, value] : (*sections)[0].entries) {
-        if (key == "file") {
-            openings_.file = value;
-        }
-        else if (key == "order" && (value == "sequential" || value == "random")) {
-            openings_.order = value;
-        }
-        else if (key == "seed") {
-            openings_.seed = QaplaHelpers::to_uint32(value).value_or(815);
-        }
-        else if (key == "plies") {
-            openings_.plies = QaplaHelpers::to_int(value);
-        }
-        else if (key == "start") {
-            openings_.start = QaplaHelpers::to_uint32(value).value_or(0);
-        }
-        else if (key == "policy" && (value == "default" || value == "encounter" || value == "round")) {
-            openings_.policy = value;
-        }
-    }
+    QaplaTester::OpeningConfig::loadFromConfigData(configData, openings_, id_);
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections() const {
-    QaplaHelpers::IniFile::KeyValueMap openingEntries{
-        {"id", id_},
-        {"file", openings_.file},
-        {"order", openings_.order},
-        {"seed", std::to_string(openings_.seed)},
-        {"start", std::to_string(openings_.start)},
-        {"policy", openings_.policy}
-    };
-
-    if (openings_.plies) {
-        openingEntries.emplace_back("plies", std::to_string(*openings_.plies));
-    }
-
-    return {{
-        .name = "opening",
-        .entries = openingEntries
-    }};
+    return QaplaTester::OpeningConfig::getSections(openings_, id_);
 }
 
 void ImGuiTournamentOpening::updateConfiguration() const {
-    auto sections = getSections();
-    QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "opening", id_, sections);
+    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    QaplaTester::OpeningConfig::saveToConfigData(configData, openings_, id_);
 }
