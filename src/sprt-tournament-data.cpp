@@ -263,14 +263,9 @@ bool SprtTournamentData::createTournament(bool verbose) {
 }
 
 void SprtTournamentData::loadTournament() {
-    if (createTournament(false)) {
-        auto sections = QaplaConfiguration::Configuration::instance().getConfigData().
-            getSectionList("round", "sprt-tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-
-        if (sprtManager_ && !sections.empty()) {
-            // SPRT typically has only one section (one pairing)
-            sprtManager_->loadFromSection(sections[0]);
-        }
+    if (createTournament(false) && sprtManager_) {
+        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+        QaplaTester::SprtTournamentFile::loadIntoManagerFromConfigData(configData, *sprtManager_, "sprt-tournament");
     }
 }
 

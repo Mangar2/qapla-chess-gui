@@ -201,15 +201,10 @@ namespace QaplaWindows {
 
     void TournamentData::loadTournament()
     {
-        if (createTournament(false))
+        if (createTournament(false) && tournament_)
         {
-            auto sections = QaplaConfiguration::Configuration::instance().getConfigData().
-                getSectionList("round", "tournament").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-
-            if (tournament_)
-            {
-                tournament_->load(sections);
-            }
+            auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+            QaplaTester::TournamentFile::loadIntoTournamentFromConfigData(configData, *tournament_, "tournament");
         }
     }
 
