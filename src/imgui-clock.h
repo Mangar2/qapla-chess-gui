@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "timer.h"
-#include "change-tracker.h"
-#include "engine-record.h"
+#include "base-elements/timer.h"
+#include "base-elements/change-tracker.h"
+#include "game-manager/engine-record.h"
 
 #include <imgui.h>
 

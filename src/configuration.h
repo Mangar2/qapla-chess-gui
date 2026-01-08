@@ -23,7 +23,7 @@
 #include "autosavable.h"
 #include "callback-manager.h"
 
-#include <ini-file.h>
+#include "base-elements/ini-file.h"
 
 #include <memory>
 #include <array>

@@ -21,7 +21,7 @@
 #include "imgui-engine-select.h"
 #include "imgui-controls.h"
 #include "i18n.h"
-#include "engine-worker-factory.h"
+#include "engine-handling/engine-worker-factory.h"
 #include <imgui.h>
 
 using QaplaTester::EngineWorkerFactory;

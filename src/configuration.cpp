@@ -22,12 +22,12 @@
 #include "interactive-board-window.h"
 #include "callback-manager.h"
 
-#include "logger.h"
-#include "string-helper.h"
-#include "ini-file.h"
-#include "timer.h"
-#include "time-control.h"
-#include "engine-worker-factory.h"
+#include "base-elements/logger.h"
+#include "base-elements/string-helper.h"
+#include "base-elements/ini-file.h"
+#include "base-elements/timer.h"
+#include "base-elements/time-control.h"
+#include "engine-handling/engine-worker-factory.h"
 #include "i18n.h"
 
 #include <cstdlib>

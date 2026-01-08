@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "engine-record.h"
-#include "change-tracker.h"
+#include "game-manager/engine-record.h"
+#include "base-elements/change-tracker.h"
 
 #include <imgui.h>
 #include <memory>

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "tournament-result.h"
-#include "change-tracker.h"
+#include "game-manager/tournament-result.h"
+#include "base-elements/change-tracker.h"
 
 #include <unordered_set>
 

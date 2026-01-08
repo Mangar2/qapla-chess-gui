@@ -28,18 +28,18 @@
 #include "imgui-engine-global-settings.h"
 #include "configuration.h"
 
-#include "string-helper.h"
+#include "base-elements/string-helper.h"
 
-#include "engine-option.h"
-#include "engine-worker-factory.h"
+#include "engine-handling/engine-option.h"
+#include "engine-handling/engine-worker-factory.h"
 
-#include "tournament.h"
-#include "tournament-result.h"
+#include "tournament/tournament.h"
+#include "game-manager/tournament-result.h"
 
-#include "game-manager-pool.h"
-#include "pgn-io.h"
-#include "pgn-save.h"
-#include "adjudication-manager.h"
+#include "game-manager/game-manager-pool.h"
+#include "opening/pgn-io.h"
+#include "opening/pgn-save.h"
+#include "game-manager/adjudication-manager.h"
 #include "imgui-table.h"
 
 #include <format>

@@ -20,7 +20,7 @@
 #include "chatbot-step-tournament-configuration.h"
 #include "tournament-data.h"
 #include "imgui-controls.h"
-#include "tournament.h"
+#include "tournament/tournament.h"
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {

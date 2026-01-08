@@ -20,8 +20,8 @@
 #include "game-parser.h"
 #include "qapla-engine/fenscanner.h"
 #include "qapla-engine/movegenerator.h"
-#include "game-state.h"
-#include "pgn-io.h"
+#include "game-manager/game-state.h"
+#include "opening/pgn-io.h"
 
 using QaplaTester::GameRecord;
 using QaplaTester::GameState;

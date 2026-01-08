@@ -12,11 +12,11 @@ set(QAPLA_TESTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../extern/qapla-engine-tester/
 add_executable(diagnostic-engine
     diagnostic-engine.cpp
     # GameState and dependencies
-    ${QAPLA_TESTER_DIR}/game-state.cpp
-    ${QAPLA_TESTER_DIR}/game-record.cpp
-    ${QAPLA_TESTER_DIR}/move-record.cpp
-    ${QAPLA_TESTER_DIR}/base-logger.cpp
-    ${QAPLA_TESTER_DIR}/logger.cpp
+    ${QAPLA_TESTER_DIR}/game-manager/game-state.cpp
+    ${QAPLA_TESTER_DIR}/chess-game/game-record.cpp
+    ${QAPLA_TESTER_DIR}/chess-game/move-record.cpp
+    ${QAPLA_TESTER_DIR}/base-elements/base-logger.cpp
+    ${QAPLA_TESTER_DIR}/base-elements/logger.cpp
     # qapla-engine core
     ${QAPLA_TESTER_DIR}/qapla-engine/board.cpp
     ${QAPLA_TESTER_DIR}/qapla-engine/movegenerator.cpp

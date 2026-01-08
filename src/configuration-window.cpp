@@ -23,7 +23,7 @@
 #include "snackbar.h"
 #include "configuration.h"
 #include "tutorial.h"
-#include "logger.h"
+#include "base-elements/logger.h"
 #include "os-dialogs.h"
 #include "i18n.h"
 

@@ -28,12 +28,12 @@
 #include "imgui-engine-global-settings.h"
 #include "configuration.h"
 
-#include "move-record.h"
-#include "game-record.h"
-#include "string-helper.h"
-#include "engine-event.h"
-#include "tournament.h"
-#include "sprt-manager.h"
+#include "chess-game/move-record.h"
+#include "chess-game/game-record.h"
+#include "base-elements/string-helper.h"
+#include "chess-game/engine-event.h"
+#include "tournament/tournament.h"
+#include "sprt/sprt-manager.h"
 
 #include <imgui.h>
 

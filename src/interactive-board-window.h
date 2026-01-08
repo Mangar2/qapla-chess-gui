@@ -29,10 +29,10 @@
 #include "pgn-auto-saver.h"
 #include "callback-manager.h"
 
-#include <qapla-engine/types.h>
-#include <time-control.h>
-#include <ini-file.h>
-#include <move-record.h>
+#include "qapla-engine/types.h"
+#include "base-elements/time-control.h"
+#include "base-elements/ini-file.h"
+#include "chess-game/move-record.h"
 
 #include <memory>
 #include <optional>

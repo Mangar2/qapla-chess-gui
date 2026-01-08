@@ -24,9 +24,9 @@
 #include "os-dialogs.h"
 #include "callback-manager.h"
 
-#include <pgn-io.h>
-#include <timer.h>
-#include <string-helper.h>
+#include "opening/pgn-io.h"
+#include "base-elements/timer.h"
+#include "base-elements/string-helper.h"
 
 #include <fstream>
 #include <sstream>

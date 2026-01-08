@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "game-result.h"
+#include "chess-game/game-result.h"
 
-#include <game-record.h>
+#include "chess-game/game-record.h"
 
 #include <string>
 #include <set>

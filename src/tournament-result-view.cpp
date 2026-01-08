@@ -4,7 +4,7 @@
  */
 
 #include "tournament-result-view.h"
-#include "tournament-result.h"
+#include "game-manager/tournament-result.h"
 
 #include <sstream>
 #include <format>

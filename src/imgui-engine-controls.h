@@ -20,10 +20,10 @@
 #pragma once
 
 #include "imgui-controls.h"
-#include "string-helper.h"
-#include "engine-config.h"
-#include "engine-option.h"
-#include "logger.h"
+#include "base-elements/string-helper.h"
+#include "engine-handling/engine-config.h"
+#include "engine-handling/engine-option.h"
+#include "base-elements/logger.h"
 #include "configuration.h"
 
 #include <imgui.h>

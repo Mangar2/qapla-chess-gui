@@ -33,14 +33,14 @@
 #include "game-manager-pool-access.h"
 #include "callback-manager.h"
 
-#include "ini-file.h"
-#include "engine-option.h"
-#include "engine-config.h"
-#include "pgn-io.h"
-#include "pgn-save.h"
-#include "adjudication-manager.h"
-#include "time-control.h"
-#include "logger.h"
+#include "base-elements/ini-file.h"
+#include "engine-handling/engine-option.h"
+#include "engine-handling/engine-config.h"
+#include "opening/pgn-io.h"
+#include "opening/pgn-save.h"
+#include "game-manager/adjudication-manager.h"
+#include "base-elements/time-control.h"
+#include "base-elements/logger.h"
 
 #include <memory>
 #include <optional>

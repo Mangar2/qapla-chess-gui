@@ -19,9 +19,9 @@
 
 #include "engine-capability.h"
 
-#include "engine-option.h"
-#include "string-helper.h"
-#include "ini-file.h"
+#include "engine-handling/engine-option.h"
+#include "base-elements/string-helper.h"
+#include "base-elements/ini-file.h"
 
 #include <sstream>
 #include <stdexcept>

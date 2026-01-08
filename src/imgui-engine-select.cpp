@@ -21,10 +21,10 @@
 #include "imgui-controls.h"
 #include "imgui-engine-controls.h"
 #include "configuration.h"
-#include "engine-worker-factory.h"
-#include "engine-config-manager.h"
+#include "engine-handling/engine-worker-factory.h"
+#include "engine-handling/engine-config-manager.h"
 #include "os-dialogs.h"
-#include "logger.h"
+#include "base-elements/logger.h"
 #include "snackbar.h"
 
 using QaplaTester::EngineWorkerFactory;

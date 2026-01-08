@@ -32,7 +32,7 @@
 #endif
 
 // Include GameState for chess position handling
-#include "game-state.h"
+#include "game-manager/game-state.h"
 
 using namespace QaplaTester;
 

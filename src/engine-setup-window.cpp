@@ -29,9 +29,9 @@
 #include "snackbar.h"
 #include "tutorial.h"
 
-#include "string-helper.h"
-#include "engine-config.h"
-#include "engine-worker-factory.h"
+#include "base-elements/string-helper.h"
+#include "engine-handling/engine-config.h"
+#include "engine-handling/engine-worker-factory.h"
 
 #include <imgui.h>
 

@@ -22,7 +22,7 @@
 #include "tutorial.h"
 #include "i18n.h"
 
-#include <string-helper.h>
+#include "base-elements/string-helper.h"
 
 #include <imgui.h>
 

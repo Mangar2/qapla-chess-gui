@@ -20,8 +20,8 @@
 #include "imgui-tournament-configuration.h"
 #include "imgui-controls.h"
 #include "configuration.h"
-#include "string-helper.h"
-#include "tournament.h"
+#include "base-elements/string-helper.h"
+#include "tournament/tournament.h"
 
 #include <imgui.h>
 #include <string>

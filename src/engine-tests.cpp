@@ -18,9 +18,9 @@
  */
 
 #include "engine-tests.h"
-#include "engine-test-functions.h"
-#include "string-helper.h"
-#include "engine-report.h"
+#include "engine-tester/engine-test-functions.h"
+#include "base-elements/string-helper.h"
+#include "engine-tester/engine-report.h"
 #include "snackbar.h"
 #include "configuration.h"
 

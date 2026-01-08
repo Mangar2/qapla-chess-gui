@@ -23,14 +23,14 @@
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
-#include "ini-file.h"
-#include "string-helper.h"
-#include "sprt-manager.h"
-#include "sprt-calculation.h"
-#include "engine-option.h"
-#include "pgn-io.h"
-#include "pgn-save.h"
-#include "game-manager-pool.h"
+#include "base-elements/ini-file.h"
+#include "base-elements/string-helper.h"
+#include "sprt/sprt-manager.h"
+#include "sprt/sprt-calculation.h"
+#include "engine-handling/engine-option.h"
+#include "opening/pgn-io.h"
+#include "opening/pgn-save.h"
+#include "game-manager/game-manager-pool.h"
 
 #include <algorithm>
 #include <format>

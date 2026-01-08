@@ -32,7 +32,7 @@
 #ifdef _WIN32
 
 #include "os-dialogs.h"
-#include "../extern/qapla-engine-tester/src/string-helper.h"
+#include "base-elements/string-helper.h"
 #include <vector>
 #include <filesystem>
 #include <string>

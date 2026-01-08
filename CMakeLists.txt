@@ -89,8 +89,10 @@ target_compile_options(imgui PRIVATE -Wno-all)
 file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
     extern/qapla-engine-tester/src/*.cpp
 )
-# qapla-engine-tester.cpp entfernen (hat main())
+# remove qapla-engine-tester.cpp as it is a main file for engine-tester
 list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
+# Exculde unit test files for normal build
+list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*/test-system/unit/.*")
 
 # --------------------------------
 # i18n-Dateien automatisch generieren (nur bei Release-Builds unter Windows)

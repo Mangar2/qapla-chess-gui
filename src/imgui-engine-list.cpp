@@ -23,11 +23,11 @@
 #include "imgui-button.h"
 #include "imgui-controls.h"
 #include "imgui-separator.h"
-#include "engine-record.h"
-#include "move-record.h"
-#include "game-record.h"
-#include "string-helper.h"
-#include "engine-event.h"
+#include "game-manager/engine-record.h"
+#include "chess-game/move-record.h"
+#include "chess-game/game-record.h"
+#include "base-elements/string-helper.h"
+#include "chess-game/engine-event.h"
 #include "qapla-engine/types.h"
 
 #include <imgui.h>

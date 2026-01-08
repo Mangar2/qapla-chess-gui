@@ -18,10 +18,10 @@
  */
 
 #include "engine-data.h"
-#include "engine-worker-factory.h"
-#include "string-helper.h"
-#include "epd-manager.h"
-#include "game-manager-pool.h"
+#include "engine-handling/engine-worker-factory.h"
+#include "base-elements/string-helper.h"
+#include "epd/epd-manager.h"
+#include "game-manager/game-manager-pool.h"
 #include "imgui-table.h"
 
 #include <imgui.h>

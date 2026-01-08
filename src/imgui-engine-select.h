@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "engine-config.h"
-#include "ini-file.h"
+#include "engine-handling/engine-config.h"
+#include "base-elements/ini-file.h"
 
 #include <vector>
 #include <functional>
