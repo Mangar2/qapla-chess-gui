@@ -18,8 +18,8 @@
  */
 #pragma once
 
-#include "qapla-engine/types.h"
-#include "chess-game/move-record.h"
+#include <qapla-engine/types.h>
+#include <chess-game/move-record.h>
 
 #include "imgui-board.h"
 #include "imgui-button.h"

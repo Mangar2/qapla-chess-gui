@@ -5,7 +5,7 @@
 #include <mutex>
 #include <filesystem>
 
-#include "base-elements/ini-file.h"
+#include <base-elements/ini-file.h>
 
 #include "autosavable.h"
 #include "callback-manager.h"

@@ -20,7 +20,7 @@
 #pragma once
 
 #include "chatbot-step.h"
-#include "opening/opening-parser.h"
+#include <opening/opening-parser.h>
 
 #include <optional>
 

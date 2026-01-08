@@ -21,7 +21,7 @@
 #include "chatbot-step-add-engines-welcome.h"
 #include "../chatbot-step-load-engine.h"
 #include "../chatbot-step-finish.h"
-#include "engine-handling/engine-worker-factory.h"
+#include <engine-handling/engine-worker-factory.h>
 
 using QaplaTester::EngineWorkerFactory;
 

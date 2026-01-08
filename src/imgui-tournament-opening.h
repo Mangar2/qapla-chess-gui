@@ -21,8 +21,8 @@
 
 #include "tutorial.h"
 
-#include "opening/openings.h"
-#include "base-elements/ini-file.h"
+#include <opening/openings.h>
+#include <base-elements/ini-file.h>
 
 #include <string>
 #include <optional>

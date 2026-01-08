@@ -22,7 +22,7 @@
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
 #include "tutorial-test-helpers.h"
-#include "tournament.h"
+#include <tournament/tournament.h>
 
 namespace QaplaTest::TutorialTest {
 

@@ -22,8 +22,8 @@
 #include "imgui-controls.h"
 #include <imgui.h>
 
-#include "base-elements/time-control.h"
-#include "base-elements/string-helper.h"
+#include <base-elements/time-control.h>
+#include <base-elements/string-helper.h>
 
 #include <array>
 #include <utility>

@@ -22,10 +22,10 @@
 #include "os-dialogs.h"
 #include "snackbar.h"
 #include "i18n.h"
-#include "base-elements/string-helper.h"
+#include <base-elements/string-helper.h>
 
-#include "base-elements/time-control.h"
-#include "engine-handling/engine-option.h"
+#include <base-elements/time-control.h>
+#include <engine-handling/engine-option.h>
 
 #include <imgui.h>
 #include <string>

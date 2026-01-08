@@ -18,8 +18,8 @@
  */
 
 #include "autosavable.h"
-#include "base-elements/logger.h"
-#include "base-elements/timer.h"
+#include <base-elements/logger.h>
+#include <base-elements/timer.h>
 #include "os-helpers.h"
 #include "callback-manager.h"
 

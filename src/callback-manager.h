@@ -28,7 +28,7 @@
 #include <iostream>
 #include <type_traits>
 
-#include "chess-game/game-record.h"
+#include <chess-game/game-record.h>
 
 namespace QaplaWindows {
 

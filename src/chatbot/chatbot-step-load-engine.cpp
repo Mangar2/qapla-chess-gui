@@ -21,9 +21,11 @@
 #include "imgui-engine-select.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
-#include "engine-handling/engine-worker-factory.h"
 #include "configuration.h"
 #include "snackbar.h"
+
+#include <engine-handling/engine-worker-factory.h>
+
 #include <imgui.h>
 #include <format>
 #include <cmath>

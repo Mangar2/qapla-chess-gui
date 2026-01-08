@@ -20,7 +20,7 @@
 #pragma once
 
 #include "embedded-window.h"
-#include "base-elements/time-control.h"
+#include <base-elements/time-control.h>
 
 #include <memory>
 #include <array>

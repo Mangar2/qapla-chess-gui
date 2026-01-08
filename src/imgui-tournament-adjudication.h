@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "game-manager/adjudication-manager.h"
-#include "base-elements/ini-file.h"
+#include <game-manager/adjudication-manager.h>
+#include <base-elements/ini-file.h>
 
 #include <string>
 #include <vector>

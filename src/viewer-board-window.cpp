@@ -24,9 +24,9 @@
 #include "horizontal-split-container.h"
 #include "vertical-split-container.h"
 
-#include "qapla-engine/types.h"
-#include "chess-game/game-record.h"
-#include "game-manager/engine-record.h"
+#include <qapla-engine/types.h>
+#include <chess-game/game-record.h>
+#include <game-manager/engine-record.h>
 
 #include <imgui.h>
 #include <memory>

@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "chess-game/game-record.h"
-#include "opening/pgn-io.h"
-#include "opening/pgn-save.h"
+#include <chess-game/game-record.h>
+#include <opening/pgn-io.h>
+#include <opening/pgn-save.h>
 #include "game-filter-data.h"
 
 #include <string>

@@ -21,8 +21,8 @@
 
 #include "tutorial.h"
 
-#include "opening/pgn-save.h"
-#include "base-elements/ini-file.h"
+#include <opening/pgn-save.h>
+#include <base-elements/ini-file.h>
 
 #include <string>
 #include <vector>

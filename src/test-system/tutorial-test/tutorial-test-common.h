@@ -26,7 +26,7 @@
 #include "imgui_te_context.h"
 #include "tutorial.h"
 #include "snackbar.h"
-#include "engine-worker-factory.h"
+#include <engine-handling/engine-worker-factory.h>
 #include "../test-common.h"
 
 namespace QaplaTest::TutorialTestCommon {

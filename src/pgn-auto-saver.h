@@ -21,7 +21,7 @@
 
 #include "game-record-manager.h"
 
-#include "chess-game/game-record.h"
+#include <chess-game/game-record.h>
 
 #include <string>
 

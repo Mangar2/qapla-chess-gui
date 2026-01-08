@@ -22,8 +22,8 @@
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
 #include "tournament-data.h"
-#include "engine-worker-factory.h"
-#include "tournament.h"
+#include <engine-handling/engine-worker-factory.h>
+#include <tournament/tournament.h>
 #include "imgui-engine-select.h"
 #include "chatbot/chatbot-window.h"
 #include <imgui.h>

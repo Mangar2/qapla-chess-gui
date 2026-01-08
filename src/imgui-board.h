@@ -18,9 +18,9 @@
  */
 #pragma once
 
-#include "qapla-engine/types.h"
+#include <qapla-engine/types.h>
 
-#include "base-elements/change-tracker.h"
+#include <base-elements/change-tracker.h>
 #include "imgui-board-setup.h"
 
 #include <imgui.h>

@@ -19,8 +19,8 @@
 
 #pragma once
 
-#include "chess-game/game-record.h"
-#include "base-elements/change-tracker.h"
+#include <chess-game/game-record.h>
+#include <base-elements/change-tracker.h>
 
 #include <imgui.h>
 #include <algorithm>

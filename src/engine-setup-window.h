@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "engine-handling/engine-config.h"
+#include <engine-handling/engine-config.h>
 #include "embedded-window.h"
 #include "imgui-button.h"
 #include "imgui-engine-select.h"

@@ -18,9 +18,9 @@
  */
 #include "board-window.h"
 
-#include "qapla-engine/types.h"
-#include "game-manager/game-state.h"
-#include "chess-game/game-record.h"
+#include <qapla-engine/types.h>
+#include <game-manager/game-state.h>
+#include <chess-game/game-record.h>
 
 #include "font.h"
 #include "imgui-cut-paste.h"

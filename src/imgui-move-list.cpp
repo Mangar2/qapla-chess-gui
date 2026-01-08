@@ -18,8 +18,8 @@
  */
 
 #include "imgui-move-list.h"
-#include "chess-game/move-record.h"
-#include "chess-game/game-record.h"
+#include <chess-game/move-record.h>
+#include <chess-game/game-record.h>
 
 #include <imgui.h>
 

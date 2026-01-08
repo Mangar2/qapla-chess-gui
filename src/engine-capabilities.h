@@ -20,8 +20,8 @@
 #pragma once
 #include "engine-capability.h"
 
-#include "base-elements/ini-file.h"
-#include "engine-handling/engine-option.h"
+#include <base-elements/ini-file.h>
+#include <engine-handling/engine-option.h>
 
 #include <unordered_map>
 #include <string>

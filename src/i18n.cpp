@@ -3,9 +3,9 @@
 #include "translation-normalizer.h"
 #include "translation-key.h"
 
-#include "base-elements/string-helper.h"
-#include "base-elements/logger.h"
-#include "base-elements/ini-file.h"
+#include <base-elements/string-helper.h>
+#include <base-elements/logger.h>
+#include <base-elements/ini-file.h>
 
 #ifndef QAPLA_DEBUG_I18N
 #include <deu-lang.h>

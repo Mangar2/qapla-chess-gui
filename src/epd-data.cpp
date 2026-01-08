@@ -24,10 +24,10 @@
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
-#include "engine-handling/engine-worker-factory.h"
-#include "base-elements/string-helper.h"
+#include <engine-handling/engine-worker-factory.h>
+#include <base-elements/string-helper.h>
 #include "epd/epd-manager.h"
-#include "game-manager/game-manager-pool.h"
+#include <game-manager/game-manager-pool.h>
 
 #include <imgui.h>
 

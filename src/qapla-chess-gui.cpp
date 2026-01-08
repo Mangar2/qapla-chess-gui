@@ -18,8 +18,8 @@
  */
 
 #include "interactive-board-window.h"
-#include "base-elements/logger.h"
-#include "game-manager/game-manager-pool.h"
+#include <base-elements/logger.h>
+#include <game-manager/game-manager-pool.h>
 
 #include "configuration.h"
 #include "configuration-window.h"

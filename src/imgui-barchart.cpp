@@ -19,7 +19,7 @@
 
 #include "imgui-barchart.h"
 
-#include "qapla-engine/evalvalue.h"
+#include <qapla-engine/evalvalue.h>
 
 #include <ranges>
 #include <sstream>

@@ -22,7 +22,7 @@
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
 #include "sprt-tournament-data.h"
-#include "engine-worker-factory.h"
+#include <engine-handling/engine-worker-factory.h>
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
 #include "chatbot/chatbot-window.h"

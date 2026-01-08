@@ -20,11 +20,11 @@
 #include "imgui-clock.h"
 #include "font.h"
 #include "imgui-controls.h"
-#include "qapla-engine/types.h"
-#include "base-elements/string-helper.h"
-#include "chess-game/game-record.h"
-#include "chess-game/move-record.h"
-#include "base-elements/time-control.h"
+#include <qapla-engine/types.h>
+#include <base-elements/string-helper.h>
+#include <chess-game/game-record.h>
+#include <chess-game/move-record.h>
+#include <base-elements/time-control.h>
 
 #include <imgui.h>
 

@@ -24,7 +24,7 @@
 #include "imgui_te_engine.h"
 #include "imgui_te_context.h"
 #include "epd-data.h"
-#include "engine-worker-factory.h"
+#include <engine-handling/engine-worker-factory.h>
 #include "chatbot/chatbot-window.h"
 
 #include <filesystem>

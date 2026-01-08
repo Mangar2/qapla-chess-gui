@@ -28,7 +28,7 @@
 #include "sprt-tournament-test-helpers.h"
 #include "sprt-tournament-step-actions.h"
 #include "sprt-tournament-data.h"
-#include "engine-worker-factory.h"
+#include <engine-handling/engine-worker-factory.h>
 #include "imgui-engine-select.h"
 
 namespace QaplaTest {

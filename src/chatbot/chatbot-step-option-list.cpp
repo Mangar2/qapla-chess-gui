@@ -20,6 +20,7 @@
 #include "chatbot-step-option-list.h"
 #include "imgui-controls.h"
 #include "imgui-helper/imgui-text-button.h"
+
 #include <imgui.h>
 
 namespace QaplaWindows::ChatBot {

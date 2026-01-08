@@ -36,16 +36,16 @@
 #include "epd-data.h"
 #include "callback-manager.h"
 
-#include "base-elements/string-helper.h"
+#include <base-elements/string-helper.h>
 #include <qapla-engine/move.h>
-#include "base-elements/time-control.h"
-#include "game-manager/game-state.h"
-#include "chess-game/game-record.h"
-#include "game-manager/compute-task.h"
-#include "engine-handling/engine-config.h"
-#include "engine-handling/engine-config-manager.h"
-#include "engine-handling/engine-worker-factory.h"
-#include "game-manager/game-manager-pool.h"
+#include <base-elements/time-control.h>
+#include <game-manager/game-state.h>
+#include <chess-game/game-record.h>
+#include <game-manager/compute-task.h>
+#include <engine-handling/engine-config.h>
+#include <engine-handling/engine-config-manager.h>
+#include <engine-handling/engine-worker-factory.h>
+#include <game-manager/game-manager-pool.h>
 
 #include <algorithm>
 

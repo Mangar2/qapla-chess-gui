@@ -21,8 +21,8 @@
 
 #include "embedded-window.h"
 #include "game-filter-data.h"
-#include "chess-game/game-result.h"
-#include "chess-game/game-record.h"
+#include <chess-game/game-result.h>
+#include <chess-game/game-record.h>
 #include <string>
 #include <vector>
 #include <set>

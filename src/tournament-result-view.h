@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "game-manager/tournament-result.h"
+#include <game-manager/tournament-result.h>
 
 #include <string>
 #include <vector>

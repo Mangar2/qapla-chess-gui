@@ -19,7 +19,7 @@
 
 #include "imgui-board-setup.h"
 #include "imgui-controls.h"
-#include "qapla-engine/types.h"
+#include <qapla-engine/types.h>
 
 #include <imgui.h>
 #include <algorithm>

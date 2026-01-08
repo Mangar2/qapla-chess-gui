@@ -23,9 +23,10 @@
 #include "snackbar.h"
 #include "configuration.h"
 #include "tutorial.h"
-#include "base-elements/logger.h"
 #include "os-dialogs.h"
 #include "i18n.h"
+
+#include <base-elements/logger.h>
 
 #include <imgui.h>
 #include <map>

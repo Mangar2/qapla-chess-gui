@@ -21,9 +21,9 @@
 #include "engine-capabilities.h"
 #include "snackbar.h"
 
-#include "engine-handling/engine-config.h"
-#include "engine-handling/engine-config-manager.h"
-#include "engine-handling/engine-worker-factory.h"
+#include <engine-handling/engine-config.h>
+#include <engine-handling/engine-config-manager.h>
+#include <engine-handling/engine-worker-factory.h>
 
 #include <thread>
 
