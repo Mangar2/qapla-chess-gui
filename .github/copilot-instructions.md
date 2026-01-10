@@ -31,6 +31,7 @@ If I ask you to checkin:
 - **Explicit bool conversions**: Never rely on implicit int→bool. Use `!= 0` (preferred) or `static_cast<bool>()`
 - Always use curly braces for control statements
 - Use `auto` when type is already visible in the line
+- Do not return data via reference or pointer parameters. Use return values instead. Remember that the compiler will optimize return value copies via RVO.
 
 ## Build & Test Workflow
 Build uses CMake with presets (see [CMakePresets.json](CMakePresets.json)):

@@ -26,6 +26,8 @@
 #include <engine-handling/engine-config.h>
 #include <engine-handling/engine-option.h>
 
+#include <base-elements/string-helper.h>
+
 #include <imgui.h>
 
 using namespace QaplaWindows;
@@ -281,11 +283,7 @@ void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Se
         settings.useGlobalHash = (*value == "true" || *value == "1");
     }
     if (auto value = section.getValue("hash")) {
-        try {
-            settings.hashSizeMB = std::stoul(*value);
-        } catch (...) {
-            settings.hashSizeMB = 32;
-        }
+        settings.hashSizeMB = QaplaHelpers::to_signed_int<uint32_t>(*value).value_or(32);
     }
 }
 
