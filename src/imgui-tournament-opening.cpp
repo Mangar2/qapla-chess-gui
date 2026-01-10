@@ -186,7 +186,10 @@ bool ImGuiTournamentOpening::drawSwitchPolicy(float inputWidth,
 
 void ImGuiTournamentOpening::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::OpeningConfig::loadFromConfigData(configData, openings_, id_);
+    auto openings = QaplaTester::OpeningConfig::loadFromConfigData(configData, id_);
+    if (openings) {
+        openings_ = *openings;
+    }
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections() const {
@@ -195,5 +198,6 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections(
 
 void ImGuiTournamentOpening::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::OpeningConfig::saveToConfigData(configData, openings_, id_);
+    auto sections = QaplaTester::OpeningConfig::getSections(openings_, id_);
+    configData.setSectionList("opening", id_, sections);
 }

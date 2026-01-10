@@ -283,7 +283,7 @@ void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Se
         settings.useGlobalHash = (*value == "true" || *value == "1");
     }
     if (auto value = section.getValue("hash")) {
-        settings.hashSizeMB = QaplaHelpers::to_signed_int<uint32_t>(*value).value_or(32);
+        settings.hashSizeMB = QaplaHelpers::to_unsigned_int<uint32_t>(*value).value_or(32);
     }
 }
 

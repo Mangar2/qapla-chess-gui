@@ -81,20 +81,29 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
 }
 
 void ImGuiTournamentAdjudication::loadConfiguration() {
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
+    const auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
     auto drawSections = configData.getSectionList("drawadjudication", id_);
     auto resignSections = configData.getSectionList("resignadjudication", id_);
-    QaplaTester::AdjudicationConfig::loadFromSections(
-        drawSections.value_or(std::vector<QaplaHelpers::IniFile::Section>{}),
-        resignSections.value_or(std::vector<QaplaHelpers::IniFile::Section>{}),
-        drawConfig_, resignConfig_);
+    
+    if (drawSections && !drawSections->empty()) {
+        drawConfig_ = QaplaTester::AdjudicationConfig::fromDrawSection((*drawSections)[0]);
+    }
+    if (resignSections && !resignSections->empty()) {
+        resignConfig_ = QaplaTester::AdjudicationConfig::fromResignSection((*resignSections)[0]);
+    }
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentAdjudication::getSections() const {
-    return QaplaTester::AdjudicationConfig::getSections(drawConfig_, resignConfig_, id_);
+    std::vector<QaplaHelpers::IniFile::Section> sections;
+    sections.push_back(QaplaTester::AdjudicationConfig::toDrawSection(drawConfig_, id_));
+    sections.push_back(QaplaTester::AdjudicationConfig::toResignSection(resignConfig_, id_));
+    return sections;
 }
 
 void ImGuiTournamentAdjudication::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::AdjudicationConfig::saveToConfigData(configData, drawConfig_, resignConfig_, id_);
+    auto drawSection = QaplaTester::AdjudicationConfig::toDrawSection(drawConfig_, id_);
+    auto resignSection = QaplaTester::AdjudicationConfig::toResignSection(resignConfig_, id_);
+    configData.setSectionList("drawadjudication", id_, {drawSection});
+    configData.setSectionList("resignadjudication", id_, {resignSection});
 }

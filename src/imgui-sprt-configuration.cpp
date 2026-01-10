@@ -197,7 +197,10 @@ void ImGuiSprtConfiguration::loadConfiguration() {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::SprtConfigFile::loadFromConfigData(configData, *config_, id_);
+    auto config = QaplaTester::SprtConfigFile::loadFromConfigData(configData, id_);
+    if (config) {
+        *config_ = *config;
+    }
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiSprtConfiguration::getSections() const {
@@ -212,7 +215,8 @@ void ImGuiSprtConfiguration::updateConfiguration() const {
         return;
     }
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::SprtConfigFile::saveToConfigData(configData, *config_, id_);
+    auto sections = QaplaTester::SprtConfigFile::getSections(*config_, id_);
+    configData.setSectionList("sprt", id_, sections);
 }
 
 bool ImGuiSprtConfiguration::isValid() const {

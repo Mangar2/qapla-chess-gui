@@ -121,7 +121,10 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
 
 void ImGuiTournamentPgn::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::PgnConfig::loadFromConfigData(configData, pgnOptions_, id_);
+    auto pgnOptions = QaplaTester::PgnConfig::loadFromConfigData(configData, id_);
+    if (pgnOptions) {
+        pgnOptions_ = *pgnOptions;
+    }
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentPgn::getSections() const {
@@ -130,5 +133,6 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentPgn::getSections() co
 
 void ImGuiTournamentPgn::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    QaplaTester::PgnConfig::saveToConfigData(configData, pgnOptions_, id_);
+    auto sections = QaplaTester::PgnConfig::getSections(pgnOptions_, id_);
+    configData.setSectionList("pgnoutput", id_, sections);
 }
