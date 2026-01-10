@@ -447,8 +447,7 @@ namespace QaplaWindows {
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
         std::unique_ptr<Callback::UnregisterHandle> messageCallbackHandle_;
 
-        ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
-        ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
+        QaplaTester::EngineGlobalConfig eachEngineConfig_;
 
         State state_ = State::Stopped;
         bool showAllSprtModels_ = false;

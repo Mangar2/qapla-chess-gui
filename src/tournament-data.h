@@ -471,8 +471,7 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentConfiguration> tournamentConfiguration_{std::make_unique<ImGuiTournamentConfiguration>()};
 
         GameManagerPoolAccess poolAccess_;
-        ImGuiEngineGlobalSettings::GlobalConfiguration eachEngineConfig_;
-        ImGuiEngineGlobalSettings::TimeControlSettings timeControlSettings_;
+        QaplaTester::EngineGlobalConfig eachEngineConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
         std::unique_ptr<Callback::UnregisterHandle> messageCallbackHandle_;

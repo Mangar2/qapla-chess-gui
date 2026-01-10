@@ -133,16 +133,16 @@ namespace QaplaWindows {
         // It copies the settings from the UI component into eachEngineConfig_, which is later
         // used in createTournament() to apply these global settings to all selected engines
         globalSettings_->setConfigurationChangedCallback(
-            [this](const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
+            [this](const QaplaTester::EngineGlobalConfig& settings) {
                 eachEngineConfig_ = settings;
             }
         );
         
         // Callback is triggered when the user changes time control settings in the UI
-        // It copies the time control string into eachEngineConfig_.tc for use in createTournament()
+        // It copies the time control string into eachEngineConfig_.timeControl for use in createTournament()
         globalSettings_->setTimeControlChangedCallback(
             [this](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
-                timeControlSettings_ = settings;
+                eachEngineConfig_.timeControl = settings.timeControl;
             }
         );
 
@@ -216,7 +216,7 @@ namespace QaplaWindows {
                 continue;
             }
             auto engine = tournamentConfig.config;
-            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
+            QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, eachEngineConfig_);
             
             selectedEngines.push_back(engine);
         }

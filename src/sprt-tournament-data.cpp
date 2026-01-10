@@ -142,14 +142,14 @@ void SprtTournamentData::setupCallbacks() {
     );
 
     globalSettings_->setConfigurationChangedCallback(
-        [this](const ImGuiEngineGlobalSettings::GlobalConfiguration& settings) {
+        [this](const QaplaTester::EngineGlobalConfig& settings) {
             eachEngineConfig_ = settings;
         }
     );
 
     globalSettings_->setTimeControlChangedCallback(
         [this](const ImGuiEngineGlobalSettings::TimeControlSettings& settings) {
-            timeControlSettings_ = settings;
+            eachEngineConfig_.timeControl = settings.timeControl;
         }
     );
 
@@ -227,7 +227,7 @@ bool SprtTournamentData::createTournament(bool verbose) {
             EngineConfig engine = tournamentConfig.config;
             
             // Apply global settings to engine
-            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, eachEngineConfig_, timeControlSettings_);
+            QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, eachEngineConfig_);
             
             selectedEngines.push_back(engine);
         }

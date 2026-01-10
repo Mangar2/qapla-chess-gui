@@ -23,6 +23,7 @@
 #include "configuration.h"
 #include <engine-handling/engine-worker-factory.h>
 #include <engine-handling/engine-config-manager.h>
+#include <config-file/engine-config-file.h>
 #include "os-dialogs.h"
 #include <base-elements/logger.h>
 #include "snackbar.h"
@@ -416,78 +417,60 @@ void ImGuiEngineSelect::resetNamesToOriginal() {
 }
 
 void ImGuiEngineSelect::updateConfiguration() const {
-    QaplaHelpers::IniFile::SectionList sections;
     if (id_.empty()) {
         return; // No ID set, skip saving
     }
-    for (const auto& engine : engineConfigurations_) {
-        // Store full configuration instead of just name reference
-        QaplaHelpers::IniFile::KeyValueMap entries{
-            {"id", id_},
-            {"selected", engine.selected ? "true" : "false"},
-            // Store all engine configuration attributes
-            {"name", engine.config.getName()},
-            {"originalName", engine.originalName},  // Store original name separately
-            {"author", engine.config.getAuthor()},
-            {"cmd", engine.config.getCmd()},
-            {"proto", to_string(engine.config.getProtocol())},
-            
-        };
-
-        // Only store non-default or enabled options to keep the configuration concise
-        const auto& config = engine.config;
-        if (!engine.config.getDir().empty()) {
-            entries.emplace_back("dir", engine.config.getDir());
-        }
-        if (!engine.config.getArgs().empty()) {
-            entries.emplace_back("args", engine.config.getArgs());
-        }
-        if (config.getRestartOption() != RestartOption::EngineDecides) {
-            entries.emplace_back("restart", to_string(config.getRestartOption()));
-        }
-        if (config.isGauntlet()) { entries.emplace_back("gauntlet", "true"); }
-        if (config.isPonderEnabled()) { entries.emplace_back("ponder", "true"); }
-        if (config.isScoreFromWhitePov()) { entries.emplace_back("whitepov", "true"); }
-
-        if (config.getTraceLevel() != TraceLevel::command) {
-            entries.emplace_back("trace", QaplaTester::to_string(config.getTraceLevel()));
-        }
-
-        if (config.getTimeControl().isValid()) {
-            entries.emplace_back("timecontrol", config.getTimeControl().toPgnTimeControlString());
-        }
-        
-        // Add engine-specific options
-        auto optionValues = config.getOptionValues();
-        for (const auto& [originalName, optionValue] : optionValues) {
-            entries.emplace_back(originalName, optionValue);
-        }
-        
-        QaplaHelpers::IniFile::Section section{
-            .name = "engineselection",
-            .entries = std::move(entries)
-        };
-        sections.push_back(std::move(section));
+    
+    std::vector<QaplaTester::EngineConfig> configs;
+    for (const auto& engineConfig : engineConfigurations_) {
+        configs.push_back(engineConfig.config);
     }
+    auto sections = QaplaTester::EngineConfigFile::getSections(configs);
+    
+    // Add engine selection metadata
+    size_t idx = 0;
+    for (auto& section : sections) {
+        section.entries.emplace_back("id", id_);
+        section.entries.emplace_back("originalName", engineConfigurations_[idx].originalName);
+        section.entries.emplace_back("selected", engineConfigurations_[idx].selected ? "true" : "false");
+        idx++;
+    }
+    
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", id_, sections);
 }
 
 void ImGuiEngineSelect::setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     engineConfigurations_.clear();
+    
+    // Filter sections for this ID
+    QaplaHelpers::IniFile::SectionList filteredSections;
     for (const auto& section : sections) {
         if (section.name == "engineselection" && section.getValue("id") == id_) {
-            EngineConfiguration engineConfig;
-            
-            engineConfig.config.setValues(section.getUnorderedMap());
-            // Load originalName if stored, otherwise use current name
-            auto originalNameValue = section.getValue("originalName");
-            engineConfig.originalName = originalNameValue ? *originalNameValue : engineConfig.config.getName();
-            // Parse selection state
-            auto selectedValue = section.getValue("selected");
-            engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;            
-            engineConfigurations_.push_back(std::move(engineConfig));
+            filteredSections.push_back(section);
         }
     }
+    
+    // Load engine configs from sections
+    auto configs = QaplaTester::EngineConfigFile::fromSections(filteredSections);
+    
+    // Restore engine configurations with metadata
+    for (size_t idx = 0; idx < configs.size() && idx < filteredSections.size(); idx++) {
+        const auto& section = filteredSections[idx];
+        EngineConfiguration engineConfig;
+        
+        engineConfig.config = configs[idx];
+        
+        // Load originalName if stored, otherwise use current name
+        auto originalNameValue = section.getValue("originalName");
+        engineConfig.originalName = originalNameValue ? *originalNameValue : engineConfig.config.getName();
+        
+        // Parse selection state
+        auto selectedValue = section.getValue("selected");
+        engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;
+        
+        engineConfigurations_.push_back(std::move(engineConfig));
+    }
+    
     updateUniqueDisplayNames();
     notifyConfigurationChanged();
 }

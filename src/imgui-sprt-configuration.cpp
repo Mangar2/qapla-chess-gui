@@ -197,7 +197,7 @@ void ImGuiSprtConfiguration::loadConfiguration() {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto config = QaplaTester::SprtConfigFile::loadFromConfigData(configData, id_);
+    auto config = QaplaTester::SprtConfigFile::fromConfigData(configData, id_);
     if (config) {
         *config_ = *config;
     }

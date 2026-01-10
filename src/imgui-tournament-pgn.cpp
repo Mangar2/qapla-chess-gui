@@ -121,7 +121,7 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
 
 void ImGuiTournamentPgn::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto pgnOptions = QaplaTester::PgnConfig::loadFromConfigData(configData, id_);
+    auto pgnOptions = QaplaTester::PgnConfig::fromConfigData(configData, id_);
     if (pgnOptions) {
         pgnOptions_ = *pgnOptions;
     }

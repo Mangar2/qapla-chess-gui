@@ -209,7 +209,7 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls,
     return modified;
 }
 
-void ImGuiEngineGlobalSettings::setGlobalConfiguration(const GlobalConfiguration& globalSettings) {
+void ImGuiEngineGlobalSettings::setGlobalConfiguration(const QaplaTester::EngineGlobalConfig& globalSettings) {
     globalSettings_ = globalSettings;
     notifyConfigurationChanged();
 }
@@ -278,7 +278,7 @@ void ImGuiEngineGlobalSettings::updateTimeControlConfiguration() const {
     }});
 }
 
-void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings) {
+void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
     if (auto value = section.getValue("usehash")) {
         settings.useGlobalHash = (*value == "true" || *value == "1");
     }
@@ -287,7 +287,7 @@ void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Se
     }
 }
 
-void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings) {
+void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
     if (auto value = section.getValue("useponder")) {
         settings.useGlobalPonder = (*value == "true" || *value == "1");
     }
@@ -296,7 +296,7 @@ void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::
     }
 }
 
-void ImGuiEngineGlobalSettings::loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings) {
+void ImGuiEngineGlobalSettings::loadTraceSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
     if (auto value = section.getValue("usetrace")) {
         settings.useGlobalTrace = (*value == "true" || *value == "1");
     }
@@ -305,7 +305,7 @@ void ImGuiEngineGlobalSettings::loadTraceSettings(const QaplaHelpers::IniFile::S
     }
 }
 
-void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings) {
+void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
     if (auto value = section.getValue("userestart")) {
         settings.useGlobalRestart = (*value == "true" || *value == "1");
     }
@@ -317,7 +317,7 @@ void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile:
 void ImGuiEngineGlobalSettings::setGlobalConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     for (const auto& section : sections) {
         if (section.name == "eachengine") {
-            GlobalConfiguration newGlobalSettings;
+            QaplaTester::EngineGlobalConfig newGlobalSettings;
             
             loadHashSettings(section, newGlobalSettings);
             loadPonderSettings(section, newGlobalSettings);
@@ -360,27 +360,5 @@ void ImGuiEngineGlobalSettings::setTimeControlConfiguration(const QaplaHelpers::
             notifyTimeControlChanged();
             break;
         }
-    }
-}
-
-void ImGuiEngineGlobalSettings::applyGlobalConfig(QaplaTester::EngineConfig& engine, 
-                                                   const GlobalConfiguration& globalSettings, 
-                                                   const TimeControlSettings& timeControlSettings) {
-    if (globalSettings.useGlobalPonder) {
-        engine.setPonder(globalSettings.ponder);
-    }
-    
-    engine.setTimeControl(timeControlSettings.timeControl);
-    
-    if (globalSettings.useGlobalRestart) {
-        engine.setRestartOption(QaplaTester::parseRestartOption(globalSettings.restart));
-    }
-    
-    if (globalSettings.useGlobalTrace) {
-        engine.setTraceLevel(globalSettings.traceLevel);
-    }
-    
-    if (globalSettings.useGlobalHash) {
-        engine.setOptionValue("Hash", std::to_string(globalSettings.hashSizeMB));
     }
 }

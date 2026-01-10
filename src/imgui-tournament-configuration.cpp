@@ -139,7 +139,7 @@ void ImGuiTournamentConfiguration::loadConfiguration() {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto config = QaplaTester::TournamentConfigFile::loadFromConfigData(configData, id_);
+    auto config = QaplaTester::TournamentConfigFile::fromConfigData(configData, id_);
     if (config) {
         *config_ = *config;
     }

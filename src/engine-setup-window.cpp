@@ -80,8 +80,9 @@ std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() con
     for (const auto& config : configurations) {
         if (config.selected) {
             auto engine = config.config;
-            ImGuiEngineGlobalSettings::applyGlobalConfig(engine, globalSettings_.getGlobalConfiguration(), 
-                                                         globalSettings_.getTimeControlSettings());
+            auto globalConfig = globalSettings_.getGlobalConfiguration();
+            globalConfig.timeControl = globalSettings_.getTimeControlSettings().timeControl;
+            QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, globalConfig);
             engines.push_back(engine);
         }
     }

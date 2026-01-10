@@ -22,6 +22,7 @@
 #include "tutorial.h"
 
 #include <base-elements/ini-file.h>
+#include <config-file/engine-global-config.h>
 
 #include <string>
 #include <functional>
@@ -49,23 +50,6 @@ namespace QaplaWindows {
      */
     class ImGuiEngineGlobalSettings {
     public:
-        /**
-         * @brief Global engine settings data structure
-         */
-        struct GlobalConfiguration {
-            bool useGlobalHash = true;      ///< Whether to use a global hash size setting
-            uint32_t hashSizeMB = 32;       ///< Hash size in MB (1-64000)
-            
-            bool useGlobalPonder = true;    ///< Whether to use a global ponder setting
-            bool ponder = false;             ///< Whether pondering is enabled globally
-            
-            bool useGlobalTrace = true;     ///< Whether to use a global trace level setting
-            std::string traceLevel = "command"; ///< Global trace level ("none", "all", "command")
-            
-            bool useGlobalRestart = true;   ///< Whether to use a global restart option
-            std::string restart = "auto";    ///< Global restart option ("auto", "on", "off")
-        };
-
         /**
          * @brief Time control settings data structure
          */
@@ -99,7 +83,7 @@ namespace QaplaWindows {
          * @brief Callback type that is called when the configuration changes
          * @param globalSettings The current global settings
          */
-        using ConfigurationChangedCallback = std::function<void(const GlobalConfiguration&)>;
+        using ConfigurationChangedCallback = std::function<void(const QaplaTester::EngineGlobalConfig&)>;
 
         /**
          * @brief Callback type that is called when the time control changes
@@ -145,13 +129,13 @@ namespace QaplaWindows {
          * @brief Returns the current global settings
          * @return Reference to the current global settings
          */
-        const GlobalConfiguration& getGlobalConfiguration() const { return globalSettings_; }
+        const QaplaTester::EngineGlobalConfig& getGlobalConfiguration() const { return globalSettings_; }
 
         /**
          * @brief Sets the global settings
          * @param globalSettings The new global settings
          */
-        void setGlobalConfiguration(const GlobalConfiguration& globalSettings);
+        void setGlobalConfiguration(const QaplaTester::EngineGlobalConfig& globalSettings);
 
         /**
          * @brief Returns the current time control settings
@@ -197,16 +181,6 @@ namespace QaplaWindows {
          */
         void setId(const std::string& id) { id_ = id; }
 
-        /**
-         * @brief Applies global settings to an engine configuration
-         * @param engine The engine configuration to modify
-         * @param globalSettings The global settings to apply
-         * @param timeControlSettings The time control settings to apply
-         */
-        static void applyGlobalConfig(QaplaTester::EngineConfig& engine, 
-                                      const GlobalConfiguration& globalSettings, 
-                                      const TimeControlSettings& timeControlSettings);
-
     private:
         /**
          * @brief Notifies about configuration changes via callback
@@ -233,28 +207,28 @@ namespace QaplaWindows {
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
+        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
 
         /**
          * @brief Loads ponder settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
+        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
 
         /**
          * @brief Loads trace settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
+        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
 
         /**
          * @brief Loads restart settings from an INI section
          * @param section The INI section to load from
          * @param settings The settings structure to update
          */
-        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, GlobalConfiguration& settings);
+        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
 
         /**
          * @brief Draws the hash size control
@@ -297,7 +271,7 @@ namespace QaplaWindows {
             const Tutorial::TutorialContext& tutorialContext);
 
         std::string id_ = "unset";                              ///< Unique identifier for this instance
-        GlobalConfiguration globalSettings_;                         ///< Current global settings
+        QaplaTester::EngineGlobalConfig globalSettings_;                         ///< Current global settings
         TimeControlSettings timeControlSettings_;               ///< Current time control settings
         ConfigurationChangedCallback configurationCallback_;    ///< Callback for changes
         TimeControlChangedCallback timeControlCallback_;        ///< Callback for time control changes

@@ -186,7 +186,7 @@ bool ImGuiTournamentOpening::drawSwitchPolicy(float inputWidth,
 
 void ImGuiTournamentOpening::loadConfiguration() {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto openings = QaplaTester::OpeningConfig::loadFromConfigData(configData, id_);
+    auto openings = QaplaTester::OpeningConfig::fromConfigData(configData, id_);
     if (openings) {
         openings_ = *openings;
     }
