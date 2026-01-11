@@ -117,8 +117,8 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
     {
         EngineConfiguration engine = {
             .config = config,
-            .selected = false, 
-            .originalName = {}};
+            .originalName = {},
+            .selected = false};
 
         auto it = findEngineConfiguration(config);
         if (it != engineConfigurations_.end())
@@ -272,8 +272,8 @@ std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
         
         EngineConfiguration newEngine = {
             .config = newConfig,
-            .selected = select,
-            .originalName = newConfig.getName()
+            .originalName = newConfig.getName(),
+            .selected = select
         };
         engineConfigurations_.push_back(newEngine);
         addedEngines.push_back(path);
@@ -378,8 +378,8 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
                 } else {
                     EngineConfiguration newEngine = {
                         .config = config,
-                        .selected = true,
-                        .originalName = config.getName()
+                        .originalName = config.getName(),
+                        .selected = true
                     };
                     engineConfigurations_.push_back(newEngine);
                 }
@@ -421,19 +421,13 @@ void ImGuiEngineSelect::updateConfiguration() const {
         return; // No ID set, skip saving
     }
     
-    std::vector<QaplaTester::EngineConfig> configs;
+    QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engineConfig : engineConfigurations_) {
-        configs.push_back(engineConfig.config);
-    }
-    auto sections = QaplaTester::EngineConfigFile::getSections(configs);
-    
-    // Add engine selection metadata
-    size_t idx = 0;
-    for (auto& section : sections) {
+        auto section = QaplaTester::EngineConfigFile::toSection(engineConfig.config);
         section.entries.emplace_back("id", id_);
-        section.entries.emplace_back("originalName", engineConfigurations_[idx].originalName);
-        section.entries.emplace_back("selected", engineConfigurations_[idx].selected ? "true" : "false");
-        idx++;
+        section.entries.emplace_back("originalName", engineConfig.originalName);
+        section.entries.emplace_back("selected", engineConfig.selected ? "true" : "false");
+        sections.push_back(std::move(section));
     }
     
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", id_, sections);
@@ -442,33 +436,10 @@ void ImGuiEngineSelect::updateConfiguration() const {
 void ImGuiEngineSelect::setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     engineConfigurations_.clear();
     
-    // Filter sections for this ID
-    QaplaHelpers::IniFile::SectionList filteredSections;
     for (const auto& section : sections) {
-        if (section.name == "engineselection" && section.getValue("id") == id_) {
-            filteredSections.push_back(section);
+        if (section.name == "engine" && section.getValue("id") == id_) {
+            engineConfigurations_.push_back(QaplaTester::EngineConfigFile::fromSection(section));
         }
-    }
-    
-    // Load engine configs from sections
-    auto configs = QaplaTester::EngineConfigFile::fromSections(filteredSections);
-    
-    // Restore engine configurations with metadata
-    for (size_t idx = 0; idx < configs.size() && idx < filteredSections.size(); idx++) {
-        const auto& section = filteredSections[idx];
-        EngineConfiguration engineConfig;
-        
-        engineConfig.config = configs[idx];
-        
-        // Load originalName if stored, otherwise use current name
-        auto originalNameValue = section.getValue("originalName");
-        engineConfig.originalName = originalNameValue ? *originalNameValue : engineConfig.config.getName();
-        
-        // Parse selection state
-        auto selectedValue = section.getValue("selected");
-        engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;
-        
-        engineConfigurations_.push_back(std::move(engineConfig));
     }
     
     updateUniqueDisplayNames();

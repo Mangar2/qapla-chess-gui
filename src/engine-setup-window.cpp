@@ -100,8 +100,8 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<QaplaTester::
         if (matching != nullptr) {
             ImGuiEngineSelect::EngineConfiguration config {
                 .config = engine,
-                .selected = true,
-                .originalName = engine.getName()
+                .originalName = engine.getName(),
+                .selected = true
             };
             configurations.push_back(config);
         }

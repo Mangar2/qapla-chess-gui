@@ -82,14 +82,15 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
 
 void ImGuiTournamentAdjudication::loadConfiguration() {
     const auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto drawSections = configData.getSectionList("drawadjudication", id_);
-    auto resignSections = configData.getSectionList("resignadjudication", id_);
     
-    if (drawSections && !drawSections->empty()) {
-        drawConfig_ = QaplaTester::AdjudicationConfig::fromDrawSection((*drawSections)[0]);
+    auto drawConfig = QaplaTester::AdjudicationConfig::fromDrawConfigData(configData, id_);
+    if (drawConfig.has_value()) {
+        drawConfig_ = *drawConfig;
     }
-    if (resignSections && !resignSections->empty()) {
-        resignConfig_ = QaplaTester::AdjudicationConfig::fromResignSection((*resignSections)[0]);
+    
+    auto resignConfig = QaplaTester::AdjudicationConfig::fromResignConfigData(configData, id_);
+    if (resignConfig.has_value()) {
+        resignConfig_ = *resignConfig;
     }
 }
 

@@ -53,8 +53,8 @@ ChatbotAddEngines::ChatbotAddEngines() {
     for (const auto& config : configs) {
         existingEngines.push_back({
             .config = config,
-            .selected = false,
-            .originalName = config.getName()
+            .originalName = config.getName(),
+            .selected = false
         });
     }
     engineSelect_->setEngineConfigurations(existingEngines);

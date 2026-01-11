@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <engine-handling/engine-config.h>
+#include <config-file/engine-config-file.h>
 #include <base-elements/ini-file.h>
 
 #include <vector>
@@ -32,14 +32,7 @@ namespace QaplaWindows {
      */
     class ImGuiEngineSelect {
     public:
-        /**
-         * @brief Structure for an engine configuration with selection status
-         */
-        struct EngineConfiguration {
-            QaplaTester::EngineConfig config;
-            bool selected = false;
-            std::string originalName;  ///< Original name from config or user-modified name, used for disambiguation reset
-        };
+        using EngineConfiguration = QaplaTester::EngineConfiguration;
 
         /**
          * @brief Options to control which engine properties are editable
