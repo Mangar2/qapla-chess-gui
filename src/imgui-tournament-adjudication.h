@@ -61,7 +61,6 @@ namespace QaplaWindows {
         }
 
         void loadConfiguration();
-        [[nodiscard]] std::vector<QaplaHelpers::IniFile::Section> getSections() const;
 
     private:
         /**

@@ -207,7 +207,7 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiSprtConfiguration::getSections(
     if (config_ == nullptr) {
         return {};
     }
-    return QaplaTester::SprtConfigFile::getSections(*config_, id_);
+    return QaplaTester::SprtConfigFile::toSections(*config_, id_);
 }
 
 void ImGuiSprtConfiguration::updateConfiguration() const {
@@ -215,7 +215,7 @@ void ImGuiSprtConfiguration::updateConfiguration() const {
         return;
     }
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::SprtConfigFile::getSections(*config_, id_);
+    auto sections = QaplaTester::SprtConfigFile::toSections(*config_, id_);
     configData.setSectionList("sprt", id_, sections);
 }
 

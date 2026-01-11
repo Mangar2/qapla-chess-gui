@@ -128,11 +128,11 @@ void ImGuiTournamentPgn::loadConfiguration() {
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentPgn::getSections() const {
-    return QaplaTester::PgnConfig::getSections(pgnOptions_, id_);
+    return QaplaTester::PgnConfig::toSections(pgnOptions_, id_);
 }
 
 void ImGuiTournamentPgn::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::PgnConfig::getSections(pgnOptions_, id_);
+    auto sections = QaplaTester::PgnConfig::toSections(pgnOptions_, id_);
     configData.setSectionList("pgnoutput", id_, sections);
 }

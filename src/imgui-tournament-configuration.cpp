@@ -150,7 +150,7 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSec
         return {};
     }
 
-    return QaplaTester::TournamentConfigFile::getSections(*config_, id_);
+    return QaplaTester::TournamentConfigFile::toSections(*config_, id_);
 }
 
 void ImGuiTournamentConfiguration::updateConfiguration() const {
@@ -159,6 +159,6 @@ void ImGuiTournamentConfiguration::updateConfiguration() const {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::TournamentConfigFile::getSections(*config_, id_);
+    auto sections = QaplaTester::TournamentConfigFile::toSections(*config_, id_);
     configData.setSectionList("tournament", id_, sections);
 }

@@ -193,11 +193,11 @@ void ImGuiTournamentOpening::loadConfiguration() {
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections() const {
-    return QaplaTester::OpeningConfig::getSections(openings_, id_);
+    return QaplaTester::OpeningConfig::toSections(openings_, id_);
 }
 
 void ImGuiTournamentOpening::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::OpeningConfig::getSections(openings_, id_);
+    auto sections = QaplaTester::OpeningConfig::toSections(openings_, id_);
     configData.setSectionList("opening", id_, sections);
 }

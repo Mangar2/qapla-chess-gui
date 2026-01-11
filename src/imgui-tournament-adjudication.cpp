@@ -94,17 +94,10 @@ void ImGuiTournamentAdjudication::loadConfiguration() {
     }
 }
 
-std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentAdjudication::getSections() const {
-    std::vector<QaplaHelpers::IniFile::Section> sections;
-    sections.push_back(QaplaTester::AdjudicationConfig::toDrawSection(drawConfig_, id_));
-    sections.push_back(QaplaTester::AdjudicationConfig::toResignSection(resignConfig_, id_));
-    return sections;
-}
-
 void ImGuiTournamentAdjudication::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto drawSection = QaplaTester::AdjudicationConfig::toDrawSection(drawConfig_, id_);
-    auto resignSection = QaplaTester::AdjudicationConfig::toResignSection(resignConfig_, id_);
-    configData.setSectionList("drawadjudication", id_, {drawSection});
-    configData.setSectionList("resignadjudication", id_, {resignSection});
+    auto drawSections = QaplaTester::AdjudicationConfig::toDrawSections(drawConfig_, id_);
+    auto resignSections = QaplaTester::AdjudicationConfig::toResignSections(resignConfig_, id_);
+    configData.setSectionList("drawadjudication", id_, drawSections);
+    configData.setSectionList("resignadjudication", id_, resignSections);
 }

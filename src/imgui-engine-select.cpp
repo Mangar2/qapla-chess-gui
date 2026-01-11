@@ -423,10 +423,7 @@ void ImGuiEngineSelect::updateConfiguration() const {
     
     QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engineConfig : engineConfigurations_) {
-        auto section = QaplaTester::EngineConfigFile::toSection(engineConfig.config);
-        section.entries.emplace_back("id", id_);
-        section.entries.emplace_back("originalName", engineConfig.originalName);
-        section.entries.emplace_back("selected", engineConfig.selected ? "true" : "false");
+        auto section = QaplaTester::EngineConfigFile::toSection(engineConfig, id_);
         sections.push_back(std::move(section));
     }
     
