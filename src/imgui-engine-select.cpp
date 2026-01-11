@@ -306,8 +306,6 @@ void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCall
     notifyConfigurationChanged();
 }
 
-
-
 std::vector<ImGuiEngineSelect::EngineConfiguration>::iterator 
 ImGuiEngineSelect::findEngineConfiguration(const EngineConfig& engineConfig) {
     return std::ranges::find_if(engineConfigurations_,
@@ -434,7 +432,7 @@ void ImGuiEngineSelect::setEnginesConfiguration(const QaplaHelpers::IniFile::Sec
     engineConfigurations_.clear();
     
     for (const auto& section : sections) {
-        if (section.name == "engine" && section.getValue("id") == id_) {
+        if (section.name == "engineselection" && section.getValue("id") == id_) {
             engineConfigurations_.push_back(QaplaTester::EngineConfigFile::fromSection(section));
         }
     }
