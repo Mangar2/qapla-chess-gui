@@ -17,6 +17,9 @@ add_executable(diagnostic-engine
     ${QAPLA_TESTER_DIR}/chess-game/move-record.cpp
     ${QAPLA_TESTER_DIR}/base-elements/base-logger.cpp
     ${QAPLA_TESTER_DIR}/base-elements/logger.cpp
+    ${QAPLA_TESTER_DIR}/base-elements/file-helper.cpp
+    ${QAPLA_TESTER_DIR}/base-elements/json-helper.cpp
+    ${QAPLA_TESTER_DIR}/base-elements/table-format.cpp
     # qapla-engine core
     ${QAPLA_TESTER_DIR}/qapla-engine/board.cpp
     ${QAPLA_TESTER_DIR}/qapla-engine/movegenerator.cpp
@@ -30,6 +33,7 @@ add_executable(diagnostic-engine
 # Include directories for GameState and qapla-engine
 target_include_directories(diagnostic-engine PRIVATE
     ${QAPLA_TESTER_DIR}
+    ${QAPLA_TESTER_DIR}/game-manager
     ${QAPLA_TESTER_DIR}/../..
 )
 
