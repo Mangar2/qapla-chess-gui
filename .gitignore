@@ -11,6 +11,7 @@ i18n/*.exe
 *.pgn
 *.code-workspace
 *.exe
+*.o.d
 
 # Libraries used
 extern/imgui/

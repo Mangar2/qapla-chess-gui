@@ -1,20 +1,20 @@
 [Translation]
 id=Button
-{s:"Add",t:"2026-01-11"}=Ajouter
-{s:"Remove",t:"2026-01-11"}=Retirer
-{s:"Detect",t:"2026-01-11"}=Detecter
-{s:"New",t:"2026-01-11"}=Nouveau
-{s:"Now",t:"2026-01-11"}=Maint
-{s:"Stop",t:"2026-01-11"}=Arret
-{s:"Play",t:"2026-01-11"}=Jouer
-{s:"Analyze",t:"2026-01-11"}=Analyser
-{s:"Auto",t:"2026-01-11"}=Auto
-{s:"Invert",t:"2026-01-11"}=Inverser
-{s:"Time",t:"2026-01-11"}=Temps
-{s:"Setup",t:"2026-01-11"}=Config
-{s:"More",t:"2026-01-11"}=Plus
-{s:"Config",t:"2026-01-11"}=Config
-{s:"Swap",t:"2026-01-11"}=Echanger
+{s:"Add",t:"2026-04-21"}=Ajouter
+{s:"Remove",t:"2026-04-21"}=Retirer
+{s:"Detect",t:"2026-04-21"}=Detecter
+{s:"New",t:"2025-12-28"}=Nouveau
+{s:"Now",t:"2025-12-28"}=Maint
+{s:"Stop",t:"2025-12-28"}=Arret
+{s:"Play",t:"2025-12-28"}=Jouer
+{s:"Analyze",t:"2025-12-28"}=Analyser
+{s:"Auto",t:"2025-12-28"}=Auto
+{s:"Invert",t:"2025-12-28"}=Inverser
+{s:"Time",t:"2025-12-28"}=Temps
+{s:"Setup",t:"2025-12-28"}=Config
+{s:"More",t:"2025-12-28"}=Plus
+{s:"Config",t:"2025-12-28"}=Config
+{s:"Swap",t:"2025-12-28"}=Echanger
 {s:"Restart",t:"2025-12-28"}=Rel.
 {s:"Log",t:"2025-12-28"}=Journal
 {s:"Run",t:"2026-01-11"}=Executer
@@ -596,15 +596,15 @@ Tournament type:\n  gauntlet - One engine plays against all others\n  round-robi
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2026-01-11"}=Moteurs
-{s:"Tournament",t:"2026-01-11"}=Tournoi
-{s:"Pgn",t:"2026-01-11"}=Pgn
-{s:"Epd",t:"2026-01-11"}=Epd
-{s:"Test",t:"2026-01-11"}=Test
-{s:"Settings",t:"2026-01-11"}=Paramètres
-{s:"Board",t:"2026-01-11"}=Échiquier
-{s:"Chatbot",t:"2026-01-11"}=Chatbot
-{s:"SPRT",t:"2026-01-11"}=SPRT
+{s:"Engines",t:"2026-04-21"}=Moteurs
+{s:"Tournament",t:"2026-04-21"}=Tournoi
+{s:"Pgn",t:"2026-04-21"}=Pgn
+{s:"Epd",t:"2026-04-21"}=Epd
+{s:"Test",t:"2026-04-21"}=Test
+{s:"Settings",t:"2026-04-21"}=Paramètres
+{s:"Board",t:"2026-04-21"}=Échiquier
+{s:"Chatbot",t:"2026-04-21"}=Chatbot
+{s:"SPRT",t:"2026-04-21"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -800,7 +800,7 @@ id=Text
 {s:"No engines added. You can add engines now if you like.",t:"2025-12-16"}=Aucun moteur ajouté. Vous pouvez ajouter des moteurs maintenant si vous voulez.
 {s:"C:\\Chess\\cutechess-cli\\qapla\\1.\\2\\Leorik-\\3.\\4.exe",t:"2025-12-16"}=C:\Chess\cutechess-cli\qapla\1.\2\Leorik-\3.\4.exe
 {s:"Messages",t:"2025-12-16"}=Messages
-{s:"How can I help you?",t:"2026-01-11"}=How can I help you?
+{s:"How can I help you?",t:"2026-04-21"}=How can I help you?
 {s:"Select a tutorial to run:",t:"2025-12-21"}=Sélectionner un tutoriel à exécuter :
 {s:"Please select your preferred language:",t:"2025-12-19"}=Veuillez sélectionner votre langue préférée :
 {h:"b0ade7c5",s:"Select which engine should be tested (gauntlet eng",t:"2025-12-21"}=Select which engine should be tested (gauntlet engine). This is the engine whose performance will be measured. The other engine will be used as the comparison baseline.
@@ -813,17 +813,17 @@ id=Text
 
 [Translation]
 id=TextButton
-{s:"Tournament",t:"2026-01-11"}=Tournoi
-{s:"SPRT Tournament",t:"2026-01-11"}=Tournoi SPRT
-{s:"EPD Analysis",t:"2026-01-11"}=Analyse EPD
-{s:"Board",t:"2026-01-11"}=Échiquier
-{s:"Tutorial",t:"2026-01-11"}=Tutoriel
-{s:"Choose Language",t:"2026-01-11"}=Choisir la langue
-{s:"Messages",t:"2026-01-11"}=Messages
+{s:"Tournament",t:"2026-04-21"}=Tournoi
+{s:"SPRT Tournament",t:"2026-04-21"}=Tournoi SPRT
+{s:"EPD Analysis",t:"2026-04-21"}=Analyse EPD
+{s:"Board",t:"2026-04-21"}=Échiquier
+{s:"Tutorial",t:"2026-04-21"}=Tutoriel
+{s:"Choose Language",t:"2026-04-21"}=Choisir la langue
+{s:"Messages",t:"2026-04-21"}=Messages
 {s:"Deutsch",t:"2025-12-19"}=Deutsch
 {s:"English",t:"2025-12-19"}=English
 {s:"Français",t:"2025-12-19"}=Français
-{s:"Add Engines",t:"2026-01-11"}=Ajouter des moteurs
+{s:"Add Engines",t:"2026-04-21"}=Ajouter des moteurs
 {s:"Cancel",t:"2025-12-21"}=Annuler
 {s:"Board Engines",t:"2025-12-21"}=Moteurs d'échiquier
 {s:"Board Window",t:"2025-12-21"}=Fenêtre d'échiquier
