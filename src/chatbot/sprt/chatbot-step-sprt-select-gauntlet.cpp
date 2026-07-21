@@ -87,8 +87,8 @@ void ChatbotStepSprtSelectGauntlet::drawGauntletSelection() {
 
     // Build combo box items
     std::vector<std::string> engineNames;
-    engineNames.push_back(selectedEngines[0].config.getName());
-    engineNames.push_back(selectedEngines[1].config.getName());
+    engineNames.push_back(selectedEngines[0].getName());
+    engineNames.push_back(selectedEngines[1].getName());
 
     // Determine display text
     const char* previewText = (currentGauntletIndex >= 0 && currentGauntletIndex < 2)
@@ -133,14 +133,14 @@ void ChatbotStepSprtSelectGauntlet::applyGauntletSelection(int selectedIndex) {
     }
     
     // Get the name of the selected gauntlet engine
-    std::string gauntletEngineName = selectedEngines[selectedIndex].config.getName();
-    
+    std::string gauntletEngineName = selectedEngines[selectedIndex].getName();
+
     // Update all configurations: set gauntlet for the selected one, clear for others
     for (auto& config : configurations) {
-        if (config.selected && config.config.getName() == gauntletEngineName) {
-            config.config.setGauntlet(true);
+        if (config.isSelected() && config.getName() == gauntletEngineName) {
+            config.setGauntlet(true);
         } else {
-            config.config.setGauntlet(false);
+            config.setGauntlet(false);
         }
     }
     
@@ -151,7 +151,7 @@ int ChatbotStepSprtSelectGauntlet::findCurrentGauntletIndex() const {
     auto selectedEngines = SprtTournamentData::instance().getEngineSelect().getSelectedEngines();
     
     for (int idx = 0; idx < static_cast<int>(selectedEngines.size()); ++idx) {
-        if (selectedEngines[idx].config.isGauntlet()) {
+        if (selectedEngines[idx].isGauntlet()) {
             return idx;
         }
     }

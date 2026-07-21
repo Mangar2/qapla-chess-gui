@@ -40,8 +40,8 @@ namespace QaplaTest {
         auto& getEngineSelect = tournamentData.getEngineSelect();
         auto configs = getEngineSelect.getEngineConfigurations();
         for (auto& cfg : configs) {
-            cfg.selected = false;
-            cfg.config.setPonder(false);
+            cfg.setSelected(false);
+            cfg.setPonder(false);
         }
         getEngineSelect.setEngineConfigurations(configs);
         

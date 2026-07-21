@@ -33,13 +33,12 @@ namespace QaplaWindows {
     class ImGuiEngineSelect {
     public:
         /**
-         * @brief Structure for an engine configuration with selection status
+         * @brief Element type for engine selection. QaplaTester::EngineConfig carries
+         * selection state (isSelected()/setSelected()) and the pre-disambiguation name
+         * (getReportedName()/setReportedName()) directly, matching the shared "engine"
+         * INI section format used by the CLI/MCP - no separate GUI-only wrapper.
          */
-        struct EngineConfiguration {
-            QaplaTester::EngineConfig config;
-            bool selected = false;
-            std::string originalName;  ///< Original name from config or user-modified name, used for disambiguation reset
-        };
+        using EngineConfiguration = QaplaTester::EngineConfig;
 
         /**
          * @brief Options to control which engine properties are editable

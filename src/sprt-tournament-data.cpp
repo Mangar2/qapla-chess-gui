@@ -169,7 +169,7 @@ void SprtTournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSe
 
 void SprtTournamentData::loadEngineSelectionConfig() {
     auto sections = QaplaConfiguration::Configuration::instance()
-        .getConfigData().getSectionList("engineselection", "sprt-tournament")
+        .getConfigData().getSectionList("engine", "sprt-tournament")
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("sprt-tournament");
     engineSelect_->setEnginesConfiguration(sections);
@@ -178,7 +178,7 @@ void SprtTournamentData::loadEngineSelectionConfig() {
 void SprtTournamentData::loadGlobalSettingsConfig() {
     auto& config = QaplaConfiguration::Configuration::instance();
     
-    auto globalSections = config.getConfigData().getSectionList("eachengine", "sprt-tournament")
+    auto globalSections = config.getConfigData().getSectionList("each", "sprt-tournament")
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     globalSettings_->setId("sprt-tournament");
     globalSettings_->setGlobalConfiguration(globalSections);
@@ -221,11 +221,11 @@ bool SprtTournamentData::createTournament(bool verbose) {
         // Build engine configurations with global settings applied
         std::vector<EngineConfig> selectedEngines;
         for (auto& tournamentConfig : engineConfigurations_) {
-            if (!tournamentConfig.selected) {
+            if (!tournamentConfig.isSelected()) {
                 continue;
             }
-            EngineConfig engine = tournamentConfig.config;
-            
+            EngineConfig engine = tournamentConfig;
+
             // Apply global settings to engine
             QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, eachEngineConfig_);
             
@@ -293,10 +293,10 @@ bool SprtTournamentData::mayStartTournament(bool verbose) {
     int nonGauntletCount = 0;
     
     for (const auto& config : engineConfigurations_) {
-        if (!config.selected) {
+        if (!config.isSelected()) {
             continue;
         }
-        if (config.config.isGauntlet()) {
+        if (config.isGauntlet()) {
             ++gauntletCount;
         } else {
             ++nonGauntletCount;
@@ -665,8 +665,20 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
     }
 
     try {
-        auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        QaplaTester::SprtTournamentFile::save(filename, configData, "sprt-tournament");
+        // Work on a local copy: the tournament's engines must be embedded in the
+        // saved file (so it's self-contained and resumable elsewhere), but must not
+        // pollute the app's own persisted settings (configData is also autosaved to
+        // qapla-chess-gui.ini).
+        auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
+        for (const auto& tournamentConfig : SprtTournamentData::instance().engineConfigurations_) {
+            if (!tournamentConfig.isSelected()) {
+                continue;
+            }
+            auto engineSection = tournamentConfig.toSection();
+            engineSection.addEntry("id", "sprt-tournament");
+            saveData.addSection(engineSection);
+        }
+        QaplaTester::SprtTournamentFile::save(filename, saveData, "sprt-tournament");
 
         SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,
             false, "sprt-tournament");

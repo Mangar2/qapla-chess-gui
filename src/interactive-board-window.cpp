@@ -95,7 +95,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 InteractiveBoardWindow::~InteractiveBoardWindow() {
 	timeControlWindow_->content().updateConfiguration("board" + std::to_string(id_));
 	QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-		"engineselection",
+		"engine",
 		"board" + std::to_string(id_),
 		{}
 	);
@@ -139,7 +139,7 @@ std::optional<uint32_t> InteractiveBoardWindow::createBoardViaMessage() {
 void InteractiveBoardWindow::loadGlobalEngineConfiguration(const std::string &idStr)
 {
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
-	auto globalSettings = config.getSectionList("eachengine", idStr);
+	auto globalSettings = config.getSectionList("each", idStr);
 	if (globalSettings) {
 		engineSetupWindow_->content().setGlobalConfiguration(*globalSettings);
 	}
@@ -154,7 +154,7 @@ void InteractiveBoardWindow::loadBoardEnginesConfiguration(
 
 std::vector<std::unique_ptr<InteractiveBoardWindow>> InteractiveBoardWindow::loadInstances() {
 	auto& config = QaplaConfiguration::Configuration::instance().getConfigData();
-	auto sectionMap = config.getSectionMap("engineselection");
+	auto sectionMap = config.getSectionMap("engine");
 	if (!sectionMap) {
 		return {};
 	}

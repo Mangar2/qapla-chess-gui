@@ -128,7 +128,7 @@ namespace QaplaTest::TutorialTest {
         const auto& configs = tournamentData.getEngineSelect().getEngineConfigurations();
         int selectedCount = 0;
         for (const auto& engineConfig : configs) {
-            if (engineConfig.selected) {
+            if (engineConfig.isSelected()) {
                 selectedCount++;
             }
         }

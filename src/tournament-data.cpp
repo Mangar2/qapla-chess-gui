@@ -214,10 +214,10 @@ namespace QaplaWindows {
         std::vector<EngineConfig> selectedEngines;
         
         for (const auto& tournamentConfig : engineConfigurations_) {
-            if (!tournamentConfig.selected) {
+            if (!tournamentConfig.isSelected()) {
                 continue;
             }
-            auto engine = tournamentConfig.config;
+            auto engine = tournamentConfig;
             QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, eachEngineConfig_);
             
             selectedEngines.push_back(engine);
@@ -698,7 +698,7 @@ namespace QaplaWindows {
 
      void TournamentData::loadEngineSelectionConfig() {
         auto sections = QaplaConfiguration::Configuration::instance()
-            .getConfigData().getSectionList("engineselection", "tournament")
+            .getConfigData().getSectionList("engine", "tournament")
             .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         engineSelect_->setId("tournament");
         engineSelect_->setEnginesConfiguration(sections);
@@ -708,7 +708,7 @@ namespace QaplaWindows {
         auto& config = QaplaConfiguration::Configuration::instance();
         
         // Load global engine settings
-        auto globalSections = config.getConfigData().getSectionList("eachengine", "tournament")
+        auto globalSections = config.getConfigData().getSectionList("each", "tournament")
             .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         globalSettings_->setId("tournament");
         globalSettings_->setGlobalConfiguration(globalSections);
@@ -736,10 +736,19 @@ namespace QaplaWindows {
         }
 
         try {
-            auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-            QaplaTester::TournamentFile::save(filename, configData, "tournament");
-            
-            SnackbarManager::instance().showSuccess("Tournament saved to: " + filename, 
+            // Work on a local copy: the tournament's engines must be embedded in the
+            // saved file (so it's self-contained and resumable elsewhere), but must not
+            // pollute the app's own persisted settings (configData is also autosaved to
+            // qapla-chess-gui.ini).
+            auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
+            for (const auto& engine : TournamentData::instance().getSelectedEngines()) {
+                auto engineSection = engine.toSection();
+                engineSection.addEntry("id", "tournament");
+                saveData.addSection(engineSection);
+            }
+            QaplaTester::TournamentFile::save(filename, saveData, "tournament");
+
+            SnackbarManager::instance().showSuccess("Tournament saved to: " + filename,
                 false, "tournament");
         }
         catch (const std::exception& e) {

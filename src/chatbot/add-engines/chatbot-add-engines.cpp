@@ -51,11 +51,10 @@ ChatbotAddEngines::ChatbotAddEngines() {
     auto configs = configManager.getAllConfigs();
     std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration> existingEngines;
     for (const auto& config : configs) {
-        existingEngines.push_back({
-            .config = config,
-            .selected = false,
-            .originalName = config.getName()
-        });
+        auto existing = config;
+        existing.setSelected(false);
+        existing.setReportedName(config.getName());
+        existingEngines.push_back(existing);
     }
     engineSelect_->setEngineConfigurations(existingEngines);
 }

@@ -122,7 +122,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
-            if (selected.config.getCmd() == configs[0].getCmd()) {
+            if (selected.getCmd() == configs[0].getCmd()) {
                 alreadySelected = true;
                 break;
             }
@@ -152,7 +152,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         bool alreadySelected = false;
         for (const auto& selected : selectedEngines) {
-            if (selected.config.getCmd() == configs[1].getCmd()) {
+            if (selected.getCmd() == configs[1].getCmd()) {
                 alreadySelected = true;
                 break;
             }
@@ -184,16 +184,14 @@ namespace QaplaTest::SprtTournamentChatbot {
         // Create EngineConfigurations for the first two engines
         std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration> engineConfigs;
         
-        QaplaWindows::ImGuiEngineSelect::EngineConfiguration config1;
-        config1.config = QaplaTester::EngineConfig(configs[0]);
-        config1.config.setGauntlet(true);  // First engine is gauntlet (engine under test)
-        config1.selected = true;
+        QaplaWindows::ImGuiEngineSelect::EngineConfiguration config1 = QaplaTester::EngineConfig(configs[0]);
+        config1.setGauntlet(true);  // First engine is gauntlet (engine under test)
+        config1.setSelected(true);
         engineConfigs.push_back(config1);
-        
-        QaplaWindows::ImGuiEngineSelect::EngineConfiguration config2;
-        config2.config = QaplaTester::EngineConfig(configs[1]);
-        config2.config.setGauntlet(false);  // Second engine is comparison
-        config2.selected = true;
+
+        QaplaWindows::ImGuiEngineSelect::EngineConfiguration config2 = QaplaTester::EngineConfig(configs[1]);
+        config2.setGauntlet(false);  // Second engine is comparison
+        config2.setSelected(true);
         engineConfigs.push_back(config2);
         
         // Set the engine configurations

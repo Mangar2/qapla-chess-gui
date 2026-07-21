@@ -78,8 +78,8 @@ std::vector<QaplaTester::EngineConfig> EngineSetupWindow::getActiveEngines() con
     
     const auto& configurations = engineSelect_.getEngineConfigurations();
     for (const auto& config : configurations) {
-        if (config.selected) {
-            auto engine = config.config;
+        if (config.isSelected()) {
+            auto engine = config;
             auto globalConfig = globalSettings_.getGlobalConfiguration();
             globalConfig.timeControl = globalSettings_.getTimeControlSettings().timeControl;
             QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, globalConfig);
@@ -98,11 +98,9 @@ void EngineSetupWindow::setMatchingActiveEngines(const std::vector<QaplaTester::
     for (const auto& engine : engines) {
         auto* matching = configManager.getConfigMutableByCmdAndProtocol(engine.getCmd(), engine.getProtocol());
         if (matching != nullptr) {
-            ImGuiEngineSelect::EngineConfiguration config {
-                .config = engine,
-                .selected = true,
-                .originalName = engine.getName()
-            };
+            ImGuiEngineSelect::EngineConfiguration config = engine;
+            config.setSelected(true);
+            config.setReportedName(engine.getName());
             configurations.push_back(config);
         }
     }
@@ -124,8 +122,8 @@ QaplaButton::ButtonState EngineSetupWindow::getButtonState(const std::string& bu
     if (button == "Remove") {
         // Check if any engines are selected
         const auto& configurations = engineSelect_.getEngineConfigurations();
-        bool hasSelection = std::ranges::any_of(configurations, 
-            [](const auto& config) { return config.selected; });
+        bool hasSelection = std::ranges::any_of(configurations,
+            [](const auto& config) { return config.isSelected(); });
         
         if (!hasSelection) {
             return QaplaButton::ButtonState::Disabled;
@@ -211,10 +209,10 @@ void QaplaWindows::EngineSetupWindow::executeCommand(const std::string &button)
         // Remove selected engines
         const auto& configurations = engineSelect_.getEngineConfigurations();
         for (const auto& config : configurations) {
-            if (config.selected) {
-                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(config.config);
+            if (config.isSelected()) {
+                QaplaTester::EngineWorkerFactory::getConfigManagerMutable().removeConfig(config);
                 QaplaConfiguration::Configuration::instance().getEngineCapabilities().deleteCapability(
-                    config.config.getCmd(), config.config.getProtocol());
+                    config.getCmd(), config.getProtocol());
             }
         }
         

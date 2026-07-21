@@ -109,7 +109,7 @@ namespace QaplaWindows {
         options.allowMultipleSelection = true;
         engineSelect_->setOptions(options);
         auto engineSections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "epd").
+            getConfigData().getSectionList("engine", "epd").
             value_or(std::vector<QaplaHelpers::IniFile::Section>{});
         engineSelect_->setId("epd");
         engineSelect_->setEnginesConfiguration(engineSections);
@@ -365,8 +365,8 @@ namespace QaplaWindows {
     void EpdData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
          epdConfig_.engines.clear();
         for (const auto& config : configurations) {
-            if (config.selected) {
-                epdConfig_.engines.push_back(config.config);
+            if (config.isSelected()) {
+                epdConfig_.engines.push_back(config);
             }
         }
         scheduledEngines_ = 0;

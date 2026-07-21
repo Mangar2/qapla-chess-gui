@@ -37,7 +37,7 @@ namespace QaplaTest {
         auto& getEngineSelect = epdData.getEngineSelect();
         auto configs = getEngineSelect.getEngineConfigurations();
         for (auto& cfg : configs) {
-            cfg.selected = false;
+            cfg.setSelected(false);
         }
         getEngineSelect.setEngineConfigurations(configs);
         

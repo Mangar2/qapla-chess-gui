@@ -325,14 +325,14 @@ bool TournamentWindow::highlighted() const {
 bool TournamentWindow::hasTwoSameEnginesWithPonder() {
     const auto& configs = TournamentData::instance().getEngineSelect().getEngineConfigurations();
     
-    // Check if we have at least 2 selected engines with same originalName
+    // Check if we have at least 2 selected engines with same reported name
     long long index = 0;
     for (const auto& config: configs) {
-        if (config.selected) {
-            auto it = std::ranges::find_if(configs.begin() + index + 1, configs.end(), 
+        if (config.isSelected()) {
+            auto it = std::ranges::find_if(configs.begin() + index + 1, configs.end(),
                 [&config](const ImGuiEngineSelect::EngineConfiguration& otherConfig) {
-                    bool ponderCondition = config.config.isPonderEnabled() || otherConfig.config.isPonderEnabled();
-                    return otherConfig.selected && (config.originalName == otherConfig.originalName) && 
+                    bool ponderCondition = config.isPonderEnabled() || otherConfig.isPonderEnabled();
+                    return otherConfig.isSelected() && (config.getReportedName() == otherConfig.getReportedName()) &&
                         ponderCondition;
                 });
             
@@ -546,7 +546,7 @@ void TournamentWindow::showNextTournamentTutorialStep([[maybe_unused]] const std
             const auto& configs = tournamentData.getEngineSelect().getEngineConfigurations();
             int selectedCount = 0;
             for (const auto& engineConfig : configs) {
-                if (engineConfig.selected) {
+                if (engineConfig.isSelected()) {
                     selectedCount++;
                 }
             }

@@ -414,7 +414,7 @@ namespace QaplaWindows {
 
         /**
          * @brief Loads the engine selection configuration from the configuration file.
-         * @details Retrieves engine selection settings from the "engineselection" section
+         * @details Retrieves engine selection settings from the "engine" section
          *          with ID "sprt-tournament" and applies them to the engine selector.
          */
         void loadEngineSelectionConfig();

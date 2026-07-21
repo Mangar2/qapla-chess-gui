@@ -243,8 +243,8 @@ void ImGuiEngineGlobalSettings::notifyTimeControlChanged() {
 
 void ImGuiEngineGlobalSettings::updateConfiguration() const {
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList(
-        "eachengine", id_, {{
-            .name = "eachengine",
+        "each", id_, {{
+            .name = "each",
             .entries = QaplaHelpers::IniFile::KeyValueMap{
                 {"id", id_},
                 {"usehash", globalSettings_.useGlobalHash ? "true" : "false"},
@@ -316,7 +316,7 @@ void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile:
 
 void ImGuiEngineGlobalSettings::setGlobalConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     for (const auto& section : sections) {
-        if (section.name == "eachengine") {
+        if (section.name == "each") {
             QaplaTester::EngineGlobalConfig newGlobalSettings;
             
             loadHashSettings(section, newGlobalSettings);

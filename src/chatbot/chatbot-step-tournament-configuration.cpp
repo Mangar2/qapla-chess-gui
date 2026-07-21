@@ -120,7 +120,7 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
     // Build combo box items
     std::vector<std::string> engineNames;
     for (const auto& engine : selectedEngines) {
-        engineNames.push_back(engine.config.getName());
+        engineNames.push_back(engine.getName());
     }
 
     // Determine display text
@@ -155,14 +155,14 @@ void ChatbotStepTournamentConfiguration::applyGauntletSelection(int selectedInde
     }
     
     // Get the name of the selected gauntlet engine
-    std::string gauntletEngineName = selectedEngines[selectedIndex].config.getName();
-    
+    std::string gauntletEngineName = selectedEngines[selectedIndex].getName();
+
     // Update all configurations: set gauntlet for the selected one, clear for others
     for (auto& config : configurations) {
-        if (config.selected && config.config.getName() == gauntletEngineName) {
-            config.config.setGauntlet(true);
+        if (config.isSelected() && config.getName() == gauntletEngineName) {
+            config.setGauntlet(true);
         } else {
-            config.config.setGauntlet(false);
+            config.setGauntlet(false);
         }
     }
     
@@ -173,7 +173,7 @@ int ChatbotStepTournamentConfiguration::findCurrentGauntletIndex() const {
     auto selectedEngines = TournamentData::instance().getEngineSelect().getSelectedEngines();
     
     for (int i = 0; i < static_cast<int>(selectedEngines.size()); ++i) {
-        if (selectedEngines[i].config.isGauntlet()) {
+        if (selectedEngines[i].isGauntlet()) {
             return i;
         }
     }

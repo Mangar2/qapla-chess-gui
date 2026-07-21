@@ -56,7 +56,7 @@ void EngineTestWindow::setEngineConfigurationCallback(ImGuiEngineSelect::Configu
 
 void EngineTestWindow::setEngineConfiguration() {
     auto sections = QaplaConfiguration::Configuration::instance().
-            getConfigData().getSectionList("engineselection", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+            getConfigData().getSectionList("engine", "enginetest").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     engineSelect_->setId("enginetest");
     engineSelect_->setEnginesConfiguration(sections);
 }
@@ -67,8 +67,8 @@ std::vector<QaplaTester::EngineConfig> EngineTestWindow::getSelectedEngineConfig
     const auto& configurations = engineSelect_->getEngineConfigurations();
     
     for (const auto& config : configurations) {
-        if (config.selected) {
-            selectedConfigs.push_back(config.config);
+        if (config.isSelected()) {
+            selectedConfigs.push_back(config);
         }
     }
     

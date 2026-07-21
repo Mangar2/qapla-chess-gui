@@ -1,0 +1,352 @@
+[tournament]
+id=tournament
+event=
+type=round-robin
+saveintervalS=0
+games=10
+rounds=100
+repeat=2
+ratinginterval=0
+outcomeinterval=0
+averageelo=2600
+noswap=false
+
+[openings]
+id=tournament
+file=/home/mangar/dev/qapla-engine-tester/test/opening/book8ply.raw
+order=random
+plies=all
+start=1
+srand=815
+policy=default
+
+[pgnoutput]
+id=tournament
+file=/home/mangar/dev/qapla-chess-gui/log/test.pgn
+append=true
+finished=true
+min=false
+clock=true
+eval=true
+depth=true
+pv=true
+
+[round]
+id=tournament
+round=1
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=111==11=1=
+wincauses=checkmate:6
+drawcauses=threefold repetition:3
+drawcauses=50-move rule:1
+
+[round]
+id=tournament
+round=1
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games==000000000
+drawcauses=50-move rule:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=1
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=00000000=0
+drawcauses=threefold repetition:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=2
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=00001=0===
+wincauses=checkmate:1
+drawcauses=threefold repetition:3
+drawcauses=insufficient material:1
+losscauses=checkmate:5
+
+[round]
+id=tournament
+round=2
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=00000000=0
+drawcauses=threefold repetition:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=2
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=1000000000
+wincauses=checkmate:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=3
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=110=10100=
+wincauses=checkmate:4
+drawcauses=threefold repetition:2
+losscauses=checkmate:4
+
+[round]
+id=tournament
+round=3
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=000010=000
+wincauses=checkmate:1
+drawcauses=threefold repetition:1
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=3
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=4
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=1=1==1===1
+wincauses=checkmate:4
+drawcauses=threefold repetition:5
+drawcauses=insufficient material:1
+
+[round]
+id=tournament
+round=4
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=100000=000
+wincauses=checkmate:1
+drawcauses=threefold repetition:1
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=4
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=5
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=011=0=1110
+wincauses=checkmate:5
+drawcauses=threefold repetition:2
+losscauses=checkmate:3
+
+[round]
+id=tournament
+round=5
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=0010000000
+wincauses=checkmate:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=5
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=6
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=1100=====0
+wincauses=checkmate:2
+drawcauses=threefold repetition:3
+drawcauses=50-move rule:1
+drawcauses=insufficient material:1
+losscauses=checkmate:3
+
+[round]
+id=tournament
+round=6
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=0000000=10
+wincauses=checkmate:1
+drawcauses=50-move rule:1
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=6
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=7
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games===0==11=11
+wincauses=checkmate:4
+drawcauses=threefold repetition:4
+drawcauses=insufficient material:1
+losscauses=checkmate:1
+
+[round]
+id=tournament
+round=7
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=7
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games==00000000=
+drawcauses=threefold repetition:2
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=8
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=1111==11==
+wincauses=checkmate:5
+wincauses=time forfeit:1
+drawcauses=threefold repetition:4
+
+[round]
+id=tournament
+round=8
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=0001100000
+wincauses=checkmate:2
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=8
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=9
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games==01=1=1==1
+wincauses=checkmate:4
+drawcauses=threefold repetition:4
+drawcauses=insufficient material:1
+losscauses=checkmate:1
+
+[round]
+id=tournament
+round=9
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=9
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=10
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=0=111===11
+wincauses=checkmate:5
+drawcauses=threefold repetition:2
+drawcauses=insufficient material:2
+losscauses=checkmate:1
+
+[round]
+id=tournament
+round=10
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=000=000000
+drawcauses=50-move rule:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=10
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=00000000=0
+drawcauses=threefold repetition:1
+losscauses=checkmate:9
+
+[round]
+id=tournament
+round=11
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=10=100=111
+wincauses=checkmate:5
+drawcauses=threefold repetition:2
+losscauses=checkmate:3
+
+[round]
+id=tournament
+round=11
+engineA=QaiPla 13 LMP
+engineB=Qapla 0.4.0 - 027
+games=00000=000=
+drawcauses=insufficient material:2
+losscauses=checkmate:8
+
+[round]
+id=tournament
+round=11
+engineA=QaiPla 13 CE
+engineB=Qapla 0.4.0 - 027
+games=0000000000
+losscauses=checkmate:10
+
+[round]
+id=tournament
+round=12
+engineA=QaiPla 13 LMP
+engineB=QaiPla 13 CE
+games=1=0==01
+wincauses=checkmate:2
+drawcauses=threefold repetition:2
+drawcauses=50-move rule:1
+losscauses=checkmate:2
+

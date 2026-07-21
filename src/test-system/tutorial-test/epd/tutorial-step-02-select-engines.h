@@ -49,7 +49,7 @@ namespace QaplaTest::EpdTutorialTest {
         const auto& configs = epdData.getEngineSelect().getEngineConfigurations();
         int selectedCount = 0;
         for (const auto& engineConfig : configs) {
-            if (engineConfig.selected) {
+            if (engineConfig.isSelected()) {
                 selectedCount++;
             }
         }
