@@ -23,7 +23,7 @@
 #include "configuration.h"
 #include <engine-handling/engine-worker-factory.h>
 #include <engine-handling/engine-config-manager.h>
-#include <config-file/engine-config-file.h>
+#include <engine-handling/engine-config.h>
 #include "os-dialogs.h"
 #include <base-elements/logger.h>
 #include "snackbar.h"
@@ -117,8 +117,8 @@ bool QaplaWindows::ImGuiEngineSelect::drawAllEngines()
     {
         EngineConfiguration engine = {
             .config = config,
-            .originalName = {},
-            .selected = false};
+            .selected = false,
+            .originalName = {}};
 
         auto it = findEngineConfiguration(config);
         if (it != engineConfigurations_.end())
@@ -272,8 +272,8 @@ std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
         
         EngineConfiguration newEngine = {
             .config = newConfig,
-            .originalName = newConfig.getName(),
-            .selected = select
+            .selected = select,
+            .originalName = newConfig.getName()
         };
         engineConfigurations_.push_back(newEngine);
         addedEngines.push_back(path);
@@ -376,8 +376,8 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
                 } else {
                     EngineConfiguration newEngine = {
                         .config = config,
-                        .originalName = config.getName(),
-                        .selected = true
+                        .selected = true,
+                        .originalName = config.getName()
                     };
                     engineConfigurations_.push_back(newEngine);
                 }
@@ -421,22 +421,39 @@ void ImGuiEngineSelect::updateConfiguration() const {
     
     QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engineConfig : engineConfigurations_) {
-        auto section = QaplaTester::EngineConfigFile::toSection(engineConfig, id_);
+        auto section = engineConfig.config.toSection("engineselection");
+        section.entries.emplace_back("id", id_);
+        section.entries.emplace_back("originalName", engineConfig.originalName);
+        section.entries.emplace_back("selected", engineConfig.selected ? "true" : "false");
         sections.push_back(std::move(section));
     }
-    
+
     QaplaConfiguration::Configuration::instance().getConfigData().setSectionList("engineselection", id_, sections);
 }
 
 void ImGuiEngineSelect::setEnginesConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     engineConfigurations_.clear();
-    
+
     for (const auto& section : sections) {
         if (section.name == "engineselection" && section.getValue("id") == id_) {
-            engineConfigurations_.push_back(QaplaTester::EngineConfigFile::fromSection(section));
+            EngineConfiguration engineConfig;
+
+            QaplaHelpers::IniFile::Section configSection = section;
+            std::erase_if(configSection.entries, [](const auto& entry) {
+                return entry.first == "id" || entry.first == "originalName" || entry.first == "selected";
+            });
+            engineConfig.config = EngineConfig::createFromSection(configSection);
+
+            auto originalNameValue = section.getValue("originalName");
+            engineConfig.originalName = originalNameValue ? *originalNameValue : engineConfig.config.getName();
+
+            auto selectedValue = section.getValue("selected");
+            engineConfig.selected = selectedValue ? (*selectedValue == "true") : false;
+
+            engineConfigurations_.push_back(std::move(engineConfig));
         }
     }
-    
+
     updateUniqueDisplayNames();
     notifyConfigurationChanged();
 }

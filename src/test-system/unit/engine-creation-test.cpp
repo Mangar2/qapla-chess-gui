@@ -20,6 +20,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include "test-system/unit/unit-test-helpers.h"
 
+#include <filesystem>
+
 using namespace QaplaTester;
 using namespace QaplaTester::Test;
 
@@ -40,7 +42,9 @@ TEST_CASE("Engine creation", "[engine-tester]") {
         
         REQUIRE(engines.size() == 2);
         REQUIRE(engines[0].getName() == "FastEngine");
-        REQUIRE(engines[0].getCmd() == "fast.exe");
+        // EngineConfig::setCmd() normalizes relative paths to absolute, so only the
+        // filename portion is guaranteed to match regardless of the working directory.
+        REQUIRE(std::filesystem::path(engines[0].getCmd()).filename() == "fast.exe");
         REQUIRE(engines[0].isPonderEnabled() == true);
         REQUIRE(engines[1].getName() == "SlowEngine");
         REQUIRE(engines[1].isPonderEnabled() == false);

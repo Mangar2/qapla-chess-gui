@@ -20,8 +20,10 @@
 #include "imgui-tournament-adjudication.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "config-group-loader.h"
+#include "tournament-config-sections.h"
 
-#include <config-file/adjudication-config.h>
+#include <config/adjudication-config.h>
 #include <base-elements/string-helper.h>
 
 #include <imgui.h>
@@ -81,23 +83,30 @@ bool ImGuiTournamentAdjudication::draw(float inputWidth, float indent) {
 }
 
 void ImGuiTournamentAdjudication::loadConfiguration() {
-    const auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    
-    auto drawConfig = QaplaTester::AdjudicationConfig::fromDrawConfigData(configData, id_);
-    if (drawConfig.has_value()) {
-        drawConfig_ = *drawConfig;
-    }
-    
-    auto resignConfig = QaplaTester::AdjudicationConfig::fromResignConfigData(configData, id_);
-    if (resignConfig.has_value()) {
-        resignConfig_ = *resignConfig;
-    }
+    // fromDrawManager/fromResignManager only report active=true when a group
+    // instance is present at all, so an absent section round-trips to the
+    // default-constructed (inactive) config.
+    auto& drawManager = QaplaConfiguration::loadGroupIntoManager("draw", id_);
+    drawConfig_ = QaplaTester::AdjudicationConfig::fromDrawManager(drawManager, "draw");
+
+    auto& resignManager = QaplaConfiguration::loadGroupIntoManager("resign", id_);
+    resignConfig_ = QaplaTester::AdjudicationConfig::fromResignManager(resignManager, "resign");
 }
 
 void ImGuiTournamentAdjudication::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto drawSections = QaplaTester::AdjudicationConfig::toDrawSections(drawConfig_, id_);
-    auto resignSections = QaplaTester::AdjudicationConfig::toResignSections(resignConfig_, id_);
-    configData.setSectionList("drawadjudication", id_, drawSections);
-    configData.setSectionList("resignadjudication", id_, resignSections);
+
+    // Only persist a section when active: fromDrawManager/fromResignManager treat
+    // "instance present" as the active signal, ignoring any stored "active" value.
+    QaplaHelpers::IniFile::SectionList drawSections;
+    if (drawConfig_.active) {
+        drawSections.push_back(QaplaConfiguration::toDrawAdjudicationSection(drawConfig_, id_));
+    }
+    configData.setSectionList("draw", id_, drawSections);
+
+    QaplaHelpers::IniFile::SectionList resignSections;
+    if (resignConfig_.active) {
+        resignSections.push_back(QaplaConfiguration::toResignAdjudicationSection(resignConfig_, id_));
+    }
+    configData.setSectionList("resign", id_, resignSections);
 }

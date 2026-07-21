@@ -18,6 +18,7 @@
  */
 
 #include "configuration.h"
+#include "config-group-loader.h"
 #include "tournament-data.h"
 #include "interactive-board-window.h"
 #include "callback-manager.h"
@@ -54,9 +55,23 @@ Configuration::Configuration()
 
 // getConfigDirectory, autosave, saveFile, loadFile are now handled by Autosavable base class
 
+QaplaTester::Settings::Manager& QaplaConfiguration::loadGroupIntoManager(
+    const std::string& sectionName, const std::string& id) {
+    auto sections = Configuration::instance().getConfigData()
+        .getSectionList(sectionName, id)
+        .value_or(QaplaHelpers::IniFile::SectionList{});
+    return loadGroupIntoManager(sectionName, sections);
+}
+
 void Configuration::saveData(std::ofstream& out) {
 	engineCapabilities_.save(out);
-	EngineWorkerFactory::getConfigManager().saveToStream(out);
+	{
+	    QaplaHelpers::IniFile::SectionList sections;
+	    for (const auto& config : EngineWorkerFactory::getConfigManager().getAllConfigs()) {
+	        sections.push_back(config.toSection("engine"));
+	    }
+	    QaplaHelpers::IniFile::saveSections(out, sections);
+	}
     getConfigData().save(out);
     out.flush();
 }
@@ -89,7 +104,7 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
         else if (sectionName == "engine") {
             QaplaTester::EngineConfig config;
             config.setValues(section.getUnorderedMap());
-            EngineWorkerFactory::getConfigManagerMutable().addOrReplaceConfig(config);
+            EngineWorkerFactory::getConfigManagerMutable().addOrReplaceByCmd(config);
         }
         else {
             return false;

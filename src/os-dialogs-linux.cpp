@@ -38,7 +38,7 @@
 #ifdef __linux__
 
 #include "os-dialogs.h"
-#include "../extern/qapla-engine-tester/src/string-helper.h"
+#include "../extern/qapla-engine-tester/src/base-elements/string-helper.h"
 #include <vector>
 #include <filesystem>
 #include <string>

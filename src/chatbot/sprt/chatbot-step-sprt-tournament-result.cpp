@@ -56,8 +56,8 @@ std::string ChatbotStepSprtTournamentResult::draw() {
     ImGui::Spacing();
     
     // Explanation of the SPRT bounds display (e.g., "-2.94 < -0.03 < 2.94")
-    auto eloLower = sprtData.sprtConfig().eloLower;
-    auto eloUpper = sprtData.sprtConfig().eloUpper;
+    auto eloLower = sprtData.sprtConfig().eloH0;
+    auto eloUpper = sprtData.sprtConfig().eloH1;
     auto maxGames = sprtData.sprtConfig().maxGames;
     QaplaWindows::ImGuiControls::textWrapped(std::format(
         "The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n" 

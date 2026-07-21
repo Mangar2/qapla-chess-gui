@@ -102,8 +102,8 @@ SprtTournamentData::SprtTournamentData() :
     sprtConfiguration_->setId("sprt-tournament");
     sprtConfiguration_->setConfig(sprtConfig_.get());
 
-    sprtConfig_->eloLower = 0.0F;
-    sprtConfig_->eloUpper = 3.0F;
+    sprtConfig_->eloH0 = 0.0F;
+    sprtConfig_->eloH1 = 3.0F;
     sprtConfig_->alpha = 0.05;
     sprtConfig_->beta = 0.05;
     sprtConfig_->maxGames = 100000;
@@ -265,7 +265,9 @@ bool SprtTournamentData::createTournament(bool verbose) {
 void SprtTournamentData::loadTournament() {
     if (createTournament(false) && sprtManager_) {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        QaplaTester::SprtTournamentFile::loadIntoManagerFromConfigData(configData, *sprtManager_, "sprt-tournament");
+        auto sections = configData.getSectionList("round", "sprt-tournament")
+            .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+        sprtManager_->setGameResults(sections);
     }
 }
 
@@ -684,7 +686,7 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
 
     try {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        QaplaTester::SprtTournamentFile::load(filename, configData, "sprt-tournament");
+        configData.load(filename);
 
         // Reload configuration from the updated singleton
         loadEngineSelectionConfig();

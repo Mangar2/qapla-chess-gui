@@ -21,6 +21,7 @@
 
 #include <game-manager/engine-record.h>
 #include <base-elements/change-tracker.h>
+#include <base-elements/logger.h>
 
 #include <imgui.h>
 #include <memory>

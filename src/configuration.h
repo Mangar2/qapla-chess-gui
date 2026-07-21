@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "engine-capabilities.h"
+#include <engine-handling/engine-capabilities.h>
 #include "autosavable.h"
 #include "callback-manager.h"
 

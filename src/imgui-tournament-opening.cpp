@@ -20,9 +20,11 @@
 #include "imgui-tournament-opening.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "config-group-loader.h"
+#include "tournament-config-sections.h"
 #include "tutorial.h"
 
-#include <config-file/opening-config.h>
+#include <config/opening-config.h>
 #include <base-elements/string-helper.h>
 
 #include <imgui.h>
@@ -185,19 +187,15 @@ bool ImGuiTournamentOpening::drawSwitchPolicy(float inputWidth,
 }
 
 void ImGuiTournamentOpening::loadConfiguration() {
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto openings = QaplaTester::OpeningConfig::fromConfigData(configData, id_);
-    if (openings) {
-        openings_ = *openings;
-    }
+    auto& manager = QaplaConfiguration::loadGroupIntoManager("openings", id_);
+    openings_ = QaplaTester::OpeningConfig::fromManager(manager, "openings");
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentOpening::getSections() const {
-    return QaplaTester::OpeningConfig::toSections(openings_, id_);
+    return { QaplaConfiguration::toOpeningsSection(openings_, id_) };
 }
 
 void ImGuiTournamentOpening::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::OpeningConfig::toSections(openings_, id_);
-    configData.setSectionList("opening", id_, sections);
+    configData.setSectionList("openings", id_, getSections());
 }

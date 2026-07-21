@@ -20,9 +20,11 @@
 #include "imgui-tournament-configuration.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "config-group-loader.h"
+#include "tournament-config-sections.h"
 #include <base-elements/string-helper.h>
 #include <tournament/tournament.h>
-#include <config-file/tournament-config-file.h>
+#include <tournament/tournament-config.h>
 
 #include <imgui.h>
 #include <string>
@@ -138,11 +140,8 @@ void ImGuiTournamentConfiguration::loadConfiguration() {
         return;
     }
 
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto config = QaplaTester::TournamentConfigFile::fromConfigData(configData, id_);
-    if (config) {
-        *config_ = *config;
-    }
+    auto& manager = QaplaConfiguration::loadGroupIntoManager("tournament", id_);
+    *config_ = QaplaTester::TournamentConfigFile::fromManager(manager, "tournament");
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSections() const {
@@ -150,7 +149,7 @@ std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentConfiguration::getSec
         return {};
     }
 
-    return QaplaTester::TournamentConfigFile::toSections(*config_, id_);
+    return { QaplaConfiguration::toTournamentSection(*config_, id_) };
 }
 
 void ImGuiTournamentConfiguration::updateConfiguration() const {
@@ -159,6 +158,5 @@ void ImGuiTournamentConfiguration::updateConfiguration() const {
     }
 
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::TournamentConfigFile::toSections(*config_, id_);
-    configData.setSectionList("tournament", id_, sections);
+    configData.setSectionList("tournament", id_, getSections());
 }

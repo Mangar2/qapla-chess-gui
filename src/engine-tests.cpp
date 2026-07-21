@@ -393,7 +393,7 @@ std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
 std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& engineName)
 {
     // Get the report data from EngineReport
-    auto* checklist = EngineReport::getChecklist(engineName);
+    auto checklist = EngineReport::getChecklist(engineName);
     if (checklist == nullptr) {
         return nullptr;
     }

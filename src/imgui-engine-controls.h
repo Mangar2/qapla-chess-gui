@@ -285,7 +285,7 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
     if (!enabled) return false;
     
     auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-    auto& capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
+    auto capability = capabilities.getCapability(config.getCmd(), config.getProtocol());
     if (!capability) return false;
     
     auto& options = capability->getSupportedOptions();

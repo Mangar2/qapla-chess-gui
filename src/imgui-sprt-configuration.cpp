@@ -20,9 +20,11 @@
 #include "imgui-sprt-configuration.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "config-group-loader.h"
+#include "tournament-config-sections.h"
 
 #include <sprt/sprt-manager.h>
-#include <sprt/sprt-config-file.h>
+#include <sprt/sprt-config.h>
 
 #include <base-elements/string-helper.h>
 
@@ -55,7 +57,7 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
         }
 
         // Validation hint for Elo bounds
-        if (config_->eloLower >= config_->eloUpper) {
+        if (config_->eloH0 >= config_->eloH1) {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.4F, 0.4F, 1.0F));
             ImGuiControls::textWrapped("Elo Lower must be less than Elo Upper.");
             ImGui::PopStyleColor();
@@ -100,7 +102,7 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
 
 bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
     ImGui::SetNextItemWidth(inputWidth);
-    bool changed = ImGuiControls::inputFloat("Elo Lower (H0)", config_->eloLower, -1000.0F, 1000.0F);
+    bool changed = ImGuiControls::inputFloat("Elo Lower (H0)", config_->eloH0, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Lower Elo bound (H0): null hypothesis threshold for SPRT test.\n"
         "If true Elo difference is below this, H0 is accepted (no improvement).");
@@ -109,7 +111,7 @@ bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
 
 bool ImGuiSprtConfiguration::drawEloUpper(float inputWidth) {
     ImGui::SetNextItemWidth(inputWidth);
-    bool changed = ImGuiControls::inputFloat("Elo Upper (H1)", config_->eloUpper, -1000.0F, 1000.0F);
+    bool changed = ImGuiControls::inputFloat("Elo Upper (H1)", config_->eloH1, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\n"
         "If true Elo difference is above this, H1 is accepted (improvement confirmed).");
@@ -196,18 +198,15 @@ void ImGuiSprtConfiguration::loadConfiguration() {
         return;
     }
 
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto config = QaplaTester::SprtConfigFile::fromConfigData(configData, id_);
-    if (config) {
-        *config_ = *config;
-    }
+    auto& manager = QaplaConfiguration::loadGroupIntoManager("sprt", id_);
+    *config_ = QaplaTester::SprtConfigFile::fromManager(manager, "sprt");
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiSprtConfiguration::getSections() const {
     if (config_ == nullptr) {
         return {};
     }
-    return QaplaTester::SprtConfigFile::toSections(*config_, id_);
+    return { QaplaConfiguration::toSprtSection(*config_, id_) };
 }
 
 void ImGuiSprtConfiguration::updateConfiguration() const {
@@ -215,8 +214,7 @@ void ImGuiSprtConfiguration::updateConfiguration() const {
         return;
     }
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::SprtConfigFile::toSections(*config_, id_);
-    configData.setSectionList("sprt", id_, sections);
+    configData.setSectionList("sprt", id_, getSections());
 }
 
 bool ImGuiSprtConfiguration::isValid() const {
@@ -225,7 +223,7 @@ bool ImGuiSprtConfiguration::isValid() const {
     }
 
     // Elo Lower must be less than Elo Upper
-    if (config_->eloLower >= config_->eloUpper) {
+    if (config_->eloH0 >= config_->eloH1) {
         return false;
     }
     

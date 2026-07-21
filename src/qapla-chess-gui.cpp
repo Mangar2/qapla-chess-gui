@@ -38,6 +38,7 @@
 #include "board-workspace.h"
 #include "engine-setup-window.h"
 #include "snackbar.h"
+#include <engine-handling/engine-capabilities.h>
 #include "tutorial.h"
 #include "callback-manager.h"
 #include "data/dark-wood-background.h"
@@ -231,6 +232,19 @@ namespace {
         QaplaWindows::EpdData::instance().loadFile();
         QaplaWindows::Tutorial::instance().loadConfiguration();
         QaplaWindows::SnackbarManager::instance().loadConfiguration();
+
+        QaplaConfiguration::EngineCapabilities::setNotificationCallback(
+            [](const std::string& message, const std::string& type) {
+                auto& snackbar = QaplaWindows::SnackbarManager::instance();
+                if (type == "warning") {
+                    snackbar.showWarning(message, false, "engine");
+                } else if (type == "success") {
+                    snackbar.showSuccess(message, false, "engine");
+                } else {
+                    snackbar.showNote(message, false, "engine");
+                }
+            });
+
         auto workspace = initWindows();
 
         auto* window = initGlfwContext();
@@ -247,6 +261,14 @@ namespace {
         
         QaplaTest::TestManager testManager;
         testManager.init();
+
+        // Headless/CI support: when QAPLA_AUTO_RUN_TESTS is set, queue all registered
+        // ImGui Test Engine suites, print a summary once they finish, and exit.
+        const bool autoRunTests = std::getenv("QAPLA_AUTO_RUN_TESTS") != nullptr;
+        if (autoRunTests) {
+            testManager.queueAllTests();
+        }
+        int autoRunFrameCount = 0;
 
         bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
         auto frameRateLimiter = ImGuiFrameRateLimiter::forMode(remoteDesktopMode);
@@ -299,6 +321,19 @@ namespace {
             glfwSwapBuffers(window);
             
             testManager.onPostSwap();
+
+            if (autoRunTests) {
+                ++autoRunFrameCount;
+                if (autoRunFrameCount > 5 && testManager.isQueueEmpty()) {
+                    int tested = 0;
+                    int success = 0;
+                    int inQueue = 0;
+                    testManager.getResultSummary(tested, success, inQueue);
+                    std::cout << "QAPLA_TEST_SUMMARY tested=" << tested
+                        << " success=" << success << " inQueue=" << inQueue << "\n";
+                    glfwSetWindowShouldClose(window, 1);
+                }
+            }
 
             QaplaWindows::StaticCallbacks::autosave().invokeAll();
         }

@@ -20,9 +20,11 @@
 #include "imgui-tournament-pgn.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "config-group-loader.h"
+#include "tournament-config-sections.h"
 #include "tutorial.h"
 
-#include <config-file/pgn-config.h>
+#include <config/pgn-config.h>
 
 #include <imgui.h>
 
@@ -120,19 +122,15 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
 }
 
 void ImGuiTournamentPgn::loadConfiguration() {
-    auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto pgnOptions = QaplaTester::PgnConfig::fromConfigData(configData, id_);
-    if (pgnOptions) {
-        pgnOptions_ = *pgnOptions;
-    }
+    auto& manager = QaplaConfiguration::loadGroupIntoManager("pgnoutput", id_);
+    pgnOptions_ = QaplaTester::PgnConfig::fromManager(manager, "pgnoutput");
 }
 
 std::vector<QaplaHelpers::IniFile::Section> ImGuiTournamentPgn::getSections() const {
-    return QaplaTester::PgnConfig::toSections(pgnOptions_, id_);
+    return { QaplaConfiguration::toPgnOutputSection(pgnOptions_, id_) };
 }
 
 void ImGuiTournamentPgn::updateConfiguration() const {
     auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-    auto sections = QaplaTester::PgnConfig::toSections(pgnOptions_, id_);
-    configData.setSectionList("pgnoutput", id_, sections);
+    configData.setSectionList("pgnoutput", id_, getSections());
 }

@@ -204,7 +204,9 @@ namespace QaplaWindows {
         if (createTournament(false) && tournament_)
         {
             auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-            QaplaTester::TournamentFile::loadIntoTournamentFromConfigData(configData, *tournament_, "tournament");
+            auto sections = configData.getSectionList("round", "tournament")
+                .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+            tournament_->load(sections);
         }
     }
 
@@ -755,7 +757,7 @@ namespace QaplaWindows {
 
         try {
             auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-            QaplaTester::TournamentFile::load(filename, configData, "tournament");
+            configData.load(filename);
 
             // Reload configuration from the updated singleton
             loadConfig();

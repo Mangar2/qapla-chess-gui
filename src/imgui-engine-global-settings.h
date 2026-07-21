@@ -22,7 +22,7 @@
 #include "tutorial.h"
 
 #include <base-elements/ini-file.h>
-#include <config-file/engine-global-config.h>
+#include <config/engine-global-config.h>
 
 #include <string>
 #include <functional>

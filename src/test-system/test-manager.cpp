@@ -76,6 +76,38 @@ namespace QaplaTest {
 #endif
     }
 
+    void TestManager::queueAllTests() {
+#ifdef IMGUI_ENABLE_TEST_ENGINE
+        if (engine_ != nullptr) {
+            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, nullptr, ImGuiTestRunFlags_RunFromCommandLine);
+        }
+#endif
+    }
+
+    bool TestManager::isQueueEmpty() const {
+#ifdef IMGUI_ENABLE_TEST_ENGINE
+        if (engine_ != nullptr) {
+            return ImGuiTestEngine_IsTestQueueEmpty(engine_);
+        }
+#endif
+        return true;
+    }
+
+    void TestManager::getResultSummary(int& tested, int& success, int& inQueue) const {
+        tested = 0;
+        success = 0;
+        inQueue = 0;
+#ifdef IMGUI_ENABLE_TEST_ENGINE
+        if (engine_ != nullptr) {
+            ImGuiTestEngineResultSummary summary;
+            ImGuiTestEngine_GetResultSummary(engine_, &summary);
+            tested = summary.CountTested;
+            success = summary.CountSuccess;
+            inQueue = summary.CountInQueue;
+        }
+#endif
+    }
+
     void TestManager::onPostSwap() {
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (engine_ != nullptr) {

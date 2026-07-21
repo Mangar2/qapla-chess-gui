@@ -56,6 +56,24 @@ namespace QaplaTest {
         void drawDebugWindows();
 
         /**
+         * @brief Queues all registered tests to run automatically (headless/CI use).
+         */
+        void queueAllTests();
+
+        /**
+         * @brief Checks whether the test run queue is empty (i.e. all queued tests finished).
+         */
+        [[nodiscard]] bool isQueueEmpty() const;
+
+        /**
+         * @brief Retrieves a summary of the most recent test run.
+         * @param tested Number of tests executed.
+         * @param success Number of tests that succeeded.
+         * @param inQueue Number of tests remaining in the queue.
+         */
+        void getResultSummary(int& tested, int& success, int& inQueue) const;
+
+        /**
          * @brief Shuts down the test engine (stops threads, unhooks).
          * Must be called BEFORE ImGui::DestroyContext().
          */

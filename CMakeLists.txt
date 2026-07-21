@@ -198,6 +198,8 @@ if(QAPLA_BUILD_UNIT_TESTS)
     # GUI sources needed by unit tests
     set(GUI_TEST_DEPENDENCIES
       src/tournament-result-incremental.cpp
+      src/config-group-loader.cpp
+      src/tournament-config-sections.cpp
     )
     
     add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})

@@ -46,7 +46,7 @@ namespace QaplaTest {
         getEngineSelect.setEngineConfigurations(configs);
         
         // Reset global settings to defaults
-        QaplaWindows::ImGuiEngineGlobalSettings::GlobalConfiguration defaultGlobalConfig;
+        QaplaTester::EngineGlobalConfig defaultGlobalConfig;
         tournamentData.getGlobalSettings().setGlobalConfiguration(defaultGlobalConfig);
         
         // Reset opening configuration to defaults

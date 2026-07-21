@@ -300,7 +300,7 @@ namespace QaplaWindows {
         }
         if (configChanged()) {
             clear();
-            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
+            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
             scheduledConfig_ = epdConfig_;
         }
 
@@ -384,7 +384,7 @@ namespace QaplaWindows {
 
     void EpdData::loadData(std::ifstream& in) {
         if (epdManager_ && !epdConfig_.filepath.empty()) {
-            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies);
+            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
             bool dataLoaded = epdManager_->loadResults(in);
             state = dataLoaded ? State::Stopped : State::Cleared;
         }
