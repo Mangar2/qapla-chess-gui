@@ -137,6 +137,18 @@ void Configuration::loadLoggerConfiguration() {
         
         QaplaTester::setLoggerConfig(config);
     }
+
+    // BaseLogger's built-in default (TraceLevel::info) logs everything to the console,
+    // including every engine's raw UCI/xboard "info" lines -- a debug-only verbosity level
+    // meant for the standalone qapla-engine-tester CLI. That CLI actually runs quieter than
+    // its own default: QaplaSettings::applyLoggerConfig() dials the console down to
+    // error-only for engine communication (still logging everything to file) and to
+    // result-only for game/tournament progress, before running anything. The GUI never went
+    // through that CLI init path, so it kept the noisy library default. Match the CLI here.
+    QaplaTester::EngineLogger::engineLogger().setTraceLevel(
+        QaplaTester::TraceLevel::error, QaplaTester::TraceLevel::info);
+    QaplaTester::Logger::reportLogger().setTraceLevel(
+        QaplaTester::TraceLevel::result, QaplaTester::TraceLevel::info);
 }
 
 void Configuration::updateLoggerConfiguration() {
