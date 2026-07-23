@@ -675,7 +675,10 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
                 continue;
             }
             auto engineSection = tournamentConfig.toSection();
-            engineSection.addEntry("id", "sprt-tournament");
+            // toSection() already carries over an "id" entry from wherever this
+            // EngineConfig was originally loaded; replace it instead of appending a
+            // second "id" key (addEntry() would insert a duplicate).
+            engineSection.changeOrAddEntry("id", "sprt-tournament");
             saveData.addSection(engineSection);
         }
         QaplaTester::SprtTournamentFile::save(filename, saveData, "sprt-tournament");

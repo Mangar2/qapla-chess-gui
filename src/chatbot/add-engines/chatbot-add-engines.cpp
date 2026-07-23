@@ -44,8 +44,14 @@ ChatbotAddEngines::ChatbotAddEngines() {
     options.allowEngineConfiguration = true;
     
     engineSelect_ = std::make_unique<QaplaWindows::ImGuiEngineSelect>(options);
-    engineSelect_->setId("add-engines-chatbot");
-    
+    // This instance is a transient, in-memory helper list used only to detect duplicates
+    // against the global engine catalog (below) -- nothing ever reads it back. Set id_ to
+    // empty (rather than a real id like the old "add-engines-chatbot") so
+    // ImGuiEngineSelect::updateConfiguration() skips saving it entirely; otherwise every
+    // config change here would leak a stale full copy of the catalog into the ini file
+    // under an id nothing loads from, that never gets cleaned up when engines are removed.
+    engineSelect_->setId("");
+
     // Initialize with all existing engines to enable duplicate detection
     auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
     auto configs = configManager.getAllConfigs();

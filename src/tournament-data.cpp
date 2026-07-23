@@ -18,6 +18,7 @@
  */
 
 
+#include <functional>
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
 #include "tournament-result-view.h"
@@ -719,13 +720,29 @@ namespace QaplaWindows {
         globalSettings_->setTimeControlConfiguration(timeControlSections);
     }
 
+    namespace {
+        // Each tournament config component is loaded independently: if one component's
+        // stored data no longer matches its schema, that component falls back to its
+        // defaults (with a visible warning) instead of aborting the whole sequence and
+        // silently leaving every later component (engines, results, ...) unloaded too.
+        void loadConfigStep(const std::string& stepName, const std::function<void()>& step) {
+            try {
+                step();
+            } catch (const std::exception& e) {
+                SnackbarManager::instance().showWarning(
+                    "Failed to load " + stepName + " configuration, using defaults: " + e.what(),
+                    false, "tournament");
+            }
+        }
+    }
+
     void TournamentData::loadConfig() {
-        loadTournamentConfig();
-        loadOpenings();
-        loadPgnConfig();
-        tournamentAdjudication_->loadConfiguration();
-        loadEngineSelectionConfig();
-        loadGlobalSettingsConfig();
+        loadConfigStep("tournament", [this] { loadTournamentConfig(); });
+        loadConfigStep("opening", [this] { loadOpenings(); });
+        loadConfigStep("PGN output", [this] { loadPgnConfig(); });
+        loadConfigStep("adjudication", [this] { tournamentAdjudication_->loadConfiguration(); });
+        loadConfigStep("engine selection", [this] { loadEngineSelectionConfig(); });
+        loadConfigStep("global engine settings", [this] { loadGlobalSettingsConfig(); });
     }
 
     void TournamentData::saveTournament(const std::string& filename) {
@@ -743,7 +760,10 @@ namespace QaplaWindows {
             auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
             for (const auto& engine : TournamentData::instance().getSelectedEngines()) {
                 auto engineSection = engine.toSection();
-                engineSection.addEntry("id", "tournament");
+                // engine.toSection() already carries over an "id" entry from wherever this
+                // EngineConfig was originally loaded; replace it instead of appending a
+                // second "id" key (addEntry() would insert a duplicate).
+                engineSection.changeOrAddEntry("id", "tournament");
                 saveData.addSection(engineSection);
             }
             QaplaTester::TournamentFile::save(filename, saveData, "tournament");

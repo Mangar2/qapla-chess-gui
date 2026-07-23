@@ -451,7 +451,10 @@ void ImGuiEngineSelect::updateConfiguration() const {
     QaplaHelpers::IniFile::SectionList sections;
     for (const auto& engineConfig : engineConfigurations_) {
         auto section = engineConfig.toSection("engine");
-        section.entries.emplace_back("id", id_);
+        // toSection() already carries over an "id" entry when engineConfig was loaded
+        // from a differently-scoped section (e.g. a tournament engine re-used in the
+        // add-engines chatbot): replace it rather than appending a second "id" key.
+        section.changeOrAddEntry("id", id_);
         sections.push_back(std::move(section));
     }
 

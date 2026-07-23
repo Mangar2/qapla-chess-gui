@@ -101,7 +101,11 @@ bool Configuration::processSection(const QaplaHelpers::IniFile::Section& section
         if (sectionName == "enginecapability") {
             engineCapabilities_.addOrReplace(section);
         }
-        else if (sectionName == "engine") {
+        else if (sectionName == "engine" && !section.getValue("id").has_value()) {
+            // Only the global engine catalog has no "id": per-window engine selections
+            // (tournament, sprt-tournament, enginetest, epd, ...) reuse the "engine" section
+            // name but carry an "id" and must stay in configData_ so their owning window's
+            // id-scoped getSectionList("engine", id) lookup can find them again.
             QaplaTester::EngineConfig config;
             config.setValues(section.getUnorderedMap());
             EngineWorkerFactory::getConfigManagerMutable().addOrReplaceByCmd(config);
