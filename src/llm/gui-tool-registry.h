@@ -46,6 +46,22 @@ struct GuiToolResult {
 };
 
 /**
+ * @brief JSON Schema for a tool that takes no arguments: {"type":"object","properties":{}}.
+ *
+ * A bare "{}" (e.g. from QaplaTester::Json::JsonValue::object() alone) is
+ * rejected by LM Studio's tool-schema validation ("Invalid discriminator
+ * value. Expected 'object'") -- confirmed against a real server -- so this
+ * is the correct default for GuiToolDefinition::parametersSchema, not just
+ * a convenience.
+ */
+[[nodiscard]] inline QaplaTester::Json::JsonValue noArgsToolSchema() {
+    auto schema = QaplaTester::Json::JsonValue::object();
+    schema["type"] = "object";
+    schema["properties"] = QaplaTester::Json::JsonValue::object();
+    return schema;
+}
+
+/**
  * @brief One GUI-controllable action exposed to the LLM as a function tool.
  *
  * Handlers run exclusively on the UI thread (see GuiToolRegistry::processQueue()),
@@ -56,7 +72,7 @@ struct GuiToolResult {
 struct GuiToolDefinition {
     std::string name;
     std::string description;
-    QaplaTester::Json::JsonValue parametersSchema = QaplaTester::Json::JsonValue::object(); ///< JSON Schema for "arguments".
+    QaplaTester::Json::JsonValue parametersSchema = noArgsToolSchema(); ///< JSON Schema for "arguments".
     std::function<GuiToolResult(const QaplaTester::Json::JsonValue& arguments)> handler;
 
     /**

@@ -20,6 +20,7 @@
 #include "llm-chat-controller.h"
 #include "gui-tool-registry.h"
 
+#include <functional>
 #include <thread>
 #include <utility>
 
@@ -31,12 +32,17 @@ namespace {
     // it keeps responding with tool_calls, executes them via GuiToolRegistry
     // (which itself blocks this thread until the UI thread has processed
     // them) and asks again, until a final text answer or the iteration limit.
+    // Each tool result is reported through onToolEvent as soon as it happens
+    // -- not batched into the returned AgentTurnResult -- so the UI can show
+    // it immediately instead of waiting for the model's (often much slower)
+    // final reply.
     AgentTurnResult runAgentLoop(
         const LmStudioClient& client,
         const std::string& model,
         const std::vector<ToolSpec>& tools,
         std::vector<ChatMessage> messages,
-        int maxToolIterations) {
+        int maxToolIterations,
+        const std::function<void(ToolCallEvent)>& onToolEvent) {
 
         AgentTurnResult turnResult;
 
@@ -76,7 +82,7 @@ namespace {
                 toolMessage.content = toolResult.content;
                 messages.push_back(std::move(toolMessage));
 
-                turnResult.toolEvents.push_back(ToolCallEvent{
+                onToolEvent(ToolCallEvent{
                     .toolName = call.name,
                     .success = toolResult.success,
                     .resultSummary = toolResult.content
@@ -138,7 +144,11 @@ void LlmChatController::sendMessage(const std::string& userText) {
     auto maxToolIterations = maxToolIterations_;
 
     std::thread([state, client, model, tools, messages = std::move(messages), maxToolIterations]() mutable {
-        state->result = runAgentLoop(client, model, tools, std::move(messages), maxToolIterations);
+        auto onToolEvent = [state](ToolCallEvent event) {
+            std::scoped_lock lock(state->eventsMutex);
+            state->events.push_back(std::move(event));
+        };
+        state->result = runAgentLoop(client, model, tools, std::move(messages), maxToolIterations, onToolEvent);
         state->done.store(true, std::memory_order_release);
     }).detach();
 }
@@ -148,29 +158,30 @@ void LlmChatController::stop() {
         return;
     }
     // Orphan the in-flight worker: dropping our shared_ptr means update()
-    // can never observe its result, even once the thread finishes.
+    // can never observe its result, even once the thread finishes. Any
+    // tool events already drained into history_ before this point stay --
+    // their real-world effects already happened.
     pendingChat_.reset();
     busy_ = false;
     history_.push_back({ChatRole::Error, "Request cancelled."});
 }
 
-void LlmChatController::applyTurnResult(const AgentTurnResult& result) {
-    for (const auto& event : result.toolEvents) {
-        // Successful tool results are already phrased as a friendly,
-        // user-facing sentence by the tool itself (see
-        // gui-tool-*-register.cpp) -- no technical tool name needed.
-        // Registry-level failures (unknown tool, timeout, bad arguments)
-        // are developer-facing edge cases, so keep the name there for
-        // anyone trying to diagnose what went wrong.
-        std::string text = event.success
-            ? event.resultSummary
-            : (event.toolName + ": " + event.resultSummary);
-        if (text.empty()) {
-            text = event.toolName;
-        }
-        history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
+void LlmChatController::appendToolEventToHistory(const ToolCallEvent& event) {
+    // Successful tool results are already phrased as a friendly,
+    // user-facing sentence by the tool itself (see gui-tool-*-register.cpp)
+    // -- no technical tool name needed. Registry-level failures (unknown
+    // tool, timeout, bad arguments) are developer-facing edge cases, so
+    // keep the name there for anyone trying to diagnose what went wrong.
+    std::string text = event.success
+        ? event.resultSummary
+        : (event.toolName + ": " + event.resultSummary);
+    if (text.empty()) {
+        text = event.toolName;
     }
+    history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
+}
 
+void LlmChatController::applyTurnResult(const AgentTurnResult& result) {
     if (!result.success) {
         history_.push_back({ChatRole::Error, result.errorMessage});
     } else if (!result.finalContent.empty()) {
@@ -191,12 +202,32 @@ void LlmChatController::applyModelsResult(const ListModelsResult& result) {
     }
 }
 
+void LlmChatController::drainToolEvents(PendingChat& pending) {
+    std::vector<ToolCallEvent> newEvents;
+    {
+        std::scoped_lock lock(pending.eventsMutex);
+        if (pending.consumedEvents < pending.events.size()) {
+            newEvents.assign(
+                pending.events.begin() + static_cast<std::ptrdiff_t>(pending.consumedEvents),
+                pending.events.end());
+            pending.consumedEvents = pending.events.size();
+        }
+    }
+    for (const auto& event : newEvents) {
+        appendToolEventToHistory(event);
+    }
+}
+
 void LlmChatController::update() {
-    if (busy_ && pendingChat_ && pendingChat_->done.load(std::memory_order_acquire)) {
-        auto result = pendingChat_->result;
-        pendingChat_.reset();
-        busy_ = false;
-        applyTurnResult(result);
+    if (busy_ && pendingChat_) {
+        drainToolEvents(*pendingChat_);
+
+        if (pendingChat_->done.load(std::memory_order_acquire)) {
+            auto result = pendingChat_->result;
+            pendingChat_.reset();
+            busy_ = false;
+            applyTurnResult(result);
+        }
     }
 
     if (refreshingModels_ && pendingModels_ && pendingModels_->done.load(std::memory_order_acquire)) {

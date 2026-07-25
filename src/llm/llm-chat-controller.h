@@ -23,6 +23,7 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -50,12 +51,11 @@ struct ToolCallEvent {
     std::string resultSummary;
 };
 
-/** @brief Outcome of one full agent-loop turn (see runAgentLoop() in the .cpp). */
+/** @brief The model's final answer for one agent-loop turn (tool events are streamed separately, see PendingChat). */
 struct AgentTurnResult {
     bool success = false;
     std::string finalContent;
     std::string errorMessage;
-    std::vector<ToolCallEvent> toolEvents;
 };
 
 /**
@@ -67,12 +67,21 @@ struct AgentTurnResult {
  * each one through GuiToolRegistry (which itself hops back to the UI thread
  * and blocks the worker until done), feed the results back, and ask again --
  * up to maxToolIterations times. update() must be called once per frame
- * from the UI thread to pick up the turn's result.
+ * from the UI thread to pick up results.
+ *
+ * Tool results are visible to the user as soon as they happen -- e.g. once
+ * an engine is added and detected, that already shows both in the chat and
+ * in the GUI's engine list, independently of how long the model then takes
+ * to compose its own reply -- rather than being held back and only shown
+ * together with the model's (often much slower) final answer.
  *
  * Thread-safety: all public methods (including update()) are meant to be
  * called from a single thread (the UI thread). The worker thread only ever
  * touches its own PendingChat/PendingModels state, exchanged with the UI
- * thread through a std::shared_ptr and a release/acquire "done" flag.
+ * thread through a std::shared_ptr; PendingChat::events is additionally
+ * guarded by its own mutex since, unlike the rest of the exchanged state,
+ * it is written incrementally over the turn's whole lifetime rather than
+ * once at the end.
  */
 class LlmChatController {
 public:
@@ -110,10 +119,13 @@ public:
      *
      * Best-effort: the worker thread keeps running to completion in the
      * background (bounded by the connection's request timeout and the tool
-     * iteration limit), but its result is orphaned and never applied. Note
-     * this does not abort an individual tool call already queued for the UI
-     * thread -- e.g. a file dialog the model already asked to open will
-     * still open even after stop() is called.
+     * iteration limit), but its final answer is orphaned and never applied.
+     * Any tool results already streamed into history() before stop() was
+     * called remain -- their GUI-visible effects (e.g. an added engine)
+     * already happened and can't be undone anyway. Note this does not
+     * abort an individual tool call already queued for the UI thread --
+     * e.g. a file dialog the model already asked to open will still open
+     * even after stop() is called.
      */
     void stop();
 
@@ -125,10 +137,14 @@ public:
     void update();
 
 private:
+    void appendToolEventToHistory(const ToolCallEvent& event);
     void applyTurnResult(const AgentTurnResult& result);
     void applyModelsResult(const ListModelsResult& result);
 
     struct PendingChat {
+        std::mutex eventsMutex;
+        std::vector<ToolCallEvent> events; ///< Appended incrementally by the worker as each tool call finishes.
+        std::size_t consumedEvents = 0;    ///< UI-thread-only cursor into events, guarded by eventsMutex too.
         std::atomic<bool> done{false};
         AgentTurnResult result;
     };
@@ -136,6 +152,9 @@ private:
         std::atomic<bool> done{false};
         ListModelsResult result;
     };
+
+    /** @brief Drains and applies any tool events the worker has published so far, without waiting for done. */
+    void drainToolEvents(PendingChat& pending);
 
     LmStudioClient client_;
     std::string systemPrompt_;

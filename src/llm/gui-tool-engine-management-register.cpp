@@ -31,13 +31,6 @@ namespace QaplaLlm {
 namespace {
     namespace Json = QaplaTester::Json;
 
-    Json::JsonValue noArgsSchema() {
-        auto schema = Json::JsonValue::object();
-        schema["type"] = "object";
-        schema["properties"] = Json::JsonValue::object();
-        return schema;
-    }
-
     std::string joinNames(const std::vector<std::string>& names) {
         std::string joined;
         for (std::size_t i = 0; i < names.size(); ++i) {
@@ -55,7 +48,6 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
         .name = "list_installed_engines",
         .description = "Lists all chess engines currently configured in the GUI's global "
                         "engine catalog, with their name and protocol (uci/xboard).",
-        .parametersSchema = noArgsSchema(),
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             return GuiToolResult{.success = true, .content = listInstalledEnginesJson()};
         }
@@ -70,7 +62,6 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
                         "before this call returns -- the result already reflects the final "
                         "outcome, so do not promise the user a separate future update. Call "
                         "list_installed_engines afterwards to confirm what was actually added.",
-        .parametersSchema = noArgsSchema(),
         // Waits on the user picking a file in a native dialog, which can
         // legitimately take much longer than a normal tool call -- the
         // default timeout would abandon the call while the user is still
