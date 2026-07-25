@@ -383,6 +383,16 @@ namespace QaplaWindows {
         bool mayStartTournament(bool verbose);
 
         /**
+         * @brief Warns the user if a gauntlet-mode tournament is about to
+         * start without any engine explicitly marked as gauntlet.
+         * @details The tournament itself falls back to using the first
+         * selected engine as the gauntlet engine in that case (see
+         * QaplaTester::Tournament::partitionGauntletEngines), so this is a
+         * non-blocking notice rather than an error.
+         */
+        void warnIfNoGauntletEngineSet();
+
+        /**
          * @brief Builds a list of selected engines with global settings applied.
          * @return Vector of EngineConfig for all selected engines.
          */

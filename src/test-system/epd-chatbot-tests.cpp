@@ -216,22 +216,27 @@ namespace QaplaTest {
             IM_CHECK(hasEnginesAvailable());
 
             setupEpdTestConfiguration();
-            
+
             // Manually start an analysis to have a running state
             auto& epdData = QaplaWindows::EpdData::instance();
-            
+
             // We need to select an engine first
             auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
             auto configs = configManager.getAllConfigs();
             IM_CHECK(!configs.empty());
-            
+
             epdData.config().engines.clear();
             epdData.config().engines.push_back(QaplaTester::EngineConfig(configs[0]));
-            
+
+            // Give the analysis enough time per position that it is still
+            // running when we get around to clicking "stop" -- with the
+            // default 1s used elsewhere, the (tiny) test EPD set can finish
+            // before the test reaches that step.
+            epdData.config().maxTimeInS = 5;
+            epdData.config().minTimeInS = 5;
+
             epdData.analyse();
-            ctx->Sleep(0.5f); // Wait for analysis to start
-            
-            IM_CHECK(epdData.isRunning() || epdData.isStarting());
+            IM_CHECK(waitForAnalysisRunning(ctx, 5.0f));
 
             // Now open the chatbot and select EPD Analysis
             ctx->LogInfo("Step 1: Navigating to Chatbot with running analysis...");
@@ -286,11 +291,16 @@ namespace QaplaTest {
             
             epdData.config().engines.clear();
             epdData.config().engines.push_back(QaplaTester::EngineConfig(configs[0]));
-            
+
+            // Give the analysis enough time per position that it is still
+            // running when we get around to clicking "Cancel" -- with the
+            // default 1s used elsewhere, the (tiny) test EPD set can finish
+            // before the test reaches that step.
+            epdData.config().maxTimeInS = 5;
+            epdData.config().minTimeInS = 5;
+
             epdData.analyse();
-            ctx->Sleep(0.5f);
-            
-            IM_CHECK(epdData.isRunning() || epdData.isStarting());
+            IM_CHECK(waitForAnalysisRunning(ctx, 5.0f));
 
             // Navigate to chatbot
             ctx->LogInfo("Step 1: Navigating to Chatbot...");

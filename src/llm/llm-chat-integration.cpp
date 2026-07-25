@@ -21,6 +21,7 @@
 #include "lm-studio-locator.h"
 #include "gui-tool-registry.h"
 #include "gui-tool-engine-management.h"
+#include "gui-tool-tournament.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
@@ -49,6 +50,7 @@ struct DetectionState {
 // there is no reason to gate this on LM Studio being found.
 void registerGuiTools() {
     registerEngineManagementTools(GuiToolRegistry::instance());
+    registerTournamentTools(GuiToolRegistry::instance());
 }
 
 } // namespace

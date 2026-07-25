@@ -44,14 +44,13 @@ std::string ChatbotStepTournamentConfiguration::draw() {
         return "";
     }
 
-    // Check if we can continue
-    bool canContinue = !isGauntletMode() || hasValidGauntletSelection();
-    
-    ImGui::BeginDisabled(!canContinue);
+    // No engine needs to be explicitly marked as gauntlet -- the tournament
+    // falls back to the first selected engine in that case (with a warning
+    // shown when the tournament actually starts), so Continue is never
+    // blocked on this.
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
-    ImGui::EndDisabled();
 
     ImGui::SameLine();
 
@@ -108,7 +107,7 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
     }
 
     auto selectedEngines = TournamentData::instance().getEngineSelect().getSelectedEngines();
-    
+
     if (selectedEngines.empty()) {
         QaplaWindows::ImGuiControls::textWrapped("No engines selected for the tournament.");
         return;
@@ -126,7 +125,7 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
     // Determine display text
     const char* previewText = (currentGauntletIndex >= 0 && currentGauntletIndex < static_cast<int>(engineNames.size()))
         ? engineNames[currentGauntletIndex].c_str()
-        : "-- Select Engine --";
+        : "-- First engine will be used --";
 
     ImGui::SetNextItemWidth(300.0F);
     if (ImGui::BeginCombo("Gauntlet Engine", previewText)) {
@@ -142,6 +141,11 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
             }
         }
         ImGui::EndCombo();
+    }
+
+    if (!hasValidGauntletSelection() && !finished_) {
+        QaplaWindows::ImGuiControls::textWrapped(
+            "No gauntlet engine selected -- the first selected engine will be used automatically.");
     }
 }
 

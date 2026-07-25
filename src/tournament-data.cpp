@@ -288,9 +288,32 @@ namespace QaplaWindows {
         return true;
     }
 
+    void TournamentData::warnIfNoGauntletEngineSet() {
+        if (config_->type != "gauntlet") {
+            return;
+        }
+        auto selectedEngines = getSelectedEngines();
+        bool hasGauntlet = false;
+        for (const auto& engine : selectedEngines) {
+            if (engine.isGauntlet()) {
+                hasGauntlet = true;
+                break;
+            }
+        }
+        if (!hasGauntlet && !selectedEngines.empty()) {
+            SnackbarManager::instance().showWarning(
+                "No engine marked as gauntlet -- using \"" + selectedEngines.front().getName() +
+                "\" as the gauntlet engine (it will play against all others).",
+                false, "tournament");
+        }
+    }
+
     void TournamentData::startTournament(bool verbose) {
         if (!mayStartTournament(verbose)) {
             return;
+        }
+        if (verbose) {
+            warnIfNoGauntletEngineSet();
         }
         if (!createTournament(true)) {
             return;

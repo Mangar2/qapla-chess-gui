@@ -97,8 +97,13 @@ void ChatbotLlmChat::ensureController() {
         "You are an AI assistant integrated into the Qapla Chess GUI, a chess engine testing "
         "and tournament application. Answer helpfully and concisely. Respond in the user's "
         "configured language (code: {}). You have tools available to inspect and control parts "
-        "of the GUI (e.g. the engine catalog) -- use them instead of guessing or asking the user "
-        "to do something you can already do yourself.",
+        "of the GUI (e.g. the engine catalog, tournaments) -- use them instead of guessing or "
+        "asking the user to do something you can already do yourself. If a tool result says a "
+        "value is missing or invalid (e.g. no openings file configured, or an engine name that "
+        "doesn't match anything installed), ask the user for it rather than inventing one -- "
+        "there is often no safe default. When starting a tournament without the user specifying "
+        "details, reasonable defaults are fine for anything except the list of engines and the "
+        "openings file, which you must always have (from this conversation or an earlier one).",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));

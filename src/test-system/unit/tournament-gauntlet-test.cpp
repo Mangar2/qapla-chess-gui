@@ -122,3 +122,83 @@ TEST_CASE("Tournament gauntlet game count", "[engine-tester][tournament]") {
         REQUIRE(totalGames == 12);
     }
 }
+
+TEST_CASE("Tournament gauntlet auto-fallback when no engine is marked", "[engine-tester][tournament]") {
+
+    SECTION("calculateTotalGames treats the first engine as gauntlet") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "FirstEngine"},
+            {.name = "Opponent1"},
+            {.name = "Opponent2"}
+        });
+        // Deliberately not marking any engine as gauntlet.
+
+        TournamentConfig config{
+            .event = "Auto-Fallback Gauntlet",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 2,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{}
+        };
+
+        // Same result as if engines[0] had been explicitly marked as gauntlet:
+        // 1 gauntlet * 2 opponents * 2 games = 4 games.
+        uint32_t totalGames = Tournament::calculateTotalGames(engines, config);
+        REQUIRE(totalGames == 4);
+    }
+
+    SECTION("createTournament succeeds and uses the first engine as gauntlet") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "FirstEngine"},
+            {.name = "Challenger1"},
+            {.name = "Challenger2"}
+        });
+        // Deliberately not marking any engine as gauntlet.
+
+        TournamentConfig config{
+            .event = "Auto-Fallback Gauntlet",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 2,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{
+                .file = "src/test-system/unit/test-openings.pgn",
+                .plies = 1
+            }
+        };
+
+        Tournament tournament;
+        REQUIRE_NOTHROW(tournament.createTournament(engines, config));
+
+        // First engine vs each of the two others -> 2 pair tournaments.
+        REQUIRE(tournament.pairTournamentCount() == 2);
+    }
+
+    SECTION("A single engine is still not a valid gauntlet tournament") {
+        auto engines = createEngines(std::vector<TestEngineParams>{
+            {.name = "OnlyEngine"}
+        });
+
+        TournamentConfig config{
+            .event = "Single Engine",
+            .type = "gauntlet",
+            .tournamentFilename = "",
+            .games = 2,
+            .rounds = 1,
+            .repeat = 1,
+            .openings = Openings{}
+        };
+
+        // Falling back to "first engine is gauntlet" still requires an
+        // opponent -- a lone engine must not silently become a valid
+        // tournament.
+        uint32_t totalGames = Tournament::calculateTotalGames(engines, config);
+        REQUIRE(totalGames == 0);
+
+        Tournament tournament;
+        REQUIRE_THROWS(tournament.createTournament(engines, config));
+    }
+}

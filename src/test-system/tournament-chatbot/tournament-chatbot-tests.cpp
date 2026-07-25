@@ -28,6 +28,7 @@
 #include "tournament-test-helpers.h"
 #include "tournament-step-actions.h"
 #include "tournament-data.h"
+#include <iostream>
 
 namespace QaplaTest {
 
@@ -48,65 +49,69 @@ namespace QaplaTest {
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Flow", "NewTournamentComplete");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
             ctx->LogInfo("=== Test: Complete New Tournament Flow ===");
-            
+
             cleanupTournamentState();
             resetChatbotToInitialState(ctx);
+            std::cerr << "[dbg] hasEnginesAvailable\n";
             IM_CHECK(hasEnginesAvailable());
 
             // Navigate to Tournament Chatbot
+            std::cerr << "[dbg] navigateToTournamentChatbot\n";
             IM_CHECK(navigateToTournamentChatbot(ctx));
             ctx->Yield(10);
 
             // Step: Menu - Create new tournament
-            ctx->LogInfo("Step 1: Menu - New Tournament");
+            std::cerr << "[dbg] Step 1: Menu\n";
             IM_CHECK(executeMenuStep(ctx, MenuAction::NewTournament));
             ctx->Yield(10);
 
             // Step: GlobalSettings - Continue with defaults
-            ctx->LogInfo("Step 2: GlobalSettings - Continue");
+            std::cerr << "[dbg] Step 2: GlobalSettings\n";
             IM_CHECK(executeGlobalSettingsStep(ctx, GlobalSettingsAction::Continue));
             ctx->Yield(10);
 
             // Step: SelectEngines - Select two engines and continue
-            ctx->LogInfo("Step 3: SelectEngines - Select & Continue");
+            std::cerr << "[dbg] Step 3: SelectEngines\n";
             IM_CHECK(executeSelectEnginesStep(ctx, SelectEnginesAction::Continue, true));
             ctx->Yield(10);
 
             // Step: LoadEngine - Skip detection
-            ctx->LogInfo("Step 4: LoadEngine - Skip Detection");
+            std::cerr << "[dbg] Step 4: LoadEngine\n";
             IM_CHECK(executeLoadEngineStep(ctx, LoadEngineAction::SkipDetection));
             ctx->Yield(10);
 
             // Step: Configuration - Continue with defaults
-            ctx->LogInfo("Step 5: Configuration - Continue");
+            std::cerr << "[dbg] Step 5: Configuration\n";
             IM_CHECK(executeConfigurationStep(ctx, ConfigurationAction::Continue));
             ctx->Yield(10);
 
             // Step: Opening - Setup file and continue
-            ctx->LogInfo("Step 6: Opening - Continue");
+            std::cerr << "[dbg] Step 6: Opening\n";
             IM_CHECK(executeOpeningStep(ctx, OpeningAction::Continue, true));
             ctx->Yield(10);
 
             // Step: PGN - Setup file with Append mode (ensures "Continue" button)
-            ctx->LogInfo("Step 7: PGN - Continue (Append mode)");
+            std::cerr << "[dbg] Step 7: PGN\n";
             IM_CHECK(executePgnStep(ctx, PgnAction::Continue, true, true));  // append=true
             ctx->Yield(10);
 
             // Step: Start - Start tournament
-            ctx->LogInfo("Step 8: Start - Start Tournament");
+            std::cerr << "[dbg] Step 8: Start\n";
             IM_CHECK(executeStartStep(ctx, StartAction::StartTournament));
             ctx->Yield(10);
 
             // Verify tournament is running
+            std::cerr << "[dbg] Step 8b: verify running\n";
             auto& tournamentData = QaplaWindows::TournamentData::instance();
             IM_CHECK(tournamentData.isRunning());
 
             // Step: Stay in Chatbot
-            ctx->LogInfo("Step 9: Stay in Chatbot");
+            std::cerr << "[dbg] Step 9: Stay in Chatbot\n";
             IM_CHECK(executeStartStep(ctx, StartAction::StayInChatbot));
 
+            std::cerr << "[dbg] PASSED\n";
             ctx->LogInfo("=== Test NewTournamentComplete PASSED ===");
-            
+
             cleanupTournamentState();
         };
 

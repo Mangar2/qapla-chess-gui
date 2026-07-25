@@ -27,6 +27,7 @@
 #include "test-system/tutorial-test/engine-setup/tutorial-tests.h"
 #include "test-system/tutorial-test/board-window/tutorial-tests.h"
 #include "test-system/llm-chat-tests.h"
+#include "test-system/llm-tournament-tool-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -75,13 +76,16 @@ namespace QaplaTest {
         registerEngineSetupTutorialTests(engine_);
         registerBoardWindowTutorialTests(engine_);
         registerLlmChatTests(engine_);
+        registerLlmTournamentToolTests(engine_);
 #endif
     }
 
     void TestManager::queueAllTests() {
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (engine_ != nullptr) {
-            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, nullptr, ImGuiTestRunFlags_RunFromCommandLine);
+            // TEMP-LOCAL-ONLY: filter via env var for local verification. Revert before committing.
+            const char* filter = getenv("QAPLA_TEST_FILTER");
+            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, filter, ImGuiTestRunFlags_RunFromCommandLine);
         }
 #endif
     }

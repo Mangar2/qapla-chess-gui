@@ -75,6 +75,14 @@ namespace QaplaTest::TournamentChatbot {
             tournamentData.stopPool(false);
         }
         tournamentData.clear(false);
+
+        // Reset to a known tournament type instead of whatever happens to be
+        // persisted in the local qapla-chess-gui.ini (which may not even
+        // parse, e.g. after a schema change, and fall back to a different
+        // compiled-in default). These tests never mark an engine as
+        // gauntlet, so this also exercises the "first selected engine
+        // becomes the gauntlet engine" fallback end-to-end.
+        tournamentData.config().type = "gauntlet";
     }
 
     void resetChatbotToInitialState(ImGuiTestContext* ctx) {
@@ -168,18 +176,26 @@ namespace QaplaTest::TournamentChatbot {
 
         // Clear and setup tournament
         tournamentData.clear(false);
-        
+
+        // Set the tournament type explicitly -- don't rely on whatever is
+        // persisted in the local qapla-chess-gui.ini, which may not even
+        // parse (e.g. after a schema change) and fall back to a different
+        // compiled-in default.
+        tournamentData.config().type = "gauntlet";
+
         // Create EngineConfigurations for the first two engines
         std::vector<QaplaWindows::ImGuiEngineSelect::EngineConfiguration> engineConfigs;
-        
+
         QaplaWindows::ImGuiEngineSelect::EngineConfiguration config1 = QaplaTester::EngineConfig(configs[0]);
         config1.setSelected(true);
+        config1.setGauntlet(true);  // First engine is the gauntlet engine
         engineConfigs.push_back(config1);
 
         QaplaWindows::ImGuiEngineSelect::EngineConfiguration config2 = QaplaTester::EngineConfig(configs[1]);
         config2.setSelected(true);
+        config2.setGauntlet(false);
         engineConfigs.push_back(config2);
-        
+
         // Set the engine configurations via the proper API
         tournamentData.getEngineSelect().setEngineConfigurations(engineConfigs);
 
