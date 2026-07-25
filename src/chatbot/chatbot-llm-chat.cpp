@@ -19,6 +19,9 @@
 
 #include "chatbot-llm-chat.h"
 #include "imgui-controls.h"
+#include "../configuration.h"
+
+#include <base-elements/timer.h>
 
 #include <imgui.h>
 
@@ -26,18 +29,54 @@ namespace QaplaWindows::ChatBot {
 
 using QaplaLlm::LmStudioStatus;
 
+namespace {
+    // How often the status may be re-probed while the step is open. Chosen to
+    // notice a manually started/stopped LM Studio server within a few
+    // seconds without hammering it with requests every frame.
+    constexpr uint64_t REFRESH_INTERVAL_MS = 3000;
+}
+
 ChatbotLlmChat::ChatbotLlmChat(LmStudioStatus status)
     : status_(status) {
 }
 
 void ChatbotLlmChat::start() {
     finished_ = false;
+    refreshProbe_.reset();
+    lastProbeCompletedMs_ = 0;
+}
+
+void ChatbotLlmChat::refreshStatus() {
+    if (refreshProbe_.has_value()) {
+        if (!refreshProbe_->isReady()) {
+            return; // previous probe still in flight; keep showing status_ as-is
+        }
+        status_ = refreshProbe_->status();
+        lastProbeCompletedMs_ = QaplaHelpers::Timer::getCurrentTimeMs();
+        refreshProbe_.reset();
+        return;
+    }
+
+    if (lastProbeCompletedMs_ != 0 &&
+        QaplaHelpers::Timer::getCurrentTimeMs() - lastProbeCompletedMs_ < REFRESH_INTERVAL_MS) {
+        return;
+    }
+
+    auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
+    QaplaLlm::LmStudioProbeConfig probeConfig;
+    probeConfig.host = config.host;
+    probeConfig.port = config.port;
+
+    refreshProbe_.emplace(probeConfig);
+    refreshProbe_->start();
 }
 
 bool ChatbotLlmChat::draw() {
     if (finished_) {
         return false;
     }
+
+    refreshStatus();
 
     switch (status_) {
         case LmStudioStatus::ServerRunning:
@@ -47,7 +86,8 @@ bool ChatbotLlmChat::draw() {
             ImGuiControls::textWrapped("LM Studio installed, server is not started.");
             break;
         case LmStudioStatus::NotInstalled:
-            // Not reachable: the thread is only registered when LM Studio was found.
+            // Only reachable if a live re-probe stops finding LM Studio after
+            // the thread was registered (e.g. uninstalled while GUI is open).
             ImGuiControls::textWrapped("LM Studio not detected.");
             break;
     }

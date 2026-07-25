@@ -22,7 +22,9 @@
 #include "chatbot-thread.h"
 #include "../llm/lm-studio-locator.h"
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace QaplaWindows::ChatBot {
@@ -34,6 +36,10 @@ namespace QaplaWindows::ChatBot {
  * detected (see LmStudioLocator). This first version only shows the
  * detected status and an inactive input field; the actual conversation is
  * wired up in a later development step.
+ *
+ * The status shown is re-probed periodically (throttled) while this step is
+ * open, rather than frozen at construction time: LM Studio's server can be
+ * started/stopped by the user at any time, independently of the GUI.
  */
 class ChatbotLlmChat : public ChatbotThread {
 public:
@@ -48,8 +54,18 @@ public:
     [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
 private:
+    /**
+     * @brief Refreshes status_ from a throttled, non-blocking re-probe.
+     *
+     * Starts a new async probe at most once per refresh interval, and only
+     * once any previous probe has completed; never blocks the UI thread.
+     */
+    void refreshStatus();
+
     QaplaLlm::LmStudioStatus status_;
     bool finished_ = false;
+    std::optional<QaplaLlm::AsyncLmStudioLocator> refreshProbe_;
+    uint64_t lastProbeCompletedMs_ = 0;
 };
 
 } // namespace QaplaWindows::ChatBot
