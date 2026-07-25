@@ -84,6 +84,16 @@ endif()
 target_compile_options(imgui PRIVATE -Wno-all)
 
 # --------------------------------
+# cpp-httplib (header-only HTTP client/server)
+# --------------------------------
+add_library(httplib INTERFACE)
+target_include_directories(httplib INTERFACE extern/httplib)
+if(NOT WIN32)
+  find_package(Threads REQUIRED)
+  target_link_libraries(httplib INTERFACE Threads::Threads)
+endif()
+
+# --------------------------------
 # qapla-engine-tester Sources
 # --------------------------------
 file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
@@ -93,6 +103,12 @@ file(GLOB_RECURSE QAPLA_TESTER_SOURCES CONFIGURE_DEPENDS
 list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*qapla-engine-tester\\.cpp$")
 # Exculde unit test files for normal build
 list(FILTER QAPLA_TESTER_SOURCES EXCLUDE REGEX ".*/test-system/unit/.*")
+
+# The qapla executable is not linked against Catch2, so Catch2-based test
+# files that live outside test-system/unit (e.g. json/test/*.cpp) must be
+# excluded there too; unit-tests keeps the unfiltered QAPLA_TESTER_SOURCES.
+set(QAPLA_TESTER_SOURCES_FOR_GUI ${QAPLA_TESTER_SOURCES})
+list(FILTER QAPLA_TESTER_SOURCES_FOR_GUI EXCLUDE REGEX ".*/json/test/.*")
 
 # --------------------------------
 # i18n-Dateien automatisch generieren (nur bei Release-Builds unter Windows)
@@ -134,7 +150,7 @@ endif()
 # --------------------------------
 # Executable
 # --------------------------------
-add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES} ${RESOURCE_FILES})
+add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES_FOR_GUI} ${RESOURCE_FILES})
 
 # --------------------------------
 # Includes & Libs
@@ -146,7 +162,7 @@ target_include_directories(qapla PRIVATE
   i18n
 )
 
-target_link_libraries(qapla PRIVATE glfw imgui)
+target_link_libraries(qapla PRIVATE glfw imgui httplib)
 
 # --------------------------------
 # Plattformabhängige Links
@@ -200,6 +216,7 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/tournament-result-incremental.cpp
       src/config-group-loader.cpp
       src/tournament-config-sections.cpp
+      src/llm/lm-studio-locator.cpp
     )
     
     add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})
@@ -210,8 +227,9 @@ if(QAPLA_BUILD_UNIT_TESTS)
       extern/qapla-engine-tester/src
     )
     
-    target_link_libraries(unit-tests PRIVATE 
+    target_link_libraries(unit-tests PRIVATE
       Catch2::Catch2WithMain
+      httplib
     )
     
     # Link qapla-engine-tester sources (shared logic)

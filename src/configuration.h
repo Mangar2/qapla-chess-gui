@@ -106,6 +106,27 @@ namespace QaplaConfiguration {
          */
         static void setRemoteDesktopMode(bool enabled);
 
+        /**
+         * @brief Configuration for the LLM chat feature ([llmchat] section).
+         */
+        struct LlmChatConfig {
+            bool enabled = true;             ///< Auto: offer the chat when LM Studio is found
+            std::string host = "localhost";
+            int port = 1234;
+        };
+
+        /**
+         * @brief Gets the LLM chat configuration.
+         * @return The current [llmchat] settings, or defaults if unset.
+         */
+        static LlmChatConfig getLlmChatConfig();
+
+        /**
+         * @brief Sets the LLM chat configuration.
+         * @param config The settings to persist.
+         */
+        static void setLlmChatConfig(const LlmChatConfig& config);
+
     protected:
         /**
          * @brief Saves configuration data to the output stream.

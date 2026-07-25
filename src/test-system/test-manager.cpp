@@ -26,6 +26,7 @@
 #include "test-system/tutorial-test/epd/tutorial-tests.h"
 #include "test-system/tutorial-test/engine-setup/tutorial-tests.h"
 #include "test-system/tutorial-test/board-window/tutorial-tests.h"
+#include "test-system/llm-chat-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -73,6 +74,7 @@ namespace QaplaTest {
         registerEpdTutorialTests(engine_);
         registerEngineSetupTutorialTests(engine_);
         registerBoardWindowTutorialTests(engine_);
+        registerLlmChatTests(engine_);
 #endif
     }
 

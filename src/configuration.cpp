@@ -215,3 +215,34 @@ void Configuration::setRemoteDesktopMode(bool enabled) {
     Configuration::instance().getConfigData().setSectionList("performance", "general", { section });
     Configuration::instance().setModified();
 }
+
+Configuration::LlmChatConfig Configuration::getLlmChatConfig() {
+    LlmChatConfig result;
+    auto sections = Configuration::instance().
+        getConfigData().getSectionList("llmchat", "general").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+
+    if (!sections.empty()) {
+        const auto& section = sections[0];
+        std::string enabledValue = section.getValue("enabled").value_or("true");
+        result.enabled = (enabledValue == "true" || enabledValue == "1");
+        result.host = section.getValue("host").value_or(result.host);
+        result.port = static_cast<int>(
+            QaplaHelpers::to_uint32(section.getValue("port").value_or("")).value_or(static_cast<uint32_t>(result.port)));
+    }
+    return result;
+}
+
+void Configuration::setLlmChatConfig(const LlmChatConfig& config) {
+    QaplaHelpers::IniFile::Section section {
+        .name = "llmchat",
+        .entries = QaplaHelpers::IniFile::KeyValueMap{
+            {"id", "general"},
+            {"enabled", config.enabled ? "true" : "false"},
+            {"host", config.host},
+            {"port", std::to_string(config.port)}
+        }
+    };
+
+    Configuration::instance().getConfigData().setSectionList("llmchat", "general", { section });
+    Configuration::instance().setModified();
+}

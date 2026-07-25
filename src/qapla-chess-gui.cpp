@@ -46,6 +46,7 @@
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
 #include "chatbot/chatbot-window.h"
+#include "llm/llm-chat-integration.h"
 #include "data/logo-data.h"
 #include "imgui-frame-rate-limiter.h"
 
@@ -246,6 +247,7 @@ namespace {
             });
 
         auto workspace = initWindows();
+        QaplaLlm::startLlmChatDetection();
 
         auto* window = initGlfwContext();
         initGlad();
