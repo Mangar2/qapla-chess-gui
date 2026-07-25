@@ -65,9 +65,16 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
         .name = "open_add_engine_dialog",
         .description = "Opens the GUI's native file picker so the user can select one or more "
                         "chess engine executables to add to the global engine catalog. The user "
-                        "chooses the file(s) themselves -- you have no filesystem access. Call "
-                        "list_installed_engines afterwards to confirm what was actually added.",
+                        "chooses the file(s) themselves -- you have no filesystem access. Newly "
+                        "added engines are automatically queued for capability auto-detection "
+                        "(no separate step needed). Call list_installed_engines afterwards to "
+                        "confirm what was actually added.",
         .parametersSchema = noArgsSchema(),
+        // Waits on the user picking a file in a native dialog, which can
+        // legitimately take much longer than a normal tool call -- the
+        // default timeout would abandon the call while the user is still
+        // choosing, orphaning its (eventually correct) result.
+        .timeout = std::chrono::minutes(10),
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
             if (paths.empty()) {
@@ -79,12 +86,19 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
 
             auto outcome = addEnginesFromPaths(paths);
             if (!outcome.addedNames.empty()) {
-                QaplaConfiguration::Configuration::instance().setModified();
+                auto& configuration = QaplaConfiguration::Configuration::instance();
+                configuration.setModified();
+                // Matches the classic "Add" + "Detect" buttons being used
+                // together: a chat-driven add should not require the user
+                // to separately ask for detection afterwards. Fire-and-forget,
+                // same as the "Detect" button; only queries missing engines.
+                configuration.getEngineCapabilities().autoDetect();
             }
 
             std::string message;
             if (!outcome.addedNames.empty()) {
-                message += "Added engines: " + joinNames(outcome.addedNames) + ". ";
+                message += "Added engines: " + joinNames(outcome.addedNames) +
+                    ". Capability auto-detection started for them in the background. ";
             }
             if (!outcome.duplicateNames.empty()) {
                 message += "Already configured (skipped): " + joinNames(outcome.duplicateNames) + ". ";

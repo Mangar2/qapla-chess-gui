@@ -66,19 +66,20 @@ TEST_CASE("GuiToolRegistry executes a tool call handed off to the UI thread", "[
     });
 
     auto result = runOnWorkerWhilePolling(registry, [&]() {
-        return registry.callTool("echo", R"({"text":"hi"})", std::chrono::seconds(5));
+        return registry.callTool("echo", R"({"text":"hi"})");
     });
 
     REQUIRE(result.success);
     REQUIRE(result.content == "echo:hi");
 }
 
-TEST_CASE("GuiToolRegistry reports an error result for an unknown tool", "[llm][gui-tool-registry]") {
+TEST_CASE("GuiToolRegistry reports an error result for an unknown tool without touching the queue",
+    "[llm][gui-tool-registry]") {
     GuiToolRegistry registry;
 
-    auto result = runOnWorkerWhilePolling(registry, [&]() {
-        return registry.callTool("does_not_exist", "{}", std::chrono::seconds(3));
-    });
+    // No worker/polling needed: an unknown tool is rejected immediately,
+    // without ever being enqueued for the UI thread.
+    auto result = registry.callTool("does_not_exist", "{}");
 
     REQUIRE_FALSE(result.success);
     REQUIRE(result.content.find("Unknown tool") != std::string::npos);
@@ -99,7 +100,7 @@ TEST_CASE("GuiToolRegistry turns invalid argument JSON into a failed result inst
     });
 
     auto result = runOnWorkerWhilePolling(registry, [&]() {
-        return registry.callTool("noop", "{not valid json", std::chrono::seconds(3));
+        return registry.callTool("noop", "{not valid json");
     });
 
     REQUIRE_FALSE(result.success);
@@ -115,13 +116,37 @@ TEST_CASE("GuiToolRegistry::callTool times out when nobody drains the queue", "[
         .parametersSchema = Json::JsonValue::object(),
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             return GuiToolResult{.success = true, .content = "unused"};
-        }
+        },
+        .timeout = std::chrono::milliseconds(100)
     });
 
-    auto result = registry.callTool("never_called", "{}", std::chrono::milliseconds(100));
+    auto result = registry.callTool("never_called", "{}");
 
     REQUIRE_FALSE(result.success);
     REQUIRE(result.content.find("timed out") != std::string::npos);
+}
+
+TEST_CASE("GuiToolRegistry uses each tool's own configured timeout", "[llm][gui-tool-registry]") {
+    GuiToolRegistry registry;
+    registry.registerTool(GuiToolDefinition{
+        .name = "slow_interactive_tool",
+        .description = "",
+        .parametersSchema = Json::JsonValue::object(),
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "done"};
+        },
+        .timeout = std::chrono::seconds(2)
+    });
+
+    // Simulates the UI thread being "slow" (e.g. waiting on the user) for
+    // longer than the default 30s timeout would matter for this test, but
+    // well within the tool's own 2s timeout once it does run.
+    auto result = runOnWorkerWhilePolling(registry, [&]() {
+        return registry.callTool("slow_interactive_tool", "{}");
+    });
+
+    REQUIRE(result.success);
+    REQUIRE(result.content == "done");
 }
 
 TEST_CASE("GuiToolRegistry::exportToolSpecs reflects registered tools", "[llm][gui-tool-registry]") {

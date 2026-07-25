@@ -58,6 +58,18 @@ struct GuiToolDefinition {
     std::string description;
     QaplaTester::Json::JsonValue parametersSchema = QaplaTester::Json::JsonValue::object(); ///< JSON Schema for "arguments".
     std::function<GuiToolResult(const QaplaTester::Json::JsonValue& arguments)> handler;
+
+    /**
+     * @brief How long callTool() waits for this tool's handler to run.
+     *
+     * Most tools finish within a frame or two, so the default is short.
+     * Tools that block the UI thread on human interaction (e.g. a native
+     * file dialog) must set a much longer timeout -- there is no way to
+     * know in advance how long a person will take, and a short timeout
+     * would just abandon the call while the handler is still legitimately
+     * running, orphaning its (eventually correct) result.
+     */
+    std::chrono::milliseconds timeout = std::chrono::seconds(30);
 };
 
 /**
@@ -84,13 +96,11 @@ public:
 
     /**
      * @brief Enqueues a tool call and blocks the calling thread until the UI
-     * thread has executed it, or the timeout elapses.
+     * thread has executed it, or the tool's own timeout elapses.
      * @param name Registered tool name.
      * @param argumentsJson Raw JSON object text as received from the model (may be empty).
-     * @param timeout Maximum time to wait for the UI thread to process it.
      */
-    [[nodiscard]] GuiToolResult callTool(const std::string& name, const std::string& argumentsJson,
-        std::chrono::milliseconds timeout = std::chrono::seconds(30));
+    [[nodiscard]] GuiToolResult callTool(const std::string& name, const std::string& argumentsJson);
 
     /** @brief Must be called once per frame from the UI thread. */
     void processQueue();

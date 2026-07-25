@@ -56,8 +56,16 @@ std::vector<ToolSpec> GuiToolRegistry::exportToolSpecs() const {
     return specs;
 }
 
-GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::string& argumentsJson,
-    std::chrono::milliseconds timeout) {
+GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::string& argumentsJson) {
+    std::chrono::milliseconds timeout;
+    {
+        std::scoped_lock lock(toolsMutex_);
+        auto it = std::ranges::find_if(tools_, [&](const auto& tool) { return tool.name == name; });
+        if (it == tools_.end()) {
+            return GuiToolResult{.success = false, .content = "Unknown tool: " + name};
+        }
+        timeout = it->timeout;
+    }
 
     QueuedCall call;
     call.name = name;
