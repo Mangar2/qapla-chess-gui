@@ -133,3 +133,68 @@ TEST_CASE("LmStudioClient::chatCompletion surfaces server-side error messages", 
     REQUIRE_FALSE(result.success);
     REQUIRE(result.errorMessage.find("No model loaded.") != std::string::npos);
 }
+
+TEST_CASE("LmStudioClient::chatCompletion sends tools and parses tool_calls", "[llm][lm-studio-client]") {
+    MockServer mock;
+    mock.server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
+        REQUIRE(req.body.find("\"tools\"") != std::string::npos);
+        REQUIRE(req.body.find("\"list_installed_engines\"") != std::string::npos);
+        res.set_content(
+            R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+            R"([{"id":"call_1","type":"function",)"
+            R"("function":{"name":"list_installed_engines","arguments":"{}"}}]}}]})",
+            "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    ChatCompletionRequest request;
+    request.model = "test-model";
+    request.messages.push_back({"user", "please list engines"});
+    request.tools.push_back(ToolSpec{
+        .name = "list_installed_engines",
+        .description = "Lists engines.",
+        .parametersSchemaJson = R"({"type":"object","properties":{}})"
+    });
+
+    auto result = client.chatCompletion(request);
+
+    REQUIRE(result.success);
+    REQUIRE(result.content.empty());
+    REQUIRE(result.toolCalls.size() == 1);
+    REQUIRE(result.toolCalls[0].id == "call_1");
+    REQUIRE(result.toolCalls[0].name == "list_installed_engines");
+    REQUIRE(result.toolCalls[0].argumentsJson == "{}");
+}
+
+TEST_CASE("LmStudioClient::chatCompletion echoes assistant tool_calls and tool results on the wire",
+    "[llm][lm-studio-client]") {
+    MockServer mock;
+    mock.server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
+        REQUIRE(req.body.find("\"tool_call_id\":\"call_1\"") != std::string::npos);
+        REQUIRE(req.body.find("\"role\":\"tool\"") != std::string::npos);
+        REQUIRE(req.body.find("\"tool_calls\"") != std::string::npos);
+        res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Done."}}]})", "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    ChatCompletionRequest request;
+    request.model = "test-model";
+
+    ChatMessage assistantMessage;
+    assistantMessage.role = "assistant";
+    assistantMessage.toolCalls.push_back(ToolCall{.id = "call_1", .name = "some_tool", .argumentsJson = "{}"});
+    request.messages.push_back(assistantMessage);
+
+    ChatMessage toolMessage;
+    toolMessage.role = "tool";
+    toolMessage.toolCallId = "call_1";
+    toolMessage.content = "result text";
+    request.messages.push_back(toolMessage);
+
+    auto result = client.chatCompletion(request);
+
+    REQUIRE(result.success);
+    REQUIRE(result.content == "Done.");
+}

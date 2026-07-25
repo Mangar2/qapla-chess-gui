@@ -18,14 +18,80 @@
  */
 
 #include "llm-chat-controller.h"
+#include "gui-tool-registry.h"
 
 #include <thread>
 #include <utility>
 
 namespace QaplaLlm {
 
-LlmChatController::LlmChatController(LmStudioConnection connection, std::string systemPrompt)
-    : client_(std::move(connection)), systemPrompt_(std::move(systemPrompt)) {
+namespace {
+
+    // Runs entirely on the worker thread: calls the model, and for as long as
+    // it keeps responding with tool_calls, executes them via GuiToolRegistry
+    // (which itself blocks this thread until the UI thread has processed
+    // them) and asks again, until a final text answer or the iteration limit.
+    AgentTurnResult runAgentLoop(
+        const LmStudioClient& client,
+        const std::string& model,
+        const std::vector<ToolSpec>& tools,
+        std::vector<ChatMessage> messages,
+        int maxToolIterations) {
+
+        AgentTurnResult turnResult;
+
+        for (int iteration = 0; iteration < maxToolIterations; ++iteration) {
+            ChatCompletionRequest request;
+            request.model = model;
+            request.messages = messages;
+            request.tools = tools;
+
+            auto response = client.chatCompletion(request);
+            if (!response.success) {
+                turnResult.errorMessage = response.errorMessage;
+                return turnResult;
+            }
+
+            if (response.toolCalls.empty()) {
+                turnResult.success = true;
+                turnResult.finalContent = response.content;
+                return turnResult;
+            }
+
+            // Echo the assistant's tool-call request back, then answer each
+            // one -- both are required by the API to keep the message
+            // sequence valid for the next round.
+            ChatMessage assistantMessage;
+            assistantMessage.role = "assistant";
+            assistantMessage.content = response.content;
+            assistantMessage.toolCalls = response.toolCalls;
+            messages.push_back(std::move(assistantMessage));
+
+            for (const auto& call : response.toolCalls) {
+                GuiToolResult toolResult = GuiToolRegistry::instance().callTool(call.name, call.argumentsJson);
+
+                ChatMessage toolMessage;
+                toolMessage.role = "tool";
+                toolMessage.toolCallId = call.id;
+                toolMessage.content = toolResult.content;
+                messages.push_back(std::move(toolMessage));
+
+                turnResult.toolEvents.push_back(ToolCallEvent{
+                    .toolName = call.name,
+                    .success = toolResult.success,
+                    .resultSummary = toolResult.content
+                });
+            }
+        }
+
+        turnResult.errorMessage = "Stopped after reaching the tool-call iteration limit.";
+        return turnResult;
+    }
+
+} // namespace
+
+LlmChatController::LlmChatController(LmStudioConnection connection, std::string systemPrompt, int maxToolIterations)
+    : client_(std::move(connection)), systemPrompt_(std::move(systemPrompt)), maxToolIterations_(maxToolIterations) {
 }
 
 void LlmChatController::refreshModels() {
@@ -51,16 +117,15 @@ void LlmChatController::sendMessage(const std::string& userText) {
 
     history_.push_back({ChatRole::User, userText});
 
-    ChatCompletionRequest request;
-    request.model = model_;
-    request.messages.push_back({"system", systemPrompt_});
+    std::vector<ChatMessage> messages;
+    messages.push_back(ChatMessage{.role = "system", .content = systemPrompt_});
     for (const auto& entry : history_) {
         if (entry.role == ChatRole::User) {
-            request.messages.push_back({"user", entry.text});
+            messages.push_back(ChatMessage{.role = "user", .content = entry.text});
         } else if (entry.role == ChatRole::Assistant) {
-            request.messages.push_back({"assistant", entry.text});
+            messages.push_back(ChatMessage{.role = "assistant", .content = entry.text});
         }
-        // Error entries are shown to the user locally but never replayed to the model.
+        // Tool/Error entries are shown to the user locally but never replayed to the model.
     }
 
     auto state = std::make_shared<PendingChat>();
@@ -68,8 +133,12 @@ void LlmChatController::sendMessage(const std::string& userText) {
     busy_ = true;
 
     auto client = client_;
-    std::thread([state, client, request = std::move(request)]() {
-        state->result = client.chatCompletion(request);
+    auto model = model_;
+    auto tools = GuiToolRegistry::instance().exportToolSpecs();
+    auto maxToolIterations = maxToolIterations_;
+
+    std::thread([state, client, model, tools, messages = std::move(messages), maxToolIterations]() mutable {
+        state->result = runAgentLoop(client, model, tools, std::move(messages), maxToolIterations);
         state->done.store(true, std::memory_order_release);
     }).detach();
 }
@@ -90,8 +159,19 @@ void LlmChatController::update() {
         auto result = pendingChat_->result;
         pendingChat_.reset();
         busy_ = false;
+
+        for (const auto& event : result.toolEvents) {
+            std::string text = event.toolName;
+            if (!event.resultSummary.empty()) {
+                text += ": " + event.resultSummary;
+            }
+            history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
+        }
+
         if (result.success) {
-            history_.push_back({ChatRole::Assistant, result.content});
+            if (!result.finalContent.empty()) {
+                history_.push_back({ChatRole::Assistant, result.finalContent});
+            }
         } else {
             history_.push_back({ChatRole::Error, result.errorMessage});
         }

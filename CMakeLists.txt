@@ -218,6 +218,8 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/tournament-config-sections.cpp
       src/llm/lm-studio-locator.cpp
       src/llm/lm-studio-client.cpp
+      src/llm/gui-tool-registry.cpp
+      src/llm/gui-tool-engine-management.cpp
     )
     
     add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})

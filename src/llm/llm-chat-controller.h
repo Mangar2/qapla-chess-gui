@@ -34,7 +34,8 @@ namespace QaplaLlm {
 enum class ChatRole {
     User,
     Assistant,
-    Error ///< Local/network/protocol error shown inline; never replayed to the model.
+    Tool,  ///< "⚙ <tool>: <result>" -- shown inline; never replayed to the model.
+    Error  ///< Local/network/protocol error shown inline; never replayed to the model.
 };
 
 struct ChatEntry {
@@ -42,21 +43,40 @@ struct ChatEntry {
     std::string text;
 };
 
+/** @brief One tool call executed within an agent-loop turn, for local display. */
+struct ToolCallEvent {
+    std::string toolName;
+    bool success = true;
+    std::string resultSummary;
+};
+
+/** @brief Outcome of one full agent-loop turn (see runAgentLoop() in the .cpp). */
+struct AgentTurnResult {
+    bool success = false;
+    std::string finalContent;
+    std::string errorMessage;
+    std::vector<ToolCallEvent> toolEvents;
+};
+
 /**
- * @brief Drives a request/response conversation with a local LM Studio model.
+ * @brief Drives a tool-calling conversation with a local LM Studio model.
  *
- * Each request runs on a detached worker thread; update() must be called
- * once per frame from the UI thread to pick up results. No tool-calling
- * loop yet (see docs/llm-chatbot-plan.md Step 3) and no streaming (Step 7).
+ * Each user message starts one detached worker thread that runs the full
+ * agent loop (see docs/llm-chatbot-plan.md Step 3): call the model, and as
+ * long as it responds with tool_calls instead of a final answer, execute
+ * each one through GuiToolRegistry (which itself hops back to the UI thread
+ * and blocks the worker until done), feed the results back, and ask again --
+ * up to maxToolIterations times. update() must be called once per frame
+ * from the UI thread to pick up the turn's result.
  *
  * Thread-safety: all public methods (including update()) are meant to be
- * called from a single thread (the UI thread). Worker threads only ever
- * touch their own PendingChat/PendingModels state, exchanged with the UI
+ * called from a single thread (the UI thread). The worker thread only ever
+ * touches its own PendingChat/PendingModels state, exchanged with the UI
  * thread through a std::shared_ptr and a release/acquire "done" flag.
  */
 class LlmChatController {
 public:
-    LlmChatController(LmStudioConnection connection, std::string systemPrompt);
+    LlmChatController(LmStudioConnection connection, std::string systemPrompt, int maxToolIterations = 10);
 
     /** @brief Starts a non-blocking model list refresh. No-op if already in flight. */
     void refreshModels();
@@ -77,20 +97,23 @@ public:
         return model_;
     }
 
-    /** @brief Appends the user's message and starts the model request. No-op if isBusy() or text is empty. */
+    /** @brief Appends the user's message and starts the agent loop. No-op if isBusy() or text is empty. */
     void sendMessage(const std::string& userText);
 
-    /** @brief True while a chat request is in flight. */
+    /** @brief True while a turn (model calls and any tool calls within it) is in flight. */
     [[nodiscard]] bool isBusy() const {
         return busy_;
     }
 
     /**
-     * @brief Abandons the in-flight request.
+     * @brief Abandons the in-flight turn.
      *
      * Best-effort: the worker thread keeps running to completion in the
-     * background (bounded by the connection's request timeout), but its
-     * result is orphaned and never applied.
+     * background (bounded by the connection's request timeout and the tool
+     * iteration limit), but its result is orphaned and never applied. Note
+     * this does not abort an individual tool call already queued for the UI
+     * thread -- e.g. a file dialog the model already asked to open will
+     * still open even after stop() is called.
      */
     void stop();
 
@@ -104,7 +127,7 @@ public:
 private:
     struct PendingChat {
         std::atomic<bool> done{false};
-        ChatCompletionResult result;
+        AgentTurnResult result;
     };
     struct PendingModels {
         std::atomic<bool> done{false};
@@ -114,6 +137,7 @@ private:
     LmStudioClient client_;
     std::string systemPrompt_;
     std::string model_;
+    int maxToolIterations_;
     std::vector<ChatEntry> history_;
 
     bool busy_ = false;

@@ -40,6 +40,7 @@ namespace {
     constexpr uint64_t REFRESH_INTERVAL_MS = 3000;
 
     const ImVec4 USER_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
+    const ImVec4 TOOL_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
     const ImVec4 ASSISTANT_COLOR{0.7F, 1.0F, 0.7F, 1.0F};
 }
 
@@ -188,6 +189,9 @@ void ChatbotLlmChat::drawChatUi() {
                 break;
             case QaplaLlm::ChatRole::Assistant:
                 ImGui::TextColored(ASSISTANT_COLOR, "Assistant:");
+                break;
+            case QaplaLlm::ChatRole::Tool:
+                ImGui::TextColored(TOOL_COLOR, "\xE2\x9A\x99 Tool:"); // gear icon
                 break;
             case QaplaLlm::ChatRole::Error:
                 ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");

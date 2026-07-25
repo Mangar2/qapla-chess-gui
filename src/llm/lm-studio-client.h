@@ -34,19 +34,56 @@ struct LmStudioConnection {
 };
 
 /**
- * @brief One message in an OpenAI-style chat completion request.
+ * @brief One function-tool call requested by the model, or echoed back to it.
+ *
+ * The wire format (JSON) is assembled/parsed entirely inside
+ * lm-studio-client.cpp; argumentsJson is passed through verbatim so this
+ * header stays free of any JSON library dependency.
  */
-struct ChatMessage {
-    std::string role; // "system" | "user" | "assistant"
-    std::string content;
+struct ToolCall {
+    std::string id;
+    std::string name;
+    std::string argumentsJson; ///< Raw JSON object text, e.g. "{}" or "{\"path\":\"x\"}".
 };
 
 /**
- * @brief A (non-streaming, tool-free) chat completion request.
+ * @brief One message in an OpenAI-style chat completion request.
+ *
+ * - role "system" / "user": content only.
+ * - role "assistant": content (may be empty) and, if the model requested
+ *   tool calls, toolCalls -- both must be echoed back verbatim in a later
+ *   request so the API can match up the following "tool" messages.
+ * - role "tool": content is the tool's result text; toolCallId identifies
+ *   which of the assistant's toolCalls this result answers.
+ */
+struct ChatMessage {
+    std::string role;
+    std::string content;
+    std::vector<ToolCall> toolCalls; ///< Only meaningful for role == "assistant".
+    std::string toolCallId;          ///< Only meaningful for role == "tool".
+};
+
+/**
+ * @brief A function tool offered to the model (OpenAI "tools" entry).
+ *
+ * parametersSchemaJson is the raw JSON Schema text for the tool's
+ * "arguments" object (e.g. "{\"type\":\"object\",\"properties\":{}}");
+ * building/validating that schema is GuiToolRegistry's job, not the
+ * client's -- this struct just carries it over the wire.
+ */
+struct ToolSpec {
+    std::string name;
+    std::string description;
+    std::string parametersSchemaJson;
+};
+
+/**
+ * @brief A (non-streaming) chat completion request, optionally offering tools.
  */
 struct ChatCompletionRequest {
     std::string model;
     std::vector<ChatMessage> messages;
+    std::vector<ToolSpec> tools; ///< Empty => no "tools" field is sent at all.
 };
 
 /**
@@ -54,8 +91,9 @@ struct ChatCompletionRequest {
  */
 struct ChatCompletionResult {
     bool success = false;
-    std::string content;      ///< Assistant reply text; valid only if success.
-    std::string errorMessage; ///< Human-readable error; valid only if !success.
+    std::string content;             ///< Assistant reply text; may be empty if toolCalls is non-empty.
+    std::vector<ToolCall> toolCalls; ///< Non-empty if the model wants to call tools instead of replying.
+    std::string errorMessage;        ///< Human-readable error; valid only if !success.
 };
 
 /**
@@ -70,10 +108,10 @@ struct ListModelsResult {
 /**
  * @brief Blocking OpenAI-compatible HTTP client for the local LM Studio server.
  *
- * No tool/function-calling support yet (see docs/llm-chatbot-plan.md Step 3)
- * and no streaming (see Step 7). Calls block for the duration of the HTTP
- * request; callers that need the UI thread to stay responsive must run them
- * on a worker thread themselves (see LlmChatController).
+ * No streaming yet (see docs/llm-chatbot-plan.md Step 7). Calls block for
+ * the duration of the HTTP request; callers that need the UI thread to stay
+ * responsive must run them on a worker thread themselves (see
+ * LlmChatController).
  */
 class LmStudioClient {
 public:

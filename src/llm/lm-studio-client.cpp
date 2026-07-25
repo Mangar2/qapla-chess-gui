@@ -67,6 +67,87 @@ namespace {
         }
         return message;
     }
+
+    Json::JsonValue buildMessageJson(const ChatMessage& message) {
+        auto entry = Json::JsonValue::object();
+        entry["role"] = message.role;
+
+        if (message.role == "tool") {
+            entry["tool_call_id"] = message.toolCallId;
+            entry["content"] = message.content;
+            return entry;
+        }
+
+        entry["content"] = message.content;
+        if (message.role == "assistant" && !message.toolCalls.empty()) {
+            auto toolCallsJson = Json::JsonValue::array();
+            for (const auto& call : message.toolCalls) {
+                auto callJson = Json::JsonValue::object();
+                callJson["id"] = call.id;
+                callJson["type"] = "function";
+                auto functionJson = Json::JsonValue::object();
+                functionJson["name"] = call.name;
+                functionJson["arguments"] = call.argumentsJson;
+                callJson["function"] = functionJson;
+                toolCallsJson.push_back(callJson);
+            }
+            entry["tool_calls"] = toolCallsJson;
+        }
+        return entry;
+    }
+
+    Json::JsonValue buildToolsJson(const std::vector<ToolSpec>& tools) {
+        auto toolsJson = Json::JsonValue::array();
+        for (const auto& tool : tools) {
+            auto functionJson = Json::JsonValue::object();
+            functionJson["name"] = tool.name;
+            functionJson["description"] = tool.description;
+            auto parsedParams = Json::JsonValue::try_parse(tool.parametersSchemaJson);
+            functionJson["parameters"] = parsedParams ? *parsedParams : Json::JsonValue::object();
+
+            auto entry = Json::JsonValue::object();
+            entry["type"] = "function";
+            entry["function"] = functionJson;
+            toolsJson.push_back(entry);
+        }
+        return toolsJson;
+    }
+
+    // "content" may legitimately be JSON null (or absent) when the model
+    // only returns tool_calls; treat anything but a string as empty.
+    std::string parseContent(const Json::JsonValue& message) {
+        if (!message.contains("content") || !message.at("content").is_string()) {
+            return "";
+        }
+        return message.at("content").as_string();
+    }
+
+    std::vector<ToolCall> parseToolCalls(const Json::JsonValue& message) {
+        std::vector<ToolCall> calls;
+        if (!message.contains("tool_calls") || !message.at("tool_calls").is_array()) {
+            return calls;
+        }
+
+        for (const auto& callJson : message.at("tool_calls").as_array()) {
+            if (!callJson.is_object() || !callJson.contains("function") || !callJson.at("function").is_object()) {
+                continue;
+            }
+            const auto& functionJson = callJson.at("function");
+
+            ToolCall call;
+            if (callJson.contains("id") && callJson.at("id").is_string()) {
+                call.id = callJson.at("id").as_string();
+            }
+            if (functionJson.contains("name") && functionJson.at("name").is_string()) {
+                call.name = functionJson.at("name").as_string();
+            }
+            if (functionJson.contains("arguments") && functionJson.at("arguments").is_string()) {
+                call.argumentsJson = functionJson.at("arguments").as_string();
+            }
+            calls.push_back(std::move(call));
+        }
+        return calls;
+    }
 }
 
 LmStudioClient::LmStudioClient(LmStudioConnection connection)
@@ -109,14 +190,16 @@ ChatCompletionResult LmStudioClient::chatCompletion(const ChatCompletionRequest&
     auto body = Json::JsonValue::object();
     body["model"] = request.model;
     body["stream"] = false;
-    auto messages = Json::JsonValue::array();
+
+    auto messagesJson = Json::JsonValue::array();
     for (const auto& message : request.messages) {
-        auto entry = Json::JsonValue::object();
-        entry["role"] = message.role;
-        entry["content"] = message.content;
-        messages.push_back(entry);
+        messagesJson.push_back(buildMessageJson(message));
     }
-    body["messages"] = messages;
+    body["messages"] = messagesJson;
+
+    if (!request.tools.empty()) {
+        body["tools"] = buildToolsJson(request.tools);
+    }
 
     auto client = makeClient(connection_);
     auto res = client.Post("/v1/chat/completions", body.stringify(), "application/json");
@@ -137,17 +220,14 @@ ChatCompletionResult LmStudioClient::chatCompletion(const ChatCompletionRequest&
     }
 
     const auto& firstChoice = parsed->at("choices").as_array()[0];
-    if (!firstChoice.is_object() || !firstChoice.contains("message")) {
+    if (!firstChoice.is_object() || !firstChoice.contains("message") || !firstChoice.at("message").is_object()) {
         result.errorMessage = "Unexpected response from LM Studio (no message).";
         return result;
     }
-    const auto& message = firstChoice.at("message");
-    if (!message.is_object() || !message.contains("content") || !message.at("content").is_string()) {
-        result.errorMessage = "Unexpected response from LM Studio (no content).";
-        return result;
-    }
 
-    result.content = message.at("content").as_string();
+    const auto& message = firstChoice.at("message");
+    result.content = parseContent(message);
+    result.toolCalls = parseToolCalls(message);
     result.success = true;
     return result;
 }

@@ -19,6 +19,8 @@
 
 #include "llm-chat-integration.h"
 #include "lm-studio-locator.h"
+#include "gui-tool-registry.h"
+#include "gui-tool-engine-management.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
@@ -42,9 +44,26 @@ struct DetectionState {
     std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> pollHandle;
 };
 
+// Registers every available GUI tool group. Registration is cheap and
+// unconditional -- tools only ever run when a chat actually calls them, so
+// there is no reason to gate this on LM Studio being found.
+void registerGuiTools() {
+    registerEngineManagementTools(GuiToolRegistry::instance());
+}
+
 } // namespace
 
 void startLlmChatDetection() {
+    registerGuiTools();
+
+    // Intentionally kept alive for the whole process (static, never reset):
+    // the tool-call job queue must be drained for the lifetime of the
+    // application, not just during startup detection. Letting the returned
+    // UnregisterHandle go out of scope would immediately unregister it.
+    static auto toolQueuePollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([]() {
+        GuiToolRegistry::instance().processQueue();
+    });
+
     auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
     if (!config.enabled) {
         return;
