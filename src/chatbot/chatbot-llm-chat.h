@@ -37,9 +37,9 @@ namespace QaplaWindows::ChatBot {
  *
  * Registered in the ChatbotWindow only when an LM Studio installation was
  * detected (see LmStudioLocator). Once the server answers, a
- * QaplaLlm::LlmChatController is created lazily and the free-text chat UI
- * (history, input, model dropdown, stop button) takes over; no tool-calling
- * yet (see docs/llm-chatbot-plan.md Step 3).
+ * QaplaLlm::LlmChatController is created lazily and the free-text,
+ * tool-calling chat UI (history, input, model dropdown, stop button) takes
+ * over (see docs/llm-chatbot-plan.md Step 3).
  *
  * The status shown before a conversation starts is re-probed periodically
  * (throttled) while this step is open, rather than frozen at construction
@@ -81,6 +81,18 @@ private:
     /** @brief Sends the current input buffer, if non-empty and not busy. */
     void trySend();
 
+    /**
+     * @brief Posts a chat notification once engine capability detection
+     * (started fire-and-forget by open_add_engine_dialog, but tracked as
+     * global GUI state, not part of the tool call's own result) finishes.
+     *
+     * The "Detect" button already surfaces this via a snackbar; this adds
+     * the same information inline in the chat so a chat-driven "add engine"
+     * request doesn't leave the user staring at a stale "detecting..."
+     * message with no visible follow-up in the conversation itself.
+     */
+    void watchEngineDetection();
+
     QaplaLlm::LmStudioStatus status_;
     bool finished_ = false;
     std::optional<QaplaLlm::AsyncLmStudioLocator> refreshProbe_;
@@ -89,6 +101,7 @@ private:
     std::unique_ptr<QaplaLlm::LlmChatController> controller_;
     std::array<char, 4096> inputBuffer_{};
     std::size_t lastHistorySize_ = 0;
+    bool wasDetectingEngines_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

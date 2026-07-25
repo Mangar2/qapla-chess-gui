@@ -34,7 +34,7 @@ namespace QaplaLlm {
 enum class ChatRole {
     User,
     Assistant,
-    Tool,  ///< "⚙ <tool>: <result>" -- shown inline; never replayed to the model.
+    Tool,  ///< A tool's own friendly result text, shown inline; never replayed to the model.
     Error  ///< Local/network/protocol error shown inline; never replayed to the model.
 };
 
@@ -121,10 +121,26 @@ public:
         return history_;
     }
 
+    /**
+     * @brief Appends a locally-generated status note to the history (e.g.
+     * "Engine detection completed."), shown the same way as a Tool result.
+     *
+     * For events the UI layer observes outside the agent loop (e.g. a GUI
+     * singleton's async state finishing after a tool call already
+     * returned) -- see ChatbotLlmChat's engine-detection watcher. Like
+     * other Tool entries, never replayed to the model.
+     */
+    void notify(const std::string& text) {
+        history_.push_back({ChatRole::Tool, text});
+    }
+
     /** @brief Must be called once per frame from the UI thread to pick up worker results. */
     void update();
 
 private:
+    void applyTurnResult(const AgentTurnResult& result);
+    void applyModelsResult(const ListModelsResult& result);
+
     struct PendingChat {
         std::atomic<bool> done{false};
         AgentTurnResult result;

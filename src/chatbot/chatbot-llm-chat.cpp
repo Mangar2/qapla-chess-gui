@@ -117,6 +117,7 @@ bool ChatbotLlmChat::draw() {
 
     if (controller_) {
         controller_->update();
+        watchEngineDetection();
         drawChatUi();
     } else {
         drawStatusOnly();
@@ -130,6 +131,14 @@ bool ChatbotLlmChat::draw() {
     ImGuiControls::hooverTooltip("Close the AI chat and return to the previous view.");
 
     return false;
+}
+
+void ChatbotLlmChat::watchEngineDetection() {
+    bool isDetecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
+    if (wasDetectingEngines_ && !isDetecting) {
+        controller_->notify("Engine detection completed -- the new engine(s) can now be used.");
+    }
+    wasDetectingEngines_ = isDetecting;
 }
 
 void ChatbotLlmChat::drawStatusOnly() {
@@ -183,6 +192,10 @@ void ChatbotLlmChat::drawChatUi() {
     const auto& history = controller_->history();
     ImGui::BeginChild("##LlmChatHistory", ImVec2(-1, 220), true);
     for (const auto& entry : history) {
+        // Tool entries are already phrased as a plain status sentence (see
+        // gui-tool-*-register.cpp) and shown without a header: end users
+        // don't know what a "tool" or "open_add_engine_dialog" is, so no
+        // label -- just the friendly text, in a distinguishing color.
         switch (entry.role) {
             case QaplaLlm::ChatRole::User:
                 ImGui::TextColored(USER_COLOR, "You:");
@@ -191,13 +204,18 @@ void ChatbotLlmChat::drawChatUi() {
                 ImGui::TextColored(ASSISTANT_COLOR, "Assistant:");
                 break;
             case QaplaLlm::ChatRole::Tool:
-                ImGui::TextColored(TOOL_COLOR, "\xE2\x9A\x99 Tool:"); // gear icon
                 break;
             case QaplaLlm::ChatRole::Error:
                 ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");
                 break;
         }
-        ImGui::TextWrapped("%s", entry.text.c_str());
+        if (entry.role == QaplaLlm::ChatRole::Tool) {
+            ImGui::PushStyleColor(ImGuiCol_Text, TOOL_COLOR);
+            ImGui::TextWrapped("%s", entry.text.c_str());
+            ImGui::PopStyleColor();
+        } else {
+            ImGui::TextWrapped("%s", entry.text.c_str());
+        }
         ImGui::Spacing();
     }
     if (controller_->isBusy()) {

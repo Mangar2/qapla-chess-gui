@@ -97,11 +97,15 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
 
             std::string message;
             if (!outcome.addedNames.empty()) {
-                message += "Added engines: " + joinNames(outcome.addedNames) +
-                    ". Capability auto-detection started for them in the background. ";
+                message += "Added " + joinNames(outcome.addedNames) + ".\n"
+                    "Detecting its capabilities now -- this can take a moment; "
+                    "I'll let you know once it's ready to use.";
             }
             if (!outcome.duplicateNames.empty()) {
-                message += "Already configured (skipped): " + joinNames(outcome.duplicateNames) + ". ";
+                if (!message.empty()) {
+                    message += "\n";
+                }
+                message += "Already configured (skipped): " + joinNames(outcome.duplicateNames) + ".";
             }
             if (message.empty()) {
                 message = "No engines were added.";

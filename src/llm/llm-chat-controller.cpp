@@ -154,42 +154,56 @@ void LlmChatController::stop() {
     history_.push_back({ChatRole::Error, "Request cancelled."});
 }
 
+void LlmChatController::applyTurnResult(const AgentTurnResult& result) {
+    for (const auto& event : result.toolEvents) {
+        // Successful tool results are already phrased as a friendly,
+        // user-facing sentence by the tool itself (see
+        // gui-tool-*-register.cpp) -- no technical tool name needed.
+        // Registry-level failures (unknown tool, timeout, bad arguments)
+        // are developer-facing edge cases, so keep the name there for
+        // anyone trying to diagnose what went wrong.
+        std::string text = event.success
+            ? event.resultSummary
+            : (event.toolName + ": " + event.resultSummary);
+        if (text.empty()) {
+            text = event.toolName;
+        }
+        history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
+    }
+
+    if (!result.success) {
+        history_.push_back({ChatRole::Error, result.errorMessage});
+    } else if (!result.finalContent.empty()) {
+        history_.push_back({ChatRole::Assistant, result.finalContent});
+    }
+}
+
+void LlmChatController::applyModelsResult(const ListModelsResult& result) {
+    if (!result.success) {
+        modelsError_ = result.errorMessage;
+        return;
+    }
+
+    availableModels_ = result.modelIds;
+    modelsError_.clear();
+    if (model_.empty() && !availableModels_.empty()) {
+        model_ = availableModels_.front();
+    }
+}
+
 void LlmChatController::update() {
     if (busy_ && pendingChat_ && pendingChat_->done.load(std::memory_order_acquire)) {
         auto result = pendingChat_->result;
         pendingChat_.reset();
         busy_ = false;
-
-        for (const auto& event : result.toolEvents) {
-            std::string text = event.toolName;
-            if (!event.resultSummary.empty()) {
-                text += ": " + event.resultSummary;
-            }
-            history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
-        }
-
-        if (result.success) {
-            if (!result.finalContent.empty()) {
-                history_.push_back({ChatRole::Assistant, result.finalContent});
-            }
-        } else {
-            history_.push_back({ChatRole::Error, result.errorMessage});
-        }
+        applyTurnResult(result);
     }
 
     if (refreshingModels_ && pendingModels_ && pendingModels_->done.load(std::memory_order_acquire)) {
         auto result = pendingModels_->result;
         pendingModels_.reset();
         refreshingModels_ = false;
-        if (result.success) {
-            availableModels_ = result.modelIds;
-            modelsError_.clear();
-            if (model_.empty() && !availableModels_.empty()) {
-                model_ = availableModels_.front();
-            }
-        } else {
-            modelsError_ = result.errorMessage;
-        }
+        applyModelsResult(result);
     }
 }
 
