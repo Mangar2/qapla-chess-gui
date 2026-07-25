@@ -22,13 +22,23 @@
 namespace QaplaLlm {
 
 /**
- * @brief Starts asynchronous LM Studio detection and registers the AI chat
- * thread in the ChatbotWindow once the result is known (if LM Studio was
- * found and the feature is enabled in the configuration).
+ * @brief Wires the LLM chat feature into the running application. Call once
+ * during startup, after the GUI singletons it registers tools against exist.
  *
- * Non-blocking: the actual probe runs on a worker thread and is polled via
- * QaplaWindows::StaticCallbacks::poll(). Call once during application startup.
+ * Does three things:
+ * 1. Registers every GUI tool group (see gui-tool-*.h) with
+ *    GuiToolRegistry::instance() -- this is where a new tool group's
+ *    registerXxxTools() call belongs when adding one.
+ * 2. Hooks GuiToolRegistry::instance().processQueue() into
+ *    QaplaWindows::StaticCallbacks::poll() for the lifetime of the process,
+ *    so tool calls made from any chat get executed on the UI thread.
+ * 3. Starts asynchronous LM Studio detection and registers the AI chat
+ *    thread in the ChatbotWindow once the result is known (if LM Studio
+ *    was found and the feature is enabled in the configuration).
+ *
+ * Non-blocking throughout: the detection probe runs on a worker thread and
+ * is polled the same way as the tool queue.
  */
-void startLlmChatDetection();
+void initializeLlmChat();
 
 } // namespace QaplaLlm

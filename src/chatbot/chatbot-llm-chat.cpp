@@ -96,8 +96,9 @@ void ChatbotLlmChat::ensureController() {
     std::string systemPrompt = std::format(
         "You are an AI assistant integrated into the Qapla Chess GUI, a chess engine testing "
         "and tournament application. Answer helpfully and concisely. Respond in the user's "
-        "configured language (code: {}). You currently have no tools available -- you can only "
-        "chat; you cannot yet control the GUI.",
+        "configured language (code: {}). You have tools available to inspect and control parts "
+        "of the GUI (e.g. the engine catalog) -- use them instead of guessing or asking the user "
+        "to do something you can already do yourself.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));

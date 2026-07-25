@@ -81,17 +81,15 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
             if (!outcome.addedNames.empty()) {
                 auto& configuration = QaplaConfiguration::Configuration::instance();
                 configuration.setModified();
-                // Detection is normally sub-second per engine, so do it
-                // synchronously and report the real outcome in this same
-                // result. An earlier fire-and-forget autoDetect() design
-                // reported "detection started" and relied on watching
-                // isDetecting() to later announce completion -- but that
-                // watcher polls independently of the agent loop, so the
-                // (fast) completion note routinely reached the chat
-                // *before* the (slower, LLM-roundtrip-bound) "engine
-                // added" tool result did, and the model would go on to
-                // promise a "I'll let you know" follow-up it could never
-                // actually deliver.
+                // Synchronous and blocking (not the fire-and-forget
+                // autoDetect() the "Detect" button uses): detection is
+                // normally sub-second per engine, and a tool's result must
+                // reflect the *actual* final outcome, not a promise of one
+                // -- the model has no way to reliably follow up once its
+                // reply for this turn is already sent, and any out-of-band
+                // "done" signal (e.g. polling isDetecting()) is not
+                // correlated with this turn, so it can reach the chat
+                // before or long after this tool result does.
                 configuration.getEngineCapabilities().autoDetectSync();
             }
 

@@ -53,7 +53,7 @@ void registerGuiTools() {
 
 } // namespace
 
-void startLlmChatDetection() {
+void initializeLlmChat() {
     registerGuiTools();
 
     // Intentionally kept alive for the whole process (static, never reset):

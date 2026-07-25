@@ -19,8 +19,10 @@
 
 #pragma once
 
+#include "async-worker-result.h"
+
+#include <cstdint>
 #include <filesystem>
-#include <future>
 #include <string>
 #include <vector>
 
@@ -29,7 +31,7 @@ namespace QaplaLlm {
 /**
  * @brief Result of detecting an LM Studio installation on the current machine.
  */
-enum class LmStudioStatus {
+enum class LmStudioStatus : std::uint8_t {
     NotInstalled,        ///< No installation found and no server reachable.
     InstalledServerDown, ///< Installation found, but the local API server is not running.
     ServerRunning         ///< The OpenAI-compatible local API server answered.
@@ -87,15 +89,16 @@ public:
 
 /**
  * @brief Runs LmStudioLocator::detect() on a worker thread and exposes the
- * result via polling, so the GUI/render thread never blocks on network or
- * filesystem I/O during startup.
+ * result via polling (see AsyncWorkerResult), so the GUI/render thread
+ * never blocks on network or filesystem I/O during startup.
  */
 class AsyncLmStudioLocator {
 public:
     explicit AsyncLmStudioLocator(LmStudioProbeConfig config = {});
 
     /**
-     * @brief Starts the background probe. Must be called at most once.
+     * @brief Starts the background probe. Safe to call again to restart
+     * (e.g. a fresh probe after the previous result was consumed).
      */
     void start();
 
@@ -114,7 +117,7 @@ public:
 
 private:
     LmStudioProbeConfig config_;
-    std::future<LmStudioStatus> future_;
+    AsyncWorkerResult<LmStudioStatus> task_;
     LmStudioStatus status_ = LmStudioStatus::NotInstalled;
     bool ready_ = false;
 };

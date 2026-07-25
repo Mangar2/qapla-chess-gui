@@ -21,7 +21,6 @@
 #include "gui-tool-registry.h"
 
 #include <functional>
-#include <thread>
 #include <utility>
 
 namespace QaplaLlm {
@@ -101,23 +100,16 @@ LlmChatController::LlmChatController(LmStudioConnection connection, std::string 
 }
 
 void LlmChatController::refreshModels() {
-    if (refreshingModels_) {
+    if (modelsTask_.isRunning()) {
         return;
     }
-    refreshingModels_ = true;
-
-    auto state = std::make_shared<PendingModels>();
-    pendingModels_ = state;
 
     auto client = client_;
-    std::thread([state, client]() {
-        state->result = client.listModels();
-        state->done.store(true, std::memory_order_release);
-    }).detach();
+    modelsTask_.start([client]() { return client.listModels(); });
 }
 
 void LlmChatController::sendMessage(const std::string& userText) {
-    if (busy_ || userText.empty()) {
+    if (isBusy() || userText.empty()) {
         return;
     }
 
@@ -134,35 +126,33 @@ void LlmChatController::sendMessage(const std::string& userText) {
         // Tool/Error entries are shown to the user locally but never replayed to the model.
     }
 
-    auto state = std::make_shared<PendingChat>();
-    pendingChat_ = state;
-    busy_ = true;
+    auto events = std::make_shared<ToolEventChannel>();
+    toolEvents_ = events;
 
     auto client = client_;
     auto model = model_;
     auto tools = GuiToolRegistry::instance().exportToolSpecs();
     auto maxToolIterations = maxToolIterations_;
 
-    std::thread([state, client, model, tools, messages = std::move(messages), maxToolIterations]() mutable {
-        auto onToolEvent = [state](ToolCallEvent event) {
-            std::scoped_lock lock(state->eventsMutex);
-            state->events.push_back(std::move(event));
+    chatTask_.start([client, model, tools, messages = std::move(messages), maxToolIterations, events]() mutable {
+        auto onToolEvent = [events](ToolCallEvent event) {
+            std::scoped_lock lock(events->mutex);
+            events->events.push_back(std::move(event));
         };
-        state->result = runAgentLoop(client, model, tools, std::move(messages), maxToolIterations, onToolEvent);
-        state->done.store(true, std::memory_order_release);
-    }).detach();
+        return runAgentLoop(client, model, tools, std::move(messages), maxToolIterations, onToolEvent);
+    });
 }
 
 void LlmChatController::stop() {
-    if (!busy_) {
+    if (!isBusy()) {
         return;
     }
-    // Orphan the in-flight worker: dropping our shared_ptr means update()
-    // can never observe its result, even once the thread finishes. Any
-    // tool events already drained into history_ before this point stay --
-    // their real-world effects already happened.
-    pendingChat_.reset();
-    busy_ = false;
+    // Orphan the in-flight worker (see AsyncWorkerResult): update() can
+    // never observe its result, even once the thread finishes. Any tool
+    // events already drained into history_ before this point stay -- their
+    // real-world effects already happened.
+    chatTask_.reset();
+    toolEvents_.reset();
     history_.push_back({ChatRole::Error, "Request cancelled."});
 }
 
@@ -202,15 +192,19 @@ void LlmChatController::applyModelsResult(const ListModelsResult& result) {
     }
 }
 
-void LlmChatController::drainToolEvents(PendingChat& pending) {
+void LlmChatController::drainToolEvents() {
+    if (!toolEvents_) {
+        return;
+    }
+
     std::vector<ToolCallEvent> newEvents;
     {
-        std::scoped_lock lock(pending.eventsMutex);
-        if (pending.consumedEvents < pending.events.size()) {
+        std::scoped_lock lock(toolEvents_->mutex);
+        if (toolEvents_->consumed < toolEvents_->events.size()) {
             newEvents.assign(
-                pending.events.begin() + static_cast<std::ptrdiff_t>(pending.consumedEvents),
-                pending.events.end());
-            pending.consumedEvents = pending.events.size();
+                toolEvents_->events.begin() + static_cast<std::ptrdiff_t>(toolEvents_->consumed),
+                toolEvents_->events.end());
+            toolEvents_->consumed = toolEvents_->events.size();
         }
     }
     for (const auto& event : newEvents) {
@@ -219,22 +213,15 @@ void LlmChatController::drainToolEvents(PendingChat& pending) {
 }
 
 void LlmChatController::update() {
-    if (busy_ && pendingChat_) {
-        drainToolEvents(*pendingChat_);
+    drainToolEvents();
 
-        if (pendingChat_->done.load(std::memory_order_acquire)) {
-            auto result = pendingChat_->result;
-            pendingChat_.reset();
-            busy_ = false;
-            applyTurnResult(result);
-        }
+    if (chatTask_.isReady()) {
+        applyTurnResult(chatTask_.consume());
+        toolEvents_.reset();
     }
 
-    if (refreshingModels_ && pendingModels_ && pendingModels_->done.load(std::memory_order_acquire)) {
-        auto result = pendingModels_->result;
-        pendingModels_.reset();
-        refreshingModels_ = false;
-        applyModelsResult(result);
+    if (modelsTask_.isReady()) {
+        applyModelsResult(modelsTask_.consume());
     }
 }
 

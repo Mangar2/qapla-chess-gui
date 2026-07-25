@@ -19,9 +19,10 @@
 
 #pragma once
 
+#include "async-worker-result.h"
 #include "lm-studio-client.h"
 
-#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -32,7 +33,7 @@ namespace QaplaLlm {
 /**
  * @brief Role of one entry in the locally displayed chat history.
  */
-enum class ChatRole {
+enum class ChatRole : std::uint8_t {
     User,
     Assistant,
     Tool,  ///< A tool's own friendly result text, shown inline; never replayed to the model.
@@ -51,7 +52,7 @@ struct ToolCallEvent {
     std::string resultSummary;
 };
 
-/** @brief The model's final answer for one agent-loop turn (tool events are streamed separately, see PendingChat). */
+/** @brief The model's final answer for one agent-loop turn (tool events are streamed separately, see ToolEventChannel). */
 struct AgentTurnResult {
     bool success = false;
     std::string finalContent;
@@ -61,11 +62,12 @@ struct AgentTurnResult {
 /**
  * @brief Drives a tool-calling conversation with a local LM Studio model.
  *
- * Each user message starts one detached worker thread that runs the full
- * agent loop (see docs/llm-chatbot-plan.md Step 3): call the model, and as
- * long as it responds with tool_calls instead of a final answer, execute
- * each one through GuiToolRegistry (which itself hops back to the UI thread
- * and blocks the worker until done), feed the results back, and ask again --
+ * Each user message starts one detached worker thread (via chatTask_, an
+ * AsyncWorkerResult) that runs the full agent loop (see
+ * docs/llm-chatbot-plan.md Step 3): call the model, and as long as it
+ * responds with tool_calls instead of a final answer, execute each one
+ * through GuiToolRegistry (which itself hops back to the UI thread and
+ * blocks the worker until done), feed the results back, and ask again --
  * up to maxToolIterations times. update() must be called once per frame
  * from the UI thread to pick up results.
  *
@@ -73,15 +75,17 @@ struct AgentTurnResult {
  * an engine is added and detected, that already shows both in the chat and
  * in the GUI's engine list, independently of how long the model then takes
  * to compose its own reply -- rather than being held back and only shown
- * together with the model's (often much slower) final answer.
+ * together with the model's (often much slower) final answer. This is why
+ * a turn's tool events travel over their own toolEvents_ channel instead of
+ * riding along inside AgentTurnResult: chatTask_ only becomes ready once
+ * the whole turn (all roundtrips) has finished, but tool events must reach
+ * history() as each one happens, mid-turn.
  *
  * Thread-safety: all public methods (including update()) are meant to be
  * called from a single thread (the UI thread). The worker thread only ever
- * touches its own PendingChat/PendingModels state, exchanged with the UI
- * thread through a std::shared_ptr; PendingChat::events is additionally
- * guarded by its own mutex since, unlike the rest of the exchanged state,
- * it is written incrementally over the turn's whole lifetime rather than
- * once at the end.
+ * touches AsyncWorkerResult's internal state (see async-worker-result.h)
+ * and ToolEventChannel, both exchanged with the UI thread through a
+ * std::shared_ptr.
  */
 class LlmChatController {
 public:
@@ -90,7 +94,7 @@ public:
     /** @brief Starts a non-blocking model list refresh. No-op if already in flight. */
     void refreshModels();
     [[nodiscard]] bool isRefreshingModels() const {
-        return refreshingModels_;
+        return modelsTask_.isRunning();
     }
     [[nodiscard]] const std::vector<std::string>& availableModels() const {
         return availableModels_;
@@ -111,7 +115,7 @@ public:
 
     /** @brief True while a turn (model calls and any tool calls within it) is in flight. */
     [[nodiscard]] bool isBusy() const {
-        return busy_;
+        return chatTask_.isRunning();
     }
 
     /**
@@ -137,24 +141,17 @@ public:
     void update();
 
 private:
+    /** @brief Multi-value counterpart to AsyncWorkerResult: the worker appends as it goes, the UI thread drains. */
+    struct ToolEventChannel {
+        std::mutex mutex;
+        std::vector<ToolCallEvent> events;
+        std::size_t consumed = 0;
+    };
+
     void appendToolEventToHistory(const ToolCallEvent& event);
     void applyTurnResult(const AgentTurnResult& result);
     void applyModelsResult(const ListModelsResult& result);
-
-    struct PendingChat {
-        std::mutex eventsMutex;
-        std::vector<ToolCallEvent> events; ///< Appended incrementally by the worker as each tool call finishes.
-        std::size_t consumedEvents = 0;    ///< UI-thread-only cursor into events, guarded by eventsMutex too.
-        std::atomic<bool> done{false};
-        AgentTurnResult result;
-    };
-    struct PendingModels {
-        std::atomic<bool> done{false};
-        ListModelsResult result;
-    };
-
-    /** @brief Drains and applies any tool events the worker has published so far, without waiting for done. */
-    void drainToolEvents(PendingChat& pending);
+    void drainToolEvents();
 
     LmStudioClient client_;
     std::string systemPrompt_;
@@ -162,11 +159,10 @@ private:
     int maxToolIterations_;
     std::vector<ChatEntry> history_;
 
-    bool busy_ = false;
-    std::shared_ptr<PendingChat> pendingChat_;
+    AsyncWorkerResult<AgentTurnResult> chatTask_;
+    std::shared_ptr<ToolEventChannel> toolEvents_; ///< Non-null exactly while chatTask_.isRunning().
 
-    bool refreshingModels_ = false;
-    std::shared_ptr<PendingModels> pendingModels_;
+    AsyncWorkerResult<ListModelsResult> modelsTask_;
     std::vector<std::string> availableModels_;
     std::string modelsError_;
 };

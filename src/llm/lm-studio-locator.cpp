@@ -91,7 +91,8 @@ AsyncLmStudioLocator::AsyncLmStudioLocator(LmStudioProbeConfig config)
 }
 
 void AsyncLmStudioLocator::start() {
-    future_ = std::async(std::launch::async, [config = config_]() {
+    ready_ = false;
+    task_.start([config = config_]() {
         return LmStudioLocator::detect(config);
     });
 }
@@ -100,13 +101,10 @@ bool AsyncLmStudioLocator::isReady() {
     if (ready_) {
         return true;
     }
-    if (!future_.valid()) {
+    if (!task_.isReady()) {
         return false;
     }
-    if (future_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-        return false;
-    }
-    status_ = future_.get();
+    status_ = task_.consume();
     ready_ = true;
     return true;
 }

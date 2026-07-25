@@ -247,7 +247,7 @@ namespace {
             });
 
         auto workspace = initWindows();
-        QaplaLlm::startLlmChatDetection();
+        QaplaLlm::initializeLlmChat();
 
         auto* window = initGlfwContext();
         initGlad();

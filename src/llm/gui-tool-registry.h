@@ -68,6 +68,23 @@ struct GuiToolResult {
  * so they are free to touch GUI singletons exactly like the classic chatbot
  * steps do -- this is what guarantees an LLM action is immediately and
  * correctly visible in the GUI (see docs/llm-chatbot-plan.md).
+ *
+ * Template for a new tool group (see gui-tool-engine-management.* for a
+ * worked example): split it across two files --
+ * 1. gui-tool-<group>.h/.cpp: pure logic only (no os-dialogs.h, no
+ *    configuration.h, no other ImGui/GLFW-adjacent include) so the
+ *    unit-tests target can link and test it directly. Expose the handlers'
+ *    actual work as free functions so tests can call them without going
+ *    through a tool call at all.
+ * 2. gui-tool-<group>-register.cpp: one registerXxxTools(GuiToolRegistry&)
+ *    that builds each GuiToolDefinition and wires its handler to the pure
+ *    functions from (1), plus whatever GUI singletons it actually needs to
+ *    touch (Configuration, the window/window-data classes, ...). Only the
+ *    qapla executable links this file. Call registerXxxTools() from
+ *    registerGuiTools() in llm-chat-integration.cpp.
+ * A tool's result content is dual-purpose -- sent to the model *and* shown
+ * to the user (see ChatbotLlmChat) -- so write it as a short, friendly
+ * sentence, never raw data dumps or internal identifiers.
  */
 struct GuiToolDefinition {
     std::string name;
