@@ -117,7 +117,6 @@ bool ChatbotLlmChat::draw() {
 
     if (controller_) {
         controller_->update();
-        watchEngineDetection();
         drawChatUi();
     } else {
         drawStatusOnly();
@@ -131,14 +130,6 @@ bool ChatbotLlmChat::draw() {
     ImGuiControls::hooverTooltip("Close the AI chat and return to the previous view.");
 
     return false;
-}
-
-void ChatbotLlmChat::watchEngineDetection() {
-    bool isDetecting = QaplaConfiguration::Configuration::instance().getEngineCapabilities().isDetecting();
-    if (wasDetectingEngines_ && !isDetecting) {
-        controller_->notify("Engine detection completed -- the new engine(s) can now be used.");
-    }
-    wasDetectingEngines_ = isDetecting;
 }
 
 void ChatbotLlmChat::drawStatusOnly() {

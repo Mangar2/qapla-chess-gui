@@ -66,14 +66,16 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
         .description = "Opens the GUI's native file picker so the user can select one or more "
                         "chess engine executables to add to the global engine catalog. The user "
                         "chooses the file(s) themselves -- you have no filesystem access. Newly "
-                        "added engines are automatically queued for capability auto-detection "
-                        "(no separate step needed). Call list_installed_engines afterwards to "
-                        "confirm what was actually added.",
+                        "added engines are detected (protocol, options, etc.) synchronously "
+                        "before this call returns -- the result already reflects the final "
+                        "outcome, so do not promise the user a separate future update. Call "
+                        "list_installed_engines afterwards to confirm what was actually added.",
         .parametersSchema = noArgsSchema(),
         // Waits on the user picking a file in a native dialog, which can
         // legitimately take much longer than a normal tool call -- the
         // default timeout would abandon the call while the user is still
-        // choosing, orphaning its (eventually correct) result.
+        // choosing, orphaning its (eventually correct) result. Also covers
+        // the synchronous detection below.
         .timeout = std::chrono::minutes(10),
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
@@ -88,18 +90,23 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
             if (!outcome.addedNames.empty()) {
                 auto& configuration = QaplaConfiguration::Configuration::instance();
                 configuration.setModified();
-                // Matches the classic "Add" + "Detect" buttons being used
-                // together: a chat-driven add should not require the user
-                // to separately ask for detection afterwards. Fire-and-forget,
-                // same as the "Detect" button; only queries missing engines.
-                configuration.getEngineCapabilities().autoDetect();
+                // Detection is normally sub-second per engine, so do it
+                // synchronously and report the real outcome in this same
+                // result. An earlier fire-and-forget autoDetect() design
+                // reported "detection started" and relied on watching
+                // isDetecting() to later announce completion -- but that
+                // watcher polls independently of the agent loop, so the
+                // (fast) completion note routinely reached the chat
+                // *before* the (slower, LLM-roundtrip-bound) "engine
+                // added" tool result did, and the model would go on to
+                // promise a "I'll let you know" follow-up it could never
+                // actually deliver.
+                configuration.getEngineCapabilities().autoDetectSync();
             }
 
             std::string message;
             if (!outcome.addedNames.empty()) {
-                message += "Added " + joinNames(outcome.addedNames) + ".\n"
-                    "Detecting its capabilities now -- this can take a moment; "
-                    "I'll let you know once it's ready to use.";
+                message += "Added and detected: " + joinNames(outcome.addedNames) + ". Ready to use.";
             }
             if (!outcome.duplicateNames.empty()) {
                 if (!message.empty()) {

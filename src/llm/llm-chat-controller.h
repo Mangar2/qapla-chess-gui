@@ -121,19 +121,6 @@ public:
         return history_;
     }
 
-    /**
-     * @brief Appends a locally-generated status note to the history (e.g.
-     * "Engine detection completed."), shown the same way as a Tool result.
-     *
-     * For events the UI layer observes outside the agent loop (e.g. a GUI
-     * singleton's async state finishing after a tool call already
-     * returned) -- see ChatbotLlmChat's engine-detection watcher. Like
-     * other Tool entries, never replayed to the model.
-     */
-    void notify(const std::string& text) {
-        history_.push_back({ChatRole::Tool, text});
-    }
-
     /** @brief Must be called once per frame from the UI thread to pick up worker results. */
     void update();
 
