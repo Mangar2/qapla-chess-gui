@@ -21,8 +21,11 @@
 
 #include "chatbot-thread.h"
 #include "../llm/lm-studio-locator.h"
+#include "../llm/llm-chat-controller.h"
 
+#include <array>
 #include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <string>
@@ -33,13 +36,17 @@ namespace QaplaWindows::ChatBot {
  * @brief Chatbot thread offering a free-text chat with a local LM Studio model.
  *
  * Registered in the ChatbotWindow only when an LM Studio installation was
- * detected (see LmStudioLocator). This first version only shows the
- * detected status and an inactive input field; the actual conversation is
- * wired up in a later development step.
+ * detected (see LmStudioLocator). Once the server answers, a
+ * QaplaLlm::LlmChatController is created lazily and the free-text chat UI
+ * (history, input, model dropdown, stop button) takes over; no tool-calling
+ * yet (see docs/llm-chatbot-plan.md Step 3).
  *
- * The status shown is re-probed periodically (throttled) while this step is
- * open, rather than frozen at construction time: LM Studio's server can be
- * started/stopped by the user at any time, independently of the GUI.
+ * The status shown before a conversation starts is re-probed periodically
+ * (throttled) while this step is open, rather than frozen at construction
+ * time: LM Studio's server can be started/stopped independently of the GUI.
+ * Once a conversation has started, the status is no longer used to gate the
+ * UI -- connectivity problems surface as inline error entries in the chat
+ * instead, so a spurious/transient status flip can't wipe an ongoing chat.
  */
 class ChatbotLlmChat : public ChatbotThread {
 public:
@@ -62,10 +69,26 @@ private:
      */
     void refreshStatus();
 
+    /** @brief Lazily creates controller_ and kicks the first model refresh. */
+    void ensureController();
+
+    /** @brief Draws the pre-chat status text (server not reachable yet). */
+    void drawStatusOnly();
+
+    /** @brief Draws the chat history, model dropdown, input and stop button. */
+    void drawChatUi();
+
+    /** @brief Sends the current input buffer, if non-empty and not busy. */
+    void trySend();
+
     QaplaLlm::LmStudioStatus status_;
     bool finished_ = false;
     std::optional<QaplaLlm::AsyncLmStudioLocator> refreshProbe_;
     uint64_t lastProbeCompletedMs_ = 0;
+
+    std::unique_ptr<QaplaLlm::LlmChatController> controller_;
+    std::array<char, 4096> inputBuffer_{};
+    std::size_t lastHistorySize_ = 0;
 };
 
 } // namespace QaplaWindows::ChatBot
