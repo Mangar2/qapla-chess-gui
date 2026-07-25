@@ -17,3 +17,6 @@
 [submodule "extern/Catch2"]
 	path = extern/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "extern/httplib"]
+	path = extern/httplib
+	url = https://github.com/yhirose/cpp-httplib.git

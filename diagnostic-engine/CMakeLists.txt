@@ -18,8 +18,10 @@ add_executable(diagnostic-engine
     ${QAPLA_TESTER_DIR}/base-elements/base-logger.cpp
     ${QAPLA_TESTER_DIR}/base-elements/logger.cpp
     ${QAPLA_TESTER_DIR}/base-elements/file-helper.cpp
-    ${QAPLA_TESTER_DIR}/base-elements/json-helper.cpp
     ${QAPLA_TESTER_DIR}/base-elements/table-format.cpp
+    ${QAPLA_TESTER_DIR}/json/json_value.cpp
+    ${QAPLA_TESTER_DIR}/json/json_value_object.cpp
+    ${QAPLA_TESTER_DIR}/json/json_value_array.cpp
     # qapla-engine core
     ${QAPLA_TESTER_DIR}/qapla-engine/board.cpp
     ${QAPLA_TESTER_DIR}/qapla-engine/movegenerator.cpp
