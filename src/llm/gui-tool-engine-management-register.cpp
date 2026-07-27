@@ -62,12 +62,6 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
                         "before this call returns -- the result already reflects the final "
                         "outcome, so do not promise the user a separate future update. Call "
                         "list_installed_engines afterwards to confirm what was actually added.",
-        // Waits on the user picking a file in a native dialog, which can
-        // legitimately take much longer than a normal tool call -- the
-        // default timeout would abandon the call while the user is still
-        // choosing, orphaning its (eventually correct) result. Also covers
-        // the synchronous detection below.
-        .timeout = std::chrono::minutes(10),
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
             if (paths.empty()) {
@@ -107,7 +101,13 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
                 message = "No engines were added.";
             }
             return GuiToolResult{.success = true, .content = message};
-        }
+        },
+        // Waits on the user picking a file in a native dialog, which can
+        // legitimately take much longer than a normal tool call -- the
+        // default timeout would abandon the call while the user is still
+        // choosing, orphaning its (eventually correct) result. Also covers
+        // the synchronous detection below.
+        .timeout = std::chrono::minutes(10)
     });
 }
 

@@ -411,10 +411,10 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                         "select_engines/configure_tournament. Requires at least two selected "
                         "engines and an openings file to already be configured; the result tells "
                         "you exactly which precondition is missing if it can't start.",
+        .handler = handleStartTournament,
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
-        .timeout = std::chrono::seconds(60),
-        .handler = handleStartTournament
+        .timeout = std::chrono::seconds(60)
     });
 }
 

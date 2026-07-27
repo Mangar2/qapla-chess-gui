@@ -59,8 +59,8 @@ struct ToolCall {
 struct ChatMessage {
     std::string role;
     std::string content;
-    std::vector<ToolCall> toolCalls; ///< Only meaningful for role == "assistant".
-    std::string toolCallId;          ///< Only meaningful for role == "tool".
+    std::vector<ToolCall> toolCalls{}; ///< Only meaningful for role == "assistant".
+    std::string toolCallId{};          ///< Only meaningful for role == "tool".
 };
 
 /**
