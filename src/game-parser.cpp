@@ -18,9 +18,8 @@
  */
 
 #include "game-parser.h"
-#include <qapla-engine/fenscanner.h>
-#include <qapla-engine/movegenerator.h>
 #include <game-manager/game-state.h>
+#include <opening/fen-parser.h>
 #include <opening/pgn-io.h>
 
 using QaplaTester::GameRecord;
@@ -41,39 +40,13 @@ std::optional<GameRecord> parseFen(const std::string& input) {
         return std::nullopt;
     }
 
-    // Simple sliding window: try FenScanner::setBoard starting from each position
-    const size_t maxSearchLength = 1000;
-    size_t searchLength = std::min(input.length(), maxSearchLength);
-    
-    for (size_t startPos = 0; startPos < searchLength; ++startPos) {
-        std::string candidateString = input.substr(startPos);
-        
-        QaplaInterface::FenScanner scanner;
-        QaplaMoveGenerator::MoveGenerator position;
-        
-        if (scanner.setBoard(candidateString, position)) {
-            // FenScanner succeeded! Create GameRecord from this position
-            try {
-                GameState gameState;
-                gameState.setFen(false, candidateString);
-                
-                GameRecord gameRecord;
-                gameRecord.setStartPosition(
-                    false,                              // Not standard start position
-                    candidateString,                    // FEN string
-                    gameState.isWhiteToMove(),          // Who to move
-                    gameState.getStartHalfmoves()       // Half-move clock
-                );
-                
-                return gameRecord;
-            } catch (...) {
-                // Continue searching if GameState creation fails
-                continue;
-            }
-        }
-    }
-
-    return std::nullopt;
+    // Loose search: pasted text may contain leading garbage before the FEN.
+    auto result = QaplaTester::parseFen({
+        .fenString = input,
+        .startPos = 0,
+        .maxSearchLength = 1000
+    });
+    return result.gameRecord;
 }
 
 // ================================================================================================
