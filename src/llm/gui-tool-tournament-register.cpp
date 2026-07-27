@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <format>
 
 namespace QaplaLlm {
 
@@ -107,6 +108,10 @@ namespace {
         auto& tournamentData = TournamentData::instance();
         tournamentData.getEngineSelect().setEngineConfigurations(outcome.resolved);
         tournamentData.config().type = "round-robin"; // gauntlet mode is not exposed via chat
+        // config() is a raw reference -- unlike setEngineConfigurations() above,
+        // mutating it directly doesn't persist on its own (see
+        // ImGuiTournamentConfiguration::updateConfiguration()'s doc comment).
+        tournamentData.tournamentConfiguration().updateConfiguration();
 
         std::vector<std::string> selectedNames;
         for (const auto& engine : outcome.resolved) {
@@ -141,11 +146,22 @@ namespace {
             return prop;
         };
 
-        properties["time_control"] = stringProp(
-            "E.g. \"60+0.5\" (60s base + 0.5s increment), \"40/300+2\" (40 moves in 300s, "
-            "then +2s increment), or \"inf\". Numbers are seconds, not minutes.");
-        properties["games"] = integerProp("Games per engine pairing.");
-        properties["rounds"] = integerProp("Number of rounds.");
+        properties["time_control"] = timeControlSchemaProperty();
+        properties["games"] = integerProp(
+            "Games played per engine pairing PER ROUND -- not the tournament total. "
+            "Total games for one pairing = games * rounds (and the tournament plays this for "
+            "every pairing of selected engines). If the user just gives one number of games "
+            "with no mention of rounds, set games to that number and leave rounds at its "
+            "default of 1, so total equals what they said. If the user gives BOTH a total game "
+            "count and a number of rounds (e.g. \"100 games total, 10 rounds\"), compute "
+            "games = total / rounds yourself (100/10 -> games=10, rounds=10) -- do not set the "
+            "total as-is into games. If a game count and a round count are both given but it's "
+            "unclear whether the game count is the total or the per-round count (e.g. \"set it "
+            "to 100 games and 10 rounds\" with nothing clarifying which), ask the user which "
+            "they mean instead of guessing.");
+        properties["rounds"] = integerProp(
+            "How many times the full set of pairings is repeated. Defaults to 1. See the "
+            "\"games\" description for how this multiplies into the tournament total.");
         properties["event"] = stringProp("Tournament/event name.");
         properties["openings_file"] = stringProp("Path to an existing EPD or PGN opening book file on disk.");
         properties["pgn_file"] = stringProp("Path to save the played games as PGN.");
@@ -163,13 +179,23 @@ namespace {
         applied.push_back("time control " + value);
     }
 
+    // Reports the effective per-pairing total (games * rounds) alongside
+    // whichever field just changed -- games and rounds multiply into the
+    // actual game count, which is easy to misjudge (both for the model and
+    // the user reading the chat), so every change restates it using
+    // whatever the *other* field currently is, not just the one just set.
+    std::string gamesAndRoundsSummary(TournamentData& data) {
+        return std::format("games={} per round, rounds={} ({} games per pairing in total)",
+            data.config().games, data.config().rounds, data.config().games * data.config().rounds);
+    }
+
     void applyGames(TournamentData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (value < 1) {
             problems.push_back("games must be at least 1");
             return;
         }
         data.config().games = static_cast<uint32_t>(value);
-        applied.push_back("games=" + std::to_string(data.config().games));
+        applied.push_back(gamesAndRoundsSummary(data));
     }
 
     void applyRounds(TournamentData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -178,7 +204,7 @@ namespace {
             return;
         }
         data.config().rounds = static_cast<uint32_t>(value);
-        applied.push_back("rounds=" + std::to_string(data.config().rounds));
+        applied.push_back(gamesAndRoundsSummary(data));
     }
 
     void applyEvent(TournamentData& data, const std::string& value, std::vector<std::string>& applied) {
@@ -254,7 +280,54 @@ namespace {
             applyConcurrency(tournamentData, arguments.at("concurrency").as_number(), applied, problems);
         }
 
+        // applyGames/applyRounds/applyEvent, applyOpeningsFile and
+        // applyPgnFile all mutate raw references (config()/openings()/
+        // pgnOptions()) that don't persist on their own -- see
+        // ImGuiTournamentConfiguration::updateConfiguration()'s doc comment.
+        // Calling all three unconditionally is cheap and always correct,
+        // whether or not this particular call touched their fields.
+        tournamentData.tournamentConfiguration().updateConfiguration();
+        tournamentData.tournamentOpening().updateConfiguration();
+        tournamentData.tournamentPgn().updateConfiguration();
+
         return buildConfigureResult(applied, problems);
+    }
+
+    // ------------------------------------------------------------------
+    // get_tournament_status
+    // ------------------------------------------------------------------
+
+    GuiToolResult handleGetTournamentStatus(const Json::JsonValue&) {
+        auto& tournamentData = TournamentData::instance();
+        auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
+        std::vector<std::string> engineNames;
+        for (const auto& engine : selectedEngines) {
+            engineNames.push_back(engine.getName());
+        }
+        const auto& config = tournamentData.config();
+        const auto& openingsFile = tournamentData.tournamentOpening().openings().file;
+        const auto& pgnFile = tournamentData.pgnConfig().file;
+
+        std::string runState = "No tournament is currently running.";
+        if (tournamentData.isRunning()) {
+            runState = "A tournament is currently running.";
+        } else if (tournamentData.isStarting()) {
+            runState = "A tournament is currently starting.";
+        }
+
+        std::string message = std::format(
+            "Engines: {}. Time control: {}. Games per pairing: {}. Rounds: {}. "
+            "Event name: {}. Openings file: {}. PGN output file: {}. Concurrency: {}. {}",
+            engineNames.empty() ? "none selected" : joinStrings(engineNames),
+            tournamentData.getGlobalSettings().getTimeControlSettings().timeControl,
+            config.games, config.rounds,
+            config.event.empty() ? "(not set)" : config.event,
+            openingsFile.empty() ? "(not set)" : openingsFile,
+            pgnFile.empty() ? "(not set)" : pgnFile,
+            tournamentData.getExternalConcurrency(),
+            runState);
+
+        return GuiToolResult{.success = true, .content = message};
     }
 
     // ------------------------------------------------------------------
@@ -303,13 +376,33 @@ void registerTournamentTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "configure_tournament",
         .description = "Sets tournament options: time_control, games (per pairing), rounds, "
-                        "event (name), openings_file, pgn_file, concurrency. All optional -- "
-                        "only given fields are changed. openings_file must be set (here or in an "
-                        "earlier session) before start_tournament will succeed; there is no safe "
-                        "default, so ask the user for a path if none is configured yet and they "
-                        "did not provide one.",
+                        "event (name), openings_file, pgn_file, concurrency. Every field is "
+                        "independent and optional -- pass ONLY the one thing the user asked to "
+                        "change (e.g. just \"games\" to change the game count); do not require "
+                        "or ask for any of the other fields first. Anything not passed here "
+                        "keeps whatever it was already set to (this session or an earlier one) "
+                        "-- call get_tournament_status first if you're not sure what that "
+                        "currently is, rather than assuming it's unset. openings_file must be "
+                        "set (here or in an earlier session) before start_tournament will "
+                        "succeed; there is no safe default, so ask the user for a path only if "
+                        "get_tournament_status confirms none is configured yet.",
         .parametersSchema = buildConfigureTournamentSchema(),
         .handler = handleConfigureTournament
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "get_tournament_status",
+        .description = "Reports the tournament configuration and state as currently set up: "
+                        "selected engines, time control, games/rounds, event name, openings "
+                        "file, PGN output file, concurrency, and whether a tournament is "
+                        "running. Call this FIRST whenever a request only changes one thing "
+                        "(e.g. \"set it to 10 games\") and you're not certain everything else is "
+                        "already configured -- it almost always is, from this session or an "
+                        "earlier one. Use it to confirm that before asking the user to restate "
+                        "settings or declining to make the one change they actually asked for, "
+                        "and to confirm a previous select_engines/configure_tournament call "
+                        "actually took effect.",
+        .handler = handleGetTournamentStatus
     });
 
     registry.registerTool(GuiToolDefinition{

@@ -83,9 +83,7 @@ namespace QaplaTest {
     void TestManager::queueAllTests() {
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (engine_ != nullptr) {
-            // TEMP-LOCAL-ONLY: filter via env var for local verification. Revert before committing.
-            const char* filter = getenv("QAPLA_TEST_FILTER");
-            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, filter, ImGuiTestRunFlags_RunFromCommandLine);
+            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, nullptr, ImGuiTestRunFlags_RunFromCommandLine);
         }
 #endif
     }

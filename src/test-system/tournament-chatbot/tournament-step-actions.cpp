@@ -24,7 +24,6 @@
 
 #include "tournament-data.h"
 #include <imgui.h>
-#include <iostream>
 
 namespace QaplaTest::TournamentChatbot {
 
@@ -298,18 +297,12 @@ namespace QaplaTest::TournamentChatbot {
 
         switch (action) {
             case StartAction::StartTournament:
-                std::cerr << "[dbg] before itemClick Start Tournament, exists="
-                    << ctx->ItemExists("**/###Start Tournament") << "\n";
                 if (!itemClick(ctx, "**/###Start Tournament")) {
-                    std::cerr << "[dbg] itemClick Start Tournament FAILED\n";
                     return false;
                 }
                 ctx->Yield(10);
-                {
-                    bool running = waitForTournamentRunning(ctx, 10.0f);
-                    std::cerr << "[dbg] waitForTournamentRunning -> " << running << "\n";
-                    return running;
-                }
+                // Wait for tournament to start
+                return waitForTournamentRunning(ctx, 10.0f);
 
             case StartAction::SwitchToView:
                 return itemClick(ctx, "**/###Switch to Tournament View");

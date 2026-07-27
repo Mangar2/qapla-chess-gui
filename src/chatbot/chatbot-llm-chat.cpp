@@ -103,7 +103,14 @@ void ChatbotLlmChat::ensureController() {
         "doesn't match anything installed), ask the user for it rather than inventing one -- "
         "there is often no safe default. When starting a tournament without the user specifying "
         "details, reasonable defaults are fine for anything except the list of engines and the "
-        "openings file, which you must always have (from this conversation or an earlier one).",
+        "openings file, which you must always have (from this conversation or an earlier one). "
+        "Configuration tools are incremental: every field they accept is optional and "
+        "independent, so call one with only the single thing the user actually asked to change "
+        "-- never insist on collecting every other setting first. Whatever was configured "
+        "earlier (this session or a previous one) stays in effect until someone changes it "
+        "again, so never assume something is unset or ask the user to repeat it: if you're not "
+        "sure what's currently configured, call the relevant status/get tool to check before "
+        "asking the user or declining an otherwise simple request.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));

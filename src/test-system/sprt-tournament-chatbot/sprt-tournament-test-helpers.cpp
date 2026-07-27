@@ -23,6 +23,7 @@
 
 #include "sprt-tournament-data.h"
 #include <engine-handling/engine-worker-factory.h>
+#include <sprt/sprt-manager.h>
 #include "imgui-engine-select.h"
 #include "imgui-engine-global-settings.h"
 #include "chatbot/chatbot-window.h"
@@ -87,6 +88,16 @@ namespace QaplaTest::SprtTournamentChatbot {
             sprtTournamentData.stopPool(false);
         }
         sprtTournamentData.clear();
+
+        // Reset to known-valid SPRT bounds instead of whatever is persisted
+        // in the local qapla-chess-gui.ini (which may not even parse, e.g.
+        // after a schema change, and leave these at 0/0 -- SPRT rejects that
+        // combination ("elo0 must be less than elo1", or an invalid
+        // alpha/beta pair).
+        sprtTournamentData.sprtConfig().eloH0 = 0.0F;
+        sprtTournamentData.sprtConfig().eloH1 = 5.0F;
+        sprtTournamentData.sprtConfig().alpha = 0.05;
+        sprtTournamentData.sprtConfig().beta = 0.05;
     }
 
     void resetChatbotToInitialState(ImGuiTestContext* ctx) {

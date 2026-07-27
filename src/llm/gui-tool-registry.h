@@ -62,6 +62,35 @@ struct GuiToolResult {
 }
 
 /**
+ * @brief JSON Schema property for a chess clock time control string.
+ *
+ * Shared across every tool group that lets the model configure a time
+ * control (tournaments today, SPRT/EPD flows later) so the format and its
+ * worked examples only need to be written -- and get updated -- once.
+ * QaplaTester::TimeControl::parse() (the thing that actually consumes this
+ * string) is deliberately lenient and never throws, so nothing here is
+ * enforced beyond what the model is told; the description IS the contract.
+ */
+[[nodiscard]] inline QaplaTester::Json::JsonValue timeControlSchemaProperty() {
+    auto prop = QaplaTester::Json::JsonValue::object();
+    prop["type"] = "string";
+    prop["description"] =
+        "Chess clock time control. Format: \"<base>+<increment>\", both in "
+        "seconds; increment is optional and defaults to 0. <base> may also "
+        "be \"M:S\" or \"H:M:S\". Prefix with \"<moves>/\" for a moves-per-session "
+        "phase (e.g. \"40/300+2\" = 40 moves in 300s, then +2s per move "
+        "thereafter). Use \"inf\" for no time limit. "
+        "Always convert the user's own words into this format yourself -- "
+        "never ask the user to supply an already-formatted time control "
+        "string. Examples: \"1 minute per game\" -> \"60+0\" (or \"1:00\"); "
+        "\"5 minutes plus 3 second increment\" / \"5+3\" -> \"300+3\" (or "
+        "\"5:00+3\"); \"40 moves in 5 minutes, then 2 seconds per move\" -> "
+        "\"40/300+2\"; \"blitz\" (no further detail given) -> \"300+0\"; "
+        "\"unlimited\"/\"no clock\" -> \"inf\".";
+    return prop;
+}
+
+/**
  * @brief One GUI-controllable action exposed to the LLM as a function tool.
  *
  * Handlers run exclusively on the UI thread (see GuiToolRegistry::processQueue()),
