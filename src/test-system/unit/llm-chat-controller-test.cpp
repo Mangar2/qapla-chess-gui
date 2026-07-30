@@ -135,3 +135,79 @@ TEST_CASE("LlmChatController shows a tool result before the model's slower final
     }
     REQUIRE(sawFinalAssistantText);
 }
+
+TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEntry",
+    "[llm][llm-chat-controller]") {
+    // A tool whose whole point is to display something (e.g. show_tournament_result) sets
+    // GuiToolResult::renderWidget instead of (or alongside) plain text -- see its doc comment.
+    // This must survive the worker-thread hop (ToolCallEvent) and land, callable, in the
+    // ChatEntry the chat UI actually draws from history().
+    int widgetCallCount = 0;
+    GuiToolRegistry::instance().registerTool(GuiToolDefinition{
+        .name = "test_llm_chat_controller_widget_probe",
+        .description = "Test-only widget probe tool.",
+        .handler = [&widgetCallCount](const QaplaTester::Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{
+                .success = true,
+                .content = "Showing something.",
+                .renderWidget = [&widgetCallCount]() { ++widgetCallCount; }
+            };
+        }
+    });
+
+    // A dedicated inline server rather than MockToolCallingServer: that helper's Post handler
+    // is fixed to a different tool name and registering a second handler for the same path
+    // would just add a second, order-dependent route -- not worth the fragility here.
+    httplib::Server server;
+    std::atomic<int> completionCallCount{0};
+    server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request&, httplib::Response& res) {
+        if (completionCallCount.fetch_add(1) == 0) {
+            res.set_content(
+                R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+                R"([{"id":"call_1","type":"function",)"
+                R"("function":{"name":"test_llm_chat_controller_widget_probe","arguments":"{}"}}]}}]})",
+                "application/json");
+        } else {
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Done."}}]})",
+                "application/json");
+        }
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    LlmChatController controller(connection, "system prompt");
+    controller.setModel("test-model");
+    controller.sendMessage("please call the widget probe tool");
+
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+        GuiToolRegistry::instance().processQueue();
+        controller.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    REQUIRE_FALSE(controller.isBusy());
+
+    const QaplaLlm::ChatEntry* toolEntry = nullptr;
+    for (const auto& entry : controller.history()) {
+        if (entry.role == ChatRole::Tool) {
+            toolEntry = &entry;
+        }
+    }
+    REQUIRE(toolEntry != nullptr);
+    REQUIRE(static_cast<bool>(toolEntry->renderWidget));
+
+    toolEntry->renderWidget();
+    REQUIRE(widgetCallCount == 1);
+
+    server.stop();
+    serverThread.join();
+}

@@ -23,6 +23,7 @@
 #include "lm-studio-client.h"
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -43,6 +44,9 @@ enum class ChatRole : std::uint8_t {
 struct ChatEntry {
     ChatRole role;
     std::string text;
+
+    /** @brief See GuiToolResult::renderWidget. Set only on some ChatRole::Tool entries. */
+    std::function<void()> renderWidget;
 };
 
 /** @brief One tool call executed within an agent-loop turn, for local display. */
@@ -50,6 +54,9 @@ struct ToolCallEvent {
     std::string toolName;
     bool success = true;
     std::string resultSummary;
+
+    /** @brief See GuiToolResult::renderWidget; carried through unchanged. */
+    std::function<void()> renderWidget;
 };
 
 /** @brief The model's final answer for one agent-loop turn (tool events are streamed separately, see ToolEventChannel). */

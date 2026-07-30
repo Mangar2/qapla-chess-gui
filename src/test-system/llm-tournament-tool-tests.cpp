@@ -108,6 +108,83 @@ namespace QaplaTest {
             cleanupTournamentState();
             ctx->LogInfo("=== Test StartTournamentDirectlyViaRegistry PASSED ===");
         };
+
+        // -----------------------------------------------------------------
+        // Test: stop_tournament / clear_tournament_result / show_tournament_result,
+        // called directly through GuiToolRegistry (no LLM).
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Tournament/Tools", "StopClearAndShowResultViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: stop/clear/show_tournament_result via GuiToolRegistry ===");
+
+            cleanupTournamentState();
+            IM_CHECK(hasEnginesAvailable());
+
+            // stop_tournament must fail cleanly when nothing is running.
+            auto stopWhenIdle = callToolAndYield(ctx, "stop_tournament", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(!stopWhenIdle.success);
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(configs.size() >= 2);
+
+            auto engineArgs = QaplaTester::Json::JsonValue::object();
+            auto engineNames = QaplaTester::Json::JsonValue::array();
+            engineNames.push_back(configs[0].getName());
+            engineNames.push_back(configs[1].getName());
+            engineArgs["engines"] = engineNames;
+            IM_CHECK(callToolAndYield(ctx, "select_engines", engineArgs).success);
+
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["openings_file"] = getTestOpeningPath();
+            configureArgs["games"] = 4.0;
+            configureArgs["rounds"] = 1.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", configureArgs).success);
+
+            IM_CHECK(callToolAndYield(ctx, "start_tournament", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForTournamentRunning(ctx, 20.0f));
+
+            // show_tournament_result must succeed while running, even before any game finished --
+            // with a real engine game in progress, scoredEngines() (and so renderWidget, see
+            // GuiToolResult::renderWidget) may legitimately still be empty this soon after start,
+            // so only .success is checked here. The renderWidget plumbing itself (set -> carried
+            // through ToolCallEvent -> lands callable on the ChatEntry) is covered deterministically
+            // by the "carries a tool's renderWidget through to its ChatEntry" Catch2 test.
+            auto resultWhileRunning = callToolAndYield(ctx, "show_tournament_result", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(resultWhileRunning.success);
+
+            // Let the engines settle into the first move before stopping -- see the identical
+            // wait in createIncompleteTournamentState() (prevents crash/slow shutdown from a
+            // rapid start/stop of the engine process).
+            ctx->SleepNoSkip(0.5f, 0.1f);
+
+            // "abrupt" is used here (rather than "graceful") so the test doesn't depend on
+            // how long the real engines configured on this machine take to finish a game --
+            // stop_tournament just passes the mode through to TournamentData::stopPool(),
+            // whose graceful/abrupt behavior itself isn't new logic under test here.
+            ctx->LogInfo("Step: stop_tournament(mode=abrupt)");
+            auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["mode"] = "abrupt";
+            auto stopResult = callToolAndYield(ctx, "stop_tournament", stopArgs);
+            IM_CHECK(stopResult.success);
+            IM_CHECK(waitForTournamentStopped(ctx, 15.0f));
+            IM_CHECK(!QaplaWindows::TournamentData::instance().isRunning());
+
+            ctx->LogInfo("Step: clear_tournament_result");
+            auto clearResult = callToolAndYield(ctx, "clear_tournament_result", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(clearResult.success);
+
+            auto resultAfterClear = callToolAndYield(ctx, "show_tournament_result", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(resultAfterClear.success);
+            IM_CHECK(resultAfterClear.content.find("No tournament results") != std::string::npos);
+            IM_CHECK(!static_cast<bool>(resultAfterClear.renderWidget));
+
+            // clear_tournament_result on an already-clear state must still succeed, not error.
+            auto clearAgain = callToolAndYield(ctx, "clear_tournament_result", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(clearAgain.success);
+
+            cleanupTournamentState();
+            ctx->LogInfo("=== Test StopClearAndShowResultViaRegistry PASSED ===");
+        };
     }
 
 } // namespace QaplaTest

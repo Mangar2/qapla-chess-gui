@@ -43,6 +43,22 @@ namespace QaplaLlm {
 struct GuiToolResult {
     bool success = true;
     std::string content;
+
+    /**
+     * @brief Optional: renders a live GUI control in the chat history in place of `content`'s
+     * plain text (e.g. the same ImGuiTable a classic, non-AI chatbot step would draw).
+     *
+     * Set this from a tool handler whose whole point is to *show* something -- as opposed to a
+     * tool that merely reports facts as text for the model to relay -- so the result appears in
+     * the chat as a real control, not a text dump. Built on the UI thread inside the handler (see
+     * GuiToolRegistry::processQueue()), it is then carried across the worker thread that drives
+     * the agent loop as an inert std::function (never invoked there) and finally invoked back on
+     * the UI thread each frame while its ChatEntry stays visible in the chat history -- so it's
+     * safe to capture and call other UI-thread-only state (singletons, ImGui calls) exactly as a
+     * normal draw() method would. Keep `content` short in this case (e.g. "Showing the current
+     * tournament results.") since the control itself carries the actual data.
+     */
+    std::function<void()> renderWidget;
 };
 
 /**

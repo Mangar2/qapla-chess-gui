@@ -110,7 +110,13 @@ void ChatbotLlmChat::ensureController() {
         "earlier (this session or a previous one) stays in effect until someone changes it "
         "again, so never assume something is unset or ask the user to repeat it: if you're not "
         "sure what's currently configured, call the relevant status/get tool to check before "
-        "asking the user or declining an otherwise simple request.",
+        "asking the user or declining an otherwise simple request. Some tools (their description "
+        "says so explicitly, e.g. show_tournament_result) display their data directly in the "
+        "chat as a visual control -- a table, not text -- rather than returning it for you to "
+        "relay. After calling one of those, do not restate, list, summarize, or describe the "
+        "numbers/rows it just displayed; the user already sees them right there. Just briefly "
+        "confirm what you did in a short sentence (e.g. \"Here are the current results.\") "
+        "instead of repeating the data as text.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));
@@ -131,11 +137,11 @@ bool ChatbotLlmChat::draw() {
     if (controller_) {
         controller_->update();
         drawChatUi();
+        ImGui::SameLine();
     } else {
         drawStatusOnly();
+        ImGui::Spacing();
     }
-
-    ImGui::Spacing();
 
     if (ImGuiControls::textButton("Close")) {
         finished_ = true;
@@ -213,7 +219,11 @@ void ChatbotLlmChat::drawChatUi() {
                 ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");
                 break;
         }
-        if (entry.role == QaplaLlm::ChatRole::Tool) {
+        if (entry.role == QaplaLlm::ChatRole::Tool && entry.renderWidget) {
+            // A real GUI control (e.g. the same ImGuiTable a classic chatbot step would draw)
+            // rather than a text dump -- see GuiToolResult::renderWidget.
+            entry.renderWidget();
+        } else if (entry.role == QaplaLlm::ChatRole::Tool) {
             ImGui::PushStyleColor(ImGuiCol_Text, TOOL_COLOR);
             ImGui::TextWrapped("%s", entry.text.c_str());
             ImGui::PopStyleColor();

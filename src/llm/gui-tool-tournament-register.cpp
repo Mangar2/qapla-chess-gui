@@ -28,6 +28,8 @@
 
 #include <tournament/tournament.h>
 
+#include <imgui.h>
+
 #include <chrono>
 #include <filesystem>
 #include <format>
@@ -331,6 +333,101 @@ namespace {
     }
 
     // ------------------------------------------------------------------
+    // stop_tournament
+    // ------------------------------------------------------------------
+
+    Json::JsonValue buildStopTournamentSchema() {
+        auto schema = noArgsToolSchema();
+        auto mode = Json::JsonValue::object();
+        mode["type"] = "string";
+        auto enumValues = Json::JsonValue::array();
+        enumValues.push_back("graceful");
+        enumValues.push_back("abrupt");
+        mode["enum"] = enumValues;
+        mode["description"] =
+            "\"graceful\" (default if omitted): let games currently in progress finish, then "
+            "stop -- no new games are started. \"abrupt\": abort all in-progress games "
+            "immediately without letting them finish. If the user just says \"stop\"/\"end the "
+            "tournament\" without qualifying it, use \"graceful\" -- ask only if they've "
+            "previously shown they care about the distinction.";
+        schema["properties"]["mode"] = mode;
+        return schema;
+    }
+
+    GuiToolResult handleStopTournament(const Json::JsonValue& arguments) {
+        auto& tournamentData = TournamentData::instance();
+        if (!tournamentData.isRunning() && !tournamentData.isStarting()) {
+            return GuiToolResult{.success = false, .content = "No tournament is currently running."};
+        }
+
+        bool graceful = true;
+        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+            graceful = arguments.at("mode").as_string() != "abrupt";
+        }
+
+        tournamentData.stopPool(graceful);
+        return GuiToolResult{
+            .success = true,
+            .content = graceful
+                ? "Stopping the tournament gracefully: games already in progress will be "
+                  "finished, no new games will start."
+                : "Stopping the tournament abruptly: all in-progress games are being aborted "
+                  "immediately."
+        };
+    }
+
+    // ------------------------------------------------------------------
+    // clear_tournament_result
+    // ------------------------------------------------------------------
+
+    GuiToolResult handleClearTournamentResult(const Json::JsonValue&) {
+        auto& tournamentData = TournamentData::instance();
+        if (!tournamentData.hasTasksScheduled()) {
+            return GuiToolResult{.success = true, .content = "There are no tournament results to clear."};
+        }
+
+        bool wasRunning = tournamentData.isRunning() || tournamentData.isStarting();
+        tournamentData.clear(false); // verbose=false: this tool's own content already tells the user
+        return GuiToolResult{
+            .success = true,
+            .content = wasRunning
+                ? "Tournament stopped and all results cleared."
+                : "All tournament results have been cleared."
+        };
+    }
+
+    // ------------------------------------------------------------------
+    // show_tournament_result
+    // ------------------------------------------------------------------
+
+    GuiToolResult handleShowTournamentResult(const Json::JsonValue&) {
+        auto& tournamentData = TournamentData::instance();
+        if (tournamentData.getTournamentResult().scoredEngines().empty()) {
+            return GuiToolResult{.success = true, .content = "No tournament results are available yet."};
+        }
+
+        // Renders the same live control the classic (non-AI) chatbot's results step draws (see
+        // ChatbotStepStandardTournamentResult::draw()) -- a real ImGuiTable, not a text dump of
+        // the data. Always reads TournamentData::instance() fresh at draw time (every frame the
+        // ChatEntry stays visible), so it reflects the tournament's current state, exactly like
+        // that classic step does, rather than a one-time snapshot of the results as they were
+        // when this tool was called.
+        return GuiToolResult{
+            .success = true,
+            .content = "Showing the current tournament results as a table in the chat -- it is "
+                        "already visible to the user, so do not restate, list, or summarize the "
+                        "numbers in your reply; just briefly confirm what you did.",
+            .renderWidget = []() {
+                auto& data = TournamentData::instance();
+                ImGui::Text("Tournament Progress: %u / %u games completed",
+                    data.getPlayedGames(), data.getTotalGames());
+                ImGui::Spacing();
+                data.drawEloTable(ImVec2(0.0F, 3000.0F));
+            }
+        };
+    }
+
+    // ------------------------------------------------------------------
     // start_tournament
     // ------------------------------------------------------------------
 
@@ -415,6 +512,39 @@ void registerTournamentTools(GuiToolRegistry& registry) {
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
         .timeout = std::chrono::seconds(60)
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "stop_tournament",
+        .description = "Stops the currently running tournament. Optional \"mode\": \"graceful\" "
+                        "(default) finishes games already in progress and starts no new ones; "
+                        "\"abrupt\" aborts every in-progress game immediately. Fails if no "
+                        "tournament is running.",
+        .parametersSchema = buildStopTournamentSchema(),
+        .handler = handleStopTournament
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "clear_tournament_result",
+        .description = "Discards the current tournament's results (and stops it first if it's "
+                        "still running). Use when the user wants to throw away what's been "
+                        "played so far, e.g. before reconfiguring and starting a fresh "
+                        "tournament with the same engines.",
+        .handler = handleClearTournamentResult
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "show_tournament_result",
+        .description = "Displays the current tournament results as a table in the chat, ranked "
+                        "by Elo (each engine's score, win percentage, Elo with error margin, and "
+                        "games played). This is an action that renders a table control in the "
+                        "chat UI -- it isn't for reading the data yourself to describe in your "
+                        "own words, so just call it and briefly say you're showing the results, "
+                        "rather than restating the numbers from its response. Works both while a "
+                        "tournament is running (partial results so far) and after it has "
+                        "finished; reports that no results are available yet if nothing has been "
+                        "played.",
+        .handler = handleShowTournamentResult
     });
 }
 

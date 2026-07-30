@@ -84,7 +84,8 @@ namespace {
                 onToolEvent(ToolCallEvent{
                     .toolName = call.name,
                     .success = toolResult.success,
-                    .resultSummary = toolResult.content
+                    .resultSummary = toolResult.content,
+                    .renderWidget = toolResult.renderWidget
                 });
             }
         }
@@ -113,7 +114,7 @@ void LlmChatController::sendMessage(const std::string& userText) {
         return;
     }
 
-    history_.push_back({ChatRole::User, userText});
+    history_.push_back({ChatRole::User, userText, nullptr});
 
     std::vector<ChatMessage> messages;
     messages.push_back(ChatMessage{.role = "system", .content = systemPrompt_});
@@ -153,7 +154,7 @@ void LlmChatController::stop() {
     // real-world effects already happened.
     chatTask_.reset();
     toolEvents_.reset();
-    history_.push_back({ChatRole::Error, "Request cancelled."});
+    history_.push_back({ChatRole::Error, "Request cancelled.", nullptr});
 }
 
 void LlmChatController::appendToolEventToHistory(const ToolCallEvent& event) {
@@ -168,14 +169,14 @@ void LlmChatController::appendToolEventToHistory(const ToolCallEvent& event) {
     if (text.empty()) {
         text = event.toolName;
     }
-    history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text});
+    history_.push_back({event.success ? ChatRole::Tool : ChatRole::Error, text, event.renderWidget});
 }
 
 void LlmChatController::applyTurnResult(const AgentTurnResult& result) {
     if (!result.success) {
-        history_.push_back({ChatRole::Error, result.errorMessage});
+        history_.push_back({ChatRole::Error, result.errorMessage, nullptr});
     } else if (!result.finalContent.empty()) {
-        history_.push_back({ChatRole::Assistant, result.finalContent});
+        history_.push_back({ChatRole::Assistant, result.finalContent, nullptr});
     }
 }
 
