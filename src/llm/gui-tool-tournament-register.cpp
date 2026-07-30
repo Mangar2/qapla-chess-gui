@@ -299,6 +299,30 @@ namespace {
     // get_tournament_status
     // ------------------------------------------------------------------
 
+    // Shared by get_tournament_status and both configure_*_adjudication tools' result
+    // messages, so the reported mode always matches the same off/test/active vocabulary
+    // the tools accept (see applyAdjudicationMode()).
+    std::string adjudicationModeText(bool active, bool testOnly) {
+        if (!active) {
+            return "off";
+        }
+        return testOnly ? "test" : "active";
+    }
+
+    std::string adjudicationSummary(TournamentData& data) {
+        const auto& draw = data.drawConfig();
+        const auto& resign = data.resignConfig();
+        return std::format(
+            "Draw adjudication: {} (min full moves={}, required consecutive moves={}, "
+            "centipawn threshold={}). Resign adjudication: {} (required consecutive moves={}, "
+            "centipawn threshold={}, two-sided={}).",
+            adjudicationModeText(draw.active, draw.testOnly),
+            draw.minFullMoves, draw.requiredConsecutiveMoves, draw.centipawnThreshold,
+            adjudicationModeText(resign.active, resign.testOnly),
+            resign.requiredConsecutiveMoves, resign.centipawnThreshold,
+            resign.twoSided ? "yes" : "no");
+    }
+
     GuiToolResult handleGetTournamentStatus(const Json::JsonValue&) {
         auto& tournamentData = TournamentData::instance();
         auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
@@ -319,7 +343,7 @@ namespace {
 
         std::string message = std::format(
             "Engines: {}. Time control: {}. Games per pairing: {}. Rounds: {}. "
-            "Event name: {}. Openings file: {}. PGN output file: {}. Concurrency: {}. {}",
+            "Event name: {}. Openings file: {}. PGN output file: {}. Concurrency: {}. {} {}",
             engineNames.empty() ? "none selected" : joinStrings(engineNames),
             tournamentData.getGlobalSettings().getTimeControlSettings().timeControl,
             config.games, config.rounds,
@@ -327,9 +351,177 @@ namespace {
             openingsFile.empty() ? "(not set)" : openingsFile,
             pgnFile.empty() ? "(not set)" : pgnFile,
             tournamentData.getExternalConcurrency(),
-            runState);
+            runState,
+            adjudicationSummary(tournamentData));
 
         return GuiToolResult{.success = true, .content = message};
+    }
+
+    // ------------------------------------------------------------------
+    // configure_draw_adjudication / configure_resign_adjudication
+    // ------------------------------------------------------------------
+
+    // Both adjudication configs use the same tri-state as the classic UI's control (see
+    // ImGuiControls::triStateInput): "off" (never adjudicate), "test" (evaluate and log what it
+    // would have decided, without ending games), or "active" (actually adjudicate).
+    Json::JsonValue adjudicationModeSchemaProperty(const std::string& description) {
+        auto prop = Json::JsonValue::object();
+        prop["type"] = "string";
+        auto enumValues = Json::JsonValue::array();
+        enumValues.push_back("off");
+        enumValues.push_back("test");
+        enumValues.push_back("active");
+        prop["enum"] = enumValues;
+        prop["description"] = description;
+        return prop;
+    }
+
+    bool applyAdjudicationMode(
+        const std::string& mode, bool& active, bool& testOnly, std::vector<std::string>& problems) {
+        if (mode == "off") {
+            active = false;
+            testOnly = false;
+        } else if (mode == "test") {
+            active = true;
+            testOnly = true;
+        } else if (mode == "active") {
+            active = true;
+            testOnly = false;
+        } else {
+            problems.push_back("mode must be \"off\", \"test\", or \"active\" (got \"" + mode + "\")");
+            return false;
+        }
+        return true;
+    }
+
+    Json::JsonValue buildConfigureDrawAdjudicationSchema() {
+        auto schema = noArgsToolSchema();
+        auto& properties = schema["properties"];
+
+        auto intProp = [](const std::string& description) {
+            auto prop = Json::JsonValue::object();
+            prop["type"] = "integer";
+            prop["description"] = description;
+            return prop;
+        };
+
+        properties["mode"] = adjudicationModeSchemaProperty(
+            "\"off\" disables draw adjudication. \"test\" evaluates and logs what it would have "
+            "decided without ending games. \"active\" actually ends games early as a draw once "
+            "the conditions below are met.");
+        properties["min_full_moves"] = intProp(
+            "Minimum number of full moves that must be played before draw adjudication can "
+            "trigger at all. Default 80.");
+        properties["required_consecutive_moves"] = intProp(
+            "Number of consecutive moves (evaluated by the engines themselves) that must all "
+            "stay within centipawn_threshold of equal before the game is adjudicated a draw. "
+            "Default 20.");
+        properties["centipawn_threshold"] = intProp(
+            "Maximum absolute evaluation, in centipawns, for a position to still count as drawn "
+            "(e.g. 20 means within +/-20cp of dead equal). Positive number. Default 20.");
+        return schema;
+    }
+
+    GuiToolResult handleConfigureDrawAdjudication(const Json::JsonValue& arguments) {
+        auto& tournamentData = TournamentData::instance();
+        auto& config = tournamentData.drawConfig();
+        std::vector<std::string> applied;
+        std::vector<std::string> problems;
+
+        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+            const auto& mode = arguments.at("mode").as_string();
+            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+                applied.push_back("draw adjudication mode=" + mode);
+            }
+        }
+        if (arguments.contains("min_full_moves") && arguments.at("min_full_moves").is_number()) {
+            config.minFullMoves = static_cast<uint32_t>(arguments.at("min_full_moves").as_number());
+            applied.push_back("min full moves=" + std::to_string(config.minFullMoves));
+        }
+        if (arguments.contains("required_consecutive_moves") &&
+            arguments.at("required_consecutive_moves").is_number()) {
+            config.requiredConsecutiveMoves =
+                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
+            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+        }
+        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
+            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
+            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
+        }
+
+        // config is a raw reference into ImGuiTournamentAdjudication -- mutating it directly
+        // doesn't persist on its own (see ImGuiTournamentAdjudication::updateConfiguration()'s
+        // doc comment), so this must be called explicitly after every change made this way.
+        tournamentData.tournamentAdjudication().updateConfiguration();
+        return buildConfigureResult(applied, problems);
+    }
+
+    Json::JsonValue buildConfigureResignAdjudicationSchema() {
+        auto schema = noArgsToolSchema();
+        auto& properties = schema["properties"];
+
+        auto intProp = [](const std::string& description) {
+            auto prop = Json::JsonValue::object();
+            prop["type"] = "integer";
+            prop["description"] = description;
+            return prop;
+        };
+        auto boolProp = [](const std::string& description) {
+            auto prop = Json::JsonValue::object();
+            prop["type"] = "boolean";
+            prop["description"] = description;
+            return prop;
+        };
+
+        properties["mode"] = adjudicationModeSchemaProperty(
+            "\"off\" disables resign adjudication. \"test\" evaluates and logs what it would "
+            "have decided without ending games. \"active\" actually ends games early as a loss "
+            "for the losing side once the conditions below are met.");
+        properties["required_consecutive_moves"] = intProp(
+            "Number of consecutive moves whose own evaluation must stay at or below "
+            "-centipawn_threshold (i.e. that bad or worse) before the game is adjudicated a "
+            "resignation. Default 5.");
+        properties["centipawn_threshold"] = intProp(
+            "How bad (in centipawns) a position must be, from the losing side's own point of "
+            "view, before it counts as resignation-worthy -- e.g. 500 means resign once down "
+            "roughly a queen's worth of evaluation. Give a positive magnitude, not a negative "
+            "number. Default 500.");
+        properties["two_sided"] = boolProp(
+            "If true, both engines must independently agree the position is lost before "
+            "adjudicating -- more conservative, avoids a resignation from one engine's blunder "
+            "in evaluation alone. Default false.");
+        return schema;
+    }
+
+    GuiToolResult handleConfigureResignAdjudication(const Json::JsonValue& arguments) {
+        auto& tournamentData = TournamentData::instance();
+        auto& config = tournamentData.resignConfig();
+        std::vector<std::string> applied;
+        std::vector<std::string> problems;
+
+        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+            const auto& mode = arguments.at("mode").as_string();
+            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+                applied.push_back("resign adjudication mode=" + mode);
+            }
+        }
+        if (arguments.contains("required_consecutive_moves") &&
+            arguments.at("required_consecutive_moves").is_number()) {
+            config.requiredConsecutiveMoves =
+                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
+            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+        }
+        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
+            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
+            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
+        }
+        if (arguments.contains("two_sided") && arguments.at("two_sided").is_boolean()) {
+            config.twoSided = arguments.at("two_sided").as_boolean();
+            applied.push_back(std::string("two-sided=") + (config.twoSided ? "yes" : "no"));
+        }
+
+        tournamentData.tournamentAdjudication().updateConfiguration();
+        return buildConfigureResult(applied, problems);
     }
 
     // ------------------------------------------------------------------
@@ -491,15 +683,41 @@ void registerTournamentTools(GuiToolRegistry& registry) {
         .name = "get_tournament_status",
         .description = "Reports the tournament configuration and state as currently set up: "
                         "selected engines, time control, games/rounds, event name, openings "
-                        "file, PGN output file, concurrency, and whether a tournament is "
-                        "running. Call this FIRST whenever a request only changes one thing "
-                        "(e.g. \"set it to 10 games\") and you're not certain everything else is "
-                        "already configured -- it almost always is, from this session or an "
-                        "earlier one. Use it to confirm that before asking the user to restate "
-                        "settings or declining to make the one change they actually asked for, "
-                        "and to confirm a previous select_engines/configure_tournament call "
-                        "actually took effect.",
+                        "file, PGN output file, concurrency, draw/resign adjudication settings, "
+                        "and whether a tournament is running. Call this FIRST whenever a request "
+                        "only changes one thing (e.g. \"set it to 10 games\", \"turn on resign "
+                        "adjudication\") and you're not certain everything else is already "
+                        "configured -- it almost always is, from this session or an earlier one. "
+                        "Use it to confirm that before asking the user to restate settings or "
+                        "declining to make the one change they actually asked for, and to confirm "
+                        "a previous configure_*/select_engines call actually took effect.",
         .handler = handleGetTournamentStatus
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "configure_draw_adjudication",
+        .description = "Sets draw adjudication for the tournament: mode (off/test/active), "
+                        "min_full_moves, required_consecutive_moves, centipawn_threshold. Ends "
+                        "games early as a draw once N consecutive moves all stay within a small "
+                        "evaluation margin of equal. Every field is independent and optional -- "
+                        "pass only what the user actually asked to change; anything not passed "
+                        "keeps its previous value (call get_tournament_status first if unsure "
+                        "what that is). Disabled (mode=\"off\") by default.",
+        .parametersSchema = buildConfigureDrawAdjudicationSchema(),
+        .handler = handleConfigureDrawAdjudication
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "configure_resign_adjudication",
+        .description = "Sets resign adjudication for the tournament: mode (off/test/active), "
+                        "required_consecutive_moves, centipawn_threshold, two_sided. Ends games "
+                        "early as a loss for one side once its own evaluation stays badly "
+                        "negative for N consecutive moves. Every field is independent and "
+                        "optional -- pass only what the user actually asked to change; anything "
+                        "not passed keeps its previous value (call get_tournament_status first "
+                        "if unsure what that is). Disabled (mode=\"off\") by default.",
+        .parametersSchema = buildConfigureResignAdjudicationSchema(),
+        .handler = handleConfigureResignAdjudication
     });
 
     registry.registerTool(GuiToolDefinition{

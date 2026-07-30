@@ -62,12 +62,18 @@ namespace QaplaWindows {
 
         void loadConfiguration();
 
-    private:
         /**
-         * @brief Updates the configuration in the Configuration singleton.
+         * @brief Persists the current configuration to the Configuration
+         * singleton (and from there to the ini file, like every other
+         * setting). draw() calls this itself whenever a UI control reports a
+         * change; callers that mutate drawConfig()/resignConfig() directly
+         * (e.g. programmatic/chat-driven changes, which don't go through
+         * draw()) must call this themselves afterwards -- otherwise the
+         * change is visible in the running app but silently lost on restart.
          */
         void updateConfiguration() const;
 
+    private:
         QaplaTester::AdjudicationManager::DrawAdjudicationConfig drawConfig_;
         QaplaTester::AdjudicationManager::ResignAdjudicationConfig resignConfig_;
         std::string id_;

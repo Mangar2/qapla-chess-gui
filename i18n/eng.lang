@@ -1,8 +1,8 @@
 [Translation]
 id=Button
-{s:"Add",t:"2026-07-25"}=Add
-{s:"Remove",t:"2026-07-25"}=Remove
-{s:"Detect",t:"2026-07-25"}=Detect
+{s:"Add",t:"2026-07-30"}=Add
+{s:"Remove",t:"2026-07-30"}=Remove
+{s:"Detect",t:"2026-07-30"}=Detect
 {s:"New",t:"2026-07-25"}=New
 {s:"Now",t:"2026-07-25"}=Now
 {s:"Stop",t:"2026-07-25"}=Stop
@@ -220,7 +220,7 @@ Elo Upper (H1)=Elo Upper (H1)
 id=Snackbar
 {s:"Note",t:"2026-07-25"}=Note
 {s:"Nothing to clear.",t:"2026-07-25"}=Nothing to clear.
-{s:"Success",t:"2026-07-25"}=Success
+{s:"Success",t:"2026-07-30"}=Success
 {s:"SPRT tournament started",t:"2026-01-11"}=SPRT tournament started
 {s:"SPRT tournament stopped",t:"2026-01-11"}=SPRT tournament stopped
 {s:"Epd analysis started",t:"2026-07-25"}=Epd analysis started
@@ -228,9 +228,9 @@ id=Snackbar
 {s:"Warning",t:"2026-07-25"}=Warning
 {s:"All tests have been completed. Clear data before re-analyzing.",t:"2026-07-25"}=All tests have been completed. Clear data before re-analyzing.
 {s:"Analysis stopped",t:"2026-07-25"}=Analysis stopped
-{s:"Tournament stopped",t:"2026-07-25"}=Tournament stopped
+{s:"Tournament stopped",t:"2026-07-30"}=Tournament stopped
 {s:"Engine autodetection completed.",t:"2025-12-23"}=Engine autodetection completed.
-{s:"Tournament started",t:"2026-07-25"}=Tournament started
+{s:"Tournament started",t:"2026-07-30"}=Tournament started
 {s:"All results have been cleared.",t:"2025-12-23"}=All results have been cleared.
 {s:"No new engines found.",t:"2025-12-18"}=No new engines found.
 {h:"36f1ff52",s:"Welcome to the Snackbar System!\n\nSnackbars display",t:"2025-12-15"}=Welcome to the Snackbar System!\n\nSnackbars display temporary notifications in the bottom-left corner. They automatically disappear after a few seconds. This is a 'sticky' note - it stays until you close it manually by clicking the X button.
@@ -566,15 +566,15 @@ id=Tooltip
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2026-07-25"}=Engines
-{s:"Tournament",t:"2026-07-25"}=Tournament
-{s:"Pgn",t:"2026-07-25"}=Pgn
-{s:"Epd",t:"2026-07-25"}=Epd
-{s:"Test",t:"2026-07-25"}=Test
-{s:"Settings",t:"2026-07-25"}=Settings
-{s:"Board",t:"2026-07-25"}=Board
-{s:"Chatbot",t:"2026-07-25"}=Chatbot
-{s:"SPRT",t:"2026-07-25"}=SPRT
+{s:"Engines",t:"2026-07-30"}=Engines
+{s:"Tournament",t:"2026-07-30"}=Tournament
+{s:"Pgn",t:"2026-07-30"}=Pgn
+{s:"Epd",t:"2026-07-30"}=Epd
+{s:"Test",t:"2026-07-30"}=Test
+{s:"Settings",t:"2026-07-30"}=Settings
+{s:"Board",t:"2026-07-30"}=Board
+{s:"Chatbot",t:"2026-07-30"}=Chatbot
+{s:"SPRT",t:"2026-07-30"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -770,7 +770,7 @@ id=Text
 {s:"No engines added. You can add engines now if you like.",t:"2025-12-16"}=No engines added. You can add engines now if you like.
 {s:"C:\\Chess\\cutechess-cli\\qapla\\1.\\2\\Leorik-\\3.\\4.exe",t:"2025-12-16"}=C:\Chess\cutechess-cli\qapla\1.\2\Leorik-\3.\4.exe
 {s:"Messages",t:"2026-07-25"}=Messages
-{s:"How can I help you?",t:"2026-07-25"}=How can I help you?
+{s:"How can I help you?",t:"2026-07-30"}=How can I help you?
 {s:"Select a tutorial to run:",t:"2025-12-21"}=Select a tutorial to run:
 {s:"Please select your preferred language:",t:"2025-12-19"}=Please select your preferred language:
 {h:"b0ade7c5",s:"Select which engine should be tested (gauntlet eng",t:"2026-07-25"}=Select which engine should be tested (gauntlet engine). This is the engine whose performance will be measured. The other engine will be used as the comparison baseline.
@@ -792,13 +792,13 @@ id=Text
 
 [Translation]
 id=TextButton
-{s:"Tournament",t:"2026-07-25"}=Tournament
-{s:"SPRT Tournament",t:"2026-07-25"}=SPRT Tournament
-{s:"EPD Analysis",t:"2026-07-25"}=EPD Analysis
-{s:"Board",t:"2026-07-25"}=Board
-{s:"Tutorial",t:"2026-07-25"}=Tutorial
-{s:"Choose Language",t:"2026-07-25"}=Choose Language
-{s:"Messages",t:"2026-07-25"}=Messages
+{s:"Tournament",t:"2026-07-30"}=Tournament
+{s:"SPRT Tournament",t:"2026-07-30"}=SPRT Tournament
+{s:"EPD Analysis",t:"2026-07-30"}=EPD Analysis
+{s:"Board",t:"2026-07-30"}=Board
+{s:"Tutorial",t:"2026-07-30"}=Tutorial
+{s:"Choose Language",t:"2026-07-30"}=Choose Language
+{s:"Messages",t:"2026-07-30"}=Messages
 {s:"Deutsch",t:"2025-12-19"}=Deutsch
 {s:"English",t:"2025-12-19"}=English
 {s:"Français",t:"2025-12-19"}=Français
@@ -808,13 +808,13 @@ id=TextButton
 {s:"Lernprogramm",t:"2025-12-18"}=Lernprogramm
 {s:"Sprache wählen",t:"2025-12-18"}=Sprache wählen
 {s:"Nachrichten",t:"2025-12-18"}=Nachrichten
-{s:"Add Engines",t:"2026-07-25"}=Add Engines
+{s:"Add Engines",t:"2026-07-30"}=Add Engines
 {s:"Cancel",t:"2025-12-21"}=Cancel
 {s:"Board Engines",t:"2025-12-21"}=Board Engines
 {s:"Board Window",t:"2025-12-21"}=Board Window
 {s:"Board Cut & Paste",t:"2025-12-21"}=Board Cut & Paste
 {s:"Engines hinzufügen",t:"2025-12-18"}=Engines hinzufügen
-{s:"AI Chat",t:"2026-07-25"}=AI Chat
+{s:"AI Chat",t:"2026-07-30"}=AI Chat
 
 [Translation]
 id=Section

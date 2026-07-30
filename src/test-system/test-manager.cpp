@@ -83,7 +83,8 @@ namespace QaplaTest {
     void TestManager::queueAllTests() {
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (engine_ != nullptr) {
-            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, nullptr, ImGuiTestRunFlags_RunFromCommandLine);
+            const char* filter = getenv("QAPLA_TEST_FILTER");
+            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, filter, ImGuiTestRunFlags_RunFromCommandLine);
         }
 #endif
     }
