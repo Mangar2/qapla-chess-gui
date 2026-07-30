@@ -23,11 +23,14 @@
 #include "gui-tool-engine-management.h"
 #include "gui-tool-tournament.h"
 #include "gui-tool-sprt.h"
+#include "gui-tool-epd.h"
 #include "gui-tool-status.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
 #include "../chatbot/chatbot-llm-chat.h"
+
+#include <base-elements/timer.h>
 
 #include <memory>
 #include <utility>
@@ -36,15 +39,17 @@ namespace QaplaLlm {
 
 namespace {
 
-// Holds the async locator plus its own poll-callback handle so it can
-// unregister itself from QaplaWindows::StaticCallbacks::poll() once the
-// detection result has been consumed.
+// How often to retry detection while it hasn't succeeded yet (e.g. LM Studio genuinely
+// isn't reachable at the currently configured host/port). Deliberately more relaxed than
+// ChatbotLlmChat's own in-chat 3s refresh: this runs for the whole app lifetime in the
+// background, including for users who never touch the AI Chat feature at all.
+constexpr uint64_t RETRY_INTERVAL_MS = 10000;
+
 struct DetectionState {
     explicit DetectionState(LmStudioProbeConfig config) : locator(std::move(config)) {
     }
 
     AsyncLmStudioLocator locator;
-    std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> pollHandle;
 };
 
 // Registers every available GUI tool group. Registration is cheap and
@@ -54,47 +59,90 @@ void registerGuiTools() {
     registerEngineManagementTools(GuiToolRegistry::instance());
     registerTournamentTools(GuiToolRegistry::instance());
     registerSprtTools(GuiToolRegistry::instance());
+    registerEpdTools(GuiToolRegistry::instance());
     registerStatusTools(GuiToolRegistry::instance());
 }
+
+// Retries LM Studio detection periodically -- not just once at startup -- reading
+// host/port/enabled from Configuration fresh on every attempt. Without this, fixing a
+// wrong or unreachable LM Studio address in Settings (e.g. after pointing it at a remote
+// server) would silently do nothing: the "AI Chat" menu entry would already have failed to
+// appear at startup (detect() returning NotInstalled for the old settings) and nothing
+// would ever retry, leaving a restart as the only way to pick up the corrected settings.
+// Stops polling for good the first time detection succeeds and the menu entry is added --
+// ChatbotWindow::registerThread() has no dedupe, so calling it twice would add the entry
+// twice.
+class LlmChatMenuRegistrar {
+public:
+    void poll() {
+        if (detection_) {
+            pollPendingDetection();
+            return;
+        }
+        if (done_) {
+            return;
+        }
+        maybeStartAttempt();
+    }
+
+private:
+    void pollPendingDetection() {
+        if (!detection_->locator.isReady()) {
+            return;
+        }
+
+        auto status = detection_->locator.status();
+        detection_.reset();
+        lastAttemptCompletedMs_ = QaplaHelpers::Timer::getCurrentTimeMs();
+
+        if (status != LmStudioStatus::NotInstalled) {
+            QaplaWindows::ChatBot::ChatbotWindow::instance()->registerThread(
+                std::make_unique<QaplaWindows::ChatBot::ChatbotLlmChat>(status));
+            done_ = true;
+        }
+        // else: NotInstalled -- maybeStartAttempt() will try again once the retry
+        // interval elapses, re-reading Configuration in case it changed meanwhile.
+    }
+
+    void maybeStartAttempt() {
+        if (!QaplaConfiguration::Configuration::getLlmChatConfig().enabled) {
+            return; // re-checked every attempt: stays responsive if enabled later
+        }
+        if (lastAttemptCompletedMs_ != 0 &&
+            QaplaHelpers::Timer::getCurrentTimeMs() - lastAttemptCompletedMs_ < RETRY_INTERVAL_MS) {
+            return;
+        }
+
+        auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
+        LmStudioProbeConfig probeConfig;
+        probeConfig.host = config.host;
+        probeConfig.port = config.port;
+
+        detection_ = std::make_unique<DetectionState>(probeConfig);
+        detection_->locator.start();
+    }
+
+    std::unique_ptr<DetectionState> detection_;
+    uint64_t lastAttemptCompletedMs_ = 0;
+    bool done_ = false;
+};
 
 } // namespace
 
 void initializeLlmChat() {
     registerGuiTools();
 
-    // Intentionally kept alive for the whole process (static, never reset):
-    // the tool-call job queue must be drained for the lifetime of the
-    // application, not just during startup detection. Letting the returned
-    // UnregisterHandle go out of scope would immediately unregister it.
+    // Both intentionally kept alive for the whole process (static, never reset): the
+    // tool-call job queue must be drained for the lifetime of the application, and the menu
+    // registrar keeps retrying detection for just as long (see LlmChatMenuRegistrar). Letting
+    // either returned UnregisterHandle go out of scope would immediately unregister it.
     static auto toolQueuePollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([]() {
         GuiToolRegistry::instance().processQueue();
     });
 
-    auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
-    if (!config.enabled) {
-        return;
-    }
-
-    LmStudioProbeConfig probeConfig;
-    probeConfig.host = config.host;
-    probeConfig.port = config.port;
-
-    auto state = std::make_shared<DetectionState>(probeConfig);
-    state->locator.start();
-
-    state->pollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([state]() {
-        if (!state->locator.isReady()) {
-            return;
-        }
-
-        auto status = state->locator.status();
-        if (status != LmStudioStatus::NotInstalled) {
-            QaplaWindows::ChatBot::ChatbotWindow::instance()->registerThread(
-                std::make_unique<QaplaWindows::ChatBot::ChatbotLlmChat>(status));
-        }
-
-        // Detection only ever runs once at startup; unregister to stop polling.
-        state->pollHandle.reset();
+    static LlmChatMenuRegistrar menuRegistrar;
+    static auto menuRegistrarPollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([]() {
+        menuRegistrar.poll();
     });
 }
 

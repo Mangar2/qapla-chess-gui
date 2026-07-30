@@ -23,6 +23,9 @@
 
 #include <httplib.h>
 
+#include <algorithm>
+#include <vector>
+
 namespace QaplaLlm {
 
 namespace {
@@ -148,6 +151,37 @@ namespace {
         }
         return calls;
     }
+
+    // Best-effort: LM Studio's own native REST API (distinct from the OpenAI-compatible
+    // /v1/models used by listModels() below) reports a "type" per model ("llm", "embeddings",
+    // "vlm") that /v1/models doesn't. Used only to filter embedding models out of the
+    // selectable chat model list -- LM Studio lists them right alongside chat models even
+    // though they can't sensibly answer a chat completion. Never fails listModels() as a
+    // whole: an older LM Studio version without this endpoint, or any parsing hiccup, just
+    // means no filtering happens and the unfiltered list is shown, same as before this existed.
+    std::vector<std::string> fetchEmbeddingModelIds(const LmStudioConnection& connection) {
+        std::vector<std::string> embeddingIds;
+
+        auto client = makeClient(connection);
+        auto res = client.Get("/api/v0/models");
+        if (!res || res->status != 200) {
+            return embeddingIds;
+        }
+
+        auto parsed = Json::JsonValue::try_parse(res->body);
+        if (!parsed || !parsed->is_object() || !parsed->contains("data") || !parsed->at("data").is_array()) {
+            return embeddingIds;
+        }
+
+        for (const auto& entry : parsed->at("data").as_array()) {
+            if (entry.is_object() && entry.contains("id") && entry.at("id").is_string() &&
+                entry.contains("type") && entry.at("type").is_string() &&
+                entry.at("type").as_string() == "embeddings") {
+                embeddingIds.push_back(entry.at("id").as_string());
+            }
+        }
+        return embeddingIds;
+    }
 }
 
 LmStudioClient::LmStudioClient(LmStudioConnection connection)
@@ -178,6 +212,13 @@ ListModelsResult LmStudioClient::listModels() const {
         if (entry.is_object() && entry.contains("id") && entry.at("id").is_string()) {
             result.modelIds.push_back(entry.at("id").as_string());
         }
+    }
+
+    auto embeddingIds = fetchEmbeddingModelIds(connection_);
+    if (!embeddingIds.empty()) {
+        std::erase_if(result.modelIds, [&embeddingIds](const std::string& id) {
+            return std::ranges::find(embeddingIds, id) != embeddingIds.end();
+        });
     }
 
     result.success = true;

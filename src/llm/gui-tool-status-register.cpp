@@ -20,7 +20,9 @@
 #include "gui-tool-status.h"
 #include "../tournament-data.h"
 #include "../sprt-tournament-data.h"
+#include "../epd-data.h"
 
+#include <cctype>
 #include <format>
 
 namespace QaplaLlm {
@@ -38,26 +40,45 @@ namespace {
     GuiToolResult handleGetRunningStatus(const Json::JsonValue&) {
         auto& tournamentData = QaplaWindows::TournamentData::instance();
         auto& sprtData = QaplaWindows::SprtTournamentData::instance();
+        auto& epdData = QaplaWindows::EpdData::instance();
 
         bool tournamentActive = tournamentData.isRunning();
         bool sprtActive = sprtData.isRunning();
+        bool epdActive = epdData.isRunning() || epdData.isStarting();
+
+        std::vector<std::string> active;
+        if (tournamentActive) {
+            active.emplace_back("a tournament");
+        }
+        if (sprtActive) {
+            active.emplace_back("an SPRT test");
+        }
+        if (epdActive) {
+            active.emplace_back("an EPD analysis");
+        }
 
         std::string summary;
-        if (!tournamentActive && !sprtActive) {
-            summary = "Nothing is currently running -- no tournament and no SPRT test.";
-        } else if (tournamentActive && sprtActive) {
-            summary = "Both a tournament and an SPRT test are currently running.";
-        } else if (tournamentActive) {
-            summary = "A tournament is currently running; no SPRT test is running.";
+        if (active.empty()) {
+            summary = "Nothing is currently running -- no tournament, no SPRT test, no EPD analysis.";
         } else {
-            summary = "An SPRT test is currently running; no tournament is running.";
+            std::string joined;
+            if (active.size() == 1) {
+                joined = active.front();
+            } else if (active.size() == 2) {
+                joined = active[0] + " and " + active[1];
+            } else {
+                joined = active[0] + ", " + active[1] + ", and " + active[2];
+            }
+            joined[0] = static_cast<char>(std::toupper(joined[0]));
+            summary = joined + " currently running.";
         }
 
         std::string message = std::format(
-            "{} Tournament: {}. SPRT test: {}.",
+            "{} Tournament: {}. SPRT test: {}. EPD analysis: {}.",
             summary,
             activityText(tournamentActive, tournamentData.isStarting()),
-            activityText(sprtActive, sprtData.isStarting()));
+            activityText(sprtActive, sprtData.isStarting()),
+            activityText(epdActive, epdData.isStarting()));
 
         return GuiToolResult{.success = true, .content = message};
     }
@@ -66,18 +87,19 @@ namespace {
 void registerStatusTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "get_running_status",
-        .description = "Reports what's currently running: the classic tournament and the SPRT "
-                        "test are checked and reported separately (they run independently, see "
-                        "configure_sprt's note on this). Call this whenever the user asks "
-                        "broadly whether \"something\"/\"a test\"/\"anything\" is running, or "
-                        "asks specifically whether a TOURNAMENT is running -- people often call "
-                        "an SPRT test a \"tournament\" informally (it looks the same: engines "
-                        "playing games in the background), so checking only "
-                        "get_tournament_status could wrongly say nothing is happening while an "
-                        "SPRT test is actually active. Prefer this over get_tournament_status/"
-                        "get_sprt_status specifically for \"is X running\" questions -- use "
-                        "those two instead when the user wants the fuller configuration detail "
-                        "of one specific feature they've already named.",
+        .description = "Reports what's currently running: the classic tournament, the SPRT "
+                        "test, and EPD analysis are checked and reported separately (they run "
+                        "independently, see configure_sprt's/configure_epd's notes on this). "
+                        "Call this whenever the user asks broadly whether \"something\"/\"a "
+                        "test\"/\"anything\" is running, or asks specifically whether a "
+                        "TOURNAMENT is running -- people often call an SPRT test or an EPD "
+                        "analysis a \"tournament\" informally (they all look the same: engines "
+                        "running in the background), so checking only get_tournament_status "
+                        "could wrongly say nothing is happening while an SPRT test or EPD "
+                        "analysis is actually active. Prefer this over get_tournament_status/"
+                        "get_sprt_status/get_epd_status specifically for \"is X running\" "
+                        "questions -- use those instead when the user wants the fuller "
+                        "configuration detail of one specific feature they've already named.",
         .handler = handleGetRunningStatus
     });
 }

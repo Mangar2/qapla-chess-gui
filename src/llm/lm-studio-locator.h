@@ -34,7 +34,10 @@ namespace QaplaLlm {
 enum class LmStudioStatus : std::uint8_t {
     NotInstalled,        ///< No installation found and no server reachable.
     InstalledServerDown, ///< Installation found, but the local API server is not running.
-    ServerRunning         ///< The OpenAI-compatible local API server answered.
+    ServerRunning,        ///< The OpenAI-compatible API server answered.
+    RemoteUnreachable    ///< Configured host is not this machine, and its server didn't answer.
+                          ///< Checking for a local install would be meaningless here, so this
+                          ///< is reported distinctly instead of NotInstalled/InstalledServerDown.
 };
 
 /**
@@ -81,7 +84,16 @@ public:
     [[nodiscard]] static bool isInstalled();
 
     /**
-     * @brief Full detection: server probe first, then installation check.
+     * @brief True if `host` refers to this machine (e.g. "localhost", "127.0.0.1", "::1").
+     *
+     * Local-installation detection (isInstalled()) only makes sense for such hosts -- checking
+     * this machine's filesystem says nothing about whether LM Studio is installed on some other
+     * machine a remote `host` might point at.
+     */
+    [[nodiscard]] static bool isLocalHost(const std::string& host);
+
+    /**
+     * @brief Full detection: server probe first, then (for a local host only) installation check.
      * @param config Host/port/timeout to probe.
      */
     [[nodiscard]] static LmStudioStatus detect(const LmStudioProbeConfig& config);

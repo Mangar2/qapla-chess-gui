@@ -111,41 +111,46 @@ void ChatbotLlmChat::ensureController() {
         "again, so never assume something is unset or ask the user to repeat it: if you're not "
         "sure what's currently configured, call the relevant status/get tool to check before "
         "asking the user or declining an otherwise simple request. Some tools (their description "
-        "says so explicitly, e.g. show_tournament_result, show_sprt_result) display their data "
-        "directly in the chat as a visual control -- a table, not text -- rather than returning "
-        "it for you to relay. After calling one of those, do not restate, list, summarize, or "
-        "describe the numbers/rows it just displayed; the user already sees them right there. "
-        "Just briefly confirm what you did in a short sentence (e.g. \"Here are the current "
-        "results.\") instead of repeating the data as text. You have no source of truth for game "
-        "or tournament results, SPRT decisions, scores, standings, or Elo numbers other than "
-        "calling show_tournament_result / show_sprt_result -- you never see them any other way, "
-        "not even from earlier in this conversation, since they keep changing as games finish. "
-        "Never state, type out, or guess any such number yourself under any circumstances, even "
-        "a plausible-looking one or one you seem to recall -- if it did not just come from that "
+        "says so explicitly, e.g. show_tournament_result, show_sprt_result, show_epd_result) "
+        "display their data directly in the chat as a visual control -- a table, not text -- "
+        "rather than returning it for you to relay. After calling one of those, do not restate, "
+        "list, summarize, or describe the numbers/rows it just displayed; the user already sees "
+        "them right there. Just briefly confirm what you did in a short sentence (e.g. \"Here "
+        "are the current results.\") instead of repeating the data as text. You have no source "
+        "of truth for game or tournament results, SPRT decisions, EPD solve rates, scores, "
+        "standings, or Elo numbers other than calling show_tournament_result / "
+        "show_sprt_result / show_epd_result -- you never see them any other way, not even from "
+        "earlier in this conversation, since they keep changing as games/analysis finish. Never "
+        "state, type out, or guess any such number yourself under any circumstances, even a "
+        "plausible-looking one or one you seem to recall -- if it did not just come from that "
         "tool's own response, it is fabricated and telling it to the user is a serious error. "
         "Whenever a user asks to see results, or you want to mention them, call the matching "
         "show_*_result tool -- do not answer with your own guessed text instead. "
-        "Two features look similar but are entirely separate, independently configured "
-        "features with their own tools, own engine selection, own time control, own "
-        "concurrency, own openings file, own adjudication settings, etc.: the classic "
-        "multi-engine tournament (select_engines/configure_tournament/...) and the SPRT test "
-        "comparing exactly two engines, champion vs challenger (select_sprt_engines/"
-        "configure_sprt/...). Changing one never affects the other, even though the field names "
-        "look the same. Always work out which one a request targets from context (what has the "
-        "conversation been about -- a multi-engine tournament, or a champion-vs-challenger "
-        "comparison?) before calling a configuration tool; if a message truly could mean either "
-        "and nothing in the conversation clarifies it (e.g. an out-of-nowhere \"set the time "
-        "control to 1 minute per game\"), ask the user \"Turnier oder SPRT-Test?\" (or the "
-        "equivalent in their language) rather than guessing -- a wrong guess silently configures "
-        "the other feature instead of the one they meant, and get_tournament_status/"
-        "get_sprt_status can help you check which one is already mid-configuration. This same "
-        "mix-up applies to \"is X running?\" questions: people often call an SPRT test a "
-        "\"tournament\" informally since it looks the same (engines playing games in the "
-        "background). If you answer \"is a tournament running?\" using only "
-        "get_tournament_status, you can wrongly say no while an SPRT test is actually running. "
-        "For any question about whether something/anything/a tournament/a test is currently "
-        "running, call get_running_status instead -- it checks both and tells you which (if "
-        "either) is actually active.",
+        "Three features look similar but are entirely separate, independently configured "
+        "features with their own tools, own engine selection, own concurrency, etc.: the "
+        "classic multi-engine tournament (select_engines/configure_tournament/...), the SPRT "
+        "test comparing exactly two engines, champion vs challenger (select_sprt_engines/"
+        "configure_sprt/...), and EPD analysis testing one or more engines against a fixed set "
+        "of positions for move-finding accuracy (select_epd_engines/configure_epd/...). "
+        "Changing one never affects the others, even though some field names look similar "
+        "(e.g. EPD has no shared \"time_control\" string and no adjudication concept at all -- "
+        "just plain per-position max/min-time-in-seconds fields, see configure_epd's "
+        "description). Always work out which one a request targets from context (what has the "
+        "conversation been about -- a multi-engine tournament, a champion-vs-challenger "
+        "comparison, or testing move-finding accuracy against known positions?) before calling "
+        "a configuration tool; if a message truly could mean more than one of them and nothing "
+        "in the conversation clarifies it (e.g. an out-of-nowhere \"set the time to 1 minute "
+        "per game\"), ask the user which they mean (\"Turnier, SPRT-Test oder EPD-Analyse?\" or "
+        "the equivalent in their language) rather than guessing -- a wrong guess silently "
+        "configures a different feature than the one they meant, and get_tournament_status/"
+        "get_sprt_status/get_epd_status can help you check which one is already "
+        "mid-configuration. This same mix-up applies to \"is X running?\" questions: people "
+        "often call an SPRT test or an EPD analysis a \"tournament\" informally since they all "
+        "look the same (engines running in the background). If you answer \"is a tournament "
+        "running?\" using only get_tournament_status, you can wrongly say no while an SPRT test "
+        "or EPD analysis is actually running. For any question about whether something/anything/"
+        "a tournament/a test is currently running, call get_running_status instead -- it checks "
+        "all three and tells you which (if any) is actually active.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));
@@ -193,6 +198,20 @@ void ChatbotLlmChat::drawStatusOnly() {
         case LmStudioStatus::NotInstalled:
             ImGuiControls::textWrapped("LM Studio not detected.");
             break;
+        case LmStudioStatus::RemoteUnreachable: {
+            // A non-local host is configured (see Settings -> LM Studio / AI Chat), so an
+            // "installed?" filesystem check (meaningful only for THIS machine) would be
+            // misleading here -- report a connectivity problem instead, with the exact
+            // address so the user can tell a typo from a genuinely down/unreachable server.
+            auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
+            ImGuiControls::textWrapped(std::format(
+                "Could not reach the LM Studio server at {}:{}. Check the address in "
+                "Settings -> LM Studio / AI Chat, and make sure LM Studio's server is "
+                "running there and reachable over the network (LM Studio: Developer tab -> "
+                "\"Serve on Local Network\" enabled).",
+                config.host, config.port).c_str());
+            break;
+        }
     }
 }
 

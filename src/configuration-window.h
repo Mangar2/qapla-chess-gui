@@ -93,8 +93,15 @@ namespace QaplaWindows
          */
         static void drawPerformanceConfig();
 
+        /**
+         * @brief Draws the LM Studio / AI Chat configuration section (server address/port,
+         * whether to offer the AI Chat at all).
+         */
+        void drawLlmChatConfig();
+
         BufferedTextInput reportBaseNameInput_;  ///< Buffered input for report log base name
         BufferedTextInput engineBaseNameInput_;  ///< Buffered input for engine log base name
+        BufferedTextInput llmChatHostInput_;     ///< Buffered input for the LM Studio server host/address
     };
 
 } // namespace QaplaWindows

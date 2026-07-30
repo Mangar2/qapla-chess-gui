@@ -75,6 +75,54 @@ TEST_CASE("LmStudioLocator::probeServer returns false when nothing listens", "[l
     REQUIRE_FALSE(LmStudioLocator::probeServer(config));
 }
 
+TEST_CASE("LmStudioLocator::isLocalHost recognizes loopback aliases only", "[llm][lm-studio-locator]") {
+    REQUIRE(LmStudioLocator::isLocalHost("localhost"));
+    REQUIRE(LmStudioLocator::isLocalHost("127.0.0.1"));
+    REQUIRE(LmStudioLocator::isLocalHost("::1"));
+
+    REQUIRE_FALSE(LmStudioLocator::isLocalHost("192.168.1.42"));
+    REQUIRE_FALSE(LmStudioLocator::isLocalHost("my-server.local"));
+    REQUIRE_FALSE(LmStudioLocator::isLocalHost(""));
+}
+
+TEST_CASE("LmStudioLocator::detect reports RemoteUnreachable for a non-local host with no server, "
+    "instead of checking this machine's local installation", "[llm][lm-studio-locator]") {
+    LmStudioProbeConfig config;
+    config.host = "192.168.255.254"; // non-routable-in-practice address, nothing listens here
+    config.port = 1234;
+    config.timeoutMs = 200;
+
+    REQUIRE(LmStudioLocator::detect(config) == LmStudioStatus::RemoteUnreachable);
+}
+
+TEST_CASE("LmStudioLocator::detect reports ServerRunning for a reachable remote host too",
+    "[llm][lm-studio-locator]") {
+    httplib::Server server;
+    server.Get("/v1/models", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content(R"({"data": []})", "application/json");
+    });
+
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    // 127.0.0.1 counts as "local" for isLocalHost(), but the point here is just that a
+    // running server always wins regardless of that classification -- detect() checks
+    // probeServer() first, before ever looking at isLocalHost().
+    LmStudioProbeConfig config;
+    config.host = "127.0.0.1";
+    config.port = port;
+    config.timeoutMs = 1000;
+
+    REQUIRE(LmStudioLocator::detect(config) == LmStudioStatus::ServerRunning);
+
+    server.stop();
+    serverThread.join();
+}
+
 TEST_CASE("AsyncLmStudioLocator reports readiness asynchronously", "[llm][lm-studio-locator]") {
     LmStudioProbeConfig config;
     config.host = "127.0.0.1";

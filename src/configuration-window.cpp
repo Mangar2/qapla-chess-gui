@@ -141,7 +141,15 @@ void ConfigurationWindow::draw()
         drawPerformanceConfig();
         ImGui::Unindent(10.0F);
     }
-    
+
+    ImGui::Spacing();
+
+    if (ImGuiControls::CollapsingHeaderWithDot("LM Studio / AI Chat Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Indent(10.0F);
+        drawLlmChatConfig();
+        ImGui::Unindent(10.0F);
+    }
+
     ImGui::Spacing();
 }
 
@@ -241,6 +249,45 @@ void ConfigurationWindow::drawPerformanceConfig()
         "- Removes decorative background image\n"
         "Requires restart to apply changes."
     );
+}
+
+void ConfigurationWindow::drawLlmChatConfig()
+{
+    constexpr float inputWidth = 200.0F;
+
+    auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
+    bool modified = false;
+
+    bool enabled = config.enabled;
+    if (ImGui::Checkbox("Offer AI Chat when LM Studio is detected", &enabled)) {
+        config.enabled = enabled;
+        modified = true;
+    }
+    ImGuiControls::hooverTooltip(
+        "If enabled, the app automatically checks for LM Studio at startup and adds an "
+        "\"AI Chat\" entry to the chatbot menu when found.");
+
+    ImGui::Spacing();
+    ImGui::Text("LM Studio Server:");
+
+    if (llmChatHostInput_.draw("Host / Address", config.host, inputWidth)) {
+        modified = true;
+    }
+    ImGuiControls::hooverTooltip(
+        "Hostname or IP address of the machine running LM Studio -- \"localhost\" for this "
+        "machine, or e.g. \"192.168.1.42\" / \"my-server.local\" for a remote one. For a "
+        "remote server, enable \"Serve on Local Network\" on LM Studio's Developer tab so "
+        "it accepts connections from other machines.");
+
+    ImGui::SetNextItemWidth(inputWidth);
+    if (ImGuiControls::inputInt<int>("Port", config.port, 1, 65535)) {
+        modified = true;
+    }
+    ImGuiControls::hooverTooltip("LM Studio's server port, shown on its Developer tab (default 1234).");
+
+    if (modified) {
+        QaplaConfiguration::Configuration::setLlmChatConfig(config);
+    }
 }
 
 void ConfigurationWindow::drawLoggerConfig()

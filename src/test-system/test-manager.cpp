@@ -29,6 +29,7 @@
 #include "test-system/llm-chat-tests.h"
 #include "test-system/llm-tournament-tool-tests.h"
 #include "test-system/llm-sprt-tool-tests.h"
+#include "test-system/llm-epd-tool-tests.h"
 #include "test-system/llm-status-tool-tests.h"
 #include <glad/glad.h>
 
@@ -80,6 +81,7 @@ namespace QaplaTest {
         registerLlmChatTests(engine_);
         registerLlmTournamentToolTests(engine_);
         registerLlmSprtToolTests(engine_);
+        registerLlmEpdToolTests(engine_);
         registerLlmStatusToolTests(engine_);
 #endif
     }

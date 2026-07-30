@@ -78,6 +78,53 @@ TEST_CASE("LmStudioClient::listModels parses the model id list", "[llm][lm-studi
     REQUIRE(result.modelIds[1] == "llama-3-8b");
 }
 
+TEST_CASE("LmStudioClient::listModels filters out embedding models using LM Studio's native REST API",
+    "[llm][lm-studio-client]") {
+    MockServer mock;
+    mock.server.Get("/v1/models", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content(
+            R"({"data":[{"id":"qwen3.5-9b"},{"id":"google/gemma-3-12b"},)"
+            R"({"id":"text-embedding-nomic-embed-text-v1.5"}]})",
+            "application/json");
+    });
+    mock.server.Get("/api/v0/models", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content(
+            R"({"data":[)"
+            R"({"id":"qwen3.5-9b","type":"llm","state":"loaded"},)"
+            R"({"id":"google/gemma-3-12b","type":"llm","state":"not-loaded"},)"
+            R"({"id":"text-embedding-nomic-embed-text-v1.5","type":"embeddings","state":"not-loaded"}])"
+            R"(})",
+            "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    auto result = client.listModels();
+
+    REQUIRE(result.success);
+    REQUIRE(result.modelIds.size() == 2);
+    REQUIRE(result.modelIds[0] == "qwen3.5-9b");
+    REQUIRE(result.modelIds[1] == "google/gemma-3-12b");
+}
+
+TEST_CASE("LmStudioClient::listModels keeps the full list when the native REST API is unavailable",
+    "[llm][lm-studio-client]") {
+    // No /api/v0/models handler registered -- simulates an older LM Studio version that
+    // doesn't have it. Filtering is best-effort: listModels() must still succeed with the
+    // unfiltered list, not fail or hang.
+    MockServer mock;
+    mock.server.Get("/v1/models", [](const httplib::Request&, httplib::Response& res) {
+        res.set_content(R"({"data":[{"id":"qwen2.5-7b-instruct"},{"id":"llama-3-8b"}]})", "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    auto result = client.listModels();
+
+    REQUIRE(result.success);
+    REQUIRE(result.modelIds.size() == 2);
+}
+
 TEST_CASE("LmStudioClient::listModels reports a readable error when nothing listens", "[llm][lm-studio-client]") {
     LmStudioConnection connection;
     connection.host = "127.0.0.1";

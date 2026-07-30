@@ -76,9 +76,16 @@ bool LmStudioLocator::isInstalled() {
     return isInstalledAt(defaultInstallPaths());
 }
 
+bool LmStudioLocator::isLocalHost(const std::string& host) {
+    return host == "localhost" || host == "127.0.0.1" || host == "::1";
+}
+
 LmStudioStatus LmStudioLocator::detect(const LmStudioProbeConfig& config) {
     if (probeServer(config)) {
         return LmStudioStatus::ServerRunning;
+    }
+    if (!isLocalHost(config.host)) {
+        return LmStudioStatus::RemoteUnreachable;
     }
     if (isInstalled()) {
         return LmStudioStatus::InstalledServerDown;
