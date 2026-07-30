@@ -299,16 +299,9 @@ namespace {
     // get_tournament_status
     // ------------------------------------------------------------------
 
-    // Shared by get_tournament_status and both configure_*_adjudication tools' result
-    // messages, so the reported mode always matches the same off/test/active vocabulary
-    // the tools accept (see applyAdjudicationMode()).
-    std::string adjudicationModeText(bool active, bool testOnly) {
-        if (!active) {
-            return "off";
-        }
-        return testOnly ? "test" : "active";
-    }
-
+    // adjudicationModeText()/adjudicationModeSchemaProperty()/applyAdjudicationMode() live in
+    // gui-tool-registry.h -- shared with the SPRT adjudication tools (gui-tool-sprt-register.cpp)
+    // so the off/test/active vocabulary and its bool-pair mapping is written exactly once.
     std::string adjudicationSummary(TournamentData& data) {
         const auto& draw = data.drawConfig();
         const auto& resign = data.resignConfig();
@@ -360,39 +353,6 @@ namespace {
     // ------------------------------------------------------------------
     // configure_draw_adjudication / configure_resign_adjudication
     // ------------------------------------------------------------------
-
-    // Both adjudication configs use the same tri-state as the classic UI's control (see
-    // ImGuiControls::triStateInput): "off" (never adjudicate), "test" (evaluate and log what it
-    // would have decided, without ending games), or "active" (actually adjudicate).
-    Json::JsonValue adjudicationModeSchemaProperty(const std::string& description) {
-        auto prop = Json::JsonValue::object();
-        prop["type"] = "string";
-        auto enumValues = Json::JsonValue::array();
-        enumValues.push_back("off");
-        enumValues.push_back("test");
-        enumValues.push_back("active");
-        prop["enum"] = enumValues;
-        prop["description"] = description;
-        return prop;
-    }
-
-    bool applyAdjudicationMode(
-        const std::string& mode, bool& active, bool& testOnly, std::vector<std::string>& problems) {
-        if (mode == "off") {
-            active = false;
-            testOnly = false;
-        } else if (mode == "test") {
-            active = true;
-            testOnly = true;
-        } else if (mode == "active") {
-            active = true;
-            testOnly = false;
-        } else {
-            problems.push_back("mode must be \"off\", \"test\", or \"active\" (got \"" + mode + "\")");
-            return false;
-        }
-        return true;
-    }
 
     Json::JsonValue buildConfigureDrawAdjudicationSchema() {
         auto schema = noArgsToolSchema();
@@ -761,7 +721,10 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                         "rather than restating the numbers from its response. Works both while a "
                         "tournament is running (partial results so far) and after it has "
                         "finished; reports that no results are available yet if nothing has been "
-                        "played.",
+                        "played. This is the ONLY way you ever learn any actual score, standing, "
+                        "or Elo number -- you have no other source for them. Never state, type, "
+                        "or guess a result yourself instead of calling this; that would be "
+                        "fabricated information, not a real result.",
         .handler = handleShowTournamentResult
     });
 }

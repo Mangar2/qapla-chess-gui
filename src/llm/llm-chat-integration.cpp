@@ -22,6 +22,8 @@
 #include "gui-tool-registry.h"
 #include "gui-tool-engine-management.h"
 #include "gui-tool-tournament.h"
+#include "gui-tool-sprt.h"
+#include "gui-tool-status.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
@@ -51,6 +53,8 @@ struct DetectionState {
 void registerGuiTools() {
     registerEngineManagementTools(GuiToolRegistry::instance());
     registerTournamentTools(GuiToolRegistry::instance());
+    registerSprtTools(GuiToolRegistry::instance());
+    registerStatusTools(GuiToolRegistry::instance());
 }
 
 } // namespace

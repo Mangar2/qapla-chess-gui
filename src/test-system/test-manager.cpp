@@ -28,6 +28,8 @@
 #include "test-system/tutorial-test/board-window/tutorial-tests.h"
 #include "test-system/llm-chat-tests.h"
 #include "test-system/llm-tournament-tool-tests.h"
+#include "test-system/llm-sprt-tool-tests.h"
+#include "test-system/llm-status-tool-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -77,6 +79,8 @@ namespace QaplaTest {
         registerBoardWindowTutorialTests(engine_);
         registerLlmChatTests(engine_);
         registerLlmTournamentToolTests(engine_);
+        registerLlmSprtToolTests(engine_);
+        registerLlmStatusToolTests(engine_);
 #endif
     }
 

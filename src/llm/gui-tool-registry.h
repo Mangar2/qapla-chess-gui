@@ -107,6 +107,58 @@ struct GuiToolResult {
 }
 
 /**
+ * @brief JSON Schema property for the off/test/active tri-state adjudication uses (see
+ * ImGuiControls::triStateInput() -- "off" (never adjudicate), "test" (evaluate and log what it
+ * would have decided, without ending games), "active" (actually adjudicate). Shared between the
+ * tournament and SPRT adjudication tool groups so the vocabulary and its mapping to the
+ * underlying active/testOnly bool pair only need to be written once.
+ */
+[[nodiscard]] inline QaplaTester::Json::JsonValue adjudicationModeSchemaProperty(const std::string& description) {
+    auto prop = QaplaTester::Json::JsonValue::object();
+    prop["type"] = "string";
+    auto enumValues = QaplaTester::Json::JsonValue::array();
+    enumValues.push_back("off");
+    enumValues.push_back("test");
+    enumValues.push_back("active");
+    prop["enum"] = enumValues;
+    prop["description"] = description;
+    return prop;
+}
+
+/**
+ * @brief Maps an adjudicationModeSchemaProperty() string to the underlying active/testOnly pair.
+ * @return true if `mode` was recognized (active/testOnly were updated); false if not (a
+ * human-readable problem was appended to `problems`, and active/testOnly are left untouched).
+ */
+[[nodiscard]] inline bool applyAdjudicationMode(
+    const std::string& mode, bool& active, bool& testOnly, std::vector<std::string>& problems) {
+    if (mode == "off") {
+        active = false;
+        testOnly = false;
+    } else if (mode == "test") {
+        active = true;
+        testOnly = true;
+    } else if (mode == "active") {
+        active = true;
+        testOnly = false;
+    } else {
+        problems.push_back("mode must be \"off\", \"test\", or \"active\" (got \"" + mode + "\")");
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @brief Formats an off/test/active mode back to the same vocabulary applyAdjudicationMode() accepts.
+ */
+[[nodiscard]] inline std::string adjudicationModeText(bool active, bool testOnly) {
+    if (!active) {
+        return "off";
+    }
+    return testOnly ? "test" : "active";
+}
+
+/**
  * @brief One GUI-controllable action exposed to the LLM as a function tool.
  *
  * Handlers run exclusively on the UI thread (see GuiToolRegistry::processQueue()),
