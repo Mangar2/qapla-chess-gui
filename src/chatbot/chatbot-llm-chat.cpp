@@ -156,7 +156,24 @@ void ChatbotLlmChat::ensureController() {
         "running?\" using only get_tournament_status, you can wrongly say no while an SPRT test "
         "or EPD analysis is actually running. For any question about whether something/anything/"
         "a tournament/a test is currently running, call get_running_status instead -- it checks "
-        "all three and tells you which (if any) is actually active.",
+        "all three and tells you which (if any) is actually active. "
+        "When the user asks you to start something (a tournament, SPRT test, or EPD analysis), "
+        "do not ask for confirmation before starting it, even if you just changed its "
+        "configuration in the same conversation. First apply any configuration changes they "
+        "asked for, then check status only if you are not sure something required is still "
+        "missing; once everything required is present, call the matching start_* tool "
+        "immediately -- never ask whether you should start now, or make the user re-confirm "
+        "settings you already applied. Only ask a question first if a value that is actually "
+        "required (e.g. no engines selected, no openings/EPD file configured) is genuinely "
+        "missing or invalid. Whenever a file path needs to be selected -- because it is "
+        "missing, because a tool reported it as invalid or not found, or because the user "
+        "simply wants to browse for one -- call the matching open_*_file_dialog tool "
+        "(open_tournament_openings_file_dialog, open_tournament_pgn_file_dialog, "
+        "open_sprt_openings_file_dialog, open_sprt_pgn_file_dialog, open_epd_file_dialog) "
+        "instead of asking the user to type or paste a path in chat. This opens the same "
+        "native file picker the regular GUI uses for that exact field and applies whatever "
+        "the user picks directly; you have no filesystem access of your own, so never guess "
+        "or invent a path yourself.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(

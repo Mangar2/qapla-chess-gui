@@ -151,6 +151,9 @@ namespace QaplaTest {
             badFileArgs["epd_file"] = "/no/such/file.epd";
             auto badFileResult = callToolAndYield(ctx, "configure_epd", badFileArgs);
             IM_CHECK(!badFileResult.success);
+            // The rejection must point the model at the file dialog tool instead of asking
+            // the user to type a corrected path (see open_epd_file_dialog).
+            IM_CHECK(badFileResult.content.find("open_epd_file_dialog") != std::string::npos);
             // Rejecting the bad path must not have reset the previously-configured one.
             IM_CHECK(epdData.config().filepath == getTestEpdPath());
 

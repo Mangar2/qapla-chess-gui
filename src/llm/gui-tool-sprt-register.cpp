@@ -21,6 +21,7 @@
 #include "gui-tool-tournament.h" // resolveEngines() -- pure logic, reused as-is
 #include "../sprt-tournament-data.h"
 #include "../snackbar.h"
+#include "../os-dialogs.h"
 
 #include <sprt/sprt-manager.h>
 
@@ -273,7 +274,8 @@ namespace {
 
     void applyOpeningsFile(SprtTournamentData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
-            problems.push_back("openings file not found: " + path);
+            problems.push_back("openings file not found: " + path +
+                " -- call open_sprt_openings_file_dialog to let the user pick a valid one");
             return;
         }
         data.tournamentOpening().openings().file = path;
@@ -283,6 +285,37 @@ namespace {
     void applyPgnFile(SprtTournamentData& data, const std::string& path, std::vector<std::string>& applied) {
         data.tournamentPgn().pgnOptions().file = path;
         applied.push_back("PGN output file");
+    }
+
+    GuiToolResult handleOpenSprtOpeningsFileDialog(const Json::JsonValue&) {
+        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        if (paths.empty()) {
+            return GuiToolResult{
+                .success = true,
+                .content = "The user cancelled the dialog; the openings file was not changed."
+            };
+        }
+
+        auto& sprtData = SprtTournamentData::instance();
+        sprtData.tournamentOpening().openings().file = paths.front();
+        sprtData.tournamentOpening().updateConfiguration();
+        return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
+    }
+
+    GuiToolResult handleOpenSprtPgnFileDialog(const Json::JsonValue&) {
+        auto& sprtData = SprtTournamentData::instance();
+        auto path = QaplaWindows::OsDialogs::saveFileDialog(
+            {{"PGN files (*.pgn)", "pgn"}}, sprtData.tournamentPgn().pgnOptions().file);
+        if (path.empty()) {
+            return GuiToolResult{
+                .success = true,
+                .content = "The user cancelled the dialog; the PGN output file was not changed."
+            };
+        }
+
+        sprtData.tournamentPgn().pgnOptions().file = path;
+        sprtData.tournamentPgn().updateConfiguration();
+        return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
     }
 
     void applyConcurrency(SprtTournamentData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -707,9 +740,34 @@ void registerSprtTools(GuiToolRegistry& registry) {
                         "context, ask which one they mean rather than guessing -- guessing wrong "
                         "silently configures the other feature instead. openings_file must be "
                         "set (here or in an earlier session) before start_sprt_tournament will "
-                        "succeed.",
+                        "succeed. If it's missing, invalid, or the user wants to browse for one, "
+                        "call open_sprt_openings_file_dialog instead of asking them to type a "
+                        "path -- same for pgn_file and open_sprt_pgn_file_dialog.",
         .parametersSchema = buildConfigureSprtSchema(),
         .handler = handleConfigureSprt
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "open_sprt_openings_file_dialog",
+        .description = "Opens the GUI's native file picker so the user can choose the SPRT "
+                        "test's openings file themselves -- you have no filesystem access, so "
+                        "never guess or invent a path. Use this instead of asking the user to "
+                        "type or paste a path whenever one is missing, was reported as invalid, "
+                        "or the user just wants to browse for one. The chosen path is applied "
+                        "immediately, exactly like configure_sprt's openings_file.",
+        .handler = handleOpenSprtOpeningsFileDialog,
+        .timeout = std::chrono::minutes(10)
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "open_sprt_pgn_file_dialog",
+        .description = "Opens the GUI's native save-file picker so the user can choose where "
+                        "the SPRT test's PGN output file should be written -- you have no "
+                        "filesystem access, so never guess or invent a path. Use this instead "
+                        "of asking the user to type or paste a path. The chosen path is applied "
+                        "immediately, exactly like configure_sprt's pgn_file.",
+        .handler = handleOpenSprtPgnFileDialog,
+        .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{

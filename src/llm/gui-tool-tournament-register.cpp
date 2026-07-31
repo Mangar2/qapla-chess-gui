@@ -25,6 +25,7 @@
 #include "gui-tool-tournament.h"
 #include "../tournament-data.h"
 #include "../snackbar.h"
+#include "../os-dialogs.h"
 
 #include <tournament/tournament.h>
 
@@ -216,11 +217,42 @@ namespace {
 
     void applyOpeningsFile(TournamentData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
-            problems.push_back("openings file not found: " + path);
+            problems.push_back("openings file not found: " + path +
+                " -- call open_tournament_openings_file_dialog to let the user pick a valid one");
             return;
         }
         data.tournamentOpening().openings().file = path;
         applied.push_back("openings file");
+    }
+
+    GuiToolResult handleOpenTournamentOpeningsFileDialog(const Json::JsonValue&) {
+        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        if (paths.empty()) {
+            return GuiToolResult{
+                .success = true,
+                .content = "The user cancelled the dialog; the openings file was not changed."
+            };
+        }
+
+        auto& tournamentData = TournamentData::instance();
+        tournamentData.tournamentOpening().openings().file = paths.front();
+        tournamentData.tournamentOpening().updateConfiguration();
+        return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
+    }
+
+    GuiToolResult handleOpenTournamentPgnFileDialog(const Json::JsonValue&) {
+        auto& tournamentData = TournamentData::instance();
+        auto path = QaplaWindows::OsDialogs::saveFileDialog({{"PGN files (*.pgn)", "pgn"}}, tournamentData.pgnConfig().file);
+        if (path.empty()) {
+            return GuiToolResult{
+                .success = true,
+                .content = "The user cancelled the dialog; the PGN output file was not changed."
+            };
+        }
+
+        tournamentData.pgnConfig().file = path;
+        tournamentData.tournamentPgn().updateConfiguration();
+        return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
     }
 
     void applyPgnFile(TournamentData& data, const std::string& path, std::vector<std::string>& applied) {
@@ -633,10 +665,38 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                         "-- call get_tournament_status first if you're not sure what that "
                         "currently is, rather than assuming it's unset. openings_file must be "
                         "set (here or in an earlier session) before start_tournament will "
-                        "succeed; there is no safe default, so ask the user for a path only if "
-                        "get_tournament_status confirms none is configured yet.",
+                        "succeed; there is no safe default. If it's missing, invalid, or the "
+                        "user wants to browse for one, call open_tournament_openings_file_dialog "
+                        "instead of asking them to type a path -- same for pgn_file and "
+                        "open_tournament_pgn_file_dialog.",
         .parametersSchema = buildConfigureTournamentSchema(),
         .handler = handleConfigureTournament
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "open_tournament_openings_file_dialog",
+        .description = "Opens the GUI's native file picker so the user can choose the "
+                        "tournament's openings file themselves -- you have no filesystem "
+                        "access, so never guess or invent a path. Use this instead of asking "
+                        "the user to type or paste a path whenever one is missing, was reported "
+                        "as invalid, or the user just wants to browse for one. The chosen path "
+                        "is applied immediately, exactly like configure_tournament's "
+                        "openings_file.",
+        .handler = handleOpenTournamentOpeningsFileDialog,
+        // Waits on the user picking a file in a native dialog, which can legitimately take
+        // much longer than a normal tool call -- see open_add_engine_dialog's identical timeout.
+        .timeout = std::chrono::minutes(10)
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "open_tournament_pgn_file_dialog",
+        .description = "Opens the GUI's native save-file picker so the user can choose where "
+                        "the tournament's PGN output file should be written -- you have no "
+                        "filesystem access, so never guess or invent a path. Use this instead "
+                        "of asking the user to type or paste a path. The chosen path is applied "
+                        "immediately, exactly like configure_tournament's pgn_file.",
+        .handler = handleOpenTournamentPgnFileDialog,
+        .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{

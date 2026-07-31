@@ -21,6 +21,7 @@
 #include "gui-tool-tournament.h" // resolveEngines() -- pure logic, reused as-is
 #include "../epd-data.h"
 #include "../snackbar.h"
+#include "../os-dialogs.h"
 
 #include <imgui.h>
 
@@ -177,11 +178,27 @@ namespace {
 
     void applyEpdFile(EpdData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
-            problems.push_back("EPD file not found: " + path);
+            problems.push_back("EPD file not found: " + path +
+                " -- call open_epd_file_dialog to let the user pick a valid one");
             return;
         }
         data.config().filepath = path;
         applied.push_back("EPD file");
+    }
+
+    GuiToolResult handleOpenEpdFileDialog(const Json::JsonValue&) {
+        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        if (paths.empty()) {
+            return GuiToolResult{
+                .success = true,
+                .content = "The user cancelled the dialog; the EPD file was not changed."
+            };
+        }
+
+        auto& epdData = EpdData::instance();
+        epdData.config().filepath = paths.front();
+        epdData.updateConfiguration();
+        return GuiToolResult{.success = true, .content = "EPD file set to: " + paths.front()};
     }
 
     void applyMaxTime(EpdData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -454,9 +471,23 @@ void registerEpdTools(GuiToolRegistry& registry) {
                         "though it superficially sounds like another engine-testing mode. If a "
                         "request could mean tournament, SPRT, or EPD and it isn't clear from "
                         "context which, ask rather than guessing. epd_file must be set (here or "
-                        "in an earlier session) before start_epd_analysis will succeed.",
+                        "in an earlier session) before start_epd_analysis will succeed. If it's "
+                        "missing, invalid, or the user wants to browse for one, call "
+                        "open_epd_file_dialog instead of asking them to type a path.",
         .parametersSchema = buildConfigureEpdSchema(),
         .handler = handleConfigureEpd
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "open_epd_file_dialog",
+        .description = "Opens the GUI's native file picker so the user can choose the EPD (or "
+                        "RAW position) file themselves -- you have no filesystem access, so "
+                        "never guess or invent a path. Use this instead of asking the user to "
+                        "type or paste a path whenever one is missing, was reported as invalid, "
+                        "or the user just wants to browse for one. The chosen path is applied "
+                        "immediately, exactly like configure_epd's epd_file.",
+        .handler = handleOpenEpdFileDialog,
+        .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{
