@@ -125,7 +125,15 @@ TEST_CASE("LlmChatController shows a tool result before the model's slower final
     MockToolCallingServer mock;
     mock.start();
 
-    LlmChatController controller(mock.connection(), "system prompt");
+    // This turn's successful tool call + "Done." final reply is exactly the "clean but
+    // unstructured final reply" shape LlmChatController now corrects into finetuning.json
+    // (see the dedicated test for that) -- redirect away from the real config directory.
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(
+        mock.connection(), "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
+        testLogDirectory().string());
     controller.setModel("test-model");
     controller.sendMessage("please call the probe tool");
 
@@ -162,6 +170,8 @@ TEST_CASE("LlmChatController shows a tool result before the model's slower final
         }
     }
     REQUIRE(sawFinalAssistantText);
+
+    std::filesystem::remove_all(testLogDirectory());
 }
 
 TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEntry",
@@ -219,7 +229,13 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    LlmChatController controller(connection, "system prompt");
+    // Same reasoning as the probe test above: this turn's successful tool call + "Done." final
+    // reply now gets corrected into finetuning.json -- redirect away from the real directory.
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(
+        connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false, testLogDirectory().string());
     controller.setModel("test-model");
     controller.sendMessage("please call the widget probe tool");
 
@@ -242,6 +258,8 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
 
     toolEntry->renderWidget();
     REQUIRE(widgetCallCount == 1);
+
+    std::filesystem::remove_all(testLogDirectory());
 
     server.stop();
     serverThread.join();
@@ -463,6 +481,94 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
     // No finetuning.json (or an empty one) since the file is only created on the first
     // actually-recorded turn, and this turn was never clean.
     REQUIRE_FALSE(std::filesystem::exists(testLogDirectory() / "finetuning.json"));
+
+    std::filesystem::remove_all(testLogDirectory());
+
+    server.stop();
+    serverThread.join();
+}
+
+TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply for finetuning.json",
+    "[llm][llm-chat-controller]") {
+    // Reproduces the real-world case reported against this feature: a turn where every real
+    // tool call succeeded, but the model's *final* reply ignored "tool_choice":"required" and
+    // came back as plain text instead of a reply_to_user call. The live chat/log must show
+    // that faithfully, but finetuning.json should still record the turn -- corrected to show
+    // the reply_to_user call the model should have made -- so the successful tool use isn't
+    // lost from the dataset, and the dataset never reinforces the plain-text fallback.
+    GuiToolRegistry::instance().registerTool(GuiToolDefinition{
+        .name = "test_llm_chat_controller_start_probe",
+        .description = "Test-only probe tool that always succeeds.",
+        .handler = [](const QaplaTester::Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "Started."};
+        }
+    });
+
+    std::atomic<int> completionCallCount{0};
+    httplib::Server server;
+    server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
+        if (req.body.find("\"ping\"") != std::string::npos) {
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
+                "application/json");
+            return;
+        }
+        if (completionCallCount.fetch_add(1) == 0) {
+            res.set_content(
+                R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+                R"([{"id":"call_1","type":"function",)"
+                R"("function":{"name":"test_llm_chat_controller_start_probe","arguments":"{}"}}]}}]})",
+                "application/json");
+        } else {
+            // No tool_calls at all -- the model ignored "tool_choice":"required" for its final
+            // reply, exactly the shape observed in practice.
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Tournament started!"}}]})",
+                "application/json");
+        }
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
+        testLogDirectory().string());
+    controller.setModel("test-model");
+    controller.sendMessage("start it");
+
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+        GuiToolRegistry::instance().processQueue();
+        controller.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    REQUIRE_FALSE(controller.isBusy());
+
+    // The live chat shows exactly what happened: the plain-text reply, untouched.
+    bool sawPlainReply = false;
+    for (const auto& entry : controller.history()) {
+        if (entry.role == ChatRole::Assistant && entry.text == "Tournament started!") {
+            sawPlainReply = true;
+        }
+    }
+    REQUIRE(sawPlainReply);
+
+    // finetuning.json records the turn anyway, corrected: the successful tool call stays, and
+    // the final reply is now a reply_to_user call instead of bare content.
+    auto fineTuningContent = readFile(testLogDirectory() / "finetuning.json");
+    REQUIRE(fineTuningContent.find(R"("name":"test_llm_chat_controller_start_probe")") != std::string::npos);
+    REQUIRE(fineTuningContent.find(R"("name":"reply_to_user")") != std::string::npos);
+    REQUIRE(fineTuningContent.find(R"("arguments":"{\"text\":\"Tournament started!\"}")") != std::string::npos);
+    REQUIRE(std::ranges::count(fineTuningContent, '\n') == 1);
 
     std::filesystem::remove_all(testLogDirectory());
 

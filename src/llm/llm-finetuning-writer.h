@@ -37,10 +37,16 @@ namespace QaplaLlm {
  * Deliberately different from LlmChatLogger: always on (no Settings toggle -- there is nothing
  * to configure), and one single file that grows across the app's entire lifetime rather than a
  * new timestamped file per session, since the whole point is to accumulate a dataset over time.
- * Only turns that completed with no error anywhere -- no connection/timeout failure, no
- * unstructured/malformed model output, no tool call reporting failure, no hitting the
- * tool-call-iteration limit -- are recorded (see LlmChatController::runAgentLoop), since a
- * fine-tuning example should only ever demonstrate correct behavior.
+ * Only turns where every real tool call succeeded are recorded at all -- a connection/timeout
+ * failure or a tool reporting failure excludes the whole turn, and hitting the
+ * tool-call-iteration limit means there was no final reply to record in the first place (see
+ * LlmChatController::runAgentLoop) -- since a fine-tuning example should only ever demonstrate
+ * correct tool use. If the model's *final* reply ignored "tool_choice":"required" and came back
+ * as plain text instead of a reply_to_user call, the turn is still recorded, but with that
+ * reply corrected into the reply_to_user call the model should have made (see
+ * makeSyntheticReplyMessage() in llm-chat-controller.cpp) -- so the dataset never reinforces
+ * the exact plain-text fallback behavior it exists to train away. The live chat and
+ * LlmChatLogger's log are never corrected this way; only this file is.
  *
  * Each record covers exactly one turn: the system prompt, the user's message, and everything
  * the model/tools produced in response (tool calls, their results, and the final reply) --

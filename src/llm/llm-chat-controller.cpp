@@ -78,6 +78,33 @@ namespace {
         return "";
     }
 
+    // [system, ...this turn's own exchange] -- see turnStartIndex's doc comment in
+    // runAgentLoop for why the rest of the (unrelated, earlier-turn) messages are skipped.
+    std::vector<ChatMessage> sliceFineTuningMessages(
+        const std::vector<ChatMessage>& messages, std::size_t turnStartIndex) {
+        std::vector<ChatMessage> result;
+        result.push_back(messages.front()); // system prompt
+        result.insert(result.end(), messages.begin() + static_cast<std::ptrdiff_t>(turnStartIndex), messages.end());
+        return result;
+    }
+
+    // Builds the reply_to_user tool call the model *should* have made instead of answering
+    // with plain text -- used to correct a fine-tuning record's final message (never the live
+    // chat/log, which stay faithful to what actually happened) so the dataset only ever
+    // demonstrates the structured form we're trying to train the model into using.
+    ChatMessage makeSyntheticReplyMessage(const std::string& text) {
+        ChatMessage message;
+        message.role = "assistant";
+        ToolCall call;
+        call.id = "synthetic_reply"; // recognizable marker; never sent to a real API
+        call.name = REPLY_TOOL_NAME;
+        auto argumentsJson = QaplaTester::Json::JsonValue::object();
+        argumentsJson["text"] = text;
+        call.argumentsJson = argumentsJson.stringify();
+        message.toolCalls.push_back(std::move(call));
+        return message;
+    }
+
     // Runs entirely on the worker thread: calls the model, and for as long as
     // it keeps responding with tool_calls, executes them via GuiToolRegistry
     // (which itself blocks this thread until the UI thread has processed
@@ -127,6 +154,18 @@ namespace {
                 turnResult.success = true;
                 turnResult.finalContent = response.content;
                 logger->logUnstructured(response.content);
+
+                if (turnClean) {
+                    // Every real tool call earlier in this turn (if any) still succeeded --
+                    // worth keeping as a fine-tuning example anyway, just corrected to show the
+                    // reply_to_user call the model *should* have made instead of literally
+                    // replaying the plain-text fallback we're actively trying to eliminate (see
+                    // the system prompt and this tool's own description). The live chat/log
+                    // above are untouched and keep showing what actually happened.
+                    auto fineTuningMessages = sliceFineTuningMessages(messages, turnStartIndex);
+                    fineTuningMessages.push_back(makeSyntheticReplyMessage(response.content));
+                    fineTuningWriter->appendTurn(fineTuningMessages);
+                }
                 return turnResult;
             }
 
@@ -177,11 +216,7 @@ namespace {
 
             if (turnResult.success) {
                 if (turnClean) {
-                    std::vector<ChatMessage> fineTuningMessages;
-                    fineTuningMessages.push_back(messages.front()); // system prompt
-                    fineTuningMessages.insert(fineTuningMessages.end(),
-                        messages.begin() + static_cast<std::ptrdiff_t>(turnStartIndex), messages.end());
-                    fineTuningWriter->appendTurn(fineTuningMessages);
+                    fineTuningWriter->appendTurn(sliceFineTuningMessages(messages, turnStartIndex));
                 }
                 return turnResult;
             }
