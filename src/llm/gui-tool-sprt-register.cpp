@@ -49,12 +49,15 @@ namespace {
         return joined;
     }
 
-    // Same message the classic (non-AI) SPRT chatbot flow's own "Switch to SPRT View" button
-    // sends (see chatbot-step-tournament-start.cpp, shared with the tournament flow) --
-    // ImGuiTabBar subscribes and flips to the SPRT tab on the next frame. Called whenever a
-    // tool actually changes SPRT settings or its run state.
+    // Tab-only variant of the classic (non-AI) SPRT chatbot flow's "Switch to SPRT View" message
+    // (see chatbot-step-tournament-start.cpp, shared with the tournament flow). ImGuiTabBar flips
+    // to the SPRT tab on the next frame just like for "switch_to_sprt_view", but
+    // SprtTournamentData does NOT listen for this message, so it does not also activate the
+    // running SPRT board window. Called whenever a tool actually changes SPRT settings or its
+    // run state, so the user sees what the AI just did without a board popping up and covering
+    // the AI chat.
     void switchToSprtView() {
-        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_sprt_view");
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_sprt_tab");
     }
 
     // Looks for the most recent "sprt-tournament"-topic snackbar since countBefore entries

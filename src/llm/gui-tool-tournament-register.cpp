@@ -53,13 +53,14 @@ namespace {
         return joined;
     }
 
-    // Same message the classic (non-AI) tournament chatbot flow's own "Switch to Tournament
-    // View" button sends (see chatbot-step-tournament-start.cpp) -- ImGuiTabBar subscribes and
-    // flips to the Tournament tab on the next frame. Called whenever a tool actually changes
-    // tournament settings or its run state, so the user sees what the AI just did without
-    // having to switch tabs manually themselves.
+    // Tab-only variant of the classic (non-AI) tournament chatbot flow's "Switch to Tournament
+    // View" message (see chatbot-step-tournament-start.cpp). ImGuiTabBar flips to the Tournament
+    // tab on the next frame just like for "switch_to_tournament_view", but TournamentData does
+    // NOT listen for this message, so it does not also activate a running game's board window.
+    // Called whenever a tool actually changes tournament settings or its run state, so the user
+    // sees what the AI just did without a board popping up and covering the AI chat.
     void switchToTournamentView() {
-        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_tournament_view");
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_tournament_tab");
     }
 
     // Looks for the most recent "tournament"-topic snackbar since

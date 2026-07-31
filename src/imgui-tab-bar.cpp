@@ -159,8 +159,17 @@ namespace QaplaWindows {
     
     void ImGuiTabBar::processMessage(const std::string& message) {
         std::map<std::string, std::string> commands = {
+            // "_view" messages come from the classic (non-AI) chatbot's "Switch to ... View"
+            // button and also make TournamentData/SprtTournamentData activate a running game's
+            // board (see their message callbacks) -- that's desired there since the button is
+            // reached only after the user asked to inspect running games. The AI tools instead
+            // send "_tab" messages, which only flip the tab and never touch board activation, so
+            // the AI chat (docked alongside/under the board area) isn't covered by a game board
+            // popping to the front on every configure/start call.
             { "switch_to_tournament_view", "Tournament" },
             { "switch_to_sprt_view", "SPRT" },
+            { "switch_to_tournament_tab", "Tournament" },
+            { "switch_to_sprt_tab", "SPRT" },
             { "switch_to_epd_view", "Epd" },
             { "switch_to_pgn_view", "Pgn" }
         };
