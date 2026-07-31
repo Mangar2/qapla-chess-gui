@@ -228,6 +228,62 @@ namespace QaplaTest {
             cleanupEpdState();
             ctx->LogInfo("=== Test StartStopClearShowEpdResultViaRegistry PASSED ===");
         };
+
+        // -----------------------------------------------------------------
+        // Test: start_epd_analysis after a config change post-stop must fail with
+        // AI-actionable guidance to call clear_epd_result first (see EpdData::mayAnalyze()'s
+        // configChanged()+Stopped precondition -- unique to EPD, no tournament/SPRT
+        // equivalent, previously undocumented from the AI's perspective).
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "StartAfterConfigChangeGuidesTowardClearViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: start_epd_analysis after config change guides toward clear_epd_result ===");
+
+            cleanupEpdState();
+            IM_CHECK(hasEnginesAvailable());
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(!configs.empty());
+
+            auto selectArgs = QaplaTester::Json::JsonValue::object();
+            auto engineNames = QaplaTester::Json::JsonValue::array();
+            engineNames.push_back(configs[0].getName());
+            selectArgs["engines"] = engineNames;
+            IM_CHECK(callToolAndYield(ctx, "select_epd_engines", selectArgs).success);
+
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["epd_file"] = getTestEpdPath();
+            configureArgs["max_time_seconds"] = 5.0;
+            configureArgs["min_time_seconds"] = 5.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", configureArgs).success);
+
+            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
+            ctx->SleepNoSkip(0.5f, 0.1f); // see the identical wait above
+
+            auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["mode"] = "abrupt";
+            IM_CHECK(callToolAndYield(ctx, "stop_epd_analysis", stopArgs).success);
+            IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
+
+            // Change the configuration without clearing first -- state is Stopped, not Cleared.
+            auto changeArgs = QaplaTester::Json::JsonValue::object();
+            changeArgs["max_time_seconds"] = 6.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", changeArgs).success);
+
+            auto blockedResult = callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object());
+            IM_CHECK(!blockedResult.success);
+            IM_CHECK(blockedResult.content.find("clear_epd_result") != std::string::npos);
+
+            // Following that exact guidance must actually unblock a fresh start.
+            IM_CHECK(callToolAndYield(ctx, "clear_epd_result", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
+            ctx->SleepNoSkip(0.5f, 0.1f);
+
+            cleanupEpdState();
+            ctx->LogInfo("=== Test StartAfterConfigChangeGuidesTowardClearViaRegistry PASSED ===");
+        };
     }
 
 } // namespace QaplaTest

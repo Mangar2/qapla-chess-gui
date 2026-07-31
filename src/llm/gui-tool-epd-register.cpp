@@ -313,10 +313,15 @@ namespace {
 
         if (!epdData.isRunning() && !epdData.isStarting()) {
             auto reason = findRecentEpdSnackbar(historyCountBefore);
-            return GuiToolResult{
-                .success = false,
-                .content = reason.empty() ? "Could not start the EPD analysis." : reason
-            };
+            if (reason.empty()) {
+                reason = "Could not start the EPD analysis.";
+            } else if (reason.find("Clear data before re-analyzing") != std::string::npos) {
+                // This exact rejection (see EpdData::mayAnalyze()) has no tournament/SPRT
+                // equivalent, so spell out the fix rather than relying on the model to
+                // connect "clear data" to the clear_epd_result tool on its own.
+                reason += " Call clear_epd_result, then call start_epd_analysis again.";
+            }
+            return GuiToolResult{.success = false, .content = reason};
         }
 
         return GuiToolResult{.success = true, .content = "EPD analysis started."};
@@ -474,7 +479,11 @@ void registerEpdTools(GuiToolRegistry& registry) {
                         "long as the engines/file/timing haven't changed since. Requires at "
                         "least one selected engine and an EPD file to already be configured; the "
                         "result tells you exactly which precondition is missing if it can't "
-                        "start.",
+                        "start. One EPD-specific precondition with no tournament/SPRT "
+                        "equivalent: if a previous analysis already ran to completion, or its "
+                        "settings were changed via select_epd_engines/configure_epd after it "
+                        "stopped, this call fails until you call clear_epd_result first -- if "
+                        "that happens, call clear_epd_result, then call this again.",
         .handler = handleStartEpdAnalysis,
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
