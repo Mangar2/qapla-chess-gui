@@ -22,6 +22,7 @@
 #include "../sprt-tournament-data.h"
 #include "../snackbar.h"
 #include "../os-dialogs.h"
+#include "../callback-manager.h"
 
 #include <sprt/sprt-manager.h>
 
@@ -46,6 +47,14 @@ namespace {
             joined += values[i];
         }
         return joined;
+    }
+
+    // Same message the classic (non-AI) SPRT chatbot flow's own "Switch to SPRT View" button
+    // sends (see chatbot-step-tournament-start.cpp, shared with the tournament flow) --
+    // ImGuiTabBar subscribes and flips to the SPRT tab on the next frame. Called whenever a
+    // tool actually changes SPRT settings or its run state.
+    void switchToSprtView() {
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_sprt_view");
     }
 
     // Looks for the most recent "sprt-tournament"-topic snackbar since countBefore entries
@@ -119,6 +128,15 @@ namespace {
         auto championOutcome = resolveEngines({arguments.at("champion").as_string()});
         auto challengerOutcome = resolveEngines({arguments.at("challenger").as_string()});
 
+        std::vector<AmbiguousEngineName> ambiguous = championOutcome.ambiguous;
+        ambiguous.insert(ambiguous.end(), challengerOutcome.ambiguous.begin(), challengerOutcome.ambiguous.end());
+        if (!ambiguous.empty()) {
+            return GuiToolResult{
+                .success = false,
+                .content = formatAmbiguousEngineNames(ambiguous) + " Ask the user which one they mean."
+            };
+        }
+
         std::vector<std::string> notFound = championOutcome.notFound;
         notFound.insert(notFound.end(), challengerOutcome.notFound.begin(), challengerOutcome.notFound.end());
         if (!notFound.empty()) {
@@ -145,6 +163,7 @@ namespace {
         std::vector<QaplaTester::EngineConfig> configs{champion, challenger};
         SprtTournamentData::instance().getEngineSelect().setEngineConfigurations(configs);
 
+        switchToSprtView();
         return GuiToolResult{
             .success = true,
             .content = "Champion (comparison engine): " + champion.getName() +
@@ -299,6 +318,7 @@ namespace {
         auto& sprtData = SprtTournamentData::instance();
         sprtData.tournamentOpening().openings().file = paths.front();
         sprtData.tournamentOpening().updateConfiguration();
+        switchToSprtView();
         return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
     }
 
@@ -315,6 +335,7 @@ namespace {
 
         sprtData.tournamentPgn().pgnOptions().file = path;
         sprtData.tournamentPgn().updateConfiguration();
+        switchToSprtView();
         return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
     }
 
@@ -375,6 +396,9 @@ namespace {
         sprtData.tournamentOpening().updateConfiguration();
         sprtData.tournamentPgn().updateConfiguration();
 
+        if (!applied.empty()) {
+            switchToSprtView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -438,6 +462,9 @@ namespace {
         }
 
         sprtData.tournamentAdjudication().updateConfiguration();
+        if (!applied.empty()) {
+            switchToSprtView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -506,6 +533,9 @@ namespace {
         }
 
         sprtData.tournamentAdjudication().updateConfiguration();
+        if (!applied.empty()) {
+            switchToSprtView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -606,6 +636,7 @@ namespace {
         }
 
         sprtData.setPoolConcurrency(sprtData.getExternalConcurrency(), true, true);
+        switchToSprtView();
         return GuiToolResult{.success = true, .content = "SPRT test started."};
     }
 
@@ -641,6 +672,7 @@ namespace {
         }
 
         sprtData.stopPool(graceful);
+        switchToSprtView();
         return GuiToolResult{
             .success = true,
             .content = graceful
@@ -663,6 +695,7 @@ namespace {
 
         bool wasRunning = sprtData.isRunning() || sprtData.isStarting();
         sprtData.clear();
+        switchToSprtView();
         return GuiToolResult{
             .success = true,
             .content = wasRunning
@@ -711,8 +744,14 @@ void registerSprtTools(GuiToolRegistry& registry) {
         .description = "Selects the two engines for an SPRT test: \"champion\" (comparison "
                         "baseline) and \"challenger\" (engine under test), replacing any "
                         "previous selection. Names are matched case-insensitively against the "
-                        "installed engine catalog -- call list_installed_engines first if unsure "
-                        "what's available. This is entirely separate from select_engines/"
+                        "installed engine catalog, and an informal/shortened name (e.g. "
+                        "\"spike\") is automatically matched against the one installed engine "
+                        "it can only mean (e.g. \"Spike 1.4.1\") -- pass the name the user "
+                        "actually said, you do not need to call list_installed_engines first "
+                        "just to look up the exact full name. If a name could mean more than "
+                        "one installed engine, the result tells you so and lists the "
+                        "candidates -- ask the user which one they meant rather than guessing. "
+                        "This is entirely separate from select_engines/"
                         "configure_tournament (classic tournament mode) -- selecting SPRT "
                         "engines never changes the tournament's engine selection, and vice "
                         "versa.",

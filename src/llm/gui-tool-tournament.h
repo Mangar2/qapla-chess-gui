@@ -35,16 +35,32 @@ namespace QaplaLlm {
 void registerTournamentTools(GuiToolRegistry& registry);
 
 /**
+ * @brief One chat-provided name that matched more than one installed engine.
+ */
+struct AmbiguousEngineName {
+    std::string given;                     ///< The name as given (e.g. "spike").
+    std::vector<std::string> matches;       ///< Installed engine names it could mean.
+};
+
+/**
  * @brief Outcome of resolving chat-provided engine names against the global engine catalog.
  */
 struct ResolveEnginesOutcome {
     std::vector<QaplaTester::EngineConfig> resolved; ///< Catalog copies, marked selected (not gauntlet).
-    std::vector<std::string> notFound;                ///< Names with no matching catalog entry.
+    std::vector<std::string> notFound;                ///< Names with no matching catalog entry, not even by substring.
+    std::vector<AmbiguousEngineName> ambiguous;       ///< Names that substring-matched more than one installed engine.
 };
 
 /**
- * @brief Resolves engine names against the global engine catalog (case-insensitive,
- * see EngineConfigManager::getConfig()), marking each match selected for a tournament.
+ * @brief Resolves engine names against the global engine catalog, marking each match
+ * selected for a tournament.
+ *
+ * First tries an exact, case-insensitive match (EngineConfigManager::getConfig()). If that
+ * fails, falls back to a case-insensitive substring match against installed engine names --
+ * e.g. the model/user says "spike" and the catalog has "Spike 1.4.1": there's no exact match,
+ * but exactly one installed name contains "spike", so that one is used. If more than one
+ * installed name contains the given text, the name is reported as ambiguous instead of
+ * guessing one -- see AmbiguousEngineName -- so the caller can ask which one was meant.
  *
  * Pure/UI-independent (only touches EngineWorkerFactory's config manager, not
  * TournamentData) so it can be unit-tested directly; the "select_engines" tool
@@ -52,5 +68,12 @@ struct ResolveEnginesOutcome {
  * TournamentData::instance().getEngineSelect().
  */
 [[nodiscard]] ResolveEnginesOutcome resolveEngines(const std::vector<std::string>& names);
+
+/**
+ * @brief Formats resolveEngines()'s ambiguous names as one sentence per name, e.g.
+ * "\"spike\" could mean: Spike 1.4.1, Spike Classic." -- for a tool result asking the user
+ * (via the model) which one they meant. Empty string if `ambiguous` is empty.
+ */
+[[nodiscard]] std::string formatAmbiguousEngineNames(const std::vector<AmbiguousEngineName>& ambiguous);
 
 } // namespace QaplaLlm

@@ -22,6 +22,7 @@
 #include "../epd-data.h"
 #include "../snackbar.h"
 #include "../os-dialogs.h"
+#include "../callback-manager.h"
 
 #include <imgui.h>
 
@@ -44,6 +45,14 @@ namespace {
             joined += values[i];
         }
         return joined;
+    }
+
+    // Same message the classic (non-AI) EPD chatbot flow's own "Switch to EPD View" button
+    // sends (see chatbot-step-epd-start.cpp) -- ImGuiTabBar subscribes and flips to the Epd
+    // tab on the next frame. Called whenever a tool actually changes EPD settings or its run
+    // state.
+    void switchToEpdView() {
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_epd_view");
     }
 
     // Looks for the most recent "epd"-topic snackbar since countBefore entries existed --
@@ -113,6 +122,12 @@ namespace {
         }
 
         auto outcome = resolveEngines(names);
+        if (!outcome.ambiguous.empty()) {
+            return GuiToolResult{
+                .success = false,
+                .content = formatAmbiguousEngineNames(outcome.ambiguous) + " Ask the user which one they mean."
+            };
+        }
         if (outcome.resolved.empty()) {
             return GuiToolResult{
                 .success = false,
@@ -135,6 +150,7 @@ namespace {
         if (!outcome.notFound.empty()) {
             message += " Not installed (skipped): " + joinStrings(outcome.notFound) + ".";
         }
+        switchToEpdView();
         return GuiToolResult{.success = true, .content = message};
     }
 
@@ -198,6 +214,7 @@ namespace {
         auto& epdData = EpdData::instance();
         epdData.config().filepath = paths.front();
         epdData.updateConfiguration();
+        switchToEpdView();
         return GuiToolResult{.success = true, .content = "EPD file set to: " + paths.front()};
     }
 
@@ -264,6 +281,9 @@ namespace {
         // EpdData::updateConfiguration() alone already covers everything set above in one call.
         epdData.updateConfiguration();
 
+        if (!applied.empty()) {
+            switchToEpdView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -341,6 +361,7 @@ namespace {
             return GuiToolResult{.success = false, .content = reason};
         }
 
+        switchToEpdView();
         return GuiToolResult{.success = true, .content = "EPD analysis started."};
     }
 
@@ -377,6 +398,7 @@ namespace {
         }
 
         epdData.stopPool(graceful);
+        switchToEpdView();
         return GuiToolResult{
             .success = true,
             .content = graceful
@@ -399,6 +421,7 @@ namespace {
 
         bool wasRunning = epdData.isRunning() || epdData.isStarting();
         epdData.clear();
+        switchToEpdView();
         return GuiToolResult{
             .success = true,
             .content = wasRunning
@@ -447,11 +470,16 @@ void registerEpdTools(GuiToolRegistry& registry) {
         .name = "select_epd_engines",
         .description = "Selects which configured chess engines are tested against the EPD "
                         "positions, replacing any previous selection. Names are matched "
-                        "case-insensitively against the installed engine catalog -- call "
-                        "list_installed_engines first if unsure what's available. This is "
-                        "entirely separate from select_engines/select_sprt_engines (classic "
-                        "tournament / SPRT) -- selecting EPD engines never changes those, and "
-                        "vice versa.",
+                        "case-insensitively against the installed engine catalog, and an "
+                        "informal/shortened name (e.g. \"spike\") is automatically matched "
+                        "against the one installed engine it can only mean (e.g. "
+                        "\"Spike 1.4.1\") -- pass the name the user actually said, you do not "
+                        "need to call list_installed_engines first just to look up the exact "
+                        "full name. If a name could mean more than one installed engine, the "
+                        "result tells you so and lists the candidates -- ask the user which "
+                        "one they meant rather than guessing. This is entirely separate from "
+                        "select_engines/select_sprt_engines (classic tournament / SPRT) -- "
+                        "selecting EPD engines never changes those, and vice versa.",
         .parametersSchema = buildSelectEpdEnginesSchema(),
         .handler = handleSelectEpdEngines
     });

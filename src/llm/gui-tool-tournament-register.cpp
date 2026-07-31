@@ -26,6 +26,7 @@
 #include "../tournament-data.h"
 #include "../snackbar.h"
 #include "../os-dialogs.h"
+#include "../callback-manager.h"
 
 #include <tournament/tournament.h>
 
@@ -50,6 +51,15 @@ namespace {
             joined += values[i];
         }
         return joined;
+    }
+
+    // Same message the classic (non-AI) tournament chatbot flow's own "Switch to Tournament
+    // View" button sends (see chatbot-step-tournament-start.cpp) -- ImGuiTabBar subscribes and
+    // flips to the Tournament tab on the next frame. Called whenever a tool actually changes
+    // tournament settings or its run state, so the user sees what the AI just did without
+    // having to switch tabs manually themselves.
+    void switchToTournamentView() {
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_tournament_view");
     }
 
     // Looks for the most recent "tournament"-topic snackbar since
@@ -100,6 +110,12 @@ namespace {
         }
 
         auto outcome = resolveEngines(names);
+        if (!outcome.ambiguous.empty()) {
+            return GuiToolResult{
+                .success = false,
+                .content = formatAmbiguousEngineNames(outcome.ambiguous) + " Ask the user which one they mean."
+            };
+        }
         if (outcome.resolved.empty()) {
             return GuiToolResult{
                 .success = false,
@@ -125,6 +141,7 @@ namespace {
         if (!outcome.notFound.empty()) {
             message += " Not installed (skipped): " + joinStrings(outcome.notFound) + ".";
         }
+        switchToTournamentView();
         return GuiToolResult{.success = true, .content = message};
     }
 
@@ -237,6 +254,7 @@ namespace {
         auto& tournamentData = TournamentData::instance();
         tournamentData.tournamentOpening().openings().file = paths.front();
         tournamentData.tournamentOpening().updateConfiguration();
+        switchToTournamentView();
         return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
     }
 
@@ -252,6 +270,7 @@ namespace {
 
         tournamentData.pgnConfig().file = path;
         tournamentData.tournamentPgn().updateConfiguration();
+        switchToTournamentView();
         return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
     }
 
@@ -324,6 +343,9 @@ namespace {
         tournamentData.tournamentOpening().updateConfiguration();
         tournamentData.tournamentPgn().updateConfiguration();
 
+        if (!applied.empty()) {
+            switchToTournamentView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -445,6 +467,9 @@ namespace {
         // doesn't persist on its own (see ImGuiTournamentAdjudication::updateConfiguration()'s
         // doc comment), so this must be called explicitly after every change made this way.
         tournamentData.tournamentAdjudication().updateConfiguration();
+        if (!applied.empty()) {
+            switchToTournamentView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -513,6 +538,9 @@ namespace {
         }
 
         tournamentData.tournamentAdjudication().updateConfiguration();
+        if (!applied.empty()) {
+            switchToTournamentView();
+        }
         return buildConfigureResult(applied, problems);
     }
 
@@ -550,6 +578,7 @@ namespace {
         }
 
         tournamentData.stopPool(graceful);
+        switchToTournamentView();
         return GuiToolResult{
             .success = true,
             .content = graceful
@@ -572,6 +601,7 @@ namespace {
 
         bool wasRunning = tournamentData.isRunning() || tournamentData.isStarting();
         tournamentData.clear(false); // verbose=false: this tool's own content already tells the user
+        switchToTournamentView();
         return GuiToolResult{
             .success = true,
             .content = wasRunning
@@ -637,6 +667,7 @@ namespace {
         }
 
         tournamentData.setPoolConcurrency(tournamentData.getExternalConcurrency(), true, true);
+        switchToTournamentView();
         return GuiToolResult{.success = true, .content = "Tournament started."};
     }
 }
@@ -646,10 +677,15 @@ void registerTournamentTools(GuiToolRegistry& registry) {
         .name = "select_engines",
         .description = "Selects which configured chess engines play in the next tournament, "
                         "replacing any previous selection. Names are matched case-insensitively "
-                        "against the installed engine catalog -- call list_installed_engines "
-                        "first if unsure what's available. Sets up a round-robin tournament "
-                        "(every selected engine plays every other one); gauntlet mode is not "
-                        "supported via chat.",
+                        "against the installed engine catalog, and an informal/shortened name "
+                        "(e.g. \"spike\") is automatically matched against the one installed "
+                        "engine it can only mean (e.g. \"Spike 1.4.1\") -- pass the name the "
+                        "user actually said, you do not need to call list_installed_engines "
+                        "first just to look up the exact full name. If a name could mean more "
+                        "than one installed engine, the result tells you so and lists the "
+                        "candidates -- ask the user which one they meant rather than guessing. "
+                        "Sets up a round-robin tournament (every selected engine plays every "
+                        "other one); gauntlet mode is not supported via chat.",
         .parametersSchema = buildSelectEnginesSchema(),
         .handler = handleSelectEngines
     });

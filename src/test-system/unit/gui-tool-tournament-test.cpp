@@ -74,3 +74,74 @@ TEST_CASE("resolveEngines returns nothing for an empty catalog", "[llm][gui-tool
     REQUIRE(outcome.resolved.empty());
     REQUIRE(outcome.notFound == std::vector<std::string>{"anything"});
 }
+
+TEST_CASE("resolveEngines matches an informal name to the one installed engine that contains it",
+    "[llm][gui-tool-tournament]") {
+    EngineConfigGuard guard;
+    auto& configs = QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable();
+    configs.clear();
+    auto spike = QaplaTester::EngineConfig::createFromPath("/fake/path/spike");
+    spike.setName("Spike 1.4.1");
+    configs.push_back(spike);
+    auto qapla = QaplaTester::EngineConfig::createFromPath("/fake/path/qapla");
+    qapla.setName("Qapla 0.4.0");
+    configs.push_back(qapla);
+
+    auto outcome = resolveEngines({"spike"});
+
+    REQUIRE(outcome.resolved.size() == 1);
+    REQUIRE(outcome.resolved[0].getName() == "Spike 1.4.1");
+    REQUIRE(outcome.notFound.empty());
+    REQUIRE(outcome.ambiguous.empty());
+}
+
+TEST_CASE("resolveEngines prefers an exact match over a substring match", "[llm][gui-tool-tournament]") {
+    EngineConfigGuard guard;
+    auto& configs = QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable();
+    configs.clear();
+    auto spike = QaplaTester::EngineConfig::createFromPath("/fake/path/spike");
+    spike.setName("Spike");
+    configs.push_back(spike);
+    auto spikeVersioned = QaplaTester::EngineConfig::createFromPath("/fake/path/spike2");
+    spikeVersioned.setName("Spike 1.4.1");
+    configs.push_back(spikeVersioned);
+
+    // "Spike" is an exact match for the first engine -- even though it's also a substring of
+    // the second one's name, the exact match must win outright, not be reported ambiguous.
+    auto outcome = resolveEngines({"Spike"});
+
+    REQUIRE(outcome.resolved.size() == 1);
+    REQUIRE(outcome.resolved[0].getName() == "Spike");
+    REQUIRE(outcome.ambiguous.empty());
+}
+
+TEST_CASE("resolveEngines reports ambiguous when a name substring-matches more than one installed engine",
+    "[llm][gui-tool-tournament]") {
+    EngineConfigGuard guard;
+    auto& configs = QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable();
+    configs.clear();
+    auto spike1 = QaplaTester::EngineConfig::createFromPath("/fake/path/spike1");
+    spike1.setName("Spike 1.4.1");
+    configs.push_back(spike1);
+    auto spike2 = QaplaTester::EngineConfig::createFromPath("/fake/path/spike2");
+    spike2.setName("Spike Classic");
+    configs.push_back(spike2);
+
+    auto outcome = resolveEngines({"spike"});
+
+    REQUIRE(outcome.resolved.empty());
+    REQUIRE(outcome.notFound.empty());
+    REQUIRE(outcome.ambiguous.size() == 1);
+    REQUIRE(outcome.ambiguous[0].given == "spike");
+    REQUIRE(outcome.ambiguous[0].matches == std::vector<std::string>{"Spike 1.4.1", "Spike Classic"});
+}
+
+TEST_CASE("formatAmbiguousEngineNames lists the candidates for each ambiguous name", "[llm][gui-tool-tournament]") {
+    std::vector<AmbiguousEngineName> ambiguous{
+        {.given = "spike", .matches = {"Spike 1.4.1", "Spike Classic"}}
+    };
+
+    auto message = formatAmbiguousEngineNames(ambiguous);
+
+    REQUIRE(message == "\"spike\" could mean: Spike 1.4.1, Spike Classic.");
+}
