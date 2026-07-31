@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -31,6 +32,37 @@ struct LmStudioConnection {
     std::string host = "localhost";
     int port = 1234;
     int timeoutMs = 60000; // chat completions can legitimately take a while to generate
+};
+
+/**
+ * @brief Cross-thread handle to abort an in-flight chatCompletion() call.
+ *
+ * The caller (see LlmChatController) keeps one of these alive for the duration of a request
+ * and can call cancel() from a different thread -- e.g. the UI thread reacting to a Stop
+ * click, or giving up on a stale request before starting a new one -- to make the blocked
+ * HTTP call return early. This actually closes the TCP connection to LM Studio, rather than
+ * just discarding the result locally once it eventually arrives: a server that notices a
+ * disconnected client (as llama.cpp-based backends typically do) stops generating too,
+ * instead of continuing to burn compute for an answer nobody will read.
+ *
+ * Deliberately holds an opaque `void*` rather than an `httplib::Client*` so this header (like
+ * the rest of this file) stays free of the httplib dependency; the cast back happens only
+ * inside lm-studio-client.cpp.
+ */
+class LmStudioCancelHandle {
+public:
+    LmStudioCancelHandle() = default;
+    LmStudioCancelHandle(const LmStudioCancelHandle&) = delete;
+    LmStudioCancelHandle& operator=(const LmStudioCancelHandle&) = delete;
+
+    /** @brief Aborts the request currently using this handle, if any. Safe from any thread, any time. */
+    void cancel();
+
+private:
+    friend class LmStudioClient;
+    friend class CancelRegistration; ///< RAII attach/detach helper, defined in lm-studio-client.cpp
+    std::mutex mutex_;
+    void* activeClient_ = nullptr; ///< non-null (an httplib::Client*) only while a request is in flight
 };
 
 /**
@@ -62,6 +94,16 @@ struct ChatMessage {
     std::vector<ToolCall> toolCalls{}; ///< Only meaningful for role == "assistant".
     std::string toolCallId{};          ///< Only meaningful for role == "tool".
 };
+
+/**
+ * @brief Serializes one ChatMessage to its OpenAI wire-format JSON object text -- the exact
+ * same representation chatCompletion() sends inside the request's "messages" array.
+ *
+ * Exposed (returning a plain string, not a JSON library type, to keep this header free of that
+ * dependency -- see ToolCall's doc comment) so LlmFineTuningWriter can build dataset records
+ * using the identical message shape rather than duplicating this serialization.
+ */
+[[nodiscard]] std::string chatMessageToJson(const ChatMessage& message);
 
 /**
  * @brief A function tool offered to the model (OpenAI "tools" entry).
@@ -120,8 +162,19 @@ public:
     /** @brief GET /v1/models. */
     [[nodiscard]] ListModelsResult listModels() const;
 
-    /** @brief POST /v1/chat/completions (blocking, stream: false). */
-    [[nodiscard]] ChatCompletionResult chatCompletion(const ChatCompletionRequest& request) const;
+    /**
+     * @brief POST /v1/chat/completions (blocking, stream: false).
+     * @param cancelHandle If non-null, registered for the duration of this call so
+     *        cancelHandle->cancel() (from another thread) can abort it early. See
+     *        LmStudioCancelHandle.
+     * @param timeoutMsOverride If > 0, used instead of the connection's configured
+     *        timeoutMs for this one call -- e.g. a longer timeout for a model's first,
+     *        possibly cold-load-triggering contact than for routine follow-up turns.
+     */
+    [[nodiscard]] ChatCompletionResult chatCompletion(
+        const ChatCompletionRequest& request,
+        LmStudioCancelHandle* cancelHandle = nullptr,
+        int timeoutMsOverride = 0) const;
 
 private:
     LmStudioConnection connection_;

@@ -222,6 +222,9 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/llm/gui-tool-engine-management.cpp
       src/llm/gui-tool-tournament.cpp
       src/llm/llm-chat-controller.cpp
+      src/llm/llm-chat-logger.cpp
+      src/llm/llm-finetuning-writer.cpp
+      src/os-helpers.cpp
     )
     
     add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})

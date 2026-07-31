@@ -40,11 +40,26 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
         originalValue_ = sourceValue;
         currentValue_ = sourceValue;
     }
-    
+
     bool applied = false;
-    
-    // Apply button
+
     ImGui::PushID(label);
+
+    // Input field
+    ImGui::SetNextItemWidth(width);
+    ImGuiControls::inputText(label, currentValue_);
+    // Commit as soon as the field loses focus after an edit (Enter, Tab, clicking
+    // elsewhere) -- not only on an explicit Apply click, so a typed change can never be
+    // silently lost just because the separate Apply button wasn't clicked.
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+        sourceValue = currentValue_;
+        originalValue_ = currentValue_;
+        applied = true;
+    }
+    ImGuiControls::hooverTooltip("Edit value and press Enter/click elsewhere, or click Apply, to save changes");
+
+    // Apply button (for committing without leaving the field, e.g. before adjusting another setting)
+    ImGui::SameLine();
     const bool hasChanges = (currentValue_ != originalValue_);
     if (!hasChanges) {
         ImGui::BeginDisabled();
@@ -58,20 +73,28 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
     if (!hasChanges) {
         ImGui::EndDisabled();
     }
-    
-    // Input field
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(width);
-    ImGuiControls::inputText(label, currentValue_);
-    ImGuiControls::hooverTooltip("Edit value and click Apply to save changes");
-    
+
     ImGui::PopID();
-    
+
     return applied;
 }
 
 ConfigurationWindow::ConfigurationWindow() = default;
 ConfigurationWindow::~ConfigurationWindow() = default;
+
+namespace {
+    constexpr std::size_t MAX_LLM_HOST_HISTORY = 8;
+
+    // Moves `host` to the front of `history` (adding it if new), capped so the dropdown
+    // doesn't grow without bound across a long-running install.
+    void rememberLlmHost(std::vector<std::string>& history, const std::string& host) {
+        std::erase(history, host);
+        history.insert(history.begin(), host);
+        if (history.size() > MAX_LLM_HOST_HISTORY) {
+            history.resize(MAX_LLM_HOST_HISTORY);
+        }
+    }
+}
 
 static void drawLanguageConfig() {
     std::string currentLanguageCode = Translator::instance().getLanguageCode();
@@ -270,8 +293,23 @@ void ConfigurationWindow::drawLlmChatConfig()
     ImGui::Spacing();
     ImGui::Text("LM Studio Server:");
 
+    bool hostChanged = false;
+
+    if (!config.hostHistory.empty()) {
+        std::string selectedHost = config.host;
+        ImGui::SetNextItemWidth(inputWidth);
+        if (ImGuiControls::selectionBox("Recent Hosts", selectedHost, config.hostHistory)) {
+            config.host = selectedHost;
+            modified = true;
+            hostChanged = true;
+        }
+        ImGuiControls::hooverTooltip(
+            "Switch back to a previously used LM Studio server address without retyping it.");
+    }
+
     if (llmChatHostInput_.draw("Host / Address", config.host, inputWidth)) {
         modified = true;
+        hostChanged = true;
     }
     ImGuiControls::hooverTooltip(
         "Hostname or IP address of the machine running LM Studio -- \"localhost\" for this "
@@ -285,7 +323,21 @@ void ConfigurationWindow::drawLlmChatConfig()
     }
     ImGuiControls::hooverTooltip("LM Studio's server port, shown on its Developer tab (default 1234).");
 
+    ImGui::Spacing();
+    bool logTraffic = config.logTraffic;
+    if (ImGui::Checkbox("Log AI chat traffic to file", &logTraffic)) {
+        config.logTraffic = logTraffic;
+        modified = true;
+    }
+    ImGuiControls::hooverTooltip(
+        "Appends every AI chat conversation (what you said, what the model answered, and any "
+        "tool/connection errors) to a timestamped log file in the app's config directory -- "
+        "useful for diagnosing an unhelpful or misbehaving model after the fact.");
+
     if (modified) {
+        if (hostChanged && !config.host.empty()) {
+            rememberLlmHost(config.hostHistory, config.host);
+        }
         QaplaConfiguration::Configuration::setLlmChatConfig(config);
     }
 }

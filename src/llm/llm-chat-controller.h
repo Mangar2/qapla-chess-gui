@@ -20,6 +20,8 @@
 #pragma once
 
 #include "async-worker-result.h"
+#include "llm-chat-logger.h"
+#include "llm-finetuning-writer.h"
 #include "lm-studio-client.h"
 
 #include <cstdint>
@@ -96,7 +98,30 @@ struct AgentTurnResult {
  */
 class LlmChatController {
 public:
-    LlmChatController(LmStudioConnection connection, std::string systemPrompt, int maxToolIterations = 10);
+    /** @brief Reachability of the currently selected model, probed by pingModel(). */
+    enum class PingStatus : std::uint8_t {
+        NotStarted, ///< No model selected yet, or pingModel() hasn't run for it.
+        Pinging,
+        Reachable,
+        Failed
+    };
+
+    /**
+     * @param logTraffic If true, the full conversation (user messages, structured model
+     *        replies incl. tool errors, connection errors, and capped unstructured output) is
+     *        appended to a timestamped file in logDirectory -- see LlmChatLogger. Defaults to
+     *        false so constructing a controller in a test never writes into the real user
+     *        config directory; the GUI integration passes the Settings checkbox's value
+     *        explicitly (see ChatbotLlmChat::ensureController()).
+     * @param logDirectory Directory both LlmChatLogger's (if logTraffic) and
+     *        LlmFineTuningWriter's files are written to. Empty (the default) means the app's
+     *        own config directory; overridable so tests never touch the real one. The
+     *        fine-tuning file is always written regardless of logTraffic -- see
+     *        LlmFineTuningWriter's class docs for why it has no such toggle.
+     */
+    LlmChatController(
+        LmStudioConnection connection, std::string systemPrompt, int maxToolIterations = 10, bool logTraffic = false,
+        std::string logDirectory = "");
 
     /** @brief Starts a non-blocking model list refresh. No-op if already in flight. */
     void refreshModels();
@@ -110,11 +135,19 @@ public:
         return modelsError_;
     }
 
-    void setModel(std::string modelId) {
-        model_ = std::move(modelId);
-    }
+    /** @brief Switches models and, if the model actually changed, re-probes reachability (see pingModel()). */
+    void setModel(std::string modelId);
     [[nodiscard]] const std::string& model() const {
         return model_;
+    }
+
+    /** @brief Reachability state of model(), as last probed by pingModel(). */
+    [[nodiscard]] PingStatus pingStatus() const {
+        return pingStatus_;
+    }
+    /** @brief Set once pingStatus() == Failed; a human-readable reason (e.g. a timeout explanation). */
+    [[nodiscard]] const std::string& pingError() const {
+        return pingError_;
     }
 
     /** @brief Appends the user's message and starts the agent loop. No-op if isBusy() or text is empty. */
@@ -126,17 +159,16 @@ public:
     }
 
     /**
-     * @brief Abandons the in-flight turn.
+     * @brief Abandons the in-flight turn and tells LM Studio to stop generating it.
      *
-     * Best-effort: the worker thread keeps running to completion in the
-     * background (bounded by the connection's request timeout and the tool
-     * iteration limit), but its final answer is orphaned and never applied.
-     * Any tool results already streamed into history() before stop() was
-     * called remain -- their GUI-visible effects (e.g. an added engine)
-     * already happened and can't be undone anyway. Note this does not
-     * abort an individual tool call already queued for the UI thread --
-     * e.g. a file dialog the model already asked to open will still open
-     * even after stop() is called.
+     * Actively cancels the in-flight HTTP request (see LmStudioCancelHandle) rather than
+     * just discarding the result locally, so the server also notices and stops burning
+     * compute on an answer nobody will read. The worker thread itself unblocks once the
+     * cancelled call returns, but its result is orphaned and never applied. Any tool results
+     * already streamed into history() before stop() was called remain -- their GUI-visible
+     * effects (e.g. an added engine) already happened and can't be undone anyway. Note this
+     * does not abort an individual tool call already queued for the UI thread -- e.g. a file
+     * dialog the model already asked to open will still open even after stop() is called.
      */
     void stop();
 
@@ -158,20 +190,42 @@ private:
     void appendToolEventToHistory(const ToolCallEvent& event);
     void applyTurnResult(const AgentTurnResult& result);
     void applyModelsResult(const ListModelsResult& result);
+    void applyPingResult(const ChatCompletionResult& result);
     void drainToolEvents();
+
+    /**
+     * @brief Probes whether model() actually answers, not just whether the server is up.
+     *
+     * Triggered automatically by setModel() and by applyModelsResult() picking a default
+     * model, i.e. whenever a new model is selected or the chat is opened for the first time
+     * (see class docs) -- never needs to be called directly. Uses a longer timeout than a
+     * regular turn (PING_TIMEOUT_MS, see .cpp) since first contact with a model LM Studio
+     * hasn't loaded into memory yet can take a while. Supersedes (and cancels on the wire,
+     * see LmStudioCancelHandle) any still-in-flight ping for a previous model.
+     */
+    void pingModel();
 
     LmStudioClient client_;
     std::string systemPrompt_;
     std::string model_;
     int maxToolIterations_;
     std::vector<ChatEntry> history_;
+    std::shared_ptr<LlmChatLogger> logger_;
+    std::shared_ptr<LlmFineTuningWriter> fineTuningWriter_;
 
     AsyncWorkerResult<AgentTurnResult> chatTask_;
     std::shared_ptr<ToolEventChannel> toolEvents_; ///< Non-null exactly while chatTask_.isRunning().
+    std::shared_ptr<LmStudioCancelHandle> chatCancelHandle_; ///< Lets stop() cancel the in-flight request on the wire.
 
     AsyncWorkerResult<ListModelsResult> modelsTask_;
     std::vector<std::string> availableModels_;
     std::string modelsError_;
+
+    AsyncWorkerResult<ChatCompletionResult> pingTask_;
+    std::shared_ptr<LmStudioCancelHandle> pingCancelHandle_;
+    std::string pingedModel_;      ///< Which model pingStatus_/pingTask_ refer to.
+    PingStatus pingStatus_ = PingStatus::NotStarted;
+    std::string pingError_;
 };
 
 } // namespace QaplaLlm

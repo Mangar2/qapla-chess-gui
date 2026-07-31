@@ -53,6 +53,7 @@ void ChatbotLlmChat::start() {
     refreshProbe_.reset();
     lastProbeCompletedMs_ = 0;
     controller_.reset();
+    activeConnection_ = {};
     inputBuffer_.fill('\0');
     lastHistorySize_ = 0;
 }
@@ -96,7 +97,12 @@ void ChatbotLlmChat::ensureController() {
     std::string systemPrompt = std::format(
         "You are an AI assistant integrated into the Qapla Chess GUI, a chess engine testing "
         "and tournament application. Answer helpfully and concisely. Respond in the user's "
-        "configured language (code: {}). You have tools available to inspect and control parts "
+        "configured language (code: {}). CRITICAL: every message you send the user -- an "
+        "answer, a confirmation, a follow-up question, anything -- must go through calling the "
+        "reply_to_user tool with the full text in its \"text\" argument. Never answer as plain "
+        "assistant text instead: it is never shown to the user and is silently discarded, so "
+        "writing your reply there wastes it entirely; always call reply_to_user, even for a "
+        "one-word confirmation. You have tools available to inspect and control parts "
         "of the GUI (e.g. the engine catalog, tournaments) -- use them instead of guessing or "
         "asking the user to do something you can already do yourself. If a tool result says a "
         "value is missing or invalid (e.g. no openings file configured, or an engine name that "
@@ -153,13 +159,30 @@ void ChatbotLlmChat::ensureController() {
         "all three and tells you which (if any) is actually active.",
         languageCode);
 
-    controller_ = std::make_unique<QaplaLlm::LlmChatController>(connection, std::move(systemPrompt));
+    controller_ = std::make_unique<QaplaLlm::LlmChatController>(
+        connection, std::move(systemPrompt), /*maxToolIterations=*/10, config.logTraffic);
     controller_->refreshModels();
+    activeConnection_ = connection;
 }
 
 bool ChatbotLlmChat::draw() {
     if (finished_) {
         return false;
+    }
+
+    if (controller_) {
+        auto config = QaplaConfiguration::Configuration::getLlmChatConfig();
+        if (config.host != activeConnection_.host || config.port != activeConnection_.port) {
+            // The server address/port changed in Settings while this chat was open. Start
+            // over against the new connection instead of silently continuing to talk to the
+            // old host (or requiring the user to close this chat and reopen it, let alone
+            // restart the whole app, just to pick up the change) -- the old model list and
+            // conversation are meaningless once the target server changes anyway.
+            controller_.reset();
+            activeConnection_ = {};
+            refreshProbe_.reset();
+            lastProbeCompletedMs_ = 0; // force an immediate re-probe against the new host
+        }
     }
 
     refreshStatus();
@@ -242,6 +265,23 @@ void ChatbotLlmChat::drawChatUi() {
     } else if (!controller_->modelsError().empty()) {
         ImGui::SameLine();
         ImGui::TextColored(StepColors::ERROR_COLOR, "(%s)", controller_->modelsError().c_str());
+    }
+
+    // Reachability of the selected model itself (distinct from the server being up at all --
+    // see LlmChatController::pingModel()): probed automatically on first open and on every
+    // model switch, not gating the chat UI below, just informing it.
+    using PingStatus = QaplaLlm::LlmChatController::PingStatus;
+    switch (controller_->pingStatus()) {
+        case PingStatus::Pinging:
+            ImGui::TextDisabled("Connecting to %s...", controller_->model().c_str());
+            break;
+        case PingStatus::Failed:
+            ImGui::TextColored(StepColors::ERROR_COLOR, "%s did not respond: %s",
+                controller_->model().c_str(), controller_->pingError().c_str());
+            break;
+        case PingStatus::NotStarted:
+        case PingStatus::Reachable:
+            break;
     }
 
     ImGui::Spacing();

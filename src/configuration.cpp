@@ -228,6 +228,15 @@ Configuration::LlmChatConfig Configuration::getLlmChatConfig() {
         result.host = section.getValue("host").value_or(result.host);
         result.port = static_cast<int>(
             QaplaHelpers::to_uint32(section.getValue("port").value_or("")).value_or(static_cast<uint32_t>(result.port)));
+        std::string logTrafficValue = section.getValue("logtraffic").value_or("true");
+        result.logTraffic = (logTrafficValue == "true" || logTrafficValue == "1");
+        // "host_history" is a repeatable key (KeyValueMap allows duplicates), one entry per
+        // remembered host, stored in most-recently-used order.
+        for (const auto& [key, value] : section.entries) {
+            if (key == "host_history") {
+                result.hostHistory.push_back(value);
+            }
+        }
     }
     return result;
 }
@@ -239,9 +248,13 @@ void Configuration::setLlmChatConfig(const LlmChatConfig& config) {
             {"id", "general"},
             {"enabled", config.enabled ? "true" : "false"},
             {"host", config.host},
-            {"port", std::to_string(config.port)}
+            {"port", std::to_string(config.port)},
+            {"logtraffic", config.logTraffic ? "true" : "false"}
         }
     };
+    for (const auto& host : config.hostHistory) {
+        section.addEntry("host_history", host);
+    }
 
     Configuration::instance().getConfigData().setSectionList("llmchat", "general", { section });
     Configuration::instance().setModified();

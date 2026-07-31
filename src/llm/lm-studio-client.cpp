@@ -24,17 +24,52 @@
 #include <httplib.h>
 
 #include <algorithm>
+#include <chrono>
+#include <format>
 #include <vector>
 
 namespace QaplaLlm {
 
+void LmStudioCancelHandle::cancel() {
+    std::scoped_lock lock(mutex_);
+    if (activeClient_ != nullptr) {
+        static_cast<httplib::Client*>(activeClient_)->stop();
+    }
+}
+
+// RAII: registers/unregisters `client` as the request LmStudioCancelHandle::cancel() should
+// reach while it's in flight. No-op if handle is null (cancellation not needed/wanted). Must
+// live in QaplaLlm (not an anonymous namespace) to match the "friend class CancelRegistration"
+// declared in lm-studio-client.h, which is what grants access to the handle's private state.
+class CancelRegistration {
+public:
+    CancelRegistration(LmStudioCancelHandle* handle, httplib::Client* client) : handle_(handle) {
+        if (handle_ != nullptr) {
+            std::scoped_lock lock(handle_->mutex_);
+            handle_->activeClient_ = client;
+        }
+    }
+    ~CancelRegistration() {
+        if (handle_ != nullptr) {
+            std::scoped_lock lock(handle_->mutex_);
+            handle_->activeClient_ = nullptr;
+        }
+    }
+    CancelRegistration(const CancelRegistration&) = delete;
+    CancelRegistration& operator=(const CancelRegistration&) = delete;
+
+private:
+    LmStudioCancelHandle* handle_;
+};
+
 namespace {
     namespace Json = QaplaTester::Json;
 
-    httplib::Client makeClient(const LmStudioConnection& connection) {
+    httplib::Client makeClient(const LmStudioConnection& connection, int timeoutMsOverride = 0) {
         httplib::Client client(connection.host, connection.port);
-        const time_t sec = connection.timeoutMs / 1000;
-        const time_t usec = (connection.timeoutMs % 1000) * 1000;
+        const int effectiveTimeoutMs = timeoutMsOverride > 0 ? timeoutMsOverride : connection.timeoutMs;
+        const time_t sec = effectiveTimeoutMs / 1000;
+        const time_t usec = (effectiveTimeoutMs % 1000) * 1000;
         client.set_connection_timeout(sec, usec);
         client.set_read_timeout(sec, usec);
         client.set_write_timeout(sec, usec);
@@ -43,6 +78,22 @@ namespace {
 
     std::string describeConnectionError(httplib::Error error) {
         return "Could not reach LM Studio server (" + httplib::to_string(error) + ").";
+    }
+
+    // httplib reports both a genuine connection failure and an expired read/connection timeout
+    // as the same generic Error::Read/Error::Connection -- it doesn't distinguish them. A dead
+    // or unreachable server fails within milliseconds; only an actual timeout takes (about) as
+    // long as the configured duration, so elapsed wall-clock time is the only reliable signal
+    // we have to tell the two apart and avoid alarming "no connection" text for what is really
+    // just a slow model still generating.
+    std::string describeChatConnectionError(httplib::Error error, bool likelyTimedOut, int timeoutMs) {
+        if (likelyTimedOut) {
+            return std::format(
+                "Timed out waiting for LM Studio to respond after {} seconds -- the model may "
+                "still be loading or generating a long answer.",
+                timeoutMs / 1000);
+        }
+        return describeConnectionError(error);
     }
 
     // LM Studio (like the OpenAI API) reports request-level errors as
@@ -71,7 +122,7 @@ namespace {
         return message;
     }
 
-    Json::JsonValue buildMessageJson(const ChatMessage& message) {
+    Json::JsonValue buildMessageJsonValue(const ChatMessage& message) {
         auto entry = Json::JsonValue::object();
         entry["role"] = message.role;
 
@@ -188,6 +239,10 @@ LmStudioClient::LmStudioClient(LmStudioConnection connection)
     : connection_(std::move(connection)) {
 }
 
+std::string chatMessageToJson(const ChatMessage& message) {
+    return buildMessageJsonValue(message).stringify();
+}
+
 ListModelsResult LmStudioClient::listModels() const {
     ListModelsResult result;
 
@@ -225,7 +280,8 @@ ListModelsResult LmStudioClient::listModels() const {
     return result;
 }
 
-ChatCompletionResult LmStudioClient::chatCompletion(const ChatCompletionRequest& request) const {
+ChatCompletionResult LmStudioClient::chatCompletion(
+    const ChatCompletionRequest& request, LmStudioCancelHandle* cancelHandle, int timeoutMsOverride) const {
     ChatCompletionResult result;
 
     auto body = Json::JsonValue::object();
@@ -234,18 +290,34 @@ ChatCompletionResult LmStudioClient::chatCompletion(const ChatCompletionRequest&
 
     auto messagesJson = Json::JsonValue::array();
     for (const auto& message : request.messages) {
-        messagesJson.push_back(buildMessageJson(message));
+        messagesJson.push_back(buildMessageJsonValue(message));
     }
     body["messages"] = messagesJson;
 
     if (!request.tools.empty()) {
         body["tools"] = buildToolsJson(request.tools);
+        // Force every reply through a tool call (see LlmChatController's reply_to_user tool)
+        // instead of ever allowing free-form assistant content -- best-effort: not every
+        // backend/model honors "tool_choice", in which case chatCompletion() callers still
+        // fall back to plain `content` (see runAgentLoop's empty-toolCalls branch), so this
+        // is purely a quality improvement, never a hard requirement of the wire protocol.
+        body["tool_choice"] = "required";
     }
 
-    auto client = makeClient(connection_);
+    const int effectiveTimeoutMs = timeoutMsOverride > 0 ? timeoutMsOverride : connection_.timeoutMs;
+    auto client = makeClient(connection_, timeoutMsOverride);
+    CancelRegistration registration(cancelHandle, &client);
+
+    const auto start = std::chrono::steady_clock::now();
     auto res = client.Post("/v1/chat/completions", body.stringify(), "application/json");
     if (!res) {
-        result.errorMessage = describeConnectionError(res.error());
+        const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start).count();
+        // See describeChatConnectionError: a genuinely dead/unreachable server fails almost
+        // immediately, so elapsed time close to the configured timeout means it really did
+        // time out rather than fail to connect at all.
+        const bool likelyTimedOut = elapsedMs >= (effectiveTimeoutMs - 1000);
+        result.errorMessage = describeChatConnectionError(res.error(), likelyTimedOut, effectiveTimeoutMs);
         return result;
     }
     if (res->status != 200) {

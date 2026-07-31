@@ -186,6 +186,7 @@ TEST_CASE("LmStudioClient::chatCompletion sends tools and parses tool_calls", "[
     mock.server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
         REQUIRE(req.body.find("\"tools\"") != std::string::npos);
         REQUIRE(req.body.find("\"list_installed_engines\"") != std::string::npos);
+        REQUIRE(req.body.find(R"("tool_choice":"required")") != std::string::npos);
         res.set_content(
             R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
             R"([{"id":"call_1","type":"function",)"

@@ -28,6 +28,8 @@
 #include <memory>
 #include <array>
 #include <unordered_map>
+#include <string>
+#include <vector>
 
 namespace QaplaConfiguration {
 
@@ -113,6 +115,13 @@ namespace QaplaConfiguration {
             bool enabled = true;             ///< Auto: offer the chat when LM Studio is found
             std::string host = "localhost";
             int port = 1234;
+            /// Previously-used hosts, most recently used first (capped, see setLlmChatConfig
+            /// callers) -- lets the Settings UI offer a dropdown instead of retyping the
+            /// address every time the user switches between a local and a remote LM Studio.
+            std::vector<std::string> hostHistory;
+            /// If true, the full AI-chat traffic is appended to a timestamped log file in the
+            /// app's config directory -- see QaplaLlm::LlmChatLogger.
+            bool logTraffic = true;
         };
 
         /**
