@@ -53,6 +53,18 @@ ImGuiGameList::ImGuiGameList()
     )
 {
     init();
+
+    // Lets the AI-chatbot's open_pgn_file tool load a specific path into this tab (e.g. the
+    // tournament's or SPRT's own current PGN output file) without needing a singleton/pointer
+    // to this instance, which doesn't exist -- see gui-tool-app-register.cpp.
+    messageCallbackHandle_ = QaplaWindows::StaticCallbacks::message().registerCallback(
+        [this](const std::string& msg) {
+            constexpr std::string_view prefix = "load_pgn_file:";
+            if (msg.rfind(prefix, 0) == 0) {
+                loadFileInBackground(msg.substr(prefix.size()));
+            }
+        }
+    );
 }
 
 void ImGuiGameList::init() {

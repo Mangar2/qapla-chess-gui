@@ -31,6 +31,7 @@
 #include "test-system/llm-sprt-tool-tests.h"
 #include "test-system/llm-epd-tool-tests.h"
 #include "test-system/llm-status-tool-tests.h"
+#include "test-system/llm-app-tool-tests.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -83,6 +84,7 @@ namespace QaplaTest {
         registerLlmSprtToolTests(engine_);
         registerLlmEpdToolTests(engine_);
         registerLlmStatusToolTests(engine_);
+        registerLlmAppToolTests(engine_);
 #endif
     }
 

@@ -253,6 +253,21 @@ namespace {
         initGlad();
         setWindowIcon(window);
         initImGui(window);
+
+        // Lets the AI-chatbot's close_application tool (see gui-tool-app-register.cpp) quit
+        // the app the same way the OS window-close button does -- setting this flag makes the
+        // main loop below exit normally on its next check, running the exact same shutdown
+        // sequence (including the final StaticCallbacks::save().invokeAll() flush) rather than
+        // an abrupt process exit. `window` has no other accessor outside this function, so the
+        // subscription is registered here, where it's in scope, and kept alive for the whole
+        // loop below.
+        auto quitCallbackHandle = QaplaWindows::StaticCallbacks::message().registerCallback(
+            [window](const std::string& msg) {
+                if (msg == "quit_application") {
+                    glfwSetWindowShouldClose(window, 1);
+                }
+            }
+        );
         try {
             // Load embedded background image
             initBackgroundImageFromMemory(darkwood, darkwoodSize);

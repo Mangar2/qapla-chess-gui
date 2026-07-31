@@ -25,6 +25,7 @@
 #include "gui-tool-sprt.h"
 #include "gui-tool-epd.h"
 #include "gui-tool-status.h"
+#include "gui-tool-app.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
@@ -61,6 +62,7 @@ void registerGuiTools() {
     registerSprtTools(GuiToolRegistry::instance());
     registerEpdTools(GuiToolRegistry::instance());
     registerStatusTools(GuiToolRegistry::instance());
+    registerAppTools(GuiToolRegistry::instance());
 }
 
 // Retries LM Studio detection periodically -- not just once at startup -- reading

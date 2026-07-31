@@ -173,7 +173,12 @@ void ChatbotLlmChat::ensureController() {
         "instead of asking the user to type or paste a path in chat. This opens the same "
         "native file picker the regular GUI uses for that exact field and applies whatever "
         "the user picks directly; you have no filesystem access of your own, so never guess "
-        "or invent a path yourself.",
+        "or invent a path yourself. When the user asks to close/quit/exit the application, "
+        "call close_application immediately -- like starting a run, this needs no confirmation "
+        "first. To show a PGN file in the Pgn tab, call open_pgn_file: use its \"source\" "
+        "argument \"tournament\" or \"sprt\" for phrases like \"open the PGN file from the "
+        "tournament/SPRT\" (the file each is currently writing its games to, no dialog needed), "
+        "or leave it as the default \"dialog\" so the user picks any other file themselves.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(

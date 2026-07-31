@@ -26,6 +26,7 @@
 #include "imgui-popup.h"
 #include "imgui-button.h"
 #include "pgn-auto-saver.h"
+#include "callback-manager.h"
 #include <thread>
 #include <atomic>
 #include <string>
@@ -187,6 +188,13 @@ private:
 
     std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;
     void executeCommand(const std::string& button, bool isLoading);
+
+    /**
+     * @brief Subscription to StaticCallbacks::message() for "load_pgn_file:<path>" -- lets the
+     * AI-chatbot's open_pgn_file tool (see gui-tool-app-register.cpp) load a specific file into
+     * this tab without needing a singleton/pointer to this (non-singleton) instance.
+     */
+    std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> messageCallbackHandle_;
 };
 
 } // namespace QaplaWindows
