@@ -120,6 +120,16 @@ struct ToolSpec {
 };
 
 /**
+ * @brief Serializes tool specs to their exact OpenAI wire-format JSON array text -- the same
+ * representation chatCompletion() sends inside the request's "tools" field.
+ *
+ * Exposed for the same reason as chatMessageToJson: so callers (e.g. LlmChatController's
+ * prompt-size debug estimate) can measure the exact bytes about to be sent without duplicating
+ * the JSON shape here.
+ */
+[[nodiscard]] std::string toolSpecsToJson(const std::vector<ToolSpec>& tools);
+
+/**
  * @brief A (non-streaming) chat completion request, optionally offering tools.
  */
 struct ChatCompletionRequest {

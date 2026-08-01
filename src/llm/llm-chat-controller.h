@@ -40,7 +40,8 @@ enum class ChatRole : std::uint8_t {
     User,
     Assistant,
     Tool,  ///< A tool's own friendly result text, shown inline; never replayed to the model.
-    Error  ///< Local/network/protocol error shown inline; never replayed to the model.
+    Error, ///< Local/network/protocol error shown inline; never replayed to the model.
+    Debug  ///< Local diagnostic text (e.g. prompt-size estimate), shown inline; never replayed to the model.
 };
 
 struct ChatEntry {

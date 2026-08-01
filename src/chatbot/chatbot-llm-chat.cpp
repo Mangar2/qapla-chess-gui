@@ -42,6 +42,7 @@ namespace {
     const ImVec4 USER_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
     const ImVec4 TOOL_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
     const ImVec4 ASSISTANT_COLOR{0.7F, 1.0F, 0.7F, 1.0F};
+    const ImVec4 DEBUG_COLOR{0.55F, 0.55F, 0.55F, 1.0F};
 }
 
 ChatbotLlmChat::ChatbotLlmChat(LmStudioStatus status)
@@ -328,6 +329,8 @@ void ChatbotLlmChat::drawChatUi() {
             case QaplaLlm::ChatRole::Error:
                 ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");
                 break;
+            case QaplaLlm::ChatRole::Debug:
+                break;
         }
         if (entry.role == QaplaLlm::ChatRole::Tool && entry.renderWidget) {
             // A real GUI control (e.g. the same ImGuiTable a classic chatbot step would draw)
@@ -335,6 +338,10 @@ void ChatbotLlmChat::drawChatUi() {
             entry.renderWidget();
         } else if (entry.role == QaplaLlm::ChatRole::Tool) {
             ImGui::PushStyleColor(ImGuiCol_Text, TOOL_COLOR);
+            ImGui::TextWrapped("%s", entry.text.c_str());
+            ImGui::PopStyleColor();
+        } else if (entry.role == QaplaLlm::ChatRole::Debug) {
+            ImGui::PushStyleColor(ImGuiCol_Text, DEBUG_COLOR);
             ImGui::TextWrapped("%s", entry.text.c_str());
             ImGui::PopStyleColor();
         } else {

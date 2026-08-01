@@ -243,6 +243,10 @@ std::string chatMessageToJson(const ChatMessage& message) {
     return buildMessageJsonValue(message).stringify();
 }
 
+std::string toolSpecsToJson(const std::vector<ToolSpec>& tools) {
+    return buildToolsJson(tools).stringify();
+}
+
 ListModelsResult LmStudioClient::listModels() const {
     ListModelsResult result;
 

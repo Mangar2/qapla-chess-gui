@@ -22,6 +22,7 @@
 
 #include <base-elements/qapla-json.h>
 
+#include <format>
 #include <functional>
 #include <utility>
 
@@ -274,6 +275,31 @@ void LlmChatController::sendMessage(const std::string& userText) {
     auto model = model_;
     auto tools = GuiToolRegistry::instance().exportToolSpecs();
     tools.push_back(replyToUserToolSpec());
+
+    // Rough prompt-size estimate for diagnosing "context too long" server errors: the full
+    // tool list and flattened history are resent on every turn (see runAgentLoop's
+    // request.tools = tools inside its retry loop), so a model loaded with a small context
+    // window can hit its limit even on an early message. There's no local tokenizer for
+    // whatever model happens to be loaded, so this uses the widely-used ~4-characters-per-token
+    // heuristic instead of an exact count -- not precise, but enough to tell "close to the
+    // limit" from "nowhere near it", and to compare against LM Studio's configured context size.
+    {
+        std::size_t messagesChars = 0;
+        for (const auto& message : messages) {
+            messagesChars += chatMessageToJson(message).size();
+        }
+        std::size_t toolsChars = toolSpecsToJson(tools).size();
+        std::size_t totalChars = messagesChars + toolsChars;
+        history_.push_back({
+            ChatRole::Debug,
+            std::format(
+                "Debug: request size ~{} chars ≈ {} tokens (~4 chars/token estimate) -- "
+                "messages {} chars, tools {} chars across {} tools.",
+                totalChars, totalChars / 4, messagesChars, toolsChars, tools.size()),
+            nullptr
+        });
+    }
+
     auto maxToolIterations = maxToolIterations_;
     auto cancelHandle = chatCancelHandle_;
     auto logger = logger_;
