@@ -607,7 +607,7 @@ namespace {
     }
 
     // ------------------------------------------------------------------
-    // start_sprt_tournament
+    // start_sprt
     // ------------------------------------------------------------------
 
     GuiToolResult handleStartSprtTournament(const Json::JsonValue&) {
@@ -637,7 +637,7 @@ namespace {
     }
 
     // ------------------------------------------------------------------
-    // stop_sprt_tournament
+    // stop_sprt
     // ------------------------------------------------------------------
 
     Json::JsonValue buildStopSprtTournamentSchema() {
@@ -768,7 +768,7 @@ void registerSprtTools(GuiToolRegistry& registry) {
                         "champion-vs-challenger SPRT?); if still unclear from context, ask which "
                         "they mean, never guess -- wrong guess silently configures other "
                         "feature. openings_file must be set (here or earlier session) before "
-                        "start_sprt_tournament succeeds. If missing/invalid or user wants to "
+                        "start_sprt succeeds. If missing/invalid or user wants to "
                         "browse, call open_sprt_openings_file_dialog instead of asking for typed "
                         "path -- same for pgn_file/open_sprt_pgn_file_dialog.",
         .parametersSchema = buildConfigureSprtSchema(),
@@ -834,7 +834,7 @@ void registerSprtTools(GuiToolRegistry& registry) {
     });
 
     registry.registerTool(GuiToolDefinition{
-        .name = "start_sprt_tournament",
+        .name = "start_sprt",
         .description = "Starts SPRT test with engines/settings from select_sprt_engines/"
                         "configure_sprt. Requires champion+challenger already selected and "
                         "openings file already configured; result states exactly which "
@@ -846,7 +846,7 @@ void registerSprtTools(GuiToolRegistry& registry) {
     });
 
     registry.registerTool(GuiToolDefinition{
-        .name = "stop_sprt_tournament",
+        .name = "stop_sprt",
         .description = "Stops currently running SPRT test. Optional \"mode\": \"graceful\" "
                         "(default) finishes game in progress, starts no new one; \"abrupt\" "
                         "aborts in-progress game immediately. Fails if no SPRT test running.",

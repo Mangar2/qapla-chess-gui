@@ -94,7 +94,7 @@ namespace QaplaTest {
             configureArgs["max_games"] = 4.0;
             IM_CHECK(callToolAndYield(ctx, "configure_sprt", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_sprt_tournament", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start_sprt", QaplaTester::Json::JsonValue::object()).success);
             IM_CHECK(SprtTournamentChatbot::waitForSprtTournamentRunning(ctx, 20.0f));
 
             ctx->LogInfo("Step 3: get_running_status must report SPRT running, tournament not running");

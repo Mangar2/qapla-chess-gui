@@ -26,7 +26,7 @@ namespace QaplaLlm {
 /**
  * @brief Registers the "SPRT" tool group: select_sprt_engines, configure_sprt,
  * configure_sprt_draw_adjudication, configure_sprt_resign_adjudication, get_sprt_status,
- * start_sprt_tournament, stop_sprt_tournament, clear_sprt_result, show_sprt_result.
+ * start_sprt, stop_sprt, clear_sprt_result, show_sprt_result.
  *
  * SPRT (Sequential Probability Ratio Test) compares exactly two engines -- a "champion"
  * (comparison baseline) and a "challenger" (engine under test) -- unlike tournament mode's
