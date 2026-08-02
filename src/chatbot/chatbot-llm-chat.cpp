@@ -309,6 +309,15 @@ void ChatbotLlmChat::drawChatUi() {
     if (ImGuiControls::textButton("Refresh Models")) {
         controller_->refreshModels();
     }
+    ImGui::SameLine();
+    bool enableThinking = controller_->enableThinking();
+    if (ImGui::Checkbox("Enable Thinking", &enableThinking)) {
+        controller_->setEnableThinking(enableThinking);
+    }
+    ImGuiControls::hooverTooltip(
+        "If unchecked, tells the model to skip chain-of-thought reasoning (best-effort -- only "
+        "has an effect on chat templates that support it, e.g. Qwen3). Applies to every "
+        "message sent from now on.");
     if (controller_->isRefreshingModels()) {
         ImGui::SameLine();
         ImGui::TextDisabled("(refreshing...)");

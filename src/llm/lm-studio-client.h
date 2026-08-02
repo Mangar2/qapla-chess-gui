@@ -136,6 +136,12 @@ struct ChatCompletionRequest {
     std::string model;
     std::vector<ChatMessage> messages;
     std::vector<ToolSpec> tools; ///< Empty => no "tools" field is sent at all.
+    /// If false, sends "chat_template_kwargs":{"enable_thinking":false} -- best-effort hint for
+    /// llama.cpp-based backends (LM Studio's, for GGUF models) to skip chain-of-thought
+    /// reasoning on templates that support the "enable_thinking" chat-template variable (e.g.
+    /// Qwen3). Silently ignored by backends/templates that don't recognize it. True (the
+    /// default) omits the field entirely, leaving the template's own default behavior in place.
+    bool enableThinking = true;
 };
 
 /**

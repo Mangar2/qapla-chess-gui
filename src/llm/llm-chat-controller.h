@@ -148,6 +148,19 @@ public:
         return model_;
     }
 
+    /**
+     * @brief Whether chain-of-thought reasoning is requested from the model (see the "Enable
+     * Thinking" checkbox next to the model dropdown). True by default -- leaves the model's
+     * own chat template default in place. Setting false applies to every request sent from
+     * then on, including the reachability ping; see ChatCompletionRequest::enableThinking.
+     */
+    void setEnableThinking(bool enableThinking) {
+        enableThinking_ = enableThinking;
+    }
+    [[nodiscard]] bool enableThinking() const {
+        return enableThinking_;
+    }
+
     /** @brief Reachability state of model(), as last probed by pingModel(). */
     [[nodiscard]] PingStatus pingStatus() const {
         return pingStatus_;
@@ -215,6 +228,7 @@ private:
     LmStudioClient client_;
     std::string systemPrompt_;
     std::string model_;
+    bool enableThinking_ = true;
     int maxToolIterations_;
     int messageTimeoutMs_;
     std::vector<ChatEntry> history_;

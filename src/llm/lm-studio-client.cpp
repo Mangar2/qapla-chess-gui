@@ -291,6 +291,17 @@ ChatCompletionResult LmStudioClient::chatCompletion(
     auto body = Json::JsonValue::object();
     body["model"] = request.model;
     body["stream"] = false;
+    if (!request.enableThinking) {
+        // Best-effort: tells llama.cpp-based backends (LM Studio's, for GGUF models) to skip
+        // chain-of-thought reasoning for templates that support the "enable_thinking"
+        // chat-template variable (e.g. Qwen3). Silently ignored by backends/templates that
+        // don't recognize "chat_template_kwargs" or this specific key. Only sent when the user
+        // has unchecked "Enable Thinking" in the chat UI -- true (the default) omits this
+        // entirely, leaving the template's own default behavior in place.
+        auto chatTemplateKwargs = Json::JsonValue::object();
+        chatTemplateKwargs["enable_thinking"] = false;
+        body["chat_template_kwargs"] = chatTemplateKwargs;
+    }
 
     auto messagesJson = Json::JsonValue::array();
     for (const auto& message : request.messages) {

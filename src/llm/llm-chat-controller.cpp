@@ -116,6 +116,7 @@ namespace {
         std::vector<ChatMessage> messages,
         int maxToolIterations,
         int messageTimeoutMs,
+        bool enableThinking,
         LmStudioCancelHandle* cancelHandle,
         LlmChatLogger* logger,
         LlmFineTuningWriter* fineTuningWriter,
@@ -136,6 +137,7 @@ namespace {
             request.model = model;
             request.messages = messages;
             request.tools = tools;
+            request.enableThinking = enableThinking;
 
             auto response = client.chatCompletion(request, cancelHandle, messageTimeoutMs);
             if (!response.success) {
@@ -319,19 +321,20 @@ void LlmChatController::sendMessage(const std::string& userText) {
 
     auto maxToolIterations = maxToolIterations_;
     auto messageTimeoutMs = messageTimeoutMs_;
+    auto enableThinking = enableThinking_;
     auto cancelHandle = chatCancelHandle_;
     auto logger = logger_;
     auto fineTuningWriter = fineTuningWriter_;
 
     chatTask_.start([client, model, tools, messages = std::move(messages), maxToolIterations, messageTimeoutMs,
-                      events, cancelHandle, logger, fineTuningWriter]() mutable {
+                      enableThinking, events, cancelHandle, logger, fineTuningWriter]() mutable {
         auto onToolEvent = [events](ToolCallEvent event) {
             std::scoped_lock lock(events->mutex);
             events->events.push_back(std::move(event));
         };
         return runAgentLoop(
-            client, model, tools, std::move(messages), maxToolIterations, messageTimeoutMs, cancelHandle.get(),
-            logger.get(), fineTuningWriter.get(), onToolEvent);
+            client, model, tools, std::move(messages), maxToolIterations, messageTimeoutMs, enableThinking,
+            cancelHandle.get(), logger.get(), fineTuningWriter.get(), onToolEvent);
     });
 }
 
@@ -437,6 +440,7 @@ void LlmChatController::pingModel() {
     request.messages = {
         ChatMessage{.role = "user", .content = "Hi"}
     };
+    request.enableThinking = enableThinking_;
 
     auto client = client_;
     auto cancelHandle = pingCancelHandle_;

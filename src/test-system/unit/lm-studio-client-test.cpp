@@ -162,6 +162,44 @@ TEST_CASE("LmStudioClient::chatCompletion extracts the assistant reply", "[llm][
     REQUIRE(result.content == "Hello there!");
 }
 
+TEST_CASE("LmStudioClient::chatCompletion omits chat_template_kwargs when enableThinking is true",
+    "[llm][lm-studio-client]") {
+    MockServer mock;
+    mock.server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
+        REQUIRE(req.body.find("chat_template_kwargs") == std::string::npos);
+        res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Hi"}}]})", "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    ChatCompletionRequest request;
+    request.model = "qwen2.5-7b-instruct";
+    request.messages.push_back({"user", "Hi"});
+    REQUIRE(request.enableThinking); // default
+
+    auto result = client.chatCompletion(request);
+    REQUIRE(result.success);
+}
+
+TEST_CASE("LmStudioClient::chatCompletion sends enable_thinking:false via chat_template_kwargs when disabled",
+    "[llm][lm-studio-client]") {
+    MockServer mock;
+    mock.server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
+        REQUIRE(req.body.find(R"("chat_template_kwargs":{"enable_thinking":false})") != std::string::npos);
+        res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Hi"}}]})", "application/json");
+    });
+    mock.start();
+
+    LmStudioClient client(mock.connection());
+    ChatCompletionRequest request;
+    request.model = "qwen2.5-7b-instruct";
+    request.messages.push_back({"user", "Hi"});
+    request.enableThinking = false;
+
+    auto result = client.chatCompletion(request);
+    REQUIRE(result.success);
+}
+
 TEST_CASE("LmStudioClient::chatCompletion surfaces server-side error messages", "[llm][lm-studio-client]") {
     MockServer mock;
     mock.server.Post("/v1/chat/completions", [](const httplib::Request&, httplib::Response& res) {
