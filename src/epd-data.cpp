@@ -314,18 +314,19 @@ namespace QaplaWindows {
         
         imguiConcurrency_->init();
         imguiConcurrency_->setActive(true);
-        
-        // Apply the external concurrency setting
-        auto concurrency = std::max<uint32_t>(1, getExternalConcurrency());
-        setPoolConcurrency(concurrency, true, true);
+
+        // getExternalConcurrency() is always >= 1 (see ImGuiConcurrency's class doc comment),
+        // so no defensive floor is needed here anymore.
+        setPoolConcurrency(getExternalConcurrency(), true, true);
 
         SnackbarManager::instance().showSuccess("Epd analysis started", false, "epd");
     }
 
      void EpdData::stopPool(bool graceful) {
-        // Must be called before deactivating the control so that the pool is informed about 
-        // setting concurrency to zero. 
-        imguiConcurrency_->update(0);
+        // Must be called before deactivating the control so that the pool is informed about
+        // setting concurrency to zero. Uses stop() (not update(0)) so the user's configured
+        // concurrency survives the stop -- see ImGuiConcurrency's class doc comment.
+        imguiConcurrency_->stop();
         // Prevents that concurrency control tells the pool to start new tasks when calculations are stopped
         imguiConcurrency_->setActive(false);
 

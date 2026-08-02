@@ -31,8 +31,6 @@ namespace QaplaLlm {
 
 namespace {
 
-    // Follow-up turns (model already contacted once, presumably already loaded into memory).
-    constexpr int MESSAGE_TIMEOUT_MS = 60000;
     // First contact with a model: LM Studio may still need to load it into memory/VRAM, which
     // can legitimately take much longer than a routine follow-up turn.
     constexpr int PING_TIMEOUT_MS = 180000;
@@ -249,6 +247,19 @@ void LlmChatController::sendMessage(const std::string& userText) {
         return;
     }
 
+    // A real message supersedes the background reachability ping (see pingModel()): cancel it
+    // on the wire immediately, and discard its result locally so a ping cut off mid-flight
+    // can't later land as a misleading "model did not respond" once the real request is what
+    // matters -- the real request is about to prove reachability far better than the ping ever
+    // could.
+    if (pingCancelHandle_) {
+        pingCancelHandle_->cancel();
+        pingCancelHandle_.reset();
+        pingTask_.reset();
+        pingStatus_ = PingStatus::Reachable;
+        pingError_.clear();
+    }
+
     history_.push_back({ChatRole::User, userText, nullptr});
     logger_->logLine("USER", userText);
 
@@ -414,11 +425,14 @@ void LlmChatController::pingModel() {
     pingStatus_ = PingStatus::Pinging;
     pingError_.clear();
 
+    // Deliberately just "Hi", no system message explaining what to answer -- a "reply briefly"
+    // instruction sent some reasoning models into thousands of tokens of thinking about what
+    // "briefly" even means before ever answering, defeating the point of a cheap reachability
+    // probe. This only needs *any* reply at all, not a specific one.
     ChatCompletionRequest request;
     request.model = model_;
     request.messages = {
-        ChatMessage{.role = "system", .content = "Reply with one short word to confirm you are working."},
-        ChatMessage{.role = "user", .content = "ping"}
+        ChatMessage{.role = "user", .content = "Hi"}
     };
 
     auto client = client_;

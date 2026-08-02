@@ -32,6 +32,16 @@ constexpr int DEBOUNCE_FRAMES = 10;
 /**
  * @class ImGuiConcurrency
  * @brief Handles concurrency updates via ImGui slider and ensures the GameManagerPool is updated accordingly.
+ *
+ * Deliberately separates two different notions of "concurrency" that earlier versions of this
+ * class conflated into a single field:
+ * - externalConcurrency_ ("configured"): the user's target setting, e.g. what a slider or the
+ *   AI's configure_tournament/configure_sprt/configure_epd tools set. Always >= 1 and survives
+ *   start/stop/init unchanged -- it's what the user asked for, not what's currently happening.
+ * - currentConcurrency_ ("active"): how many games the pool is actually told to run right now.
+ *   Legitimately 0 while stopped/idle.
+ * Call stop() (not update(0)) to make the pool stop running games -- it zeroes only the active
+ * side, leaving the configured value untouched so it's still there the next time a run starts.
  */
 class ImGuiConcurrency {
 public:
@@ -43,7 +53,10 @@ public:
         : poolAccess_(std::move(poolAccess)) {}
 
     /**
-     * @brief Initializes the ImGuiConcurrency object.
+     * @brief Initializes the ImGuiConcurrency object for a new run.
+     *
+     * Deliberately leaves externalConcurrency_ (the configured value) untouched -- called from
+     * every mode's start(), it must not reset what the user already configured.
      */
     void init() {
         currentConcurrency_ = 0;
@@ -87,6 +100,24 @@ public:
     }
 
     /**
+     * @brief Tells the pool to stop running games (active concurrency 0).
+     *
+     * Deliberately separate from update(0): that call would also overwrite the user's
+     * configured concurrency down to the clamp floor via setExternalConcurrency() (the exact
+     * "current vs. configured" bug this class used to have -- stopping a tournament/SPRT/EPD
+     * run silently reset its configured concurrency instead of leaving it for the next run).
+     * stop() only zeroes the active side; getExternalConcurrency() keeps returning whatever the
+     * user last configured.
+     */
+    void stop() {
+        if (!active_) return;
+        currentConcurrency_ = 0;
+        targetConcurrency_ = 0;
+        debounceCounter_ = 0;
+        poolAccess_->setConcurrency(0, niceStop_, true);
+    }
+
+    /**
      * @brief Sets the nice stop flag. When nice stop is true, 
      * games will be played until its end.
      * @param niceStop The new value for the nice stop flag.
@@ -104,10 +135,11 @@ public:
     }
 
     /**
-     * @brief Gets the external concurrency value.
-     * @return The external concurrency value.
+     * @brief Gets the configured (external) concurrency value.
+     * @return The configured concurrency value. Always >= 1, even before any explicit
+     *         configuration (see externalConcurrency_'s default) or after a stop.
      */
-    uint32_t getExternalConcurrency() {
+    [[nodiscard]] uint32_t getExternalConcurrency() const {
         return externalConcurrency_;
     }
 
@@ -123,9 +155,13 @@ private:
     GameManagerPoolAccess poolAccess_; ///< Access to the GameManagerPool instance.
     bool active_ = false;  ///< Whether the concurrency control is active.
     bool niceStop_ = true;  ///< Whether to finish games or abort them.
-    uint32_t currentConcurrency_ = 0;  ///< Tracks the current concurrency value.
-    uint32_t targetConcurrency_ = 0;   ///< Tracks the target concurrency value.
-    uint32_t externalConcurrency_ = 0;       ///< Tracks the last UI concurrency value.
+    uint32_t currentConcurrency_ = 0;  ///< Tracks the current (active) concurrency value.
+    uint32_t targetConcurrency_ = 0;   ///< Tracks the target concurrency value for debouncing.
+    // Defaults to 1, not 0: getExternalConcurrency()'s "always >= 1" invariant must hold even
+    // before setExternalConcurrency()/update() is ever called (e.g. status queried before the
+    // user has configured or started anything this session) -- previously defaulted to 0, which
+    // broke that invariant for every reader until something happened to call the setter first.
+    uint32_t externalConcurrency_ = 1;       ///< Tracks the configured (not current) concurrency.
     int debounceCounter_;         ///< Counter for debouncing slider changes.
 
     /**

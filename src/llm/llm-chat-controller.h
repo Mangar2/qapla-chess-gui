@@ -119,10 +119,16 @@ public:
      *        own config directory; overridable so tests never touch the real one. The
      *        fine-tuning file is always written regardless of logTraffic -- see
      *        LlmFineTuningWriter's class docs for why it has no such toggle.
+     * @param messageTimeoutMs How long to wait for the model to answer one chat-completion
+     *        request (each turn of the agent loop, see runAgentLoop()) before giving up as
+     *        timed out. Settings' "Response Timeout" maps directly to this (in seconds); the
+     *        GUI integration passes it explicitly (see ChatbotLlmChat::ensureController()).
+     *        Does not affect pingModel()'s separate, longer first-contact timeout -- a cold
+     *        model load can legitimately take longer than a routine follow-up turn.
      */
     LlmChatController(
         LmStudioConnection connection, std::string systemPrompt, int maxToolIterations = 10, bool logTraffic = false,
-        std::string logDirectory = "");
+        std::string logDirectory = "", int messageTimeoutMs = 120000);
 
     /** @brief Starts a non-blocking model list refresh. No-op if already in flight. */
     void refreshModels();
@@ -210,6 +216,7 @@ private:
     std::string systemPrompt_;
     std::string model_;
     int maxToolIterations_;
+    int messageTimeoutMs_;
     std::vector<ChatEntry> history_;
     std::shared_ptr<LlmChatLogger> logger_;
     std::shared_ptr<LlmFineTuningWriter> fineTuningWriter_;

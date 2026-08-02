@@ -233,6 +233,52 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
+        // Test: stopping an EPD analysis must not reset its configured concurrency --
+        // regression test for ImGuiConcurrency conflating "configured" (survives stop) with
+        // "active" (0 while stopped) concurrency; see ImGuiConcurrency's class doc comment.
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "ConcurrencySurvivesStopViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: concurrency survives stop_epd_analysis ===");
+
+            cleanupEpdState();
+            IM_CHECK(hasEnginesAvailable());
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(!configs.empty());
+
+            auto selectArgs = QaplaTester::Json::JsonValue::object();
+            auto engineNames = QaplaTester::Json::JsonValue::array();
+            engineNames.push_back(configs[0].getName());
+            selectArgs["engines"] = engineNames;
+            IM_CHECK(callToolAndYield(ctx, "select_epd_engines", selectArgs).success);
+
+            constexpr uint32_t configuredConcurrency = 5;
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["epd_file"] = getTestEpdPath();
+            configureArgs["max_time_seconds"] = 5.0;
+            configureArgs["min_time_seconds"] = 5.0;
+            configureArgs["concurrency"] = static_cast<double>(configuredConcurrency);
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", configureArgs).success);
+            IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
+            IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["mode"] = "abrupt";
+            IM_CHECK(callToolAndYield(ctx, "stop_epd_analysis", stopArgs).success);
+            IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
+
+            IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            cleanupEpdState();
+            ctx->LogInfo("=== Test ConcurrencySurvivesStopViaRegistry PASSED ===");
+        };
+
+        // -----------------------------------------------------------------
         // Test: start_epd_analysis after a config change post-stop must fail with
         // AI-actionable guidance to call clear_epd_result first (see EpdData::mayAnalyze()'s
         // configChanged()+Stopped precondition -- unique to EPD, no tournament/SPRT

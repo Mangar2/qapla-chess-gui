@@ -187,6 +187,55 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
+        // Test: stopping a tournament must not reset its configured concurrency -- regression
+        // test for ImGuiConcurrency conflating "configured" (survives stop) with "active" (0
+        // while stopped) concurrency; see ImGuiConcurrency's class doc comment.
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Tournament/Tools", "ConcurrencySurvivesStopViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: concurrency survives stop_tournament ===");
+
+            cleanupTournamentState();
+            IM_CHECK(hasEnginesAvailable());
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(configs.size() >= 2);
+
+            auto engineArgs = QaplaTester::Json::JsonValue::object();
+            auto engineNames = QaplaTester::Json::JsonValue::array();
+            engineNames.push_back(configs[0].getName());
+            engineNames.push_back(configs[1].getName());
+            engineArgs["engines"] = engineNames;
+            IM_CHECK(callToolAndYield(ctx, "select_engines", engineArgs).success);
+
+            constexpr uint32_t configuredConcurrency = 5;
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["openings_file"] = getTestOpeningPath();
+            configureArgs["games"] = 4.0;
+            configureArgs["rounds"] = 1.0;
+            configureArgs["concurrency"] = static_cast<double>(configuredConcurrency);
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", configureArgs).success);
+            IM_CHECK_EQ(QaplaWindows::TournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            IM_CHECK(callToolAndYield(ctx, "start_tournament", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForTournamentRunning(ctx, 20.0f));
+            IM_CHECK_EQ(QaplaWindows::TournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["mode"] = "abrupt";
+            IM_CHECK(callToolAndYield(ctx, "stop_tournament", stopArgs).success);
+            IM_CHECK(waitForTournamentStopped(ctx, 15.0f));
+
+            // The actual bug: concurrency used to drop to the clamp floor (1) on stop, discarding
+            // whatever the user had configured (5 here).
+            IM_CHECK_EQ(QaplaWindows::TournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            cleanupTournamentState();
+            ctx->LogInfo("=== Test ConcurrencySurvivesStopViaRegistry PASSED ===");
+        };
+
+        // -----------------------------------------------------------------
         // Test: configure_draw_adjudication / configure_resign_adjudication,
         // called directly through GuiToolRegistry (no LLM). No tournament
         // needs to actually run for this -- both tools just mutate

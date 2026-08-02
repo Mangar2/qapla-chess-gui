@@ -236,6 +236,50 @@ namespace QaplaTest {
             cleanupSprtTournamentState();
             ctx->LogInfo("=== Test StartStopClearShowSprtResultViaRegistry PASSED ===");
         };
+
+        // -----------------------------------------------------------------
+        // Test: stopping an SPRT test must not reset its configured concurrency -- regression
+        // test for ImGuiConcurrency conflating "configured" (survives stop) with "active" (0
+        // while stopped) concurrency; see ImGuiConcurrency's class doc comment.
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "ConcurrencySurvivesStopViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: concurrency survives stop_sprt_tournament ===");
+
+            cleanupSprtTournamentState();
+            IM_CHECK(hasEnginesAvailable());
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(configs.size() >= 2);
+
+            auto selectArgs = QaplaTester::Json::JsonValue::object();
+            selectArgs["champion"] = configs[0].getName();
+            selectArgs["challenger"] = configs[1].getName();
+            IM_CHECK(callToolAndYield(ctx, "select_sprt_engines", selectArgs).success);
+
+            constexpr uint32_t configuredConcurrency = 5;
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["openings_file"] = getTestOpeningPath();
+            configureArgs["max_games"] = 4.0;
+            configureArgs["concurrency"] = static_cast<double>(configuredConcurrency);
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", configureArgs).success);
+            IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            IM_CHECK(callToolAndYield(ctx, "start_sprt_tournament", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(waitForSprtTournamentRunning(ctx, 20.0f));
+            IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            ctx->SleepNoSkip(0.5f, 0.1f);
+            auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["mode"] = "abrupt";
+            IM_CHECK(callToolAndYield(ctx, "stop_sprt_tournament", stopArgs).success);
+            IM_CHECK(waitForSprtTournamentStopped(ctx, 15.0f));
+
+            IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);
+
+            cleanupSprtTournamentState();
+            ctx->LogInfo("=== Test ConcurrencySurvivesStopViaRegistry PASSED ===");
+        };
     }
 
 } // namespace QaplaTest

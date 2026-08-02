@@ -65,7 +65,7 @@ struct MockToolCallingServer {
 
     void start() {
         server.Post("/v1/chat/completions", [this](const httplib::Request& req, httplib::Response& res) {
-            if (req.body.find("\"ping\"") != std::string::npos) {
+            if (req.body.find("\"Hi\"") != std::string::npos) {
                 // LlmChatController::setModel() triggers an automatic reachability ping (see
                 // its pingModel()) -- answer it trivially so it doesn't steal a slot from the
                 // call-count-based sequencing below, which is only about the real conversation.
@@ -199,7 +199,7 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
     httplib::Server server;
     std::atomic<int> completionCallCount{0};
     server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
-        if (req.body.find("\"ping\"") != std::string::npos) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
             // See MockToolCallingServer above: the automatic reachability ping triggered by
             // setModel() must not steal a slot from the call-count-based sequencing below.
             res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
@@ -269,7 +269,7 @@ TEST_CASE("LlmChatController automatically pings a model when it is selected", "
     httplib::Server server;
     std::atomic<int> pingCallCount{0};
     server.Post("/v1/chat/completions", [&pingCallCount](const httplib::Request& req, httplib::Response& res) {
-        if (req.body.find("\"ping\"") != std::string::npos) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
             pingCallCount.fetch_add(1);
             res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
                 "application/json");
@@ -325,6 +325,66 @@ TEST_CASE("LlmChatController automatically pings a model when it is selected", "
     serverThread.join();
 }
 
+TEST_CASE("LlmChatController cancels an in-flight ping when a real message is sent",
+    "[llm][llm-chat-controller]") {
+    // A real sendMessage() must not have to wait for -- or later be clobbered by -- a
+    // reachability ping still in flight from setModel(). Delay the ping response so there's a
+    // window to call sendMessage() while pingStatus() is still Pinging.
+    httplib::Server server;
+    server.Post("/v1/chat/completions", [](const httplib::Request& req, httplib::Response& res) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
+                "application/json");
+            return;
+        }
+        res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Done."}}]})", "application/json");
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(
+        connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false, testLogDirectory().string());
+    controller.setModel("test-model");
+    REQUIRE(controller.pingStatus() == LlmChatController::PingStatus::Pinging);
+
+    // sendMessage() itself is synchronous (just starts the worker thread), so pingStatus() must
+    // already reflect the cancellation immediately after this call -- no update() needed.
+    controller.sendMessage("hello");
+    REQUIRE(controller.pingStatus() == LlmChatController::PingStatus::Reachable);
+    REQUIRE(controller.pingError().empty());
+
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+        controller.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    REQUIRE_FALSE(controller.isBusy());
+
+    // The cancelled ping's eventual (delayed) response must never retroactively flip
+    // pingStatus() back to anything else once update() drains it.
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+    controller.update();
+    REQUIRE(controller.pingStatus() == LlmChatController::PingStatus::Reachable);
+
+    std::filesystem::remove_all(testLogDirectory());
+
+    server.stop();
+    serverThread.join();
+}
+
 TEST_CASE("LlmChatController routes the model's reply through the reply_to_user tool",
     "[llm][llm-chat-controller]") {
     // Every real conversation turn must offer "tool_choice":"required" and a reply_to_user
@@ -333,7 +393,7 @@ TEST_CASE("LlmChatController routes the model's reply through the reply_to_user 
     std::string lastRequestBody;
     httplib::Server server;
     server.Post("/v1/chat/completions", [&lastRequestBody](const httplib::Request& req, httplib::Response& res) {
-        if (req.body.find("\"ping\"") != std::string::npos) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
             res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
                 "application/json");
             return;
@@ -422,7 +482,7 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
     std::atomic<int> completionCallCount{0};
     httplib::Server server;
     server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
-        if (req.body.find("\"ping\"") != std::string::npos) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
             res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
                 "application/json");
             return;
@@ -507,7 +567,7 @@ TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply fo
     std::atomic<int> completionCallCount{0};
     httplib::Server server;
     server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
-        if (req.body.find("\"ping\"") != std::string::npos) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
             res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
                 "application/json");
             return;
