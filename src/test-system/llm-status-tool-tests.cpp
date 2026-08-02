@@ -77,8 +77,8 @@ namespace QaplaTest {
             auto idleStatus = callToolAndYield(ctx, "get_running_status", QaplaTester::Json::JsonValue::object());
             IM_CHECK(idleStatus.success);
             IM_CHECK(idleStatus.content.find("Nothing is currently running") != std::string::npos);
-            IM_CHECK(idleStatus.content.find("Tournament: not running") != std::string::npos);
-            IM_CHECK(idleStatus.content.find("SPRT test: not running") != std::string::npos);
+            IM_CHECK(idleStatus.content.find("no tournament") != std::string::npos);
+            IM_CHECK(idleStatus.content.find("no SPRT test") != std::string::npos);
 
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
             IM_CHECK(configs.size() >= 2);
@@ -94,16 +94,17 @@ namespace QaplaTest {
             configureArgs["max_games"] = 4.0;
             IM_CHECK(callToolAndYield(ctx, "configure_sprt", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_sprt", QaplaTester::Json::JsonValue::object()).success);
+            auto sprtTypeArgs = QaplaTester::Json::JsonValue::object();
+            sprtTypeArgs["type"] = "sprt";
+            IM_CHECK(callToolAndYield(ctx, "start", sprtTypeArgs).success);
             IM_CHECK(SprtTournamentChatbot::waitForSprtTournamentRunning(ctx, 20.0f));
 
-            ctx->LogInfo("Step 3: get_running_status must report SPRT running, tournament not running");
+            ctx->LogInfo("Step 3: get_running_status must report SPRT running, no mention of a tournament");
             auto runningStatus = callToolAndYield(ctx, "get_running_status", QaplaTester::Json::JsonValue::object());
             IM_CHECK(runningStatus.success);
-            IM_CHECK(runningStatus.content.find("no tournament is running") != std::string::npos);
-            IM_CHECK(runningStatus.content.find("Tournament: not running") != std::string::npos);
-            IM_CHECK(runningStatus.content.find("SPRT test: running") != std::string::npos ||
-                     runningStatus.content.find("SPRT test: starting") != std::string::npos);
+            IM_CHECK(runningStatus.content.find("a tournament") == std::string::npos);
+            IM_CHECK(runningStatus.content.find("an SPRT test is running") != std::string::npos ||
+                     runningStatus.content.find("an SPRT test is starting") != std::string::npos);
 
             // Let the engines settle before stopping -- see the identical wait elsewhere in
             // this session's GUI tests (prevents crash/slow shutdown from a rapid start/stop).

@@ -97,8 +97,10 @@ namespace QaplaTest {
             auto configureResult = callToolAndYield(ctx, "configure_tournament", configureArgs);
             IM_CHECK(configureResult.success);
 
-            ctx->LogInfo("Step 3: start_tournament");
-            auto startResult = callToolAndYield(ctx, "start_tournament", QaplaTester::Json::JsonValue::object());
+            ctx->LogInfo("Step 3: start(type=tournament)");
+            auto startArgs = QaplaTester::Json::JsonValue::object();
+            startArgs["type"] = "tournament";
+            auto startResult = callToolAndYield(ctx, "start", startArgs);
             IM_CHECK(startResult.success);
 
             IM_CHECK(waitForTournamentRunning(ctx, 20.0f));
@@ -120,8 +122,10 @@ namespace QaplaTest {
             cleanupTournamentState();
             IM_CHECK(hasEnginesAvailable());
 
-            // stop_tournament must fail cleanly when nothing is running.
-            auto stopWhenIdle = callToolAndYield(ctx, "stop_tournament", QaplaTester::Json::JsonValue::object());
+            // stop(type=tournament) must fail cleanly when nothing is running.
+            auto tournamentTypeArgs = QaplaTester::Json::JsonValue::object();
+            tournamentTypeArgs["type"] = "tournament";
+            auto stopWhenIdle = callToolAndYield(ctx, "stop", tournamentTypeArgs);
             IM_CHECK(!stopWhenIdle.success);
 
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
@@ -140,7 +144,7 @@ namespace QaplaTest {
             configureArgs["rounds"] = 1.0;
             IM_CHECK(callToolAndYield(ctx, "configure_tournament", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_tournament", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start", tournamentTypeArgs).success);
             IM_CHECK(waitForTournamentRunning(ctx, 20.0f));
 
             // show_tournament_result must succeed while running, even before any game finished --
@@ -159,12 +163,13 @@ namespace QaplaTest {
 
             // "abrupt" is used here (rather than "graceful") so the test doesn't depend on
             // how long the real engines configured on this machine take to finish a game --
-            // stop_tournament just passes the mode through to TournamentData::stopPool(),
+            // stop(type=tournament) just passes the mode through to TournamentData::stopPool(),
             // whose graceful/abrupt behavior itself isn't new logic under test here.
-            ctx->LogInfo("Step: stop_tournament(mode=abrupt)");
+            ctx->LogInfo("Step: stop(type=tournament, mode=abrupt)");
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "tournament";
             stopArgs["mode"] = "abrupt";
-            auto stopResult = callToolAndYield(ctx, "stop_tournament", stopArgs);
+            auto stopResult = callToolAndYield(ctx, "stop", stopArgs);
             IM_CHECK(stopResult.success);
             IM_CHECK(waitForTournamentStopped(ctx, 15.0f));
             IM_CHECK(!QaplaWindows::TournamentData::instance().isRunning());
@@ -193,7 +198,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Tournament/Tools", "ConcurrencySurvivesStopViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: concurrency survives stop_tournament ===");
+            ctx->LogInfo("=== Test: concurrency survives stop(type=tournament) ===");
 
             cleanupTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -217,14 +222,17 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "configure_tournament", configureArgs).success);
             IM_CHECK_EQ(QaplaWindows::TournamentData::instance().getExternalConcurrency(), configuredConcurrency);
 
-            IM_CHECK(callToolAndYield(ctx, "start_tournament", QaplaTester::Json::JsonValue::object()).success);
+            auto startArgs = QaplaTester::Json::JsonValue::object();
+            startArgs["type"] = "tournament";
+            IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForTournamentRunning(ctx, 20.0f));
             IM_CHECK_EQ(QaplaWindows::TournamentData::instance().getExternalConcurrency(), configuredConcurrency);
 
             ctx->SleepNoSkip(0.5f, 0.1f);
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "tournament";
             stopArgs["mode"] = "abrupt";
-            IM_CHECK(callToolAndYield(ctx, "stop_tournament", stopArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "stop", stopArgs).success);
             IM_CHECK(waitForTournamentStopped(ctx, 15.0f));
 
             // The actual bug: concurrency used to drop to the clamp floor (1) on stop, discarding
@@ -236,14 +244,14 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: configure_draw_adjudication / configure_resign_adjudication,
-        // called directly through GuiToolRegistry (no LLM). No tournament
-        // needs to actually run for this -- both tools just mutate
-        // TournamentData's adjudication config and persist it.
+        // Test: configure_tournament's draw_*/resign_* fields, called
+        // directly through GuiToolRegistry (no LLM). No tournament needs to
+        // actually run for this -- they just mutate TournamentData's
+        // adjudication config and persist it.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Tournament/Tools", "ConfigureAdjudicationViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: configure_draw_adjudication / configure_resign_adjudication via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: configure_tournament's draw_*/resign_* fields via GuiToolRegistry ===");
 
             auto& tournamentData = QaplaWindows::TournamentData::instance();
             // Reset to known defaults -- these tests never touch adjudication otherwise, but
@@ -251,13 +259,13 @@ namespace QaplaTest {
             tournamentData.drawConfig() = {};
             tournamentData.resignConfig() = {};
 
-            ctx->LogInfo("Step 1: configure_draw_adjudication");
+            ctx->LogInfo("Step 1: draw_* fields");
             auto drawArgs = QaplaTester::Json::JsonValue::object();
-            drawArgs["mode"] = "active";
-            drawArgs["min_full_moves"] = 60.0;
-            drawArgs["required_consecutive_moves"] = 10.0;
-            drawArgs["centipawn_threshold"] = 15.0;
-            auto drawResult = callToolAndYield(ctx, "configure_draw_adjudication", drawArgs);
+            drawArgs["draw_mode"] = "active";
+            drawArgs["draw_min_full_moves"] = 60.0;
+            drawArgs["draw_required_consecutive_moves"] = 10.0;
+            drawArgs["draw_centipawn_threshold"] = 15.0;
+            auto drawResult = callToolAndYield(ctx, "configure_tournament", drawArgs);
             IM_CHECK(drawResult.success);
             IM_CHECK(tournamentData.drawConfig().active);
             IM_CHECK(!tournamentData.drawConfig().testOnly);
@@ -265,13 +273,13 @@ namespace QaplaTest {
             IM_CHECK(tournamentData.drawConfig().requiredConsecutiveMoves == 10);
             IM_CHECK(tournamentData.drawConfig().centipawnThreshold == 15);
 
-            ctx->LogInfo("Step 2: configure_resign_adjudication");
+            ctx->LogInfo("Step 2: resign_* fields");
             auto resignArgs = QaplaTester::Json::JsonValue::object();
-            resignArgs["mode"] = "test";
-            resignArgs["required_consecutive_moves"] = 8.0;
-            resignArgs["centipawn_threshold"] = 600.0;
-            resignArgs["two_sided"] = true;
-            auto resignResult = callToolAndYield(ctx, "configure_resign_adjudication", resignArgs);
+            resignArgs["resign_mode"] = "test";
+            resignArgs["resign_required_consecutive_moves"] = 8.0;
+            resignArgs["resign_centipawn_threshold"] = 600.0;
+            resignArgs["resign_two_sided"] = true;
+            auto resignResult = callToolAndYield(ctx, "configure_tournament", resignArgs);
             IM_CHECK(resignResult.success);
             IM_CHECK(tournamentData.resignConfig().active);
             IM_CHECK(tournamentData.resignConfig().testOnly);
@@ -279,27 +287,24 @@ namespace QaplaTest {
             IM_CHECK(tournamentData.resignConfig().centipawnThreshold == 600);
             IM_CHECK(tournamentData.resignConfig().twoSided);
 
-            ctx->LogInfo("Step 3: get_tournament_status reflects both");
-            auto status = callToolAndYield(ctx, "get_tournament_status", QaplaTester::Json::JsonValue::object());
-            IM_CHECK(status.success);
-            IM_CHECK(status.content.find("Draw adjudication: active") != std::string::npos);
-            IM_CHECK(status.content.find("Resign adjudication: test") != std::string::npos);
+            ctx->LogInfo("Step 3: configure_tournament's own response already reflects both");
+            IM_CHECK(resignResult.content.find("Draw adjudication: active") != std::string::npos);
+            IM_CHECK(resignResult.content.find("Resign adjudication: test") != std::string::npos);
 
             ctx->LogInfo("Step 4: an invalid mode is rejected, not silently ignored");
             auto badArgs = QaplaTester::Json::JsonValue::object();
-            badArgs["mode"] = "sometimes";
-            auto badResult = callToolAndYield(ctx, "configure_draw_adjudication", badArgs);
+            badArgs["draw_mode"] = "sometimes";
+            auto badResult = callToolAndYield(ctx, "configure_tournament", badArgs);
             IM_CHECK(!badResult.success);
             // Rejecting the bad mode must not have reset the field it failed to parse.
             IM_CHECK(tournamentData.drawConfig().active);
 
             ctx->LogInfo("Step 5: mode=off round-trips back to disabled");
             auto offArgs = QaplaTester::Json::JsonValue::object();
-            offArgs["mode"] = "off";
-            IM_CHECK(callToolAndYield(ctx, "configure_draw_adjudication", offArgs).success);
+            offArgs["draw_mode"] = "off";
+            offArgs["resign_mode"] = "off";
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", offArgs).success);
             IM_CHECK(!tournamentData.drawConfig().active);
-            offArgs["mode"] = "off";
-            IM_CHECK(callToolAndYield(ctx, "configure_resign_adjudication", offArgs).success);
             IM_CHECK(!tournamentData.resignConfig().active);
 
             // Leave adjudication back at defaults so it can't affect any other test in this suite.

@@ -75,21 +75,103 @@ namespace {
         return "";
     }
 
-    GuiToolResult buildConfigureResult(const std::vector<std::string>& applied, const std::vector<std::string>& problems) {
-        std::string message;
-        if (!applied.empty()) {
-            message = "Configured: " + joinStrings(applied) + ".";
-        }
-        if (!problems.empty()) {
-            if (!message.empty()) {
-                message += " ";
+    struct SprtEngineNames {
+        std::string champion;
+        std::string challenger;
+    };
+
+    SprtEngineNames getSprtEngineNames(SprtTournamentData& data) {
+        SprtEngineNames names;
+        for (const auto& engine : data.getEngineSelect().getSelectedEngines()) {
+            if (engine.isGauntlet()) {
+                names.challenger = engine.getName();
+            } else {
+                names.champion = engine.getName();
             }
-            message += "Problems: " + joinStrings(problems) + ".";
         }
-        if (message.empty()) {
-            message = "No configuration changes were provided.";
+        return names;
+    }
+
+    // adjudicationModeText()/adjudicationModeSchemaProperty()/applyAdjudicationMode() live in
+    // gui-tool-registry.h -- shared with the tournament adjudication fields
+    // (gui-tool-tournament-register.cpp) so the off/test/active vocabulary and its bool-pair
+    // mapping is written exactly once.
+    std::string adjudicationSummary(SprtTournamentData& data) {
+        const auto& draw = data.tournamentAdjudication().drawConfig();
+        const auto& resign = data.tournamentAdjudication().resignConfig();
+        return std::format(
+            "Draw adjudication: {} (min full moves={}, required consecutive moves={}, "
+            "centipawn threshold={}). Resign adjudication: {} (required consecutive moves={}, "
+            "centipawn threshold={}, two-sided={}).",
+            adjudicationModeText(draw.active, draw.testOnly),
+            draw.minFullMoves, draw.requiredConsecutiveMoves, draw.centipawnThreshold,
+            adjudicationModeText(resign.active, resign.testOnly),
+            resign.requiredConsecutiveMoves, resign.centipawnThreshold,
+            resign.twoSided ? "yes" : "no");
+    }
+
+    // sprtData.isRunning() is true for every non-Stopped state (Starting/Running/
+    // GracefulStopping alike), so it can't tell those apart on its own; state() can.
+    // Distinguishing GracefulStopping matters since a test in that state is still actively
+    // finishing its in-progress game, just declining to start a new one -- reporting it as
+    // plain "running" would hide that a stop was already requested. Unlike tournament mode,
+    // there's no separate abrupt "Stopping" state -- an abrupt stop finishes synchronously,
+    // straight to Stopped.
+    std::string sprtRunStateText(SprtTournamentData& sprtData) {
+        switch (sprtData.state()) {
+            case SprtTournamentData::State::Starting:
+                return "An SPRT test is currently starting.";
+            case SprtTournamentData::State::Running:
+                return "An SPRT test is currently running.";
+            case SprtTournamentData::State::GracefulStopping:
+                return "An SPRT test is currently running but stopping gracefully -- the "
+                       "in-progress game will finish, no new one will start.";
+            case SprtTournamentData::State::Stopped:
+            default:
+                return "No SPRT test is currently running.";
         }
-        return GuiToolResult{.success = problems.empty(), .content = message};
+    }
+
+    // Shared by get_sprt_status and configure_sprt's result (the latter always ends with the
+    // full status too -- see buildConfigureResult -- so the model never needs a separate
+    // get_sprt_status round-trip just to confirm what it changed).
+    std::string buildSprtStatusText(SprtTournamentData& sprtData) {
+        auto names = getSprtEngineNames(sprtData);
+        const auto& config = sprtData.sprtConfig();
+        const auto& openingsFile = sprtData.tournamentOpening().openings().file;
+        const auto& pgnFile = sprtData.tournamentPgn().pgnOptions().file;
+
+        std::string runState = sprtRunStateText(sprtData);
+        if (sprtData.isFinished()) {
+            runState += " A decision has been reached (or the game limit was hit) -- call "
+                         "show_sprt_result to see it.";
+        }
+
+        return std::format(
+            "Champion (comparison engine): {}. Challenger (engine under test): {}. "
+            "Time control: {}. Elo bounds: H0={:.2f}, H1={:.2f}. Alpha={:.3f}, Beta={:.3f}. "
+            "Max games: {}. Model: {}{}. Openings file: {}. PGN output file: {}. Concurrency: {}. {} {}",
+            names.champion.empty() ? "(not set)" : names.champion,
+            names.challenger.empty() ? "(not set)" : names.challenger,
+            sprtData.getGlobalSettings().getTimeControlSettings().timeControl,
+            config.eloH0, config.eloH1, config.alpha, config.beta, config.maxGames,
+            config.model, config.pentanomial ? " (pentanomial)" : "",
+            openingsFile.empty() ? "(not set)" : openingsFile,
+            pgnFile.empty() ? "(not set)" : pgnFile,
+            sprtData.getExternalConcurrency(),
+            runState,
+            adjudicationSummary(sprtData));
+    }
+
+    GuiToolResult buildConfigureResult(SprtTournamentData& sprtData, const std::vector<std::string>& problems,
+        bool dialogOpened = false) {
+        std::string message;
+        if (!problems.empty()) {
+            message = "Problems: " + joinStrings(problems) + ". ";
+        }
+        message += buildSprtStatusText(sprtData);
+        return GuiToolResult{.success = problems.empty(), .content = message, .renderWidget = nullptr,
+            .terminal = dialogOpened};
     }
 
     // ------------------------------------------------------------------
@@ -229,8 +311,37 @@ namespace {
             "True: pentanomial (paired-game) stats instead of trinomial -- more power, needs "
             "games in same-opening pairs. Default false.");
         properties["openings_file"] = stringProp("Path to existing EPD/PGN opening book file on disk.");
+        properties["openings_file_dialog"] = boolProp(
+            "Set true to open a native file picker instead of passing openings_file.");
         properties["pgn_file"] = stringProp("Path to save played games as PGN.");
+        properties["pgn_file_dialog"] = boolProp(
+            "Set true to open a native save-file picker instead of passing pgn_file.");
         properties["concurrency"] = integerProp("Games to run in parallel.");
+        properties["draw_mode"] = adjudicationModeSchemaProperty(
+            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end "
+            "games. \"active\": ends games early as draw once conditions below met.");
+        properties["draw_min_full_moves"] = integerProp(
+            "Min full moves before draw adjudication can trigger. Default 80.");
+        properties["draw_required_consecutive_moves"] = integerProp(
+            "Consecutive moves (engines' own eval) that must stay within draw_centipawn_threshold "
+            "of equal before draw adjudication. Default 20.");
+        properties["draw_centipawn_threshold"] = integerProp(
+            "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of "
+            "equal). Positive number. Default 20.");
+        properties["resign_mode"] = adjudicationModeSchemaProperty(
+            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't "
+            "end games. \"active\": ends games early as loss for losing side once conditions "
+            "below met.");
+        properties["resign_required_consecutive_moves"] = integerProp(
+            "Consecutive moves whose own eval must stay at/below -resign_centipawn_threshold "
+            "(that bad or worse) before resign adjudication. Default 5.");
+        properties["resign_centipawn_threshold"] = integerProp(
+            "How bad, in centipawns from losing side's own view, before resignation-worthy -- "
+            "e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.");
+        properties["resign_two_sided"] = boolProp(
+            "If true, both engines must independently agree position lost before adjudicating "
+            "-- more conservative, avoids resignation from one engine's eval blunder alone. "
+            "Default false.");
         return schema;
     }
 
@@ -295,49 +406,37 @@ namespace {
     void applyOpeningsFile(SprtTournamentData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
             problems.push_back("openings file not found: " + path +
-                " -- call open_sprt_openings_file_dialog to let the user pick a valid one");
+                " -- set openings_file_dialog=true instead to let the user pick a valid one");
             return;
         }
         data.tournamentOpening().openings().file = path;
-        applied.push_back("openings file");
+        applied.push_back("openings file: " + path);
+    }
+
+    void openOpeningsFileDialog(SprtTournamentData& data, std::vector<std::string>& applied) {
+        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        if (paths.empty()) {
+            applied.push_back("openings file (dialog cancelled, unchanged)");
+            return;
+        }
+        data.tournamentOpening().openings().file = paths.front();
+        applied.push_back("openings file selected: " + paths.front());
     }
 
     void applyPgnFile(SprtTournamentData& data, const std::string& path, std::vector<std::string>& applied) {
         data.tournamentPgn().pgnOptions().file = path;
-        applied.push_back("PGN output file");
+        applied.push_back("PGN output file: " + path);
     }
 
-    GuiToolResult handleOpenSprtOpeningsFileDialog(const Json::JsonValue&) {
-        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
-        if (paths.empty()) {
-            return GuiToolResult{
-                .success = true,
-                .content = "The user cancelled the dialog; the openings file was not changed."
-            };
-        }
-
-        auto& sprtData = SprtTournamentData::instance();
-        sprtData.tournamentOpening().openings().file = paths.front();
-        sprtData.tournamentOpening().updateConfiguration();
-        switchToSprtView();
-        return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
-    }
-
-    GuiToolResult handleOpenSprtPgnFileDialog(const Json::JsonValue&) {
-        auto& sprtData = SprtTournamentData::instance();
+    void openPgnFileDialog(SprtTournamentData& data, std::vector<std::string>& applied) {
         auto path = QaplaWindows::OsDialogs::saveFileDialog(
-            {{"PGN files (*.pgn)", "pgn"}}, sprtData.tournamentPgn().pgnOptions().file);
+            {{"PGN files (*.pgn)", "pgn"}}, data.tournamentPgn().pgnOptions().file);
         if (path.empty()) {
-            return GuiToolResult{
-                .success = true,
-                .content = "The user cancelled the dialog; the PGN output file was not changed."
-            };
+            applied.push_back("PGN output file (dialog cancelled, unchanged)");
+            return;
         }
-
-        sprtData.tournamentPgn().pgnOptions().file = path;
-        sprtData.tournamentPgn().updateConfiguration();
-        switchToSprtView();
-        return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
+        data.tournamentPgn().pgnOptions().file = path;
+        applied.push_back("PGN output file selected: " + path);
     }
 
     void applyConcurrency(SprtTournamentData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -350,10 +449,61 @@ namespace {
         applied.push_back("concurrency=" + std::to_string(concurrency));
     }
 
+    void applyDrawMode(SprtTournamentData& data, const std::string& mode, std::vector<std::string>& applied, std::vector<std::string>& problems) {
+        auto& config = data.tournamentAdjudication().drawConfig();
+        if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+            applied.push_back("draw adjudication mode=" + mode);
+        }
+    }
+
+    void applyDrawMinFullMoves(SprtTournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().drawConfig();
+        config.minFullMoves = static_cast<uint32_t>(value);
+        applied.push_back("draw min full moves=" + std::to_string(config.minFullMoves));
+    }
+
+    void applyDrawRequiredConsecutiveMoves(SprtTournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().drawConfig();
+        config.requiredConsecutiveMoves = static_cast<uint32_t>(value);
+        applied.push_back("draw required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+    }
+
+    void applyDrawCentipawnThreshold(SprtTournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().drawConfig();
+        config.centipawnThreshold = static_cast<int>(value);
+        applied.push_back("draw centipawn threshold=" + std::to_string(config.centipawnThreshold));
+    }
+
+    void applyResignMode(SprtTournamentData& data, const std::string& mode, std::vector<std::string>& applied, std::vector<std::string>& problems) {
+        auto& config = data.tournamentAdjudication().resignConfig();
+        if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+            applied.push_back("resign adjudication mode=" + mode);
+        }
+    }
+
+    void applyResignRequiredConsecutiveMoves(SprtTournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().resignConfig();
+        config.requiredConsecutiveMoves = static_cast<uint32_t>(value);
+        applied.push_back("resign required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+    }
+
+    void applyResignCentipawnThreshold(SprtTournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().resignConfig();
+        config.centipawnThreshold = static_cast<int>(value);
+        applied.push_back("resign centipawn threshold=" + std::to_string(config.centipawnThreshold));
+    }
+
+    void applyResignTwoSided(SprtTournamentData& data, bool value, std::vector<std::string>& applied) {
+        auto& config = data.tournamentAdjudication().resignConfig();
+        config.twoSided = value;
+        applied.push_back(std::string("resign two-sided=") + (value ? "yes" : "no"));
+    }
+
     GuiToolResult handleConfigureSprt(const Json::JsonValue& arguments) {
         auto& sprtData = SprtTournamentData::instance();
         std::vector<std::string> applied;
         std::vector<std::string> problems;
+        bool dialogOpened = false;
 
         if (arguments.contains("time_control") && arguments.at("time_control").is_string()) {
             applyTimeControl(sprtData, arguments.at("time_control").as_string(), applied);
@@ -379,304 +529,71 @@ namespace {
         if (arguments.contains("pentanomial") && arguments.at("pentanomial").is_boolean()) {
             applyPentanomial(sprtData, arguments.at("pentanomial").as_boolean(), applied);
         }
-        if (arguments.contains("openings_file") && arguments.at("openings_file").is_string()) {
+        if (arguments.contains("openings_file_dialog") && arguments.at("openings_file_dialog").is_boolean() &&
+            arguments.at("openings_file_dialog").as_boolean()) {
+            openOpeningsFileDialog(sprtData, applied);
+            dialogOpened = true;
+        } else if (arguments.contains("openings_file") && arguments.at("openings_file").is_string()) {
             applyOpeningsFile(sprtData, arguments.at("openings_file").as_string(), applied, problems);
         }
-        if (arguments.contains("pgn_file") && arguments.at("pgn_file").is_string()) {
+        if (arguments.contains("pgn_file_dialog") && arguments.at("pgn_file_dialog").is_boolean() &&
+            arguments.at("pgn_file_dialog").as_boolean()) {
+            openPgnFileDialog(sprtData, applied);
+            dialogOpened = true;
+        } else if (arguments.contains("pgn_file") && arguments.at("pgn_file").is_string()) {
             applyPgnFile(sprtData, arguments.at("pgn_file").as_string(), applied);
         }
         if (arguments.contains("concurrency") && arguments.at("concurrency").is_number()) {
             applyConcurrency(sprtData, arguments.at("concurrency").as_number(), applied, problems);
         }
+        if (arguments.contains("draw_mode") && arguments.at("draw_mode").is_string()) {
+            applyDrawMode(sprtData, arguments.at("draw_mode").as_string(), applied, problems);
+        }
+        if (arguments.contains("draw_min_full_moves") && arguments.at("draw_min_full_moves").is_number()) {
+            applyDrawMinFullMoves(sprtData, arguments.at("draw_min_full_moves").as_number(), applied);
+        }
+        if (arguments.contains("draw_required_consecutive_moves") &&
+            arguments.at("draw_required_consecutive_moves").is_number()) {
+            applyDrawRequiredConsecutiveMoves(sprtData, arguments.at("draw_required_consecutive_moves").as_number(), applied);
+        }
+        if (arguments.contains("draw_centipawn_threshold") && arguments.at("draw_centipawn_threshold").is_number()) {
+            applyDrawCentipawnThreshold(sprtData, arguments.at("draw_centipawn_threshold").as_number(), applied);
+        }
+        if (arguments.contains("resign_mode") && arguments.at("resign_mode").is_string()) {
+            applyResignMode(sprtData, arguments.at("resign_mode").as_string(), applied, problems);
+        }
+        if (arguments.contains("resign_required_consecutive_moves") &&
+            arguments.at("resign_required_consecutive_moves").is_number()) {
+            applyResignRequiredConsecutiveMoves(sprtData, arguments.at("resign_required_consecutive_moves").as_number(), applied);
+        }
+        if (arguments.contains("resign_centipawn_threshold") && arguments.at("resign_centipawn_threshold").is_number()) {
+            applyResignCentipawnThreshold(sprtData, arguments.at("resign_centipawn_threshold").as_number(), applied);
+        }
+        if (arguments.contains("resign_two_sided") && arguments.at("resign_two_sided").is_boolean()) {
+            applyResignTwoSided(sprtData, arguments.at("resign_two_sided").as_boolean(), applied);
+        }
 
         // All of the above (except time_control/concurrency, which self-persist) mutate raw
         // references that don't persist on their own -- see
-        // ImGuiSprtConfiguration::updateConfiguration()'s doc comment. Calling all three
+        // ImGuiSprtConfiguration::updateConfiguration()'s doc comment. Calling all
         // unconditionally is cheap and always correct either way.
         sprtData.sprtConfiguration().updateConfiguration();
         sprtData.tournamentOpening().updateConfiguration();
         sprtData.tournamentPgn().updateConfiguration();
-
-        if (!applied.empty()) {
-            switchToSprtView();
-        }
-        return buildConfigureResult(applied, problems);
-    }
-
-    // ------------------------------------------------------------------
-    // configure_sprt_draw_adjudication / configure_sprt_resign_adjudication
-    // ------------------------------------------------------------------
-
-    Json::JsonValue buildConfigureSprtDrawAdjudicationSchema() {
-        auto schema = noArgsToolSchema();
-        auto& properties = schema["properties"];
-
-        auto intProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "integer";
-            prop["description"] = description;
-            return prop;
-        };
-
-        properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision without "
-            "ending games. \"active\": ends games early as draw once conditions below met.");
-        properties["min_full_moves"] = intProp(
-            "Min full moves before draw adjudication can trigger. Default 80.");
-        properties["required_consecutive_moves"] = intProp(
-            "Consecutive moves (per engines' own eval) that must stay within centipawn_threshold "
-            "of equal before draw adjudication. Default 20.");
-        properties["centipawn_threshold"] = intProp(
-            "Max abs eval in centipawns for position to count as drawn (e.g. 20 = within "
-            "+/-20cp of equal). Positive number. Default 20.");
-        return schema;
-    }
-
-    GuiToolResult handleConfigureSprtDrawAdjudication(const Json::JsonValue& arguments) {
-        auto& sprtData = SprtTournamentData::instance();
-        auto& config = sprtData.tournamentAdjudication().drawConfig();
-        std::vector<std::string> applied;
-        std::vector<std::string> problems;
-
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            const auto& mode = arguments.at("mode").as_string();
-            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
-                applied.push_back("draw adjudication mode=" + mode);
-            }
-        }
-        if (arguments.contains("min_full_moves") && arguments.at("min_full_moves").is_number()) {
-            config.minFullMoves = static_cast<uint32_t>(arguments.at("min_full_moves").as_number());
-            applied.push_back("min full moves=" + std::to_string(config.minFullMoves));
-        }
-        if (arguments.contains("required_consecutive_moves") &&
-            arguments.at("required_consecutive_moves").is_number()) {
-            config.requiredConsecutiveMoves =
-                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
-            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
-        }
-        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
-            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
-            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
-        }
-
         sprtData.tournamentAdjudication().updateConfiguration();
+
         if (!applied.empty()) {
             switchToSprtView();
         }
-        return buildConfigureResult(applied, problems);
-    }
-
-    Json::JsonValue buildConfigureSprtResignAdjudicationSchema() {
-        auto schema = noArgsToolSchema();
-        auto& properties = schema["properties"];
-
-        auto intProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "integer";
-            prop["description"] = description;
-            return prop;
-        };
-        auto boolProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "boolean";
-            prop["description"] = description;
-            return prop;
-        };
-
-        properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision without "
-            "ending games. \"active\": ends games early as loss for losing side once conditions "
-            "below met.");
-        properties["required_consecutive_moves"] = intProp(
-            "Consecutive moves whose own eval must stay at/below -centipawn_threshold (that bad "
-            "or worse) before resign adjudication. Default 5.");
-        properties["centipawn_threshold"] = intProp(
-            "How bad (centipawns), from losing side's own view, before resignation-worthy -- "
-            "e.g. 500 = resign once down ~a queen's eval. Positive magnitude, not negative. "
-            "Default 500.");
-        properties["two_sided"] = boolProp(
-            "True: both engines must independently agree position lost before adjudicating -- "
-            "more conservative, avoids resignation from one engine's eval blunder alone. "
-            "Default false.");
-        return schema;
-    }
-
-    GuiToolResult handleConfigureSprtResignAdjudication(const Json::JsonValue& arguments) {
-        auto& sprtData = SprtTournamentData::instance();
-        auto& config = sprtData.tournamentAdjudication().resignConfig();
-        std::vector<std::string> applied;
-        std::vector<std::string> problems;
-
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            const auto& mode = arguments.at("mode").as_string();
-            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
-                applied.push_back("resign adjudication mode=" + mode);
-            }
-        }
-        if (arguments.contains("required_consecutive_moves") &&
-            arguments.at("required_consecutive_moves").is_number()) {
-            config.requiredConsecutiveMoves =
-                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
-            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
-        }
-        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
-            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
-            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
-        }
-        if (arguments.contains("two_sided") && arguments.at("two_sided").is_boolean()) {
-            config.twoSided = arguments.at("two_sided").as_boolean();
-            applied.push_back(std::string("two-sided=") + (config.twoSided ? "yes" : "no"));
-        }
-
-        sprtData.tournamentAdjudication().updateConfiguration();
-        if (!applied.empty()) {
-            switchToSprtView();
-        }
-        return buildConfigureResult(applied, problems);
+        return buildConfigureResult(sprtData, problems, dialogOpened);
     }
 
     // ------------------------------------------------------------------
     // get_sprt_status
     // ------------------------------------------------------------------
 
-    struct SprtEngineNames {
-        std::string champion;
-        std::string challenger;
-    };
-
-    SprtEngineNames getSprtEngineNames(SprtTournamentData& data) {
-        SprtEngineNames names;
-        for (const auto& engine : data.getEngineSelect().getSelectedEngines()) {
-            if (engine.isGauntlet()) {
-                names.challenger = engine.getName();
-            } else {
-                names.champion = engine.getName();
-            }
-        }
-        return names;
-    }
-
-    std::string adjudicationSummary(SprtTournamentData& data) {
-        const auto& draw = data.tournamentAdjudication().drawConfig();
-        const auto& resign = data.tournamentAdjudication().resignConfig();
-        return std::format(
-            "Draw adjudication: {} (min full moves={}, required consecutive moves={}, "
-            "centipawn threshold={}). Resign adjudication: {} (required consecutive moves={}, "
-            "centipawn threshold={}, two-sided={}).",
-            adjudicationModeText(draw.active, draw.testOnly),
-            draw.minFullMoves, draw.requiredConsecutiveMoves, draw.centipawnThreshold,
-            adjudicationModeText(resign.active, resign.testOnly),
-            resign.requiredConsecutiveMoves, resign.centipawnThreshold,
-            resign.twoSided ? "yes" : "no");
-    }
-
     GuiToolResult handleGetSprtStatus(const Json::JsonValue&) {
-        auto& sprtData = SprtTournamentData::instance();
-        auto names = getSprtEngineNames(sprtData);
-        const auto& config = sprtData.sprtConfig();
-        const auto& openingsFile = sprtData.tournamentOpening().openings().file;
-        const auto& pgnFile = sprtData.tournamentPgn().pgnOptions().file;
-
-        std::string runState = "No SPRT test is currently running.";
-        if (sprtData.isStarting()) {
-            runState = "An SPRT test is currently starting.";
-        } else if (sprtData.isRunning()) {
-            runState = "An SPRT test is currently running.";
-        }
-        if (sprtData.isFinished()) {
-            runState += " A decision has been reached (or the game limit was hit) -- call "
-                         "show_sprt_result to see it.";
-        }
-
-        std::string message = std::format(
-            "Champion (comparison engine): {}. Challenger (engine under test): {}. "
-            "Time control: {}. Elo bounds: H0={:.2f}, H1={:.2f}. Alpha={:.3f}, Beta={:.3f}. "
-            "Max games: {}. Model: {}{}. Openings file: {}. PGN output file: {}. Concurrency: {}. {} {}",
-            names.champion.empty() ? "(not set)" : names.champion,
-            names.challenger.empty() ? "(not set)" : names.challenger,
-            sprtData.getGlobalSettings().getTimeControlSettings().timeControl,
-            config.eloH0, config.eloH1, config.alpha, config.beta, config.maxGames,
-            config.model, config.pentanomial ? " (pentanomial)" : "",
-            openingsFile.empty() ? "(not set)" : openingsFile,
-            pgnFile.empty() ? "(not set)" : pgnFile,
-            sprtData.getExternalConcurrency(),
-            runState,
-            adjudicationSummary(sprtData));
-
-        return GuiToolResult{.success = true, .content = message};
-    }
-
-    // ------------------------------------------------------------------
-    // start_sprt
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleStartSprtTournament(const Json::JsonValue&) {
-        auto& sprtData = SprtTournamentData::instance();
-        if (sprtData.isRunning() || sprtData.isStarting()) {
-            return GuiToolResult{
-                .success = false,
-                .content = "An SPRT test is already running. Stop it first if you want to start a different one."
-            };
-        }
-
-        auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
-
-        sprtData.startTournament(); // always verbose, same as the classic "Start" button
-
-        if (!sprtData.isRunning() && !sprtData.isStarting()) {
-            auto reason = findRecentSprtSnackbar(historyCountBefore);
-            return GuiToolResult{
-                .success = false,
-                .content = reason.empty() ? "Could not start the SPRT test." : reason
-            };
-        }
-
-        sprtData.setPoolConcurrency(sprtData.getExternalConcurrency(), true, true);
-        switchToSprtView();
-        return GuiToolResult{.success = true, .content = "SPRT test started."};
-    }
-
-    // ------------------------------------------------------------------
-    // stop_sprt
-    // ------------------------------------------------------------------
-
-    Json::JsonValue buildStopSprtTournamentSchema() {
-        auto schema = noArgsToolSchema();
-        auto mode = Json::JsonValue::object();
-        mode["type"] = "string";
-        auto enumValues = Json::JsonValue::array();
-        enumValues.push_back("graceful");
-        enumValues.push_back("abrupt");
-        mode["enum"] = enumValues;
-        mode["description"] =
-            "\"graceful\" (default if omitted): finish game in progress, then stop. \"abrupt\": "
-            "abort in-progress game immediately. If user just says \"stop\"/\"end the test\" "
-            "unqualified, use \"graceful\".";
-        schema["properties"]["mode"] = mode;
-        return schema;
-    }
-
-    GuiToolResult handleStopSprtTournament(const Json::JsonValue& arguments) {
-        auto& sprtData = SprtTournamentData::instance();
-        if (!sprtData.isRunning() && !sprtData.isStarting()) {
-            return GuiToolResult{.success = false, .content = "No SPRT test is currently running."};
-        }
-
-        bool graceful = true;
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            graceful = arguments.at("mode").as_string() != "abrupt";
-        }
-
-        sprtData.stopPool(graceful);
-        switchToSprtView();
-        return GuiToolResult{
-            .success = true,
-            .content = graceful
-                ? "Stopping the SPRT test gracefully: the game already in progress will be "
-                  "finished, no new games will start."
-                : "Stopping the SPRT test abruptly: the in-progress game is being aborted "
-                  "immediately."
-        };
+        return GuiToolResult{.success = true, .content = buildSprtStatusText(SprtTournamentData::instance())};
     }
 
     // ------------------------------------------------------------------
@@ -732,6 +649,58 @@ namespace {
             }
         };
     }
+} // namespace
+
+// Exported (see gui-tool-sprt.h) so the unified start/stop tool (gui-tool-status-register.cpp)
+// can dispatch into it directly by type -- start_sprt/stop_sprt no longer exist as separate
+// model-visible tools, but the underlying logic is unchanged.
+GuiToolResult handleStartSprtTournament(const QaplaTester::Json::JsonValue&) {
+    auto& sprtData = SprtTournamentData::instance();
+    if (sprtData.isRunning() || sprtData.isStarting()) {
+        return GuiToolResult{
+            .success = false,
+            .content = "An SPRT test is already running. Stop it first if you want to start a different one."
+        };
+    }
+
+    auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
+
+    sprtData.startTournament(); // always verbose, same as the classic "Start" button
+
+    if (!sprtData.isRunning() && !sprtData.isStarting()) {
+        auto reason = findRecentSprtSnackbar(historyCountBefore);
+        return GuiToolResult{
+            .success = false,
+            .content = reason.empty() ? "Could not start the SPRT test." : reason
+        };
+    }
+
+    sprtData.setPoolConcurrency(sprtData.getExternalConcurrency(), true, true);
+    switchToSprtView();
+    return GuiToolResult{.success = true, .content = "SPRT test started."};
+}
+
+GuiToolResult handleStopSprtTournament(const QaplaTester::Json::JsonValue& arguments) {
+    auto& sprtData = SprtTournamentData::instance();
+    if (!sprtData.isRunning() && !sprtData.isStarting()) {
+        return GuiToolResult{.success = false, .content = "No SPRT test is currently running."};
+    }
+
+    bool graceful = true;
+    if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+        graceful = arguments.at("mode").as_string() != "abrupt";
+    }
+
+    sprtData.stopPool(graceful);
+    switchToSprtView();
+    return GuiToolResult{
+        .success = true,
+        .content = graceful
+            ? "Stopping the SPRT test gracefully: the game already in progress will be "
+              "finished, no new games will start."
+            : "Stopping the SPRT test abruptly: the in-progress game is being aborted "
+              "immediately."
+    };
 }
 
 void registerSprtTools(GuiToolRegistry& registry) {
@@ -756,44 +725,31 @@ void registerSprtTools(GuiToolRegistry& registry) {
         .name = "configure_sprt",
         .description = "Sets SPRT test options: time_control, elo0/elo1 (H0/H1 Elo bounds), "
                         "alpha, beta, max_games, model, pentanomial, openings_file, pgn_file, "
-                        "concurrency. Every field independent/optional -- pass ONLY what user "
-                        "asked to change, don't require/ask for others first. Anything not "
-                        "passed keeps prior value (this session or earlier) -- call "
-                        "get_sprt_status first if unsure current value. IMPORTANT: fully "
+                        "concurrency, draw_mode/draw_min_full_moves/"
+                        "draw_required_consecutive_moves/draw_centipawn_threshold, resign_mode/"
+                        "resign_required_consecutive_moves/resign_centipawn_threshold/"
+                        "resign_two_sided. Every field independent/optional -- pass ONLY what "
+                        "user asked to change, don't require/ask for others first. Anything not "
+                        "passed keeps prior value (this session or earlier). Response always "
+                        "reports the full current SPRT config, so no separate get_sprt_status "
+                        "call is normally needed to confirm what changed. IMPORTANT: fully "
                         "separate config from configure_tournament -- classic tournament and "
-                        "SPRT each have own time control, openings file, concurrency etc, "
-                        "despite same field names. If user's message doesn't make clear "
-                        "tournament vs SPRT (e.g. bare \"set time control to 1 min/game\"), "
-                        "infer from conversation so far (multi-engine tournament or "
+                        "SPRT each have own time control, openings file, concurrency, "
+                        "adjudication etc, despite same field names. If user's message doesn't "
+                        "make clear tournament vs SPRT (e.g. bare \"set time control to 1 "
+                        "min/game\"), infer from conversation so far (multi-engine tournament or "
                         "champion-vs-challenger SPRT?); if still unclear from context, ask which "
                         "they mean, never guess -- wrong guess silently configures other "
                         "feature. openings_file must be set (here or earlier session) before "
-                        "start_sprt succeeds. If missing/invalid or user wants to "
-                        "browse, call open_sprt_openings_file_dialog instead of asking for typed "
-                        "path -- same for pgn_file/open_sprt_pgn_file_dialog.",
+                        "start_sprt succeeds. If missing/invalid or user wants to browse, set "
+                        "openings_file_dialog/pgn_file_dialog to true instead of a typed path. "
+                        "draw_mode/resign_mode \"off\"/\"test\"/\"active\"; both disabled "
+                        "(\"off\") by default.",
         .parametersSchema = buildConfigureSprtSchema(),
-        .handler = handleConfigureSprt
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "open_sprt_openings_file_dialog",
-        .description = "Opens GUI's native file picker for user to choose SPRT test's openings "
-                        "file -- no filesystem access here, never guess/invent path. Use "
-                        "instead of asking user to type/paste path whenever missing, reported "
-                        "invalid, or user wants to browse. Chosen path applied immediately, "
-                        "same as configure_sprt's openings_file.",
-        .handler = handleOpenSprtOpeningsFileDialog,
-        .timeout = std::chrono::minutes(10)
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "open_sprt_pgn_file_dialog",
-        .description = "Opens GUI's native save-file picker for user to choose where SPRT "
-                        "test's PGN output file gets written -- no filesystem access here, "
-                        "never guess/invent path. Use instead of asking user to type/paste "
-                        "path. Chosen path applied immediately, same as configure_sprt's "
-                        "pgn_file.",
-        .handler = handleOpenSprtPgnFileDialog,
+        .handler = handleConfigureSprt,
+        // openings_file_dialog/pgn_file_dialog wait on the user picking a file in a native
+        // dialog, which can legitimately take much longer than a normal tool call -- see
+        // open_add_engine_dialog's identical timeout.
         .timeout = std::chrono::minutes(10)
     });
 
@@ -804,54 +760,11 @@ void registerSprtTools(GuiToolRegistry& registry) {
                         "PGN output file, concurrency, draw/resign adjudication settings, "
                         "running/finished status. Entirely separate from get_tournament_status "
                         "(classic tournament mode) -- call this one specifically for SPRT "
-                        "questions. Call FIRST whenever request changes only one SPRT setting "
-                        "and you're unsure rest is configured, or unclear if user means "
-                        "tournament or SPRT (comparing vs get_tournament_status helps tell "
-                        "which they're mid-configuring).",
+                        "questions. configure_sprt already returns this same full status after "
+                        "any change, so this is only needed for a pure status check that "
+                        "changes nothing, or to tell tournament vs SPRT apart when unclear which "
+                        "the user is mid-configuring.",
         .handler = handleGetSprtStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "configure_sprt_draw_adjudication",
-        .description = "Sets draw adjudication for SPRT test (separate from classic "
-                        "tournament's configure_draw_adjudication): mode (off/test/active), "
-                        "min_full_moves, required_consecutive_moves, centipawn_threshold. Every "
-                        "field independent/optional -- pass only what user asked to change. "
-                        "Disabled (mode=\"off\") by default.",
-        .parametersSchema = buildConfigureSprtDrawAdjudicationSchema(),
-        .handler = handleConfigureSprtDrawAdjudication
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "configure_sprt_resign_adjudication",
-        .description = "Sets resign adjudication for SPRT test (separate from classic "
-                        "tournament's configure_resign_adjudication): mode (off/test/active), "
-                        "required_consecutive_moves, centipawn_threshold, two_sided. Every "
-                        "field independent/optional -- pass only what user asked to change. "
-                        "Disabled (mode=\"off\") by default.",
-        .parametersSchema = buildConfigureSprtResignAdjudicationSchema(),
-        .handler = handleConfigureSprtResignAdjudication
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "start_sprt",
-        .description = "Starts SPRT test with engines/settings from select_sprt_engines/"
-                        "configure_sprt. Requires champion+challenger already selected and "
-                        "openings file already configured; result states exactly which "
-                        "precondition missing if it can't start.",
-        .handler = handleStartSprtTournament,
-        // Engine processes need to launch and initialize; a handful of
-        // engines can legitimately take longer than the default 30s.
-        .timeout = std::chrono::seconds(60)
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "stop_sprt",
-        .description = "Stops currently running SPRT test. Optional \"mode\": \"graceful\" "
-                        "(default) finishes game in progress, starts no new one; \"abrupt\" "
-                        "aborts in-progress game immediately. Fails if no SPRT test running.",
-        .parametersSchema = buildStopSprtTournamentSchema(),
-        .handler = handleStopSprtTournament
     });
 
     registry.registerTool(GuiToolDefinition{

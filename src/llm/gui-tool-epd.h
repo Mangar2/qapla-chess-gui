@@ -25,7 +25,9 @@ namespace QaplaLlm {
 
 /**
  * @brief Registers the "EPD" tool group: select_epd_engines, configure_epd,
- * get_epd_status, start_epd_analysis, stop_epd_analysis, clear_epd_result, show_epd_result.
+ * get_epd_status, clear_epd_result, show_epd_result. start/stop are handled by the unified
+ * start/stop tool in gui-tool-status-register.cpp instead -- see
+ * handleStartEpdAnalysis/handleStopEpdAnalysis below.
  *
  * EPD analysis tests one or more engines against a fixed set of positions (from an EPD/RAW
  * position file), checking whether each engine finds the expected best move within a time
@@ -43,5 +45,23 @@ namespace QaplaLlm {
  * only the qapla executable links this.
  */
 void registerEpdTools(GuiToolRegistry& registry);
+
+/**
+ * @brief Starts (or resumes) the EPD analysis (see EpdData::analyse()), reporting exactly which
+ * precondition is missing if it can't.
+ *
+ * Exported rather than kept file-local so the unified "start" tool (gui-tool-status-register.cpp)
+ * can dispatch into it by type="epd" -- there is no separate model-visible "start_epd_analysis"
+ * tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleStartEpdAnalysis(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Stops the running EPD analysis. `arguments["mode"]` = "graceful" (default) or "abrupt".
+ *
+ * Exported for the same reason as handleStartEpdAnalysis() -- dispatched into by the unified
+ * "stop" tool.
+ */
+[[nodiscard]] GuiToolResult handleStopEpdAnalysis(const QaplaTester::Json::JsonValue& arguments);
 
 } // namespace QaplaLlm

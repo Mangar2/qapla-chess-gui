@@ -151,9 +151,9 @@ namespace QaplaTest {
             badFileArgs["epd_file"] = "/no/such/file.epd";
             auto badFileResult = callToolAndYield(ctx, "configure_epd", badFileArgs);
             IM_CHECK(!badFileResult.success);
-            // The rejection must point the model at the file dialog tool instead of asking
-            // the user to type a corrected path (see open_epd_file_dialog).
-            IM_CHECK(badFileResult.content.find("open_epd_file_dialog") != std::string::npos);
+            // The rejection must point the model at the file dialog flag instead of asking
+            // the user to type a corrected path (see configure_epd's epd_file_dialog).
+            IM_CHECK(badFileResult.content.find("epd_file_dialog") != std::string::npos);
             // Rejecting the bad path must not have reset the previously-configured one.
             IM_CHECK(epdData.config().filepath == getTestEpdPath());
 
@@ -178,8 +178,10 @@ namespace QaplaTest {
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
 
-            // stop_epd_analysis must fail cleanly when nothing is running.
-            IM_CHECK(!callToolAndYield(ctx, "stop_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            // stop(type=epd) must fail cleanly when nothing is running.
+            auto epdTypeArgs = QaplaTester::Json::JsonValue::object();
+            epdTypeArgs["type"] = "epd";
+            IM_CHECK(!callToolAndYield(ctx, "stop", epdTypeArgs).success);
 
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
             IM_CHECK(!configs.empty());
@@ -196,7 +198,7 @@ namespace QaplaTest {
             configureArgs["min_time_seconds"] = 5.0;
             IM_CHECK(callToolAndYield(ctx, "configure_epd", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start", epdTypeArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
 
             // show_epd_result must succeed while running, even before any position finished.
@@ -208,10 +210,11 @@ namespace QaplaTest {
             // (prevents crash/slow shutdown from a rapid start/stop of the engine process).
             ctx->SleepNoSkip(0.5f, 0.1f);
 
-            ctx->LogInfo("Step: stop_epd_analysis(mode=abrupt)");
+            ctx->LogInfo("Step: stop(type=epd, mode=abrupt)");
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "epd";
             stopArgs["mode"] = "abrupt";
-            auto stopResult = callToolAndYield(ctx, "stop_epd_analysis", stopArgs);
+            auto stopResult = callToolAndYield(ctx, "stop", stopArgs);
             IM_CHECK(stopResult.success);
             IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
             IM_CHECK(!QaplaWindows::EpdData::instance().isRunning());
@@ -239,7 +242,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "ConcurrencySurvivesStopViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: concurrency survives stop_epd_analysis ===");
+            ctx->LogInfo("=== Test: concurrency survives stop(type=epd) ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -262,14 +265,17 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "configure_epd", configureArgs).success);
             IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
 
-            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            auto startArgs = QaplaTester::Json::JsonValue::object();
+            startArgs["type"] = "epd";
+            IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
             IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
 
             ctx->SleepNoSkip(0.5f, 0.1f);
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "epd";
             stopArgs["mode"] = "abrupt";
-            IM_CHECK(callToolAndYield(ctx, "stop_epd_analysis", stopArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "stop", stopArgs).success);
             IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
 
             IM_CHECK_EQ(QaplaWindows::EpdData::instance().getExternalConcurrency(), configuredConcurrency);
@@ -306,13 +312,16 @@ namespace QaplaTest {
             configureArgs["min_time_seconds"] = 5.0;
             IM_CHECK(callToolAndYield(ctx, "configure_epd", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            auto startArgs = QaplaTester::Json::JsonValue::object();
+            startArgs["type"] = "epd";
+            IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
             ctx->SleepNoSkip(0.5f, 0.1f); // see the identical wait above
 
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "epd";
             stopArgs["mode"] = "abrupt";
-            IM_CHECK(callToolAndYield(ctx, "stop_epd_analysis", stopArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "stop", stopArgs).success);
             IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
 
             // Change the configuration without clearing first -- state is Stopped, not Cleared.
@@ -320,13 +329,13 @@ namespace QaplaTest {
             changeArgs["max_time_seconds"] = 6.0;
             IM_CHECK(callToolAndYield(ctx, "configure_epd", changeArgs).success);
 
-            auto blockedResult = callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object());
+            auto blockedResult = callToolAndYield(ctx, "start", startArgs);
             IM_CHECK(!blockedResult.success);
             IM_CHECK(blockedResult.content.find("clear_epd_result") != std::string::npos);
 
             // Following that exact guidance must actually unblock a fresh start.
             IM_CHECK(callToolAndYield(ctx, "clear_epd_result", QaplaTester::Json::JsonValue::object()).success);
-            IM_CHECK(callToolAndYield(ctx, "start_epd_analysis", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
             ctx->SleepNoSkip(0.5f, 0.1f);
 

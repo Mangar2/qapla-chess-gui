@@ -63,9 +63,9 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: select_sprt_engines / configure_sprt / configure_sprt_draw_adjudication /
-        // configure_sprt_resign_adjudication / get_sprt_status, called directly through
-        // GuiToolRegistry (no LLM). No SPRT test needs to actually run for this.
+        // Test: select_sprt_engines / configure_sprt (incl. its draw_*/resign_* adjudication
+        // fields) / get_sprt_status, called directly through GuiToolRegistry (no LLM). No SPRT
+        // test needs to actually run for this.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "ConfigureSprtViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
@@ -127,24 +127,24 @@ namespace QaplaTest {
             auto tournamentStatusBefore = callToolAndYield(ctx, "get_tournament_status", QaplaTester::Json::JsonValue::object());
             IM_CHECK(tournamentStatusBefore.success);
 
-            ctx->LogInfo("Step 3: configure_sprt_draw_adjudication / configure_sprt_resign_adjudication");
+            ctx->LogInfo("Step 3: configure_sprt's draw_*/resign_* fields");
             auto drawArgs = QaplaTester::Json::JsonValue::object();
-            drawArgs["mode"] = "active";
-            drawArgs["centipawn_threshold"] = 15.0;
-            IM_CHECK(callToolAndYield(ctx, "configure_sprt_draw_adjudication", drawArgs).success);
+            drawArgs["draw_mode"] = "active";
+            drawArgs["draw_centipawn_threshold"] = 15.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", drawArgs).success);
             IM_CHECK(sprtData.tournamentAdjudication().drawConfig().active);
 
             auto resignArgs = QaplaTester::Json::JsonValue::object();
-            resignArgs["mode"] = "test";
-            resignArgs["two_sided"] = true;
-            IM_CHECK(callToolAndYield(ctx, "configure_sprt_resign_adjudication", resignArgs).success);
+            resignArgs["resign_mode"] = "test";
+            resignArgs["resign_two_sided"] = true;
+            auto resignResult = callToolAndYield(ctx, "configure_sprt", resignArgs);
+            IM_CHECK(resignResult.success);
             IM_CHECK(sprtData.tournamentAdjudication().resignConfig().active);
             IM_CHECK(sprtData.tournamentAdjudication().resignConfig().testOnly);
             IM_CHECK(sprtData.tournamentAdjudication().resignConfig().twoSided);
 
-            ctx->LogInfo("Step 4: get_sprt_status reflects all of the above");
-            auto status = callToolAndYield(ctx, "get_sprt_status", QaplaTester::Json::JsonValue::object());
-            IM_CHECK(status.success);
+            ctx->LogInfo("Step 4: configure_sprt's own response already reflects all of the above");
+            auto status = resignResult;
             IM_CHECK(status.content.find(configs[0].getName()) != std::string::npos);
             IM_CHECK(status.content.find(configs[1].getName()) != std::string::npos);
             IM_CHECK(status.content.find("Draw adjudication: active") != std::string::npos);
@@ -180,8 +180,10 @@ namespace QaplaTest {
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
 
-            // stop_sprt must fail cleanly when nothing is running.
-            IM_CHECK(!callToolAndYield(ctx, "stop_sprt", QaplaTester::Json::JsonValue::object()).success);
+            // stop(type=sprt) must fail cleanly when nothing is running.
+            auto sprtTypeArgs = QaplaTester::Json::JsonValue::object();
+            sprtTypeArgs["type"] = "sprt";
+            IM_CHECK(!callToolAndYield(ctx, "stop", sprtTypeArgs).success);
 
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
             IM_CHECK(configs.size() >= 2);
@@ -196,7 +198,7 @@ namespace QaplaTest {
             configureArgs["max_games"] = 4.0;
             IM_CHECK(callToolAndYield(ctx, "configure_sprt", configureArgs).success);
 
-            IM_CHECK(callToolAndYield(ctx, "start_sprt", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "start", sprtTypeArgs).success);
             IM_CHECK(waitForSprtTournamentRunning(ctx, 20.0f));
 
             // show_sprt_result must succeed while running, even before any game finished.
@@ -209,14 +211,15 @@ namespace QaplaTest {
             ctx->SleepNoSkip(0.5f, 0.1f);
 
             // "abrupt" is used here (rather than "graceful") for the same determinism reason as
-            // the tournament tool tests: stop_sprt just passes the mode through to
+            // the tournament tool tests: stop(type=sprt) just passes the mode through to
             // SprtTournamentData::stopPool(), whose graceful/abrupt behavior isn't new logic
             // under test here, and graceful would depend on how long this machine's real engines
             // take to finish a game.
-            ctx->LogInfo("Step: stop_sprt(mode=abrupt)");
+            ctx->LogInfo("Step: stop(type=sprt, mode=abrupt)");
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "sprt";
             stopArgs["mode"] = "abrupt";
-            auto stopResult = callToolAndYield(ctx, "stop_sprt", stopArgs);
+            auto stopResult = callToolAndYield(ctx, "stop", stopArgs);
             IM_CHECK(stopResult.success);
             IM_CHECK(waitForSprtTournamentStopped(ctx, 15.0f));
             IM_CHECK(!QaplaWindows::SprtTournamentData::instance().isRunning());
@@ -244,7 +247,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "ConcurrencySurvivesStopViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: concurrency survives stop_sprt ===");
+            ctx->LogInfo("=== Test: concurrency survives stop(type=sprt) ===");
 
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -265,14 +268,17 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "configure_sprt", configureArgs).success);
             IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);
 
-            IM_CHECK(callToolAndYield(ctx, "start_sprt", QaplaTester::Json::JsonValue::object()).success);
+            auto startArgs = QaplaTester::Json::JsonValue::object();
+            startArgs["type"] = "sprt";
+            IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForSprtTournamentRunning(ctx, 20.0f));
             IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);
 
             ctx->SleepNoSkip(0.5f, 0.1f);
             auto stopArgs = QaplaTester::Json::JsonValue::object();
+            stopArgs["type"] = "sprt";
             stopArgs["mode"] = "abrupt";
-            IM_CHECK(callToolAndYield(ctx, "stop_sprt", stopArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "stop", stopArgs).success);
             IM_CHECK(waitForSprtTournamentStopped(ctx, 15.0f));
 
             IM_CHECK_EQ(QaplaWindows::SprtTournamentData::instance().getExternalConcurrency(), configuredConcurrency);

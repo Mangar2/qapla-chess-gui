@@ -59,6 +59,19 @@ struct GuiToolResult {
      * tournament results.") since the control itself carries the actual data.
      */
     std::function<void()> renderWidget;
+
+    /**
+     * @brief Ends the agent turn right after this call, skipping any further model round-trip.
+     *
+     * `content` still reaches the user exactly as usual, via the normal tool-result chat entry
+     * (see LlmChatController::appendToolEventToHistory) -- but the model is never asked again,
+     * so it never gets a chance to add a reply_to_user narrating/paraphrasing what just
+     * happened. Use for actions whose outcome must never be commented on (e.g. a file dialog
+     * result): telling the model not to comment, even worded as a hard prohibition in both the
+     * system prompt and the tool result itself, was not reliable -- removing it from the loop
+     * is.
+     */
+    bool terminal = false;
 };
 
 /**

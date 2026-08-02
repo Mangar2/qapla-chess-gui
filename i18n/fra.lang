@@ -1,8 +1,8 @@
 [Translation]
 id=Button
-{s:"Add",t:"2026-07-30"}=Ajouter
-{s:"Remove",t:"2026-07-30"}=Retirer
-{s:"Detect",t:"2026-07-30"}=Detecter
+{s:"Add",t:"2026-08-02"}=Ajouter
+{s:"Remove",t:"2026-08-02"}=Retirer
+{s:"Detect",t:"2026-08-02"}=Detecter
 {s:"New",t:"2026-07-25"}=Nouveau
 {s:"Now",t:"2026-07-25"}=Maint
 {s:"Stop",t:"2026-07-25"}=Arret
@@ -599,15 +599,15 @@ Tournament type:\n  gauntlet - One engine plays against all others\n  round-robi
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2026-07-30"}=Moteurs
-{s:"Tournament",t:"2026-07-30"}=Tournoi
-{s:"Pgn",t:"2026-07-30"}=Pgn
-{s:"Epd",t:"2026-07-30"}=Epd
-{s:"Test",t:"2026-07-30"}=Test
-{s:"Settings",t:"2026-07-30"}=Paramètres
-{s:"Board",t:"2026-07-30"}=Échiquier
-{s:"Chatbot",t:"2026-07-30"}=Chatbot
-{s:"SPRT",t:"2026-07-30"}=SPRT
+{s:"Engines",t:"2026-08-02"}=Moteurs
+{s:"Tournament",t:"2026-08-02"}=Tournoi
+{s:"Pgn",t:"2026-08-02"}=Pgn
+{s:"Epd",t:"2026-08-02"}=Epd
+{s:"Test",t:"2026-08-02"}=Test
+{s:"Settings",t:"2026-08-02"}=Paramètres
+{s:"Board",t:"2026-08-02"}=Échiquier
+{s:"Chatbot",t:"2026-08-02"}=Chatbot
+{s:"SPRT",t:"2026-08-02"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -803,7 +803,7 @@ id=Text
 {s:"No engines added. You can add engines now if you like.",t:"2025-12-16"}=Aucun moteur ajouté. Vous pouvez ajouter des moteurs maintenant si vous voulez.
 {s:"C:\\Chess\\cutechess-cli\\qapla\\1.\\2\\Leorik-\\3.\\4.exe",t:"2025-12-16"}=C:\Chess\cutechess-cli\qapla\1.\2\Leorik-\3.\4.exe
 {s:"Messages",t:"2026-07-25"}=Messages
-{s:"How can I help you?",t:"2026-07-30"}=How can I help you?
+{s:"How can I help you?",t:"2026-08-02"}=How can I help you?
 {s:"Select a tutorial to run:",t:"2025-12-21"}=Sélectionner un tutoriel à exécuter :
 {s:"Please select your preferred language:",t:"2025-12-19"}=Veuillez sélectionner votre langue préférée :
 {h:"b0ade7c5",s:"Select which engine should be tested (gauntlet eng",t:"2026-07-25"}=Select which engine should be tested (gauntlet engine). This is the engine whose performance will be measured. The other engine will be used as the comparison baseline.
@@ -825,20 +825,20 @@ id=Text
 
 [Translation]
 id=TextButton
-{s:"Tournament",t:"2026-07-30"}=Tournoi
-{s:"SPRT Tournament",t:"2026-07-30"}=Tournoi SPRT
-{s:"EPD Analysis",t:"2026-07-30"}=Analyse EPD
-{s:"Board",t:"2026-07-30"}=Échiquier
-{s:"Tutorial",t:"2026-07-30"}=Tutoriel
-{s:"Choose Language",t:"2026-07-30"}=Choisir la langue
-{s:"Messages",t:"2026-07-30"}=Messages
+{s:"Tournament",t:"2026-08-02"}=Tournoi
+{s:"SPRT Tournament",t:"2026-08-02"}=Tournoi SPRT
+{s:"EPD Analysis",t:"2026-08-02"}=Analyse EPD
+{s:"Board",t:"2026-08-02"}=Échiquier
+{s:"Tutorial",t:"2026-08-02"}=Tutoriel
+{s:"Choose Language",t:"2026-08-02"}=Choisir la langue
+{s:"Messages",t:"2026-08-02"}=Messages
 {s:"Deutsch",t:"2025-12-19"}=Deutsch
 {s:"English",t:"2025-12-19"}=English
 {s:"Français",t:"2025-12-19"}=Français
-{s:"Add Engines",t:"2026-07-30"}=Ajouter des moteurs
+{s:"Add Engines",t:"2026-08-02"}=Ajouter des moteurs
 {s:"Cancel",t:"2025-12-21"}=Annuler
 {s:"Board Engines",t:"2025-12-21"}=Moteurs d'échiquier
 {s:"Board Window",t:"2025-12-21"}=Fenêtre d'échiquier
 {s:"Board Cut & Paste",t:"2025-12-21"}=Couper et coller d'échiquier
-{s:"AI Chat",t:"2026-07-30"}=AI Chat
+{s:"AI Chat",t:"2026-08-02"}=AI Chat
 

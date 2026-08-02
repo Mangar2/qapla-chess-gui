@@ -166,6 +166,12 @@ namespace {
             prop["description"] = description;
             return prop;
         };
+        auto boolProp = [](const std::string& description) {
+            auto prop = Json::JsonValue::object();
+            prop["type"] = "boolean";
+            prop["description"] = description;
+            return prop;
+        };
 
         properties["time_control"] = timeControlSchemaProperty();
         properties["games"] = integerProp(
@@ -180,9 +186,38 @@ namespace {
             "Times full pairing set repeats. Default 1. See \"games\" for how this multiplies "
             "into tournament total.");
         properties["event"] = stringProp("Tournament/event name.");
-        properties["openings_file"] = stringProp("Path to existing EPD/PGN opening book file on disk.");
+        properties["openings_file"] = stringProp("Path to EPD/PGN opening book file.");
+        properties["openings_file_dialog"] = boolProp(
+            "Set true to open a native file picker instead of passing openings_file.");
         properties["pgn_file"] = stringProp("Path to save played games as PGN.");
+        properties["pgn_file_dialog"] = boolProp(
+            "Set true to open a native save-file picker instead of passing pgn_file.");
         properties["concurrency"] = integerProp("Games run in parallel.");
+        properties["draw_mode"] = adjudicationModeSchemaProperty(
+            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end "
+            "games. \"active\": ends games early as draw once conditions below met.");
+        properties["draw_min_full_moves"] = integerProp(
+            "Min full moves before draw adjudication can trigger. Default 80.");
+        properties["draw_required_consecutive_moves"] = integerProp(
+            "Consecutive moves (engines' own eval) that must stay within draw_centipawn_threshold "
+            "of equal before draw adjudication. Default 20.");
+        properties["draw_centipawn_threshold"] = integerProp(
+            "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of "
+            "equal). Positive number. Default 20.");
+        properties["resign_mode"] = adjudicationModeSchemaProperty(
+            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't "
+            "end games. \"active\": ends games early as loss for losing side once conditions "
+            "below met.");
+        properties["resign_required_consecutive_moves"] = integerProp(
+            "Consecutive moves whose own eval must stay at/below -resign_centipawn_threshold "
+            "(that bad or worse) before resign adjudication. Default 5.");
+        properties["resign_centipawn_threshold"] = integerProp(
+            "How bad, in centipawns from losing side's own view, before resignation-worthy -- "
+            "e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.");
+        properties["resign_two_sided"] = boolProp(
+            "If true, both engines must independently agree position lost before adjudicating "
+            "-- more conservative, avoids resignation from one engine's eval blunder alone. "
+            "Default false.");
         return schema;
     }
 
@@ -232,48 +267,36 @@ namespace {
     void applyOpeningsFile(TournamentData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
             problems.push_back("openings file not found: " + path +
-                " -- call open_tournament_openings_file_dialog to let the user pick a valid one");
+                " -- set openings_file_dialog=true instead to let the user pick a valid one");
             return;
         }
         data.tournamentOpening().openings().file = path;
-        applied.push_back("openings file");
+        applied.push_back("openings file: " + path);
     }
 
-    GuiToolResult handleOpenTournamentOpeningsFileDialog(const Json::JsonValue&) {
+    void openOpeningsFileDialog(TournamentData& data, std::vector<std::string>& applied) {
         auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
         if (paths.empty()) {
-            return GuiToolResult{
-                .success = true,
-                .content = "The user cancelled the dialog; the openings file was not changed."
-            };
+            applied.push_back("openings file (dialog cancelled, unchanged)");
+            return;
         }
-
-        auto& tournamentData = TournamentData::instance();
-        tournamentData.tournamentOpening().openings().file = paths.front();
-        tournamentData.tournamentOpening().updateConfiguration();
-        switchToTournamentView();
-        return GuiToolResult{.success = true, .content = "Openings file set to: " + paths.front()};
-    }
-
-    GuiToolResult handleOpenTournamentPgnFileDialog(const Json::JsonValue&) {
-        auto& tournamentData = TournamentData::instance();
-        auto path = QaplaWindows::OsDialogs::saveFileDialog({{"PGN files (*.pgn)", "pgn"}}, tournamentData.pgnConfig().file);
-        if (path.empty()) {
-            return GuiToolResult{
-                .success = true,
-                .content = "The user cancelled the dialog; the PGN output file was not changed."
-            };
-        }
-
-        tournamentData.pgnConfig().file = path;
-        tournamentData.tournamentPgn().updateConfiguration();
-        switchToTournamentView();
-        return GuiToolResult{.success = true, .content = "PGN output file set to: " + path};
+        data.tournamentOpening().openings().file = paths.front();
+        applied.push_back("openings file selected: " + paths.front());
     }
 
     void applyPgnFile(TournamentData& data, const std::string& path, std::vector<std::string>& applied) {
         data.pgnConfig().file = path;
-        applied.push_back("PGN output file");
+        applied.push_back("PGN output file: " + path);
+    }
+
+    void openPgnFileDialog(TournamentData& data, std::vector<std::string>& applied) {
+        auto chosenPath = QaplaWindows::OsDialogs::saveFileDialog({{"PGN files (*.pgn)", "pgn"}}, data.pgnConfig().file);
+        if (chosenPath.empty()) {
+            applied.push_back("PGN output file (dialog cancelled, unchanged)");
+            return;
+        }
+        data.pgnConfig().file = chosenPath;
+        applied.push_back("PGN output file selected: " + chosenPath);
     }
 
     void applyConcurrency(TournamentData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -286,69 +309,55 @@ namespace {
         applied.push_back("concurrency=" + std::to_string(concurrency));
     }
 
-    GuiToolResult buildConfigureResult(const std::vector<std::string>& applied, const std::vector<std::string>& problems) {
-        std::string message;
-        if (!applied.empty()) {
-            message = "Configured: " + joinStrings(applied) + ".";
+    void applyDrawMode(TournamentData& data, const std::string& mode, std::vector<std::string>& applied, std::vector<std::string>& problems) {
+        auto& config = data.drawConfig();
+        if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+            applied.push_back("draw adjudication mode=" + mode);
         }
-        if (!problems.empty()) {
-            if (!message.empty()) {
-                message += " ";
-            }
-            message += "Problems: " + joinStrings(problems) + ".";
-        }
-        if (message.empty()) {
-            message = "No configuration changes were provided.";
-        }
-        return GuiToolResult{.success = problems.empty(), .content = message};
     }
 
-    GuiToolResult handleConfigureTournament(const Json::JsonValue& arguments) {
-        auto& tournamentData = TournamentData::instance();
-        std::vector<std::string> applied;
-        std::vector<std::string> problems;
-
-        if (arguments.contains("time_control") && arguments.at("time_control").is_string()) {
-            applyTimeControl(tournamentData, arguments.at("time_control").as_string(), applied);
-        }
-        if (arguments.contains("games") && arguments.at("games").is_number()) {
-            applyGames(tournamentData, arguments.at("games").as_number(), applied, problems);
-        }
-        if (arguments.contains("rounds") && arguments.at("rounds").is_number()) {
-            applyRounds(tournamentData, arguments.at("rounds").as_number(), applied, problems);
-        }
-        if (arguments.contains("event") && arguments.at("event").is_string()) {
-            applyEvent(tournamentData, arguments.at("event").as_string(), applied);
-        }
-        if (arguments.contains("openings_file") && arguments.at("openings_file").is_string()) {
-            applyOpeningsFile(tournamentData, arguments.at("openings_file").as_string(), applied, problems);
-        }
-        if (arguments.contains("pgn_file") && arguments.at("pgn_file").is_string()) {
-            applyPgnFile(tournamentData, arguments.at("pgn_file").as_string(), applied);
-        }
-        if (arguments.contains("concurrency") && arguments.at("concurrency").is_number()) {
-            applyConcurrency(tournamentData, arguments.at("concurrency").as_number(), applied, problems);
-        }
-
-        // applyGames/applyRounds/applyEvent, applyOpeningsFile and
-        // applyPgnFile all mutate raw references (config()/openings()/
-        // pgnOptions()) that don't persist on their own -- see
-        // ImGuiTournamentConfiguration::updateConfiguration()'s doc comment.
-        // Calling all three unconditionally is cheap and always correct,
-        // whether or not this particular call touched their fields.
-        tournamentData.tournamentConfiguration().updateConfiguration();
-        tournamentData.tournamentOpening().updateConfiguration();
-        tournamentData.tournamentPgn().updateConfiguration();
-
-        if (!applied.empty()) {
-            switchToTournamentView();
-        }
-        return buildConfigureResult(applied, problems);
+    void applyDrawMinFullMoves(TournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.drawConfig();
+        config.minFullMoves = static_cast<uint32_t>(value);
+        applied.push_back("draw min full moves=" + std::to_string(config.minFullMoves));
     }
 
-    // ------------------------------------------------------------------
-    // get_tournament_status
-    // ------------------------------------------------------------------
+    void applyDrawRequiredConsecutiveMoves(TournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.drawConfig();
+        config.requiredConsecutiveMoves = static_cast<uint32_t>(value);
+        applied.push_back("draw required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+    }
+
+    void applyDrawCentipawnThreshold(TournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.drawConfig();
+        config.centipawnThreshold = static_cast<int>(value);
+        applied.push_back("draw centipawn threshold=" + std::to_string(config.centipawnThreshold));
+    }
+
+    void applyResignMode(TournamentData& data, const std::string& mode, std::vector<std::string>& applied, std::vector<std::string>& problems) {
+        auto& config = data.resignConfig();
+        if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
+            applied.push_back("resign adjudication mode=" + mode);
+        }
+    }
+
+    void applyResignRequiredConsecutiveMoves(TournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.resignConfig();
+        config.requiredConsecutiveMoves = static_cast<uint32_t>(value);
+        applied.push_back("resign required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+    }
+
+    void applyResignCentipawnThreshold(TournamentData& data, double value, std::vector<std::string>& applied) {
+        auto& config = data.resignConfig();
+        config.centipawnThreshold = static_cast<int>(value);
+        applied.push_back("resign centipawn threshold=" + std::to_string(config.centipawnThreshold));
+    }
+
+    void applyResignTwoSided(TournamentData& data, bool value, std::vector<std::string>& applied) {
+        auto& config = data.resignConfig();
+        config.twoSided = value;
+        applied.push_back(std::string("resign two-sided=") + (value ? "yes" : "no"));
+    }
 
     // adjudicationModeText()/adjudicationModeSchemaProperty()/applyAdjudicationMode() live in
     // gui-tool-registry.h -- shared with the SPRT adjudication tools (gui-tool-sprt-register.cpp)
@@ -367,8 +376,34 @@ namespace {
             resign.twoSided ? "yes" : "no");
     }
 
-    GuiToolResult handleGetTournamentStatus(const Json::JsonValue&) {
-        auto& tournamentData = TournamentData::instance();
+    // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/
+    // Stopping alike -- see TournamentData::isRunning()'s doc comment), so it can't tell those
+    // apart on its own; getState() can. Distinguishing GracefulStopping matters here since a
+    // tournament in that state is still actively playing its in-progress games, just declining
+    // to start new ones -- reporting it as plain "running" would hide that a stop was already
+    // requested.
+    std::string tournamentRunStateText(TournamentData& tournamentData) {
+        switch (tournamentData.getState()) {
+            case TournamentData::State::Starting:
+                return "A tournament is currently starting.";
+            case TournamentData::State::Running:
+                return "A tournament is currently running.";
+            case TournamentData::State::GracefulStopping:
+                return "A tournament is currently running but stopping gracefully -- "
+                       "in-progress games will finish, no new ones will start.";
+            case TournamentData::State::Stopping:
+                return "A tournament is currently stopping abruptly -- in-progress games are "
+                       "being aborted.";
+            case TournamentData::State::Stopped:
+            default:
+                return "No tournament is currently running.";
+        }
+    }
+
+    // Shared by get_tournament_status and configure_tournament's result (the latter always
+    // ends with the full status too -- see buildConfigureResult -- so the model never needs a
+    // separate get_tournament_status round-trip just to confirm what it changed).
+    std::string buildTournamentStatusText(TournamentData& tournamentData) {
         auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
         std::vector<std::string> engineNames;
         for (const auto& engine : selectedEngines) {
@@ -378,14 +413,9 @@ namespace {
         const auto& openingsFile = tournamentData.tournamentOpening().openings().file;
         const auto& pgnFile = tournamentData.pgnConfig().file;
 
-        std::string runState = "No tournament is currently running.";
-        if (tournamentData.isRunning()) {
-            runState = "A tournament is currently running.";
-        } else if (tournamentData.isStarting()) {
-            runState = "A tournament is currently starting.";
-        }
+        std::string runState = tournamentRunStateText(tournamentData);
 
-        std::string message = std::format(
+        return std::format(
             "Engines: {}. Time control: {}. Games per pairing: {}. Rounds: {}. "
             "Event name: {}. Openings file: {}. PGN output file: {}. Concurrency: {}. {} {}",
             engineNames.empty() ? "none selected" : joinStrings(engineNames),
@@ -397,186 +427,104 @@ namespace {
             tournamentData.getExternalConcurrency(),
             runState,
             adjudicationSummary(tournamentData));
-
-        return GuiToolResult{.success = true, .content = message};
     }
 
-    // ------------------------------------------------------------------
-    // configure_draw_adjudication / configure_resign_adjudication
-    // ------------------------------------------------------------------
-
-    Json::JsonValue buildConfigureDrawAdjudicationSchema() {
-        auto schema = noArgsToolSchema();
-        auto& properties = schema["properties"];
-
-        auto intProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "integer";
-            prop["description"] = description;
-            return prop;
-        };
-
-        properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end "
-            "games. \"active\": ends games early as draw once conditions below met.");
-        properties["min_full_moves"] = intProp(
-            "Min full moves before draw adjudication can trigger. Default 80.");
-        properties["required_consecutive_moves"] = intProp(
-            "Consecutive moves (engines' own eval) that must stay within centipawn_threshold of "
-            "equal before draw adjudication. Default 20.");
-        properties["centipawn_threshold"] = intProp(
-            "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of "
-            "equal). Positive number. Default 20.");
-        return schema;
+    GuiToolResult buildConfigureResult(TournamentData& tournamentData, const std::vector<std::string>& problems,
+        bool dialogOpened = false) {
+        std::string message;
+        if (!problems.empty()) {
+            message = "Problems: " + joinStrings(problems) + ". ";
+        }
+        message += buildTournamentStatusText(tournamentData);
+        return GuiToolResult{.success = problems.empty(), .content = message, .renderWidget = nullptr,
+            .terminal = dialogOpened};
     }
 
-    GuiToolResult handleConfigureDrawAdjudication(const Json::JsonValue& arguments) {
+    GuiToolResult handleConfigureTournament(const Json::JsonValue& arguments) {
         auto& tournamentData = TournamentData::instance();
-        auto& config = tournamentData.drawConfig();
         std::vector<std::string> applied;
         std::vector<std::string> problems;
+        bool dialogOpened = false;
 
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            const auto& mode = arguments.at("mode").as_string();
-            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
-                applied.push_back("draw adjudication mode=" + mode);
-            }
+        if (arguments.contains("time_control") && arguments.at("time_control").is_string()) {
+            applyTimeControl(tournamentData, arguments.at("time_control").as_string(), applied);
         }
-        if (arguments.contains("min_full_moves") && arguments.at("min_full_moves").is_number()) {
-            config.minFullMoves = static_cast<uint32_t>(arguments.at("min_full_moves").as_number());
-            applied.push_back("min full moves=" + std::to_string(config.minFullMoves));
+        if (arguments.contains("games") && arguments.at("games").is_number()) {
+            applyGames(tournamentData, arguments.at("games").as_number(), applied, problems);
         }
-        if (arguments.contains("required_consecutive_moves") &&
-            arguments.at("required_consecutive_moves").is_number()) {
-            config.requiredConsecutiveMoves =
-                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
-            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
+        if (arguments.contains("rounds") && arguments.at("rounds").is_number()) {
+            applyRounds(tournamentData, arguments.at("rounds").as_number(), applied, problems);
         }
-        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
-            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
-            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
+        if (arguments.contains("event") && arguments.at("event").is_string()) {
+            applyEvent(tournamentData, arguments.at("event").as_string(), applied);
+        }
+        if (arguments.contains("openings_file_dialog") && arguments.at("openings_file_dialog").is_boolean() &&
+            arguments.at("openings_file_dialog").as_boolean()) {
+            openOpeningsFileDialog(tournamentData, applied);
+            dialogOpened = true;
+        } else if (arguments.contains("openings_file") && arguments.at("openings_file").is_string()) {
+            applyOpeningsFile(tournamentData, arguments.at("openings_file").as_string(), applied, problems);
+        }
+        if (arguments.contains("pgn_file_dialog") && arguments.at("pgn_file_dialog").is_boolean() &&
+            arguments.at("pgn_file_dialog").as_boolean()) {
+            openPgnFileDialog(tournamentData, applied);
+            dialogOpened = true;
+        } else if (arguments.contains("pgn_file") && arguments.at("pgn_file").is_string()) {
+            applyPgnFile(tournamentData, arguments.at("pgn_file").as_string(), applied);
+        }
+        if (arguments.contains("concurrency") && arguments.at("concurrency").is_number()) {
+            applyConcurrency(tournamentData, arguments.at("concurrency").as_number(), applied, problems);
+        }
+        if (arguments.contains("draw_mode") && arguments.at("draw_mode").is_string()) {
+            applyDrawMode(tournamentData, arguments.at("draw_mode").as_string(), applied, problems);
+        }
+        if (arguments.contains("draw_min_full_moves") && arguments.at("draw_min_full_moves").is_number()) {
+            applyDrawMinFullMoves(tournamentData, arguments.at("draw_min_full_moves").as_number(), applied);
+        }
+        if (arguments.contains("draw_required_consecutive_moves") &&
+            arguments.at("draw_required_consecutive_moves").is_number()) {
+            applyDrawRequiredConsecutiveMoves(tournamentData, arguments.at("draw_required_consecutive_moves").as_number(), applied);
+        }
+        if (arguments.contains("draw_centipawn_threshold") && arguments.at("draw_centipawn_threshold").is_number()) {
+            applyDrawCentipawnThreshold(tournamentData, arguments.at("draw_centipawn_threshold").as_number(), applied);
+        }
+        if (arguments.contains("resign_mode") && arguments.at("resign_mode").is_string()) {
+            applyResignMode(tournamentData, arguments.at("resign_mode").as_string(), applied, problems);
+        }
+        if (arguments.contains("resign_required_consecutive_moves") &&
+            arguments.at("resign_required_consecutive_moves").is_number()) {
+            applyResignRequiredConsecutiveMoves(tournamentData, arguments.at("resign_required_consecutive_moves").as_number(), applied);
+        }
+        if (arguments.contains("resign_centipawn_threshold") && arguments.at("resign_centipawn_threshold").is_number()) {
+            applyResignCentipawnThreshold(tournamentData, arguments.at("resign_centipawn_threshold").as_number(), applied);
+        }
+        if (arguments.contains("resign_two_sided") && arguments.at("resign_two_sided").is_boolean()) {
+            applyResignTwoSided(tournamentData, arguments.at("resign_two_sided").as_boolean(), applied);
         }
 
-        // config is a raw reference into ImGuiTournamentAdjudication -- mutating it directly
-        // doesn't persist on its own (see ImGuiTournamentAdjudication::updateConfiguration()'s
-        // doc comment), so this must be called explicitly after every change made this way.
+        // applyGames/applyRounds/applyEvent, applyOpeningsFile and
+        // applyPgnFile all mutate raw references (config()/openings()/
+        // pgnOptions()) that don't persist on their own -- see
+        // ImGuiTournamentConfiguration::updateConfiguration()'s doc comment.
+        // Calling all unconditionally is cheap and always correct, whether or
+        // not this particular call touched their fields.
+        tournamentData.tournamentConfiguration().updateConfiguration();
+        tournamentData.tournamentOpening().updateConfiguration();
+        tournamentData.tournamentPgn().updateConfiguration();
         tournamentData.tournamentAdjudication().updateConfiguration();
+
         if (!applied.empty()) {
             switchToTournamentView();
         }
-        return buildConfigureResult(applied, problems);
-    }
-
-    Json::JsonValue buildConfigureResignAdjudicationSchema() {
-        auto schema = noArgsToolSchema();
-        auto& properties = schema["properties"];
-
-        auto intProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "integer";
-            prop["description"] = description;
-            return prop;
-        };
-        auto boolProp = [](const std::string& description) {
-            auto prop = Json::JsonValue::object();
-            prop["type"] = "boolean";
-            prop["description"] = description;
-            return prop;
-        };
-
-        properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't "
-            "end games. \"active\": ends games early as loss for losing side once conditions "
-            "below met.");
-        properties["required_consecutive_moves"] = intProp(
-            "Consecutive moves whose own eval must stay at/below -centipawn_threshold (that bad "
-            "or worse) before resign adjudication. Default 5.");
-        properties["centipawn_threshold"] = intProp(
-            "How bad, in centipawns from losing side's own view, before resignation-worthy -- "
-            "e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.");
-        properties["two_sided"] = boolProp(
-            "If true, both engines must independently agree position lost before adjudicating "
-            "-- more conservative, avoids resignation from one engine's eval blunder alone. "
-            "Default false.");
-        return schema;
-    }
-
-    GuiToolResult handleConfigureResignAdjudication(const Json::JsonValue& arguments) {
-        auto& tournamentData = TournamentData::instance();
-        auto& config = tournamentData.resignConfig();
-        std::vector<std::string> applied;
-        std::vector<std::string> problems;
-
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            const auto& mode = arguments.at("mode").as_string();
-            if (applyAdjudicationMode(mode, config.active, config.testOnly, problems)) {
-                applied.push_back("resign adjudication mode=" + mode);
-            }
-        }
-        if (arguments.contains("required_consecutive_moves") &&
-            arguments.at("required_consecutive_moves").is_number()) {
-            config.requiredConsecutiveMoves =
-                static_cast<uint32_t>(arguments.at("required_consecutive_moves").as_number());
-            applied.push_back("required consecutive moves=" + std::to_string(config.requiredConsecutiveMoves));
-        }
-        if (arguments.contains("centipawn_threshold") && arguments.at("centipawn_threshold").is_number()) {
-            config.centipawnThreshold = static_cast<int>(arguments.at("centipawn_threshold").as_number());
-            applied.push_back("centipawn threshold=" + std::to_string(config.centipawnThreshold));
-        }
-        if (arguments.contains("two_sided") && arguments.at("two_sided").is_boolean()) {
-            config.twoSided = arguments.at("two_sided").as_boolean();
-            applied.push_back(std::string("two-sided=") + (config.twoSided ? "yes" : "no"));
-        }
-
-        tournamentData.tournamentAdjudication().updateConfiguration();
-        if (!applied.empty()) {
-            switchToTournamentView();
-        }
-        return buildConfigureResult(applied, problems);
+        return buildConfigureResult(tournamentData, problems, dialogOpened);
     }
 
     // ------------------------------------------------------------------
-    // stop_tournament
+    // get_tournament_status
     // ------------------------------------------------------------------
 
-    Json::JsonValue buildStopTournamentSchema() {
-        auto schema = noArgsToolSchema();
-        auto mode = Json::JsonValue::object();
-        mode["type"] = "string";
-        auto enumValues = Json::JsonValue::array();
-        enumValues.push_back("graceful");
-        enumValues.push_back("abrupt");
-        mode["enum"] = enumValues;
-        mode["description"] =
-            "\"graceful\" (default): finish in-progress games, then stop, no new games start. "
-            "\"abrupt\": abort all in-progress games immediately. If user just says "
-            "\"stop\"/\"end tournament\" unqualified, use \"graceful\" -- ask only if they've "
-            "previously shown they care about the distinction.";
-        schema["properties"]["mode"] = mode;
-        return schema;
-    }
-
-    GuiToolResult handleStopTournament(const Json::JsonValue& arguments) {
-        auto& tournamentData = TournamentData::instance();
-        if (!tournamentData.isRunning() && !tournamentData.isStarting()) {
-            return GuiToolResult{.success = false, .content = "No tournament is currently running."};
-        }
-
-        bool graceful = true;
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            graceful = arguments.at("mode").as_string() != "abrupt";
-        }
-
-        tournamentData.stopPool(graceful);
-        switchToTournamentView();
-        return GuiToolResult{
-            .success = true,
-            .content = graceful
-                ? "Stopping the tournament gracefully: games already in progress will be "
-                  "finished, no new games will start."
-                : "Stopping the tournament abruptly: all in-progress games are being aborted "
-                  "immediately."
-        };
+    GuiToolResult handleGetTournamentStatus(const Json::JsonValue&) {
+        return GuiToolResult{.success = true, .content = buildTournamentStatusText(TournamentData::instance())};
     }
 
     // ------------------------------------------------------------------
@@ -631,35 +579,58 @@ namespace {
         };
     }
 
-    // ------------------------------------------------------------------
-    // start_tournament
-    // ------------------------------------------------------------------
+} // namespace
 
-    GuiToolResult handleStartTournament(const Json::JsonValue&) {
-        auto& tournamentData = TournamentData::instance();
-        if (tournamentData.isRunning() || tournamentData.isStarting()) {
-            return GuiToolResult{
-                .success = false,
-                .content = "A tournament is already running. Stop it first if you want to start a different one."
-            };
-        }
-
-        auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
-
-        tournamentData.startTournament(); // verbose=true, same as the classic "Start Tournament" button
-
-        if (!tournamentData.isRunning() && !tournamentData.isStarting()) {
-            auto reason = findRecentTournamentSnackbar(historyCountBefore);
-            return GuiToolResult{
-                .success = false,
-                .content = reason.empty() ? "Could not start the tournament." : reason
-            };
-        }
-
-        tournamentData.setPoolConcurrency(tournamentData.getExternalConcurrency(), true, true);
-        switchToTournamentView();
-        return GuiToolResult{.success = true, .content = "Tournament started."};
+// Exported (see gui-tool-tournament.h) so the unified start/stop tool (gui-tool-status-register.cpp)
+// can dispatch into it directly by type -- start_tournament/stop_tournament no longer exist as
+// separate model-visible tools, but the underlying logic is unchanged.
+GuiToolResult handleStartTournament(const QaplaTester::Json::JsonValue&) {
+    auto& tournamentData = TournamentData::instance();
+    if (tournamentData.isRunning() || tournamentData.isStarting()) {
+        return GuiToolResult{
+            .success = false,
+            .content = "A tournament is already running. Stop it first if you want to start a different one."
+        };
     }
+
+    auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
+
+    tournamentData.startTournament(); // verbose=true, same as the classic "Start Tournament" button
+
+    if (!tournamentData.isRunning() && !tournamentData.isStarting()) {
+        auto reason = findRecentTournamentSnackbar(historyCountBefore);
+        return GuiToolResult{
+            .success = false,
+            .content = reason.empty() ? "Could not start the tournament." : reason
+        };
+    }
+
+    tournamentData.setPoolConcurrency(tournamentData.getExternalConcurrency(), true, true);
+    switchToTournamentView();
+    return GuiToolResult{.success = true, .content = "Tournament started."};
+}
+
+GuiToolResult handleStopTournament(const QaplaTester::Json::JsonValue& arguments) {
+    auto& tournamentData = TournamentData::instance();
+    if (!tournamentData.isRunning() && !tournamentData.isStarting()) {
+        return GuiToolResult{.success = false, .content = "No tournament is currently running."};
+    }
+
+    bool graceful = true;
+    if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+        graceful = arguments.at("mode").as_string() != "abrupt";
+    }
+
+    tournamentData.stopPool(graceful);
+    switchToTournamentView();
+    return GuiToolResult{
+        .success = true,
+        .content = graceful
+            ? "Stopping the tournament gracefully: games already in progress will be "
+              "finished, no new games will start."
+            : "Stopping the tournament abruptly: all in-progress games are being aborted "
+              "immediately."
+    };
 }
 
 void registerTournamentTools(GuiToolRegistry& registry) {
@@ -680,39 +651,25 @@ void registerTournamentTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "configure_tournament",
         .description = "Sets tournament options: time_control, games (per pairing), rounds, "
-                        "event (name), openings_file, pgn_file, concurrency. Each field "
-                        "independent/optional -- pass ONLY what user asked to change (e.g. just "
-                        "\"games\"); don't require/ask other fields first. Unpassed fields keep "
-                        "prior value (this session or earlier) -- call get_tournament_status "
-                        "first if unsure, don't assume unset. openings_file must be set (here "
-                        "or earlier session) before start_tournament succeeds, no safe default. "
-                        "If missing/invalid or user wants to browse, call "
-                        "open_tournament_openings_file_dialog instead of asking for typed path "
-                        "-- same for pgn_file/open_tournament_pgn_file_dialog.",
+                        "event (name), openings_file, pgn_file, concurrency, draw_mode/"
+                        "draw_min_full_moves/draw_required_consecutive_moves/"
+                        "draw_centipawn_threshold, resign_mode/resign_required_consecutive_moves/"
+                        "resign_centipawn_threshold/resign_two_sided. Each field independent/"
+                        "optional -- pass ONLY what user asked to change (e.g. just \"games\"); "
+                        "don't require/ask other fields first. Unpassed fields keep prior value "
+                        "(this session or earlier), don't assume unset. Response always reports "
+                        "the full current tournament config, so no separate get_tournament_status "
+                        "call is normally needed to confirm what changed. openings_file must be "
+                        "set (here or earlier session) before start_tournament succeeds, no safe "
+                        "default. For openings_file/pgn_file, set openings_file_dialog/"
+                        "pgn_file_dialog to true instead of a typed path to open a native file "
+                        "picker -- never type/guess a path yourself. draw_mode/resign_mode "
+                        "\"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
         .parametersSchema = buildConfigureTournamentSchema(),
-        .handler = handleConfigureTournament
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "open_tournament_openings_file_dialog",
-        .description = "Opens GUI's native file picker for user to choose tournament's openings "
-                        "file -- you have no filesystem access, never guess/invent a path. Use "
-                        "instead of asking user to type/paste path whenever missing, invalid, "
-                        "or user wants to browse. Chosen path applied immediately, same as "
-                        "configure_tournament's openings_file.",
-        .handler = handleOpenTournamentOpeningsFileDialog,
-        // Waits on the user picking a file in a native dialog, which can legitimately take
-        // much longer than a normal tool call -- see open_add_engine_dialog's identical timeout.
-        .timeout = std::chrono::minutes(10)
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "open_tournament_pgn_file_dialog",
-        .description = "Opens GUI's native save-file picker for user to choose tournament's PGN "
-                        "output path -- you have no filesystem access, never guess/invent a "
-                        "path. Use instead of asking user to type/paste path. Chosen path "
-                        "applied immediately, same as configure_tournament's pgn_file.",
-        .handler = handleOpenTournamentPgnFileDialog,
+        .handler = handleConfigureTournament,
+        // openings_file_dialog/pgn_file_dialog wait on the user picking a file in a native
+        // dialog, which can legitimately take much longer than a normal tool call -- see
+        // open_add_engine_dialog's identical timeout.
         .timeout = std::chrono::minutes(10)
     });
 
@@ -720,59 +677,12 @@ void registerTournamentTools(GuiToolRegistry& registry) {
         .name = "get_tournament_status",
         .description = "Reports current tournament config/state: selected engines, time "
                         "control, games/rounds, event name, openings file, PGN output file, "
-                        "concurrency, draw/resign adjudication settings, whether running. Call "
-                        "FIRST when request changes only one thing (e.g. \"set it to 10 games\", "
-                        "\"turn on resign adjudication\") and rest of config uncertain -- almost "
-                        "always already set, this session or earlier. Use to confirm before "
-                        "asking user to restate settings or declining requested change, and to "
-                        "confirm a prior configure_*/select_engines call took effect.",
+                        "concurrency, draw/resign adjudication settings, whether running. "
+                        "configure_tournament already returns this same full status after any "
+                        "change, so this is only needed for a pure status check that changes "
+                        "nothing (e.g. \"what's the tournament set to right now\"), or before "
+                        "select_engines.",
         .handler = handleGetTournamentStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "configure_draw_adjudication",
-        .description = "Sets draw adjudication: mode (off/test/active), min_full_moves, "
-                        "required_consecutive_moves, centipawn_threshold. Ends game early as "
-                        "draw once N consecutive moves stay within small eval margin of equal. "
-                        "Each field independent/optional -- pass only what user asked to "
-                        "change; unpassed keeps prior value (call get_tournament_status first "
-                        "if unsure). Disabled (mode=\"off\") by default.",
-        .parametersSchema = buildConfigureDrawAdjudicationSchema(),
-        .handler = handleConfigureDrawAdjudication
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "configure_resign_adjudication",
-        .description = "Sets resign adjudication: mode (off/test/active), "
-                        "required_consecutive_moves, centipawn_threshold, two_sided. Ends game "
-                        "early as loss for one side once its own eval stays badly negative for "
-                        "N consecutive moves. Each field independent/optional -- pass only what "
-                        "user asked to change; unpassed keeps prior value (call "
-                        "get_tournament_status first if unsure). Disabled (mode=\"off\") by "
-                        "default.",
-        .parametersSchema = buildConfigureResignAdjudicationSchema(),
-        .handler = handleConfigureResignAdjudication
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "start_tournament",
-        .description = "Starts tournament with engines/settings from "
-                        "select_engines/configure_tournament. Requires at least two selected "
-                        "engines and openings file already configured; result states exactly "
-                        "which precondition missing if it can't start.",
-        .handler = handleStartTournament,
-        // Engine processes need to launch and initialize; a handful of
-        // engines can legitimately take longer than the default 30s.
-        .timeout = std::chrono::seconds(60)
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "stop_tournament",
-        .description = "Stops running tournament. Optional \"mode\": \"graceful\" (default) "
-                        "finishes in-progress games, starts no new ones; \"abrupt\" aborts "
-                        "every in-progress game immediately. Fails if no tournament running.",
-        .parametersSchema = buildStopTournamentSchema(),
-        .handler = handleStopTournament
     });
 
     registry.registerTool(GuiToolDefinition{

@@ -24,9 +24,10 @@
 namespace QaplaLlm {
 
 /**
- * @brief Registers the "SPRT" tool group: select_sprt_engines, configure_sprt,
- * configure_sprt_draw_adjudication, configure_sprt_resign_adjudication, get_sprt_status,
- * start_sprt, stop_sprt, clear_sprt_result, show_sprt_result.
+ * @brief Registers the "SPRT" tool group: select_sprt_engines, configure_sprt (also covers
+ * draw/resign adjudication), get_sprt_status, clear_sprt_result, show_sprt_result. start/stop
+ * are handled by the unified start/stop tool in gui-tool-status-register.cpp instead -- see
+ * handleStartSprtTournament/handleStopSprtTournament below.
  *
  * SPRT (Sequential Probability Ratio Test) compares exactly two engines -- a "champion"
  * (comparison baseline) and a "challenger" (engine under test) -- unlike tournament mode's
@@ -43,5 +44,23 @@ namespace QaplaLlm {
  * around QaplaWindows::SprtTournamentData, so only the qapla executable links this.
  */
 void registerSprtTools(GuiToolRegistry& registry);
+
+/**
+ * @brief Starts the SPRT test (see SprtTournamentData::startTournament()), reporting exactly
+ * which precondition is missing if it can't.
+ *
+ * Exported rather than kept file-local so the unified "start" tool (gui-tool-status-register.cpp)
+ * can dispatch into it by type="sprt" -- there is no separate model-visible "start_sprt" tool
+ * anymore.
+ */
+[[nodiscard]] GuiToolResult handleStartSprtTournament(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Stops the running SPRT test. `arguments["mode"]` = "graceful" (default) or "abrupt".
+ *
+ * Exported for the same reason as handleStartSprtTournament() -- dispatched into by the unified
+ * "stop" tool.
+ */
+[[nodiscard]] GuiToolResult handleStopSprtTournament(const QaplaTester::Json::JsonValue& arguments);
 
 } // namespace QaplaLlm

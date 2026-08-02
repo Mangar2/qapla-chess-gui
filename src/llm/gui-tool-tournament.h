@@ -30,9 +30,29 @@ namespace QaplaLlm {
 
 /**
  * @brief Registers the "Turnier" tool group (select_engines, configure_tournament,
- * start_tournament) from docs/llm-chatbot-plan.md Step 4.
+ * clear/show_tournament_result) from docs/llm-chatbot-plan.md Step 4. start/stop are handled
+ * by the unified start/stop tool in gui-tool-status-register.cpp instead -- see
+ * handleStartTournament/handleStopTournament below.
  */
 void registerTournamentTools(GuiToolRegistry& registry);
+
+/**
+ * @brief Starts the tournament (see TournamentData::startTournament()), reporting exactly which
+ * precondition is missing (no engines selected, no openings file, etc.) if it can't.
+ *
+ * Exported rather than kept file-local so the unified "start" tool (gui-tool-status-register.cpp)
+ * can dispatch into it by type="tournament" -- there is no separate model-visible
+ * "start_tournament" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleStartTournament(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Stops the running tournament. `arguments["mode"]` = "graceful" (default) or "abrupt".
+ *
+ * Exported for the same reason as handleStartTournament() -- dispatched into by the unified
+ * "stop" tool.
+ */
+[[nodiscard]] GuiToolResult handleStopTournament(const QaplaTester::Json::JsonValue& arguments);
 
 /**
  * @brief One chat-provided name that matched more than one installed engine.

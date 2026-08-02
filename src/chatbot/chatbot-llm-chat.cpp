@@ -35,9 +35,9 @@ using QaplaLlm::LmStudioStatus;
 
 namespace {
     // How often the status may be re-probed while the step is open. Chosen to
-    // notice a manually started/stopped LM Studio server within a few
-    // seconds without hammering it with requests every frame.
-    constexpr uint64_t REFRESH_INTERVAL_MS = 3000;
+    // notice a manually started/stopped LM Studio server without hammering
+    // it with requests every frame.
+    constexpr uint64_t REFRESH_INTERVAL_MS = 30000;
 
     const ImVec4 USER_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
     const ImVec4 TOOL_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
@@ -202,10 +202,11 @@ void ChatbotLlmChat::ensureController() {
         "(checks all three), not just get_tournament_status.\n"
         "Start a run: apply requested config, then start immediately, no confirmation, no "
         "re-ask. Only ask first if something required truly missing/invalid.\n"
-        "File path needed: call matching open_*_file_dialog tool, never type/guess a path. "
-        "Never inform user about the dialog -- report the tool's actual result.\n"
-        "close_application: immediately, no confirmation. open_pgn_file: source=tournament/sprt "
-        "for \"PGN from tournament/SPRT\", else default dialog.",
+        "File path needed: for tournament, set openings_file_dialog/pgn_file_dialog=true in "
+        "configure_tournament -- opens picker automatically. For SPRT/EPD, call matching "
+        "open_*_file_dialog tool. open_pgn_file: source=tournament/sprt for \"PGN from "
+        "tournament/SPRT\", else default dialog. Never type/guess a path yourself.\n"
+        "close_application: immediately, no confirmation.",
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(

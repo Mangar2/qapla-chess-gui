@@ -211,6 +211,14 @@ namespace {
                     .resultSummary = toolResult.content,
                     .renderWidget = toolResult.renderWidget
                 });
+
+                if (toolResult.terminal) {
+                    // Ends the turn without asking the model again -- see GuiToolResult::terminal.
+                    // finalContent stays empty on purpose: the tool result above already reached
+                    // the user via onToolEvent, applyTurnResult only adds a further chat entry
+                    // when finalContent is non-empty.
+                    turnResult.success = true;
+                }
             }
 
             if (turnResult.success) {

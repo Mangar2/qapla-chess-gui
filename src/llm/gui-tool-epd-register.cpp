@@ -69,7 +69,8 @@ namespace {
         return "";
     }
 
-    GuiToolResult buildConfigureResult(const std::vector<std::string>& applied, const std::vector<std::string>& problems) {
+    GuiToolResult buildConfigureResult(const std::vector<std::string>& applied, const std::vector<std::string>& problems,
+        bool dialogOpened = false) {
         std::string message;
         if (!applied.empty()) {
             message = "Configured: " + joinStrings(applied) + ".";
@@ -83,7 +84,8 @@ namespace {
         if (message.empty()) {
             message = "No configuration changes were provided.";
         }
-        return GuiToolResult{.success = problems.empty(), .content = message};
+        return GuiToolResult{.success = problems.empty(), .content = message, .renderWidget = nullptr,
+            .terminal = dialogOpened};
     }
 
     // ------------------------------------------------------------------
@@ -174,8 +176,16 @@ namespace {
             prop["description"] = description;
             return prop;
         };
+        auto boolProp = [](const std::string& description) {
+            auto prop = Json::JsonValue::object();
+            prop["type"] = "boolean";
+            prop["description"] = description;
+            return prop;
+        };
 
         properties["epd_file"] = stringProp("Path to existing EPD (or RAW position) file on disk.");
+        properties["epd_file_dialog"] = boolProp(
+            "Set true to open a native file picker instead of passing epd_file.");
         properties["max_time_seconds"] = integerProp(
             "Max seconds engine may search each position. NOT tournament/SPRT time control -- "
             "EPD analysis has no clock string, just plain per-position time budget. Default 10.");
@@ -192,27 +202,21 @@ namespace {
     void applyEpdFile(EpdData& data, const std::string& path, std::vector<std::string>& applied, std::vector<std::string>& problems) {
         if (!std::filesystem::exists(path)) {
             problems.push_back("EPD file not found: " + path +
-                " -- call open_epd_file_dialog to let the user pick a valid one");
+                " -- set epd_file_dialog=true instead to let the user pick a valid one");
             return;
         }
         data.config().filepath = path;
-        applied.push_back("EPD file");
+        applied.push_back("EPD file: " + path);
     }
 
-    GuiToolResult handleOpenEpdFileDialog(const Json::JsonValue&) {
+    void openEpdFileDialog(EpdData& data, std::vector<std::string>& applied) {
         auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
         if (paths.empty()) {
-            return GuiToolResult{
-                .success = true,
-                .content = "The user cancelled the dialog; the EPD file was not changed."
-            };
+            applied.push_back("EPD file (dialog cancelled, unchanged)");
+            return;
         }
-
-        auto& epdData = EpdData::instance();
-        epdData.config().filepath = paths.front();
-        epdData.updateConfiguration();
-        switchToEpdView();
-        return GuiToolResult{.success = true, .content = "EPD file set to: " + paths.front()};
+        data.config().filepath = paths.front();
+        applied.push_back("EPD file selected: " + paths.front());
     }
 
     void applyMaxTime(EpdData& data, double value, std::vector<std::string>& applied, std::vector<std::string>& problems) {
@@ -256,8 +260,13 @@ namespace {
         auto& epdData = EpdData::instance();
         std::vector<std::string> applied;
         std::vector<std::string> problems;
+        bool dialogOpened = false;
 
-        if (arguments.contains("epd_file") && arguments.at("epd_file").is_string()) {
+        if (arguments.contains("epd_file_dialog") && arguments.at("epd_file_dialog").is_boolean() &&
+            arguments.at("epd_file_dialog").as_boolean()) {
+            openEpdFileDialog(epdData, applied);
+            dialogOpened = true;
+        } else if (arguments.contains("epd_file") && arguments.at("epd_file").is_string()) {
             applyEpdFile(epdData, arguments.at("epd_file").as_string(), applied, problems);
         }
         if (arguments.contains("max_time_seconds") && arguments.at("max_time_seconds").is_number()) {
@@ -281,7 +290,7 @@ namespace {
         if (!applied.empty()) {
             switchToEpdView();
         }
-        return buildConfigureResult(applied, problems);
+        return buildConfigureResult(applied, problems, dialogOpened);
     }
 
     // ------------------------------------------------------------------
@@ -297,13 +306,22 @@ namespace {
         }
         const auto& config = epdData.config();
 
+        // isStopping() alone can't tell graceful from abrupt (see its doc comment); the
+        // distinction matters here since a gracefully-stopping analysis is still actively
+        // finishing its in-progress positions, just declining to start new ones -- reporting it
+        // as plain "running" (or an undifferentiated "stopping") would hide that a stop was
+        // already requested.
         std::string runState = "No EPD analysis is currently running.";
         if (epdData.isStarting()) {
             runState = "An EPD analysis is currently starting.";
         } else if (epdData.isRunning()) {
             runState = "An EPD analysis is currently running.";
-        } else if (epdData.isStopping()) {
-            runState = "An EPD analysis is currently stopping.";
+        } else if (epdData.state == EpdData::State::Gracefully) {
+            runState = "An EPD analysis is currently running but stopping gracefully -- "
+                       "in-progress positions will finish, no new ones will start.";
+        } else if (epdData.state == EpdData::State::Stopping) {
+            runState = "An EPD analysis is currently stopping abruptly -- in-progress positions "
+                       "are being aborted.";
         }
         if (epdData.isFinished()) {
             runState += " All positions have been analyzed -- call show_epd_result to see it.";
@@ -322,87 +340,6 @@ namespace {
             runState);
 
         return GuiToolResult{.success = true, .content = message};
-    }
-
-    // ------------------------------------------------------------------
-    // start_epd_analysis
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleStartEpdAnalysis(const Json::JsonValue&) {
-        auto& epdData = EpdData::instance();
-        if (epdData.isRunning() || epdData.isStarting()) {
-            return GuiToolResult{
-                .success = false,
-                .content = "An EPD analysis is already running. Stop it first if you want to start a different one."
-            };
-        }
-
-        auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
-
-        // A single call covers both a fresh start and resuming an incomplete analysis --
-        // EpdData::analyse() decides internally which one this is (see its doc comment / the
-        // gui-tool-epd.h header comment): if the configured engines/EPD file/timing haven't
-        // changed since the last run, it picks up where it left off instead of starting over.
-        epdData.analyse();
-
-        if (!epdData.isRunning() && !epdData.isStarting()) {
-            auto reason = findRecentEpdSnackbar(historyCountBefore);
-            if (reason.empty()) {
-                reason = "Could not start the EPD analysis.";
-            } else if (reason.find("Clear data before re-analyzing") != std::string::npos) {
-                // This exact rejection (see EpdData::mayAnalyze()) has no tournament/SPRT
-                // equivalent, so spell out the fix rather than relying on the model to
-                // connect "clear data" to the clear_epd_result tool on its own.
-                reason += " Call clear_epd_result, then call start_epd_analysis again.";
-            }
-            return GuiToolResult{.success = false, .content = reason};
-        }
-
-        switchToEpdView();
-        return GuiToolResult{.success = true, .content = "EPD analysis started."};
-    }
-
-    // ------------------------------------------------------------------
-    // stop_epd_analysis
-    // ------------------------------------------------------------------
-
-    Json::JsonValue buildStopEpdAnalysisSchema() {
-        auto schema = noArgsToolSchema();
-        auto mode = Json::JsonValue::object();
-        mode["type"] = "string";
-        auto enumValues = Json::JsonValue::array();
-        enumValues.push_back("graceful");
-        enumValues.push_back("abrupt");
-        mode["enum"] = enumValues;
-        mode["description"] =
-            "\"graceful\" (default if omitted): let in-progress positions finish, then stop -- "
-            "no new ones started. \"abrupt\": abort all in-progress positions immediately. User "
-            "says \"stop\"/\"end analysis\" unqualified -> use \"graceful\".";
-        schema["properties"]["mode"] = mode;
-        return schema;
-    }
-
-    GuiToolResult handleStopEpdAnalysis(const Json::JsonValue& arguments) {
-        auto& epdData = EpdData::instance();
-        if (!epdData.isRunning() && !epdData.isStarting()) {
-            return GuiToolResult{.success = false, .content = "No EPD analysis is currently running."};
-        }
-
-        bool graceful = true;
-        if (arguments.contains("mode") && arguments.at("mode").is_string()) {
-            graceful = arguments.at("mode").as_string() != "abrupt";
-        }
-
-        epdData.stopPool(graceful);
-        switchToEpdView();
-        return GuiToolResult{
-            .success = true,
-            .content = graceful
-                ? "Stopping the EPD analysis gracefully: positions already being analyzed will "
-                  "finish, no new ones will start."
-                : "Stopping the EPD analysis abruptly: all in-progress positions are being "
-                  "aborted immediately."
-        };
     }
 
     // ------------------------------------------------------------------
@@ -459,6 +396,66 @@ namespace {
             }
         };
     }
+} // namespace
+
+// Exported (see gui-tool-epd.h) so the unified start/stop tool (gui-tool-status-register.cpp)
+// can dispatch into it directly by type -- start_epd_analysis/stop_epd_analysis no longer exist
+// as separate model-visible tools, but the underlying logic is unchanged.
+GuiToolResult handleStartEpdAnalysis(const QaplaTester::Json::JsonValue&) {
+    auto& epdData = EpdData::instance();
+    if (epdData.isRunning() || epdData.isStarting()) {
+        return GuiToolResult{
+            .success = false,
+            .content = "An EPD analysis is already running. Stop it first if you want to start a different one."
+        };
+    }
+
+    auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
+
+    // A single call covers both a fresh start and resuming an incomplete analysis --
+    // EpdData::analyse() decides internally which one this is (see its doc comment / the
+    // gui-tool-epd.h header comment): if the configured engines/EPD file/timing haven't
+    // changed since the last run, it picks up where it left off instead of starting over.
+    epdData.analyse();
+
+    if (!epdData.isRunning() && !epdData.isStarting()) {
+        auto reason = findRecentEpdSnackbar(historyCountBefore);
+        if (reason.empty()) {
+            reason = "Could not start the EPD analysis.";
+        } else if (reason.find("Clear data before re-analyzing") != std::string::npos) {
+            // This exact rejection (see EpdData::mayAnalyze()) has no tournament/SPRT
+            // equivalent, so spell out the fix rather than relying on the model to
+            // connect "clear data" to the clear_epd_result tool on its own.
+            reason += " Call clear_epd_result, then call start again with type=\"epd\".";
+        }
+        return GuiToolResult{.success = false, .content = reason};
+    }
+
+    switchToEpdView();
+    return GuiToolResult{.success = true, .content = "EPD analysis started."};
+}
+
+GuiToolResult handleStopEpdAnalysis(const QaplaTester::Json::JsonValue& arguments) {
+    auto& epdData = EpdData::instance();
+    if (!epdData.isRunning() && !epdData.isStarting()) {
+        return GuiToolResult{.success = false, .content = "No EPD analysis is currently running."};
+    }
+
+    bool graceful = true;
+    if (arguments.contains("mode") && arguments.at("mode").is_string()) {
+        graceful = arguments.at("mode").as_string() != "abrupt";
+    }
+
+    epdData.stopPool(graceful);
+    switchToEpdView();
+    return GuiToolResult{
+        .success = true,
+        .content = graceful
+            ? "Stopping the EPD analysis gracefully: positions already being analyzed will "
+              "finish, no new ones will start."
+            : "Stopping the EPD analysis abruptly: all in-progress positions are being "
+              "aborted immediately."
+    };
 }
 
 void registerEpdTools(GuiToolRegistry& registry) {
@@ -491,20 +488,13 @@ void registerEpdTools(GuiToolRegistry& registry) {
                         "engine-testing mode. If request could mean tournament, SPRT, or EPD "
                         "and unclear which, ask, don't guess. epd_file must be set (here or "
                         "earlier session) before start_epd_analysis succeeds. If missing, "
-                        "invalid, or user wants to browse, call open_epd_file_dialog instead of "
-                        "asking them to type path.",
+                        "invalid, or user wants to browse, set epd_file_dialog=true instead of "
+                        "a typed path.",
         .parametersSchema = buildConfigureEpdSchema(),
-        .handler = handleConfigureEpd
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "open_epd_file_dialog",
-        .description = "Opens GUI's native file picker for user to choose EPD (or RAW position) "
-                        "file -- you have no filesystem access, never guess or invent a path. "
-                        "Use instead of asking user to type/paste path whenever missing, "
-                        "reported invalid, or user wants to browse. Chosen path applied "
-                        "immediately, same as configure_epd's epd_file.",
-        .handler = handleOpenEpdFileDialog,
+        .handler = handleConfigureEpd,
+        // epd_file_dialog waits on the user picking a file in a native dialog, which can
+        // legitimately take much longer than a normal tool call -- see open_add_engine_dialog's
+        // identical timeout.
         .timeout = std::chrono::minutes(10)
     });
 
@@ -517,35 +507,6 @@ void registerEpdTools(GuiToolRegistry& registry) {
                         "questions. Call FIRST when request changes only one EPD setting and "
                         "rest of config uncertain.",
         .handler = handleGetEpdStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "start_epd_analysis",
-        .description = "Starts (or resumes incomplete) EPD analysis with engines/settings from "
-                        "select_epd_engines/configure_epd. Auto-resumes from previous run's "
-                        "stopping point instead of restarting, if engines/file/timing unchanged "
-                        "since. Requires at least one selected engine + configured EPD file; "
-                        "result states exactly which precondition missing if it can't start. "
-                        "EPD-specific precondition, no tournament/SPRT equivalent: if previous "
-                        "analysis already completed, or settings changed via "
-                        "select_epd_engines/configure_epd after it stopped, call fails until "
-                        "clear_epd_result called first -- if so, call clear_epd_result, then "
-                        "retry this.",
-        .handler = handleStartEpdAnalysis,
-        // Engine processes need to launch and initialize; a handful of
-        // engines can legitimately take longer than the default 30s.
-        .timeout = std::chrono::seconds(60)
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "stop_epd_analysis",
-        .description = "Stops currently running EPD analysis. Optional \"mode\": \"graceful\" "
-                        "(default) finishes in-progress positions, starts no new ones; "
-                        "\"abrupt\" aborts every in-progress position immediately. Fails if no "
-                        "EPD analysis running. Progress kept (not cleared) -- "
-                        "start_epd_analysis resumes from here.",
-        .parametersSchema = buildStopEpdAnalysisSchema(),
-        .handler = handleStopEpdAnalysis
     });
 
     registry.registerTool(GuiToolDefinition{

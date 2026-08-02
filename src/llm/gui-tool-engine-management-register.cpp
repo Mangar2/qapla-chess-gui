@@ -66,7 +66,9 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
             if (paths.empty()) {
                 return GuiToolResult{
                     .success = true,
-                    .content = "The user cancelled the dialog; no engine was added."
+                    .content = "The user cancelled the dialog; no engine was added.",
+                    .renderWidget = nullptr,
+                    .terminal = true
                 };
             }
 
@@ -99,7 +101,7 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
             if (message.empty()) {
                 message = "No engines were added.";
             }
-            return GuiToolResult{.success = true, .content = message};
+            return GuiToolResult{.success = true, .content = message, .renderWidget = nullptr, .terminal = true};
         },
         // Waits on the user picking a file in a native dialog, which can
         // legitimately take much longer than a normal tool call -- the
