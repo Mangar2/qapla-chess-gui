@@ -87,19 +87,17 @@ namespace {
 void registerStatusTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "get_running_status",
-        .description = "Reports what's currently running: the classic tournament, the SPRT "
-                        "test, and EPD analysis are checked and reported separately (they run "
-                        "independently, see configure_sprt's/configure_epd's notes on this). "
-                        "Call this whenever the user asks broadly whether \"something\"/\"a "
-                        "test\"/\"anything\" is running, or asks specifically whether a "
-                        "TOURNAMENT is running -- people often call an SPRT test or an EPD "
-                        "analysis a \"tournament\" informally (they all look the same: engines "
-                        "running in the background), so checking only get_tournament_status "
-                        "could wrongly say nothing is happening while an SPRT test or EPD "
-                        "analysis is actually active. Prefer this over get_tournament_status/"
-                        "get_sprt_status/get_epd_status specifically for \"is X running\" "
-                        "questions -- use those instead when the user wants the fuller "
-                        "configuration detail of one specific feature they've already named.",
+        .description = "Reports what's currently running: classic tournament, SPRT test, EPD "
+                        "analysis checked/reported separately (run independently, see "
+                        "configure_sprt's/configure_epd's notes). Call whenever user asks "
+                        "broadly if \"something\"/\"a test\"/\"anything\" running, or "
+                        "specifically if TOURNAMENT running -- people often call SPRT test or "
+                        "EPD analysis \"tournament\" informally (all look same: engines running "
+                        "in background), so checking only get_tournament_status could wrongly "
+                        "say nothing happening while SPRT test or EPD analysis actually active. "
+                        "Prefer this over get_tournament_status/get_sprt_status/get_epd_status "
+                        "for \"is X running\" questions -- use those instead when user wants "
+                        "fuller config detail of one specific feature already named.",
         .handler = handleGetRunningStatus
     });
 }

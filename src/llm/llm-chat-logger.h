@@ -79,6 +79,21 @@ public:
      */
     void logUnstructured(const std::string& text);
 
+    /**
+     * @brief Logs the system prompt and tool schema once per log file; every later call is a
+     * no-op.
+     *
+     * Both are resent unchanged on every model request (see LlmChatController::sendMessage()),
+     * so logging them on every turn like logLine() would just repeat the same ~30KB of text
+     * over and over; this captures them once so a user diagnosing e.g. a "context too long"
+     * error can see the exact prompt without relying on LM Studio's own (often-truncated)
+     * debug view.
+     * @param systemPromptText The system prompt text, logged as-is (already human-readable).
+     * @param toolsJsonPretty Pretty-printed JSON text of the tools array actually sent on the
+     *        wire (see mqtt::json::stringify_pretty).
+     */
+    void logSystemPromptAndToolsOnce(const std::string& systemPromptText, const std::string& toolsJsonPretty);
+
     /** @brief The path of the log file once opened, for tests/diagnostics; empty until then. */
     [[nodiscard]] const std::string& openedFilePath() const {
         return openedFilePath_;
@@ -95,6 +110,7 @@ private:
     std::ofstream file_;
     std::string openedFilePath_;
     std::size_t unstructuredBudgetUsed_ = 0;
+    bool systemPromptLogged_ = false;
 };
 
 } // namespace QaplaLlm

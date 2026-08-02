@@ -49,15 +49,13 @@ namespace {
         enumValues.push_back("sprt");
         source["enum"] = enumValues;
         source["description"] =
-            "Where to get the PGN file from. \"dialog\" (default if omitted): opens a native "
-            "file picker so the user chooses any PGN file themselves -- use this whenever the "
-            "user names a specific file/path you don't already know, or just says \"open a PGN "
-            "file\" without qualifying it. \"tournament\": opens the PGN file the classic "
-            "tournament is currently configured to write its games to (see "
-            "configure_tournament's pgn_file) -- use this for phrases like \"open the PGN file "
-            "from the tournament\". \"sprt\": the same, but for the SPRT test's own PGN output "
-            "file (see configure_sprt's pgn_file). These two never need a dialog since the path "
-            "is already known.";
+            "PGN file source. \"dialog\" (default): native file picker, user picks any PGN "
+            "file -- use when user names specific file/path you don't know, or just says "
+            "\"open a PGN file\" unqualified. \"tournament\": opens PGN file classic "
+            "tournament currently writes to (see configure_tournament's pgn_file) -- use for "
+            "\"open the PGN file from the tournament\". \"sprt\": same, for SPRT test's own "
+            "PGN output (see configure_sprt's pgn_file). Both need no dialog, path already "
+            "known.";
         schema["properties"]["source"] = source;
         return schema;
     }
@@ -106,20 +104,18 @@ namespace {
 void registerAppTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "close_application",
-        .description = "Closes the whole Qapla Chess GUI application (the same as clicking the "
-                        "window's own close button). Does exactly what it says immediately -- "
-                        "when the user asks to close/quit/exit the application, call this "
-                        "directly, do not ask for confirmation first.",
+        .description = "Closes whole Qapla Chess GUI app (same as window's own close button). "
+                        "Immediate -- on close/quit/exit request, call directly, no "
+                        "confirmation first.",
         .handler = handleCloseApplication
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_pgn_file",
-        .description = "Opens a PGN file for viewing in the Pgn tab and switches to it. Can "
-                        "either let the user pick any file via a native dialog, or directly "
-                        "open the PGN file the classic tournament or the SPRT test is currently "
-                        "writing its games to (their own \"source\" values) -- see this tool's "
-                        "\"source\" parameter for exactly which.",
+        .description = "Opens PGN file in Pgn tab, switches to it. Either user picks file via "
+                        "native dialog, or directly opens PGN file classic tournament or SPRT "
+                        "test is currently writing to (their own \"source\" values) -- see "
+                        "\"source\" param for exactly which.",
         .parametersSchema = buildOpenPgnFileSchema(),
         .handler = handleOpenPgnFile,
         // Waits on the user picking a file in a native dialog (source="dialog") -- see

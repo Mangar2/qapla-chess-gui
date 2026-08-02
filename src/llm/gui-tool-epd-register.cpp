@@ -98,10 +98,10 @@ namespace {
         items["type"] = "string";
         engines["items"] = items;
         engines["description"] =
-            "Engine display names to test against the EPD positions, e.g. [\"Stockfish\", "
-            "\"Qapla\"]. All listed engines are tested against the SAME position set, side by "
-            "side (one result column each) -- unlike SPRT there is no champion/challenger role, "
-            "any number of engines (including just one) is fine.";
+            "Engine display names to test vs EPD positions, e.g. [\"Stockfish\", "
+            "\"Qapla\"]. All tested vs SAME position set, side by side (one result column "
+            "each) -- unlike SPRT, no champion/challenger role; any number of engines "
+            "(incl. one) fine.";
         schema["properties"]["engines"] = engines;
         schema["required"] = Json::JsonValue::array();
         schema["required"].push_back("engines");
@@ -175,20 +175,17 @@ namespace {
             return prop;
         };
 
-        properties["epd_file"] = stringProp("Path to an existing EPD (or RAW position) file on disk.");
+        properties["epd_file"] = stringProp("Path to existing EPD (or RAW position) file on disk.");
         properties["max_time_seconds"] = integerProp(
-            "Maximum time, in seconds, an engine may spend searching each position. NOT the "
-            "same as a tournament/SPRT time control -- EPD analysis has no clock string, just "
-            "this plain per-position time budget. Default 10.");
+            "Max seconds engine may search each position. NOT tournament/SPRT time control -- "
+            "EPD analysis has no clock string, just plain per-position time budget. Default 10.");
         properties["min_time_seconds"] = integerProp(
-            "Minimum time, in seconds, an engine must keep searching each position even after "
-            "finding what looks like the right move (guards against solving by luck on a very "
-            "shallow search). Default 1.");
+            "Min seconds engine must keep searching each position even after finding apparent "
+            "right move (guards vs solving by luck on shallow search). Default 1.");
         properties["seen_plies"] = integerProp(
-            "Number of consecutive plies the engine's principal variation must keep showing the "
-            "correct best move before that position is considered solved and analysis moves on "
-            "early -- saves time on easy positions. Default 3.");
-        properties["concurrency"] = integerProp("Number of positions to analyze in parallel.");
+            "Consecutive plies engine's PV must keep showing correct best move before position "
+            "counted solved, analysis moves on early -- saves time on easy positions. Default 3.");
+        properties["concurrency"] = integerProp("Positions to analyze in parallel.");
         return schema;
     }
 
@@ -378,10 +375,9 @@ namespace {
         enumValues.push_back("abrupt");
         mode["enum"] = enumValues;
         mode["description"] =
-            "\"graceful\" (default if omitted): let positions currently being analyzed finish, "
-            "then stop -- no new positions are started. \"abrupt\": abort all in-progress "
-            "positions immediately. If the user just says \"stop\"/\"end the analysis\" without "
-            "qualifying it, use \"graceful\".";
+            "\"graceful\" (default if omitted): let in-progress positions finish, then stop -- "
+            "no new ones started. \"abrupt\": abort all in-progress positions immediately. User "
+            "says \"stop\"/\"end analysis\" unqualified -> use \"graceful\".";
         schema["properties"]["mode"] = mode;
         return schema;
     }
@@ -468,18 +464,16 @@ namespace {
 void registerEpdTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "select_epd_engines",
-        .description = "Selects which configured chess engines are tested against the EPD "
-                        "positions, replacing any previous selection. Names are matched "
-                        "case-insensitively against the installed engine catalog, and an "
-                        "informal/shortened name (e.g. \"spike\") is automatically matched "
-                        "against the one installed engine it can only mean (e.g. "
-                        "\"Spike 1.4.1\") -- pass the name the user actually said, you do not "
-                        "need to call list_installed_engines first just to look up the exact "
-                        "full name. If a name could mean more than one installed engine, the "
-                        "result tells you so and lists the candidates -- ask the user which "
-                        "one they meant rather than guessing. This is entirely separate from "
-                        "select_engines/select_sprt_engines (classic tournament / SPRT) -- "
-                        "selecting EPD engines never changes those, and vice versa.",
+        .description = "Selects configured chess engines tested vs EPD positions, replacing any "
+                        "previous selection. Names matched case-insensitively vs installed "
+                        "engine catalog; informal/shortened name (e.g. \"spike\") auto-matched "
+                        "to the one installed engine it can only mean (e.g. \"Spike 1.4.1\") -- "
+                        "pass name user actually said, no need to call list_installed_engines "
+                        "first just to look up full name. If name could mean more than one "
+                        "installed engine, result lists candidates -- ask user which one meant, "
+                        "never guess. Entirely separate from select_engines/select_sprt_engines "
+                        "(classic tournament/SPRT) -- selecting EPD engines never changes those, "
+                        "vice versa.",
         .parametersSchema = buildSelectEpdEnginesSchema(),
         .handler = handleSelectEpdEngines
     });
@@ -487,62 +481,56 @@ void registerEpdTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "configure_epd",
         .description = "Sets EPD analysis options: epd_file, max_time_seconds, "
-                        "min_time_seconds, seen_plies, concurrency. Every field is independent "
-                        "and optional -- pass ONLY the one thing the user actually asked to "
-                        "change; do not require or ask for any of the other fields first. "
-                        "Anything not passed here keeps whatever it was already set to (this "
-                        "session or an earlier one) -- call get_epd_status first if you're not "
-                        "sure what that currently is. IMPORTANT: this is a completely separate, "
-                        "independent configuration from configure_tournament/configure_sprt -- "
-                        "EPD analysis has no shared time_control string (just these plain "
-                        "per-position second counts) and no adjudication concept at all, even "
-                        "though it superficially sounds like another engine-testing mode. If a "
-                        "request could mean tournament, SPRT, or EPD and it isn't clear from "
-                        "context which, ask rather than guessing. epd_file must be set (here or "
-                        "in an earlier session) before start_epd_analysis will succeed. If it's "
-                        "missing, invalid, or the user wants to browse for one, call "
-                        "open_epd_file_dialog instead of asking them to type a path.",
+                        "min_time_seconds, seen_plies, concurrency. Each field independent, "
+                        "optional -- pass ONLY what user asked to change, don't require/ask for "
+                        "others first. Unset fields keep prior value (this session or earlier) "
+                        "-- call get_epd_status first if unsure what's current. IMPORTANT: "
+                        "completely separate from configure_tournament/configure_sprt -- EPD "
+                        "has no shared time_control string (just plain per-position second "
+                        "counts), no adjudication concept, despite sounding like another "
+                        "engine-testing mode. If request could mean tournament, SPRT, or EPD "
+                        "and unclear which, ask, don't guess. epd_file must be set (here or "
+                        "earlier session) before start_epd_analysis succeeds. If missing, "
+                        "invalid, or user wants to browse, call open_epd_file_dialog instead of "
+                        "asking them to type path.",
         .parametersSchema = buildConfigureEpdSchema(),
         .handler = handleConfigureEpd
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_epd_file_dialog",
-        .description = "Opens the GUI's native file picker so the user can choose the EPD (or "
-                        "RAW position) file themselves -- you have no filesystem access, so "
-                        "never guess or invent a path. Use this instead of asking the user to "
-                        "type or paste a path whenever one is missing, was reported as invalid, "
-                        "or the user just wants to browse for one. The chosen path is applied "
-                        "immediately, exactly like configure_epd's epd_file.",
+        .description = "Opens GUI's native file picker for user to choose EPD (or RAW position) "
+                        "file -- you have no filesystem access, never guess or invent a path. "
+                        "Use instead of asking user to type/paste path whenever missing, "
+                        "reported invalid, or user wants to browse. Chosen path applied "
+                        "immediately, same as configure_epd's epd_file.",
         .handler = handleOpenEpdFileDialog,
         .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "get_epd_status",
-        .description = "Reports the EPD analysis configuration and state as currently set up: "
-                        "selected engines, EPD file, max/min time per position, seen_plies, "
-                        "concurrency, progress (positions remaining), and whether it's running "
-                        "or finished. This is entirely separate from get_tournament_status/"
-                        "get_sprt_status -- call this one specifically for EPD questions. Call "
-                        "it FIRST whenever a request only changes one EPD setting and you're not "
-                        "certain everything else is already configured.",
+        .description = "Reports current EPD analysis config/state: selected engines, EPD file, "
+                        "max/min time per position, seen_plies, concurrency, progress "
+                        "(positions remaining), running/finished. Entirely separate from "
+                        "get_tournament_status/get_sprt_status -- use this one for EPD "
+                        "questions. Call FIRST when request changes only one EPD setting and "
+                        "rest of config uncertain.",
         .handler = handleGetEpdStatus
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "start_epd_analysis",
-        .description = "Starts (or resumes an incomplete) EPD analysis with the engines and "
-                        "settings configured via select_epd_engines/configure_epd. Automatically "
-                        "resumes from where a previous run left off instead of starting over, as "
-                        "long as the engines/file/timing haven't changed since. Requires at "
-                        "least one selected engine and an EPD file to already be configured; the "
-                        "result tells you exactly which precondition is missing if it can't "
-                        "start. One EPD-specific precondition with no tournament/SPRT "
-                        "equivalent: if a previous analysis already ran to completion, or its "
-                        "settings were changed via select_epd_engines/configure_epd after it "
-                        "stopped, this call fails until you call clear_epd_result first -- if "
-                        "that happens, call clear_epd_result, then call this again.",
+        .description = "Starts (or resumes incomplete) EPD analysis with engines/settings from "
+                        "select_epd_engines/configure_epd. Auto-resumes from previous run's "
+                        "stopping point instead of restarting, if engines/file/timing unchanged "
+                        "since. Requires at least one selected engine + configured EPD file; "
+                        "result states exactly which precondition missing if it can't start. "
+                        "EPD-specific precondition, no tournament/SPRT equivalent: if previous "
+                        "analysis already completed, or settings changed via "
+                        "select_epd_engines/configure_epd after it stopped, call fails until "
+                        "clear_epd_result called first -- if so, call clear_epd_result, then "
+                        "retry this.",
         .handler = handleStartEpdAnalysis,
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
@@ -551,34 +539,32 @@ void registerEpdTools(GuiToolRegistry& registry) {
 
     registry.registerTool(GuiToolDefinition{
         .name = "stop_epd_analysis",
-        .description = "Stops the currently running EPD analysis. Optional \"mode\": "
-                        "\"graceful\" (default) finishes positions already in progress and "
-                        "starts no new ones; \"abrupt\" aborts every in-progress position "
-                        "immediately. Fails if no EPD analysis is running. Progress already made "
-                        "is kept (not cleared) -- start_epd_analysis will resume from here.",
+        .description = "Stops currently running EPD analysis. Optional \"mode\": \"graceful\" "
+                        "(default) finishes in-progress positions, starts no new ones; "
+                        "\"abrupt\" aborts every in-progress position immediately. Fails if no "
+                        "EPD analysis running. Progress kept (not cleared) -- "
+                        "start_epd_analysis resumes from here.",
         .parametersSchema = buildStopEpdAnalysisSchema(),
         .handler = handleStopEpdAnalysis
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "clear_epd_result",
-        .description = "Discards the current EPD analysis results (and stops it first if it's "
-                        "still running). Use when the user wants to throw away progress so far, "
-                        "e.g. before reconfiguring and starting a fresh analysis.",
+        .description = "Discards current EPD analysis results (stops it first if still "
+                        "running). Use when user wants to throw away progress so far, e.g. "
+                        "before reconfiguring and starting fresh analysis.",
         .handler = handleClearEpdResult
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "show_epd_result",
-        .description = "Displays the current EPD analysis results as a table in the chat: one "
-                        "row per position, one column per tested engine, showing whether each "
-                        "engine found the correct move (and how fast) or not. This is an action "
-                        "that renders a table control in the chat UI -- it isn't for reading the "
-                        "data yourself to describe in your own words, so just call it and "
-                        "briefly say you're showing the results, rather than restating the "
-                        "numbers from its response. Works both while analysis is running "
-                        "(partial results so far) and after it has finished; reports that no "
-                        "results are available yet if nothing has been analyzed.",
+        .description = "Displays current EPD analysis results as table in chat: one row per "
+                        "position, one column per tested engine, showing whether each engine "
+                        "found correct move (and how fast) or not. Renders table control in "
+                        "chat UI -- not for you to read data and describe in own words; just "
+                        "call it, briefly say you're showing results, don't restate numbers "
+                        "from response. Works while running (partial results) and after "
+                        "finished; reports no results yet if nothing analyzed.",
         .handler = handleShowEpdResult
     });
 }

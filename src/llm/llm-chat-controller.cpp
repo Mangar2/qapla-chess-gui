@@ -21,6 +21,7 @@
 #include "gui-tool-registry.h"
 
 #include <base-elements/qapla-json.h>
+#include <json/json_pretty_print.h>
 
 #include <format>
 #include <functional>
@@ -50,20 +51,16 @@ namespace {
         return ToolSpec{
             .name = REPLY_TOOL_NAME,
             .description =
-                "Send your reply to the user. This is the ONLY way to say anything to them -- "
-                "never answer directly as plain text; always call this tool instead, even for a "
-                "short confirmation, a clarifying question, or just acknowledging a result. Put "
-                "your COMPLETE answer in this call's \"text\" argument: any separate message "
-                "content you write alongside this tool call (outside \"text\") is never shown to "
-                "the user and is silently discarded, so never split your answer between the two "
-                "or write a short placeholder here while putting the real explanation elsewhere. "
-                "If a tool's own description says it already displays its result directly in the "
-                "chat (e.g. show_tournament_result), do not repeat that data here -- call this "
-                "with just a short confirmation sentence.",
+                "Reply to user. ONLY way to say anything to them -- never plain text, always "
+                "this tool, even short confirmation/question/acknowledgement. Full answer in "
+                "\"text\" arg only -- anything outside \"text\" discarded, never shown. Never "
+                "split answer or use placeholder here+real answer elsewhere. If a tool already "
+                "displays its result in chat (e.g. show_tournament_result), don't repeat that "
+                "data -- just a short confirmation sentence.",
             .parametersSchemaJson =
                 R"({"type":"object","properties":{"text":{"type":"string",)"
-                R"("description":"Your complete message to the user, in their own language -- )"
-                R"(this is the only part of your response the user will ever see."}},)"
+                R"("description":"Complete message to user, in their language -- only part )"
+                R"(they see."}},)"
                 R"("required":["text"]})"
         };
     }
@@ -288,16 +285,23 @@ void LlmChatController::sendMessage(const std::string& userText) {
         for (const auto& message : messages) {
             messagesChars += chatMessageToJson(message).size();
         }
-        std::size_t toolsChars = toolSpecsToJson(tools).size();
-        std::size_t totalChars = messagesChars + toolsChars;
+        std::string toolsJsonCompact = toolSpecsToJson(tools);
+        std::size_t totalChars = messagesChars + toolsJsonCompact.size();
         history_.push_back({
             ChatRole::Debug,
             std::format(
                 "Debug: request size ~{} chars ≈ {} tokens (~4 chars/token estimate) -- "
                 "messages {} chars, tools {} chars across {} tools.",
-                totalChars, totalChars / 4, messagesChars, toolsChars, tools.size()),
+                totalChars, totalChars / 4, messagesChars, toolsJsonCompact.size(), tools.size()),
             nullptr
         });
+
+        // Logged once (see logSystemPromptAndToolsOnce's doc comment) rather than on every
+        // turn: system prompt and tools are resent unchanged on every request, so repeating
+        // this ~30KB block every turn would just bloat the log file with identical text.
+        logger_->logSystemPromptAndToolsOnce(
+            systemPrompt_,
+            QaplaTester::Json::stringify_pretty(QaplaTester::Json::JsonValue::parse(toolsJsonCompact)));
     }
 
     auto maxToolIterations = maxToolIterations_;

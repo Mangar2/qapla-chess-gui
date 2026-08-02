@@ -90,7 +90,7 @@ namespace {
         auto items = Json::JsonValue::object();
         items["type"] = "string";
         engines["items"] = items;
-        engines["description"] = "Engine display names, e.g. [\"Stockfish\", \"Qapla\"].";
+        engines["description"] = "Engine display names, e.g. [\"Stockfish\",\"Qapla\"].";
         schema["properties"]["engines"] = engines;
         schema["required"] = Json::JsonValue::array();
         schema["required"].push_back("engines");
@@ -169,24 +169,20 @@ namespace {
 
         properties["time_control"] = timeControlSchemaProperty();
         properties["games"] = integerProp(
-            "Games played per engine pairing PER ROUND -- not the tournament total. "
-            "Total games for one pairing = games * rounds (and the tournament plays this for "
-            "every pairing of selected engines). If the user just gives one number of games "
-            "with no mention of rounds, set games to that number and leave rounds at its "
-            "default of 1, so total equals what they said. If the user gives BOTH a total game "
-            "count and a number of rounds (e.g. \"100 games total, 10 rounds\"), compute "
-            "games = total / rounds yourself (100/10 -> games=10, rounds=10) -- do not set the "
-            "total as-is into games. If a game count and a round count are both given but it's "
-            "unclear whether the game count is the total or the per-round count (e.g. \"set it "
-            "to 100 games and 10 rounds\" with nothing clarifying which), ask the user which "
-            "they mean instead of guessing.");
+            "Games per engine pairing PER ROUND, not tournament total. Total per pairing = "
+            "games*rounds, applies to every pairing. User gives one number, no rounds mention "
+            "-> set games to that, leave rounds at default 1, so total=what they said. User "
+            "gives BOTH total games and rounds (e.g. \"100 games total, 10 rounds\") -> compute "
+            "games=total/rounds yourself (100/10 -> games=10, rounds=10), never put total as-is "
+            "into games. If unclear whether given count is total or per-round (e.g. \"100 games "
+            "and 10 rounds\", not specified which), ask user, never guess.");
         properties["rounds"] = integerProp(
-            "How many times the full set of pairings is repeated. Defaults to 1. See the "
-            "\"games\" description for how this multiplies into the tournament total.");
+            "Times full pairing set repeats. Default 1. See \"games\" for how this multiplies "
+            "into tournament total.");
         properties["event"] = stringProp("Tournament/event name.");
-        properties["openings_file"] = stringProp("Path to an existing EPD or PGN opening book file on disk.");
-        properties["pgn_file"] = stringProp("Path to save the played games as PGN.");
-        properties["concurrency"] = integerProp("Number of games to run in parallel.");
+        properties["openings_file"] = stringProp("Path to existing EPD/PGN opening book file on disk.");
+        properties["pgn_file"] = stringProp("Path to save played games as PGN.");
+        properties["concurrency"] = integerProp("Games run in parallel.");
         return schema;
     }
 
@@ -421,19 +417,16 @@ namespace {
         };
 
         properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\" disables draw adjudication. \"test\" evaluates and logs what it would have "
-            "decided without ending games. \"active\" actually ends games early as a draw once "
-            "the conditions below are met.");
+            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end "
+            "games. \"active\": ends games early as draw once conditions below met.");
         properties["min_full_moves"] = intProp(
-            "Minimum number of full moves that must be played before draw adjudication can "
-            "trigger at all. Default 80.");
+            "Min full moves before draw adjudication can trigger. Default 80.");
         properties["required_consecutive_moves"] = intProp(
-            "Number of consecutive moves (evaluated by the engines themselves) that must all "
-            "stay within centipawn_threshold of equal before the game is adjudicated a draw. "
-            "Default 20.");
+            "Consecutive moves (engines' own eval) that must stay within centipawn_threshold of "
+            "equal before draw adjudication. Default 20.");
         properties["centipawn_threshold"] = intProp(
-            "Maximum absolute evaluation, in centipawns, for a position to still count as drawn "
-            "(e.g. 20 means within +/-20cp of dead equal). Positive number. Default 20.");
+            "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of "
+            "equal). Positive number. Default 20.");
         return schema;
     }
 
@@ -492,22 +485,19 @@ namespace {
         };
 
         properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\" disables resign adjudication. \"test\" evaluates and logs what it would "
-            "have decided without ending games. \"active\" actually ends games early as a loss "
-            "for the losing side once the conditions below are met.");
+            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't "
+            "end games. \"active\": ends games early as loss for losing side once conditions "
+            "below met.");
         properties["required_consecutive_moves"] = intProp(
-            "Number of consecutive moves whose own evaluation must stay at or below "
-            "-centipawn_threshold (i.e. that bad or worse) before the game is adjudicated a "
-            "resignation. Default 5.");
+            "Consecutive moves whose own eval must stay at/below -centipawn_threshold (that bad "
+            "or worse) before resign adjudication. Default 5.");
         properties["centipawn_threshold"] = intProp(
-            "How bad (in centipawns) a position must be, from the losing side's own point of "
-            "view, before it counts as resignation-worthy -- e.g. 500 means resign once down "
-            "roughly a queen's worth of evaluation. Give a positive magnitude, not a negative "
-            "number. Default 500.");
+            "How bad, in centipawns from losing side's own view, before resignation-worthy -- "
+            "e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.");
         properties["two_sided"] = boolProp(
-            "If true, both engines must independently agree the position is lost before "
-            "adjudicating -- more conservative, avoids a resignation from one engine's blunder "
-            "in evaluation alone. Default false.");
+            "If true, both engines must independently agree position lost before adjudicating "
+            "-- more conservative, avoids resignation from one engine's eval blunder alone. "
+            "Default false.");
         return schema;
     }
 
@@ -558,10 +548,9 @@ namespace {
         enumValues.push_back("abrupt");
         mode["enum"] = enumValues;
         mode["description"] =
-            "\"graceful\" (default if omitted): let games currently in progress finish, then "
-            "stop -- no new games are started. \"abrupt\": abort all in-progress games "
-            "immediately without letting them finish. If the user just says \"stop\"/\"end the "
-            "tournament\" without qualifying it, use \"graceful\" -- ask only if they've "
+            "\"graceful\" (default): finish in-progress games, then stop, no new games start. "
+            "\"abrupt\": abort all in-progress games immediately. If user just says "
+            "\"stop\"/\"end tournament\" unqualified, use \"graceful\" -- ask only if they've "
             "previously shown they care about the distinction.";
         schema["properties"]["mode"] = mode;
         return schema;
@@ -676,17 +665,14 @@ namespace {
 void registerTournamentTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "select_engines",
-        .description = "Selects which configured chess engines play in the next tournament, "
-                        "replacing any previous selection. Names are matched case-insensitively "
-                        "against the installed engine catalog, and an informal/shortened name "
-                        "(e.g. \"spike\") is automatically matched against the one installed "
-                        "engine it can only mean (e.g. \"Spike 1.4.1\") -- pass the name the "
-                        "user actually said, you do not need to call list_installed_engines "
-                        "first just to look up the exact full name. If a name could mean more "
-                        "than one installed engine, the result tells you so and lists the "
-                        "candidates -- ask the user which one they meant rather than guessing. "
-                        "Sets up a round-robin tournament (every selected engine plays every "
-                        "other one); gauntlet mode is not supported via chat.",
+        .description = "Selects configured engines for next tournament, replaces previous "
+                        "selection. Names matched case-insensitively vs installed engine "
+                        "catalog; informal/short name (e.g. \"spike\") auto-matched to the one "
+                        "engine it can mean (e.g. \"Spike 1.4.1\") -- pass name user said, no "
+                        "need to call list_installed_engines first for exact name. If name "
+                        "matches multiple engines, result lists candidates -- ask user which, "
+                        "never guess. Sets up round-robin (every engine plays every other); "
+                        "gauntlet mode not supported via chat.",
         .parametersSchema = buildSelectEnginesSchema(),
         .handler = handleSelectEngines
     });
@@ -694,31 +680,26 @@ void registerTournamentTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "configure_tournament",
         .description = "Sets tournament options: time_control, games (per pairing), rounds, "
-                        "event (name), openings_file, pgn_file, concurrency. Every field is "
-                        "independent and optional -- pass ONLY the one thing the user asked to "
-                        "change (e.g. just \"games\" to change the game count); do not require "
-                        "or ask for any of the other fields first. Anything not passed here "
-                        "keeps whatever it was already set to (this session or an earlier one) "
-                        "-- call get_tournament_status first if you're not sure what that "
-                        "currently is, rather than assuming it's unset. openings_file must be "
-                        "set (here or in an earlier session) before start_tournament will "
-                        "succeed; there is no safe default. If it's missing, invalid, or the "
-                        "user wants to browse for one, call open_tournament_openings_file_dialog "
-                        "instead of asking them to type a path -- same for pgn_file and "
-                        "open_tournament_pgn_file_dialog.",
+                        "event (name), openings_file, pgn_file, concurrency. Each field "
+                        "independent/optional -- pass ONLY what user asked to change (e.g. just "
+                        "\"games\"); don't require/ask other fields first. Unpassed fields keep "
+                        "prior value (this session or earlier) -- call get_tournament_status "
+                        "first if unsure, don't assume unset. openings_file must be set (here "
+                        "or earlier session) before start_tournament succeeds, no safe default. "
+                        "If missing/invalid or user wants to browse, call "
+                        "open_tournament_openings_file_dialog instead of asking for typed path "
+                        "-- same for pgn_file/open_tournament_pgn_file_dialog.",
         .parametersSchema = buildConfigureTournamentSchema(),
         .handler = handleConfigureTournament
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_tournament_openings_file_dialog",
-        .description = "Opens the GUI's native file picker so the user can choose the "
-                        "tournament's openings file themselves -- you have no filesystem "
-                        "access, so never guess or invent a path. Use this instead of asking "
-                        "the user to type or paste a path whenever one is missing, was reported "
-                        "as invalid, or the user just wants to browse for one. The chosen path "
-                        "is applied immediately, exactly like configure_tournament's "
-                        "openings_file.",
+        .description = "Opens GUI's native file picker for user to choose tournament's openings "
+                        "file -- you have no filesystem access, never guess/invent a path. Use "
+                        "instead of asking user to type/paste path whenever missing, invalid, "
+                        "or user wants to browse. Chosen path applied immediately, same as "
+                        "configure_tournament's openings_file.",
         .handler = handleOpenTournamentOpeningsFileDialog,
         // Waits on the user picking a file in a native dialog, which can legitimately take
         // much longer than a normal tool call -- see open_add_engine_dialog's identical timeout.
@@ -727,62 +708,58 @@ void registerTournamentTools(GuiToolRegistry& registry) {
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_tournament_pgn_file_dialog",
-        .description = "Opens the GUI's native save-file picker so the user can choose where "
-                        "the tournament's PGN output file should be written -- you have no "
-                        "filesystem access, so never guess or invent a path. Use this instead "
-                        "of asking the user to type or paste a path. The chosen path is applied "
-                        "immediately, exactly like configure_tournament's pgn_file.",
+        .description = "Opens GUI's native save-file picker for user to choose tournament's PGN "
+                        "output path -- you have no filesystem access, never guess/invent a "
+                        "path. Use instead of asking user to type/paste path. Chosen path "
+                        "applied immediately, same as configure_tournament's pgn_file.",
         .handler = handleOpenTournamentPgnFileDialog,
         .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "get_tournament_status",
-        .description = "Reports the tournament configuration and state as currently set up: "
-                        "selected engines, time control, games/rounds, event name, openings "
-                        "file, PGN output file, concurrency, draw/resign adjudication settings, "
-                        "and whether a tournament is running. Call this FIRST whenever a request "
-                        "only changes one thing (e.g. \"set it to 10 games\", \"turn on resign "
-                        "adjudication\") and you're not certain everything else is already "
-                        "configured -- it almost always is, from this session or an earlier one. "
-                        "Use it to confirm that before asking the user to restate settings or "
-                        "declining to make the one change they actually asked for, and to confirm "
-                        "a previous configure_*/select_engines call actually took effect.",
+        .description = "Reports current tournament config/state: selected engines, time "
+                        "control, games/rounds, event name, openings file, PGN output file, "
+                        "concurrency, draw/resign adjudication settings, whether running. Call "
+                        "FIRST when request changes only one thing (e.g. \"set it to 10 games\", "
+                        "\"turn on resign adjudication\") and rest of config uncertain -- almost "
+                        "always already set, this session or earlier. Use to confirm before "
+                        "asking user to restate settings or declining requested change, and to "
+                        "confirm a prior configure_*/select_engines call took effect.",
         .handler = handleGetTournamentStatus
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "configure_draw_adjudication",
-        .description = "Sets draw adjudication for the tournament: mode (off/test/active), "
-                        "min_full_moves, required_consecutive_moves, centipawn_threshold. Ends "
-                        "games early as a draw once N consecutive moves all stay within a small "
-                        "evaluation margin of equal. Every field is independent and optional -- "
-                        "pass only what the user actually asked to change; anything not passed "
-                        "keeps its previous value (call get_tournament_status first if unsure "
-                        "what that is). Disabled (mode=\"off\") by default.",
+        .description = "Sets draw adjudication: mode (off/test/active), min_full_moves, "
+                        "required_consecutive_moves, centipawn_threshold. Ends game early as "
+                        "draw once N consecutive moves stay within small eval margin of equal. "
+                        "Each field independent/optional -- pass only what user asked to "
+                        "change; unpassed keeps prior value (call get_tournament_status first "
+                        "if unsure). Disabled (mode=\"off\") by default.",
         .parametersSchema = buildConfigureDrawAdjudicationSchema(),
         .handler = handleConfigureDrawAdjudication
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "configure_resign_adjudication",
-        .description = "Sets resign adjudication for the tournament: mode (off/test/active), "
-                        "required_consecutive_moves, centipawn_threshold, two_sided. Ends games "
-                        "early as a loss for one side once its own evaluation stays badly "
-                        "negative for N consecutive moves. Every field is independent and "
-                        "optional -- pass only what the user actually asked to change; anything "
-                        "not passed keeps its previous value (call get_tournament_status first "
-                        "if unsure what that is). Disabled (mode=\"off\") by default.",
+        .description = "Sets resign adjudication: mode (off/test/active), "
+                        "required_consecutive_moves, centipawn_threshold, two_sided. Ends game "
+                        "early as loss for one side once its own eval stays badly negative for "
+                        "N consecutive moves. Each field independent/optional -- pass only what "
+                        "user asked to change; unpassed keeps prior value (call "
+                        "get_tournament_status first if unsure). Disabled (mode=\"off\") by "
+                        "default.",
         .parametersSchema = buildConfigureResignAdjudicationSchema(),
         .handler = handleConfigureResignAdjudication
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "start_tournament",
-        .description = "Starts the tournament with the engines and settings configured via "
+        .description = "Starts tournament with engines/settings from "
                         "select_engines/configure_tournament. Requires at least two selected "
-                        "engines and an openings file to already be configured; the result tells "
-                        "you exactly which precondition is missing if it can't start.",
+                        "engines and openings file already configured; result states exactly "
+                        "which precondition missing if it can't start.",
         .handler = handleStartTournament,
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
@@ -791,37 +768,32 @@ void registerTournamentTools(GuiToolRegistry& registry) {
 
     registry.registerTool(GuiToolDefinition{
         .name = "stop_tournament",
-        .description = "Stops the currently running tournament. Optional \"mode\": \"graceful\" "
-                        "(default) finishes games already in progress and starts no new ones; "
-                        "\"abrupt\" aborts every in-progress game immediately. Fails if no "
-                        "tournament is running.",
+        .description = "Stops running tournament. Optional \"mode\": \"graceful\" (default) "
+                        "finishes in-progress games, starts no new ones; \"abrupt\" aborts "
+                        "every in-progress game immediately. Fails if no tournament running.",
         .parametersSchema = buildStopTournamentSchema(),
         .handler = handleStopTournament
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "clear_tournament_result",
-        .description = "Discards the current tournament's results (and stops it first if it's "
-                        "still running). Use when the user wants to throw away what's been "
-                        "played so far, e.g. before reconfiguring and starting a fresh "
-                        "tournament with the same engines.",
+        .description = "Discards current tournament results (stops it first if still running). "
+                        "Use when user wants to discard what's been played so far, e.g. before "
+                        "reconfiguring/starting fresh tournament with same engines.",
         .handler = handleClearTournamentResult
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "show_tournament_result",
-        .description = "Displays the current tournament results as a table in the chat, ranked "
-                        "by Elo (each engine's score, win percentage, Elo with error margin, and "
-                        "games played). This is an action that renders a table control in the "
-                        "chat UI -- it isn't for reading the data yourself to describe in your "
-                        "own words, so just call it and briefly say you're showing the results, "
-                        "rather than restating the numbers from its response. Works both while a "
-                        "tournament is running (partial results so far) and after it has "
-                        "finished; reports that no results are available yet if nothing has been "
-                        "played. This is the ONLY way you ever learn any actual score, standing, "
-                        "or Elo number -- you have no other source for them. Never state, type, "
-                        "or guess a result yourself instead of calling this; that would be "
-                        "fabricated information, not a real result.",
+        .description = "Displays current tournament results as table in chat, ranked by Elo "
+                        "(score, win%, Elo w/ error margin, games played per engine). Renders "
+                        "table control in chat UI -- not for reading data yourself to describe "
+                        "in own words, just call it and briefly confirm you're showing results, "
+                        "don't restate numbers. Works while running (partial results) or after "
+                        "finish; reports none available if nothing played yet. ONLY way you "
+                        "ever learn any actual score/standing/Elo -- no other source. Never "
+                        "state/type/guess a result yourself instead of calling this -- that's "
+                        "fabrication, not a real result.",
         .handler = handleShowTournamentResult
     });
 }

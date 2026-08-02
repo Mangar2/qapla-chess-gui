@@ -119,3 +119,21 @@ TEST_CASE("LlmChatLogger logLine writes the tag and full text, unbounded", "[llm
 
     std::filesystem::remove_all(testLogDirectory());
 }
+
+TEST_CASE("LlmChatLogger logSystemPromptAndToolsOnce writes only on its first call", "[llm][llm-chat-logger]") {
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatLogger logger(/*enabled=*/true, testLogDirectory().string());
+    logger.logSystemPromptAndToolsOnce("be helpful", "{\n  \"a\": 1\n}");
+    logger.logSystemPromptAndToolsOnce("a different prompt", "{\n  \"b\": 2\n}");
+
+    auto content = readFile(logger.openedFilePath());
+    REQUIRE(content.find("SYSTEM_PROMPT: be helpful") != std::string::npos);
+    REQUIRE(content.find("TOOLS: {\n  \"a\": 1\n}") != std::string::npos);
+    // The second call must be a no-op -- only the first prompt/tools pair is ever logged.
+    REQUIRE(content.find("a different prompt") == std::string::npos);
+    REQUIRE(content.find("\"b\": 2") == std::string::npos);
+
+    std::filesystem::remove_all(testLogDirectory());
+}

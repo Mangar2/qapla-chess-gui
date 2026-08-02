@@ -83,4 +83,20 @@ void LlmChatLogger::logUnstructured(const std::string& text) {
     writeRaw(timestampPrefix() + "UNSTRUCTURED: " + toWrite);
 }
 
+void LlmChatLogger::logSystemPromptAndToolsOnce(const std::string& systemPromptText, const std::string& toolsJsonPretty) {
+    if (!enabled_) {
+        return;
+    }
+    std::scoped_lock lock(mutex_);
+    if (systemPromptLogged_) {
+        return;
+    }
+    systemPromptLogged_ = true;
+    // Inlined logLine()'s body (not called directly) since mutex_ is already held here and
+    // std::mutex isn't recursive.
+    unstructuredBudgetUsed_ = 0;
+    writeRaw(timestampPrefix() + "SYSTEM_PROMPT: " + systemPromptText);
+    writeRaw(timestampPrefix() + "TOOLS: " + toolsJsonPretty);
+}
+
 } // namespace QaplaLlm

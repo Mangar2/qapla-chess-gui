@@ -46,8 +46,8 @@ namespace {
 void registerEngineManagementTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "list_installed_engines",
-        .description = "Lists all chess engines currently configured in the GUI's global "
-                        "engine catalog, with their name and protocol (uci/xboard).",
+        .description = "Lists all chess engines configured in GUI's global engine catalog, "
+                        "name + protocol (uci/xboard).",
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             return GuiToolResult{.success = true, .content = listInstalledEnginesJson()};
         }
@@ -55,13 +55,12 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_add_engine_dialog",
-        .description = "Opens the GUI's native file picker so the user can select one or more "
-                        "chess engine executables to add to the global engine catalog. The user "
-                        "chooses the file(s) themselves -- you have no filesystem access. Newly "
-                        "added engines are detected (protocol, options, etc.) synchronously "
-                        "before this call returns -- the result already reflects the final "
-                        "outcome, so do not promise the user a separate future update. Call "
-                        "list_installed_engines afterwards to confirm what was actually added.",
+        .description = "Opens GUI's native file picker, user selects one+ chess engine "
+                        "executables to add to global engine catalog. User picks file(s) "
+                        "themselves -- you have no filesystem access. New engines detected "
+                        "(protocol, options, etc.) synchronously before call returns -- result "
+                        "already reflects final outcome, don't promise separate future update. "
+                        "Call list_installed_engines after to confirm what was actually added.",
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
             if (paths.empty()) {

@@ -108,11 +108,11 @@ namespace {
         };
 
         properties["champion"] = stringProp(
-            "The comparison/baseline engine -- the one already trusted, that the challenger is "
-            "being tested against. Matched case-insensitively against the installed engine "
-            "catalog -- call list_installed_engines first if unsure what's available.");
+            "Comparison/baseline engine -- trusted one, challenger tested against it. Matched "
+            "case-insensitive vs installed engine catalog -- call list_installed_engines first "
+            "if unsure what's available.");
         properties["challenger"] = stringProp(
-            "The engine under test. Must be a different engine than champion.");
+            "Engine under test. Must differ from champion.");
         schema["required"] = Json::JsonValue::array();
         schema["required"].push_back("champion");
         schema["required"].push_back("challenger");
@@ -209,30 +209,28 @@ namespace {
 
         properties["time_control"] = timeControlSchemaProperty();
         properties["elo0"] = numberProp(
-            "H0 (null hypothesis) Elo bound -- the challenger is considered NOT stronger at or "
-            "below this Elo difference. Usually 0. Default 0.");
+            "H0 (null hypothesis) Elo bound -- challenger NOT stronger at/below this Elo diff. "
+            "Usually 0. Default 0.");
         properties["elo1"] = numberProp(
-            "H1 (alternative hypothesis) Elo bound -- the challenger is considered stronger at "
-            "or above this Elo difference. Must end up greater than elo0 (checked when the test "
-            "starts, not when this field alone is set). Default 3.");
+            "H1 (alt hypothesis) Elo bound -- challenger stronger at/above this Elo diff. Must "
+            "end up > elo0 (checked at test start, not when this field alone set). Default 3.");
         properties["alpha"] = numberProp(
-            "Type I error rate: probability of accepting the challenger as stronger when it "
-            "actually isn't. Between 0 and 1, exclusive. Default 0.05.");
+            "Type I error rate: prob. of accepting challenger as stronger when it isn't. 0-1 "
+            "exclusive. Default 0.05.");
         properties["beta"] = numberProp(
-            "Type II error rate: probability of rejecting the challenger when it actually is "
-            "stronger. Between 0 and 1, exclusive. Default 0.05.");
+            "Type II error rate: prob. of rejecting challenger when it is stronger. 0-1 "
+            "exclusive. Default 0.05.");
         properties["max_games"] = integerProp(
-            "Maximum games to play before stopping inconclusively if no decision is reached "
-            "sooner. Default 100000.");
+            "Max games before stopping inconclusive if no decision sooner. Default 100000.");
         properties["model"] = stringProp(
-            "Statistical model used for the SPRT calculation: \"normalized\" (default), "
-            "\"logistic\", or \"bayesian\".");
+            "Statistical model for SPRT calc: \"normalized\" (default), \"logistic\", "
+            "\"bayesian\".");
         properties["pentanomial"] = boolProp(
-            "If true, use pentanomial (paired-game) statistics instead of trinomial -- more "
-            "statistical power, needs games played in same-opening pairs. Default false.");
-        properties["openings_file"] = stringProp("Path to an existing EPD or PGN opening book file on disk.");
-        properties["pgn_file"] = stringProp("Path to save the played games as PGN.");
-        properties["concurrency"] = integerProp("Number of games to run in parallel.");
+            "True: pentanomial (paired-game) stats instead of trinomial -- more power, needs "
+            "games in same-opening pairs. Default false.");
+        properties["openings_file"] = stringProp("Path to existing EPD/PGN opening book file on disk.");
+        properties["pgn_file"] = stringProp("Path to save played games as PGN.");
+        properties["concurrency"] = integerProp("Games to run in parallel.");
         return schema;
     }
 
@@ -421,19 +419,16 @@ namespace {
         };
 
         properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\" disables draw adjudication. \"test\" evaluates and logs what it would have "
-            "decided without ending games. \"active\" actually ends games early as a draw once "
-            "the conditions below are met.");
+            "\"off\": disables draw adjudication. \"test\": evaluates/logs decision without "
+            "ending games. \"active\": ends games early as draw once conditions below met.");
         properties["min_full_moves"] = intProp(
-            "Minimum number of full moves that must be played before draw adjudication can "
-            "trigger at all. Default 80.");
+            "Min full moves before draw adjudication can trigger. Default 80.");
         properties["required_consecutive_moves"] = intProp(
-            "Number of consecutive moves (evaluated by the engines themselves) that must all "
-            "stay within centipawn_threshold of equal before the game is adjudicated a draw. "
-            "Default 20.");
+            "Consecutive moves (per engines' own eval) that must stay within centipawn_threshold "
+            "of equal before draw adjudication. Default 20.");
         properties["centipawn_threshold"] = intProp(
-            "Maximum absolute evaluation, in centipawns, for a position to still count as drawn "
-            "(e.g. 20 means within +/-20cp of dead equal). Positive number. Default 20.");
+            "Max abs eval in centipawns for position to count as drawn (e.g. 20 = within "
+            "+/-20cp of equal). Positive number. Default 20.");
         return schema;
     }
 
@@ -489,22 +484,20 @@ namespace {
         };
 
         properties["mode"] = adjudicationModeSchemaProperty(
-            "\"off\" disables resign adjudication. \"test\" evaluates and logs what it would "
-            "have decided without ending games. \"active\" actually ends games early as a loss "
-            "for the losing side once the conditions below are met.");
+            "\"off\": disables resign adjudication. \"test\": evaluates/logs decision without "
+            "ending games. \"active\": ends games early as loss for losing side once conditions "
+            "below met.");
         properties["required_consecutive_moves"] = intProp(
-            "Number of consecutive moves whose own evaluation must stay at or below "
-            "-centipawn_threshold (i.e. that bad or worse) before the game is adjudicated a "
-            "resignation. Default 5.");
+            "Consecutive moves whose own eval must stay at/below -centipawn_threshold (that bad "
+            "or worse) before resign adjudication. Default 5.");
         properties["centipawn_threshold"] = intProp(
-            "How bad (in centipawns) a position must be, from the losing side's own point of "
-            "view, before it counts as resignation-worthy -- e.g. 500 means resign once down "
-            "roughly a queen's worth of evaluation. Give a positive magnitude, not a negative "
-            "number. Default 500.");
+            "How bad (centipawns), from losing side's own view, before resignation-worthy -- "
+            "e.g. 500 = resign once down ~a queen's eval. Positive magnitude, not negative. "
+            "Default 500.");
         properties["two_sided"] = boolProp(
-            "If true, both engines must independently agree the position is lost before "
-            "adjudicating -- more conservative, avoids a resignation from one engine's blunder "
-            "in evaluation alone. Default false.");
+            "True: both engines must independently agree position lost before adjudicating -- "
+            "more conservative, avoids resignation from one engine's eval blunder alone. "
+            "Default false.");
         return schema;
     }
 
@@ -656,9 +649,9 @@ namespace {
         enumValues.push_back("abrupt");
         mode["enum"] = enumValues;
         mode["description"] =
-            "\"graceful\" (default if omitted): let the game currently in progress finish, then "
-            "stop. \"abrupt\": abort the in-progress game immediately. If the user just says "
-            "\"stop\"/\"end the test\" without qualifying it, use \"graceful\".";
+            "\"graceful\" (default if omitted): finish game in progress, then stop. \"abrupt\": "
+            "abort in-progress game immediately. If user just says \"stop\"/\"end the test\" "
+            "unqualified, use \"graceful\".";
         schema["properties"]["mode"] = mode;
         return schema;
     }
@@ -744,20 +737,17 @@ namespace {
 void registerSprtTools(GuiToolRegistry& registry) {
     registry.registerTool(GuiToolDefinition{
         .name = "select_sprt_engines",
-        .description = "Selects the two engines for an SPRT test: \"champion\" (comparison "
-                        "baseline) and \"challenger\" (engine under test), replacing any "
-                        "previous selection. Names are matched case-insensitively against the "
-                        "installed engine catalog, and an informal/shortened name (e.g. "
-                        "\"spike\") is automatically matched against the one installed engine "
-                        "it can only mean (e.g. \"Spike 1.4.1\") -- pass the name the user "
-                        "actually said, you do not need to call list_installed_engines first "
-                        "just to look up the exact full name. If a name could mean more than "
-                        "one installed engine, the result tells you so and lists the "
-                        "candidates -- ask the user which one they meant rather than guessing. "
-                        "This is entirely separate from select_engines/"
-                        "configure_tournament (classic tournament mode) -- selecting SPRT "
-                        "engines never changes the tournament's engine selection, and vice "
-                        "versa.",
+        .description = "Selects two engines for SPRT test: \"champion\" (comparison baseline), "
+                        "\"challenger\" (engine under test), replacing prior selection. Names "
+                        "matched case-insensitive vs installed engine catalog; informal/"
+                        "shortened name (e.g. \"spike\") auto-matched to the one installed "
+                        "engine it can only mean (e.g. \"Spike 1.4.1\") -- pass name user "
+                        "actually said, no need to call list_installed_engines first just to "
+                        "find exact full name. If name could mean >1 installed engine, result "
+                        "lists candidates -- ask user which they meant, never guess. Entirely "
+                        "separate from select_engines/configure_tournament (classic tournament "
+                        "mode) -- selecting SPRT engines never changes tournament's engine "
+                        "selection, and vice versa.",
         .parametersSchema = buildSelectSprtEnginesSchema(),
         .handler = handleSelectSprtEngines
     });
@@ -766,97 +756,89 @@ void registerSprtTools(GuiToolRegistry& registry) {
         .name = "configure_sprt",
         .description = "Sets SPRT test options: time_control, elo0/elo1 (H0/H1 Elo bounds), "
                         "alpha, beta, max_games, model, pentanomial, openings_file, pgn_file, "
-                        "concurrency. Every field is independent and optional -- pass ONLY the "
-                        "one thing the user asked to change; do not require or ask for any of "
-                        "the other fields first. Anything not passed here keeps whatever it was "
-                        "already set to (this session or an earlier one) -- call get_sprt_status "
-                        "first if you're not sure what that currently is. IMPORTANT: this is a "
-                        "completely separate, independent configuration from configure_tournament "
-                        "-- the classic tournament and SPRT each have their own time control, "
-                        "openings file, concurrency, etc., even though the field names look the "
-                        "same. If the user's message doesn't make it clear whether they mean the "
-                        "tournament or an SPRT test (e.g. just \"set the time control to 1 "
-                        "minute per game\" out of nowhere), infer it from the conversation so far "
-                        "(are they discussing a multi-engine tournament or a champion-vs-"
-                        "challenger SPRT test?); if it's genuinely still unclear even from "
-                        "context, ask which one they mean rather than guessing -- guessing wrong "
-                        "silently configures the other feature instead. openings_file must be "
-                        "set (here or in an earlier session) before start_sprt_tournament will "
-                        "succeed. If it's missing, invalid, or the user wants to browse for one, "
-                        "call open_sprt_openings_file_dialog instead of asking them to type a "
-                        "path -- same for pgn_file and open_sprt_pgn_file_dialog.",
+                        "concurrency. Every field independent/optional -- pass ONLY what user "
+                        "asked to change, don't require/ask for others first. Anything not "
+                        "passed keeps prior value (this session or earlier) -- call "
+                        "get_sprt_status first if unsure current value. IMPORTANT: fully "
+                        "separate config from configure_tournament -- classic tournament and "
+                        "SPRT each have own time control, openings file, concurrency etc, "
+                        "despite same field names. If user's message doesn't make clear "
+                        "tournament vs SPRT (e.g. bare \"set time control to 1 min/game\"), "
+                        "infer from conversation so far (multi-engine tournament or "
+                        "champion-vs-challenger SPRT?); if still unclear from context, ask which "
+                        "they mean, never guess -- wrong guess silently configures other "
+                        "feature. openings_file must be set (here or earlier session) before "
+                        "start_sprt_tournament succeeds. If missing/invalid or user wants to "
+                        "browse, call open_sprt_openings_file_dialog instead of asking for typed "
+                        "path -- same for pgn_file/open_sprt_pgn_file_dialog.",
         .parametersSchema = buildConfigureSprtSchema(),
         .handler = handleConfigureSprt
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_sprt_openings_file_dialog",
-        .description = "Opens the GUI's native file picker so the user can choose the SPRT "
-                        "test's openings file themselves -- you have no filesystem access, so "
-                        "never guess or invent a path. Use this instead of asking the user to "
-                        "type or paste a path whenever one is missing, was reported as invalid, "
-                        "or the user just wants to browse for one. The chosen path is applied "
-                        "immediately, exactly like configure_sprt's openings_file.",
+        .description = "Opens GUI's native file picker for user to choose SPRT test's openings "
+                        "file -- no filesystem access here, never guess/invent path. Use "
+                        "instead of asking user to type/paste path whenever missing, reported "
+                        "invalid, or user wants to browse. Chosen path applied immediately, "
+                        "same as configure_sprt's openings_file.",
         .handler = handleOpenSprtOpeningsFileDialog,
         .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "open_sprt_pgn_file_dialog",
-        .description = "Opens the GUI's native save-file picker so the user can choose where "
-                        "the SPRT test's PGN output file should be written -- you have no "
-                        "filesystem access, so never guess or invent a path. Use this instead "
-                        "of asking the user to type or paste a path. The chosen path is applied "
-                        "immediately, exactly like configure_sprt's pgn_file.",
+        .description = "Opens GUI's native save-file picker for user to choose where SPRT "
+                        "test's PGN output file gets written -- no filesystem access here, "
+                        "never guess/invent path. Use instead of asking user to type/paste "
+                        "path. Chosen path applied immediately, same as configure_sprt's "
+                        "pgn_file.",
         .handler = handleOpenSprtPgnFileDialog,
         .timeout = std::chrono::minutes(10)
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "get_sprt_status",
-        .description = "Reports the SPRT test configuration and state as currently set up: "
-                        "champion/challenger engines, time control, Elo bounds/alpha/beta/"
-                        "max_games/model, openings file, PGN output file, concurrency, draw/"
-                        "resign adjudication settings, and whether a test is running or "
-                        "finished. This is entirely separate from get_tournament_status (classic "
-                        "tournament mode) -- call this one specifically for SPRT questions. Call "
-                        "it FIRST whenever a request only changes one SPRT setting and you're "
-                        "not certain everything else is already configured, or whenever it's "
-                        "unclear whether the user means the tournament or SPRT (comparing "
-                        "against get_tournament_status can help you tell which one they're "
-                        "already mid-configuring).",
+        .description = "Reports current SPRT test config/state: champion/challenger engines, "
+                        "time control, Elo bounds/alpha/beta/max_games/model, openings file, "
+                        "PGN output file, concurrency, draw/resign adjudication settings, "
+                        "running/finished status. Entirely separate from get_tournament_status "
+                        "(classic tournament mode) -- call this one specifically for SPRT "
+                        "questions. Call FIRST whenever request changes only one SPRT setting "
+                        "and you're unsure rest is configured, or unclear if user means "
+                        "tournament or SPRT (comparing vs get_tournament_status helps tell "
+                        "which they're mid-configuring).",
         .handler = handleGetSprtStatus
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "configure_sprt_draw_adjudication",
-        .description = "Sets draw adjudication for the SPRT test (separate from the classic "
+        .description = "Sets draw adjudication for SPRT test (separate from classic "
                         "tournament's configure_draw_adjudication): mode (off/test/active), "
                         "min_full_moves, required_consecutive_moves, centipawn_threshold. Every "
-                        "field is independent and optional -- pass only what the user actually "
-                        "asked to change. Disabled (mode=\"off\") by default.",
+                        "field independent/optional -- pass only what user asked to change. "
+                        "Disabled (mode=\"off\") by default.",
         .parametersSchema = buildConfigureSprtDrawAdjudicationSchema(),
         .handler = handleConfigureSprtDrawAdjudication
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "configure_sprt_resign_adjudication",
-        .description = "Sets resign adjudication for the SPRT test (separate from the classic "
+        .description = "Sets resign adjudication for SPRT test (separate from classic "
                         "tournament's configure_resign_adjudication): mode (off/test/active), "
-                        "required_consecutive_moves, centipawn_threshold, two_sided. Every field "
-                        "is independent and optional -- pass only what the user actually asked "
-                        "to change. Disabled (mode=\"off\") by default.",
+                        "required_consecutive_moves, centipawn_threshold, two_sided. Every "
+                        "field independent/optional -- pass only what user asked to change. "
+                        "Disabled (mode=\"off\") by default.",
         .parametersSchema = buildConfigureSprtResignAdjudicationSchema(),
         .handler = handleConfigureSprtResignAdjudication
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "start_sprt_tournament",
-        .description = "Starts the SPRT test with the engines and settings configured via "
-                        "select_sprt_engines/configure_sprt. Requires exactly a champion and a "
-                        "challenger to already be selected and an openings file to already be "
-                        "configured; the result tells you exactly which precondition is missing "
-                        "if it can't start.",
+        .description = "Starts SPRT test with engines/settings from select_sprt_engines/"
+                        "configure_sprt. Requires champion+challenger already selected and "
+                        "openings file already configured; result states exactly which "
+                        "precondition missing if it can't start.",
         .handler = handleStartSprtTournament,
         // Engine processes need to launch and initialize; a handful of
         // engines can legitimately take longer than the default 30s.
@@ -865,36 +847,33 @@ void registerSprtTools(GuiToolRegistry& registry) {
 
     registry.registerTool(GuiToolDefinition{
         .name = "stop_sprt_tournament",
-        .description = "Stops the currently running SPRT test. Optional \"mode\": \"graceful\" "
-                        "(default) finishes the game already in progress and starts no new one; "
-                        "\"abrupt\" aborts the in-progress game immediately. Fails if no SPRT "
-                        "test is running.",
+        .description = "Stops currently running SPRT test. Optional \"mode\": \"graceful\" "
+                        "(default) finishes game in progress, starts no new one; \"abrupt\" "
+                        "aborts in-progress game immediately. Fails if no SPRT test running.",
         .parametersSchema = buildStopSprtTournamentSchema(),
         .handler = handleStopSprtTournament
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "clear_sprt_result",
-        .description = "Discards the current SPRT test's results (and stops it first if it's "
-                        "still running). Use when the user wants to throw away progress so far, "
-                        "e.g. before reconfiguring and starting a fresh test.",
+        .description = "Discards current SPRT test's results (stops it first if still "
+                        "running). Use when user wants to throw away progress so far, e.g. "
+                        "before reconfiguring/starting fresh test.",
         .handler = handleClearSprtResult
     });
 
     registry.registerTool(GuiToolDefinition{
         .name = "show_sprt_result",
-        .description = "Displays the current SPRT test results as tables in the chat: the SPRT "
-                        "decision table (LLR value, bounds, pass/fail/running status) and the "
-                        "raw win/draw/loss duel table. This is an action that renders table "
-                        "controls in the chat UI -- it isn't for reading the data yourself to "
-                        "describe in your own words, so just call it and briefly say you're "
-                        "showing the results, rather than restating the numbers from its "
-                        "response. Works both while a test is running (partial results so far) "
-                        "and after it has finished; reports that no results are available yet if "
-                        "nothing has been played. This is the ONLY way you ever learn any actual "
-                        "SPRT decision or duel score -- you have no other source for them. Never "
-                        "state, type, or guess a result yourself instead of calling this; that "
-                        "would be fabricated information, not a real result.",
+        .description = "Displays current SPRT test results as tables in chat: SPRT decision "
+                        "table (LLR value, bounds, pass/fail/running status) and raw win/draw/"
+                        "loss duel table. Renders table controls in chat UI -- not for reading "
+                        "data yourself to describe in own words, just call it and briefly say "
+                        "you're showing results, don't restate numbers from response. Works "
+                        "while test running (partial results) and after finished; reports none "
+                        "available yet if nothing played. ONLY way you ever learn actual SPRT "
+                        "decision or duel score -- no other source. Never state/type/guess a "
+                        "result yourself instead of calling this; that's fabricated info, not "
+                        "real result.",
         .handler = handleShowSprtResult
     });
 }
