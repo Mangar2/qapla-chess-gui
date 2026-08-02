@@ -230,6 +230,9 @@ Configuration::LlmChatConfig Configuration::getLlmChatConfig() {
             QaplaHelpers::to_uint32(section.getValue("port").value_or("")).value_or(static_cast<uint32_t>(result.port)));
         std::string logTrafficValue = section.getValue("logtraffic").value_or("true");
         result.logTraffic = (logTrafficValue == "true" || logTrafficValue == "1");
+        result.responseTimeoutSeconds = static_cast<int>(
+            QaplaHelpers::to_uint32(section.getValue("responsetimeoutseconds").value_or(""))
+                .value_or(static_cast<uint32_t>(result.responseTimeoutSeconds)));
         // "host_history" is a repeatable key (KeyValueMap allows duplicates), one entry per
         // remembered host, stored in most-recently-used order.
         for (const auto& [key, value] : section.entries) {
@@ -249,7 +252,8 @@ void Configuration::setLlmChatConfig(const LlmChatConfig& config) {
             {"enabled", config.enabled ? "true" : "false"},
             {"host", config.host},
             {"port", std::to_string(config.port)},
-            {"logtraffic", config.logTraffic ? "true" : "false"}
+            {"logtraffic", config.logTraffic ? "true" : "false"},
+            {"responsetimeoutseconds", std::to_string(config.responseTimeoutSeconds)}
         }
     };
     for (const auto& host : config.hostHistory) {

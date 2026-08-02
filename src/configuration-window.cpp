@@ -323,6 +323,14 @@ void ConfigurationWindow::drawLlmChatConfig()
     }
     ImGuiControls::hooverTooltip("LM Studio's server port, shown on its Developer tab (default 1234).");
 
+    ImGui::SetNextItemWidth(inputWidth);
+    if (ImGuiControls::inputInt<int>("Response Timeout (s)", config.responseTimeoutSeconds, 5, 3600)) {
+        modified = true;
+    }
+    ImGuiControls::hooverTooltip(
+        "How long to wait for the model to answer one message before giving up as timed out. "
+        "Raise this for slower/larger models or long tool-heavy turns.");
+
     ImGui::Spacing();
     bool logTraffic = config.logTraffic;
     if (ImGui::Checkbox("Log AI chat traffic to file", &logTraffic)) {

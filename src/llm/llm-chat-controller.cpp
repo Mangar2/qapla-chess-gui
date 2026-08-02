@@ -115,6 +115,7 @@ namespace {
         const std::vector<ToolSpec>& tools,
         std::vector<ChatMessage> messages,
         int maxToolIterations,
+        int messageTimeoutMs,
         LmStudioCancelHandle* cancelHandle,
         LlmChatLogger* logger,
         LlmFineTuningWriter* fineTuningWriter,
@@ -136,7 +137,7 @@ namespace {
             request.messages = messages;
             request.tools = tools;
 
-            auto response = client.chatCompletion(request, cancelHandle, MESSAGE_TIMEOUT_MS);
+            auto response = client.chatCompletion(request, cancelHandle, messageTimeoutMs);
             if (!response.success) {
                 turnResult.errorMessage = response.errorMessage;
                 logger->logLine("ERROR", response.errorMessage);
@@ -227,8 +228,9 @@ namespace {
 
 LlmChatController::LlmChatController(
     LmStudioConnection connection, std::string systemPrompt, int maxToolIterations, bool logTraffic,
-    std::string logDirectory)
+    std::string logDirectory, int messageTimeoutMs)
     : client_(std::move(connection)), systemPrompt_(std::move(systemPrompt)), maxToolIterations_(maxToolIterations),
+      messageTimeoutMs_(messageTimeoutMs),
       logger_(std::make_shared<LlmChatLogger>(logTraffic, logDirectory)),
       fineTuningWriter_(std::make_shared<LlmFineTuningWriter>(std::move(logDirectory))) {
 }
@@ -316,19 +318,20 @@ void LlmChatController::sendMessage(const std::string& userText) {
     }
 
     auto maxToolIterations = maxToolIterations_;
+    auto messageTimeoutMs = messageTimeoutMs_;
     auto cancelHandle = chatCancelHandle_;
     auto logger = logger_;
     auto fineTuningWriter = fineTuningWriter_;
 
-    chatTask_.start([client, model, tools, messages = std::move(messages), maxToolIterations, events,
-                      cancelHandle, logger, fineTuningWriter]() mutable {
+    chatTask_.start([client, model, tools, messages = std::move(messages), maxToolIterations, messageTimeoutMs,
+                      events, cancelHandle, logger, fineTuningWriter]() mutable {
         auto onToolEvent = [events](ToolCallEvent event) {
             std::scoped_lock lock(events->mutex);
             events->events.push_back(std::move(event));
         };
         return runAgentLoop(
-            client, model, tools, std::move(messages), maxToolIterations, cancelHandle.get(), logger.get(),
-            fineTuningWriter.get(), onToolEvent);
+            client, model, tools, std::move(messages), maxToolIterations, messageTimeoutMs, cancelHandle.get(),
+            logger.get(), fineTuningWriter.get(), onToolEvent);
     });
 }
 

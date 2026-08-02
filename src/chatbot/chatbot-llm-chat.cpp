@@ -187,8 +187,9 @@ void ChatbotLlmChat::ensureController() {
         "user's language ({}).\n"
         "CRITICAL: every output = tool call, no exception, no plain text. Always reply_to_user, "
         "text in \"text\" arg.\n"
+        "Always act on user request instantly -- no checking, no other action first.\n"
         "Don't ask what tools can tell you. Config tools incremental, any subset per call. "
-        "Never ask for something already configured -- check status tool if unsure.\n"
+        "Never ask for something already configured.\n"
         "Value missing/invalid (engine, file): ask user, never invent. Engines + openings file "
         "required to start.\n"
         "show_tournament_result/show_sprt_result/show_epd_result render results as table in "
@@ -208,7 +209,8 @@ void ChatbotLlmChat::ensureController() {
         languageCode);
 
     controller_ = std::make_unique<QaplaLlm::LlmChatController>(
-        connection, std::move(systemPrompt), /*maxToolIterations=*/10, config.logTraffic);
+        connection, std::move(systemPrompt), /*maxToolIterations=*/10, config.logTraffic,
+        /*logDirectory=*/"", config.responseTimeoutSeconds * 1000);
     controller_->refreshModels();
     activeConnection_ = connection;
 }

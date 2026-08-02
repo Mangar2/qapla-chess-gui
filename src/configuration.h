@@ -122,6 +122,11 @@ namespace QaplaConfiguration {
             /// If true, the full AI-chat traffic is appended to a timestamped log file in the
             /// app's config directory -- see QaplaLlm::LlmChatLogger.
             bool logTraffic = true;
+            /// How long to wait for the model to answer one chat-completion request (each turn
+            /// of the agent loop) before giving up as timed out, in seconds. Does not affect
+            /// the longer, separate first-contact reachability ping (a cold model load can
+            /// legitimately take longer than a routine follow-up turn).
+            int responseTimeoutSeconds = 120;
         };
 
         /**
