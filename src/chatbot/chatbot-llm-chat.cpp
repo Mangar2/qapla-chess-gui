@@ -245,6 +245,13 @@ bool ChatbotLlmChat::draw() {
         controller_->update();
         drawChatUi();
         ImGui::SameLine();
+        ImGui::BeginDisabled(controller_->isBusy());
+        if (ImGuiControls::textButton("Delete Chat")) {
+            controller_->clearHistory();
+        }
+        ImGui::EndDisabled();
+        ImGuiControls::hooverTooltip("Clears the chat transcript. Disabled while a message is in flight -- stop it first.");
+        ImGui::SameLine();
     } else {
         drawStatusOnly();
         ImGui::Spacing();
@@ -309,13 +316,6 @@ void ChatbotLlmChat::drawChatUi() {
     if (ImGuiControls::textButton("Refresh Models")) {
         controller_->refreshModels();
     }
-    ImGui::SameLine();
-    ImGui::BeginDisabled(controller_->isBusy());
-    if (ImGuiControls::textButton("Delete Chat")) {
-        controller_->clearHistory();
-    }
-    ImGui::EndDisabled();
-    ImGuiControls::hooverTooltip("Clears the chat transcript. Disabled while a message is in flight -- stop it first.");
     ImGui::SameLine();
     bool enableThinking = controller_->enableThinking();
     if (ImGui::Checkbox("Enable Thinking", &enableThinking)) {
