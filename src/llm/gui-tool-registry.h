@@ -58,7 +58,7 @@ struct GuiToolResult {
      * normal draw() method would. Keep `content` short in this case (e.g. "Showing the current
      * tournament results.") since the control itself carries the actual data.
      */
-    std::function<void()> renderWidget;
+    std::function<void()> renderWidget{};
 
     /**
      * @brief Ends the agent turn right after this call, skipping any further model round-trip.
