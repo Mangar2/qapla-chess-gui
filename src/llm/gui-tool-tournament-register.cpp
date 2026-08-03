@@ -400,9 +400,10 @@ namespace {
         }
     }
 
-    // Shared by get_tournament_status and configure_tournament's result (the latter always
-    // ends with the full status too -- see buildConfigureResult -- so the model never needs a
-    // separate get_tournament_status round-trip just to confirm what it changed).
+    // Shared by handleGetTournamentStatus (dispatched into by the unified get_status tool) and
+    // configure_tournament's result (the latter always ends with the full status too -- see
+    // buildConfigureResult -- so the model never needs a separate get_status round-trip just to
+    // confirm what it changed).
     std::string buildTournamentStatusText(TournamentData& tournamentData) {
         auto selectedEngines = tournamentData.getEngineSelect().getSelectedEngines();
         std::vector<std::string> engineNames;
@@ -519,67 +520,59 @@ namespace {
         return buildConfigureResult(tournamentData, problems, dialogOpened);
     }
 
-    // ------------------------------------------------------------------
-    // get_tournament_status
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleGetTournamentStatus(const Json::JsonValue&) {
-        return GuiToolResult{.success = true, .content = buildTournamentStatusText(TournamentData::instance())};
-    }
-
-    // ------------------------------------------------------------------
-    // clear_tournament_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleClearTournamentResult(const Json::JsonValue&) {
-        auto& tournamentData = TournamentData::instance();
-        if (!tournamentData.hasTasksScheduled()) {
-            return GuiToolResult{.success = true, .content = "There are no tournament results to clear."};
-        }
-
-        bool wasRunning = tournamentData.isRunning() || tournamentData.isStarting();
-        tournamentData.clear(false); // verbose=false: this tool's own content already tells the user
-        switchToTournamentView();
-        return GuiToolResult{
-            .success = true,
-            .content = wasRunning
-                ? "Tournament stopped and all results cleared."
-                : "All tournament results have been cleared."
-        };
-    }
-
-    // ------------------------------------------------------------------
-    // show_tournament_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleShowTournamentResult(const Json::JsonValue&) {
-        auto& tournamentData = TournamentData::instance();
-        if (tournamentData.getTournamentResult().scoredEngines().empty()) {
-            return GuiToolResult{.success = true, .content = "No tournament results are available yet."};
-        }
-
-        // Renders the same live control the classic (non-AI) chatbot's results step draws (see
-        // ChatbotStepStandardTournamentResult::draw()) -- a real ImGuiTable, not a text dump of
-        // the data. Always reads TournamentData::instance() fresh at draw time (every frame the
-        // ChatEntry stays visible), so it reflects the tournament's current state, exactly like
-        // that classic step does, rather than a one-time snapshot of the results as they were
-        // when this tool was called.
-        return GuiToolResult{
-            .success = true,
-            .content = "Showing the current tournament results as a table in the chat -- it is "
-                        "already visible to the user, so do not restate, list, or summarize the "
-                        "numbers in your reply; just briefly confirm what you did.",
-            .renderWidget = []() {
-                auto& data = TournamentData::instance();
-                ImGui::Text("Tournament Progress: %u / %u games completed",
-                    data.getPlayedGames(), data.getTotalGames());
-                ImGui::Spacing();
-                data.drawEloTable(ImVec2(0.0F, 3000.0F));
-            }
-        };
-    }
-
 } // namespace
+
+// Exported (see gui-tool-tournament.h) so the unified get_status/clear_result/show_result tools
+// (gui-tool-status-register.cpp) can dispatch into them directly by type --
+// get_tournament_status/clear_tournament_result/show_tournament_result no longer exist as
+// separate model-visible tools, but the underlying logic is unchanged.
+GuiToolResult handleGetTournamentStatus(const QaplaTester::Json::JsonValue&) {
+    return GuiToolResult{.success = true, .content = buildTournamentStatusText(TournamentData::instance())};
+}
+
+GuiToolResult handleClearTournamentResult(const QaplaTester::Json::JsonValue&) {
+    auto& tournamentData = TournamentData::instance();
+    if (!tournamentData.hasTasksScheduled()) {
+        return GuiToolResult{.success = true, .content = "There are no tournament results to clear."};
+    }
+
+    bool wasRunning = tournamentData.isRunning() || tournamentData.isStarting();
+    tournamentData.clear(false); // verbose=false: this tool's own content already tells the user
+    switchToTournamentView();
+    return GuiToolResult{
+        .success = true,
+        .content = wasRunning
+            ? "Tournament stopped and all results cleared."
+            : "All tournament results have been cleared."
+    };
+}
+
+GuiToolResult handleShowTournamentResult(const QaplaTester::Json::JsonValue&) {
+    auto& tournamentData = TournamentData::instance();
+    if (tournamentData.getTournamentResult().scoredEngines().empty()) {
+        return GuiToolResult{.success = true, .content = "No tournament results are available yet."};
+    }
+
+    // Renders the same live control the classic (non-AI) chatbot's results step draws (see
+    // ChatbotStepStandardTournamentResult::draw()) -- a real ImGuiTable, not a text dump of
+    // the data. Always reads TournamentData::instance() fresh at draw time (every frame the
+    // ChatEntry stays visible), so it reflects the tournament's current state, exactly like
+    // that classic step does, rather than a one-time snapshot of the results as they were
+    // when this tool was called.
+    return GuiToolResult{
+        .success = true,
+        .content = "Showing the current tournament results as a table in the chat -- it is "
+                    "already visible to the user, so do not restate, list, or summarize the "
+                    "numbers in your reply; just briefly confirm what you did.",
+        .renderWidget = []() {
+            auto& data = TournamentData::instance();
+            ImGui::Text("Tournament Progress: %u / %u games completed",
+                data.getPlayedGames(), data.getTotalGames());
+            ImGui::Spacing();
+            data.drawEloTable(ImVec2(0.0F, 3000.0F));
+        }
+    };
+}
 
 // Exported (see gui-tool-tournament.h) so the unified start/stop tool (gui-tool-status-register.cpp)
 // can dispatch into it directly by type -- start_tournament/stop_tournament no longer exist as
@@ -658,12 +651,13 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                         "optional -- pass ONLY what user asked to change (e.g. just \"games\"); "
                         "don't require/ask other fields first. Unpassed fields keep prior value "
                         "(this session or earlier), don't assume unset. Response always reports "
-                        "the full current tournament config, so no separate get_tournament_status "
-                        "call is normally needed to confirm what changed. openings_file must be "
-                        "set (here or earlier session) before start_tournament succeeds, no safe "
-                        "default. For openings_file/pgn_file, set openings_file_dialog/"
-                        "pgn_file_dialog to true instead of a typed path to open a native file "
-                        "picker -- never type/guess a path yourself. draw_mode/resign_mode "
+                        "the full current tournament config, so no separate get_status "
+                        "(type=\"tournament\") call is normally needed to confirm what changed. "
+                        "openings_file must be set (here or earlier session) before start "
+                        "(type=\"tournament\") succeeds, no safe default. For openings_file/"
+                        "pgn_file, set openings_file_dialog/pgn_file_dialog to true instead of a "
+                        "typed path to open a native file picker -- never type/guess a path "
+                        "yourself. draw_mode/resign_mode "
                         "\"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
         .parametersSchema = buildConfigureTournamentSchema(),
         .handler = handleConfigureTournament,
@@ -673,39 +667,6 @@ void registerTournamentTools(GuiToolRegistry& registry) {
         .timeout = std::chrono::minutes(10)
     });
 
-    registry.registerTool(GuiToolDefinition{
-        .name = "get_tournament_status",
-        .description = "Reports current tournament config/state: selected engines, time "
-                        "control, games/rounds, event name, openings file, PGN output file, "
-                        "concurrency, draw/resign adjudication settings, whether running. "
-                        "configure_tournament already returns this same full status after any "
-                        "change, so this is only needed for a pure status check that changes "
-                        "nothing (e.g. \"what's the tournament set to right now\"), or before "
-                        "select_engines.",
-        .handler = handleGetTournamentStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "clear_tournament_result",
-        .description = "Discards current tournament results (stops it first if still running). "
-                        "Use when user wants to discard what's been played so far, e.g. before "
-                        "reconfiguring/starting fresh tournament with same engines.",
-        .handler = handleClearTournamentResult
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "show_tournament_result",
-        .description = "Displays current tournament results as table in chat, ranked by Elo "
-                        "(score, win%, Elo w/ error margin, games played per engine). Renders "
-                        "table control in chat UI -- not for reading data yourself to describe "
-                        "in own words, just call it and briefly confirm you're showing results, "
-                        "don't restate numbers. Works while running (partial results) or after "
-                        "finish; reports none available if nothing played yet. ONLY way you "
-                        "ever learn any actual score/standing/Elo -- no other source. Never "
-                        "state/type/guess a result yourself instead of calling this -- that's "
-                        "fabrication, not a real result.",
-        .handler = handleShowTournamentResult
-    });
 }
 
 } // namespace QaplaLlm

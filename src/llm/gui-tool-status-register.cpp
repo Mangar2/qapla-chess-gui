@@ -190,6 +190,60 @@ namespace {
         result.content += " " + buildRunningStatusText();
         return result;
     }
+
+    GuiToolResult handleGetStatus(const Json::JsonValue& arguments) {
+        if (!arguments.contains("type") || !arguments.at("type").is_string()) {
+            return GuiToolResult{.success = false, .content = "\"type\" is required: \"tournament\", \"sprt\", or \"epd\"."};
+        }
+        const auto& type = arguments.at("type").as_string();
+
+        if (type == "tournament") {
+            return handleGetTournamentStatus(arguments);
+        }
+        if (type == "sprt") {
+            return handleGetSprtStatus(arguments);
+        }
+        if (type == "epd") {
+            return handleGetEpdStatus(arguments);
+        }
+        return GuiToolResult{.success = false, .content = "Unknown type \"" + type + "\" -- must be \"tournament\", \"sprt\", or \"epd\"."};
+    }
+
+    GuiToolResult handleClearResult(const Json::JsonValue& arguments) {
+        if (!arguments.contains("type") || !arguments.at("type").is_string()) {
+            return GuiToolResult{.success = false, .content = "\"type\" is required: \"tournament\", \"sprt\", or \"epd\"."};
+        }
+        const auto& type = arguments.at("type").as_string();
+
+        if (type == "tournament") {
+            return handleClearTournamentResult(arguments);
+        }
+        if (type == "sprt") {
+            return handleClearSprtResult(arguments);
+        }
+        if (type == "epd") {
+            return handleClearEpdResult(arguments);
+        }
+        return GuiToolResult{.success = false, .content = "Unknown type \"" + type + "\" -- must be \"tournament\", \"sprt\", or \"epd\"."};
+    }
+
+    GuiToolResult handleShowResult(const Json::JsonValue& arguments) {
+        if (!arguments.contains("type") || !arguments.at("type").is_string()) {
+            return GuiToolResult{.success = false, .content = "\"type\" is required: \"tournament\", \"sprt\", or \"epd\"."};
+        }
+        const auto& type = arguments.at("type").as_string();
+
+        if (type == "tournament") {
+            return handleShowTournamentResult(arguments);
+        }
+        if (type == "sprt") {
+            return handleShowSprtResult(arguments);
+        }
+        if (type == "epd") {
+            return handleShowEpdResult(arguments);
+        }
+        return GuiToolResult{.success = false, .content = "Unknown type \"" + type + "\" -- must be \"tournament\", \"sprt\", or \"epd\"."};
+    }
 }
 
 void registerStatusTools(GuiToolRegistry& registry) {
@@ -201,9 +255,9 @@ void registerStatusTools(GuiToolRegistry& registry) {
                         "broadly if \"something\"/\"a test\"/\"anything\" running, or "
                         "specifically if TOURNAMENT running -- people often call SPRT test or "
                         "EPD analysis \"tournament\" informally (all look same: engines running "
-                        "in background), so checking only get_tournament_status could wrongly "
-                        "say nothing happening while SPRT test or EPD analysis actually active. "
-                        "start/stop already return this same summary, so this is only needed "
+                        "in background), so checking only get_status (type=\"tournament\") could "
+                        "wrongly say nothing happening while SPRT test or EPD analysis actually "
+                        "active. start/stop already return this same summary, so this is only needed "
                         "for a pure check that changes nothing. Distinguishes a graceful stop "
                         "still in progress from plain running/not running.",
         .handler = handleGetRunningStatus
@@ -220,9 +274,9 @@ void registerStatusTools(GuiToolRegistry& registry) {
                         "start. EPD-specific: auto-resumes from a previous incomplete run "
                         "instead of restarting if its engines/file/timing are unchanged since; "
                         "if that previous run already completed, or its settings changed after "
-                        "it stopped, starting fails until clear_epd_result is called first. "
-                        "Response always reports what's running across all three afterward, so "
-                        "no separate get_running_status call is normally needed.",
+                        "it stopped, starting fails until clear_result (type=\"epd\") is called "
+                        "first. Response always reports what's running across all three "
+                        "afterward, so no separate get_running_status call is normally needed.",
         .parametersSchema = buildStartSchema(),
         .handler = handleStart,
         // Engine processes need to launch and initialize; a handful of engines can legitimately
@@ -240,6 +294,51 @@ void registerStatusTools(GuiToolRegistry& registry) {
                         "get_running_status call is normally needed.",
         .parametersSchema = buildStopSchema(),
         .handler = handleStop
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "get_status",
+        .description = "Reports the full current config/state of a tournament, SPRT test, or "
+                        "EPD analysis (pick via \"type\"): engines, all its settings, and "
+                        "whether/how it's running -- everything configure_tournament/"
+                        "configure_sprt/configure_epd also already return after any change they "
+                        "make, so this is only needed for a pure status check that changes "
+                        "nothing (e.g. \"what's the SPRT test set to right now\"), or before "
+                        "select_engines/select_sprt_engines/select_epd_engines. For \"is "
+                        "anything running\" across all three at once, use get_running_status "
+                        "instead.",
+        .parametersSchema = buildStartSchema(), // same shape: just the required "type" enum
+        .handler = handleGetStatus
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "clear_result",
+        .description = "Discards the current results of a tournament, SPRT test, or EPD "
+                        "analysis (pick via \"type\"), stopping it first if still running. Use "
+                        "when the user wants to discard what's been played/analyzed so far, "
+                        "e.g. before reconfiguring and starting fresh with the same engines. "
+                        "For EPD specifically, this is also the required fix when start fails "
+                        "because a previous run already completed or its settings changed after "
+                        "it stopped.",
+        .parametersSchema = buildStartSchema(), // same shape: just the required "type" enum
+        .handler = handleClearResult
+    });
+
+    registry.registerTool(GuiToolDefinition{
+        .name = "show_result",
+        .description = "Displays the current results of a tournament, SPRT test, or EPD "
+                        "analysis (pick via \"type\") as a table in the chat -- ranked-by-Elo "
+                        "standings for tournament, SPRT decision + duel score for sprt, "
+                        "per-position solved/not-solved for epd. Renders a real table control "
+                        "in the chat UI -- not for you to read the data and describe it in your "
+                        "own words; just call it and briefly confirm you're showing results, "
+                        "don't restate numbers. Works while running (partial results) or after "
+                        "finish; reports none available if nothing played/analyzed yet. ONLY way "
+                        "you ever learn any actual score/standing/Elo/decision -- no other "
+                        "source. Never state/type/guess a result yourself instead of calling "
+                        "this -- that's fabrication, not a real result.",
+        .parametersSchema = buildStartSchema(), // same shape: just the required "type" enum
+        .handler = handleShowResult
     });
 }
 

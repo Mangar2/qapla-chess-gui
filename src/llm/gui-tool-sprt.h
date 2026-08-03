@@ -25,9 +25,9 @@ namespace QaplaLlm {
 
 /**
  * @brief Registers the "SPRT" tool group: select_sprt_engines, configure_sprt (also covers
- * draw/resign adjudication), get_sprt_status, clear_sprt_result, show_sprt_result. start/stop
- * are handled by the unified start/stop tool in gui-tool-status-register.cpp instead -- see
- * handleStartSprtTournament/handleStopSprtTournament below.
+ * draw/resign adjudication). start/stop/get_status/clear_result/show_result are all handled by
+ * the unified tools in gui-tool-status-register.cpp instead -- see the exported handle*
+ * functions below.
  *
  * SPRT (Sequential Probability Ratio Test) compares exactly two engines -- a "champion"
  * (comparison baseline) and a "challenger" (engine under test) -- unlike tournament mode's
@@ -62,5 +62,30 @@ void registerSprtTools(GuiToolRegistry& registry);
  * "stop" tool.
  */
 [[nodiscard]] GuiToolResult handleStopSprtTournament(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Reports the SPRT test's full current config/state as text.
+ *
+ * Exported so the unified "get_status" tool can dispatch into it by type="sprt" -- there is no
+ * separate model-visible "get_sprt_status" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleGetSprtStatus(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Discards current SPRT test results (stops it first if still running).
+ *
+ * Exported so the unified "clear_result" tool can dispatch into it by type="sprt" -- there is
+ * no separate model-visible "clear_sprt_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleClearSprtResult(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Renders the current SPRT test results as live tables in the chat (see
+ * GuiToolResult::renderWidget).
+ *
+ * Exported so the unified "show_result" tool can dispatch into it by type="sprt" -- there is no
+ * separate model-visible "show_sprt_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleShowSprtResult(const QaplaTester::Json::JsonValue& arguments);
 
 } // namespace QaplaLlm

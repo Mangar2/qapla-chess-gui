@@ -293,12 +293,13 @@ namespace {
         return buildConfigureResult(applied, problems, dialogOpened);
     }
 
-    // ------------------------------------------------------------------
-    // get_epd_status
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleGetEpdStatus(const Json::JsonValue&) {
-        auto& epdData = EpdData::instance();
+    // Used by handleGetEpdStatus (dispatched into by the unified get_status tool) -- factored
+    // out purely so it has a name to reuse if needed elsewhere, matching
+    // buildTournamentStatusText()/buildSprtStatusText()'s pattern in the tournament/SPRT
+    // sibling files. Unlike those two, configure_epd's own result does NOT also return this
+    // full text (EPD has no adjudication fields inflating its config size the same way, so the
+    // terser "Configured: X." summary stays proportionate).
+    std::string buildEpdStatusText(EpdData& epdData) {
         auto selectedEngines = epdData.getEngineSelect().getSelectedEngines();
         std::vector<std::string> engineNames;
         for (const auto& engine : selectedEngines) {
@@ -324,13 +325,13 @@ namespace {
                        "are being aborted.";
         }
         if (epdData.isFinished()) {
-            runState += " All positions have been analyzed -- call show_epd_result to see it.";
+            runState += " All positions have been analyzed -- call show_result (type=\"epd\") to see it.";
         } else if (epdData.totalTests > 0) {
             runState += std::format(" Progress: {}/{} positions remaining.",
                 epdData.remainingTests, epdData.totalTests);
         }
 
-        std::string message = std::format(
+        return std::format(
             "Engines: {}. EPD file: {}. Max time per position: {}s. Min time per position: {}s. "
             "Seen plies (early stop): {}. Concurrency: {}. {}",
             engineNames.empty() ? "none selected" : joinStrings(engineNames),
@@ -338,65 +339,63 @@ namespace {
             config.maxTimeInS, config.minTimeInS, config.seenPlies,
             epdData.getExternalConcurrency(),
             runState);
-
-        return GuiToolResult{.success = true, .content = message};
-    }
-
-    // ------------------------------------------------------------------
-    // clear_epd_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleClearEpdResult(const Json::JsonValue&) {
-        auto& epdData = EpdData::instance();
-        if (epdData.totalTests == 0) {
-            return GuiToolResult{.success = true, .content = "There are no EPD analysis results to clear."};
-        }
-
-        bool wasRunning = epdData.isRunning() || epdData.isStarting();
-        epdData.clear();
-        switchToEpdView();
-        return GuiToolResult{
-            .success = true,
-            .content = wasRunning
-                ? "EPD analysis stopped and all results cleared."
-                : "All EPD analysis results have been cleared."
-        };
-    }
-
-    // ------------------------------------------------------------------
-    // show_epd_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleShowEpdResult(const Json::JsonValue&) {
-        auto& epdData = EpdData::instance();
-        if (epdData.totalTests == 0) {
-            return GuiToolResult{.success = true, .content = "No EPD analysis results are available yet."};
-        }
-
-        // Renders the same live control the classic (non-AI) EPD view draws (see
-        // EpdData::drawTable(), used from EpdWindow::draw()) -- a real ImGuiTable with one row
-        // per position and one column per engine, not a text dump. Always reads
-        // EpdData::instance() fresh at draw time (every frame the ChatEntry stays visible), so
-        // it reflects the analysis's current state, exactly like that classic view does.
-        return GuiToolResult{
-            .success = true,
-            .content = "Showing the current EPD analysis results as a table in the chat -- it is "
-                        "already visible to the user, so do not restate, list, or summarize the "
-                        "numbers in your reply; just briefly confirm what you did. This is the "
-                        "ONLY way you ever learn which positions were solved or not -- you have "
-                        "no other source for that. Never state, type, or guess a result yourself "
-                        "instead of calling this; that would be fabricated information, not a "
-                        "real result.",
-            .renderWidget = []() {
-                auto& data = EpdData::instance();
-                ImGui::Text("EPD Analysis Progress: %zu / %zu positions remaining",
-                    data.remainingTests, data.totalTests);
-                ImGui::Spacing();
-                data.drawTable(ImVec2(0.0F, 3000.0F));
-            }
-        };
     }
 } // namespace
+
+// Exported (see gui-tool-epd.h) so the unified get_status/clear_result/show_result tools
+// (gui-tool-status-register.cpp) can dispatch into them directly by type --
+// get_epd_status/clear_epd_result/show_epd_result no longer exist as separate model-visible
+// tools, but the underlying logic is unchanged.
+GuiToolResult handleGetEpdStatus(const QaplaTester::Json::JsonValue&) {
+    return GuiToolResult{.success = true, .content = buildEpdStatusText(EpdData::instance())};
+}
+
+GuiToolResult handleClearEpdResult(const QaplaTester::Json::JsonValue&) {
+    auto& epdData = EpdData::instance();
+    if (epdData.totalTests == 0) {
+        return GuiToolResult{.success = true, .content = "There are no EPD analysis results to clear."};
+    }
+
+    bool wasRunning = epdData.isRunning() || epdData.isStarting();
+    epdData.clear();
+    switchToEpdView();
+    return GuiToolResult{
+        .success = true,
+        .content = wasRunning
+            ? "EPD analysis stopped and all results cleared."
+            : "All EPD analysis results have been cleared."
+    };
+}
+
+GuiToolResult handleShowEpdResult(const QaplaTester::Json::JsonValue&) {
+    auto& epdData = EpdData::instance();
+    if (epdData.totalTests == 0) {
+        return GuiToolResult{.success = true, .content = "No EPD analysis results are available yet."};
+    }
+
+    // Renders the same live control the classic (non-AI) EPD view draws (see
+    // EpdData::drawTable(), used from EpdWindow::draw()) -- a real ImGuiTable with one row
+    // per position and one column per engine, not a text dump. Always reads
+    // EpdData::instance() fresh at draw time (every frame the ChatEntry stays visible), so
+    // it reflects the analysis's current state, exactly like that classic view does.
+    return GuiToolResult{
+        .success = true,
+        .content = "Showing the current EPD analysis results as a table in the chat -- it is "
+                    "already visible to the user, so do not restate, list, or summarize the "
+                    "numbers in your reply; just briefly confirm what you did. This is the "
+                    "ONLY way you ever learn which positions were solved or not -- you have "
+                    "no other source for that. Never state, type, or guess a result yourself "
+                    "instead of calling this; that would be fabricated information, not a "
+                    "real result.",
+        .renderWidget = []() {
+            auto& data = EpdData::instance();
+            ImGui::Text("EPD Analysis Progress: %zu / %zu positions remaining",
+                data.remainingTests, data.totalTests);
+            ImGui::Spacing();
+            data.drawTable(ImVec2(0.0F, 3000.0F));
+        }
+    };
+}
 
 // Exported (see gui-tool-epd.h) so the unified start/stop tool (gui-tool-status-register.cpp)
 // can dispatch into it directly by type -- start_epd_analysis/stop_epd_analysis no longer exist
@@ -425,8 +424,8 @@ GuiToolResult handleStartEpdAnalysis(const QaplaTester::Json::JsonValue&) {
         } else if (reason.find("Clear data before re-analyzing") != std::string::npos) {
             // This exact rejection (see EpdData::mayAnalyze()) has no tournament/SPRT
             // equivalent, so spell out the fix rather than relying on the model to
-            // connect "clear data" to the clear_epd_result tool on its own.
-            reason += " Call clear_epd_result, then call start again with type=\"epd\".";
+            // connect "clear data" to clear_result on its own.
+            reason += " Call clear_result with type=\"epd\", then call start again with type=\"epd\".";
         }
         return GuiToolResult{.success = false, .content = reason};
     }
@@ -481,13 +480,13 @@ void registerEpdTools(GuiToolRegistry& registry) {
                         "min_time_seconds, seen_plies, concurrency. Each field independent, "
                         "optional -- pass ONLY what user asked to change, don't require/ask for "
                         "others first. Unset fields keep prior value (this session or earlier) "
-                        "-- call get_epd_status first if unsure what's current. IMPORTANT: "
-                        "completely separate from configure_tournament/configure_sprt -- EPD "
-                        "has no shared time_control string (just plain per-position second "
+                        "-- call get_status (type=\"epd\") first if unsure what's current. "
+                        "IMPORTANT: completely separate from configure_tournament/configure_sprt "
+                        "-- EPD has no shared time_control string (just plain per-position second "
                         "counts), no adjudication concept, despite sounding like another "
                         "engine-testing mode. If request could mean tournament, SPRT, or EPD "
                         "and unclear which, ask, don't guess. epd_file must be set (here or "
-                        "earlier session) before start_epd_analysis succeeds. If missing, "
+                        "earlier session) before start (type=\"epd\") succeeds. If missing, "
                         "invalid, or user wants to browse, set epd_file_dialog=true instead of "
                         "a typed path.",
         .parametersSchema = buildConfigureEpdSchema(),
@@ -498,36 +497,6 @@ void registerEpdTools(GuiToolRegistry& registry) {
         .timeout = std::chrono::minutes(10)
     });
 
-    registry.registerTool(GuiToolDefinition{
-        .name = "get_epd_status",
-        .description = "Reports current EPD analysis config/state: selected engines, EPD file, "
-                        "max/min time per position, seen_plies, concurrency, progress "
-                        "(positions remaining), running/finished. Entirely separate from "
-                        "get_tournament_status/get_sprt_status -- use this one for EPD "
-                        "questions. Call FIRST when request changes only one EPD setting and "
-                        "rest of config uncertain.",
-        .handler = handleGetEpdStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "clear_epd_result",
-        .description = "Discards current EPD analysis results (stops it first if still "
-                        "running). Use when user wants to throw away progress so far, e.g. "
-                        "before reconfiguring and starting fresh analysis.",
-        .handler = handleClearEpdResult
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "show_epd_result",
-        .description = "Displays current EPD analysis results as table in chat: one row per "
-                        "position, one column per tested engine, showing whether each engine "
-                        "found correct move (and how fast) or not. Renders table control in "
-                        "chat UI -- not for you to read data and describe in own words; just "
-                        "call it, briefly say you're showing results, don't restate numbers "
-                        "from response. Works while running (partial results) and after "
-                        "finished; reports no results yet if nothing analyzed.",
-        .handler = handleShowEpdResult
-    });
 }
 
 } // namespace QaplaLlm

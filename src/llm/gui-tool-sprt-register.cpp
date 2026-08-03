@@ -132,9 +132,10 @@ namespace {
         }
     }
 
-    // Shared by get_sprt_status and configure_sprt's result (the latter always ends with the
-    // full status too -- see buildConfigureResult -- so the model never needs a separate
-    // get_sprt_status round-trip just to confirm what it changed).
+    // Shared by handleGetSprtStatus (dispatched into by the unified get_status tool) and
+    // configure_sprt's result (the latter always ends with the full status too -- see
+    // buildConfigureResult -- so the model never needs a separate get_status round-trip just to
+    // confirm what it changed).
     std::string buildSprtStatusText(SprtTournamentData& sprtData) {
         auto names = getSprtEngineNames(sprtData);
         const auto& config = sprtData.sprtConfig();
@@ -144,7 +145,7 @@ namespace {
         std::string runState = sprtRunStateText(sprtData);
         if (sprtData.isFinished()) {
             runState += " A decision has been reached (or the game limit was hit) -- call "
-                         "show_sprt_result to see it.";
+                         "show_result (type=\"sprt\") to see it.";
         }
 
         return std::format(
@@ -588,68 +589,61 @@ namespace {
         return buildConfigureResult(sprtData, problems, dialogOpened);
     }
 
-    // ------------------------------------------------------------------
-    // get_sprt_status
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleGetSprtStatus(const Json::JsonValue&) {
-        return GuiToolResult{.success = true, .content = buildSprtStatusText(SprtTournamentData::instance())};
-    }
-
-    // ------------------------------------------------------------------
-    // clear_sprt_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleClearSprtResult(const Json::JsonValue&) {
-        auto& sprtData = SprtTournamentData::instance();
-        if (!sprtData.hasResults()) {
-            return GuiToolResult{.success = true, .content = "There are no SPRT results to clear."};
-        }
-
-        bool wasRunning = sprtData.isRunning() || sprtData.isStarting();
-        sprtData.clear();
-        switchToSprtView();
-        return GuiToolResult{
-            .success = true,
-            .content = wasRunning
-                ? "SPRT test stopped and all results cleared."
-                : "All SPRT results have been cleared."
-        };
-    }
-
-    // ------------------------------------------------------------------
-    // show_sprt_result
-    // ------------------------------------------------------------------
-
-    GuiToolResult handleShowSprtResult(const Json::JsonValue&) {
-        auto& sprtData = SprtTournamentData::instance();
-        if (!sprtData.hasResults()) {
-            return GuiToolResult{.success = true, .content = "No SPRT results are available yet."};
-        }
-
-        // Renders the same two live controls the classic (non-AI) chatbot's SPRT results step
-        // draws (see ChatbotStepSprtTournamentResult::draw()): the SPRT test table (LLR/bounds/
-        // decision status) and the raw duel win/draw/loss table -- real ImGuiTables, not a text
-        // dump. Always reads SprtTournamentData::instance() fresh at draw time, so it reflects
-        // the test's current state on every frame, exactly like that classic step does.
-        return GuiToolResult{
-            .success = true,
-            .content = "Showing the current SPRT results as tables in the chat -- they are "
-                        "already visible to the user, so do not restate, list, or summarize the "
-                        "numbers in your reply; just briefly confirm what you did. This is the "
-                        "ONLY way you ever learn the actual SPRT decision or duel score -- never "
-                        "state, type, or guess one yourself instead of calling this.",
-            .renderWidget = []() {
-                auto& data = SprtTournamentData::instance();
-                ImGui::Text("SPRT Test Result:");
-                data.drawSprtTable(ImVec2(0.0F, 100.0F));
-                ImGui::Spacing();
-                ImGui::Text("Duel Result:");
-                data.drawResultTable(ImVec2(0.0F, 100.0F));
-            }
-        };
-    }
 } // namespace
+
+// Exported (see gui-tool-sprt.h) so the unified get_status/clear_result/show_result tools
+// (gui-tool-status-register.cpp) can dispatch into them directly by type --
+// get_sprt_status/clear_sprt_result/show_sprt_result no longer exist as separate model-visible
+// tools, but the underlying logic is unchanged.
+GuiToolResult handleGetSprtStatus(const QaplaTester::Json::JsonValue&) {
+    return GuiToolResult{.success = true, .content = buildSprtStatusText(SprtTournamentData::instance())};
+}
+
+GuiToolResult handleClearSprtResult(const QaplaTester::Json::JsonValue&) {
+    auto& sprtData = SprtTournamentData::instance();
+    if (!sprtData.hasResults()) {
+        return GuiToolResult{.success = true, .content = "There are no SPRT results to clear."};
+    }
+
+    bool wasRunning = sprtData.isRunning() || sprtData.isStarting();
+    sprtData.clear();
+    switchToSprtView();
+    return GuiToolResult{
+        .success = true,
+        .content = wasRunning
+            ? "SPRT test stopped and all results cleared."
+            : "All SPRT results have been cleared."
+    };
+}
+
+GuiToolResult handleShowSprtResult(const QaplaTester::Json::JsonValue&) {
+    auto& sprtData = SprtTournamentData::instance();
+    if (!sprtData.hasResults()) {
+        return GuiToolResult{.success = true, .content = "No SPRT results are available yet."};
+    }
+
+    // Renders the same two live controls the classic (non-AI) chatbot's SPRT results step
+    // draws (see ChatbotStepSprtTournamentResult::draw()): the SPRT test table (LLR/bounds/
+    // decision status) and the raw duel win/draw/loss table -- real ImGuiTables, not a text
+    // dump. Always reads SprtTournamentData::instance() fresh at draw time, so it reflects
+    // the test's current state on every frame, exactly like that classic step does.
+    return GuiToolResult{
+        .success = true,
+        .content = "Showing the current SPRT results as tables in the chat -- they are "
+                    "already visible to the user, so do not restate, list, or summarize the "
+                    "numbers in your reply; just briefly confirm what you did. This is the "
+                    "ONLY way you ever learn the actual SPRT decision or duel score -- never "
+                    "state, type, or guess one yourself instead of calling this.",
+        .renderWidget = []() {
+            auto& data = SprtTournamentData::instance();
+            ImGui::Text("SPRT Test Result:");
+            data.drawSprtTable(ImVec2(0.0F, 100.0F));
+            ImGui::Spacing();
+            ImGui::Text("Duel Result:");
+            data.drawResultTable(ImVec2(0.0F, 100.0F));
+        }
+    };
+}
 
 // Exported (see gui-tool-sprt.h) so the unified start/stop tool (gui-tool-status-register.cpp)
 // can dispatch into it directly by type -- start_sprt/stop_sprt no longer exist as separate
@@ -731,18 +725,19 @@ void registerSprtTools(GuiToolRegistry& registry) {
                         "resign_two_sided. Every field independent/optional -- pass ONLY what "
                         "user asked to change, don't require/ask for others first. Anything not "
                         "passed keeps prior value (this session or earlier). Response always "
-                        "reports the full current SPRT config, so no separate get_sprt_status "
-                        "call is normally needed to confirm what changed. IMPORTANT: fully "
-                        "separate config from configure_tournament -- classic tournament and "
-                        "SPRT each have own time control, openings file, concurrency, "
-                        "adjudication etc, despite same field names. If user's message doesn't "
-                        "make clear tournament vs SPRT (e.g. bare \"set time control to 1 "
-                        "min/game\"), infer from conversation so far (multi-engine tournament or "
-                        "champion-vs-challenger SPRT?); if still unclear from context, ask which "
-                        "they mean, never guess -- wrong guess silently configures other "
-                        "feature. openings_file must be set (here or earlier session) before "
-                        "start_sprt succeeds. If missing/invalid or user wants to browse, set "
-                        "openings_file_dialog/pgn_file_dialog to true instead of a typed path. "
+                        "reports the full current SPRT config, so no separate get_status "
+                        "(type=\"sprt\") call is normally needed to confirm what changed. "
+                        "IMPORTANT: fully separate config from configure_tournament -- classic "
+                        "tournament and SPRT each have own time control, openings file, "
+                        "concurrency, adjudication etc, despite same field names. If user's "
+                        "message doesn't make clear tournament vs SPRT (e.g. bare \"set time "
+                        "control to 1 min/game\"), infer from conversation so far (multi-engine "
+                        "tournament or champion-vs-challenger SPRT?); if still unclear from "
+                        "context, ask which they mean, never guess -- wrong guess silently "
+                        "configures other feature. openings_file must be set (here or earlier "
+                        "session) before start (type=\"sprt\") succeeds. If missing/invalid or "
+                        "user wants to browse, set openings_file_dialog/pgn_file_dialog to true "
+                        "instead of a typed path. "
                         "draw_mode/resign_mode \"off\"/\"test\"/\"active\"; both disabled "
                         "(\"off\") by default.",
         .parametersSchema = buildConfigureSprtSchema(),
@@ -753,42 +748,6 @@ void registerSprtTools(GuiToolRegistry& registry) {
         .timeout = std::chrono::minutes(10)
     });
 
-    registry.registerTool(GuiToolDefinition{
-        .name = "get_sprt_status",
-        .description = "Reports current SPRT test config/state: champion/challenger engines, "
-                        "time control, Elo bounds/alpha/beta/max_games/model, openings file, "
-                        "PGN output file, concurrency, draw/resign adjudication settings, "
-                        "running/finished status. Entirely separate from get_tournament_status "
-                        "(classic tournament mode) -- call this one specifically for SPRT "
-                        "questions. configure_sprt already returns this same full status after "
-                        "any change, so this is only needed for a pure status check that "
-                        "changes nothing, or to tell tournament vs SPRT apart when unclear which "
-                        "the user is mid-configuring.",
-        .handler = handleGetSprtStatus
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "clear_sprt_result",
-        .description = "Discards current SPRT test's results (stops it first if still "
-                        "running). Use when user wants to throw away progress so far, e.g. "
-                        "before reconfiguring/starting fresh test.",
-        .handler = handleClearSprtResult
-    });
-
-    registry.registerTool(GuiToolDefinition{
-        .name = "show_sprt_result",
-        .description = "Displays current SPRT test results as tables in chat: SPRT decision "
-                        "table (LLR value, bounds, pass/fail/running status) and raw win/draw/"
-                        "loss duel table. Renders table controls in chat UI -- not for reading "
-                        "data yourself to describe in own words, just call it and briefly say "
-                        "you're showing results, don't restate numbers from response. Works "
-                        "while test running (partial results) and after finished; reports none "
-                        "available yet if nothing played. ONLY way you ever learn actual SPRT "
-                        "decision or duel score -- no other source. Never state/type/guess a "
-                        "result yourself instead of calling this; that's fabricated info, not "
-                        "real result.",
-        .handler = handleShowSprtResult
-    });
 }
 
 } // namespace QaplaLlm

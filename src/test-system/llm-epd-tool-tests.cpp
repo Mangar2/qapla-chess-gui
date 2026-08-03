@@ -101,12 +101,12 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: select_epd_engines / configure_epd / get_epd_status, called directly
+        // Test: select_epd_engines / configure_epd / get_status (type=epd), called directly
         // through GuiToolRegistry (no LLM). No analysis needs to actually run for this.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "ConfigureEpdViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: select_epd_engines / configure_epd / get_epd_status via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: select_epd_engines / configure_epd / get_status (type=epd) via GuiToolRegistry ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -157,8 +157,10 @@ namespace QaplaTest {
             // Rejecting the bad path must not have reset the previously-configured one.
             IM_CHECK(epdData.config().filepath == getTestEpdPath());
 
-            ctx->LogInfo("Step 3: get_epd_status reflects all of the above");
-            auto status = callToolAndYield(ctx, "get_epd_status", QaplaTester::Json::JsonValue::object());
+            ctx->LogInfo("Step 3: get_status (type=epd) reflects all of the above");
+            auto epdTypeArgs = QaplaTester::Json::JsonValue::object();
+            epdTypeArgs["type"] = "epd";
+            auto status = callToolAndYield(ctx, "get_status", epdTypeArgs);
             IM_CHECK(status.success);
             IM_CHECK(status.content.find(configs[0].getName()) != std::string::npos);
             IM_CHECK(status.content.find(getTestEpdPath()) != std::string::npos);
@@ -168,12 +170,12 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: start_epd_analysis / stop_epd_analysis / clear_epd_result /
-        // show_epd_result, called directly through GuiToolRegistry (no LLM).
+        // Test: start/stop/clear_result/show_result (type=epd), called directly through
+        // GuiToolRegistry (no LLM).
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "StartStopClearShowEpdResultViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: start/stop/clear/show_epd_result via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: start/stop/clear_result/show_result (type=epd) via GuiToolRegistry ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -201,8 +203,8 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "start", epdTypeArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
 
-            // show_epd_result must succeed while running, even before any position finished.
-            auto resultWhileRunning = callToolAndYield(ctx, "show_epd_result", QaplaTester::Json::JsonValue::object());
+            // show_result must succeed while running, even before any position finished.
+            auto resultWhileRunning = callToolAndYield(ctx, "show_result", epdTypeArgs);
             IM_CHECK(resultWhileRunning.success);
 
             // Let the engine settle into the first position before stopping -- see the
@@ -219,17 +221,17 @@ namespace QaplaTest {
             IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
             IM_CHECK(!QaplaWindows::EpdData::instance().isRunning());
 
-            ctx->LogInfo("Step: clear_epd_result");
-            auto clearResult = callToolAndYield(ctx, "clear_epd_result", QaplaTester::Json::JsonValue::object());
+            ctx->LogInfo("Step: clear_result(type=epd)");
+            auto clearResult = callToolAndYield(ctx, "clear_result", epdTypeArgs);
             IM_CHECK(clearResult.success);
 
-            auto resultAfterClear = callToolAndYield(ctx, "show_epd_result", QaplaTester::Json::JsonValue::object());
+            auto resultAfterClear = callToolAndYield(ctx, "show_result", epdTypeArgs);
             IM_CHECK(resultAfterClear.success);
             IM_CHECK(resultAfterClear.content.find("No EPD analysis results") != std::string::npos);
             IM_CHECK(!static_cast<bool>(resultAfterClear.renderWidget));
 
-            // clear_epd_result on an already-clear state must still succeed, not error.
-            IM_CHECK(callToolAndYield(ctx, "clear_epd_result", QaplaTester::Json::JsonValue::object()).success);
+            // clear_result on an already-clear state must still succeed, not error.
+            IM_CHECK(callToolAndYield(ctx, "clear_result", epdTypeArgs).success);
 
             cleanupEpdState();
             ctx->LogInfo("=== Test StartStopClearShowEpdResultViaRegistry PASSED ===");
@@ -285,14 +287,14 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: start_epd_analysis after a config change post-stop must fail with
-        // AI-actionable guidance to call clear_epd_result first (see EpdData::mayAnalyze()'s
+        // Test: start (type=epd) after a config change post-stop must fail with AI-actionable
+        // guidance to call clear_result (type=epd) first (see EpdData::mayAnalyze()'s
         // configChanged()+Stopped precondition -- unique to EPD, no tournament/SPRT
         // equivalent, previously undocumented from the AI's perspective).
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "StartAfterConfigChangeGuidesTowardClearViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: start_epd_analysis after config change guides toward clear_epd_result ===");
+            ctx->LogInfo("=== Test: start (type=epd) after config change guides toward clear_result ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -331,10 +333,10 @@ namespace QaplaTest {
 
             auto blockedResult = callToolAndYield(ctx, "start", startArgs);
             IM_CHECK(!blockedResult.success);
-            IM_CHECK(blockedResult.content.find("clear_epd_result") != std::string::npos);
+            IM_CHECK(blockedResult.content.find("clear_result") != std::string::npos);
 
             // Following that exact guidance must actually unblock a fresh start.
-            IM_CHECK(callToolAndYield(ctx, "clear_epd_result", QaplaTester::Json::JsonValue::object()).success);
+            IM_CHECK(callToolAndYield(ctx, "clear_result", startArgs).success);
             IM_CHECK(callToolAndYield(ctx, "start", startArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
             ctx->SleepNoSkip(0.5f, 0.1f);

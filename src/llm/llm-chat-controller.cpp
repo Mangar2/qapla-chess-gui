@@ -53,8 +53,8 @@ namespace {
                 "this tool, even short confirmation/question/acknowledgement. Full answer in "
                 "\"text\" arg only -- anything outside \"text\" discarded, never shown. Never "
                 "split answer or use placeholder here+real answer elsewhere. If a tool already "
-                "displays its result in chat (e.g. show_tournament_result), don't repeat that "
-                "data -- just a short confirmation sentence.",
+                "displays its result in chat (e.g. show_result), don't repeat that data -- just "
+                "a short confirmation sentence.",
             .parametersSchemaJson =
                 R"({"type":"object","properties":{"text":{"type":"string",)"
                 R"("description":"Complete message to user, in their language -- only part )"

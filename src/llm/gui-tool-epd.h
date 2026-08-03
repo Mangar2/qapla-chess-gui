@@ -24,10 +24,9 @@
 namespace QaplaLlm {
 
 /**
- * @brief Registers the "EPD" tool group: select_epd_engines, configure_epd,
- * get_epd_status, clear_epd_result, show_epd_result. start/stop are handled by the unified
- * start/stop tool in gui-tool-status-register.cpp instead -- see
- * handleStartEpdAnalysis/handleStopEpdAnalysis below.
+ * @brief Registers the "EPD" tool group: select_epd_engines, configure_epd.
+ * start/stop/get_status/clear_result/show_result are all handled by the unified tools in
+ * gui-tool-status-register.cpp instead -- see the exported handle* functions below.
  *
  * EPD analysis tests one or more engines against a fixed set of positions (from an EPD/RAW
  * position file), checking whether each engine finds the expected best move within a time
@@ -63,5 +62,30 @@ void registerEpdTools(GuiToolRegistry& registry);
  * "stop" tool.
  */
 [[nodiscard]] GuiToolResult handleStopEpdAnalysis(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Reports the EPD analysis's full current config/state as text.
+ *
+ * Exported so the unified "get_status" tool can dispatch into it by type="epd" -- there is no
+ * separate model-visible "get_epd_status" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleGetEpdStatus(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Discards current EPD analysis results (stops it first if still running).
+ *
+ * Exported so the unified "clear_result" tool can dispatch into it by type="epd" -- there is no
+ * separate model-visible "clear_epd_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleClearEpdResult(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Renders the current EPD analysis results as a live table in the chat (see
+ * GuiToolResult::renderWidget).
+ *
+ * Exported so the unified "show_result" tool can dispatch into it by type="epd" -- there is no
+ * separate model-visible "show_epd_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleShowEpdResult(const QaplaTester::Json::JsonValue& arguments);
 
 } // namespace QaplaLlm

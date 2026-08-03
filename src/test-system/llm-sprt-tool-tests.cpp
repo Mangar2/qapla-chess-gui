@@ -64,12 +64,12 @@ namespace QaplaTest {
 
         // -----------------------------------------------------------------
         // Test: select_sprt_engines / configure_sprt (incl. its draw_*/resign_* adjudication
-        // fields) / get_sprt_status, called directly through GuiToolRegistry (no LLM). No SPRT
-        // test needs to actually run for this.
+        // fields) / get_status (type=sprt), called directly through GuiToolRegistry (no LLM).
+        // No SPRT test needs to actually run for this.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "ConfigureSprtViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: select_sprt_engines / configure_sprt / adjudication / get_sprt_status via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: select_sprt_engines / configure_sprt / adjudication / get_status (type=sprt) via GuiToolRegistry ===");
 
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -124,7 +124,9 @@ namespace QaplaTest {
             // Captured before touching SPRT adjudication, to verify below that configuring it
             // never affects classic tournament mode's own (independent) adjudication config --
             // whatever that config's state happens to already be on this machine.
-            auto tournamentStatusBefore = callToolAndYield(ctx, "get_tournament_status", QaplaTester::Json::JsonValue::object());
+            auto tournamentTypeArgs = QaplaTester::Json::JsonValue::object();
+            tournamentTypeArgs["type"] = "tournament";
+            auto tournamentStatusBefore = callToolAndYield(ctx, "get_status", tournamentTypeArgs);
             IM_CHECK(tournamentStatusBefore.success);
 
             ctx->LogInfo("Step 3: configure_sprt's draw_*/resign_* fields");
@@ -156,7 +158,7 @@ namespace QaplaTest {
             // Compared against the snapshot taken before touching SPRT adjudication above --
             // NOT asserted to be "off", since that depends on whatever's already persisted on
             // this machine, not on anything this test controls.
-            auto tournamentStatusAfter = callToolAndYield(ctx, "get_tournament_status", QaplaTester::Json::JsonValue::object());
+            auto tournamentStatusAfter = callToolAndYield(ctx, "get_status", tournamentTypeArgs);
             IM_CHECK(tournamentStatusAfter.success);
             IM_CHECK(tournamentStatusAfter.content == tournamentStatusBefore.content);
 
@@ -170,12 +172,12 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: start_sprt / stop_sprt / clear_sprt_result /
-        // show_sprt_result, called directly through GuiToolRegistry (no LLM).
+        // Test: start/stop/clear_result/show_result (type=sprt), called directly through
+        // GuiToolRegistry (no LLM).
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "StartStopClearShowSprtResultViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: start/stop/clear/show_sprt_result via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: start/stop/clear_result/show_result (type=sprt) via GuiToolRegistry ===");
 
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -201,8 +203,8 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "start", sprtTypeArgs).success);
             IM_CHECK(waitForSprtTournamentRunning(ctx, 20.0f));
 
-            // show_sprt_result must succeed while running, even before any game finished.
-            auto resultWhileRunning = callToolAndYield(ctx, "show_sprt_result", QaplaTester::Json::JsonValue::object());
+            // show_result must succeed while running, even before any game finished.
+            auto resultWhileRunning = callToolAndYield(ctx, "show_result", sprtTypeArgs);
             IM_CHECK(resultWhileRunning.success);
 
             // Let the engines settle into the first move before stopping -- see the identical
@@ -224,17 +226,17 @@ namespace QaplaTest {
             IM_CHECK(waitForSprtTournamentStopped(ctx, 15.0f));
             IM_CHECK(!QaplaWindows::SprtTournamentData::instance().isRunning());
 
-            ctx->LogInfo("Step: clear_sprt_result");
-            auto clearResult = callToolAndYield(ctx, "clear_sprt_result", QaplaTester::Json::JsonValue::object());
+            ctx->LogInfo("Step: clear_result(type=sprt)");
+            auto clearResult = callToolAndYield(ctx, "clear_result", sprtTypeArgs);
             IM_CHECK(clearResult.success);
 
-            auto resultAfterClear = callToolAndYield(ctx, "show_sprt_result", QaplaTester::Json::JsonValue::object());
+            auto resultAfterClear = callToolAndYield(ctx, "show_result", sprtTypeArgs);
             IM_CHECK(resultAfterClear.success);
             IM_CHECK(resultAfterClear.content.find("No SPRT results") != std::string::npos);
             IM_CHECK(!static_cast<bool>(resultAfterClear.renderWidget));
 
-            // clear_sprt_result on an already-clear state must still succeed, not error.
-            IM_CHECK(callToolAndYield(ctx, "clear_sprt_result", QaplaTester::Json::JsonValue::object()).success);
+            // clear_result on an already-clear state must still succeed, not error.
+            IM_CHECK(callToolAndYield(ctx, "clear_result", sprtTypeArgs).success);
 
             cleanupSprtTournamentState();
             ctx->LogInfo("=== Test StartStopClearShowSprtResultViaRegistry PASSED ===");

@@ -24,17 +24,19 @@
 namespace QaplaLlm {
 
 /**
- * @brief Registers the "get_running_status" tool: a single combined check across every
- * long-running activity the chat can control (currently tournament mode and SPRT), so a
- * question like "is anything running?" or "is a tournament running?" doesn't get answered from
- * only one of them.
+ * @brief Registers the cross-feature tools: get_running_status, start, stop, get_status,
+ * clear_result, show_result. Each of the latter five takes a "type" ("tournament"/"sprt"/"epd")
+ * and dispatches into the matching feature file's exported handle* function (see
+ * gui-tool-tournament.h / gui-tool-sprt.h / gui-tool-epd.h) -- there are no separate
+ * per-feature start_tournament/get_tournament_status-style tools anymore.
  *
- * Tournament mode and SPRT are separate, independently-running activities (see
- * gui-tool-tournament.h / gui-tool-sprt.h) -- but users often call an SPRT test a "tournament"
- * informally, since to a person running one it looks and feels the same (engines playing games
- * in the background). Answering "is a tournament running?" using only get_tournament_status
- * would incorrectly say "no" while an SPRT test is actively running games. This tool exists so
- * the model has one place to check both and report accurately.
+ * get_running_status exists on top of that because tournament/SPRT/EPD are separate,
+ * independently-running activities, but users often call an SPRT test or EPD analysis a
+ * "tournament" informally, since to a person running one it looks and feels the same (engines
+ * playing games/analyzing positions in the background). Answering "is a tournament running?"
+ * using only get_status (type="tournament") would incorrectly say "no" while an SPRT test or
+ * EPD analysis is actively running. This tool exists so the model has one place to check all
+ * three at once and report accurately.
  */
 void registerStatusTools(GuiToolRegistry& registry);
 

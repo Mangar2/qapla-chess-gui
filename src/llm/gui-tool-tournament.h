@@ -29,10 +29,10 @@
 namespace QaplaLlm {
 
 /**
- * @brief Registers the "Turnier" tool group (select_engines, configure_tournament,
- * clear/show_tournament_result) from docs/llm-chatbot-plan.md Step 4. start/stop are handled
- * by the unified start/stop tool in gui-tool-status-register.cpp instead -- see
- * handleStartTournament/handleStopTournament below.
+ * @brief Registers the "Turnier" tool group (select_engines, configure_tournament) from
+ * docs/llm-chatbot-plan.md Step 4. start/stop/get_status/clear_result/show_result are all
+ * handled by the unified tools in gui-tool-status-register.cpp instead -- see the exported
+ * handle* functions below.
  */
 void registerTournamentTools(GuiToolRegistry& registry);
 
@@ -53,6 +53,31 @@ void registerTournamentTools(GuiToolRegistry& registry);
  * "stop" tool.
  */
 [[nodiscard]] GuiToolResult handleStopTournament(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Reports the tournament's full current config/state as text.
+ *
+ * Exported so the unified "get_status" tool can dispatch into it by type="tournament" -- there
+ * is no separate model-visible "get_tournament_status" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleGetTournamentStatus(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Discards current tournament results (stops it first if still running).
+ *
+ * Exported so the unified "clear_result" tool can dispatch into it by type="tournament" --
+ * there is no separate model-visible "clear_tournament_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleClearTournamentResult(const QaplaTester::Json::JsonValue& arguments);
+
+/**
+ * @brief Renders the current tournament results as a live table in the chat (see
+ * GuiToolResult::renderWidget).
+ *
+ * Exported so the unified "show_result" tool can dispatch into it by type="tournament" -- there
+ * is no separate model-visible "show_tournament_result" tool anymore.
+ */
+[[nodiscard]] GuiToolResult handleShowTournamentResult(const QaplaTester::Json::JsonValue& arguments);
 
 /**
  * @brief One chat-provided name that matched more than one installed engine.
