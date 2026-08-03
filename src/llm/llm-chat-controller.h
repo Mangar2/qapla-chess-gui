@@ -54,12 +54,13 @@ struct ChatEntry {
 
 /** @brief One tool call executed within an agent-loop turn, for local display. */
 struct ToolCallEvent {
-    std::string toolName;
+    /// Empty for a `debug` note, which names no tool -- hence the default initializer.
+    std::string toolName{};
     bool success = true;
-    std::string resultSummary;
+    std::string resultSummary{};
 
     /** @brief See GuiToolResult::renderWidget; carried through unchanged. */
-    std::function<void()> renderWidget;
+    std::function<void()> renderWidget{};
 
     /**
      * @brief Marks this as a local diagnostic note (e.g. "duplicate call suppressed") rather
