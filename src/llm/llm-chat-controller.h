@@ -60,6 +60,13 @@ struct ToolCallEvent {
 
     /** @brief See GuiToolResult::renderWidget; carried through unchanged. */
     std::function<void()> renderWidget;
+
+    /**
+     * @brief Marks this as a local diagnostic note (e.g. "duplicate call suppressed") rather
+     * than an actual tool outcome -- shown as ChatRole::Debug instead of Tool/Error, see
+     * appendToolEventToHistory(). resultSummary is shown verbatim, toolName/renderWidget ignored.
+     */
+    bool debug = false;
 };
 
 /** @brief The model's final answer for one agent-loop turn (tool events are streamed separately, see ToolEventChannel). */

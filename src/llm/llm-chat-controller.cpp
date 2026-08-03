@@ -132,6 +132,26 @@ namespace {
         // the unrelated earlier-turn messages in between.
         const std::size_t turnStartIndex = messages.size() - 1;
 
+        // Tracks the single most recently *executed* real tool call (name + raw arguments, as
+        // sent by the model) across the whole turn, iterations included, so a call that's an
+        // exact repeat of the one immediately before it -- e.g. the model calling show_result
+        // for the same type twice in a row -- can be answered from the cached result instead of
+        // re-running it (side-effect-free to repeat, like re-showing a result table, or actively
+        // wrong to repeat, like re-starting a tournament). Any other call in between (including
+        // reply_to_user, which ends the turn) breaks the "directly consecutive" chain naturally,
+        // since the turn returns before another iteration can compare against it.
+        std::string lastToolCallName;
+        std::string lastToolCallArgs;
+        GuiToolResult lastToolResult;
+        bool hasLastToolResult = false;
+        // How many times in a row (including the original, real execution) the same
+        // name+arguments pair has now been seen; reset to 1 whenever a call differs from the
+        // one right before it. Once this goes past kMaxIdenticalCallRepeats, the model is
+        // treated as stuck in a loop rather than legitimately repeating a side-effect-free call
+        // -- see the abort below.
+        int identicalCallStreak = 0;
+        constexpr int kMaxIdenticalCallRepeats = 3;
+
         for (int iteration = 0; iteration < maxToolIterations; ++iteration) {
             ChatCompletionRequest request;
             request.model = model;
@@ -192,12 +212,56 @@ namespace {
                     continue;
                 }
 
-                logger->logLine("TOOL_CALL", call.name + " args=" + call.argumentsJson);
-                GuiToolResult toolResult = GuiToolRegistry::instance().callTool(call.name, call.argumentsJson);
-                logger->logLine(toolResult.success ? "TOOL_RESULT" : "TOOL_ERROR", toolResult.content);
+                const bool isDuplicate = hasLastToolResult && call.name == lastToolCallName
+                    && call.argumentsJson == lastToolCallArgs;
+                identicalCallStreak = isDuplicate ? identicalCallStreak + 1 : 1;
+
+                if (isDuplicate && identicalCallStreak > kMaxIdenticalCallRepeats) {
+                    // The model is calling the exact same tool with the exact same arguments
+                    // over and over -- beyond a couple of legitimate repeats (handled below by
+                    // the plain dedupe) this stops looking like a deliberate repeat and starts
+                    // looking like a stuck loop, so give up on the turn instead of feeding the
+                    // model its own repeated result forever.
+                    logger->logLine("TOOL_CALL_ABORT",
+                        call.name + " args=" + call.argumentsJson + " repeated "
+                            + std::to_string(identicalCallStreak) + " times in a row");
+                    onToolEvent(ToolCallEvent{
+                        .resultSummary = "Debug: \"" + call.name + "\" was called with identical "
+                            "arguments more than " + std::to_string(kMaxIdenticalCallRepeats)
+                            + " times in a row; aborting this turn.",
+                        .debug = true
+                    });
+                    turnResult.success = false;
+                    turnResult.errorMessage = "Aborted: \"" + call.name
+                        + "\" was called identically more than " + std::to_string(kMaxIdenticalCallRepeats)
+                        + " times in a row.";
+                    return turnResult;
+                }
+
+                GuiToolResult toolResult;
+                if (isDuplicate) {
+                    // Same tool, same raw arguments, directly following the call that produced
+                    // lastToolResult -- reuse it instead of running the action again (see the
+                    // lastToolCallName/-Args doc comment above the iteration loop).
+                    toolResult = lastToolResult;
+                    logger->logLine("TOOL_CALL_DEDUPED", call.name + " args=" + call.argumentsJson);
+                    onToolEvent(ToolCallEvent{
+                        .resultSummary = "Debug: duplicate call to \"" + call.name
+                            + "\" with identical arguments suppressed; reusing the previous result.",
+                        .debug = true
+                    });
+                } else {
+                    logger->logLine("TOOL_CALL", call.name + " args=" + call.argumentsJson);
+                    toolResult = GuiToolRegistry::instance().callTool(call.name, call.argumentsJson);
+                    logger->logLine(toolResult.success ? "TOOL_RESULT" : "TOOL_ERROR", toolResult.content);
+                }
                 if (!toolResult.success) {
                     turnClean = false;
                 }
+                lastToolCallName = call.name;
+                lastToolCallArgs = call.argumentsJson;
+                lastToolResult = toolResult;
+                hasLastToolResult = true;
 
                 ChatMessage toolMessage;
                 toolMessage.role = "tool";
@@ -371,6 +435,11 @@ void LlmChatController::appendToolEventToHistory(const ToolCallEvent& event) {
     // -- no technical tool name needed. Registry-level failures (unknown
     // tool, timeout, bad arguments) are developer-facing edge cases, so
     // keep the name there for anyone trying to diagnose what went wrong.
+    if (event.debug) {
+        history_.push_back({ChatRole::Debug, event.resultSummary, nullptr});
+        return;
+    }
+
     std::string text = event.success
         ? event.resultSummary
         : (event.toolName + ": " + event.resultSummary);

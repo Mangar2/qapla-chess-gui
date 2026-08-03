@@ -548,6 +548,201 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
     serverThread.join();
 }
 
+TEST_CASE("LlmChatController suppresses a tool call that exactly repeats the one right before it",
+    "[llm][llm-chat-controller]") {
+    // Reproduces a real case: the model calling e.g. show_result for the same type twice in
+    // immediate succession within one turn. The second, identical call must not actually run
+    // the handler again -- just reuse the first call's result -- and a ChatRole::Debug entry
+    // must make the suppression visible in the chat.
+    std::atomic<int> handlerCallCount{0};
+    GuiToolRegistry::instance().registerTool(GuiToolDefinition{
+        .name = "test_llm_chat_controller_dedupe_probe",
+        .description = "Test-only probe tool that counts real invocations.",
+        .handler = [&handlerCallCount](const QaplaTester::Json::JsonValue&) -> GuiToolResult {
+            ++handlerCallCount;
+            return GuiToolResult{.success = true, .content = "PROBE_OK"};
+        }
+    });
+
+    std::atomic<int> completionCallCount{0};
+    httplib::Server server;
+    server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
+                "application/json");
+            return;
+        }
+        // Two calls to the exact same tool with exact same (empty-object) arguments, back to
+        // back within a single response's tool_calls array -- the "directly consecutive" case.
+        if (completionCallCount.fetch_add(1) == 0) {
+            res.set_content(
+                R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+                R"([{"id":"call_1","type":"function",)"
+                R"("function":{"name":"test_llm_chat_controller_dedupe_probe","arguments":"{}"}},)"
+                R"({"id":"call_2","type":"function",)"
+                R"("function":{"name":"test_llm_chat_controller_dedupe_probe","arguments":"{}"}}]}}]})",
+                "application/json");
+        } else {
+            res.set_content(
+                R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+                R"([{"id":"call_3","type":"function",)"
+                R"("function":{"name":"reply_to_user","arguments":"{\"text\":\"Done\"}"}}]}}]})",
+                "application/json");
+        }
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
+        testLogDirectory().string());
+    controller.setModel("test-model");
+    controller.sendMessage("please call the probe tool twice");
+
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+        GuiToolRegistry::instance().processQueue();
+        controller.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    REQUIRE_FALSE(controller.isBusy());
+
+    // The handler itself only actually ran once.
+    REQUIRE(handlerCallCount.load() == 1);
+
+    // Both tool calls still show their (identical, cached) result in the chat, but a debug
+    // entry marks the second one as suppressed.
+    int toolEntryCount = 0;
+    bool sawDebugEntry = false;
+    for (const auto& entry : controller.history()) {
+        if (entry.role == ChatRole::Tool && entry.text == "PROBE_OK") {
+            ++toolEntryCount;
+        }
+        if (entry.role == ChatRole::Debug && entry.text.find("duplicate call") != std::string::npos) {
+            sawDebugEntry = true;
+        }
+    }
+    REQUIRE(toolEntryCount == 2);
+    REQUIRE(sawDebugEntry);
+
+    std::filesystem::remove_all(testLogDirectory());
+
+    server.stop();
+    serverThread.join();
+}
+
+TEST_CASE("LlmChatController aborts a turn after the same tool call repeats more than 3 times in a row",
+    "[llm][llm-chat-controller]") {
+    // A model stuck in a loop keeps calling the exact same tool with the exact same arguments
+    // forever. The plain dedupe (previous test) reuses the cached result for a couple of
+    // repeats, but past kMaxIdenticalCallRepeats (3) this must give up on the turn entirely
+    // instead of silently feeding the model its own repeated result forever.
+    std::atomic<int> handlerCallCount{0};
+    GuiToolRegistry::instance().registerTool(GuiToolDefinition{
+        .name = "test_llm_chat_controller_dedupe_abort_probe",
+        .description = "Test-only probe tool that counts real invocations.",
+        .handler = [&handlerCallCount](const QaplaTester::Json::JsonValue&) -> GuiToolResult {
+            ++handlerCallCount;
+            return GuiToolResult{.success = true, .content = "PROBE_OK"};
+        }
+    });
+
+    std::atomic<int> completionCallCount{0};
+    httplib::Server server;
+    server.Post("/v1/chat/completions", [&completionCallCount](const httplib::Request& req, httplib::Response& res) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
+            // setModel() below fires a reachability ping through the same endpoint before the
+            // real message is sent; answer it separately so it isn't counted as (or mistaken
+            // for) one of the real turn's completions.
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
+                "application/json");
+            return;
+        }
+        // Five identical calls back to back within a single response's tool_calls array:
+        // call 1 runs for real, calls 2-3 are deduped, call 4 must trip the abort (>3 in a
+        // row) before call 5 is even looked at. If the abort didn't fire, this would keep
+        // going forever (this handler never serves a reply_to_user response), so a hang here
+        // is itself a sign the abort broke.
+        completionCallCount.fetch_add(1);
+        res.set_content(
+            R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+            R"([{"id":"call_1","type":"function","function":{"name":")"
+            R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}},)"
+            R"({"id":"call_2","type":"function","function":{"name":")"
+            R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}},)"
+            R"({"id":"call_3","type":"function","function":{"name":")"
+            R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}},)"
+            R"({"id":"call_4","type":"function","function":{"name":")"
+            R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}},)"
+            R"({"id":"call_5","type":"function","function":{"name":")"
+            R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}}]}}]})",
+            "application/json");
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
+        testLogDirectory().string());
+    controller.setModel("test-model");
+    controller.sendMessage("please call the probe tool repeatedly");
+
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+        GuiToolRegistry::instance().processQueue();
+        controller.update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    REQUIRE_FALSE(controller.isBusy());
+
+    // Only the first call actually ran; the turn gave up before call 5 was ever considered, so
+    // the model was never asked again.
+    REQUIRE(handlerCallCount.load() == 1);
+    REQUIRE(completionCallCount.load() == 1);
+
+    int toolEntryCount = 0;
+    bool sawAbortDebugEntry = false;
+    for (const auto& entry : controller.history()) {
+        if (entry.role == ChatRole::Tool && entry.text == "PROBE_OK") {
+            ++toolEntryCount;
+        }
+        if (entry.role == ChatRole::Debug && entry.text.find("more than 3") != std::string::npos) {
+            sawAbortDebugEntry = true;
+        }
+    }
+    // Call 1 (real) plus the two deduped repeats (2, 3) each still show the cached result;
+    // call 4 is where the abort fires instead of a fourth "PROBE_OK" entry.
+    REQUIRE(toolEntryCount == 3);
+    REQUIRE(sawAbortDebugEntry);
+
+    std::filesystem::remove_all(testLogDirectory());
+
+    server.stop();
+    serverThread.join();
+}
+
 TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply for finetuning.json",
     "[llm][llm-chat-controller]") {
     // Reproduces the real-world case reported against this feature: a turn where every real
