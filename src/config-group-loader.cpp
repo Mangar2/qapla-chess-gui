@@ -30,12 +30,23 @@
 
 namespace QaplaConfiguration {
 
+namespace {
+    ConfigLoadErrorReporter& errorReporter() {
+        static ConfigLoadErrorReporter reporter;
+        return reporter;
+    }
+}
+
 void ensureSettingsRegistered() {
     static bool registered = []() {
         QaplaTester::Settings::initSettings();
         return true;
     }();
     (void)registered;
+}
+
+void setConfigLoadErrorReporter(ConfigLoadErrorReporter reporter) {
+    errorReporter() = std::move(reporter);
 }
 
 QaplaTester::Settings::Manager& loadGroupIntoManager(
@@ -60,9 +71,14 @@ QaplaTester::Settings::Manager& loadGroupIntoManager(
         // Section content doesn't match the current schema (e.g. leftover data from an
         // older, incompatible file format). Fall back to an empty group rather than
         // crashing, so callers' *ConfigFile::fromManager() returns a default-constructed
-        // config instead of propagating the exception.
+        // config instead of propagating the exception. Several callers (e.g.
+        // SprtTournamentData) invoke this outside any try/catch, so the exception must
+        // stay contained here -- the reporter is what makes the fallback visible instead.
         std::cerr << "Warning: failed to parse \"" << sectionName << "\" configuration, "
             << "using defaults instead: " << e.what() << "\n";
+        if (errorReporter()) {
+            errorReporter()(sectionName, e.what());
+        }
         manager.clearGroup(sectionName);
     }
     return manager;

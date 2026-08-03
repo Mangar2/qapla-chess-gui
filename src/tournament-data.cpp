@@ -200,9 +200,12 @@ namespace QaplaWindows {
         }
     }
 
-    void TournamentData::loadTournament()
+    void TournamentData::loadTournament(bool verbose)
     {
-        if (createTournament(false) && tournament_)
+        // Without a tournament instance the stored [round] sections below can't be
+        // matched to any pairing, so game results are silently dropped -- which is why
+        // an explicit user-triggered load reports the reason instead of failing quietly.
+        if (createTournament(verbose) && tournament_)
         {
             auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
             auto sections = configData.getSectionList("round", "tournament")
@@ -816,7 +819,7 @@ namespace QaplaWindows {
             loadConfig();
 
             // Create tournament based on the configuration and load the tournament data
-            loadTournament();
+            loadTournament(true);
 
             SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename, 
                 false, "tournament");

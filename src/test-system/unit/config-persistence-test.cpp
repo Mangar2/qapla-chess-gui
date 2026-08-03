@@ -200,3 +200,33 @@ TEST_CASE("SPRT config round-trips through Settings::Manager", "[config-persiste
     REQUIRE(roundtripped.model == config.model);
     REQUIRE(roundtripped.pentanomial == config.pentanomial);
 }
+
+TEST_CASE("A section that no longer matches the schema is reported, not silently defaulted",
+          "[config-persistence]") {
+    // A stored file written by an older version can carry keys the current schema no longer
+    // knows (e.g. a .qtour with "seed" where "openings" now expects "srand"). The group then
+    // falls back to defaults; without a reporter that fallback is invisible to the user and
+    // the empty openings.file goes on to block tournament creation -- and with it the restore
+    // of stored game results.
+    QaplaHelpers::IniFile::Section stale;
+    stale.name = "openings";
+    stale.addEntry("id", "test-id");
+    stale.addEntry("file", __FILE__);
+    stale.addEntry("seed", "815"); // schema key is "srand"
+
+    std::vector<std::pair<std::string, std::string>> reported;
+    setConfigLoadErrorReporter([&](const std::string& sectionName, const std::string& message) {
+        reported.emplace_back(sectionName, message);
+    });
+
+    auto& manager = loadGroupIntoManager("openings", {stale});
+    auto roundtripped = QaplaTester::OpeningConfig::fromManager(manager, "openings");
+
+    setConfigLoadErrorReporter(nullptr);
+
+    REQUIRE(reported.size() == 1);
+    REQUIRE(reported[0].first == "openings");
+    REQUIRE(reported[0].second.find("seed") != std::string::npos);
+    // The fallback itself must stay intact: defaults rather than a propagated exception.
+    REQUIRE(roundtripped.file.empty());
+}

@@ -400,8 +400,11 @@ namespace QaplaWindows {
 
         /**
         * @brief Creates a tournament and loads it from the current configuration and engine settings.
+        * @param verbose If true, reports via SnackbarManager why no tournament could be created
+        *        (and hence why stored game results were not restored). Stays false for the
+        *        implicit load at startup, where an incomplete configuration is the normal state.
         */
-        void loadTournament();
+        void loadTournament(bool verbose = false);
         
         /**
          * @brief Loads the tournament configuration from a list of INI file sections.

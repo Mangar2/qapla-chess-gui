@@ -22,6 +22,7 @@
 #include <game-manager/game-manager-pool.h>
 
 #include "configuration.h"
+#include "config-group-loader.h"
 #include "configuration-window.h"
 #include "time-control-window.h"
 #include "epd-window.h"
@@ -227,7 +228,18 @@ namespace {
     }
 
     int runApp() {
-        
+
+        // Installed before the first load so a stored section that no longer matches the
+        // schema is reported rather than silently replaced by defaults -- registered here,
+        // alongside the other GUI callbacks, because config-group-loader.cpp itself must
+        // stay free of GUI dependencies (see setConfigLoadErrorReporter).
+        QaplaConfiguration::setConfigLoadErrorReporter(
+            [](const std::string& sectionName, const std::string& message) {
+                QaplaWindows::SnackbarManager::instance().showWarning(
+                    "Could not load the \"" + sectionName + "\" settings, using defaults: " + message,
+                    false, "configuration");
+            });
+
         QaplaConfiguration::Configuration::instance().loadFile();
         QaplaConfiguration::Configuration::loadLoggerConfiguration();
         QaplaWindows::EpdData::instance().loadFile();
