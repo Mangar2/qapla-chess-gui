@@ -90,7 +90,6 @@ private:
     /** @brief host/port controller_ was built with, so draw() can notice a Settings change. */
     QaplaLlm::LmStudioConnection activeConnection_;
     std::array<char, 4096> inputBuffer_{};
-    std::size_t lastHistorySize_ = 0;
 };
 
 } // namespace QaplaWindows::ChatBot

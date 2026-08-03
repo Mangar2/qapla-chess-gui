@@ -56,7 +56,6 @@ void ChatbotLlmChat::start() {
     controller_.reset();
     activeConnection_ = {};
     inputBuffer_.fill('\0');
-    lastHistorySize_ = 0;
 }
 
 void ChatbotLlmChat::refreshStatus() {
@@ -311,6 +310,13 @@ void ChatbotLlmChat::drawChatUi() {
         controller_->refreshModels();
     }
     ImGui::SameLine();
+    ImGui::BeginDisabled(controller_->isBusy());
+    if (ImGuiControls::textButton("Delete Chat")) {
+        controller_->clearHistory();
+    }
+    ImGui::EndDisabled();
+    ImGuiControls::hooverTooltip("Clears the chat transcript. Disabled while a message is in flight -- stop it first.");
+    ImGui::SameLine();
     bool enableThinking = controller_->enableThinking();
     if (ImGui::Checkbox("Enable Thinking", &enableThinking)) {
         controller_->setEnableThinking(enableThinking);
@@ -346,9 +352,13 @@ void ChatbotLlmChat::drawChatUi() {
 
     ImGui::Spacing();
 
-    // History
+    // History -- drawn straight into the flow, no nested BeginChild: the ChatbotWindow that
+    // hosts every chatbot thread (see chatbot-window.cpp) already provides the one real,
+    // auto-growing/auto-scrolling region for the whole panel (outer child scrolls, inner child
+    // auto-resizes to content) -- adding a second, independently-scrolling, fixed-height,
+    // bordered child here just fought that outer region instead of using it, and covered part
+    // of the window in an unnecessary boxed-in "window within a window" look.
     const auto& history = controller_->history();
-    ImGui::BeginChild("##LlmChatHistory", ImVec2(-1, 220), true);
     for (const auto& entry : history) {
         // Tool entries are already phrased as a plain status sentence (see
         // gui-tool-*-register.cpp) and shown without a header: end users
@@ -389,11 +399,6 @@ void ChatbotLlmChat::drawChatUi() {
     if (controller_->isBusy()) {
         ImGui::TextDisabled("Thinking...");
     }
-    if (history.size() != lastHistorySize_) {
-        ImGui::SetScrollHereY(1.0F);
-        lastHistorySize_ = history.size();
-    }
-    ImGui::EndChild();
 
     ImGui::Spacing();
 
@@ -405,7 +410,11 @@ void ChatbotLlmChat::drawChatUi() {
     bool submitted = ImGui::InputTextMultiline(
         "##LlmChatInput", inputBuffer_.data(), inputBuffer_.size(), ImVec2(-1, 80), inputFlags);
     ImGui::EndDisabled();
-    ImGuiControls::hooverTooltip("Type your message. Enter sends, Ctrl+Enter inserts a newline.");
+
+    // Grey hint between the input box and the Send/Stop button, not a hover tooltip -- a
+    // tooltip that pops up at the mouse cursor while typing (i.e. right where the cursor
+    // usually is, over the text being typed) was distracting.
+    ImGui::TextDisabled("Enter sends, Ctrl+Enter inserts a newline.");
 
     if (submitted) {
         trySend();

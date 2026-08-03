@@ -196,6 +196,18 @@ public:
         return history_;
     }
 
+    /**
+     * @brief Clears the visible chat transcript. No-op while isBusy() -- stop() the in-flight
+     * turn first, so its late-arriving tool events don't get appended to an already-cleared
+     * history.
+     */
+    void clearHistory() {
+        if (isBusy()) {
+            return;
+        }
+        history_.clear();
+    }
+
     /** @brief Must be called once per frame from the UI thread to pick up worker results. */
     void update();
 
