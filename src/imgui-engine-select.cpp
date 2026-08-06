@@ -41,20 +41,18 @@ using QaplaTester::EngineConfigManager;
 using namespace QaplaWindows;
 
 namespace {
-    std::string defaultNameFromCmd(const std::string& cmd) {
-        return std::filesystem::path(cmd).filename().string();
-    }
-
     // The engine's display name defaults to its executable filename until the engine
     // has been auto-detected (UCI/xboard handshake). Once detection reports the real
     // engine name (getReportedName()), adopt it as the display name -- but only while
     // the name is still that untouched default, so a user-chosen name is never clobbered.
+    // This only fixes up copies for display; the authoritative write-back happens in
+    // EngineCapabilities::storeCapabilities(), which uses the same hasDefaultName() rule.
     void adoptReportedNameIfUnedited(QaplaTester::EngineConfig& config) {
         const auto& reported = config.getReportedName();
         if (reported.empty() || reported == config.getName()) {
             return;
         }
-        if (config.getName() == defaultNameFromCmd(config.getCmd())) {
+        if (config.hasDefaultName()) {
             config.setName(reported);
         }
     }
