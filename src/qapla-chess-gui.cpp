@@ -50,6 +50,7 @@
 #include "llm/llm-chat-integration.h"
 #include "data/logo-data.h"
 #include "imgui-frame-rate-limiter.h"
+#include "os-helpers.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -293,7 +294,7 @@ namespace {
 
         // Headless/CI support: when QAPLA_AUTO_RUN_TESTS is set, queue all registered
         // ImGui Test Engine suites, print a summary once they finish, and exit.
-        const bool autoRunTests = std::getenv("QAPLA_AUTO_RUN_TESTS") != nullptr;
+        const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
         if (autoRunTests) {
             testManager.queueAllTests();
         }

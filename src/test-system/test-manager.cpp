@@ -32,6 +32,7 @@
 #include "test-system/llm-epd-tool-tests.h"
 #include "test-system/llm-status-tool-tests.h"
 #include "test-system/llm-app-tool-tests.h"
+#include "os-helpers.h"
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -91,8 +92,9 @@ namespace QaplaTest {
     void TestManager::queueAllTests() {
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (engine_ != nullptr) {
-            const char* filter = getenv("QAPLA_TEST_FILTER");
-            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests, filter, ImGuiTestRunFlags_RunFromCommandLine);
+            const auto filter = QaplaHelpers::OsHelpers::getEnv("QAPLA_TEST_FILTER");
+            ImGuiTestEngine_QueueTests(engine_, ImGuiTestGroup_Tests,
+                filter ? filter->c_str() : nullptr, ImGuiTestRunFlags_RunFromCommandLine);
         }
 #endif
     }

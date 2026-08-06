@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 
 namespace QaplaHelpers {
@@ -33,6 +34,17 @@ class OsHelpers {
 public:
     OsHelpers() = delete;
     ~OsHelpers() = delete;
+
+    /**
+     * @brief Reads an environment variable.
+     *
+     * Use this instead of std::getenv: the MSVC runtime marks that function deprecated in favour
+     * of _dupenv_s, which hands out an owned buffer that the caller has to free again.
+     *
+     * @param name Name of the variable.
+     * @return Its value, or std::nullopt if the variable is not set.
+     */
+    static std::optional<std::string> getEnv(const std::string& name);
 
     /**
      * @brief Gets the configuration directory for the application.

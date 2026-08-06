@@ -236,7 +236,11 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
 }
 
 std::string OsDialogs::getConfigDirectory() {
-    // Try environment variable first
+    // TODO: Switch to QaplaHelpers::OsHelpers::getEnv(), the single accessor for environment
+    // variables. Left as-is for now because this file is not part of the Windows build, where
+    // std::getenv is deprecated and the change could be verified; on macOS toolchains it raises
+    // no warning. When converting, mind the passwd fallback below: it reassigns homeDir to a
+    // pointer into pwd, so the getEnv() result needs its own variable that stays alive.
     const char* homeDir = getenv("HOME");
     
     // Fallback to passwd if HOME not set

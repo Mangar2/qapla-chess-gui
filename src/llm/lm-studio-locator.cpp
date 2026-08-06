@@ -19,9 +19,10 @@
 
 #include "lm-studio-locator.h"
 
+#include "../os-helpers.h"
+
 #include <httplib.h>
 
-#include <cstdlib>
 #include <system_error>
 
 namespace QaplaLlm {
@@ -42,20 +43,20 @@ std::vector<std::filesystem::path> LmStudioLocator::defaultInstallPaths() {
     std::vector<std::filesystem::path> paths;
 
 #if defined(_WIN32)
-    if (const char* localAppData = std::getenv("LOCALAPPDATA")) {
-        paths.push_back(std::filesystem::path(localAppData) / "Programs" / "LM Studio");
+    if (const auto localAppData = QaplaHelpers::OsHelpers::getEnv("LOCALAPPDATA")) {
+        paths.push_back(std::filesystem::path(*localAppData) / "Programs" / "LM Studio");
     }
-    if (const char* userProfile = std::getenv("USERPROFILE")) {
-        paths.push_back(std::filesystem::path(userProfile) / ".lmstudio");
+    if (const auto userProfile = QaplaHelpers::OsHelpers::getEnv("USERPROFILE")) {
+        paths.push_back(std::filesystem::path(*userProfile) / ".lmstudio");
     }
 #elif defined(__APPLE__)
     paths.emplace_back("/Applications/LM Studio.app");
-    if (const char* home = std::getenv("HOME")) {
-        paths.push_back(std::filesystem::path(home) / ".lmstudio");
+    if (const auto home = QaplaHelpers::OsHelpers::getEnv("HOME")) {
+        paths.push_back(std::filesystem::path(*home) / ".lmstudio");
     }
 #else
-    if (const char* home = std::getenv("HOME")) {
-        paths.push_back(std::filesystem::path(home) / ".lmstudio");
+    if (const auto home = QaplaHelpers::OsHelpers::getEnv("HOME")) {
+        paths.push_back(std::filesystem::path(*home) / ".lmstudio");
     }
 #endif
 

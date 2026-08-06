@@ -46,21 +46,33 @@
 
 namespace QaplaHelpers {
 
-std::string OsHelpers::getConfigDirectory() {
-    namespace fs = std::filesystem;
-
-#ifdef _WIN32
-    char* buf = nullptr;
-    size_t len = 0;
-    if (_dupenv_s(&buf, &len, "LOCALAPPDATA") == 0 && buf != nullptr) {
-        std::string path(buf);
-        free(buf);
-        return path + "/qapla-chess-gui";
+std::optional<std::string> OsHelpers::getEnv(const std::string& name) {
+#ifdef _MSC_VER
+    // _dupenv_s allocates; guard the buffer so it is released on every exit path.
+    char* buffer = nullptr;
+    size_t length = 0;
+    if (_dupenv_s(&buffer, &length, name.c_str()) != 0 || buffer == nullptr) {
+        return std::nullopt;
     }
-    // Fallback if LOCALAPPDATA is not set
-    return std::string(".") + "/qapla-chess-gui";
+    const std::unique_ptr<char, decltype(&std::free)> owned(buffer, &std::free);
+    return std::string(owned.get());
 #else
-    return std::string(std::getenv("HOME")) + "/.qapla-chess-gui";
+    const char* value = std::getenv(name.c_str());
+    if (value == nullptr) {
+        return std::nullopt;
+    }
+    return std::string(value);
+#endif
+}
+
+std::string OsHelpers::getConfigDirectory() {
+#ifdef _WIN32
+    const auto localAppData = getEnv("LOCALAPPDATA");
+    // Fallback if LOCALAPPDATA is not set
+    return (localAppData ? *localAppData : std::string(".")) + "/qapla-chess-gui";
+#else
+    const auto home = getEnv("HOME");
+    return (home ? *home : std::string(".")) + "/.qapla-chess-gui";
 #endif
 }
 
@@ -270,27 +282,23 @@ std::string OsHelpers::getCountry() {
     return "Unknown";
 #elif defined(__APPLE__)
     // Try to get locale from environment
-    const char* locale = std::getenv("LANG");
-    if (locale != nullptr) {
-        std::string loc(locale);
+    if (const auto locale = getEnv("LANG")) {
         // Extract country code (e.g., "en_US.UTF-8" -> "US")
-        auto underscorePos = loc.find('_');
-        auto dotPos = loc.find('.');
+        auto underscorePos = locale->find('_');
+        auto dotPos = locale->find('.');
         if (underscorePos != std::string::npos && dotPos != std::string::npos) {
-            return loc.substr(underscorePos + 1, dotPos - underscorePos - 1);
+            return locale->substr(underscorePos + 1, dotPos - underscorePos - 1);
         }
     }
     return "Unknown";
 #else
     // Linux: Try to get from locale
-    const char* locale = std::getenv("LANG");
-    if (locale != nullptr) {
-        std::string loc(locale);
+    if (const auto locale = getEnv("LANG")) {
         // Extract country code
-        auto underscorePos = loc.find('_');
-        auto dotPos = loc.find('.');
+        auto underscorePos = locale->find('_');
+        auto dotPos = locale->find('.');
         if (underscorePos != std::string::npos && dotPos != std::string::npos) {
-            return loc.substr(underscorePos + 1, dotPos - underscorePos - 1);
+            return locale->substr(underscorePos + 1, dotPos - underscorePos - 1);
         }
     }
     return "Unknown";
