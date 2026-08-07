@@ -416,3 +416,75 @@ TEST_CASE("TournamentResultIncremental polling", "[gui][tournament-result]") {
 
     }
 }
+
+TEST_CASE("Played games are counted for selected engines only", "[gui][tournament-result]") {
+    // A gauntlet where the challenger still faces three opponents. The pairings keep the
+    // results of every engine that ever played, while the number of games still to play is
+    // derived from the currently selected engines -- so both numbers must be restricted to
+    // the same set of engines.
+    auto engines = createEngines(std::vector<TestEngineParams>{
+        {.name = "Champion"},
+        {.name = "OpponentA"},
+        {.name = "OpponentB"},
+        {.name = "OpponentC"}
+    });
+    engines[0].setGauntlet(true);
+
+    TournamentConfig config{
+        .event = "Engine Removal Test",
+        .type = "gauntlet",
+        .tournamentFilename = "",
+        .games = 10,
+        .rounds = 1,
+        .repeat = 1,
+        .openings = Openings{
+            .file = "src/test-system/unit/test-openings.pgn",
+            .plies = 1
+        }
+    };
+
+    TournamentBuilder builder(engines, config);
+
+    // Champion vs OpponentA is finished, the two other pairings still have games left
+    for (int game = 0; game < 10; ++game) {
+        REQUIRE(builder.playGame(0, GameResult::WhiteWins));
+    }
+    for (int game = 0; game < 4; ++game) {
+        REQUIRE(builder.playGame(1, GameResult::Draw));
+    }
+    for (int game = 0; game < 6; ++game) {
+        REQUIRE(builder.playGame(2, GameResult::BlackWins));
+    }
+
+    SECTION("With all engines selected every played game counts") {
+        TournamentResultIncremental incremental;
+        incremental.poll(builder.tournament, 2600.0);
+
+        REQUIRE(incremental.getPlayedGames() == 20);
+        REQUIRE(TournamentResultIncremental::countPlayedGames(builder.tournament,
+            {"Champion", "OpponentA", "OpponentB", "OpponentC"}) == 20);
+    }
+
+    SECTION("Removing an opponent removes its games from the played count") {
+        const std::unordered_set<std::string> selected{"Champion", "OpponentA", "OpponentB"};
+        const std::vector<EngineConfig> remaining{engines[0], engines[1], engines[2]};
+
+        const uint32_t totalGames = Tournament::calculateTotalGames(remaining, config);
+        const uint32_t playedGames = TournamentResultIncremental::countPlayedGames(
+            builder.tournament, selected);
+
+        REQUIRE(totalGames == 20);
+        REQUIRE(playedGames == 14); // 10 + 4, the 6 games against OpponentC are dropped
+        // The tournament still has 6 games to play and must not appear finished
+        REQUIRE(playedGames < totalGames);
+    }
+
+    SECTION("Removing the gauntlet engine leaves no played games") {
+        REQUIRE(TournamentResultIncremental::countPlayedGames(builder.tournament,
+            {"OpponentA", "OpponentB", "OpponentC"}) == 0);
+    }
+
+    SECTION("An empty selection has no played games") {
+        REQUIRE(TournamentResultIncremental::countPlayedGames(builder.tournament, {}) == 0);
+    }
+}

@@ -22,6 +22,7 @@
 #include <game-manager/tournament-result.h>
 #include <base-elements/change-tracker.h>
 
+#include <string>
 #include <unordered_set>
 
 namespace QaplaTester {
@@ -83,6 +84,21 @@ namespace QaplaWindows {
         uint32_t getPlayedGames() const {
             return playedGamesFromCompletedPairs_ + playedGamesFromPartialPairs_;
         }
+
+        /**
+         * @brief Counts the played games of all pairings where both engines are still selected.
+         *
+         * The number of games a tournament consists of is derived from the currently selected
+         * engines, while the tournament pairings still hold the results of engines the user has
+         * removed from the selection. Counting those removed games as played would make a
+         * tournament with games left look finished (played >= total), so they are skipped here.
+         *
+         * @param tournament Tournament holding the pairings.
+         * @param selectedEngineNames Names of the engines currently selected for the tournament.
+         * @return Number of games played between selected engines only.
+         */
+        static uint32_t countPlayedGames(const QaplaTester::Tournament& tournament,
+            const std::unordered_set<std::string>& selectedEngineNames);
 			
 
     private:

@@ -230,6 +230,18 @@ namespace QaplaWindows {
         return selectedEngines;
     }
 
+    std::unordered_set<std::string> TournamentData::getSelectedEngineNames() const {
+        std::unordered_set<std::string> selectedNames;
+
+        for (const auto& tournamentConfig : engineConfigurations_) {
+            if (tournamentConfig.isSelected()) {
+                selectedNames.insert(tournamentConfig.getName());
+            }
+        }
+
+        return selectedNames;
+    }
+
     bool TournamentData::createTournament(bool verbose) {
         try {
             if (engineConfigurations_.empty()) {
@@ -571,10 +583,14 @@ namespace QaplaWindows {
     }
 
     uint32_t TournamentData::getPlayedGames() const {
-        if (!result_) {
+        if (!tournament_) {
             return 0;
         }
-        return result_->getPlayedGames();
+        // Counted per pairing instead of taking the aggregate from result_, because getTotalGames()
+        // only covers the selected engines. Games of engines the user removed from the selection
+        // must be left out of both numbers, otherwise the tournament looks finished although the
+        // remaining engines still have games to play.
+        return TournamentResultIncremental::countPlayedGames(*tournament_, getSelectedEngineNames());
     }
 
     std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) {

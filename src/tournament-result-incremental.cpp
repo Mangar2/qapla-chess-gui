@@ -37,6 +37,19 @@ void TournamentResultIncremental::addFinishedPairTournament(size_t pairIndex, co
 	engineNames_.insert(resultToAdd.getEngineB());
 }
 
+uint32_t TournamentResultIncremental::countPlayedGames(const Tournament& tournament,
+	const std::unordered_set<std::string>& selectedEngineNames) {
+	uint32_t playedGames = 0;
+	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+		if (!selectedEngineNames.contains((*pairTournament)->getEngineA().getName()) ||
+			!selectedEngineNames.contains((*pairTournament)->getEngineB().getName())) {
+			continue;
+		}
+		playedGames += static_cast<uint32_t>((*pairTournament)->getResult().total());
+	}
+	return playedGames;
+}
+
 void TournamentResultIncremental::handleModification(const Tournament& tournament, double baseElo) {
 	clear();
 	

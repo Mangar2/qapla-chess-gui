@@ -45,6 +45,8 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <string>
+#include <unordered_set>
 
 namespace QaplaTester
 {
@@ -397,6 +399,15 @@ namespace QaplaWindows {
          * @return Vector of EngineConfig for all selected engines.
          */
         std::vector<QaplaTester::EngineConfig> getSelectedEngines() const;
+
+        /**
+         * @brief Builds the set of names of all currently selected engines.
+         * @details Cheaper than getSelectedEngines() as it neither copies the engine
+         *          configurations nor applies the global settings - the name is not
+         *          affected by them.
+         * @return Names of all selected engines.
+         */
+        std::unordered_set<std::string> getSelectedEngineNames() const;
 
         /**
         * @brief Creates a tournament and loads it from the current configuration and engine settings.
