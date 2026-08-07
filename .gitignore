@@ -399,3 +399,13 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 imgui.ini
+
+# Finetuning (siehe Finetuning/TRAINING.md)
+# Modellgewichte, virtuelle Umgebung und generierte Daten -- alles reproduzierbar
+# aus finetuning-001.json + tools.json bzw. neu herunterladbar.
+Finetuning/.venv/
+Finetuning/data/
+Finetuning/adapters*/
+Finetuning/fused*/
+# Sicherheitsnetz: Modellgewichte gehoeren grundsaetzlich nicht ins Repo
+*.safetensors

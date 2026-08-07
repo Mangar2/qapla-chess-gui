@@ -226,7 +226,12 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/llm/llm-finetuning-writer.cpp
       src/os-helpers.cpp
     )
-    
+
+    # os-helpers.cpp leaves the macOS specific parts to os-helpers-apple.cpp
+    if(APPLE)
+      list(APPEND GUI_TEST_DEPENDENCIES src/os-helpers-apple.cpp)
+    endif()
+
     add_executable(unit-tests ${UNIT_TEST_SOURCES} ${GUI_TEST_DEPENDENCIES})
     
     target_include_directories(unit-tests PRIVATE

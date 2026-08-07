@@ -1,0 +1,514 @@
+[
+  {
+    "function": {
+      "description": "Lists all chess engines configured in GUI's global engine catalog, name + protocol (uci/xboard).",
+      "name": "list_installed_engines",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Opens GUI's native file picker, user selects one+ chess engine executables to add to global engine catalog. User picks file(s) themselves -- you have no filesystem access. New engines detected (protocol, options, etc.) synchronously before call returns -- result already reflects final outcome, don't promise separate future update. ENDS YOUR TURN: this result is the last thing you produce, it is shown to the user as-is. No further tool call, no reply_to_user afterwards -- you won't be asked again.",
+      "name": "open_add_engine_dialog",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Selects configured engines for next tournament, replaces previous selection. Names matched case-insensitively vs installed engine catalog; informal/short name (e.g. \"spike\") auto-matched to the one engine it can mean (e.g. \"Spike 1.4.1\") -- pass name user said, no need to call list_installed_engines first for exact name. If name matches multiple engines, result lists candidates -- ask user which, never guess. Sets up round-robin (every engine plays every other); gauntlet mode not supported via chat.",
+      "name": "select_engines",
+      "parameters": {
+        "properties": {
+          "engines": {
+            "description": "Engine display names, e.g. [\"Stockfish\",\"Qapla\"].",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "engines"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Sets tournament options: time_control, games (per pairing), rounds, event (name), openings_file, pgn_file, concurrency, draw_mode/draw_min_full_moves/draw_required_consecutive_moves/draw_centipawn_threshold, resign_mode/resign_required_consecutive_moves/resign_centipawn_threshold/resign_two_sided. Each field independent/optional -- pass ONLY what user asked to change (e.g. just \"games\"); don't require/ask other fields first. Unpassed fields keep prior value (this session or earlier), don't assume unset. Response always reports the full current tournament config, so no separate get_status (type=\"tournament\") call is normally needed to confirm what changed. openings_file must be set (here or earlier session) before start (type=\"tournament\") succeeds, no safe default. For openings_file/pgn_file, set openings_file_dialog/pgn_file_dialog to true instead of a typed path to open a native file picker -- never type/guess a path yourself. draw_mode/resign_mode \"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
+      "name": "configure_tournament",
+      "parameters": {
+        "properties": {
+          "concurrency": {
+            "description": "Games run in parallel.",
+            "type": "integer"
+          },
+          "draw_centipawn_threshold": {
+            "description": "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of equal). Positive number. Default 20.",
+            "type": "integer"
+          },
+          "draw_min_full_moves": {
+            "description": "Min full moves before draw adjudication can trigger. Default 80.",
+            "type": "integer"
+          },
+          "draw_mode": {
+            "description": "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end games. \"active\": ends games early as draw once conditions below met.",
+            "enum": [
+              "off",
+              "test",
+              "active"
+            ],
+            "type": "string"
+          },
+          "draw_required_consecutive_moves": {
+            "description": "Consecutive moves (engines' own eval) that must stay within draw_centipawn_threshold of equal before draw adjudication. Default 20.",
+            "type": "integer"
+          },
+          "event": {
+            "description": "Tournament/event name.",
+            "type": "string"
+          },
+          "games": {
+            "description": "Games per engine pairing PER ROUND, not tournament total. Total per pairing = games*rounds, applies to every pairing. User gives one number, no rounds mention -> set games to that, leave rounds at default 1, so total=what they said. User gives BOTH total games and rounds (e.g. \"100 games total, 10 rounds\") -> compute games=total/rounds yourself (100/10 -> games=10, rounds=10), never put total as-is into games. If unclear whether given count is total or per-round (e.g. \"100 games and 10 rounds\", not specified which), ask user, never guess.",
+            "type": "integer"
+          },
+          "openings_file": {
+            "description": "Path to EPD/PGN opening book file.",
+            "type": "string"
+          },
+          "openings_file_dialog": {
+            "description": "Set true to open a native file picker instead of passing openings_file.",
+            "type": "boolean"
+          },
+          "pgn_file": {
+            "description": "Path to save played games as PGN.",
+            "type": "string"
+          },
+          "pgn_file_dialog": {
+            "description": "Set true to open a native save-file picker instead of passing pgn_file.",
+            "type": "boolean"
+          },
+          "resign_centipawn_threshold": {
+            "description": "How bad, in centipawns from losing side's own view, before resignation-worthy -- e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.",
+            "type": "integer"
+          },
+          "resign_mode": {
+            "description": "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't end games. \"active\": ends games early as loss for losing side once conditions below met.",
+            "enum": [
+              "off",
+              "test",
+              "active"
+            ],
+            "type": "string"
+          },
+          "resign_required_consecutive_moves": {
+            "description": "Consecutive moves whose own eval must stay at/below -resign_centipawn_threshold (that bad or worse) before resign adjudication. Default 5.",
+            "type": "integer"
+          },
+          "resign_two_sided": {
+            "description": "If true, both engines must independently agree position lost before adjudicating -- more conservative, avoids resignation from one engine's eval blunder alone. Default false.",
+            "type": "boolean"
+          },
+          "rounds": {
+            "description": "Times full pairing set repeats. Default 1. See \"games\" for how this multiplies into tournament total.",
+            "type": "integer"
+          },
+          "time_control": {
+            "description": "Chess clock time control. Format: \"<base>+<increment>\", both in seconds; increment is optional and defaults to 0. <base> may also be \"M:S\" or \"H:M:S\". Prefix with \"<moves>/\" for a moves-per-session phase (e.g. \"40/300+2\" = 40 moves in 300s, then +2s per move thereafter). Use \"inf\" for no time limit. Always convert the user's own words into this format yourself -- never ask the user to supply an already-formatted time control string. Examples: \"1 minute per game\" -> \"60+0\" (or \"1:00\"); \"5 minutes plus 3 second increment\" / \"5+3\" -> \"300+3\" (or \"5:00+3\"); \"40 moves in 5 minutes, then 2 seconds per move\" -> \"40/300+2\"; \"blitz\" (no further detail given) -> \"300+0\"; \"unlimited\"/\"no clock\" -> \"inf\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Selects two engines for SPRT test: \"champion\" (comparison baseline), \"challenger\" (engine under test), replacing prior selection. Names matched case-insensitive vs installed engine catalog; informal/shortened name (e.g. \"spike\") auto-matched to the one installed engine it can only mean (e.g. \"Spike 1.4.1\") -- pass name user actually said, no need to call list_installed_engines first just to find exact full name. If name could mean >1 installed engine, result lists candidates -- ask user which they meant, never guess. Entirely separate from select_engines/configure_tournament (classic tournament mode) -- selecting SPRT engines never changes tournament's engine selection, and vice versa.",
+      "name": "select_sprt_engines",
+      "parameters": {
+        "properties": {
+          "challenger": {
+            "description": "Engine under test. Must differ from champion.",
+            "type": "string"
+          },
+          "champion": {
+            "description": "Comparison/baseline engine -- trusted one, challenger tested against it. Matched case-insensitive vs installed engine catalog -- call list_installed_engines first if unsure what's available.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "champion",
+          "challenger"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Sets SPRT test options: time_control, elo0/elo1 (H0/H1 Elo bounds), alpha, beta, max_games, model, pentanomial, openings_file, pgn_file, concurrency, draw_mode/draw_min_full_moves/draw_required_consecutive_moves/draw_centipawn_threshold, resign_mode/resign_required_consecutive_moves/resign_centipawn_threshold/resign_two_sided. Every field independent/optional -- pass ONLY what user asked to change, don't require/ask for others first. Anything not passed keeps prior value (this session or earlier). Response always reports the full current SPRT config, so no separate get_status (type=\"sprt\") call is normally needed to confirm what changed. IMPORTANT: fully separate config from configure_tournament -- classic tournament and SPRT each have own time control, openings file, concurrency, adjudication etc, despite same field names. If user's message doesn't make clear tournament vs SPRT (e.g. bare \"set time control to 1 min/game\"), infer from conversation so far (multi-engine tournament or champion-vs-challenger SPRT?); if still unclear from context, ask which they mean, never guess -- wrong guess silently configures other feature. openings_file must be set (here or earlier session) before start (type=\"sprt\") succeeds. If missing/invalid or user wants to browse, set openings_file_dialog/pgn_file_dialog to true instead of a typed path. draw_mode/resign_mode \"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
+      "name": "configure_sprt",
+      "parameters": {
+        "properties": {
+          "alpha": {
+            "description": "Type I error rate: prob. of accepting challenger as stronger when it isn't. 0-1 exclusive. Default 0.05.",
+            "type": "number"
+          },
+          "beta": {
+            "description": "Type II error rate: prob. of rejecting challenger when it is stronger. 0-1 exclusive. Default 0.05.",
+            "type": "number"
+          },
+          "concurrency": {
+            "description": "Games to run in parallel.",
+            "type": "integer"
+          },
+          "draw_centipawn_threshold": {
+            "description": "Max abs eval in centipawns still counting as drawn (e.g. 20 = within +/-20cp of equal). Positive number. Default 20.",
+            "type": "integer"
+          },
+          "draw_min_full_moves": {
+            "description": "Min full moves before draw adjudication can trigger. Default 80.",
+            "type": "integer"
+          },
+          "draw_mode": {
+            "description": "\"off\": disables draw adjudication. \"test\": evaluates/logs decision, doesn't end games. \"active\": ends games early as draw once conditions below met.",
+            "enum": [
+              "off",
+              "test",
+              "active"
+            ],
+            "type": "string"
+          },
+          "draw_required_consecutive_moves": {
+            "description": "Consecutive moves (engines' own eval) that must stay within draw_centipawn_threshold of equal before draw adjudication. Default 20.",
+            "type": "integer"
+          },
+          "elo0": {
+            "description": "H0 (null hypothesis) Elo bound -- challenger NOT stronger at/below this Elo diff. Usually 0. Default 0.",
+            "type": "number"
+          },
+          "elo1": {
+            "description": "H1 (alt hypothesis) Elo bound -- challenger stronger at/above this Elo diff. Must end up > elo0 (checked at test start, not when this field alone set). Default 3.",
+            "type": "number"
+          },
+          "max_games": {
+            "description": "Max games before stopping inconclusive if no decision sooner. Default 100000.",
+            "type": "integer"
+          },
+          "model": {
+            "description": "Statistical model for SPRT calc: \"normalized\" (default), \"logistic\", \"bayesian\".",
+            "type": "string"
+          },
+          "openings_file": {
+            "description": "Path to existing EPD/PGN opening book file on disk.",
+            "type": "string"
+          },
+          "openings_file_dialog": {
+            "description": "Set true to open a native file picker instead of passing openings_file.",
+            "type": "boolean"
+          },
+          "pentanomial": {
+            "description": "True: pentanomial (paired-game) stats instead of trinomial -- more power, needs games in same-opening pairs. Default false.",
+            "type": "boolean"
+          },
+          "pgn_file": {
+            "description": "Path to save played games as PGN.",
+            "type": "string"
+          },
+          "pgn_file_dialog": {
+            "description": "Set true to open a native save-file picker instead of passing pgn_file.",
+            "type": "boolean"
+          },
+          "resign_centipawn_threshold": {
+            "description": "How bad, in centipawns from losing side's own view, before resignation-worthy -- e.g. 500 = down ~queen's worth. Positive magnitude, not negative. Default 500.",
+            "type": "integer"
+          },
+          "resign_mode": {
+            "description": "\"off\": disables resign adjudication. \"test\": evaluates/logs decision, doesn't end games. \"active\": ends games early as loss for losing side once conditions below met.",
+            "enum": [
+              "off",
+              "test",
+              "active"
+            ],
+            "type": "string"
+          },
+          "resign_required_consecutive_moves": {
+            "description": "Consecutive moves whose own eval must stay at/below -resign_centipawn_threshold (that bad or worse) before resign adjudication. Default 5.",
+            "type": "integer"
+          },
+          "resign_two_sided": {
+            "description": "If true, both engines must independently agree position lost before adjudicating -- more conservative, avoids resignation from one engine's eval blunder alone. Default false.",
+            "type": "boolean"
+          },
+          "time_control": {
+            "description": "Chess clock time control. Format: \"<base>+<increment>\", both in seconds; increment is optional and defaults to 0. <base> may also be \"M:S\" or \"H:M:S\". Prefix with \"<moves>/\" for a moves-per-session phase (e.g. \"40/300+2\" = 40 moves in 300s, then +2s per move thereafter). Use \"inf\" for no time limit. Always convert the user's own words into this format yourself -- never ask the user to supply an already-formatted time control string. Examples: \"1 minute per game\" -> \"60+0\" (or \"1:00\"); \"5 minutes plus 3 second increment\" / \"5+3\" -> \"300+3\" (or \"5:00+3\"); \"40 moves in 5 minutes, then 2 seconds per move\" -> \"40/300+2\"; \"blitz\" (no further detail given) -> \"300+0\"; \"unlimited\"/\"no clock\" -> \"inf\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Selects configured chess engines tested vs EPD positions, replacing any previous selection. Names matched case-insensitively vs installed engine catalog; informal/shortened name (e.g. \"spike\") auto-matched to the one installed engine it can only mean (e.g. \"Spike 1.4.1\") -- pass name user actually said, no need to call list_installed_engines first just to look up full name. If name could mean more than one installed engine, result lists candidates -- ask user which one meant, never guess. Entirely separate from select_engines/select_sprt_engines (classic tournament/SPRT) -- selecting EPD engines never changes those, vice versa.",
+      "name": "select_epd_engines",
+      "parameters": {
+        "properties": {
+          "engines": {
+            "description": "Engine display names to test vs EPD positions, e.g. [\"Stockfish\", \"Qapla\"]. All tested vs SAME position set, side by side (one result column each) -- unlike SPRT, no champion/challenger role; any number of engines (incl. one) fine.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "engines"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Sets EPD analysis options: epd_file, max_time_seconds, min_time_seconds, seen_plies, concurrency. Each field independent, optional -- pass ONLY what user asked to change, don't require/ask for others first. Unset fields keep prior value (this session or earlier) -- call get_status (type=\"epd\") first if unsure what's current. IMPORTANT: completely separate from configure_tournament/configure_sprt -- EPD has no shared time_control string (just plain per-position second counts), no adjudication concept, despite sounding like another engine-testing mode. If request could mean tournament, SPRT, or EPD and unclear which, ask, don't guess. epd_file must be set (here or earlier session) before start (type=\"epd\") succeeds. If missing, invalid, or user wants to browse, set epd_file_dialog=true instead of a typed path.",
+      "name": "configure_epd",
+      "parameters": {
+        "properties": {
+          "concurrency": {
+            "description": "Positions to analyze in parallel.",
+            "type": "integer"
+          },
+          "epd_file": {
+            "description": "Path to existing EPD (or RAW position) file on disk.",
+            "type": "string"
+          },
+          "epd_file_dialog": {
+            "description": "Set true to open a native file picker instead of passing epd_file.",
+            "type": "boolean"
+          },
+          "max_time_seconds": {
+            "description": "Max seconds engine may search each position. NOT tournament/SPRT time control -- EPD analysis has no clock string, just plain per-position time budget. Default 10.",
+            "type": "integer"
+          },
+          "min_time_seconds": {
+            "description": "Min seconds engine must keep searching each position even after finding apparent right move (guards vs solving by luck on shallow search). Default 1.",
+            "type": "integer"
+          },
+          "seen_plies": {
+            "description": "Consecutive plies engine's PV must keep showing correct best move before position counted solved, analysis moves on early -- saves time on easy positions. Default 3.",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Reports what's currently running: classic tournament, SPRT test, EPD analysis checked/reported separately (run independently, see configure_sprt's/configure_epd's notes). Call whenever user asks broadly if \"something\"/\"a test\"/\"anything\" running, or specifically if TOURNAMENT running -- people often call SPRT test or EPD analysis \"tournament\" informally (all look same: engines running in background), so checking only get_status (type=\"tournament\") could wrongly say nothing happening while SPRT test or EPD analysis actually active. start/stop already return this same summary, so this is only needed for a pure check that changes nothing. Distinguishes a graceful stop still in progress from plain running/not running.",
+      "name": "get_running_status",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Starts a tournament, SPRT test, or EPD analysis (pick via \"type\") using whatever engines/settings were configured via select_engines/configure_tournament, select_sprt_engines/configure_sprt, or select_epd_engines/configure_epd respectively. Requires that type's own preconditions already met (engines selected, openings/EPD file configured) -- result states exactly which is missing if it can't start. EPD-specific: auto-resumes from a previous incomplete run instead of restarting if its engines/file/timing are unchanged since; if that previous run already completed, or its settings changed after it stopped, starting fails until clear_result (type=\"epd\") is called first. Response always reports what's running across all three afterward, so no separate get_running_status call is normally needed.",
+      "name": "start",
+      "parameters": {
+        "properties": {
+          "type": {
+            "description": "Which of the three independent activities to act on. \"tournament\": classic multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": move-finding analysis vs a fixed position set. If unclear which the user means, ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "enum": [
+              "tournament",
+              "sprt",
+              "epd"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Stops a running tournament, SPRT test, or EPD analysis (pick via \"type\"). Optional \"mode\": graceful (default) or abrupt. Fails if that type isn't currently running. For EPD, progress is kept (not cleared) -- starting again resumes from here. Response always reports what's running across all three afterward, so no separate get_running_status call is normally needed.",
+      "name": "stop",
+      "parameters": {
+        "properties": {
+          "mode": {
+            "description": "\"graceful\" (default): finish whatever's already in progress, then stop, nothing new starts. \"abrupt\": abort in-progress work immediately. If user just says \"stop\" unqualified, use \"graceful\" -- ask only if they've previously shown they care about the distinction.",
+            "enum": [
+              "graceful",
+              "abrupt"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "description": "Which of the three independent activities to act on. \"tournament\": classic multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": move-finding analysis vs a fixed position set. If unclear which the user means, ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "enum": [
+              "tournament",
+              "sprt",
+              "epd"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Reports the full current config/state of a tournament, SPRT test, or EPD analysis (pick via \"type\"): engines, all its settings, and whether/how it's running -- everything configure_tournament/configure_sprt/configure_epd also already return after any change they make, so this is only needed for a pure status check that changes nothing (e.g. \"what's the SPRT test set to right now\"), or before select_engines/select_sprt_engines/select_epd_engines. For \"is anything running\" across all three at once, use get_running_status instead.",
+      "name": "get_status",
+      "parameters": {
+        "properties": {
+          "type": {
+            "description": "Which of the three independent activities to act on. \"tournament\": classic multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": move-finding analysis vs a fixed position set. If unclear which the user means, ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "enum": [
+              "tournament",
+              "sprt",
+              "epd"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Discards the current results of a tournament, SPRT test, or EPD analysis (pick via \"type\"), stopping it first if still running. Use when the user wants to discard what's been played/analyzed so far, e.g. before reconfiguring and starting fresh with the same engines. For EPD specifically, this is also the required fix when start fails because a previous run already completed or its settings changed after it stopped.",
+      "name": "clear_result",
+      "parameters": {
+        "properties": {
+          "type": {
+            "description": "Which of the three independent activities to act on. \"tournament\": classic multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": move-finding analysis vs a fixed position set. If unclear which the user means, ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "enum": [
+              "tournament",
+              "sprt",
+              "epd"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Displays the current results of a tournament, SPRT test, or EPD analysis (pick via \"type\") as a table in the chat -- ranked-by-Elo standings for tournament, SPRT decision + duel score for sprt, per-position solved/not-solved for epd. Renders a real table control in the chat UI -- not for you to read the data and describe it in your own words; just call it and briefly confirm you're showing results, don't restate numbers. Works while running (partial results) or after finish; reports none available if nothing played/analyzed yet. ONLY way you ever learn any actual score/standing/Elo/decision -- no other source. Never state/type/guess a result yourself instead of calling this -- that's fabrication, not a real result.",
+      "name": "show_result",
+      "parameters": {
+        "properties": {
+          "type": {
+            "description": "Which of the three independent activities to act on. \"tournament\": classic multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": move-finding analysis vs a fixed position set. If unclear which the user means, ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "enum": [
+              "tournament",
+              "sprt",
+              "epd"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Closes whole Qapla Chess GUI app (same as window's own close button). Immediate -- on close/quit/exit request, call directly, no confirmation first.",
+      "name": "close_application",
+      "parameters": {
+        "properties": {},
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Opens PGN file in Pgn tab, switches to it. Either user picks file via native dialog, or directly opens PGN file classic tournament or SPRT test is currently writing to (their own \"source\" values) -- see \"source\" param for exactly which. source=\"dialog\" ENDS YOUR TURN (cancelled or not): that result is the last thing you produce, shown to the user as-is, no reply_to_user afterwards. source=\"tournament\"/\"sprt\" open no dialog and are followed by a reply as usual.",
+      "name": "open_pgn_file",
+      "parameters": {
+        "properties": {
+          "source": {
+            "description": "PGN file source. \"dialog\" (default): native file picker, user picks any PGN file -- use when user names specific file/path you don't know, or just says \"open a PGN file\" unqualified. \"tournament\": opens PGN file classic tournament currently writes to (see configure_tournament's pgn_file) -- use for \"open the PGN file from the tournament\". \"sprt\": same, for SPRT test's own PGN output (see configure_sprt's pgn_file). Both need no dialog, path already known.",
+            "enum": [
+              "dialog",
+              "tournament",
+              "sprt"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "type": "function"
+  },
+  {
+    "function": {
+      "description": "Reply to user. ONLY way to say anything to them -- never plain text, always this tool, even short confirmation/question/acknowledgement. Full answer in \"text\" arg only -- anything outside \"text\" discarded, never shown. Never split answer or use placeholder here+real answer elsewhere. If a tool already displays its result in chat (e.g. show_result), don't repeat that data -- just a short confirmation sentence.",
+      "name": "reply_to_user",
+      "parameters": {
+        "properties": {
+          "text": {
+            "description": "Complete message to user, in their language -- only part they see.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      }
+    },
+    "type": "function"
+  }
+]
