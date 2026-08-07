@@ -41,7 +41,30 @@ scheitert: *User hakt nach, nachdem der Assistent gebremst hat → jetzt handeln
 | `build.py` | Setzt die Records zusammen und schreibt Datensatz + Ledger. Dateinamen und Nummer stehen oben in der Datei. |
 | `fixed_000.py` … `fixed_140.py` | **Die eigentliche Arbeit** — je zehn aus den Rohdaten korrigierte Records mit Tool-Kette, Antwort und Begründung. Hier wird editiert. |
 | `added_*.py` | Neu geschriebene Records ohne Vorlage in den Rohdaten. Eigenes Präfix, damit die Herkunft sichtbar bleibt. |
+| `variants.py` | Die „Welten" für die Wertevariation (siehe unten). |
 | `verify.py` | Der Prüfer. |
+
+### Wertevariation
+
+Alle Records stammen aus denselben Sitzungen und trugen deshalb fast immer dieselben
+Werte: `Qapla 0.4.0` in 46 Records, `book8ply.raw` in 51, `H1=5.00` in **jedem**
+SPRT-Record. Das arbeitet gegen den Zweck: der Datensatz soll beibringen, nichts zu sagen,
+was kein Tool gesagt hat — würde dem Modell diese konkreten Werte aber als Default
+antrainieren. Genau die hat es in #135 und #147 frei erfunden.
+
+`variants.py` gibt deshalb jedes Record zusätzlich in zwei weiteren Welten aus (andere
+Engines, Pfade, Zeitkontrollen, Elo-Schranken, `max_games`). Die Ersetzung läuft über den
+**gesamten** Record — User-Nachricht, Kontext, Tool-Argumente, Tool-Ergebnisse und Antwort
+— damit die innere Konsistenz erhalten bleibt.
+
+Ob eine Welt korrekt ist, entscheidet nicht `variants.py`, sondern `verify.py`: eine
+inkonsistente Ersetzung hinterlässt eine Zahl oder einen Pfad ohne Deckung, und genau
+darauf prüft es. Beim Einbauen hat es prompt einen Fall gefunden, in dem die Antwort den
+Wert ausgeschrieben nannte („nach **vier** Partien").
+
+Eine neue Welt anlegen: Regelliste in `WORLDS` ergänzen, `build.py` laufen lassen,
+`verify.py` muss weiterhin 0 melden. Reihenfolge der Regeln beachten — längere Muster
+zuerst, sonst frisst `Qapla` das `Qapla-baseline`.
 
 ### Nummerierung
 
@@ -101,8 +124,9 @@ geschrieben. 14 Records enden deshalb ohne Antwort.
 
 ## Stand
 
-- **151 Records**: 149 aus den Rohdaten korrigiert (keiner gelöscht), davon 42 mit schweren
-  Fehlern und 16 unverändert übernehmbar, plus 2 neu geschriebene (`added_pgn_dialog.py`)
+- **453 Records** = 151 Basis × 3 Welten. Die 151: 149 aus den Rohdaten korrigiert (keiner
+  gelöscht), davon 42 mit schweren Fehlern und 16 unverändert übernehmbar, plus 2 neu
+  geschriebene (`added_pgn_dialog.py`)
 - `verify.py`: **0** Beanstandungen gegen **149** bei den Rohdaten
 - **Noch nicht übernommen**: `~/.qapla-chess-gui/finetuning.json` ist unangetastet
 

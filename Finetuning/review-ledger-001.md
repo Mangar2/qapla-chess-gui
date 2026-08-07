@@ -1,3 +1,5 @@
+151 Basis-Records, je zusätzlich ausgegeben in den Welten: stockfish-berserk, ethereal-rubi -- 453 Records insgesamt.
+
 | # | User-Nachricht | Tools (korrigiert) | Änderung |
 |---|---|---|---|
 | 0 | plz start sprt, current settings, 10 games parallel | configure_sprt → start | Vorgeschaltetes get_status entfernt (User sagte "current settings", also nichts nachzusehen); Denk-Preambles als Klartext neben den Tool-Calls entfernt. |

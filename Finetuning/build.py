@@ -14,6 +14,8 @@ import json
 import importlib
 import pathlib
 
+from variants import WORLDS, apply_world
+
 HERE = pathlib.Path(__file__).parent
 # original.json is the checked-in copy of ~/.qapla-chess-gui/finetuning.json as it stood
 # when this cleanup started. Reading the prompt from it rather than from the live file
@@ -73,7 +75,7 @@ def R(index, user, steps, reply, context=(), note=""):
     context -- [(user_text, assistant_text), ...] prepended as flattened history
     note    -- what was changed and why, for the review ledger
     """
-    return {"index": index, "user": user, "steps": steps, "reply": reply,
+    return {"index": index, "variant": "", "user": user, "steps": steps, "reply": reply,
             "context": list(context), "note": note}
 
 
@@ -85,7 +87,7 @@ def to_messages(record, prompt):
     messages.append({"role": "user", "content": record["user"]})
 
     for position, (name, args, result) in enumerate(record["steps"]):
-        call_id = f"call_{record['index']}_{position}"
+        call_id = f"call_{record['index']}{record.get('variant', '')}_{position}"
         messages.append({
             "role": "assistant",
             "content": "",
@@ -101,7 +103,7 @@ def to_messages(record, prompt):
         # Terminal tool: the turn ends on the tool result, the model is never asked again.
         return messages
 
-    reply_id = f"call_{record['index']}_reply"
+    reply_id = f"call_{record['index']}{record.get('variant', '')}_reply"
     messages.append({
         "role": "assistant",
         "content": "",
@@ -127,14 +129,26 @@ def main():
         records.extend(module.RECORDS)
 
     records.sort(key=lambda r: r["index"])
+
+    # Jedes Record zusätzlich in den Welten aus variants.py, damit das Modell nicht die
+    # immer gleichen Engine-Namen, Pfade und Schranken als Default lernt.
+    emitted = list(records)
+    for name, rules in WORLDS:
+        emitted.extend(apply_world(record, name, rules) for record in records)
+
     out = HERE / DATASET
     with out.open("w") as handle:
-        for record in records:
+        for record in emitted:
             handle.write(json.dumps({"messages": to_messages(record, prompt)},
                                     ensure_ascii=False) + "\n")
 
+    # Das Ledger listet nur die Basis-Records: die Varianten sind mechanische Ableitungen
+    # derselben Entscheidung, ihre Begründung wäre 1:1 dieselbe Zeile.
     ledger = HERE / LEDGER
     with ledger.open("w") as handle:
+        handle.write(f"{len(records)} Basis-Records, je zusätzlich ausgegeben in den Welten: "
+                     + ", ".join(name for name, _ in WORLDS)
+                     + f" -- {len(emitted)} Records insgesamt.\n\n")
         handle.write("| # | User-Nachricht | Tools (korrigiert) | Änderung |\n")
         handle.write("|---|---|---|---|\n")
         for record in records:
@@ -142,7 +156,7 @@ def main():
             user = record["user"].replace("|", "\\|")[:70]
             handle.write(f"| {record['index']} | {user} | {tools} | {record['note']} |\n")
 
-    print(f"wrote {len(records)} records -> {out}")
+    print(f"wrote {len(emitted)} records ({len(records)} base x {len(WORLDS) + 1}) -> {out}")
     print(f"wrote ledger -> {ledger}")
 
 
