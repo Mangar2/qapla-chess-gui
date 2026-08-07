@@ -65,6 +65,9 @@ std::optional<std::string> OsHelpers::getEnv(const std::string& name) {
 #endif
 }
 
+// macOS has its own definition in os-helpers-apple.cpp, so that changes to it cannot reach the
+// Windows or Linux path. The #else branch below therefore belongs to Linux alone.
+#ifndef __APPLE__
 std::string OsHelpers::getConfigDirectory() {
 #ifdef _WIN32
     const auto localAppData = getEnv("LOCALAPPDATA");
@@ -75,6 +78,7 @@ std::string OsHelpers::getConfigDirectory() {
     return (home ? *home : std::string(".")) + "/.qapla-chess-gui";
 #endif
 }
+#endif // !__APPLE__
 
 void OsHelpers::openInShell(const std::string& path) {
 #ifdef _WIN32

@@ -123,7 +123,8 @@ public:
      * @return Configuration directory path:
      *         - Windows: %LOCALAPPDATA%/qapla-chess-gui
      *         - Linux/Mac: ~/.qapla-chess-gui
-     *         Returns empty string on error.
+     *         Windows and Linux return an empty string on error; macOS forwards to
+     *         QaplaHelpers::OsHelpers::getConfigDirectory() and returns its fallback path.
      */
     static std::string getConfigDirectory();
 };

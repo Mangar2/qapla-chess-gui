@@ -284,6 +284,26 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
 }
 
 std::string OsDialogs::getConfigDirectory() {
+    // TODO: Give Windows the same separation macOS already has, once someone can build and run it
+    // on Windows. Left untouched on purpose: the change was prepared on a Mac, and touching shared
+    // code for one OS is exactly what must not happen here.
+    //
+    // What macOS looks like now, as the template:
+    //   - OsHelpers::getConfigDirectory() for macOS lives in its own file, os-helpers-apple.cpp,
+    //     wrapped in #ifdef __APPLE__ (CMake globs src/*.cpp, so the TU is simply empty elsewhere).
+    //   - os-helpers.cpp excludes that definition via #ifndef __APPLE__, keeping its #ifdef branches
+    //     from serving several operating systems at once.
+    //   - The OsDialogs entry point forwards to OsHelpers::getConfigDirectory() instead of
+    //     computing the path a second time.
+    //
+    // That last point matters most here, because the two Windows implementations can disagree:
+    // this one asks SHGetFolderPathA first, OsHelpers::getConfigDirectory() only reads
+    // %LOCALAPPDATA%. Whenever the shell API answers but the variable is missing or points
+    // somewhere else, the app writes its config to two different directories. Moving the
+    // SHGetFolderPathA version into an os-helpers-windows.cpp and forwarding to it settles which
+    // one wins. While there, _dupenv_s below can become OsHelpers::getEnv(), which wraps exactly
+    // that call including the free().
+
     // Try using Windows API first (most robust)
     char path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, path))) {

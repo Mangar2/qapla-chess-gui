@@ -52,8 +52,11 @@ public:
      * Returns platform-specific config directory:
      * - Windows: %LOCALAPPDATA%/qapla-chess-gui
      * - Linux/macOS: ~/.qapla-chess-gui
-     * 
-     * @return Path to the configuration directory.
+     *
+     * The macOS variant is implemented in os-helpers-apple.cpp, all others in os-helpers.cpp.
+     *
+     * @return Path to the configuration directory. Falls back to a relative path below the
+     *         working directory when the home directory cannot be determined.
      */
     static std::string getConfigDirectory();
 

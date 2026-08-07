@@ -38,6 +38,7 @@
 #ifdef __APPLE__
 
 #include "os-dialogs.h"
+#include "os-helpers.h"
 #include "../extern/qapla-engine-tester/src/base-elements/string-helper.h"
 #include <vector>
 #include <filesystem>
@@ -51,8 +52,6 @@
 #include <objc/objc.h>
 #include <objc/message.h>
 #include <objc/runtime.h>
-#include <pwd.h>
-#include <unistd.h>
 
 #if __LP64__
 using NSInteger  = long;
@@ -236,31 +235,9 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
 }
 
 std::string OsDialogs::getConfigDirectory() {
-    // TODO: Switch to QaplaHelpers::OsHelpers::getEnv(), the single accessor for environment
-    // variables. Left as-is for now because this file is not part of the Windows build, where
-    // std::getenv is deprecated and the change could be verified; on macOS toolchains it raises
-    // no warning. When converting, mind the passwd fallback below: it reassigns homeDir to a
-    // pointer into pwd, so the getEnv() result needs its own variable that stays alive.
-    const char* homeDir = getenv("HOME");
-    
-    // Fallback to passwd if HOME not set
-    if (homeDir == nullptr) {
-        struct passwd pwd;
-        struct passwd* result = nullptr;
-        char buffer[4096];
-        
-        if (getpwuid_r(getuid(), &pwd, buffer, sizeof(buffer), &result) == 0 && result != nullptr) {
-            homeDir = pwd.pw_dir;
-        }
-    }
-    
-    if (homeDir != nullptr) {
-        std::filesystem::path configPath(homeDir);
-        configPath /= ".qapla-chess-gui";
-        return configPath.string();
-    }
-    
-    return "";
+    // Single macOS implementation lives in os-helpers-apple.cpp; both entry points have to name
+    // the same directory, so this one forwards instead of computing the path a second time.
+    return QaplaHelpers::OsHelpers::getConfigDirectory();
 }
 
 // ============================================================================

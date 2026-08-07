@@ -181,11 +181,27 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
 }
 
 std::string OsDialogs::getConfigDirectory() {
-    // TODO: Switch to QaplaHelpers::OsHelpers::getEnv(), the single accessor for environment
-    // variables. Left as-is for now because this file is not part of the Windows build, where
-    // std::getenv is deprecated and the change could be verified; on Linux toolchains it raises
-    // no warning. When converting, mind the passwd fallback below: it reassigns homeDir to a
-    // pointer into pwd, so the getEnv() result needs its own variable that stays alive.
+    // TODO: Give Linux the same separation macOS already has, once someone can build and run it
+    // on Linux. Left untouched on purpose: the change was prepared on a Mac, and touching shared
+    // code for one OS is exactly what must not happen here.
+    //
+    // What macOS looks like now, as the template:
+    //   - OsHelpers::getConfigDirectory() for macOS lives in its own file, os-helpers-apple.cpp,
+    //     wrapped in #ifdef __APPLE__ (CMake globs src/*.cpp, so the TU is simply empty elsewhere).
+    //   - os-helpers.cpp excludes that definition via #ifndef __APPLE__, so its #else branch no
+    //     longer serves two operating systems at once. For Linux it still does — that branch is
+    //     shared with nothing today only because macOS moved out.
+    //   - This function forwards to OsHelpers::getConfigDirectory() instead of computing the path
+    //     a second time, leaving one implementation per OS instead of two that can drift apart.
+    //
+    // Two things to fix while doing it:
+    //   - std::getenv -> QaplaHelpers::OsHelpers::getEnv(), the single accessor for environment
+    //     variables. No warning on Linux toolchains, but MSVC deprecates std::getenv, so the
+    //     codebase uses one accessor everywhere.
+    //   - The passwd fallback below is broken: pw_dir points into buffer, and both pwd and buffer
+    //     die at the closing brace of the if-block, so the homeDir read afterwards dereferences a
+    //     dangling pointer. Only reachable when HOME is unset (systemd units, stripped env).
+    //     Copy the value into a std::string that outlives the block, as os-helpers-apple.cpp does.
     const char* homeDir = getenv("HOME");
     
     // Fallback to passwd if HOME not set
