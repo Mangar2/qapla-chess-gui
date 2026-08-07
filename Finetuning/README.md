@@ -42,6 +42,7 @@ scheitert: *User hakt nach, nachdem der Assistent gebremst hat → jetzt handeln
 | `fixed_000.py` … `fixed_140.py` | **Die eigentliche Arbeit** — je zehn aus den Rohdaten korrigierte Records mit Tool-Kette, Antwort und Begründung. Hier wird editiert. |
 | `added_*.py` | Neu geschriebene Records ohne Vorlage in den Rohdaten. Eigenes Präfix, damit die Herkunft sichtbar bleibt. |
 | `variants.py` | Die „Welten" für die Wertevariation (siehe unten). |
+| `paraphrases.py` | Umformulierungen für Records, bei denen es nichts zu variieren gibt. |
 | `verify.py` | Der Prüfer. |
 
 ### Wertevariation
@@ -65,6 +66,34 @@ Wert ausgeschrieben nannte („nach **vier** Partien").
 Eine neue Welt anlegen: Regelliste in `WORLDS` ergänzen, `build.py` laufen lassen,
 `verify.py` muss weiterhin 0 melden. Reihenfolge der Regeln beachten — längere Muster
 zuerst, sonst frisst `Qapla` das `Qapla-baseline`.
+
+### Umformulierungen
+
+52 der 151 Records enthalten überhaupt keinen austauschbaren Wert: „beende die anwendung"
+→ `close_application` → „Die Anwendung wird geschlossen." hat weder Namen noch Pfad noch
+Zahl. Dort lieferten die drei Welten dreimal dasselbe — **106 tote Kopien**.
+
+Für ein SFT ist das kein neutraler Füller. Epochen wiederholen *alles* gleichmäßig, ein
+Duplikat aber nur ein einzelnes Beispiel: bei 3 Epochen sieht das Modell einen
+dreifach vorhandenen Record 9-mal statt 3-mal. Das ist ein Gewicht, das man besser
+absichtlich setzt — und die Gefahr steigt, dass die Zeichenkette statt der Regel gelernt
+wird.
+
+`paraphrases.py` gibt diesen Records deshalb je Welt eine eigene Formulierung, in
+User-Nachricht **und** Antwort. Der Tool-Aufruf bleibt identisch — variiert wird nur, wie
+gefragt und wie geantwortet wird:
+
+```
+#76   "beende die anwendung"        -> "Die Anwendung wird geschlossen."
+#227  "schließ bitte das programm"  -> "Die Anwendung wird geschlossen."
+#378  "ich bin fertig, mach zu"     -> "Wird geschlossen."
+```
+
+Das ist genau die Vielfalt, die parameterlosen Tools fehlt: bei ihnen *ist* die Zuordnung
+Intent → Tool die ganze Lektion, es gibt keine Argumente zu variieren.
+
+Von 106 Duplikaten bleiben damit **2** übrig — #2/#32 und #126/#128 waren schon in den
+Rohdaten wortgleich, aus verschiedenen Sitzungen.
 
 ### Nummerierung
 
@@ -124,9 +153,9 @@ geschrieben. 14 Records enden deshalb ohne Antwort.
 
 ## Stand
 
-- **453 Records** = 151 Basis × 3 Welten. Die 151: 149 aus den Rohdaten korrigiert (keiner
-  gelöscht), davon 42 mit schweren Fehlern und 16 unverändert übernehmbar, plus 2 neu
-  geschriebene (`added_pgn_dialog.py`)
+- **453 Records** = 151 Basis × 3 Welten, davon **451 inhaltlich verschieden**. Die 151:
+  149 aus den Rohdaten korrigiert (keiner gelöscht), davon 42 mit schweren Fehlern und 16
+  unverändert übernehmbar, plus 2 neu geschriebene (`added_pgn_dialog.py`)
 - `verify.py`: **0** Beanstandungen gegen **149** bei den Rohdaten
 - **Noch nicht übernommen**: `~/.qapla-chess-gui/finetuning.json` ist unangetastet
 

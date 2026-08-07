@@ -20,6 +20,7 @@ keine Deckung mehr gibt, und genau darauf prüft es.
 Reihenfolge der Regeln ist wichtig -- längere Muster zuerst, sonst frisst "Qapla" das
 "Qapla-baseline" auf.
 """
+from paraphrases import PARAPHRASES
 
 # (Suchmuster, Ersetzung) je Welt, in Anwendungsreihenfolge.
 WORLDS = [
@@ -131,13 +132,23 @@ def _map_value(value, rules):
     return value
 
 
-def apply_world(record, name, rules):
-    """Ein Record in einer anderen Welt -- jedes Textfeld durchläuft dieselben Regeln."""
+def apply_world(record, name, rules, world_number=0):
+    """Ein Record in einer anderen Welt -- jedes Textfeld durchläuft dieselben Regeln.
+
+    Records ohne austauschbare Werte bekommen stattdessen eine eigene Formulierung aus
+    paraphrases.py, sonst wären die Welten dort identische Kopien.
+    """
+    variant = PARAPHRASES.get(record["index"])
+    if variant and world_number < len(variant):
+        user, reply = variant[world_number]
+    else:
+        user, reply = record["user"], record["reply"]
+
     return {
         "index": record["index"],
         "variant": name,
-        "user": substitute(record["user"], rules),
-        "reply": None if record["reply"] is None else substitute(record["reply"], rules),
+        "user": substitute(user, rules),
+        "reply": None if reply is None else substitute(reply, rules),
         "context": [(substitute(u, rules), substitute(a, rules))
                     for u, a in record["context"]],
         "steps": [(tool, _map_value(args, rules), substitute(result, rules))

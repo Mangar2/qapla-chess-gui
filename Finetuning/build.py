@@ -133,8 +133,8 @@ def main():
     # Jedes Record zusätzlich in den Welten aus variants.py, damit das Modell nicht die
     # immer gleichen Engine-Namen, Pfade und Schranken als Default lernt.
     emitted = list(records)
-    for name, rules in WORLDS:
-        emitted.extend(apply_world(record, name, rules) for record in records)
+    for number, (name, rules) in enumerate(WORLDS):
+        emitted.extend(apply_world(record, name, rules, number) for record in records)
 
     out = HERE / DATASET
     with out.open("w") as handle:
