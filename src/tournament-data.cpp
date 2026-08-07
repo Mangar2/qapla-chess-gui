@@ -780,19 +780,16 @@ namespace QaplaWindows {
         }
 
         try {
-            // Work on a local copy: the tournament's engines must be embedded in the
-            // saved file (so it's self-contained and resumable elsewhere), but must not
-            // pollute the app's own persisted settings (configData is also autosaved to
-            // qapla-chess-gui.ini).
+            // Work on a local copy so that saving cannot alter the app's own persisted
+            // settings (configData is also autosaved to qapla-chess-gui.ini).
+            //
+            // The engines are already in there: ImGuiEngineSelect::updateConfiguration()
+            // keeps the ("engine", "tournament") section list in sync on every change, and
+            // TournamentFile::save() picks exactly that list. Appending getSelectedEngines()
+            // here would write each participant a second time -- once as configured and once
+            // with the [each] defaults baked into its section -- and addSection() appends,
+            // so both copies end up in the file and in the engine list after loading.
             auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
-            for (const auto& engine : TournamentData::instance().getSelectedEngines()) {
-                auto engineSection = engine.toSection();
-                // engine.toSection() already carries over an "id" entry from wherever this
-                // EngineConfig was originally loaded; replace it instead of appending a
-                // second "id" key (addEntry() would insert a duplicate).
-                engineSection.changeOrAddEntry("id", "tournament");
-                saveData.addSection(engineSection);
-            }
             QaplaTester::TournamentFile::save(filename, saveData, "tournament");
 
             SnackbarManager::instance().showSuccess("Tournament saved to: " + filename,

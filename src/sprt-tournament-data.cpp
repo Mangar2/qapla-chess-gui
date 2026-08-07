@@ -666,22 +666,15 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
     }
 
     try {
-        // Work on a local copy: the tournament's engines must be embedded in the
-        // saved file (so it's self-contained and resumable elsewhere), but must not
-        // pollute the app's own persisted settings (configData is also autosaved to
-        // qapla-chess-gui.ini).
+        // Work on a local copy so that saving cannot alter the app's own persisted
+        // settings (configData is also autosaved to qapla-chess-gui.ini).
+        //
+        // The engines are already in there: ImGuiEngineSelect::updateConfiguration()
+        // keeps the ("engine", "sprt-tournament") section list in sync on every change, and
+        // SprtTournamentFile::save() picks exactly that list. Appending the selected engines
+        // here would write each participant a second time, because addSection() appends
+        // rather than replaces.
         auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
-        for (const auto& tournamentConfig : SprtTournamentData::instance().engineConfigurations_) {
-            if (!tournamentConfig.isSelected()) {
-                continue;
-            }
-            auto engineSection = tournamentConfig.toSection();
-            // toSection() already carries over an "id" entry from wherever this
-            // EngineConfig was originally loaded; replace it instead of appending a
-            // second "id" key (addEntry() would insert a duplicate).
-            engineSection.changeOrAddEntry("id", "sprt-tournament");
-            saveData.addSection(engineSection);
-        }
         QaplaTester::SprtTournamentFile::save(filename, saveData, "sprt-tournament");
 
         SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,
