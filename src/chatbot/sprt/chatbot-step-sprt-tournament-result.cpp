@@ -151,12 +151,12 @@ std::string ChatbotStepSprtTournamentResult::generateHtmlReport() {
         // Generate HTML with metadata
         std::string html = TournamentResultView::formatHtml(result, title_, true, &metadata);
 
-        // Ensure config directory exists
-        std::string configDir = QaplaHelpers::OsHelpers::getConfigDirectory();
-        std::filesystem::create_directories(configDir);
-
-        // Always use the same filename (overwrites previous)
-        std::string htmlPath = configDir + "/sprt-tournament-result.html";
+        // The report is a throwaway artifact: it is regenerated under the same name on every
+        // call and handed straight to the browser below. The temp directory is writable on all
+        // platforms and, unlike the hidden config directory, readable for a sandboxed browser
+        // (a Snap or Flatpak Firefox cannot open files outside the paths its portal grants).
+        std::filesystem::path htmlPath =
+            std::filesystem::temp_directory_path() / "sprt-tournament-result.html";
 
         // Write to file
         std::ofstream file(htmlPath);
@@ -166,7 +166,7 @@ std::string ChatbotStepSprtTournamentResult::generateHtmlReport() {
         file << html;
         file.close();
 
-        return htmlPath;
+        return htmlPath.string();
     }
     catch (...) {
         return "";
