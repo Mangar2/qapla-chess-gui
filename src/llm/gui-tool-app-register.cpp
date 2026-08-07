@@ -66,6 +66,15 @@ namespace {
             source = arguments.at("source").as_string();
         }
 
+        // Only source="dialog" puts a native file picker in front of the user. Every result
+        // reached after that point is terminal: the picker steals focus, and by the time the
+        // model would speak the dialog is long closed -- exactly the situation where it used
+        // to narrate a still-open dialog ("please pick a file now"). Ending the turn on the
+        // tool result removes the opportunity entirely, the same way the configure_* file
+        // dialogs do (see their dialogOpened flag). Cancelling is terminal too: the outcome
+        // does not change that the focus moved and the dialog is gone.
+        bool dialogOpened = false;
+
         std::string path;
         if (source == "tournament") {
             path = QaplaWindows::TournamentData::instance().pgnConfig().file;
@@ -84,20 +93,25 @@ namespace {
                 };
             }
         } else {
+            dialogOpened = true;
             auto paths = QaplaWindows::OsDialogs::openFileDialog(false, {{"PGN files (*.pgn)", "pgn"}});
             if (paths.empty()) {
-                return GuiToolResult{.success = true, .content = "The user cancelled the dialog; no PGN file was opened."};
+                return GuiToolResult{.success = true,
+                    .content = "The user cancelled the dialog; no PGN file was opened.",
+                    .renderWidget = nullptr, .terminal = true};
             }
             path = paths.front();
         }
 
         if (!std::filesystem::exists(path)) {
-            return GuiToolResult{.success = false, .content = "PGN file not found: " + path};
+            return GuiToolResult{.success = false, .content = "PGN file not found: " + path,
+                .renderWidget = nullptr, .terminal = dialogOpened};
         }
 
         QaplaWindows::StaticCallbacks::message().invokeAll("load_pgn_file:" + path);
         QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_pgn_view");
-        return GuiToolResult{.success = true, .content = "Opened PGN file in the Pgn tab: " + path};
+        return GuiToolResult{.success = true, .content = "Opened PGN file in the Pgn tab: " + path,
+            .renderWidget = nullptr, .terminal = dialogOpened};
     }
 }
 
@@ -115,7 +129,10 @@ void registerAppTools(GuiToolRegistry& registry) {
         .description = "Opens PGN file in Pgn tab, switches to it. Either user picks file via "
                         "native dialog, or directly opens PGN file classic tournament or SPRT "
                         "test is currently writing to (their own \"source\" values) -- see "
-                        "\"source\" param for exactly which.",
+                        "\"source\" param for exactly which. source=\"dialog\" ENDS YOUR TURN "
+                        "(cancelled or not): that result is the last thing you produce, shown to "
+                        "the user as-is, no reply_to_user afterwards. source=\"tournament\"/"
+                        "\"sprt\" open no dialog and are followed by a reply as usual.",
         .parametersSchema = buildOpenPgnFileSchema(),
         .handler = handleOpenPgnFile,
         // Waits on the user picking a file in a native dialog (source="dialog") -- see

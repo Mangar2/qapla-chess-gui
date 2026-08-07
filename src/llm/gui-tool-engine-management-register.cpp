@@ -60,7 +60,9 @@ void registerEngineManagementTools(GuiToolRegistry& registry) {
                         "themselves -- you have no filesystem access. New engines detected "
                         "(protocol, options, etc.) synchronously before call returns -- result "
                         "already reflects final outcome, don't promise separate future update. "
-                        "Call list_installed_engines after to confirm what was actually added.",
+                        "ENDS YOUR TURN: this result is the last thing you produce, it is shown "
+                        "to the user as-is. No further tool call, no reply_to_user afterwards -- "
+                        "you won't be asked again.",
         .handler = [](const Json::JsonValue&) -> GuiToolResult {
             auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
             if (paths.empty()) {
