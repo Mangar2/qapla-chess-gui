@@ -27,6 +27,10 @@
 #include <config/opening-config.h>
 #include <config/pgn-config.h>
 #include <config/adjudication-config.h>
+#include <tournament/tournament-file.h>
+
+#include <filesystem>
+#include <fstream>
 
 using namespace QaplaConfiguration;
 
@@ -229,4 +233,65 @@ TEST_CASE("A section that no longer matches the schema is reported, not silently
     REQUIRE(reported[0].second.find("seed") != std::string::npos);
     // The fallback itself must stay intact: defaults rather than a propagated exception.
     REQUIRE(roundtripped.file.empty());
+}
+
+TEST_CASE("Loading a tournament state file keeps unrelated settings", "[config-persistence]") {
+    // A .qtour holds only the section types TournamentFile::save() writes. Reading it must
+    // replace exactly those and leave every other setting alone -- reading it with
+    // ConfigData::load() used to clear the whole tree, and the truncated tree was then
+    // written back to qapla-chess-gui.ini, permanently losing unrelated settings.
+    namespace fs = std::filesystem;
+
+    auto stateFile = fs::temp_directory_path() / "qapla-state-file-test.qtour";
+    {
+        std::ofstream out(stateFile, std::ios::trunc);
+        REQUIRE(out.is_open());
+        out << "[tournament]\nid=tournament\nevent=Loaded Cup\n\n"
+            << "[round]\nid=tournament\nengineA=A\nengineB=B\ngames=1\n\n";
+    }
+
+    auto sectionWith = [](const std::string& name, const std::string& id,
+        const std::string& key, const std::string& value) {
+        QaplaHelpers::IniFile::Section section{ .name = name, .entries = {} };
+        section.addEntry("id", id);
+        section.addEntry(key, value);
+        return section;
+    };
+
+    QaplaHelpers::ConfigData config;
+    config.addSection(sectionWith("performance", "general", "remotedesktopmode", "true"));
+    config.addSection(sectionWith("llmchat", "general", "host", "localhost"));
+    config.addSection(sectionWith("engine", "board1", "name", "BoardEngine"));
+    config.addSection(sectionWith("timecontroloptions", "tournament", "timecontrol", "40/5+0"));
+    config.addSection(sectionWith("tournament", "tournament", "event", "Old Cup"));
+    config.addSection(sectionWith("pgnoutput", "tournament", "file", "old.pgn"));
+
+    loadStateFileSections(stateFile.string(), config,
+        QaplaTester::TournamentFile::sectionNames, QaplaTester::TournamentFile::id);
+    fs::remove(stateFile);
+
+    SECTION("Settings that do not belong to the tournament survive") {
+        REQUIRE(config.getSectionList("performance", "general").value().at(0)
+            .getValue("remotedesktopmode").value() == "true");
+        REQUIRE(config.getSectionList("llmchat", "general").value().at(0)
+            .getValue("host").value() == "localhost");
+        // "engine" is a tournament section type, but only under the tournament's own id
+        REQUIRE(config.getSectionList("engine", "board1").value().at(0)
+            .getValue("name").value() == "BoardEngine");
+        // Not written by TournamentFile::save(), so loading must not drop it either
+        REQUIRE(config.getSectionList("timecontroloptions", "tournament").value().at(0)
+            .getValue("timecontrol").value() == "40/5+0");
+    }
+
+    SECTION("The tournament's own sections are replaced by the file") {
+        REQUIRE(config.getSectionList("tournament", "tournament").value().at(0)
+            .getValue("event").value() == "Loaded Cup");
+        REQUIRE(config.getSectionList("round", "tournament").value().size() == 1);
+    }
+
+    SECTION("Tournament sections missing from the file are cleared") {
+        // Otherwise the previous tournament's PGN output would leak into the loaded one
+        REQUIRE(config.getSectionList("pgnoutput", "tournament").value_or(
+            QaplaHelpers::IniFile::SectionList{}).empty());
+    }
 }

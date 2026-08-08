@@ -20,6 +20,7 @@
 #include "sprt-tournament-data.h"
 #include "imgui-sprt-configuration.h"
 #include "configuration.h"
+#include "config-group-loader.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
@@ -695,7 +696,8 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
 
     try {
         auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-        configData.load(filename);
+        QaplaConfiguration::loadStateFileSections(filename, configData,
+            QaplaTester::SprtTournamentFile::sectionNames, QaplaTester::SprtTournamentFile::id);
 
         // Reload configuration from the updated singleton
         loadEngineSelectionConfig();

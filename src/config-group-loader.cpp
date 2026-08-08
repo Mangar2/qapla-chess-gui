@@ -84,4 +84,20 @@ QaplaTester::Settings::Manager& loadGroupIntoManager(
     return manager;
 }
 
+void loadStateFileSections(
+    const std::string& filename,
+    QaplaHelpers::ConfigData& target,
+    std::span<const char* const> sectionNames,
+    const std::string& id) {
+
+    QaplaHelpers::ConfigData fileData;
+    fileData.load(filename);
+
+    for (const auto* sectionName : sectionNames) {
+        target.setSectionList(sectionName, id,
+            fileData.getSectionList(sectionName, id)
+                .value_or(QaplaHelpers::IniFile::SectionList{}));
+    }
+}
+
 } // namespace QaplaConfiguration

@@ -21,6 +21,7 @@
 
 #include <base-elements/ini-file.h>
 #include <functional>
+#include <span>
 #include <string>
 
 namespace QaplaTester::Settings {
@@ -78,6 +79,32 @@ namespace QaplaConfiguration {
      */
     QaplaTester::Settings::Manager& loadGroupIntoManager(
         const std::string& sectionName,
+        const std::string& id);
+
+    /**
+     * @brief Takes the sections of a tournament/SPRT state file into the app configuration.
+     *
+     * Only the section types the state file owns are replaced. Reading the file straight into
+     * the app configuration (ConfigData::load()) would not do: that clears the whole section
+     * tree first, so every unrelated setting -- board, EPD, SPRT, AI chat, remote desktop
+     * mode, ... -- would be dropped, and permanently so, because the truncated tree is what
+     * the next autosave writes back to qapla-chess-gui.ini.
+     *
+     * Section types the file does not contain are cleared for that id, so that loading a state
+     * file replaces the previous tournament instead of merging into it.
+     *
+     * @param filename The state file to read (.qtour / .qsprt).
+     * @param target The app configuration to update in place.
+     * @param sectionNames The section types the state file owns, e.g.
+     *        QaplaTester::TournamentFile::sectionNames.
+     * @param id The configuration id the state file's sections are stored under, e.g.
+     *        QaplaTester::TournamentFile::id.
+     * @throws std::runtime_error If the file cannot be opened.
+     */
+    void loadStateFileSections(
+        const std::string& filename,
+        QaplaHelpers::ConfigData& target,
+        std::span<const char* const> sectionNames,
         const std::string& id);
 
 } // namespace QaplaConfiguration

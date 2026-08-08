@@ -28,6 +28,7 @@
 #include "imgui-concurrency.h"
 #include "imgui-engine-global-settings.h"
 #include "configuration.h"
+#include "config-group-loader.h"
 
 #include <base-elements/string-helper.h>
 
@@ -842,7 +843,8 @@ namespace QaplaWindows {
 
         try {
             auto& configData = QaplaConfiguration::Configuration::instance().getConfigData();
-            configData.load(filename);
+            QaplaConfiguration::loadStateFileSections(filename, configData,
+                QaplaTester::TournamentFile::sectionNames, QaplaTester::TournamentFile::id);
 
             // Reload configuration from the updated singleton
             loadConfig();
