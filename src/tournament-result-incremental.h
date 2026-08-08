@@ -22,19 +22,36 @@
 #include <game-manager/tournament-result.h>
 #include <base-elements/change-tracker.h>
 
+#include <optional>
 #include <string>
 #include <unordered_set>
 
 namespace QaplaTester {
     class Tournament;
+    class PairTournament;
 }
 
 namespace QaplaWindows {
 
 
 	class TournamentResultIncremental {
-    public: 
+    public:
         bool poll(const QaplaTester::Tournament& tournament, double baseElo);
+
+        /**
+         * @brief Restricts the aggregated result to pairings played between selected engines.
+         *
+         * The tournament pairings keep the results of every engine that ever played, also of
+         * engines the user has removed from the selection afterwards. Those results must not
+         * show up in the result tables, otherwise they would list engines that no longer take
+         * part and their scores would contain games that the game counters no longer count
+         * (see countPlayedGames()).
+         *
+         * @param selectedEngineNames Names of the currently selected engines, or std::nullopt
+         *        to aggregate every pairing (used while no engine list is available yet).
+         *        Setting a different filter forces a rebuild on the next poll().
+         */
+        void setSelectedEngines(std::optional<std::unordered_set<std::string>> selectedEngineNames);
 
         /**
 		 * @brief Returns the total aggregated result of the tournament. 
@@ -123,6 +140,12 @@ namespace QaplaWindows {
          */
         void handleModification(const QaplaTester::Tournament& tournament, double baseElo);
 
+        /**
+         * @brief True, if the pairing is played between engines matching the current filter.
+         * @param pairTournament Pairing to check
+         */
+        bool isSelected(const QaplaTester::PairTournament& pairTournament) const;
+
         QaplaTester::TournamentResult finishedResultsAggregate_;
 		QaplaTester::TournamentResult totalResult_; ///< total sum of finalized and non finalized results
         std::unordered_set<std::string> engineNames_;
@@ -131,6 +154,9 @@ namespace QaplaWindows {
 		size_t currentIndex_ = 0; ///< Index into notFinishedIndices_ (not direct pair tournament index)
 		QaplaTester::ChangeTracker changeTracker_;
 		bool gamesLeft_ = false; ///< Flag to indicate if the tournament is currently running
+
+        std::optional<std::unordered_set<std::string>> selectedEngineNames_; ///< Engine filter, unset aggregates all pairings
+        bool selectionModified_ = false; ///< Set when the filter changed, forces a rebuild on the next poll
         
         uint32_t totalScheduledGames_ = 0; ///< Total number of games scheduled in the tournament
         uint32_t pairTournaments_ = 0; ///< Number of pair tournaments in the overall tournament

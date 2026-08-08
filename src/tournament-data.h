@@ -463,6 +463,14 @@ namespace QaplaWindows {
          */
         void activateBoardView(size_t gameIndex);
 
+        /**
+         * @brief Restricts the result aggregation to the currently selected engines.
+         *
+         * Must be called whenever the engine selection changes, so that the result tables stop
+         * showing engines the user removed from the tournament.
+         */
+        void updateResultEngineFilter();
+
         void populateEloTable();
         void populateMatrixTable();
 		void populateRunningTable();

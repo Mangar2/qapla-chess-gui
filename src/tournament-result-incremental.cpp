@@ -20,10 +20,35 @@
 #include "tournament-result-incremental.h"
 
 #include <tournament/tournament.h>
+#include <game-manager/pair-tournament.h>
 #include <game-manager/tournament-result.h>
 
+using QaplaTester::PairTournament;
 using QaplaTester::Tournament;
 using namespace QaplaWindows;
+
+namespace {
+	/**
+	 * @brief True, if both engines of the pairing are part of the given engine names.
+	 */
+	bool bothEnginesSelected(const PairTournament& pairTournament,
+		const std::unordered_set<std::string>& selectedEngineNames) {
+		return selectedEngineNames.contains(pairTournament.getEngineA().getName()) &&
+			selectedEngineNames.contains(pairTournament.getEngineB().getName());
+	}
+}
+
+bool TournamentResultIncremental::isSelected(const PairTournament& pairTournament) const {
+	return !selectedEngineNames_ || bothEnginesSelected(pairTournament, *selectedEngineNames_);
+}
+
+void TournamentResultIncremental::setSelectedEngines(std::optional<std::unordered_set<std::string>> selectedEngineNames) {
+	if (selectedEngineNames_ == selectedEngineNames) {
+		return;
+	}
+	selectedEngineNames_ = std::move(selectedEngineNames);
+	selectionModified_ = true;
+}
 
 void TournamentResultIncremental::addFinishedPairTournament(size_t pairIndex, const Tournament& tournament) {
 	auto pairTournament = tournament.getPairTournament(pairIndex);
@@ -41,8 +66,7 @@ uint32_t TournamentResultIncremental::countPlayedGames(const Tournament& tournam
 	const std::unordered_set<std::string>& selectedEngineNames) {
 	uint32_t playedGames = 0;
 	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
-		if (!selectedEngineNames.contains((*pairTournament)->getEngineA().getName()) ||
-			!selectedEngineNames.contains((*pairTournament)->getEngineB().getName())) {
+		if (!bothEnginesSelected(**pairTournament, selectedEngineNames)) {
 			continue;
 		}
 		playedGames += static_cast<uint32_t>((*pairTournament)->getResult().total());
@@ -52,17 +76,26 @@ uint32_t TournamentResultIncremental::countPlayedGames(const Tournament& tournam
 
 void TournamentResultIncremental::handleModification(const Tournament& tournament, double baseElo) {
 	clear();
-	
+	selectionModified_ = false;
+
 	pairTournaments_ = tournament.pairTournamentCount();
-	
-	// Calculate total scheduled games
+
+	// Calculate total scheduled games. Pairings of engines the user removed from the selection
+	// are skipped here and below, so that neither the counters nor the aggregated result (and
+	// with it every result table) contain engines that no longer take part in the tournament.
 	totalScheduledGames_ = 0;
 	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+		if (!isSelected(**pairTournament)) {
+			continue;
+		}
 		totalScheduledGames_ += (*pairTournament)->getConfig().games;
 	}
-	
+
 	// Add all finished pair tournaments and collect unfinished indices
 	for (size_t i = 0; auto pairTournament = tournament.getPairTournament(i); ++i) {
+		if (!isSelected(**pairTournament)) {
+			continue;
+		}
 		if ((*pairTournament)->isFinished()) {
 			addFinishedPairTournament(i, tournament);
 		} else {
@@ -94,14 +127,16 @@ void TournamentResultIncremental::handleModification(const Tournament& tournamen
 
 bool TournamentResultIncremental::poll(const Tournament& tournament, double baseElo) {
 	auto [isModified, isUpdated] = changeTracker_.checkModification(tournament.getChangeTracker());
-	
-	if (!isUpdated) {
+
+	if (!isUpdated && !selectionModified_) {
 		return false;
 	}
-	
+
 	changeTracker_.updateFrom(tournament.getChangeTracker());
-	
-	if (isModified) {
+
+	// A changed engine selection needs the same full rebuild as a modified tournament: the
+	// incremental update path works on notFinishedIndices_, which is filtered by the selection.
+	if (isModified || selectionModified_) {
 		handleModification(tournament, baseElo);
 		return true;
 	}

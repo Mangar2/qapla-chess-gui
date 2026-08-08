@@ -152,6 +152,7 @@ namespace QaplaWindows {
         engineSelect_->setConfigurationChangedCallback(
             [this](const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
                 engineConfigurations_ = configurations;
+                updateResultEngineFilter();
             }
         );
 
@@ -194,6 +195,7 @@ namespace QaplaWindows {
 
     void TournamentData::setEngineConfigurations(const std::vector<ImGuiEngineSelect::EngineConfiguration>& configurations) {
         engineConfigurations_ = configurations;
+        updateResultEngineFilter();
         if (!loadedTournamentData_) {
             loadedTournamentData_ = true;
             loadTournament();
@@ -240,6 +242,19 @@ namespace QaplaWindows {
         }
 
         return selectedNames;
+    }
+
+    void TournamentData::updateResultEngineFilter() {
+        if (!result_) {
+            return;
+        }
+        // An empty engine list means the engines are not loaded yet -- that must not hide the
+        // results, while an empty selection legitimately leaves the result tables empty.
+        if (engineConfigurations_.empty()) {
+            result_->setSelectedEngines(std::nullopt);
+            return;
+        }
+        result_->setSelectedEngines(getSelectedEngineNames());
     }
 
     bool TournamentData::createTournament(bool verbose) {
@@ -697,6 +712,7 @@ namespace QaplaWindows {
         poolAccess_->clearAll();
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
+        updateResultEngineFilter();
         if (state_ == State::Running) {
             if (verbose) {
                 SnackbarManager::instance().showSuccess("Tournament stopped.\nAll results have been cleared.", 

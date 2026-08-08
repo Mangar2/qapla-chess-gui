@@ -488,3 +488,117 @@ TEST_CASE("Played games are counted for selected engines only", "[gui][tournamen
         REQUIRE(TournamentResultIncremental::countPlayedGames(builder.tournament, {}) == 0);
     }
 }
+
+TEST_CASE("The aggregated result contains selected engines only", "[gui][tournament-result]") {
+    // Same setup as above: the pairings still hold the results of every engine that ever
+    // played. The result tables are built from the aggregated result, so removing an engine
+    // from the selection must remove it -- and its games -- from that aggregate.
+    auto engines = createEngines(std::vector<TestEngineParams>{
+        {.name = "Champion"},
+        {.name = "OpponentA"},
+        {.name = "OpponentB"},
+        {.name = "OpponentC"}
+    });
+    engines[0].setGauntlet(true);
+
+    TournamentConfig config{
+        .event = "Engine Removal Test",
+        .type = "gauntlet",
+        .tournamentFilename = "",
+        .games = 10,
+        .rounds = 1,
+        .repeat = 1,
+        .openings = Openings{
+            .file = "src/test-system/unit/test-openings.pgn",
+            .plies = 1
+        }
+    };
+
+    TournamentBuilder builder(engines, config);
+
+    // Champion vs OpponentA is finished, the pairings against OpponentB and OpponentC are not
+    for (int game = 0; game < 10; ++game) {
+        REQUIRE(builder.playGame(0, GameResult::WhiteWins));
+    }
+    for (int game = 0; game < 4; ++game) {
+        REQUIRE(builder.playGame(1, GameResult::Draw));
+    }
+    for (int game = 0; game < 6; ++game) {
+        REQUIRE(builder.playGame(2, GameResult::BlackWins));
+    }
+
+    auto scoredEngineNames = [](const TournamentResultIncremental& incremental) {
+        std::unordered_set<std::string> names;
+        for (const auto& scored : incremental.getScoredEngines()) {
+            names.insert(scored.engineName);
+        }
+        return names;
+    };
+
+    auto totalGamesOf = [](const TournamentResultIncremental& incremental, const std::string& engineName) {
+        for (const auto& scored : incremental.getScoredEngines()) {
+            if (scored.engineName == engineName) {
+                return scored.total;
+            }
+        }
+        return 0.0;
+    };
+
+    TournamentResultIncremental incremental;
+    REQUIRE(incremental.poll(builder.tournament, 2600.0));
+
+    SECTION("Without a filter every engine that played is scored") {
+        REQUIRE(scoredEngineNames(incremental) ==
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB", "OpponentC"});
+        REQUIRE(incremental.getPlayedGames() == 20);
+        REQUIRE(totalGamesOf(incremental, "Champion") == 20.0);
+    }
+
+    SECTION("A removed engine disappears with its games") {
+        incremental.setSelectedEngines(
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB"});
+        // The tournament itself did not change, the new filter alone must trigger a rebuild
+        REQUIRE(incremental.poll(builder.tournament, 2600.0));
+
+        REQUIRE(scoredEngineNames(incremental) ==
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB"});
+        REQUIRE(incremental.getPlayedGames() == 14);
+        REQUIRE(incremental.getTotalScheduledGames() == 20);
+        REQUIRE(incremental.hasGamesLeft());
+        // The games against OpponentC must not count towards the Champion's score either
+        REQUIRE(totalGamesOf(incremental, "Champion") == 14.0);
+    }
+
+    SECTION("An unchanged filter does not trigger a rebuild") {
+        incremental.setSelectedEngines(
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB"});
+        REQUIRE(incremental.poll(builder.tournament, 2600.0));
+        REQUIRE_FALSE(incremental.poll(builder.tournament, 2600.0));
+    }
+
+    SECTION("Results of newly played games follow the filter") {
+        incremental.setSelectedEngines(
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB"});
+        REQUIRE(incremental.poll(builder.tournament, 2600.0));
+
+        // Finishes the pairing against OpponentC, which is no longer part of the tournament
+        for (int game = 0; game < 4; ++game) {
+            REQUIRE(builder.playGame(2, GameResult::BlackWins));
+        }
+        incremental.poll(builder.tournament, 2600.0);
+
+        REQUIRE(scoredEngineNames(incremental) ==
+            std::unordered_set<std::string>{"Champion", "OpponentA", "OpponentB"});
+        REQUIRE(incremental.getPlayedGames() == 14);
+    }
+
+    SECTION("An empty selection leaves the result empty") {
+        incremental.setSelectedEngines(std::unordered_set<std::string>{});
+        REQUIRE(incremental.poll(builder.tournament, 2600.0));
+
+        REQUIRE(incremental.getScoredEngines().empty());
+        REQUIRE(incremental.getPlayedGames() == 0);
+        REQUIRE(incremental.getTotalScheduledGames() == 0);
+        REQUIRE_FALSE(incremental.hasGamesLeft());
+    }
+}
