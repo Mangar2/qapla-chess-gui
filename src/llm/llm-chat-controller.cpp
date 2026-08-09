@@ -431,7 +431,7 @@ void LlmChatController::stop() {
 
 void LlmChatController::appendToolEventToHistory(const ToolCallEvent& event) {
     // Successful tool results are already phrased as a friendly,
-    // user-facing sentence by the tool itself (see gui-tool-*-register.cpp)
+    // user-facing sentence by the tool itself (see src/llm/actions/)
     // -- no technical tool name needed. Registry-level failures (unknown
     // tool, timeout, bad arguments) are developer-facing edge cases, so
     // keep the name there for anyone trying to diagnose what went wrong.

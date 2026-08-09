@@ -221,6 +221,11 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/llm/gui-tool-registry.cpp
       src/llm/gui-tool-engine-management.cpp
       src/llm/gui-tool-tournament.cpp
+      # The external<->internal tool mapper and its shared vocabulary. Both are free of the GUI
+      # stack by design (see src/llm/tools/gui-tools.h), so the unit tests can exercise the
+      # mapper directly; the actions themselves stay qapla-only.
+      src/llm/api/llm-tool-api.cpp
+      src/llm/actions/gui-action-types.cpp
       src/llm/llm-chat-controller.cpp
       src/llm/llm-chat-logger.cpp
       src/llm/llm-finetuning-writer.cpp

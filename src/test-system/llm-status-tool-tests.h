@@ -26,7 +26,7 @@ namespace QaplaTest {
 
     /**
      * @brief Registers tests that drive the get_running_status GUI tool directly through
-     * GuiToolRegistry (no LLM involved) -- see gui-tool-status-register.cpp.
+     * GuiToolRegistry (no LLM involved) -- see src/llm/tools/gui-tools-activity.cpp.
      * @param engine The test engine instance.
      */
     void registerLlmStatusToolTests(ImGuiTestEngine* engine);

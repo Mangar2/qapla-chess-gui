@@ -361,7 +361,7 @@ void ChatbotLlmChat::drawChatUi() {
     const auto& history = controller_->history();
     for (const auto& entry : history) {
         // Tool entries are already phrased as a plain status sentence (see
-        // gui-tool-*-register.cpp) and shown without a header: end users
+        // src/llm/actions/) and shown without a header: end users
         // don't know what a "tool" or "open_add_engine_dialog" is, so no
         // label -- just the friendly text, in a distinguishing color.
         switch (entry.role) {

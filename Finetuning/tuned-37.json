@@ -1,0 +1,189 @@
+{
+  "model": "lfm2.5-1.2b-qapla-37",
+  "split": "test",
+  "acted": 34,
+  "correct": 2,
+  "n": 36,
+  "results": [
+    {
+      "want": "configure_tournament",
+      "got": "open_pgn_file",
+      "content": ""
+    },
+    {
+      "want": "configure_tournament",
+      "got": "open_pgn_file",
+      "content": ""
+    },
+    {
+      "want": "configure_tournament",
+      "got": "open_pgn_file",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "reply_to_user",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "reply_to_user",
+      "got": null,
+      "content": "Der SPRT-Test wurde gestartet, da die EPD-Engines noch nicht konfiguriert waren."
+    },
+    {
+      "want": "reply_to_user",
+      "got": null,
+      "content": "Der SPRT-Test wurde gestartet, aber es gab ein Problem mit den eingestellten Einstellungen oder der Verfügbarkeit der Daten. Das System hat versucht, die Analyse zu beginnen, stieß aber auf ein Hindernis und konnte nicht weiter fortfahren."
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_sprt",
+      "content": ""
+    },
+    {
+      "want": "configure_tournament",
+      "got": "open_add_engine_dialog",
+      "content": ""
+    },
+    {
+      "want": "configure_tournament",
+      "got": "open_add_engine_dialog",
+      "content": ""
+    },
+    {
+      "want": "configure_tournament",
+      "got": "open_add_engine_dialog",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "get_status",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "open_pgn_file",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "open_pgn_file",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "open_pgn_file",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "start",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_tournament",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "start",
+      "content": ""
+    },
+    {
+      "want": "start",
+      "got": "configure_tournament",
+      "content": ""
+    }
+  ]
+}

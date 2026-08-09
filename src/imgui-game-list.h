@@ -191,7 +191,7 @@ private:
 
     /**
      * @brief Subscription to StaticCallbacks::message() for "load_pgn_file:<path>" -- lets the
-     * AI-chatbot's open_pgn_file tool (see gui-tool-app-register.cpp) load a specific file into
+     * AI-chatbot's open_pgn_file tool (see src/llm/actions/gui-action-app.cpp) load a specific file into
      * this tab without needing a singleton/pointer to this (non-singleton) instance.
      */
     std::unique_ptr<QaplaWindows::Callback::UnregisterHandle> messageCallbackHandle_;

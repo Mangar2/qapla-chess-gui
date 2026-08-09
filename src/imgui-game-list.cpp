@@ -56,7 +56,7 @@ ImGuiGameList::ImGuiGameList()
 
     // Lets the AI-chatbot's open_pgn_file tool load a specific path into this tab (e.g. the
     // tournament's or SPRT's own current PGN output file) without needing a singleton/pointer
-    // to this instance, which doesn't exist -- see gui-tool-app-register.cpp.
+    // to this instance, which doesn't exist -- see src/llm/actions/gui-action-app.cpp.
     messageCallbackHandle_ = QaplaWindows::StaticCallbacks::message().registerCallback(
         [this](const std::string& msg) {
             constexpr std::string_view prefix = "load_pgn_file:";

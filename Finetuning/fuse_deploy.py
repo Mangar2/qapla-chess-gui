@@ -24,7 +24,25 @@ import sys
 HERE = pathlib.Path(__file__).parent
 # Must match train_lora.py's base -- an adapter is only valid against the weights it saw.
 MODEL = "LiquidAI/LFM2.5-1.2B-Instruct-MLX-4bit"
-LMSTUDIO_MODELS = pathlib.Path.home() / ".lmstudio" / "models"
+def lmstudio_models_dir():
+    """Where LM Studio actually looks for models.
+
+    Not necessarily ~/.lmstudio/models: the folder is configurable ("downloadsFolder" in
+    settings.json) and may sit on an external volume. Installing into the default path when
+    it has been moved leaves the model invisible to LM Studio -- it is simply never listed,
+    with no error anywhere.
+    """
+    settings = pathlib.Path.home() / ".lmstudio" / "settings.json"
+    try:
+        configured = json.loads(settings.read_text(encoding="utf-8")).get("downloadsFolder")
+        if configured:
+            return pathlib.Path(configured)
+    except Exception:
+        pass
+    return pathlib.Path.home() / ".lmstudio" / "models"
+
+
+LMSTUDIO_MODELS = lmstudio_models_dir()
 TEMPLATE = HERE / "chat_template.jinja"
 
 

@@ -298,6 +298,78 @@ Der Peak liegt mit 14,5 GB **weiterhin über der Empfehlung**. Wirklich darunter
 über einen kürzeren Kontext — und das sind die Tool-Schemas, die aus Konsistenzgründen bleiben
 müssen. Das ist die harte Grenze dieses Aufbaus auf 16 GB.
 
+### 9. Ergebnis des ersten brauchbaren Adapters (37 Iterationen)
+
+Der Adapter aus dem abgestürzten Lauf, Stand Iteration 37, fusioniert und in LM Studio
+gemessen — gegen dieselben 36 Testfälle wie die Baseline:
+
+| | Baseline | 37 Iterationen |
+|---|---|---|
+| **acted** (überhaupt ein Tool) | 36,1 % | **94,4 %** |
+| **correct** (das richtige Tool) | 8,3 % | 5,6 % |
+
+**Das Kernproblem ist weitgehend gelöst.** Von 23 Prosa-Antworten bleiben 2. Nach weniger als
+einem Zehntel einer Epoche ruft das Modell praktisch immer ein Tool auf, statt zu behaupten.
+
+**Die Tool-Auswahl ist es nicht.** 2 von 36 gegen 3 von 36 ist bei 12 unabhängigen Messpunkten
+Rauschen, keine Verschlechterung. Das Fehlerbild ist systematisch:
+
+```
+get_status  ->  configure_tournament   9x
+get_status  ->  configure_sprt         6x
+start       ->  configure_tournament   4x
+```
+
+Das Modell hat die *Form* gelernt und rät bei der *Auswahl* das häufigste Tool
+(`configure_tournament` 90 Aufrufe, `configure_sprt` 75). Klassisches Unterlernen.
+
+Ob dahinter zusätzlich ein Designproblem steckt, ist offen: Das Tool-Set folgt zwei
+Schnittachsen gleichzeitig — `configure_tournament`/`configure_sprt`/`configure_epd` tragen die
+Domäne im *Namen*, `start`/`stop`/`get_status`/`clear_result`/`show_result` als *Parameter*.
+Das Modell routet nach Domäne und landet beim Tool mit dem passenden Namen. Die Frage lässt
+sich erst nach einem längeren Lauf entscheiden; ein Umbau würde 180 der ~400 Tool-Aufrufe im
+Datensatz entwerten.
+
+### 10. Warum es beim 37er-Stand bleibt: die Maschine trägt es nicht
+
+Vier Anläufe für eine volle Epoche, keiner erfolgreich:
+
+| Anlauf | Konfiguration | Ergebnis |
+|---|---|---|
+| 1 | 16 Layer, kein Limit | Kernel-Panic bei Iter ~10 |
+| 2 | 8 Layer, Limit 10,66 GB | Kernel-Panic bei Iter ~50 |
+| 3 | ohne Limit | Stillstand, keine 10 Iterationen in 100 min |
+| 4 | Limit zurück, Gather zurückgerollt | Stillstand, keine 10 Iterationen in 45 min |
+
+Der Befund aus Anlauf 3 und 4:
+
+```
+Swap:  ~4 GB von 5 GB dauerhaft belegt,  19.570 Pageouts
+GPU:   100 % Auslastung
+CPU:   10 Sekunden in 70 Minuten Laufzeit
+```
+
+Die GPU steht auf 100 %, **weil sie auf ausgelagerten Speicher wartet**. Das ist kein Rechnen.
+Metal-Speicher taucht übrigens nicht im RSS auf — der Python-Prozess wirkt mit 0,63 GB
+harmlos, während er ~14 GB Working Set hält. Deshalb bringt es auch fast nichts, andere
+Anwendungen zu schließen: alle VSCode-Prozesse zusammen sind ~0,5 GB.
+
+Messbar degradiert das System über die Läufe hinweg — dieselbe Validierung brauchte
+**57 s → 113 s → 126 s** bei konstanter Swap-Belegung.
+
+**Zwei Irrtümer, die Zeit gekostet haben**, hier festgehalten, damit sie nicht wiederholt
+werden:
+
+1. *„Die Logit-Matrix ist der Speicherfresser."* 7800 x 65536 sind rechnerisch 1,9 GB plus
+   Gradient, gebraucht werden ~85 Zeilen. Die Umstellung auf gathered Logits war korrekt
+   (numerisch bit-identisch verifiziert) und **wirkungslos**: 14,65 → 14,75 GB. MLX wertet
+   verzögert aus und fusioniert; die Matrix wurde nie am Stück gehalten. Wieder entfernt.
+2. *„Das Speicherlimit verursacht den Stillstand."* Es zu entfernen machte es **schlechter**
+   (Anlauf 3). Das Limit zwingt MLX zu sparsamerem Verhalten; der Stillstand kam vom Swapping.
+
+**Was tatsächlich hilft, ist ungetestet:** ein Neustart des Rechners. Der Swap steht seit
+Stunden auf ~4 GB und wird nicht freigegeben, was jeden neuen Lauf vorbelastet.
+
 ## Stand
 
 **Fertig und geprüft**
@@ -311,24 +383,22 @@ müssen. Das ist die harte Grenze dieses Aufbaus auf 16 GB.
 - Baseline gemessen: **acted 36,1 % / correct 8,3 %**
 - LM Studio parst LFM2.5-Tool-Calls korrekt — die Risikofrage des Ansatzes ist beantwortet
 
+- Fusionieren und Deployment funktionieren, inklusive Template-Prüfung
+- Gemessen: **acted 36,1 % → 94,4 %** beim 37-Iterationen-Stand
+
 **Offen**
 
-1. **Der eigentliche Trainingslauf.** Bisher nur Testläufe über 20 und 40 Iterationen. Wie
-   lang, ist noch zu entscheiden: eine volle Epoche kostet ~4,6 h; angesichts des schnellen
-   Abfalls in den ersten 20 Iterationen könnte ein kurzer Lauf (~150 Iterationen, knapp 2 h)
-   mit anschließender Messung der bessere erste Schritt sein.
-2. **Lernrate.** Steht unverändert auf `1e-4` und wurde nie variiert — nach der
-   `scale`-Korrektur der nächste Kandidat, falls die Kurve unruhig bleibt.
-3. **Fusionieren und Deployment.** `fuse_deploy.py` ist geschrieben, aber noch nie gelaufen.
-4. **Die Ergebniszahl.** `eval_lmstudio.py --out tuned.json` gegen dieselben 36 Testfälle,
-   und zwar am fusionierten Modell in LM Studio — nicht am Adapter in mlx-lm, sonst misst man
-   nicht, was der Nutzer bekommt.
-5. **Ob der Loss überhaupt das Richtige misst.** Fallender Loss heißt „die Zieltokens werden
-   wahrscheinlicher", nicht „das richtige Tool wird aufgerufen". Nur Punkt 4 beantwortet die
-   eigentliche Frage.
-6. **Kontrolllauf `--mask none`.** Wenn die Maskierung so entscheidend ist wie hier
+1. **Ein längerer Lauf.** Vier Anläufe gescheitert (Abschnitt 10). Nächster Schritt wäre ein
+   Neustart des Rechners, danach ein Versuch aus sauberem Speicherzustand. Ohne das ist auf
+   diesem Gerät kein längeres Training möglich; die Alternative wäre anderswo zu trainieren.
+2. **Die Tool-Auswahl.** Erst ein längerer Lauf zeigt, ob die Domänen-Verwechslung
+   Unterlernen ist oder das Tool-Design (Abschnitt 9).
+3. **Lernrate.** Steht unverändert auf `1e-4` und wurde nie variiert.
+4. **Kontrolllauf `--mask none`.** Wenn die Maskierung so entscheidend ist wie hier
    behauptet, muss ein unmaskierter Lauf deutlich schlechter abschneiden. Bisher ist das
-   Argument plausibel, aber ungeprüft.
+   Argument plausibel, aber ungeprüft — und angesichts der Laufzeitprobleme teuer.
+5. **Baseline unter gleichen Bedingungen.** Die Baseline lief mit unbekannter Kontextlänge,
+   das getunte Modell mit 12288. Für den `acted`-Sprung irrelevant, sauber wäre es trotzdem.
 
 ## Dateien
 

@@ -85,14 +85,25 @@ class MaskedChatDataset:
 
 def iterate_batches(dataset, batch_size, max_seq_length, loop=False, seed=None,
                     comm_group=None):
-    """Same shape as mlx-lm's, but carries a full per-token mask instead of an offset."""
+    """Same shape as mlx-lm's, but yields the indices of the loss-carrying positions.
+
+    Indices rather than a mask, because masked_loss runs under value_and_grad and MLX forbids
+    evaluating an array inside a function transformation -- so `np.flatnonzero(mask)` has to
+    happen out here, where the mask is still plain batch data.
+
+    Indices point into the flattened (batch, width-1) target grid, i.e. they are already
+    shifted: target position i is predicted from input i.
+    """
     order = sorted(range(len(dataset)), key=lambda i: len(dataset[i][0]))
     batches = [order[i:i + batch_size]
                for i in range(0, len(order) - batch_size + 1, batch_size)]
     if seed:
         np.random.seed(seed)
     while True:
-        for b in np.random.permutation(len(batches)):
+        # Shuffled while training, in order while validating: an evaluation over a subset of
+        # batches is only comparable across runs if it keeps drawing the same subset.
+        sequence = np.random.permutation(len(batches)) if loop else range(len(batches))
+        for b in sequence:
             items = [dataset[j] for j in batches[b]]
             lengths = [min(len(t), max_seq_length) for t, _ in items]
             pad_to = 32
@@ -103,19 +114,32 @@ def iterate_batches(dataset, batch_size, max_seq_length, loop=False, seed=None,
                 n = min(len(tok), width)
                 tokens[j, :n] = tok[:n]
                 masks[j, :n] = msk[:n]
-            yield mx.array(tokens), mx.array(masks)
+            indices = np.flatnonzero(masks[:, 1:].reshape(-1))
+            if indices.size == 0:
+                continue  # nothing to learn from this batch; skip rather than divide by zero
+            yield mx.array(tokens), mx.array(indices)
         if not loop:
             break
 
 
-def masked_loss(model, batch, masks):
+def masked_loss(model, batch, indices):
+    """Cross entropy over the masked positions only.
+
+    An earlier version gathered the hidden states before the vocabulary projection, on the
+    theory that materialising 7800 x 65536 logits (1.9GB, plus its gradient) to use ~85 rows
+    was the memory problem. Measured, it was not: peak went from 14.65GB to 14.75GB, i.e.
+    marginally worse. MLX evaluates lazily and fuses, so those logits were apparently never
+    held whole. The gather is gone again -- it changed the hot path for no benefit.
+
+    The peak is dominated by forward/backward activations over ~7800 positions, which is not
+    reachable without shortening the context, and the context is the tool schemas.
+    """
     inputs, targets = batch[:, :-1], batch[:, 1:]
-    # a target at position i is predicted from input i, so the mask shifts with the targets
-    mask = masks[:, 1:]
     logits = model(inputs)
-    ce = nn.losses.cross_entropy(logits, targets) * mask
-    ntoks = mask.sum()
-    return ce.astype(mx.float32).sum() / ntoks, ntoks
+    ce = nn.losses.cross_entropy(logits.reshape(-1, logits.shape[-1])[indices],
+                                 targets.reshape(-1)[indices])
+    ntoks = indices.shape[0]
+    return ce.astype(mx.float32).sum() / ntoks, mx.array(ntoks)
 
 
 def main():
@@ -137,6 +161,12 @@ def main():
     p.add_argument("--model", default=MODEL)
     p.add_argument("--max-seq-length", type=int, default=8192)
     p.add_argument("--adapter-path", default="adapters")
+    # The GPU driver panics on this workload roughly every 40-50 iterations and takes the
+    # machine with it (see TRAINING.md). Three attempts at avoiding it failed, so the run is
+    # built to survive instead: save often, and pick up where it stopped.
+    p.add_argument("--resume", action="store_true",
+                   help="continue from adapters.safetensors in --adapter-path")
+    p.add_argument("--steps-per-save", type=int, default=10)
     # A validation pass costs ~11s per record because every record carries the full ~7.4k-token
     # prefix. Over all 36 valid records that is ~7 minutes, so validating often costs far more
     # wall-clock than the training it is meant to supervise. 8 batches is ~90s and still tracks
@@ -148,19 +178,26 @@ def main():
     # allocation. MLX blocks on scheduled work instead of allocating past the limit, so hitting
     # it costs speed, not correctness.
     p.add_argument("--memory-limit-gb", type=float, default=0.0,
-                   help="0 = derive from the GPU's recommended working set (90%% of it)")
+                   help="0 = no limit; a value below actual demand starves the run")
+    p.add_argument("--cache-limit-mb", type=int, default=0,
+                   help="0 = MLX default. Shrinking the cache forces constant re-allocation")
     p.add_argument("--steps-per-eval", type=int, default=None,
                    help="default: 8 evals over the run, but never more often than every 25 iters")
     args = p.parse_args()
 
     recommended = mx.device_info()["max_recommended_working_set_size"]
-    limit = int(args.memory_limit_gb * 2**30) if args.memory_limit_gb else int(recommended * 0.9)
-    mx.set_memory_limit(limit)
-    # Cached-but-unused buffers count toward the working set, so they are what pushes a run
-    # past the ceiling between iterations. Keeping the cache small trades a little speed for
-    # staying inside it.
-    mx.set_cache_limit(512 * 2**20)
-    print(f"GPU recommends at most {recommended/2**30:.2f} GB; limit set to {limit/2**30:.2f} GB")
+    # Both limits default to off, and that is a correction, not an oversight. Capping memory at
+    # 90% of the recommended working set (10.66GB) while the run actually needs ~14.2GB made
+    # MLX wait on scheduled work at every allocation: the GPU sat at 100% utilisation and the
+    # run stopped advancing entirely -- 68 minutes without completing a single iteration. The
+    # cap never prevented the driver panic either, so it cost throughput and bought nothing.
+    if args.memory_limit_gb:
+        mx.set_memory_limit(int(args.memory_limit_gb * 2**30))
+    if args.cache_limit_mb:
+        mx.set_cache_limit(args.cache_limit_mb * 2**20)
+    print(f"GPU recommends at most {recommended/2**30:.2f} GB; "
+          f"limit {'%.2f GB' % args.memory_limit_gb if args.memory_limit_gb else 'off'}, "
+          f"cache {'%d MB' % args.cache_limit_mb if args.cache_limit_mb else 'default'}")
 
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     data = HERE / "data"
@@ -183,6 +220,14 @@ def main():
 
     adapter_path = HERE / args.adapter_path
     adapter_path.mkdir(parents=True, exist_ok=True)
+    if args.resume:
+        weights = adapter_path / "adapters.safetensors"
+        if not weights.exists():
+            raise SystemExit(f"--resume, but {weights} does not exist")
+        model.load_weights(str(weights), strict=False)
+        # Adam's moment estimates are not restored -- they rebuild within a few steps and are
+        # not worth persisting for a crash-recovery path.
+        print(f"resumed from {weights.name}")
     (adapter_path / "adapter_config.json").write_text(json.dumps({
         "num_layers": args.lora_layers, "fine_tune_type": "lora",
         "lora_parameters": {"rank": args.rank, "scale": args.scale, "dropout": 0.0},
@@ -201,7 +246,7 @@ def main():
             val_batches=min(args.val_batches, len(valid_set) // args.batch_size),
             steps_per_report=10,
             steps_per_eval=args.steps_per_eval or max(iters // 8, 25),
-            steps_per_save=max(iters // 4, 25),
+            steps_per_save=args.steps_per_save,
             max_seq_length=args.max_seq_length,
             adapter_file=str(adapter_path / "adapters.safetensors"),
             grad_checkpoint=True,

@@ -267,7 +267,7 @@ namespace {
         setWindowIcon(window);
         initImGui(window);
 
-        // Lets the AI-chatbot's close_application tool (see gui-tool-app-register.cpp) quit
+        // Lets the AI-chatbot's close_application tool (see src/llm/actions/gui-action-app.cpp) quit
         // the app the same way the OS window-close button does -- setting this flag makes the
         // main loop below exit normally on its next check, running the exact same shutdown
         // sequence (including the final StaticCallbacks::save().invokeAll() flush) rather than

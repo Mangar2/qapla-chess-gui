@@ -20,12 +20,7 @@
 #include "llm-chat-integration.h"
 #include "lm-studio-locator.h"
 #include "gui-tool-registry.h"
-#include "gui-tool-engine-management.h"
-#include "gui-tool-tournament.h"
-#include "gui-tool-sprt.h"
-#include "gui-tool-epd.h"
-#include "gui-tool-status.h"
-#include "gui-tool-app.h"
+#include "tools/gui-tools.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
 #include "../chatbot/chatbot-window.h"
@@ -53,16 +48,11 @@ struct DetectionState {
     AsyncLmStudioLocator locator;
 };
 
-// Registers every available GUI tool group. Registration is cheap and
-// unconditional -- tools only ever run when a chat actually calls them, so
-// there is no reason to gate this on LM Studio being found.
-void registerGuiTools() {
-    registerEngineManagementTools(GuiToolRegistry::instance());
-    registerTournamentTools(GuiToolRegistry::instance());
-    registerSprtTools(GuiToolRegistry::instance());
-    registerEpdTools(GuiToolRegistry::instance());
-    registerStatusTools(GuiToolRegistry::instance());
-    registerAppTools(GuiToolRegistry::instance());
+// Registers every available GUI tool group (see src/llm/tools/gui-tools.h). Registration is cheap
+// and unconditional -- tools only ever run when a chat actually calls them, so there is no reason
+// to gate this on LM Studio being found.
+void registerAllGuiTools() {
+    registerGuiTools(GuiToolRegistry::instance());
 }
 
 // Retries LM Studio detection periodically -- not just once at startup -- reading
@@ -132,7 +122,7 @@ private:
 } // namespace
 
 void initializeLlmChat() {
-    registerGuiTools();
+    registerAllGuiTools();
 
     // Both intentionally kept alive for the whole process (static, never reset): the
     // tool-call job queue must be drained for the lifetime of the application, and the menu

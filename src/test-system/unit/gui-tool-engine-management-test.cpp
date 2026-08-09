@@ -73,10 +73,10 @@ TEST_CASE("listInstalledEnginesJson returns an empty array when nothing is confi
     REQUIRE(listInstalledEnginesJson() == "[]");
 }
 
-// registerEngineManagementTools() itself (gui-tool-engine-management-register.cpp)
-// is not covered here: it wires up OsDialogs + Configuration, which
-// transitively pull in the ImGui/GLFW GUI stack that the unit-tests target
-// deliberately does not link against (same reasoning as LmStudioLocator's
-// real-filesystem/real-server paths). Its handlers are thin wrappers around
-// the pure functions tested above; the file dialog itself can only be
-// exercised manually or via an imgui_test_engine GUI test.
+// The engine actions themselves (src/llm/actions/gui-action-engines.cpp) are not covered here:
+// they wire up OsDialogs + Configuration, which transitively pull in the ImGui/GLFW GUI stack
+// that the unit-tests target deliberately does not link against (same reasoning as
+// LmStudioLocator's real-filesystem/real-server paths). They are thin wrappers around the pure
+// functions tested above; the file dialog itself can only be exercised manually or via an
+// imgui_test_engine GUI test. The tool declarations that call them go through the mapper, which
+// is covered on its own in llm-tool-api-test.cpp.

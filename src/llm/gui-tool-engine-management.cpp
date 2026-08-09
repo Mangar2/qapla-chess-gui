@@ -19,10 +19,10 @@
 
 // Deliberately kept free of any GUI/ImGui dependency (no os-dialogs.h,
 // no configuration.h): this is the pure, UI-independent logic that the
-// unit-tests target links directly. The actual tool registration --
-// including the native file dialog and Configuration::setModified() -- is
-// in gui-tool-engine-management-register.cpp, which only the qapla
-// executable links (that file's dependencies drag in the whole GUI stack).
+// unit-tests target links directly. The actions built on it -- including the
+// native file dialog and Configuration::setModified() -- are in
+// src/llm/actions/gui-action-engines.cpp, which only the qapla executable
+// links (its dependencies drag in the whole GUI stack).
 
 #include "gui-tool-engine-management.h"
 
