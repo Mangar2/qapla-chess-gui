@@ -1,0 +1,802 @@
+{
+  "_comment": "Wertevariation: jeder Basis-Record wird zusaetzlich in jeder Welt ausgegeben. Regeln sind Textersetzungen ueber den ganzen Record. Reihenfolge zaehlt: laengere Muster zuerst, sonst frisst 'Qapla' das 'Qapla-baseline'.",
+  "worlds": [
+    {
+      "name": "stockfish-berserk",
+      "rules": [
+        [
+          "Qapla-baseline",
+          "Stockfish-dev"
+        ],
+        [
+          "Qapla 0.4.0",
+          "Stockfish 16.1"
+        ],
+        [
+          "qapla 0.4.0",
+          "stockfish 16.1"
+        ],
+        [
+          "qapla 0.4",
+          "stockfish 16"
+        ],
+        [
+          "Spike 1.4.1",
+          "Berserk 13"
+        ],
+        [
+          "qapla",
+          "stockfish"
+        ],
+        [
+          "spike",
+          "berserk"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/engine-tester/test/opening/book8ply.raw",
+          "/home/vb/chess/books/8moves_v3.pgn"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/src/test-system/test-data/wmtest.epd",
+          "/home/vb/chess/epd/sts.epd"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/engine-tester/test/epd/wmtest.epd",
+          "/home/vb/chess/epd/bratko.epd"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest2.pgn",
+          "/home/vb/chess/games/run2.pgn"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest3.pgn",
+          "/home/vb/chess/games/run3.pgn"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest.pgn",
+          "/home/vb/chess/games/run1.pgn"
+        ],
+        [
+          "aitest3.pgn",
+          "run3.pgn"
+        ],
+        [
+          "wmtest.epd",
+          "sts.epd"
+        ],
+        [
+          "book8ply.raw",
+          "8moves_v3.pgn"
+        ],
+        [
+          "20.0+0.01",
+          "300.0+3.0"
+        ],
+        [
+          "20+0.01",
+          "300+3"
+        ],
+        [
+          "60.0+0.0",
+          "180.0+2.0"
+        ],
+        [
+          "60+0",
+          "180+2"
+        ],
+        [
+          "20s + 10ms increment",
+          "5 minuten + 3 sekunden increment"
+        ],
+        [
+          "H1=5.00",
+          "H1=8.00"
+        ],
+        [
+          "Max games: 10000",
+          "Max games: 40000"
+        ],
+        [
+          "Max. Spiele: 10000",
+          "Max. Spiele: 40000"
+        ],
+        [
+          "10000",
+          "40000"
+        ],
+        [
+          "Max games: 4.",
+          "Max games: 6."
+        ],
+        [
+          "Max. Spiele: 4\n",
+          "Max. Spiele: 6\n"
+        ],
+        [
+          "Max. Spiele steht auf 4.",
+          "Max. Spiele steht auf 6."
+        ],
+        [
+          "nach vier Partien",
+          "nach sechs Partien"
+        ],
+        [
+          "Event name: ai-test",
+          "Event name: regression-run"
+        ],
+        [
+          "Event-Name: ai-test",
+          "Event-Name: regression-run"
+        ],
+        [
+          "\"ai-test\"",
+          "\"regression-run\""
+        ],
+        [
+          "auf ai-test",
+          "auf regression-run"
+        ]
+      ]
+    },
+    {
+      "name": "ethereal-rubi",
+      "rules": [
+        [
+          "Qapla-baseline",
+          "Ethereal-tune"
+        ],
+        [
+          "Qapla 0.4.0",
+          "Ethereal 14"
+        ],
+        [
+          "qapla 0.4.0",
+          "ethereal 14"
+        ],
+        [
+          "qapla 0.4",
+          "ethereal 14"
+        ],
+        [
+          "Spike 1.4.1",
+          "RubiChess 2.2"
+        ],
+        [
+          "qapla",
+          "ethereal"
+        ],
+        [
+          "spike",
+          "rubichess"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/engine-tester/test/opening/book8ply.raw",
+          "/data/chess/openings/uho_2022.epd"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/src/test-system/test-data/wmtest.epd",
+          "/data/chess/epd/eret.epd"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/engine-tester/test/epd/wmtest.epd",
+          "/data/chess/epd/arasan.epd"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest2.pgn",
+          "/data/chess/pgn/match-b.pgn"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest3.pgn",
+          "/data/chess/pgn/match-c.pgn"
+        ],
+        [
+          "/Users/volkerbohm/dev/qapla/chess-gui/log/aitest.pgn",
+          "/data/chess/pgn/match-a.pgn"
+        ],
+        [
+          "aitest3.pgn",
+          "match-c.pgn"
+        ],
+        [
+          "wmtest.epd",
+          "eret.epd"
+        ],
+        [
+          "book8ply.raw",
+          "uho_2022.epd"
+        ],
+        [
+          "20.0+0.01",
+          "40/120.0+1.0"
+        ],
+        [
+          "20+0.01",
+          "40/120+1"
+        ],
+        [
+          "60.0+0.0",
+          "10.0+0.1"
+        ],
+        [
+          "60+0",
+          "10+0.1"
+        ],
+        [
+          "20s + 10ms increment",
+          "40 züge in 2 minuten, danach 1 sekunde pro zug"
+        ],
+        [
+          "H1=5.00",
+          "H1=2.50"
+        ],
+        [
+          "Max games: 10000",
+          "Max games: 2500"
+        ],
+        [
+          "Max. Spiele: 10000",
+          "Max. Spiele: 2500"
+        ],
+        [
+          "10000",
+          "2500"
+        ],
+        [
+          "Max games: 4.",
+          "Max games: 8."
+        ],
+        [
+          "Max. Spiele: 4\n",
+          "Max. Spiele: 8\n"
+        ],
+        [
+          "Max. Spiele steht auf 4.",
+          "Max. Spiele steht auf 8."
+        ],
+        [
+          "nach vier Partien",
+          "nach acht Partien"
+        ],
+        [
+          "Event name: ai-test",
+          "Event name: nightly"
+        ],
+        [
+          "Event-Name: ai-test",
+          "Event-Name: nightly"
+        ],
+        [
+          "\"ai-test\"",
+          "\"nightly\""
+        ],
+        [
+          "auf ai-test",
+          "auf nightly"
+        ]
+      ]
+    }
+  ],
+  "_paraphrases_comment": "Records ohne austauschbare Werte bekommen je Welt eine eigene Formulierung, sonst waeren die Welten dort identische Kopien. Schluessel = Record-Index, Wert = [[user, reply], ...] je Welt.",
+  "paraphrases": {
+    "2": [
+      [
+        "starte das turnier bitte",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "los, turnier starten",
+        "Läuft."
+      ]
+    ],
+    "6": [
+      [
+        "wie viele partien fehlen noch?",
+        "Der Stand steht als Tabelle im Chat."
+      ],
+      [
+        "wieviel ist noch offen im turnier?",
+        "Die Tabelle im Chat zeigt den Stand."
+      ]
+    ],
+    "7": [
+      [
+        "was läuft im moment?",
+        "Es läuft ein klassisches Turnier, sonst nichts."
+      ],
+      [
+        "laufen gerade irgendwelche tests?",
+        "Nur ein klassisches Turnier. SPRT und EPD sind nicht aktiv."
+      ]
+    ],
+    "10": [
+      [
+        "was läuft grad?",
+        "Turnier und SPRT-Test laufen parallel, keine EPD-Analyse."
+      ],
+      [
+        "sag mir was aktuell läuft",
+        "Es laufen ein Turnier und ein SPRT-Test. Eine EPD-Analyse nicht."
+      ]
+    ],
+    "12": [
+      [
+        "und was läuft jetzt?",
+        "Turnier und SPRT-Test laufen, EPD nicht."
+      ],
+      [
+        "was ist gerade aktiv?",
+        "Aktiv sind ein klassisches Turnier und ein SPRT-Test."
+      ]
+    ],
+    "13": [
+      [
+        "frag das bitte über das tool ab",
+        "Abgefragt: Turnier und SPRT-Test laufen, eine EPD-Analyse nicht."
+      ],
+      [
+        "schau bitte nach statt zu raten",
+        "Nachgesehen: es laufen ein Turnier und ein SPRT-Test."
+      ]
+    ],
+    "14": [
+      [
+        "stoppe sprt bitte hart, sanft hat nicht gereicht",
+        "Der SPRT-Test ist abrupt gestoppt. Es läuft nur noch das Turnier."
+      ],
+      [
+        "brich den sprt lauf sofort ab",
+        "Abrupt gestoppt. Das Turnier läuft weiter."
+      ]
+    ],
+    "15": [
+      [
+        "die epd datei passt jetzt",
+        "Die EPD-Analyse läuft."
+      ],
+      [
+        "epd ist jetzt gültig, leg los",
+        "Läuft."
+      ]
+    ],
+    "16": [
+      [
+        "die epd analyse läuft immer noch nicht",
+        "Stimmt. Sie läuft jetzt."
+      ],
+      [
+        "du hast epd nicht gestartet",
+        "Richtig, das hatte ich versäumt. Die EPD-Analyse läuft jetzt."
+      ]
+    ],
+    "18": [
+      [
+        "ja bitte starten",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "ja, mach",
+        "Läuft."
+      ]
+    ],
+    "19": [
+      [
+        "brich das turnier sofort ab",
+        "Das Turnier wurde abrupt beendet, alle laufenden Partien sofort abgebrochen."
+      ],
+      [
+        "stoppe das turnier hart",
+        "Abrupt beendet -- die laufenden Partien wurden sofort abgebrochen."
+      ]
+    ],
+    "20": [
+      [
+        "zeig mir den aktuellen stand",
+        "Der aktuelle Stand steht im Chat."
+      ],
+      [
+        "wie steht es gerade?",
+        "Die Ergebnisse sind als Tabelle im Chat."
+      ]
+    ],
+    "28": [
+      [
+        "halte das turnier an",
+        "Das Turnier wird angehalten: laufende Partien werden noch beendet, neue starten nicht."
+      ],
+      [
+        "beende das turnier bitte",
+        "Es wird sanft angehalten -- begonnene Partien laufen noch aus."
+      ]
+    ],
+    "31": [
+      [
+        "halte die epd analyse an",
+        "Die EPD-Analyse wird angehalten: begonnene Stellungen werden noch fertig gerechnet."
+      ],
+      [
+        "stoppe epd",
+        "Sanft gestoppt -- laufende Stellungen werden noch zu Ende analysiert."
+      ]
+    ],
+    "32": [
+      [
+        "turnier starten bitte",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "bitte das turnier anwerfen",
+        "Läuft."
+      ]
+    ],
+    "33": [
+      [
+        "stoppe bitte das turnier",
+        "Das Turnier wird angehalten: laufende Partien werden noch beendet, neue starten nicht."
+      ],
+      [
+        "mach das turnier aus",
+        "Wird sanft angehalten -- was läuft, wird noch fertig gespielt."
+      ]
+    ],
+    "37": [
+      [
+        "geht auch hart, dann ist es sofort aus",
+        "Abrupt beendet, alle laufenden Partien sofort abgebrochen."
+      ],
+      [
+        "dann eben abrupt",
+        "Das Turnier wurde abrupt beendet."
+      ]
+    ],
+    "39": [
+      [
+        "danke dir",
+        "Gern."
+      ],
+      [
+        "super, danke",
+        "Gerne."
+      ]
+    ],
+    "50": [
+      [
+        "starte bitte einen sprt lauf",
+        "Der SPRT-Test ist gestartet."
+      ],
+      [
+        "sprt bitte starten",
+        "Läuft."
+      ]
+    ],
+    "55": [
+      [
+        "stelle das turnier bitte auf 1000 partien in 100 runden",
+        "Steht jetzt auf 10 Spiele pro Runde über 100 Runden, also 1000 pro Paarung."
+      ],
+      [
+        "ich will 1000 spiele verteilt auf 100 runden",
+        "Eingestellt: 10 Spiele pro Runde, 100 Runden, macht 1000 pro Paarung."
+      ]
+    ],
+    "56": [
+      [
+        "1000 partien in 100 runden, ohne vorher zu prüfen",
+        "Steht jetzt auf 10 Spiele pro Runde über 100 Runden, also 1000 pro Paarung."
+      ],
+      [
+        "stell einfach 1000 spiele in 100 runden ein, keine checks",
+        "Eingestellt: 10 pro Runde, 100 Runden, zusammen 1000 pro Paarung."
+      ]
+    ],
+    "73": [
+      [
+        "nur antworten bitte, nichts ausführen. warum lief sprt nicht?",
+        "Ich hatte gestoppt und die Zeitkontrolle gesetzt, den start-Aufruf aber ausgelassen."
+      ],
+      [
+        "bitte keine aktion, nur eine erklärung: warum wurde sprt nicht gestartet?",
+        "Weil ich nach dem Stoppen kein start aufgerufen habe. Mein Fehler."
+      ]
+    ],
+    "74": [
+      [
+        "das war keine technische hürde. sag mir kurz was wirklich war",
+        "Stimmt, technisch war nichts. Ich habe den Startschritt schlicht ausgelassen."
+      ],
+      [
+        "erklär mir bitte ehrlich, warum sprt nicht lief",
+        "Es gab keinen Hinderungsgrund. Ich habe schlicht nicht gestartet."
+      ]
+    ],
+    "75": [
+      [
+        "was soll \"nicht initialisiert\" heißen? kurz bitte",
+        "Nichts -- so einen Zustand gibt es nicht. Es fehlte einfach der start-Aufruf."
+      ],
+      [
+        "erklär mir den begriff \"initialisiert\", kurze antwort",
+        "Der war von mir erfunden. Einen Initialisierungsschritt gibt es nicht."
+      ]
+    ],
+    "76": [
+      [
+        "schließ bitte das programm",
+        "Die Anwendung wird geschlossen."
+      ],
+      [
+        "ich bin fertig, mach zu",
+        "Wird geschlossen."
+      ]
+    ],
+    "77": [
+      [
+        "bitte turnier starten",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "Starte das Turnier",
+        "Läuft."
+      ]
+    ],
+    "81": [
+      [
+        "was läuft denn alles gerade?",
+        "Es laufen gleichzeitig ein Turnier, ein SPRT-Test und eine EPD-Analyse."
+      ],
+      [
+        "gib mir einen überblick was aktiv ist",
+        "Aktiv sind ein klassisches Turnier, ein SPRT-Test und eine EPD-Analyse."
+      ]
+    ],
+    "82": [
+      [
+        "halte turnier und sprt sanft an",
+        "Beide werden sanft angehalten: laufende Partien werden noch beendet."
+      ],
+      [
+        "stoppe bitte turnier und sprt, aber sanft",
+        "Turnier und SPRT-Test werden sanft angehalten, begonnene Partien laufen aus."
+      ]
+    ],
+    "83": [
+      [
+        "zeig mir das ergebnis vom sprt",
+        "Die SPRT-Ergebnisse stehen im Chat."
+      ],
+      [
+        "wie ist der sprt ausgegangen?",
+        "Das SPRT-Ergebnis wird im Chat angezeigt."
+      ]
+    ],
+    "84": [
+      [
+        "mach mit sprt weiter",
+        "Der SPRT-Test läuft wieder."
+      ],
+      [
+        "sprt bitte fortsetzen",
+        "Läuft wieder."
+      ]
+    ],
+    "101": [
+      [
+        "bist du noch da?",
+        "Ja, bin da. Die letzte Antwort war leer, sorry. Was brauchst du?"
+      ],
+      [
+        "hallo? antwortest du noch?",
+        "Ich bin da -- da kam vorhin nichts, Entschuldigung."
+      ]
+    ],
+    "114": [
+      [
+        "der dialog war doch längst zu, wieso schreibst du sowas?",
+        "Zu Recht. Wenn ich antworte, ist der Dialog schon geschlossen -- das Tool gibt sein Ergebnis ja erst danach zurück. Ich hätte das Ergebnis melden müssen."
+      ],
+      [
+        "warum kündigst du einen dialog an, den du schon geschlossen weißt?",
+        "Weil das falsch war. Das Tool liefert erst zurück, wenn du gewählt oder abgebrochen hast -- danach gibt es nichts mehr anzukündigen."
+      ]
+    ],
+    "115": [
+      [
+        "wie muss ich es dir sagen, damit du es richtig machst?",
+        "Gar nicht anders -- deine Formulierung war eindeutig. Der Fehler lag bei mir."
+      ],
+      [
+        "sag mir, was ich anders formulieren muss",
+        "Nichts. Das Problem war nicht deine Anweisung, sondern dass ich einen längst geschlossenen Dialog als offen beschrieben habe."
+      ]
+    ],
+    "116": [
+      [
+        "wie verhindere ich, dass du nochmal schreibst der dialog sei geöffnet?",
+        "Dafür musst du nichts tun. Der Dialog ist immer schon zu, wenn ich zu Wort komme -- ich melde nur noch das Ergebnis."
+      ],
+      [
+        "ich will diesen satz nie wieder lesen. was muss ich tun?",
+        "Nichts -- das liegt an mir. Ich beschreibe keine Dialoge mehr, nur noch deren Ausgang."
+      ]
+    ],
+    "117": [
+      [
+        "und das passiert jetzt wirklich nicht mehr?",
+        "Nein. Keine Dialog-Ankündigungen, nur noch das Ergebnis."
+      ],
+      [
+        "du sagst das also nie wieder?",
+        "Nie wieder. Ich melde die gesetzte Datei oder den Abbruch, sonst nichts."
+      ]
+    ],
+    "126": [
+      [
+        "was ist gerade am laufen?",
+        "Ein klassisches Turnier und ein SPRT-Test. Keine EPD-Analyse."
+      ],
+      [
+        "läuft im moment was?",
+        "Ja: ein Turnier und ein SPRT-Test."
+      ]
+    ],
+    "127": [
+      [
+        "beende sprt bitte sanft",
+        "Der SPRT-Test wird sanft angehalten, die laufende Partie wird noch beendet."
+      ],
+      [
+        "sprt bitte sauber runterfahren",
+        "Wird sanft angehalten -- die begonnene Partie läuft noch aus."
+      ]
+    ],
+    "128": [
+      [
+        "und jetzt, was läuft?",
+        "Weiterhin ein Turnier und ein SPRT-Test, keine EPD-Analyse."
+      ],
+      [
+        "nochmal: was ist aktiv?",
+        "Ein klassisches Turnier und ein SPRT-Test."
+      ]
+    ],
+    "131": [
+      [
+        "was läuft denn jetzt?",
+        "Es läuft ein klassisches Turnier."
+      ],
+      [
+        "ist noch was aktiv?",
+        "Ja, das klassische Turnier läuft."
+      ]
+    ],
+    "133": [
+      [
+        "was ist aktiv?",
+        "Ein Turnier und ein SPRT-Test."
+      ],
+      [
+        "läuft was?",
+        "Ja: Turnier und SPRT-Test."
+      ]
+    ],
+    "134": [
+      [
+        "stoppe sprt bitte freundlich",
+        "Der SPRT-Test wird sanft angehalten, die laufende Partie noch beendet. Das Turnier läuft weiter."
+      ],
+      [
+        "sprt bitte sanft beenden",
+        "Wird sanft angehalten. Das Turnier bleibt davon unberührt."
+      ]
+    ],
+    "135": [
+      [
+        "und jetzt?",
+        "Jetzt läuft nur noch das klassische Turnier."
+      ],
+      [
+        "was ist übrig?",
+        "Nur noch das Turnier."
+      ]
+    ],
+    "136": [
+      [
+        "wie ist der epd lauf ausgegangen?",
+        "Die EPD-Ergebnisse stehen als Tabelle im Chat."
+      ],
+      [
+        "zeig mir das epd ergebnis",
+        "Das EPD-Ergebnis wird im Chat angezeigt."
+      ]
+    ],
+    "138": [
+      [
+        "zeig mir bitte das ergebnis vom turnier",
+        "Die Turnierergebnisse stehen als Tabelle im Chat."
+      ],
+      [
+        "wie ist das turnier ausgegangen?",
+        "Das Turnierergebnis wird im Chat angezeigt."
+      ]
+    ],
+    "142": [
+      [
+        "bitte turnier jetzt starten",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "fang bitte mit dem turnier an",
+        "Läuft."
+      ]
+    ],
+    "143": [
+      [
+        "ja, leg los",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "ja, fang an",
+        "Läuft."
+      ]
+    ],
+    "144": [
+      [
+        "das lief nicht, bitte wirklich starten",
+        "Stimmt, es lief nicht. Jetzt läuft es."
+      ],
+      [
+        "du hast nichts gestartet, mach es bitte",
+        "Richtig, da war nichts. Das Turnier läuft jetzt."
+      ]
+    ],
+    "145": [
+      [
+        "nochmal: starte es",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "bitte jetzt starten",
+        "Läuft."
+      ]
+    ],
+    "146": [
+      [
+        "start bitte",
+        "Das Turnier ist gestartet."
+      ],
+      [
+        "jetzt aber wirklich starten",
+        "Läuft jetzt."
+      ]
+    ],
+    "147": [
+      [
+        "sag mir was läuft",
+        "Es läuft ein klassisches Turnier, weiter nichts."
+      ],
+      [
+        "liste mir auf was aktiv ist",
+        "Aktiv ist nur das klassische Turnier."
+      ]
+    ],
+    "148": [
+      [
+        "bitte erst nachsehen, dann antworten",
+        "Nachgesehen: es läuft nur das klassische Turnier."
+      ],
+      [
+        "frag das tool, bevor du antwortest",
+        "Abgefragt -- aktiv ist ausschließlich das Turnier."
+      ]
+    ],
+    "150": [
+      [
+        "ich will eine pgn datei aussuchen",
+        null
+      ],
+      [
+        "lass mich eine partie zum anschauen wählen",
+        null
+      ]
+    ]
+  }
+}

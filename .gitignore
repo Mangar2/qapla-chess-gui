@@ -400,12 +400,11 @@ MigrationBackup/
 FodyWeavers.xsd
 imgui.ini
 
-# Finetuning (siehe Finetuning/TRAINING.md)
-# Modellgewichte, virtuelle Umgebung und generierte Daten -- alles reproduzierbar
-# aus finetuning-001.json + tools.json bzw. neu herunterladbar.
-Finetuning/.venv/
-Finetuning/data/
-Finetuning/adapters*/
-Finetuning/fused*/
+# Finetuning-Arbeitsverzeichnis: rein temporaer, nichts davon gehoert ins Repo.
+# Modellgewichte, virtuelle Umgebung, aufbereitete Daten, Adapter, Logs.
+# Was bleiben soll, liegt in scripts/finetuning/ (Werkzeuge) bzw.
+# data/finetuning/ (Datensatz) -- siehe docs/finetuning-training.md
+/Finetuning/
 # Sicherheitsnetz: Modellgewichte gehoeren grundsaetzlich nicht ins Repo
 *.safetensors
+*.gguf
