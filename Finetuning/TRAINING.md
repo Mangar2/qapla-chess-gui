@@ -370,6 +370,50 @@ werden:
 **Was tatsächlich hilft, ist ungetestet:** ein Neustart des Rechners. Der Swap steht seit
 Stunden auf ~4 GB und wird nicht freigegeben, was jeden neuen Lauf vorbelastet.
 
+### 11. Der Ausweg: PyTorch auf der CPU
+
+Nachdem vier Anläufe auf der GPU gescheitert waren, der Wechsel — und er ist besser als ein
+Kompromiss. Gemessen auf demselben M4 (10 Kerne), dieselben Daten, dieselbe Maskierung:
+
+| Weg | pro Iteration | Speicher | Ausgang |
+|---|---|---|---|
+| MLX, GPU, 4-bit | 25–48 s | 14,7 GB | 2 Kernel-Panics, 2× Stillstand |
+| MLX, CPU | — | — | **einkernig** (99 % von einem von zehn), keine Thread-Steuerung |
+| PyTorch, CPU, float32 | **59–61 s** | **10,7 GB** | läuft |
+| PyTorch, CPU, bfloat16 | **> 2 h** | 2,6 GB | unbrauchbar |
+
+**Gleich schnell wie die GPU bei deutlich weniger Speicher.** Der Grund ist
+`attn_implementation="sdpa"`: Die Attention-Matrix ist bei 7800 Token **3,63 GB pro Schicht**
+über 6 Attention-Schichten, und SDPA materialisiert sie nie. MLX hält sie offenbar — das war
+der eigentliche Treiber des Peaks, nicht die Logits (siehe Abschnitt 10, Irrtum 1).
+
+**bfloat16 ist auf ARM-CPU keine Option.** Der Speicher halbiert sich zwar (2,6 GB), aber
+PyTorch hat dafür keine optimierten Kernel und emuliert: in knapp 6 Stunden keine 3
+Iterationen, gegen 60 Sekunden unter float32. Das ist ein Faktor von über 100.
+
+`train_torch.py` ist dabei **kürzer** als `train_lora.py`, nicht länger: Die Maskierung ist
+`labels = -100`, was `CrossEntropyLoss` nativ ignoriert. Der ganze Eigenbau — Custom-Loss,
+Custom-Batching, Index-Vorberechnung — entfällt, und mit ihm die zwei Fehler, die er
+produziert hatte (Array-Auswertung unter `value_and_grad`, zufällige Validierungsreihenfolge).
+Gegengeprüft: identische Maskierung, 31.629 von 2.801.333 Token in beiden Implementierungen.
+
+### 12. Hardware-Empfehlung
+
+**Auf 16 GB bleibt es knapp**, auch auf der CPU: 10,7 GB Bedarf plus System heißt Auslagerung,
+sobald sonst noch etwas läuft. Es funktioniert, aber ohne Reserve.
+
+Für dieses Training gilt: **RAM schlägt Rechenleistung, und CPU schlägt eine zu kleine GPU.**
+
+- **64 GB Windows / 32 GB Linux, CPU-only** — die richtige Wahl. 10,7 GB sind dort unkritisch,
+  16 echte Kerne gegen 10 dürften die 60 s je Iteration unterbieten. Dasselbe Skript,
+  `pip install torch peft transformers`, sonst nichts. Eine vorhandene GPU wird schlicht
+  ignoriert.
+- **8 GB AMD-GPU** — nicht brauchbar. 8 GB VRAM gegen ~11 GB Bedarf passt nicht, und
+  Systemspeicher hilft einer dedizierten Karte nicht. Dazu ROCm unter Windows unreif.
+
+Für LM Studio muss ein PyTorch-Ergebnis anschließend nach GGUF konvertiert werden
+(llama.cpp); für LFM2 gibt es offizielle GGUF-Builds, der Weg ist also gangbar.
+
 ## Stand
 
 **Fertig und geprüft**
