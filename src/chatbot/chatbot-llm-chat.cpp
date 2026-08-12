@@ -199,6 +199,13 @@ void ChatbotLlmChat::ensureController() {
         "separate features, own tools/engines/config, changing one never affects others. "
         "Ambiguous request: ask which, don't guess. \"Is X running\": get_running_status "
         "(checks all three), not just get_status.\n"
+        "Run states: not running / starting / running / stopping. A stopping run is NOT running; "
+        "don't restart it, don't stop it again, wait. An abrupt stop returns when it is done; a "
+        "graceful one takes as long as its running work.\n"
+        "While a run is running or stopping, configure_* (except concurrency) and "
+        "select_*_engines are rejected. Stopping is the user's decision: ask graceful or abrupt "
+        "unless they said, then configure and start. Never stop a run on your own. "
+        "open_add_engine_dialog always works.\n"
         "Start a run: apply requested config, then start immediately, no confirmation, no "
         "re-ask. Only ask first if something required truly missing/invalid.\n"
         "File path needed: set openings_file_dialog/pgn_file_dialog=true in "
@@ -360,6 +367,12 @@ void ChatbotLlmChat::drawChatUi() {
     // of the window in an unnecessary boxed-in "window within a window" look.
     const auto& history = controller_->history();
     for (const auto& entry : history) {
+        // Model-context-only, never shown: the user already saw this turn's outcome as a Tool or
+        // Error entry, this one only keeps the replayed history alternating (see
+        // QaplaLlm::ChatRole::AssistantContext).
+        if (entry.role == QaplaLlm::ChatRole::AssistantContext) {
+            continue;
+        }
         // Tool entries are already phrased as a plain status sentence (see
         // src/llm/actions/) and shown without a header: end users
         // don't know what a "tool" or "open_add_engine_dialog" is, so no
@@ -377,6 +390,10 @@ void ChatbotLlmChat::drawChatUi() {
                 ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");
                 break;
             case QaplaLlm::ChatRole::Debug:
+                break;
+            case QaplaLlm::ChatRole::AssistantContext:
+                // Unreachable -- skipped above. Named so this switch stays exhaustive and a new
+                // role can't be added without deciding how it is drawn.
                 break;
         }
         if (entry.role == QaplaLlm::ChatRole::Tool && entry.renderWidget) {

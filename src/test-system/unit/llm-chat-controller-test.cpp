@@ -830,3 +830,101 @@ TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply fo
     server.stop();
     serverThread.join();
 }
+
+TEST_CASE("LlmChatController keeps the replayed history alternating after a failed turn",
+    "[llm][llm-chat-controller]") {
+    // A turn that produces no assistant answer used to contribute nothing to the replayed
+    // history, so the next user message ended up directly after the previous one. Local chat
+    // templates reject that outright -- Mistral's raises "conversation roles must alternate" --
+    // and since the malformed history persists, every later request in the session fails too,
+    // not just the turn that broke it. Seen in the wild: one failed turn, then every following
+    // message answered with a 500 until the chat was cleared.
+    std::vector<std::string> requestBodies;
+    httplib::Server server;
+    server.Post("/v1/chat/completions", [&requestBodies](const httplib::Request& req, httplib::Response& res) {
+        if (req.body.find("\"Hi\"") != std::string::npos) {
+            res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"pong"}}]})",
+                "application/json");
+            return;
+        }
+        requestBodies.push_back(req.body);
+        if (requestBodies.size() == 1) {
+            // First turn fails outright -- the case that left no assistant entry behind.
+            res.status = 500;
+            res.set_content(R"({"error":"boom"})", "application/json");
+            return;
+        }
+        res.set_content(
+            R"({"choices":[{"message":{"role":"assistant","content":null,"tool_calls":)"
+            R"([{"id":"call_1","type":"function",)"
+            R"("function":{"name":"reply_to_user","arguments":"{\"text\":\"Second\"}"}}]}}]})",
+            "application/json");
+    });
+    int port = server.bind_to_any_port("127.0.0.1");
+    REQUIRE(port > 0);
+    std::thread serverThread([&server]() { server.listen_after_bind(); });
+    while (!server.is_running()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    LmStudioConnection connection;
+    connection.host = "127.0.0.1";
+    connection.port = port;
+    connection.timeoutMs = 5000;
+
+    std::filesystem::remove_all(testLogDirectory());
+    std::filesystem::create_directories(testLogDirectory());
+
+    LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10,
+        /*logTraffic=*/false, testLogDirectory().string());
+    controller.setModel("test-model");
+
+    auto pump = [&controller]() {
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (controller.isBusy() && std::chrono::steady_clock::now() < deadline) {
+            GuiToolRegistry::instance().processQueue();
+            controller.update();
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+        REQUIRE_FALSE(controller.isBusy());
+    };
+
+    controller.sendMessage("first");
+    pump();
+    controller.sendMessage("second");
+    pump();
+
+    REQUIRE(requestBodies.size() == 2);
+
+    // The second turn's request must not contain two user messages in a row. Roles appear in the
+    // body in send order, so scanning for them is enough -- no JSON parsing needed here.
+    const std::string& body = requestBodies.back();
+    std::vector<std::string> roles;
+    for (std::size_t pos = body.find("\"role\":"); pos != std::string::npos;
+         pos = body.find("\"role\":", pos + 1)) {
+        std::size_t open = body.find('"', pos + 7);
+        std::size_t close = body.find('"', open + 1);
+        roles.push_back(body.substr(open + 1, close - open - 1));
+    }
+    REQUIRE(roles.size() >= 4); // system, user, assistant(context), user
+    REQUIRE(roles.front() == "system");
+    for (std::size_t i = 1; i + 1 < roles.size(); ++i) {
+        INFO("role " << i << " = " << roles[i] << ", role " << (i + 1) << " = " << roles[i + 1]);
+        REQUIRE(roles[i] != roles[i + 1]);
+    }
+
+    // The entry that keeps them apart must not show up in the chat -- the user already saw the
+    // failure as an Error entry, and seeing it twice would be worse than the bug it fixes.
+    int visibleAssistants = 0;
+    for (const auto& entry : controller.history()) {
+        if (entry.role == ChatRole::Assistant) {
+            ++visibleAssistants;
+        }
+    }
+    REQUIRE(visibleAssistants == 1); // only the second turn's real reply
+
+    std::filesystem::remove_all(testLogDirectory());
+
+    server.stop();
+    serverThread.join();
+}

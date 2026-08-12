@@ -34,6 +34,7 @@
 
 #include <filesystem>
 #include <format>
+#include <optional>
 #include <vector>
 
 namespace QaplaLlm::Actions {
@@ -97,11 +98,11 @@ namespace {
             resign.twoSided ? "yes" : "no");
     }
 
-    // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping alike),
-    // so it can't tell those apart on its own; state() can. Distinguishing GracefulStopping
-    // matters since a test in that state is still actively finishing its in-progress game, just
-    // declining to start a new one. Unlike tournament mode there's no separate abrupt "Stopping"
-    // state -- an abrupt stop finishes synchronously, straight to Stopped.
+    // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/Stopping
+    // alike), so it can't tell those apart on its own; state() can. Distinguishing the two
+    // pending-stop states matters: a test in either is still busy with games that were already
+    // under way, it just declines to start new ones -- and only GracefulStopping lets those games
+    // play out, while Stopping aborts them.
     std::string runStateText(SprtTournamentData& sprtData) {
         switch (sprtData.state()) {
             case SprtTournamentData::State::Starting:
@@ -109,8 +110,14 @@ namespace {
             case SprtTournamentData::State::Running:
                 return "An SPRT test is currently running.";
             case SprtTournamentData::State::GracefulStopping:
-                return "An SPRT test is currently running but stopping gracefully -- the "
-                       "in-progress game will finish, no new one will start.";
+                // Deliberately not phrased as "running but stopping": a test in this state is on
+                // its way out and accepts no new games, so calling it "running" invites the reader
+                // to treat it like a live test (restart it, apply settings to it). It is only
+                // finishing what was already in progress.
+                return "An SPRT test is finishing its games after a graceful stop. No new games "
+                       "start.";
+            case SprtTournamentData::State::Stopping:
+                return "An SPRT test is being aborted.";
             case SprtTournamentData::State::Stopped:
             default:
                 return "No SPRT test is currently running.";
@@ -151,7 +158,104 @@ namespace {
         std::vector<std::string> problems;
         bool dialogShown = false;
         Remedy remedy = Remedy::None;
+        // Set when the patch changed concurrency; lets configureSprt() answer a concurrency-only
+        // patch with just this sentence instead of the full status.
+        std::optional<std::string> concurrencyNote;
     };
+
+    // Concurrency is the one setting that takes effect on a test that is actually running, so it
+    // gets its own sentence saying whether it just did. Reporting it the usual way -- one
+    // "concurrency=5" item inside the full status -- reads as if the change was ignored, and has
+    // provoked stop/start cycles to force it through that were never needed.
+    //
+    // Switches on the exact state rather than isRunning(): that predicate is true for Starting,
+    // GracefulStopping and Stopping as well, and claiming "the running test now plays 5 in
+    // parallel" is wrong in every one of those. applySettings() applies the value live under
+    // exactly the same condition, so text and behaviour cannot drift apart.
+    std::string concurrencySummary(SprtTournamentData& data, uint32_t count) {
+        switch (data.state()) {
+            case SprtTournamentData::State::Running:
+                return std::format("Concurrency is now {}. The running SPRT test uses it already; "
+                                   "do not restart it.", count);
+            case SprtTournamentData::State::Starting:
+                return std::format("Concurrency is now {}. The starting SPRT test will use it.",
+                    count);
+            default:
+                return std::format("Concurrency is now {}. Applies to the next SPRT test.", count);
+        }
+    }
+
+    // Everything except concurrency is baked into the test when it starts, exactly as for the
+    // classic tournament (see gui-action-tournament.cpp's settingsLockedReason()). Changing the
+    // bounds, the time control or the adjudication half way through an SPRT test is worse still:
+    // the decision it computes is only valid if every game was played under the same conditions.
+    bool changesMoreThanConcurrency(const SprtSettings& settings) {
+        return settings.timeControl || settings.eloH0 || settings.eloH1 || settings.alpha
+            || settings.beta || settings.maxGames || settings.model || settings.pentanomial
+            || settings.openingsFile || settings.pickOpeningsFile
+            || settings.pgnFile || settings.pickPgnFile
+            || settings.drawMode || settings.drawMinFullMoves
+            || settings.drawRequiredConsecutiveMoves || settings.drawCentipawnThreshold
+            || settings.resignMode || settings.resignRequiredConsecutiveMoves
+            || settings.resignCentipawnThreshold || settings.resignTwoSided;
+    }
+
+    // A running test owns its configuration. Split into two phases because the advice differs:
+    // one can still be stopped, the other is already stopping and only needs waiting out.
+    enum class RunLock { None, Running, Stopping };
+
+    RunLock runLockOf(SprtTournamentData& data) {
+        switch (data.state()) {
+            case SprtTournamentData::State::Running:
+            case SprtTournamentData::State::Starting:
+                return RunLock::Running;
+            case SprtTournamentData::State::GracefulStopping:
+            case SprtTournamentData::State::Stopping:
+                return RunLock::Stopping;
+            case SprtTournamentData::State::Stopped:
+            default:
+                return RunLock::None;
+        }
+    }
+
+    // Why the patch is refused, or nullopt if it may go through. The rationale (an SPRT decision
+    // is only valid if every game ran under the same conditions) belongs here, not in the
+    // message: the model needs the rule and the next step, nothing else.
+    std::optional<std::string> settingsLockedReason(SprtTournamentData& data,
+                                                    const SprtSettings& settings) {
+        if (!changesMoreThanConcurrency(settings)) {
+            return std::nullopt;
+        }
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Settings are locked while an SPRT test runs. Nothing changed. Ask the "
+                       "user: stop gracefully or abruptly? Then set the values and start. Only "
+                       "concurrency can be changed while running.";
+            case RunLock::Stopping:
+                return "Settings are locked until the test has stopped. Nothing changed. Wait, "
+                       "then set the values and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
+
+    // Same rule for the pair of engines: the whole test is a statement about them, so they are
+    // fixed for as long as it runs. Adding engines to the catalog is unrelated.
+    std::optional<std::string> engineSelectionLockedReason(SprtTournamentData& data) {
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Engine selection is locked while an SPRT test runs. Nothing changed. Ask "
+                       "the user: stop gracefully or abruptly? Then select and start. Installing "
+                       "engines still works.";
+            case RunLock::Stopping:
+                return "Engine selection is locked until the test has stopped. Nothing changed. "
+                       "Wait, then select and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
 
     void pickOpeningsFile(SprtTournamentData& data, ConfigureOutcome& outcome) {
         outcome.dialogShown = true;
@@ -253,7 +357,16 @@ namespace {
                 outcome.problems.push_back("concurrency must be at least 1");
             } else {
                 data.setExternalConcurrency(*settings.concurrency);
-                outcome.applied.push_back("concurrency=" + std::to_string(*settings.concurrency));
+                // Push it into the live pool only while the test is really running -- this is
+                // what makes the change take effect mid-run instead of only at the next start.
+                // Not during GracefulStopping: raising concurrency there would hand the pool room
+                // for more games while the test is supposed to start none, contradicting both the
+                // graceful stop and what concurrencySummary() reports for that state.
+                if (data.state() == SprtTournamentData::State::Running) {
+                    data.setPoolConcurrency(*settings.concurrency, true, true);
+                }
+                outcome.concurrencyNote = concurrencySummary(data, *settings.concurrency);
+                outcome.applied.push_back(*outcome.concurrencyNote);
             }
         }
 
@@ -303,6 +416,9 @@ namespace {
 } // namespace
 
 ActionResult selectSprtEngines(const std::string& championName, const std::string& challengerName) {
+    if (auto locked = engineSelectionLockedReason(SprtTournamentData::instance())) {
+        return failed(*locked);
+    }
     auto championOutcome = resolveEngines({championName});
     auto challengerOutcome = resolveEngines({challengerName});
 
@@ -344,6 +460,12 @@ ActionResult selectSprtEngines(const std::string& championName, const std::strin
 ActionResult configureSprt(const SprtSettings& settings) {
     auto& sprtData = SprtTournamentData::instance();
 
+    // Refused before anything is applied, so a mixed patch cannot leave half its fields in place:
+    // partial success is the one outcome a caller has no way to recover from sensibly.
+    if (auto locked = settingsLockedReason(sprtData, settings)) {
+        return failed(*locked);
+    }
+
     ConfigureOutcome outcome;
     applySettings(sprtData, settings, outcome);
 
@@ -360,6 +482,14 @@ ActionResult configureSprt(const SprtSettings& settings) {
         switchToSprtView();
     }
 
+    // A patch that changed nothing but concurrency answers with just that one sentence. The full
+    // status would bury it between a dozen unrelated fields and end on the run state, which is
+    // exactly the reading that makes a caller think the change didn't land.
+    if (outcome.problems.empty() && outcome.concurrencyNote && outcome.applied.size() == 1) {
+        return ActionResult{.ok = true, .text = *outcome.concurrencyNote, .widget = nullptr,
+            .endsTurn = outcome.dialogShown, .remedy = outcome.remedy};
+    }
+
     std::string message;
     if (!outcome.problems.empty()) {
         message = "Problems: " + joinList(outcome.problems) + ". ";
@@ -371,9 +501,23 @@ ActionResult configureSprt(const SprtSettings& settings) {
 
 ActionResult startSprt() {
     auto& sprtData = SprtTournamentData::instance();
-    if (sprtData.isRunning() || sprtData.isStarting()) {
-        return failed("An SPRT test is already running. Stop it first if you want to start a "
-                      "different one.");
+    // "Stop it first" is only the right advice for a test that is actually running. A test that is
+    // already on its way out needs the opposite -- waiting -- and telling the caller to stop it
+    // again has sent them round a stop/start loop that could never succeed.
+    switch (sprtData.state()) {
+        case SprtTournamentData::State::Running:
+            return failed("An SPRT test is already running. Stop it first if you want to start a "
+                          "different one.");
+        case SprtTournamentData::State::Starting:
+            return failed("An SPRT test is already starting.");
+        case SprtTournamentData::State::GracefulStopping:
+            return failed("The previous test is still finishing its games. Wait, or stop abruptly "
+                          "to end them now.");
+        case SprtTournamentData::State::Stopping:
+            return failed("The previous test is still stopping. Wait.");
+        case SprtTournamentData::State::Stopped:
+        default:
+            break;
     }
 
     auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
@@ -396,14 +540,28 @@ ActionResult stopSprt(StopMode mode) {
         return failed("No SPRT test is currently running.");
     }
 
-    bool graceful = mode == StopMode::Graceful;
-    sprtData.stopPool(graceful);
+    // Reporting "stopping the SPRT test gracefully" for a test that has been stopping gracefully
+    // all along reads like the request just took effect, which invites waiting for a change that
+    // will never come. Say plainly that nothing changed, and name the one thing that still would.
+    if (sprtData.state() == SprtTournamentData::State::GracefulStopping
+        && mode == StopMode::Graceful) {
+        return succeeded("Already stopping gracefully. Nothing changed. Wait, or stop abruptly.");
+    }
+    if (sprtData.state() == SprtTournamentData::State::Stopping) {
+        return succeeded("Already stopping. Nothing changed.");
+    }
+
+    if (mode == StopMode::Abrupt) {
+        // Returns a result, not an intention -- see stopTournament() for why this blocks.
+        sprtData.stopPoolAbruptlyAndWait();
+        switchToSprtView();
+        return succeeded("SPRT test stopped.");
+    }
+
+    sprtData.stopPool(true);
     switchToSprtView();
-    return succeeded(graceful
-            ? "Stopping the SPRT test gracefully: the game already in progress will be finished, "
-              "no new games will start."
-            : "Stopping the SPRT test abruptly: the in-progress game is being aborted "
-              "immediately.");
+    return succeeded("Stopping gracefully. Running games finish first, no new ones start. Not "
+                     "done yet.");
 }
 
 ActionResult sprtStatus() {
@@ -457,8 +615,9 @@ std::string sprtActivityText() {
         case State::Starting: return "an SPRT test is starting";
         case State::Running: return "an SPRT test is running";
         case State::GracefulStopping:
-            return "an SPRT test is running but stopping gracefully (finishing its in-progress "
-                   "game)";
+            // Same reasoning as runStateText()'s GracefulStopping case: never call this "running".
+            return "an SPRT test is finishing its games after a graceful stop";
+        case State::Stopping: return "an SPRT test is being aborted";
         case State::Stopped:
         default: return "";
     }

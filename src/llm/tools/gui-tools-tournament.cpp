@@ -71,7 +71,8 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                 "need to call list_installed_engines first for exact name. If name "
                 "matches multiple engines, result lists candidates -- ask user which, "
                 "never guess. Sets up round-robin (every engine plays every other); "
-                "gauntlet mode not supported via chat.",
+                "gauntlet mode not supported via chat. Rejected while a tournament runs or "
+                "stops; stop it first. open_add_engine_dialog is not affected.",
             .params = {Api::stringListParam<SelectEnginesRequest>("engines",
                 &SelectEnginesRequest::engines,
                 "Engine display names, e.g. [\"Stockfish\",\"Qapla\"].", true)},
@@ -89,9 +90,10 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                 "resign_centipawn_threshold/resign_two_sided. Each field independent/"
                 "optional -- pass ONLY what user asked to change (e.g. just \"games\"); "
                 "don't require/ask other fields first. Unpassed fields keep prior value "
-                "(this session or earlier), don't assume unset. Response always reports "
-                "the full current tournament config, so no separate get_status "
-                "(type=\"tournament\") call is normally needed to confirm what changed. "
+                "(this session or earlier), don't assume unset. Response reports the full "
+                "current tournament config, so no separate get_status (type=\"tournament\") "
+                "call is normally needed. While a tournament runs or stops, every field except "
+                "concurrency is rejected; stop it first. concurrency applies immediately. "
                 "openings_file must be set (here or earlier session) before start "
                 "(type=\"tournament\") succeeds, no safe default. For openings_file/"
                 "pgn_file, set openings_file_dialog/pgn_file_dialog to true instead of a "

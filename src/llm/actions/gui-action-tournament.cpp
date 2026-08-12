@@ -34,6 +34,7 @@
 
 #include <filesystem>
 #include <format>
+#include <optional>
 
 namespace QaplaLlm::Actions {
 
@@ -77,11 +78,12 @@ namespace {
             case TournamentData::State::Running:
                 return "A tournament is currently running.";
             case TournamentData::State::GracefulStopping:
-                return "A tournament is currently running but stopping gracefully -- "
-                       "in-progress games will finish, no new ones will start.";
+                // Never phrased as "running": in this state the tournament accepts no new games
+                // and cannot be reconfigured or restarted, so calling it running misleads.
+                return "A tournament is finishing its games after a graceful stop. No new games "
+                       "start.";
             case TournamentData::State::Stopping:
-                return "A tournament is currently stopping abruptly -- in-progress games are "
-                       "being aborted.";
+                return "A tournament is being aborted.";
             case TournamentData::State::Stopped:
             default:
                 return "No tournament is currently running.";
@@ -128,6 +130,80 @@ namespace {
             adjudicationSummary(tournamentData));
     }
 
+    // Everything except concurrency is baked into the tournament at start: createTournament()
+    // snapshots time control, openings, PGN and adjudication, and scheduleAll() lays out every
+    // game up front. A mid-run change reaches neither the games in progress nor later rounds --
+    // and if it did, a tournament played half under one setting and half under another would give
+    // a meaningless Elo result. So such a patch is refused whole rather than stored, which would
+    // leave the status reporting a value that is not the one being played.
+    bool changesMoreThanConcurrency(const TournamentSettings& settings) {
+        return settings.timeControl || settings.gamesPerPairing || settings.rounds
+            || settings.event || settings.openingsFile || settings.pickOpeningsFile
+            || settings.pgnFile || settings.pickPgnFile
+            || settings.drawMode || settings.drawMinFullMoves
+            || settings.drawRequiredConsecutiveMoves || settings.drawCentipawnThreshold
+            || settings.resignMode || settings.resignRequiredConsecutiveMoves
+            || settings.resignCentipawnThreshold || settings.resignTwoSided;
+    }
+
+    // A running tournament owns its configuration. Split into two phases because the advice
+    // differs: one can still be stopped, the other is already stopping and only needs waiting out.
+    enum class RunLock { None, Running, Stopping };
+
+    RunLock runLockOf(TournamentData& data) {
+        switch (data.getState()) {
+            case TournamentData::State::Running:
+            case TournamentData::State::Starting:
+                return RunLock::Running;
+            case TournamentData::State::GracefulStopping:
+            case TournamentData::State::Stopping:
+                return RunLock::Stopping;
+            case TournamentData::State::Stopped:
+            default:
+                return RunLock::None;
+        }
+    }
+
+    // Why the patch is refused, or nullopt if it may go through. The rationale (all games are
+    // scheduled at start, so a mid-run change reaches none of them and would mix conditions into
+    // one result) belongs here, not in the message: the model needs the rule and the next step,
+    // and every extra sentence costs context it needs for the conversation.
+    std::optional<std::string> settingsLockedReason(TournamentData& data,
+                                                    const TournamentSettings& settings) {
+        if (!changesMoreThanConcurrency(settings)) {
+            return std::nullopt;
+        }
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Settings are locked while a tournament runs. Nothing changed. Ask the "
+                       "user: stop gracefully or abruptly? Then set the values and start. Only "
+                       "concurrency can be changed while running.";
+            case RunLock::Stopping:
+                return "Settings are locked until the tournament has stopped. Nothing changed. "
+                       "Wait, then set the values and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
+
+    // Same rule for the engines: they are what the result table compares, so they are fixed for
+    // as long as the tournament that uses them. Adding engines to the catalog is unrelated.
+    std::optional<std::string> engineSelectionLockedReason(TournamentData& data) {
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Engine selection is locked while a tournament runs. Nothing changed. Ask "
+                       "the user: stop gracefully or abruptly? Then select and start. Installing "
+                       "engines still works.";
+            case RunLock::Stopping:
+                return "Engine selection is locked until the tournament has stopped. Nothing "
+                       "changed. Wait, then select and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
+
     // ------------------------------------------------------------------
     // configureTournament() field appliers
     //
@@ -141,6 +217,9 @@ namespace {
         std::vector<std::string> problems;
         bool dialogShown = false;
         Remedy remedy = Remedy::None;
+        // Set when the patch changed concurrency; lets configureTournament() answer a
+        // concurrency-only patch with just this sentence instead of the full status.
+        std::optional<std::string> concurrencyNote;
     };
 
     // Reports the effective per-pairing total (games * rounds) alongside whichever field just
@@ -149,6 +228,30 @@ namespace {
     std::string gamesAndRoundsSummary(TournamentData& data) {
         return std::format("games={} per round, rounds={} ({} games per pairing in total)",
             data.config().games, data.config().rounds, data.config().games * data.config().rounds);
+    }
+
+    // Concurrency is the one setting that takes effect on a tournament that is actually running,
+    // so it gets its own sentence saying whether it just did. Reporting it the usual way -- one
+    // "concurrency=5" item inside the full status -- reads as if the change was ignored, and has
+    // provoked stop/start cycles to force it through that were never needed.
+    //
+    // Switches on the exact state rather than isRunning(): that predicate is true for Starting,
+    // GracefulStopping and Stopping as well, and claiming "the running tournament now plays 5 in
+    // parallel" is wrong in every one of those -- a gracefully stopping tournament starts no new
+    // games at all, so nothing there changes. applyConcurrency() below applies the value live
+    // under exactly the same condition, so text and behaviour cannot drift apart.
+    std::string concurrencySummary(TournamentData& data, uint32_t count) {
+        switch (data.getState()) {
+            case TournamentData::State::Running:
+                return std::format("Concurrency is now {}. The running tournament uses it "
+                                   "already; do not restart it.", count);
+            case TournamentData::State::Starting:
+                return std::format("Concurrency is now {}. The starting tournament will use it.",
+                    count);
+            default:
+                return std::format("Concurrency is now {}. Applies to the next tournament.",
+                    count);
+        }
     }
 
     void applyOpeningsFile(TournamentData& data, const std::string& path, ConfigureOutcome& outcome) {
@@ -230,7 +333,16 @@ namespace {
                 outcome.problems.push_back("concurrency must be at least 1");
             } else {
                 data.setExternalConcurrency(*settings.concurrency);
-                outcome.applied.push_back("concurrency=" + std::to_string(*settings.concurrency));
+                // Push it into the live pool only while the tournament is really running -- this
+                // is what makes the change take effect mid-run instead of only at the next start.
+                // Not during GracefulStopping: raising concurrency there would hand the pool room
+                // for more games while the tournament is supposed to start none, contradicting
+                // both the graceful stop and what concurrencySummary() reports for that state.
+                if (data.getState() == TournamentData::State::Running) {
+                    data.setPoolConcurrency(*settings.concurrency, true, true);
+                }
+                outcome.concurrencyNote = concurrencySummary(data, *settings.concurrency);
+                outcome.applied.push_back(*outcome.concurrencyNote);
             }
         }
 
@@ -283,6 +395,9 @@ ActionResult selectTournamentEngines(const std::vector<std::string>& engineNames
     if (engineNames.empty()) {
         return failed("No engine names were given.");
     }
+    if (auto locked = engineSelectionLockedReason(TournamentData::instance())) {
+        return failed(*locked);
+    }
 
     auto outcome = resolveEngines(engineNames);
     if (!outcome.ambiguous.empty()) {
@@ -317,6 +432,12 @@ ActionResult selectTournamentEngines(const std::vector<std::string>& engineNames
 ActionResult configureTournament(const TournamentSettings& settings) {
     auto& tournamentData = TournamentData::instance();
 
+    // Refused before anything is applied, so a mixed patch cannot leave half its fields in place:
+    // partial success is the one outcome a caller has no way to recover from sensibly.
+    if (auto locked = settingsLockedReason(tournamentData, settings)) {
+        return failed(*locked);
+    }
+
     ConfigureOutcome outcome;
     applySettings(tournamentData, settings, outcome);
 
@@ -333,6 +454,14 @@ ActionResult configureTournament(const TournamentSettings& settings) {
         switchToTournamentView();
     }
 
+    // A patch that changed nothing but concurrency answers with just that one sentence. The full
+    // status would bury it between a dozen unrelated fields and end on the run state, which is
+    // exactly the reading that makes a caller think the change didn't land.
+    if (outcome.problems.empty() && outcome.concurrencyNote && outcome.applied.size() == 1) {
+        return ActionResult{.ok = true, .text = *outcome.concurrencyNote, .widget = nullptr,
+            .endsTurn = outcome.dialogShown, .remedy = outcome.remedy};
+    }
+
     std::string message;
     if (!outcome.problems.empty()) {
         message = "Problems: " + joinList(outcome.problems) + ". ";
@@ -344,9 +473,23 @@ ActionResult configureTournament(const TournamentSettings& settings) {
 
 ActionResult startTournament() {
     auto& tournamentData = TournamentData::instance();
-    if (tournamentData.isRunning() || tournamentData.isStarting()) {
-        return failed("A tournament is already running. Stop it first if you want to start a "
-                      "different one.");
+    // "Stop it first" is only the right advice for a tournament that is actually running. A
+    // tournament that is already on its way out needs the opposite -- waiting -- and telling the
+    // caller to stop it again has sent them round a stop/start loop that could never succeed.
+    switch (tournamentData.getState()) {
+        case TournamentData::State::Running:
+            return failed("A tournament is already running. Stop it first if you want to start a "
+                          "different one.");
+        case TournamentData::State::Starting:
+            return failed("A tournament is already starting.");
+        case TournamentData::State::GracefulStopping:
+            return failed("The previous tournament is still finishing its games. Wait, or stop "
+                          "abruptly to end them now.");
+        case TournamentData::State::Stopping:
+            return failed("The previous tournament is still stopping. Wait.");
+        case TournamentData::State::Stopped:
+        default:
+            break;
     }
 
     auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
@@ -369,14 +512,32 @@ ActionResult stopTournament(StopMode mode) {
         return failed("No tournament is currently running.");
     }
 
-    bool graceful = mode == StopMode::Graceful;
-    tournamentData.stopPool(graceful);
+    // Reporting "stopping the tournament gracefully" for a tournament that has been stopping
+    // gracefully all along reads like the request just took effect, which invites waiting for a
+    // change that will never come. Say plainly that nothing changed, and name the one thing that
+    // still would.
+    if (tournamentData.getState() == TournamentData::State::GracefulStopping
+        && mode == StopMode::Graceful) {
+        return succeeded("Already stopping gracefully. Nothing changed. Wait, or stop abruptly.");
+    }
+    if (tournamentData.getState() == TournamentData::State::Stopping) {
+        return succeeded("Already stopping. Nothing changed.");
+    }
+
+    if (mode == StopMode::Abrupt) {
+        // Returns a result, not an intention: the call blocks until the games are really gone, so
+        // the caller can configure and start straight away. Reporting "is being aborted" and
+        // returning early is what produced the retry loops -- the next call arrived milliseconds
+        // later and found a tournament that was still stopping.
+        tournamentData.stopPoolAbruptlyAndWait();
+        switchToTournamentView();
+        return succeeded("Tournament stopped.");
+    }
+
+    tournamentData.stopPool(true);
     switchToTournamentView();
-    return succeeded(graceful
-            ? "Stopping the tournament gracefully: games already in progress will be finished, "
-              "no new games will start."
-            : "Stopping the tournament abruptly: all in-progress games are being aborted "
-              "immediately.");
+    return succeeded("Stopping gracefully. Running games finish first, no new ones start. Not "
+                     "done yet.");
 }
 
 ActionResult tournamentStatus() {
@@ -427,7 +588,8 @@ std::string tournamentActivityText() {
         case State::Starting: return "a tournament is starting";
         case State::Running: return "a tournament is running";
         case State::GracefulStopping:
-            return "a tournament is running but stopping gracefully (finishing in-progress games)";
+            // Same reasoning as runStateText()'s GracefulStopping case: never call this "running".
+            return "a tournament is finishing its games after a graceful stop";
         case State::Stopping: return "a tournament is stopping abruptly";
         case State::Stopped:
         default: return "";

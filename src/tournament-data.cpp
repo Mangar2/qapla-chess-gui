@@ -736,6 +736,14 @@ namespace QaplaWindows {
         imguiConcurrency_->setExternalConcurrency(count);
     }
 
+    void TournamentData::stopPoolAbruptlyAndWait() {
+        stopPool(false);
+        // Drains the pool instead of waiting for populateRunningTable() to notice on some later
+        // frame -- that never happens while this call is holding the UI thread anyway.
+        poolAccess_->waitForTask();
+        state_ = State::Stopped;
+    }
+
     void TournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
         if (!isRunning()) {
             return;

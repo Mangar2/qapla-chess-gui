@@ -81,7 +81,8 @@ void registerSprtTools(GuiToolRegistry& registry) {
                 "lists candidates -- ask user which they meant, never guess. Entirely "
                 "separate from select_engines/configure_tournament (classic tournament "
                 "mode) -- selecting SPRT engines never changes tournament's engine "
-                "selection, and vice versa.",
+                "selection, and vice versa. Rejected while a test runs or stops; stop it first. "
+                "open_add_engine_dialog is not affected.",
             .params = {Api::stringParam<SelectSprtEnginesRequest>("champion",
                            &SelectSprtEnginesRequest::champion,
                            "Comparison/baseline engine -- trusted one, challenger tested against "
@@ -105,9 +106,10 @@ void registerSprtTools(GuiToolRegistry& registry) {
                 "resign_required_consecutive_moves/resign_centipawn_threshold/"
                 "resign_two_sided. Every field independent/optional -- pass ONLY what "
                 "user asked to change, don't require/ask for others first. Anything not "
-                "passed keeps prior value (this session or earlier). Response always "
-                "reports the full current SPRT config, so no separate get_status "
-                "(type=\"sprt\") call is normally needed to confirm what changed. "
+                "passed keeps prior value (this session or earlier). Response reports the "
+                "full current SPRT config, so no separate get_status (type=\"sprt\") call "
+                "is normally needed. While a test runs or stops, every field except concurrency "
+                "is rejected; stop it first. concurrency applies immediately. "
                 "IMPORTANT: fully separate config from configure_tournament -- classic "
                 "tournament and SPRT each have own time control, openings file, "
                 "concurrency, adjudication etc, despite same field names. If user's "

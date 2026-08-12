@@ -142,6 +142,14 @@ namespace QaplaWindows {
         imguiConcurrency_->setExternalConcurrency(count);
     }
 
+    void EpdData::stopPoolAbruptlyAndWait() {
+        stopPool(false);
+        // Drains the pool instead of waiting for a later frame to notice -- that never happens
+        // while this call is holding the UI thread anyway.
+        poolAccess_->waitForTask();
+        state = State::Stopped;
+    }
+
     void EpdData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {
         if (!isRunning() && !isStarting()) {
             return;

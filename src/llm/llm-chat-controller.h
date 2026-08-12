@@ -41,7 +41,21 @@ enum class ChatRole : std::uint8_t {
     Assistant,
     Tool,  ///< A tool's own friendly result text, shown inline; never replayed to the model.
     Error, ///< Local/network/protocol error shown inline; never replayed to the model.
-    Debug  ///< Local diagnostic text (e.g. prompt-size estimate), shown inline; never replayed to the model.
+    Debug, ///< Local diagnostic text (e.g. prompt-size estimate), shown inline; never replayed to the model.
+
+    /**
+     * @brief The one role that is replayed to the model but never shown -- the mirror image of
+     * Tool/Error/Debug above.
+     *
+     * Exists so that every finished turn contributes exactly one assistant-side entry even when
+     * there is no assistant text to display: a terminal tool already spoke to the user through its
+     * own Tool entry, and a failed turn only has an Error entry. Without this, such a turn left the
+     * replayed history ending on a user message, and the next user message put two of them in a
+     * row -- which local chat templates reject outright (Mistral's raises "conversation roles must
+     * alternate"), permanently breaking every later request in the session rather than just the
+     * turn that failed.
+     */
+    AssistantContext
 };
 
 struct ChatEntry {
@@ -75,6 +89,15 @@ struct AgentTurnResult {
     bool success = false;
     std::string finalContent;
     std::string errorMessage;
+
+    /**
+     * @brief What the model should see as its own turn when finalContent is empty.
+     *
+     * Set on the terminal-tool path, where the tool's result already reached the user and there
+     * is no assistant text to show. Replayed as a ChatRole::AssistantContext entry -- see that
+     * role for why every turn has to contribute one.
+     */
+    std::string contextNote;
 };
 
 /**

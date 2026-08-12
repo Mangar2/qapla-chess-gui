@@ -279,9 +279,12 @@ namespace {
                 if (toolResult.terminal) {
                     // Ends the turn without asking the model again -- see GuiToolResult::terminal.
                     // finalContent stays empty on purpose: the tool result above already reached
-                    // the user via onToolEvent, applyTurnResult only adds a further chat entry
-                    // when finalContent is non-empty.
+                    // the user via onToolEvent, and applyTurnResult only adds a *visible* chat
+                    // entry when finalContent is non-empty. It still needs something to replay as
+                    // this turn's assistant message, though -- hence contextNote, which carries
+                    // the tool's own result into the model's history without showing it twice.
                     turnResult.success = true;
+                    turnResult.contextNote = toolResult.content;
                 }
             }
 
@@ -344,10 +347,29 @@ void LlmChatController::sendMessage(const std::string& userText) {
     for (const auto& entry : history_) {
         if (entry.role == ChatRole::User) {
             messages.push_back(ChatMessage{.role = "user", .content = entry.text});
-        } else if (entry.role == ChatRole::Assistant) {
+        } else if (entry.role == ChatRole::Assistant || entry.role == ChatRole::AssistantContext) {
             messages.push_back(ChatMessage{.role = "assistant", .content = entry.text});
         }
-        // Tool/Error entries are shown to the user locally but never replayed to the model.
+        // Tool/Error/Debug entries are shown to the user locally but never replayed to the model;
+        // AssistantContext is the exact opposite (see its doc comment).
+    }
+
+    // The role sequence, once per request. Local chat templates reject anything but strict
+    // user/assistant alternation here, and reconstructing what was actually sent after the fact
+    // turned out to be guesswork -- one line of ground truth is worth more than the reconstruction.
+    // Tool-call rounds inside the turn are not covered: they are appended later, by runAgentLoop.
+    {
+        std::string roles;
+        for (const auto& message : messages) {
+            if (message.role == "system") {
+                roles += 'S';
+            } else if (message.role == "user") {
+                roles += 'U';
+            } else {
+                roles += 'A';
+            }
+        }
+        logger_->logLine("ROLES", roles);
     }
 
     auto events = std::make_shared<ToolEventChannel>();
@@ -454,7 +476,24 @@ void LlmChatController::applyTurnResult(const AgentTurnResult& result) {
         history_.push_back({ChatRole::Error, result.errorMessage, nullptr});
     } else if (!result.finalContent.empty()) {
         history_.push_back({ChatRole::Assistant, result.finalContent, nullptr});
+        return;
     }
+
+    // Every finished turn must leave exactly one assistant-side entry behind, or the replayed
+    // history ends on a user message and the next one lands next to it -- see
+    // ChatRole::AssistantContext. Error and terminal-tool turns have nothing to display, so they
+    // contribute an invisible entry instead of none at all. Telling the model its own attempt
+    // failed is also better context than silently dropping the turn: it can react to the failure
+    // rather than wonder why its tool call left no trace.
+    std::string note;
+    if (!result.success) {
+        note = "(this turn failed and produced no answer: " + result.errorMessage + ")";
+    } else if (!result.contextNote.empty()) {
+        note = result.contextNote;
+    } else {
+        note = "(done -- the tool result above is the answer to that request)";
+    }
+    history_.push_back({ChatRole::AssistantContext, std::move(note), nullptr});
 }
 
 void LlmChatController::applyModelsResult(const ListModelsResult& result) {

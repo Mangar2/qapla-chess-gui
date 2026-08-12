@@ -67,7 +67,8 @@ void registerEpdTools(GuiToolRegistry& registry) {
                 "installed engine, result lists candidates -- ask user which one meant, "
                 "never guess. Entirely separate from select_engines/select_sprt_engines "
                 "(classic tournament/SPRT) -- selecting EPD engines never changes those, "
-                "vice versa.",
+                "vice versa. Rejected while an analysis runs or stops; stop it first. "
+                "open_add_engine_dialog is not affected.",
             .params = {Api::stringListParam<SelectEpdEnginesRequest>("engines",
                 &SelectEpdEnginesRequest::engines,
                 "Engine display names to test vs EPD positions, e.g. [\"Stockfish\", "
@@ -87,6 +88,8 @@ void registerEpdTools(GuiToolRegistry& registry) {
                 "optional -- pass ONLY what user asked to change, don't require/ask for "
                 "others first. Unset fields keep prior value (this session or earlier) "
                 "-- call get_status (type=\"epd\") first if unsure what's current. "
+                "While an analysis runs or stops, every field except concurrency is rejected; "
+                "stop it first. concurrency applies immediately. "
                 "IMPORTANT: completely separate from configure_tournament/configure_sprt "
                 "-- EPD has no shared time_control string (just plain per-position second "
                 "counts), no adjudication concept, despite sounding like another "

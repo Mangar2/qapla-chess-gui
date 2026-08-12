@@ -31,6 +31,7 @@
 
 #include <filesystem>
 #include <format>
+#include <optional>
 
 namespace QaplaLlm::Actions {
 
@@ -76,11 +77,14 @@ namespace {
         } else if (epdData.isRunning()) {
             runState = "An EPD analysis is currently running.";
         } else if (epdData.state == EpdData::State::Gracefully) {
-            runState = "An EPD analysis is currently running but stopping gracefully -- "
-                       "in-progress positions will finish, no new ones will start.";
+            // Deliberately not phrased as "running but stopping": an analysis in this state is on
+            // its way out and takes on no new positions, so calling it "running" invites the
+            // reader to treat it like a live analysis -- restart it, or expect settings to reach
+            // it. It is only finishing what was already under way.
+            runState = "An EPD analysis is finishing its positions after a graceful stop. No new "
+                       "positions start.";
         } else if (epdData.state == EpdData::State::Stopping) {
-            runState = "An EPD analysis is currently stopping abruptly -- in-progress positions "
-                       "are being aborted.";
+            runState = "An EPD analysis is being aborted.";
         }
         if (epdData.isFinished()) {
             runState += " All positions have been analyzed -- show the EPD result to see it.";
@@ -104,7 +108,96 @@ namespace {
         std::vector<std::string> problems;
         bool dialogShown = false;
         Remedy remedy = Remedy::None;
+        // Set when the patch changed concurrency; lets configureEpd() answer a concurrency-only
+        // patch with just this sentence instead of the "Configured: ..." list.
+        std::optional<std::string> concurrencyNote;
     };
+
+    // Concurrency is the one setting that takes effect on an analysis that is actually running, so
+    // it gets its own sentence saying whether it just did. Reported the usual way -- one
+    // "concurrency=5" item among the others -- it reads as if the change would only apply to the
+    // next run, which has provoked stop/start cycles to force it through that were never needed.
+    //
+    // applySettings() applies the value live under exactly the same condition, so text and
+    // behaviour cannot drift apart.
+    std::string concurrencySummary(EpdData& data, uint32_t count) {
+        switch (data.state) {
+            case EpdData::State::Running:
+                return std::format("Concurrency is now {}. The running analysis uses it already; "
+                                   "do not restart it.", count);
+            case EpdData::State::Starting:
+                return std::format("Concurrency is now {}. The starting analysis will use it.",
+                    count);
+            default:
+                return std::format("Concurrency is now {}. Applies to the next analysis.", count);
+        }
+    }
+
+    // Everything except concurrency is fixed once the analysis starts, exactly as for the classic
+    // tournament (see gui-action-tournament.cpp's settingsLockedReason()). Per-position time
+    // limits in particular decide what "solved" means, so changing them mid-run would leave one
+    // result table whose rows were measured under two different rules.
+    bool changesMoreThanConcurrency(const EpdSettings& settings) {
+        return settings.epdFile || settings.pickEpdFile || settings.maxTimeInSeconds
+            || settings.minTimeInSeconds || settings.seenPlies;
+    }
+
+    // A running analysis owns its configuration. Split into two phases because the advice differs:
+    // one can still be stopped, the other is already stopping and only needs waiting out.
+    enum class RunLock { None, Running, Stopping };
+
+    RunLock runLockOf(EpdData& data) {
+        switch (data.state) {
+            case EpdData::State::Running:
+            case EpdData::State::Starting:
+                return RunLock::Running;
+            case EpdData::State::Gracefully:
+            case EpdData::State::Stopping:
+                return RunLock::Stopping;
+            case EpdData::State::Stopped:
+            case EpdData::State::Cleared:
+            default:
+                return RunLock::None;
+        }
+    }
+
+    // Why the patch is refused, or nullopt if it may go through. The rationale (the per-position
+    // time limits decide what "solved" means, so mixing them mixes the result table) belongs
+    // here, not in the message: the model needs the rule and the next step, nothing else.
+    std::optional<std::string> settingsLockedReason(EpdData& data, const EpdSettings& settings) {
+        if (!changesMoreThanConcurrency(settings)) {
+            return std::nullopt;
+        }
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Settings are locked while an EPD analysis runs. Nothing changed. Ask the "
+                       "user: stop gracefully or abruptly? Then set the values and start. Only "
+                       "concurrency can be changed while running.";
+            case RunLock::Stopping:
+                return "Settings are locked until the analysis has stopped. Nothing changed. "
+                       "Wait, then set the values and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
+
+    // Same rule for the engines: they are what the result table reports on. Adding engines to the
+    // catalog is unrelated.
+    std::optional<std::string> engineSelectionLockedReason(EpdData& data) {
+        switch (runLockOf(data)) {
+            case RunLock::Running:
+                return "Engine selection is locked while an EPD analysis runs. Nothing changed. "
+                       "Ask the user: stop gracefully or abruptly? Then select and start. "
+                       "Installing engines still works.";
+            case RunLock::Stopping:
+                return "Engine selection is locked until the analysis has stopped. Nothing "
+                       "changed. Wait, then select and start.";
+            case RunLock::None:
+            default:
+                return std::nullopt;
+        }
+    }
 
     void pickEpdFile(EpdData& data, ConfigureOutcome& outcome) {
         outcome.dialogShown = true;
@@ -152,7 +245,16 @@ namespace {
                 outcome.problems.push_back("concurrency must be at least 1");
             } else {
                 data.setExternalConcurrency(*settings.concurrency);
-                outcome.applied.push_back("concurrency=" + std::to_string(*settings.concurrency));
+                // Push it into the live pool only while the analysis is really running -- this is
+                // what makes the change take effect mid-run instead of only at the next start.
+                // Not during Gracefully: raising concurrency there would hand the pool room for
+                // more positions while the analysis is supposed to start none, contradicting both
+                // the graceful stop and what concurrencySummary() reports for that state.
+                if (data.state == EpdData::State::Running) {
+                    data.setPoolConcurrency(*settings.concurrency, true, true);
+                }
+                outcome.concurrencyNote = concurrencySummary(data, *settings.concurrency);
+                outcome.applied.push_back(*outcome.concurrencyNote);
             }
         }
     }
@@ -161,6 +263,9 @@ namespace {
 ActionResult selectEpdEngines(const std::vector<std::string>& engineNames) {
     if (engineNames.empty()) {
         return failed("No engine names were given.");
+    }
+    if (auto locked = engineSelectionLockedReason(EpdData::instance())) {
+        return failed(*locked);
     }
 
     auto outcome = resolveEngines(engineNames);
@@ -194,6 +299,12 @@ ActionResult selectEpdEngines(const std::vector<std::string>& engineNames) {
 ActionResult configureEpd(const EpdSettings& settings) {
     auto& epdData = EpdData::instance();
 
+    // Refused before anything is applied, so a mixed patch cannot leave half its fields in place:
+    // partial success is the one outcome a caller has no way to recover from sensibly.
+    if (auto locked = settingsLockedReason(epdData, settings)) {
+        return failed(*locked);
+    }
+
     ConfigureOutcome outcome;
     applySettings(epdData, settings, outcome);
 
@@ -204,6 +315,13 @@ ActionResult configureEpd(const EpdSettings& settings) {
 
     if (!outcome.applied.empty()) {
         switchToEpdView();
+    }
+
+    // A patch that changed nothing but concurrency answers with just that one sentence, rather
+    // than wrapping it into the "Configured: ..." list where it reads like a queued-up setting.
+    if (outcome.problems.empty() && outcome.concurrencyNote && outcome.applied.size() == 1) {
+        return ActionResult{.ok = true, .text = *outcome.concurrencyNote, .widget = nullptr,
+            .endsTurn = outcome.dialogShown, .remedy = outcome.remedy};
     }
 
     std::string message;
@@ -225,9 +343,26 @@ ActionResult configureEpd(const EpdSettings& settings) {
 
 ActionResult startEpd() {
     auto& epdData = EpdData::instance();
-    if (epdData.isRunning() || epdData.isStarting()) {
-        return failed("An EPD analysis is already running. Stop it first if you want to start a "
-                      "different one.");
+    // Switches on the state rather than isRunning()/isStarting(): EpdData::isRunning() is strictly
+    // state == Running, so neither predicate covers Gracefully or Stopping -- a start requested
+    // while the previous analysis was still winding down slipped straight through this guard and
+    // into analyse(). Beyond that, "stop it first" is only the right advice for an analysis that
+    // is actually running; one already on its way out needs the opposite, waiting.
+    switch (epdData.state) {
+        case EpdData::State::Running:
+            return failed("An EPD analysis is already running. Stop it first if you want to start "
+                          "a different one.");
+        case EpdData::State::Starting:
+            return failed("An EPD analysis is already starting.");
+        case EpdData::State::Gracefully:
+            return failed("The previous analysis is still finishing its positions. Wait, or stop "
+                          "abruptly to end them now.");
+        case EpdData::State::Stopping:
+            return failed("The previous analysis is still stopping. Wait.");
+        case EpdData::State::Stopped:
+        case EpdData::State::Cleared:
+        default:
+            break;
     }
 
     auto historyCountBefore = QaplaWindows::SnackbarManager::instance().getHistory().size();
@@ -255,18 +390,32 @@ ActionResult startEpd() {
 
 ActionResult stopEpd(StopMode mode) {
     auto& epdData = EpdData::instance();
-    if (!epdData.isRunning() && !epdData.isStarting()) {
+    // Same reason startEpd() switches on the state: isRunning() is strictly state == Running, so
+    // this used to answer "No EPD analysis is currently running" for an analysis that was still
+    // finishing its positions after a graceful stop -- and then refuse the abrupt stop that would
+    // actually have ended it.
+    if (epdData.state == EpdData::State::Gracefully && mode == StopMode::Graceful) {
+        return succeeded("Already stopping gracefully. Nothing changed. Wait, or stop abruptly.");
+    }
+    if (epdData.state == EpdData::State::Stopping) {
+        return succeeded("Already stopping. Nothing changed.");
+    }
+    if (!epdData.isRunning() && !epdData.isStarting()
+        && epdData.state != EpdData::State::Gracefully) {
         return failed("No EPD analysis is currently running.");
     }
 
-    bool graceful = mode == StopMode::Graceful;
-    epdData.stopPool(graceful);
+    if (mode == StopMode::Abrupt) {
+        // Returns a result, not an intention -- see stopTournament() for why this blocks.
+        epdData.stopPoolAbruptlyAndWait();
+        switchToEpdView();
+        return succeeded("EPD analysis stopped.");
+    }
+
+    epdData.stopPool(true);
     switchToEpdView();
-    return succeeded(graceful
-            ? "Stopping the EPD analysis gracefully: positions already being analyzed will "
-              "finish, no new ones will start."
-            : "Stopping the EPD analysis abruptly: all in-progress positions are being aborted "
-              "immediately.");
+    return succeeded("Stopping gracefully. Running positions finish first, no new ones start. Not "
+                     "done yet.");
 }
 
 ActionResult epdStatus() {
@@ -320,8 +469,8 @@ std::string epdActivityText() {
         case State::Starting: return "an EPD analysis is starting";
         case State::Running: return "an EPD analysis is running";
         case State::Gracefully:
-            return "an EPD analysis is running but stopping gracefully (finishing in-progress "
-                   "positions)";
+            // Same reasoning as statusText()'s Gracefully case: never call this "running".
+            return "an EPD analysis is finishing its positions after a graceful stop";
         case State::Stopping: return "an EPD analysis is stopping abruptly";
         case State::Stopped:
         case State::Cleared:
