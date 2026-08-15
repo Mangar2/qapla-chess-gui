@@ -27,7 +27,7 @@ namespace QaplaTest {
     /**
      * @brief Registers tests that drive the SPRT GUI tools directly through
      * GuiToolRegistry (no LLM involved) -- mirrors registerLlmTournamentToolTests()
-     * for the SPRT tool group (see gui-tool-sprt-register.cpp).
+     * for the SPRT tool group (see src/llm/tools/gui-tools-sprt.cpp).
      * @param engine The test engine instance.
      */
     void registerLlmSprtToolTests(ImGuiTestEngine* engine);

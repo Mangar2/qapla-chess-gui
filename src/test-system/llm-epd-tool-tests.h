@@ -27,7 +27,7 @@ namespace QaplaTest {
     /**
      * @brief Registers tests that drive the EPD GUI tools directly through
      * GuiToolRegistry (no LLM involved) -- mirrors registerLlmTournamentToolTests()/
-     * registerLlmSprtToolTests() for the EPD tool group (see gui-tool-epd-register.cpp).
+     * registerLlmSprtToolTests() for the EPD tool group (see src/llm/tools/gui-tools-epd.cpp).
      * @param engine The test engine instance.
      */
     void registerLlmEpdToolTests(ImGuiTestEngine* engine);

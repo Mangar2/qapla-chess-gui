@@ -145,6 +145,14 @@ namespace QaplaWindows {
          * @param nice If true, reduces the number of active managers gradually.
          * @param direct If true, applies the change immediately without debouncing.
          */
+        /**
+         * @brief Aborts the analysis and returns only once it has really stopped.
+         *
+         * See TournamentData::stopPoolAbruptlyAndWait() -- same reasoning, same abrupt-only
+         * restriction.
+         */
+        void stopPoolAbruptlyAndWait();
+
         void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**

@@ -380,7 +380,9 @@ void SprtTournamentData::pollData() {
             }
             state_ = State::Stopped;
         }
-        if (state_ == State::GracefulStopping && !anyRunning) {
+        // Both pending-stop states end the same way: once no game is left running, the test is
+        // stopped. Same transition TournamentData::populateRunningTable() makes.
+        if ((state_ == State::GracefulStopping || state_ == State::Stopping) && !anyRunning) {
             state_ = State::Stopped;
         }
 
@@ -396,7 +398,7 @@ void SprtTournamentData::stopPool(bool graceful) {
     imguiConcurrency_->setActive(false);
 
     auto oldState = state_;
-    state_ = graceful ? State::GracefulStopping : State::Stopped;
+    state_ = graceful ? State::GracefulStopping : State::Stopping;
     if (!graceful) {
         // If we are not graceful, we stop all immediately
         poolAccess_->stopAll();
@@ -406,12 +408,21 @@ void SprtTournamentData::stopPool(bool graceful) {
     bool wasMonteCarloRunning = isMonteCarloTestRunning();
     stopMonteCarloTest();
 
+    if (oldState == State::Stopping && !wasMonteCarloRunning) {
+        SnackbarManager::instance().showNote("SPRT tournament is already stopping.",
+            false, "sprt-tournament");
+        return;
+    }
     if (oldState == State::Stopped && !wasMonteCarloRunning) {
+        // Reset what the assignment above just set: nothing is running, so neither pending-stop
+        // state is true. Without this a "stop" on an idle test parked it in GracefulStopping until
+        // the next poll() happened to clear it.
+        state_ = State::Stopped;
         SnackbarManager::instance().showNote("SPRT tournament is not running.");
         return;
     }
     if (oldState == State::GracefulStopping && graceful && !wasMonteCarloRunning) {
-        SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.", 
+        SnackbarManager::instance().showNote("SPRT tournament is already stopping gracefully.",
             false, "sprt-tournament");
         return;
     }
@@ -429,21 +440,34 @@ void SprtTournamentData::stopPool(bool graceful) {
 }
 
 void SprtTournamentData::clear() {
-    if (!hasResults()) {
-        SnackbarManager::instance().showNote("Nothing to clear.", false, "sprt-tournament");
-        return;
-    }
+    const bool hadResults = hasResults();
     std::string message = isRunning() ?
         "SPRT tournament stopped.\nAll SPRT tournament results have been cleared." :
         "All SPRT tournament results have been cleared.";
     imguiConcurrency_->setActive(false);
-    state_ = State::Stopped;
+    // Ends the run before returning, on both paths and like TournamentData::clear() does -- an
+    // early "nothing to clear" return used to leave a test that had just been stopped abruptly
+    // parked in a pending-stop state until some later frame's pollData() cleared it. clearAll()
+    // waits for the games to really be gone, so Stopped is only claimed once it is true.
     poolAccess_->clearAll();
+    state_ = State::Stopped;
+    if (!hadResults) {
+        SnackbarManager::instance().showNote("Nothing to clear.", false, "sprt-tournament");
+        return;
+    }
     sprtManager_ = std::make_unique<SprtManager>();
-    
+
     montecarloTable_.clear();
-    
+
     SnackbarManager::instance().showSuccess(message, false, "sprt-tournament");
+}
+
+void SprtTournamentData::stopPoolAbruptlyAndWait() {
+    stopPool(false);
+    // Drains the pool instead of waiting for pollData() to notice on some later frame -- that
+    // never happens while this call is holding the UI thread anyway.
+    poolAccess_->waitForTask();
+    state_ = State::Stopped;
 }
 
 void SprtTournamentData::setPoolConcurrency(uint32_t count, bool nice, bool direct) {

@@ -48,11 +48,16 @@ namespace QaplaWindows {
 
     class SprtTournamentData {
     public:
+        // Mirrors TournamentData::State one-for-one, Stopping included: an abrupt stop already
+        // aborted the in-progress games here too, it just used to report Stopped while they were
+        // still going away -- leaving no state for "abort requested, not through yet" that the
+        // buttons and the AI status texts could distinguish from a finished run.
         enum class State {
             Stopped,
             Starting,
             Running,
-            GracefulStopping
+            GracefulStopping,
+            Stopping
         };
 
         SprtTournamentData();
@@ -94,6 +99,14 @@ namespace QaplaWindows {
          * @param nice If true, reduces the number of active managers gradually.
          * @param direct If true, applies the change immediately without debouncing.
          */
+        /**
+         * @brief Aborts the test and returns only once it has really stopped.
+         *
+         * See TournamentData::stopPoolAbruptlyAndWait() -- same reasoning, same abrupt-only
+         * restriction.
+         */
+        void stopPoolAbruptlyAndWait();
+
         void setPoolConcurrency(uint32_t count, bool nice = true, bool direct = false);
 
         /**

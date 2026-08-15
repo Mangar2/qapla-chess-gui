@@ -109,6 +109,21 @@ namespace QaplaWindows {
         void setExternalConcurrency(uint32_t count);
 
         /**
+         * @brief Aborts the tournament and returns only once it has really stopped.
+         *
+         * stopPool(false) only *requests* the abort: it returns while the games are still going
+         * away, and State::Stopped is reached some frames later. That is fine for a button -- the
+         * person sees the games disappear -- but not for a caller that acts on the return value.
+         * The AI issues its next call within milliseconds and then finds a tournament that is
+         * still stopping, which is where the stop/configure/start retry loops came from.
+         *
+         * Blocks the caller (and, since tool handlers run there, the UI thread) for as long as the
+         * abort takes -- a moment, not a game. Deliberately offered for the abrupt stop only: a
+         * graceful stop plays its games to the end and would freeze the GUI for minutes.
+         */
+        void stopPoolAbruptlyAndWait();
+
+        /**
          * @brief Sets the pool concurrency level.
          * @param count The number of concurrent tasks to allow.
          * @param nice If true, reduces the number of active managers gradually.

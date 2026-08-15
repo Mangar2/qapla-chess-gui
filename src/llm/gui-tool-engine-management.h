@@ -19,24 +19,25 @@
 
 #pragma once
 
-#include "gui-tool-registry.h"
-
 #include <string>
 #include <vector>
+
+/**
+ * @file
+ * @brief Engine catalog logic, free of both tool layers and of the GUI stack.
+ *
+ * Same reasoning as gui-tool-tournament.h: pure enough for the unit-tests target to link
+ * directly, so it stays out of src/llm/actions/ (which is GUI-only) and out of src/llm/tools/
+ * (which is model-facing only).
+ */
 
 namespace QaplaLlm {
 
 /**
- * @brief Registers the "Engine-Verwaltung" tool group (list_installed_engines,
- * open_add_engine_dialog) from docs/llm-chatbot-plan.md Step 3.
- */
-void registerEngineManagementTools(GuiToolRegistry& registry);
-
-/**
  * @brief Returns the globally configured engines (name + protocol) as a JSON array string.
  *
- * Pure/UI-independent so it can be unit-tested directly; this is exactly
- * what the "list_installed_engines" tool handler returns.
+ * Pure/UI-independent so it can be unit-tested directly; this is exactly what the
+ * listInstalledEngines() action reports.
  */
 [[nodiscard]] std::string listInstalledEnginesJson();
 

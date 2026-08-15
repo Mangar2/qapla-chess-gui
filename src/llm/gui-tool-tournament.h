@@ -19,65 +19,21 @@
 
 #pragma once
 
-#include "gui-tool-registry.h"
-
 #include <engine-handling/engine-config.h>
 
 #include <string>
 #include <vector>
 
+/**
+ * @file
+ * @brief Engine-name resolution, shared by every feature that lets a chat name engines.
+ *
+ * Deliberately outside both tool layers: it is neither model-facing (src/llm/tools/) nor a GUI
+ * action (src/llm/actions/), just pure logic over the engine catalog. Keeping it free of GUI
+ * includes is what lets the unit-tests target link and test it directly.
+ */
+
 namespace QaplaLlm {
-
-/**
- * @brief Registers the "Turnier" tool group (select_engines, configure_tournament) from
- * docs/llm-chatbot-plan.md Step 4. start/stop/get_status/clear_result/show_result are all
- * handled by the unified tools in gui-tool-status-register.cpp instead -- see the exported
- * handle* functions below.
- */
-void registerTournamentTools(GuiToolRegistry& registry);
-
-/**
- * @brief Starts the tournament (see TournamentData::startTournament()), reporting exactly which
- * precondition is missing (no engines selected, no openings file, etc.) if it can't.
- *
- * Exported rather than kept file-local so the unified "start" tool (gui-tool-status-register.cpp)
- * can dispatch into it by type="tournament" -- there is no separate model-visible
- * "start_tournament" tool anymore.
- */
-[[nodiscard]] GuiToolResult handleStartTournament(const QaplaTester::Json::JsonValue& arguments);
-
-/**
- * @brief Stops the running tournament. `arguments["mode"]` = "graceful" (default) or "abrupt".
- *
- * Exported for the same reason as handleStartTournament() -- dispatched into by the unified
- * "stop" tool.
- */
-[[nodiscard]] GuiToolResult handleStopTournament(const QaplaTester::Json::JsonValue& arguments);
-
-/**
- * @brief Reports the tournament's full current config/state as text.
- *
- * Exported so the unified "get_status" tool can dispatch into it by type="tournament" -- there
- * is no separate model-visible "get_tournament_status" tool anymore.
- */
-[[nodiscard]] GuiToolResult handleGetTournamentStatus(const QaplaTester::Json::JsonValue& arguments);
-
-/**
- * @brief Discards current tournament results (stops it first if still running).
- *
- * Exported so the unified "clear_result" tool can dispatch into it by type="tournament" --
- * there is no separate model-visible "clear_tournament_result" tool anymore.
- */
-[[nodiscard]] GuiToolResult handleClearTournamentResult(const QaplaTester::Json::JsonValue& arguments);
-
-/**
- * @brief Renders the current tournament results as a live table in the chat (see
- * GuiToolResult::renderWidget).
- *
- * Exported so the unified "show_result" tool can dispatch into it by type="tournament" -- there
- * is no separate model-visible "show_tournament_result" tool anymore.
- */
-[[nodiscard]] GuiToolResult handleShowTournamentResult(const QaplaTester::Json::JsonValue& arguments);
 
 /**
  * @brief One chat-provided name that matched more than one installed engine.

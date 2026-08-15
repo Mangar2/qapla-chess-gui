@@ -63,7 +63,7 @@ namespace QaplaTest {
         // Test: get_running_status, called directly through GuiToolRegistry (no LLM).
         // Reproduces the exact scenario reported by the user: asking "is a tournament
         // running?" while only an SPRT test is actually running must not say "no" without
-        // qualification -- see gui-tool-status-register.cpp.
+        // qualification -- see src/llm/tools/gui-tools-activity.cpp.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Status/Tools", "GetRunningStatusViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {

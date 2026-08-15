@@ -26,7 +26,7 @@ namespace QaplaTest {
 
     /**
      * @brief Registers tests that drive the open_pgn_file GUI tool directly through
-     * GuiToolRegistry (no LLM involved) -- see gui-tool-app-register.cpp.
+     * GuiToolRegistry (no LLM involved) -- see src/llm/actions/gui-action-app.cpp.
      *
      * close_application is deliberately NOT covered here: actually invoking it would quit the
      * test binary itself (mid-suite, before QAPLA_TEST_SUMMARY prints), and source="dialog"

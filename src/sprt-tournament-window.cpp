@@ -100,12 +100,23 @@ static QaplaButton::ButtonState getButtonState(const std::string& button) {
     if (button == "RGC" && state == SprtTournamentData::State::GracefulStopping) {
         return QaplaButton::ButtonState::Active;
     }
-    
+
     if (button == "RGC" && !SprtTournamentData::instance().mayStartTournament(false)) {
         return QaplaButton::ButtonState::Disabled;
     }
-    
+
+    // Same pair of rules TournamentWindow::getButtonState() applies while an abrupt stop is still
+    // in flight: there is nothing left to run or grace-continue, and pressing either again cannot
+    // speed the abort up.
+    if (button == "RGC" && state == SprtTournamentData::State::Stopping) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+
     if ((button == "Stop") && !SprtTournamentData::instance().isAnyRunning()) {
+        return QaplaButton::ButtonState::Disabled;
+    }
+
+    if ((button == "Stop") && state == SprtTournamentData::State::Stopping) {
         return QaplaButton::ButtonState::Disabled;
     }
     

@@ -19,8 +19,8 @@
 
 // Deliberately kept free of any GUI/ImGui dependency (no tournament-data.h,
 // no configuration.h): this is the pure, UI-independent logic that the
-// unit-tests target links directly. The actual tool registration -- reading
-// and writing TournamentData -- is in gui-tool-tournament-register.cpp,
+// unit-tests target links directly. The actions built on it -- reading and
+// writing TournamentData -- are in src/llm/actions/gui-action-tournament.cpp,
 // which only the qapla executable links (tournament-data.h transitively
 // pulls in the whole GUI stack).
 
