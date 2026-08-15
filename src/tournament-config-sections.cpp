@@ -113,4 +113,22 @@ QaplaHelpers::IniFile::Section toSprtSection(
     return section;
 }
 
+QaplaHelpers::IniFile::SectionList toParticipantSections(
+    const std::vector<QaplaTester::EngineConfig>& engines, const std::string& id) {
+    QaplaHelpers::IniFile::SectionList sections;
+    for (const auto& engine : engines) {
+        if (!engine.isSelected()) {
+            continue;
+        }
+        auto section = engine.toSection("engine");
+        // toSection() carries over the "id" of the section this engine was read from.
+        section.changeOrAddEntry("id", id);
+        // toSection() omits "selected" for a selected engine; erase it anyway so a section
+        // built from a config with a stale flag cannot carry the GUI-only key into the file.
+        section.eraseEntry("selected");
+        sections.push_back(std::move(section));
+    }
+    return sections;
+}
+
 } // namespace QaplaConfiguration

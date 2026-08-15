@@ -21,6 +21,7 @@
 #include "imgui-sprt-configuration.h"
 #include "configuration.h"
 #include "config-group-loader.h"
+#include "tournament-config-sections.h"
 #include "snackbar.h"
 #include "imgui-concurrency.h"
 
@@ -670,12 +671,15 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
         // Work on a local copy so that saving cannot alter the app's own persisted
         // settings (configData is also autosaved to qapla-chess-gui.ini).
         //
-        // The engines are already in there: ImGuiEngineSelect::updateConfiguration()
-        // keeps the ("engine", "sprt-tournament") section list in sync on every change, and
-        // SprtTournamentFile::save() picks exactly that list. Appending the selected engines
-        // here would write each participant a second time, because addSection() appends
-        // rather than replaces.
+        // ImGuiEngineSelect::updateConfiguration() keeps the ("engine", "sprt-tournament")
+        // section list in sync on every change, but that list is the widget's full state
+        // including the deselected engines -- replace it with the participants only.
+        // The engines are written as configured: the file carries the "each" section too,
+        // so whoever runs it applies those defaults itself.
         auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
+        saveData.setSectionList("engine", "sprt-tournament",
+            QaplaConfiguration::toParticipantSections(
+                instance().engineConfigurations_, "sprt-tournament"));
         QaplaTester::SprtTournamentFile::save(filename, saveData, "sprt-tournament");
 
         SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,

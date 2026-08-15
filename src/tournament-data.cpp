@@ -29,6 +29,7 @@
 #include "imgui-engine-global-settings.h"
 #include "configuration.h"
 #include "config-group-loader.h"
+#include "tournament-config-sections.h"
 
 #include <base-elements/string-helper.h>
 
@@ -816,13 +817,15 @@ namespace QaplaWindows {
             // Work on a local copy so that saving cannot alter the app's own persisted
             // settings (configData is also autosaved to qapla-chess-gui.ini).
             //
-            // The engines are already in there: ImGuiEngineSelect::updateConfiguration()
-            // keeps the ("engine", "tournament") section list in sync on every change, and
-            // TournamentFile::save() picks exactly that list. Appending getSelectedEngines()
-            // here would write each participant a second time -- once as configured and once
-            // with the [each] defaults baked into its section -- and addSection() appends,
-            // so both copies end up in the file and in the engine list after loading.
+            // ImGuiEngineSelect::updateConfiguration() keeps the ("engine", "tournament")
+            // section list in sync on every change, but that list is the widget's full state
+            // including the deselected engines -- replace it with the participants only.
+            // The engines are written as configured: the file carries the "each" section too,
+            // so whoever runs it applies those defaults itself.
             auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
+            saveData.setSectionList("engine", "tournament",
+                QaplaConfiguration::toParticipantSections(
+                    instance().engineConfigurations_, "tournament"));
             QaplaTester::TournamentFile::save(filename, saveData, "tournament");
 
             SnackbarManager::instance().showSuccess("Tournament saved to: " + filename,

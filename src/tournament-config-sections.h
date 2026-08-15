@@ -21,12 +21,14 @@
 
 #include <base-elements/ini-file.h>
 #include <tournament/tournament-config.h>
+#include <engine-handling/engine-config.h>
 #include <opening/openings.h>
 #include <opening/pgn-save.h>
 #include <game-manager/adjudication-manager.h>
 #include <sprt/sprt-manager.h>
 
 #include <string>
+#include <vector>
 
 /**
  * @brief Free functions that build the shared-schema INI sections ("tournament",
@@ -57,5 +59,23 @@ namespace QaplaConfiguration {
 
     [[nodiscard]] QaplaHelpers::IniFile::Section toSprtSection(
         const QaplaTester::SprtConfig& config, const std::string& id);
+
+    /**
+     * @brief Builds the "engine" sections of a tournament/SPRT state file from an engine
+     * selection list: one section per participant, none for the rest.
+     *
+     * The GUI's selection list also holds the engines the user deselected, so that their
+     * settings survive until they are added back. That is state for qapla-chess-gui.ini
+     * only. A state file names the entrants: everything outside the GUI -- CLI and MCP --
+     * enters every "engine" section it finds into the tournament, so a deselected engine
+     * written here would silently play. For the same reason the GUI-only "selected" key is
+     * dropped rather than written as "true".
+     *
+     * @param engines The selection list, selected and deselected entries mixed.
+     * @param id The state file's id, written as the sections' "id" entry.
+     * @return One section per selected engine, in list order.
+     */
+    [[nodiscard]] QaplaHelpers::IniFile::SectionList toParticipantSections(
+        const std::vector<QaplaTester::EngineConfig>& engines, const std::string& id);
 
 } // namespace QaplaConfiguration

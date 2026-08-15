@@ -295,3 +295,26 @@ TEST_CASE("Loading a tournament state file keeps unrelated settings", "[config-p
             QaplaHelpers::IniFile::SectionList{}).empty());
     }
 }
+
+TEST_CASE("A state file lists the participants only", "[config-persistence]") {
+    // Everything outside the GUI reads every "engine" section of a state file as an entrant
+    // -- "selected" is GUI-only state and is not evaluated there.
+    auto engine = [](const std::string& name, bool selected) {
+        QaplaHelpers::IniFile::Section section;
+        section.name = "engine";
+        section.addEntry("id", "board1");
+        section.addEntry("name", name);
+        section.addEntry("cmd", "/engines/" + name);
+        auto config = QaplaTester::EngineConfig::createFromSection(section);
+        config.setSelected(selected);
+        return config;
+    };
+
+    const auto sections = toParticipantSections(
+        {engine("Playing", true), engine("Deselected", false)}, "tournament");
+
+    REQUIRE(sections.size() == 1);
+    CHECK(sections.at(0).getValue("name").value() == "Playing");
+    CHECK(sections.at(0).getValue("id").value() == "tournament");
+    CHECK_FALSE(sections.at(0).getValue("selected").has_value());
+}
