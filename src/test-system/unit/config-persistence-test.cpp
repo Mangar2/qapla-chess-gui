@@ -318,3 +318,199 @@ TEST_CASE("A state file lists the participants only", "[config-persistence]") {
     CHECK(sections.at(0).getValue("id").value() == "tournament");
     CHECK_FALSE(sections.at(0).getValue("selected").has_value());
 }
+
+TEST_CASE("A state file's \"each\" section holds the settings in force only",
+          "[config-persistence]") {
+    // The GUI keeps a switched-off setting's value so the user gets it back when switching the
+    // setting on again. A state file cannot say that: "each" is the CLI's defaults layer, where
+    // everything listed applies. So only what is switched on is written -- and the CLI's own key
+    // names are used, or the file does not parse at all.
+    QaplaTester::EngineGlobalConfig config;
+    config.useGlobalHash = true;
+    config.hashSizeMB = 128;
+    config.useGlobalPonder = false;
+    config.ponder = true;              // configured, but switched off
+    config.useGlobalTrace = true;
+    config.traceLevel = "none";
+    config.useGlobalRestart = false;
+    config.restart = "on";             // configured, but switched off
+    config.timeControl = "20.0+0.02";
+
+    const auto section = toEachSection(config, "tournament");
+
+    REQUIRE(section.name == "each");
+    CHECK(section.getValue("id").value() == "tournament");
+    CHECK(section.getValue("option.Hash").value() == "128");
+    CHECK(section.getValue("trace").value() == "none");
+    CHECK(section.getValue("tc").value() == "20.0+0.02");
+    CHECK_FALSE(section.getValue("ponder").has_value());
+    CHECK_FALSE(section.getValue("restart").has_value());
+    // The flags themselves are GUI state and have no meaning in a state file
+    for (const auto& key : {"usehash", "useponder", "usetrace", "userestart", "hash"}) {
+        CHECK_FALSE(section.getValue(key).has_value());
+    }
+
+    SECTION("The section parses against the CLI's \"each\" schema") {
+        std::vector<std::pair<std::string, std::string>> reported;
+        setConfigLoadErrorReporter([&](const std::string& sectionName, const std::string& message) {
+            reported.emplace_back(sectionName, message);
+        });
+        loadGroupIntoManager("each", {section});
+        setConfigLoadErrorReporter(nullptr);
+
+        CHECK(reported.empty());
+    }
+
+    SECTION("Being listed is what switches a setting on when reading back") {
+        const auto roundtripped = fromEachSection(section);
+
+        CHECK(roundtripped.useGlobalHash == true);
+        CHECK(roundtripped.hashSizeMB == 128);
+        CHECK(roundtripped.useGlobalTrace == true);
+        CHECK(roundtripped.traceLevel == "none");
+        CHECK(roundtripped.timeControl == "20.0+0.02");
+        CHECK(roundtripped.useGlobalPonder == false);
+        CHECK(roundtripped.useGlobalRestart == false);
+    }
+}
+
+namespace {
+
+    QaplaHelpers::IniFile::Section sectionOf(const std::string& name, const std::string& id,
+        const std::vector<std::pair<std::string, std::string>>& entries) {
+        QaplaHelpers::IniFile::Section section{ .name = name, .entries = {} };
+        section.addEntry("id", id);
+        for (const auto& [key, value] : entries) {
+            section.addEntry(key, value);
+        }
+        return section;
+    }
+
+} // namespace
+
+TEST_CASE("A global setting is written where the CLI's rule lets it win", "[config-persistence]") {
+    // Read the CLI's way, an engine's own entry beats "each". EngineConfig::toSection() writes
+    // "trace" and "restart" for every engine, so a global trace level would never take effect
+    // outside the GUI unless those keys are taken out of the engine sections.
+    const auto each = sectionOf("each", "tournament", {{"trace", "none"}, {"option.Hash", "32"}});
+    const QaplaHelpers::IniFile::SectionList engines = {
+        sectionOf("engine", "tournament", {{"name", "A"}, {"trace", "all"}, {"option.Hash", "64"}}),
+        sectionOf("engine", "tournament", {{"name", "B"}, {"trace", "all"}, {"tc", "1+0"}}),
+    };
+
+    const auto cleaned = withoutEachDefaults(engines, each);
+
+    REQUIRE(cleaned.size() == 2);
+    for (const auto& engine : cleaned) {
+        CHECK_FALSE(engine.getValue("trace").has_value());
+        CHECK_FALSE(engine.getValue("option.Hash").has_value());
+        CHECK(engine.getValue("id").value() == "tournament");
+    }
+    // Untouched: not a global setting
+    CHECK(cleaned.at(1).getValue("tc").value() == "1+0");
+}
+
+TEST_CASE("Reading a state file turns its defaults into the GUI's globals",
+          "[config-persistence]") {
+    const auto each = sectionOf("each", "tournament",
+        {{"ponder", "false"}, {"trace", "none"}, {"option.Threads", "4"}});
+    const QaplaHelpers::IniFile::SectionList engines = {
+        sectionOf("engine", "tournament", {{"name", "A"}, {"ponder", "true"}}),
+        sectionOf("engine", "tournament", {{"name", "B"}}),
+    };
+
+    const auto resolved = resolveEachDefaults(each, engines);
+
+    SECTION("A setting the engines disagree on is not global, and every engine states it") {
+        // Engine B did not mention ponder, so it inherits the file's default -- exactly what the
+        // CLI would have run it with. Without that, dropping "ponder" from "each" would flip B.
+        CHECK(resolved.engines.at(0).getValue("ponder").value() == "true");
+        CHECK(resolved.engines.at(1).getValue("ponder").value() == "false");
+        CHECK(resolved.each.getValue("useponder").value() == "false");
+        // The value stays visible so the user sees what the file proposed
+        CHECK(resolved.each.getValue("ponder").value() == "false");
+        CHECK(fromEachSection(resolved.each).useGlobalPonder == false);
+    }
+
+    SECTION("A setting they all end up agreeing on becomes the global one") {
+        CHECK(resolved.each.getValue("trace").value() == "none");
+        for (const auto& engine : resolved.engines) {
+            CHECK_FALSE(engine.getValue("trace").has_value());
+        }
+        CHECK(fromEachSection(resolved.each).useGlobalTrace == true);
+    }
+
+    SECTION("A setting the GUI has no control for moves to the engines") {
+        // The GUI's global panel cannot hold it, so leaving it in "each" would mean losing it on
+        // the next save. In the engine sections it survives untouched.
+        CHECK_FALSE(resolved.each.getValue("option.Threads").has_value());
+        for (const auto& engine : resolved.engines) {
+            CHECK(engine.getValue("option.Threads").value() == "4");
+        }
+    }
+
+    SECTION("Saving what was read leaves the file's meaning unchanged") {
+        // The full round trip: what the GUI took from the file goes back through its own global
+        // settings and out again.
+        const auto each2 = toEachSection(fromEachSection(resolved.each), "tournament");
+        const auto engines2 = withoutEachDefaults(resolved.engines, each2);
+        const auto again = resolveEachDefaults(each2, engines2);
+
+        CHECK(again.engines.at(0).entries == resolved.engines.at(0).entries);
+        CHECK(again.engines.at(1).entries == resolved.engines.at(1).entries);
+        CHECK(again.each.getValue("trace").value() == "none");
+        CHECK_FALSE(again.each.getValue("ponder").has_value());
+    }
+}
+
+TEST_CASE("An \"each\" section with \"use...\" flags applies only what is switched on",
+          "[config-persistence]") {
+    // State files written before the flags were dropped still carry them, and so does
+    // qapla-chess-gui.ini. Neither the flags nor a value they switch off may reach the engines:
+    // "usehash" is no engine key, and the CLI refuses to read a section containing one.
+    const auto each = sectionOf("each", "tournament",
+        {{"usehash", "false"}, {"hash", "512"}, {"usetrace", "true"}, {"trace", "none"}});
+    const QaplaHelpers::IniFile::SectionList engines = {
+        sectionOf("engine", "tournament", {{"name", "A"}}),
+    };
+
+    SECTION("Reading") {
+        const auto resolved = resolveEachDefaults(each, engines);
+
+        CHECK_FALSE(resolved.engines.at(0).getValue("usehash").has_value());
+        CHECK_FALSE(resolved.engines.at(0).getValue("hash").has_value());
+        CHECK(resolved.each.getValue("trace").value() == "none");
+    }
+
+    SECTION("Writing") {
+        const auto cleaned = withoutEachDefaults(
+            {sectionOf("engine", "tournament", {{"name", "A"}, {"hash", "64"}, {"trace", "all"}})},
+            each);
+
+        CHECK(cleaned.at(0).getValue("hash").value() == "64");  // global hash is switched off
+        CHECK_FALSE(cleaned.at(0).getValue("trace").has_value());
+    }
+}
+
+TEST_CASE("The GUI's own \"each\" section keeps its switched-off values", "[config-persistence]") {
+    // qapla-chess-gui.ini states the flags explicitly, so that a value configured but not in use
+    // survives a restart. Those flags win over the presence rule a state file is read by.
+    QaplaHelpers::IniFile::Section section;
+    section.name = "each";
+    section.addEntry("id", "tournament");
+    section.addEntry("usehash", "false");
+    section.addEntry("hash", "512");
+    section.addEntry("useponder", "true");
+    section.addEntry("ponder", "true");
+
+    const auto config = fromEachSection(section);
+
+    CHECK(config.useGlobalHash == false);
+    CHECK(config.hashSizeMB == 512);       // remembered although switched off
+    CHECK(config.useGlobalPonder == true);
+    CHECK(config.ponder == true);
+    // Nothing said about trace/restart at all: not in force, and no time control named
+    CHECK(config.useGlobalTrace == false);
+    CHECK(config.useGlobalRestart == false);
+    CHECK(config.timeControl.empty());
+}

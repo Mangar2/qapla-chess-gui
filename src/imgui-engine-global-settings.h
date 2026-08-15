@@ -203,34 +203,6 @@ namespace QaplaWindows {
         void updateTimeControlConfiguration() const;
 
         /**
-         * @brief Loads hash settings from an INI section
-         * @param section The INI section to load from
-         * @param settings The settings structure to update
-         */
-        static void loadHashSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
-
-        /**
-         * @brief Loads ponder settings from an INI section
-         * @param section The INI section to load from
-         * @param settings The settings structure to update
-         */
-        static void loadPonderSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
-
-        /**
-         * @brief Loads trace settings from an INI section
-         * @param section The INI section to load from
-         * @param settings The settings structure to update
-         */
-        static void loadTraceSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
-
-        /**
-         * @brief Loads restart settings from an INI section
-         * @param section The INI section to load from
-         * @param settings The settings structure to update
-         */
-        static void loadRestartSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings);
-
-        /**
          * @brief Draws the hash size control
          * @param controlWidth Width of the input control
          * @param showUseCheckboxes Whether to show the "use global" checkbox

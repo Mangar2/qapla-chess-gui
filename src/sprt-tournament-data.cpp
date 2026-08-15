@@ -180,14 +180,17 @@ void SprtTournamentData::loadEngineSelectionConfig() {
 void SprtTournamentData::loadGlobalSettingsConfig() {
     auto& config = QaplaConfiguration::Configuration::instance();
     
-    auto globalSections = config.getConfigData().getSectionList("each", "sprt-tournament")
-        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
-    globalSettings_->setId("sprt-tournament");
-    globalSettings_->setGlobalConfiguration(globalSections);
-    
+    // Load time control settings first: a state file has no timecontroloptions section and
+    // carries its time control in "each" instead, so that one has to be applied last to win
+    // over the time control left over from the previously loaded tournament.
     auto timeControlSections = config.getConfigData().getSectionList("timecontroloptions", "sprt-tournament")
         .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setId("sprt-tournament");
     globalSettings_->setTimeControlConfiguration(timeControlSections);
+
+    auto globalSections = config.getConfigData().getSectionList("each", "sprt-tournament")
+        .value_or(std::vector<QaplaHelpers::IniFile::Section>{});
+    globalSettings_->setGlobalConfiguration(globalSections);
 }
 
 void SprtTournamentData::updateTournamentResults() {
@@ -700,10 +703,20 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
         // including the deselected engines -- replace it with the participants only.
         // The engines are written as configured: the file carries the "each" section too,
         // so whoever runs it applies those defaults itself.
+        //
+        // The stored "each" section is the GUI's own, which keeps a switched-off setting's
+        // value alongside its "use..." flag -- a distinction a state file does not have.
+        // toEachSection() reduces it to the settings actually in force, in the CLI's spelling,
+        // and withoutEachDefaults() takes those keys out of the engine sections: read with the
+        // CLI's rule, an engine's own entry would otherwise beat the global setting.
         auto saveData = QaplaConfiguration::Configuration::instance().getConfigData();
+        const auto each =
+            QaplaConfiguration::toEachSection(instance().eachEngineConfig_, "sprt-tournament");
         saveData.setSectionList("engine", "sprt-tournament",
-            QaplaConfiguration::toParticipantSections(
-                instance().engineConfigurations_, "sprt-tournament"));
+            QaplaConfiguration::withoutEachDefaults(
+                QaplaConfiguration::toParticipantSections(
+                    instance().engineConfigurations_, "sprt-tournament"), each));
+        saveData.setSectionList("each", "sprt-tournament", { each });
         QaplaTester::SprtTournamentFile::save(filename, saveData, "sprt-tournament");
 
         SnackbarManager::instance().showSuccess("SPRT tournament saved to: " + filename,

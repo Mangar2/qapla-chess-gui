@@ -22,6 +22,7 @@
 // linked into the lightweight unit-tests target without pulling in the whole GUI.
 // The Configuration-dependent convenience overload is defined in configuration.cpp instead.
 #include "config-group-loader.h"
+#include "tournament-config-sections.h"
 
 #include <cli/settings-definitions.h>
 #include <cli/settings-manager.h>
@@ -92,6 +93,27 @@ void loadStateFileSections(
 
     QaplaHelpers::ConfigData fileData;
     fileData.load(filename);
+
+    // A state file layers engine settings the CLI's way: "each" holds the defaults, an engine's
+    // own entry beats them. The GUI's rule is the opposite, so the layering is translated here,
+    // at the file's edge -- qapla-chess-gui.ini never passes through this function and keeps the
+    // GUI's own rule, including the values it remembers for switched-off settings.
+    //
+    // Done even when the file has no "each" section: the empty result is what tells the GUI that
+    // nothing is globally in force, instead of leaving the previous tournament's globals standing
+    // and applying them to the engines just loaded.
+    auto eachSections = fileData.getSectionList("each", id)
+        .value_or(QaplaHelpers::IniFile::SectionList{});
+    QaplaHelpers::IniFile::Section each{ .name = "each", .entries = {} };
+    each.addEntry("id", id);
+    if (!eachSections.empty()) {
+        each = eachSections.front();
+    }
+
+    auto resolved = resolveEachDefaults(each,
+        fileData.getSectionList("engine", id).value_or(QaplaHelpers::IniFile::SectionList{}));
+    fileData.setSectionList("each", id, { std::move(resolved.each) });
+    fileData.setSectionList("engine", id, std::move(resolved.engines));
 
     for (const auto* sectionName : sectionNames) {
         target.setSectionList(sectionName, id,

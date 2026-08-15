@@ -21,12 +21,11 @@
 #include "imgui-engine-controls.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "tournament-config-sections.h"
 #include "tutorial.h"
 
 #include <engine-handling/engine-config.h>
 #include <engine-handling/engine-option.h>
-
-#include <base-elements/string-helper.h>
 
 #include <imgui.h>
 
@@ -278,54 +277,25 @@ void ImGuiEngineGlobalSettings::updateTimeControlConfiguration() const {
     }});
 }
 
-void ImGuiEngineGlobalSettings::loadHashSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
-    if (auto value = section.getValue("usehash")) {
-        settings.useGlobalHash = (*value == "true" || *value == "1");
-    }
-    if (auto value = section.getValue("hash")) {
-        settings.hashSizeMB = QaplaHelpers::to_unsigned_int<uint32_t>(*value).value_or(32);
-    }
-}
-
-void ImGuiEngineGlobalSettings::loadPonderSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
-    if (auto value = section.getValue("useponder")) {
-        settings.useGlobalPonder = (*value == "true" || *value == "1");
-    }
-    if (auto value = section.getValue("ponder")) {
-        settings.ponder = (*value == "true" || *value == "1");
-    }
-}
-
-void ImGuiEngineGlobalSettings::loadTraceSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
-    if (auto value = section.getValue("usetrace")) {
-        settings.useGlobalTrace = (*value == "true" || *value == "1");
-    }
-    if (auto value = section.getValue("trace")) {
-        settings.traceLevel = *value;
-    }
-}
-
-void ImGuiEngineGlobalSettings::loadRestartSettings(const QaplaHelpers::IniFile::Section& section, QaplaTester::EngineGlobalConfig& settings) {
-    if (auto value = section.getValue("userestart")) {
-        settings.useGlobalRestart = (*value == "true" || *value == "1");
-    }
-    if (auto value = section.getValue("restart")) {
-        settings.restart = *value;
-    }
-}
-
 void ImGuiEngineGlobalSettings::setGlobalConfiguration(const QaplaHelpers::IniFile::SectionList& sections) {
     for (const auto& section : sections) {
         if (section.name == "each") {
-            QaplaTester::EngineGlobalConfig newGlobalSettings;
-            
-            loadHashSettings(section, newGlobalSettings);
-            loadPonderSettings(section, newGlobalSettings);
-            loadTraceSettings(section, newGlobalSettings);
-            loadRestartSettings(section, newGlobalSettings);
-            
+            auto newGlobalSettings = QaplaConfiguration::fromEachSection(section);
+            // A state file has no timecontroloptions section: it carries the time control as
+            // the "each" key "tc", the way the CLI expects it. A section naming none -- the
+            // GUI's own, which keeps it in timecontroloptions -- leaves the setting alone.
+            const bool namesTimeControl = !newGlobalSettings.timeControl.empty();
+            if (namesTimeControl) {
+                timeControlSettings_.timeControl = newGlobalSettings.timeControl;
+            } else {
+                newGlobalSettings.timeControl = timeControlSettings_.timeControl;
+            }
+
             globalSettings_ = newGlobalSettings;
             notifyConfigurationChanged();
+            if (namesTimeControl) {
+                notifyTimeControlChanged();
+            }
             break;
         }
     }
