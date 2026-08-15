@@ -22,6 +22,7 @@
 #include <engine-handling/engine-capability.h>
 #include <base-elements/ini-file.h>
 
+#include <optional>
 #include <sstream>
 
 using namespace QaplaConfiguration;
@@ -49,22 +50,31 @@ TEST_CASE("Engine capability options survive a save/load round-trip", "[engine-c
     capability.setAuthor("Someone");
 
     EngineOptions options;
+    // EngineOption's min/max/vars have no default member initializer, so every field has to be
+    // named here -- leaving the ones an option type does not use out of the initializer is what
+    // -Wmissing-field-initializers reports.
     options.push_back(EngineOption{
         .name = "PawnValueMg",
         .type = QaplaTester::EngineOption::Type::Spin,
         .defaultValue = "100",
         .min = 50,
-        .max = 300
+        .max = 300,
+        .vars = {}
     });
     options.push_back(EngineOption{
         .name = "Ponder",
         .type = QaplaTester::EngineOption::Type::Check,
-        .defaultValue = "false"
+        .defaultValue = "false",
+        .min = std::nullopt,
+        .max = std::nullopt,
+        .vars = {}
     });
     options.push_back(EngineOption{
         .name = "Style",
         .type = QaplaTester::EngineOption::Type::Combo,
         .defaultValue = "Normal",
+        .min = std::nullopt,
+        .max = std::nullopt,
         .vars = {"Solid", "Normal", "Risky"}
     });
     capability.setSupportedOptions(options);

@@ -93,10 +93,13 @@ struct Param {
      *
      * Only ever called with a value that is present and non-null, so implementations only need to
      * check the value's type.
+     *
+     * Default-initialized like every other member, because the parameter factories below fill it
+     * in after the aggregate initializer rather than inside it.
      */
     std::function<void(Request&, const QaplaTester::Json::JsonValue& value,
         std::vector<std::string>& problems)>
-        read;
+        read{};
 };
 
 /**
