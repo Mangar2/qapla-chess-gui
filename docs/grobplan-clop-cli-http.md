@@ -195,6 +195,10 @@ LLM-Worker-Thread. Der Adapter ist entsprechend dünn:
 cpp-httplib kann Server; er ist bereits Submodul, CMake-Ziel und wird in den Tests schon als
 Server betrieben. Keine neue Abhängigkeit, kein TLS (nur localhost).
 
+> Die Tabelle nennt nur die Größenordnung. Was die Schnittstelle fachlich können muss, wie die
+> Tools zugeschnitten sein sollten, was MCP kostet und wo die heutigen Lücken sind, steht in der
+> **Feinplanung** weiter unten.
+
 ### Die vom Nutzer genannte Einschränkung — halb zutreffend
 
 - **Status gibt es schon als Text.** `get_status` (`Actions::activityStatus`) und
@@ -264,11 +268,393 @@ in genau dieser Form schon gibt. Zugleich der Punkt, der das eigentliche Ziel di
    „CLI ausführen" — und der Mapper ist ohnehin nützlich, sobald man `.qtour`/`.qsprt`-Dateien
    von außen anstoßen will.
 
-## Offene Fragen
+## Offene Fragen zu Punkt 1 und 2
 
-- Soll die HTTP-Schnittstelle im KI-Chat sichtbar sein (Aufrufe als Chat-Einträge protokolliert)?
-  Dafür spricht die Nachvollziehbarkeit für den zuschauenden Nutzer, dagegen die Vermischung
-  zweier Kanäle.
 - Braucht CLOP eine eigene Ergebnisansicht außerhalb des Chats, oder reicht die Tabelle im
   Chat plus die Bretter?
 - Bei Punkt 2: nur `argv` beim Start, oder auch eine Übergabe zur Laufzeit?
+
+---
+---
+
+# Feinplanung: die Fernsteuerungsschnittstelle
+
+Dieser Teil beantwortet vier Fragen: **wie wird die Fernsteuerung betrieben**, **wie sollten die
+Tools geschnitten sein**, **was kostet MCP**, und **wo sind die Lücken**. Er macht bewusst keine
+Umsetzungsvorgaben — keine Pfade, keine JSON-Formate, keine Klassennamen. Er sagt, *was* die
+Schnittstelle können muss und *woran* sie heute noch scheitern würde.
+
+## F.1 Betriebsart „Fernsteuerung"
+
+### Start
+
+Die Fernsteuerung wird über einen **Kommandozeilenschalter beim Start der GUI** eingeschaltet,
+nicht über ein Tool und nicht über einen Knopf im Chat. Grund: Wer die GUI startet, entscheidet
+damit auch, wofür sie in dieser Sitzung da ist. Eine Fernsteuerung, die sich selbst
+einschalten kann, ist ein Sicherheitsproblem ohne Nutzen.
+
+Kleiner Vorbehalt: `main()` in `src/qapla-chess-gui.cpp:435` nimmt heute **keine Argumente**
+entgegen. Der Einstiegspunkt muss also ohnehin angefasst werden — was gleichzeitig die
+Grundlage für Punkt 2 (CLI) wäre, falls der je kommt.
+
+### Das Fernsteuerungsfenster
+
+Ein **eigenes Verlaufsfenster**, das dem KI-Chat ähnelt, aber nicht dasselbe ist. Es zeigt
+lückenlos, was von außen ausgelöst wurde: jeder Aufruf mit Zeitpunkt, Name, Argumenten und
+Ergebnis, in derselben Darstellung, die der KI-Chat für Tool-Einträge schon benutzt — inklusive
+der Tabellen (siehe F.6). Das ist der Kern des ganzen Vorhabens: **zuschauen können.**
+
+Solange die Fernsteuerung läuft:
+
+- sind die **übrigen Chat-Threads ausgeblendet** (klassische Abläufe und KI-Chat). Es gibt genau
+  einen Steuerkanal, und der ist von außen.
+- gibt es einen Knopf **„Fernsteuerung beenden"**. Er schließt den Kanal und gibt die GUI zur
+  normalen Bedienung frei. Das ist eine **Einbahnstraße** — ein Zurückschalten in die
+  Fernsteuerung ist vorerst nicht vorgesehen (ein Hin und Her verdoppelt die Zustände, ohne dass
+  klar ist, wozu).
+- bleibt die GUI **vollständig normal bedienbar**: Bretter ansehen, Tabs links umschalten,
+  Turnier- und SPRT-Ansicht mit ihren laufenden Zahlen.
+
+### Parallelbedienung
+
+Der Nutzer darf gleichzeitig eingreifen. Wenn die KI ein Turnier startet und der Nutzer es
+stoppt, ist das erlaubt und wird **nicht verhindert**. Zwei Gründe: Sperren würden genau das
+kaputt machen, was die GUI hier voraushat (der Mensch bleibt Herr über seine Anwendung), und
+die Schnittstelle muss ohnehin damit klarkommen, dass sich der Zustand zwischen zwei Aufrufen
+ändert — siehe F.4, „Zustand statt Gedächtnis". Ein Eingriff von Hand ist für die Schnittstelle
+nichts anderes als ein Turnier, das von selbst zu Ende ging.
+
+Wichtig ist nur, dass die KI **merkt**, dass etwas passiert ist. Genau dafür sind die
+Fertigmeldung (F.5) und der Grundsatz „jede Antwort trägt den Zustand mit" (F.4) da.
+
+### Beenden
+
+„Fernsteuerung beenden" **stoppt keine laufenden Läufe.** Es schließt nur den Kanal. Ein
+laufendes Turnier läuft weiter und ist danach von Hand zu bedienen. Offene Aufrufe von außen
+bekommen eine klare Absage statt einer Zeitüberschreitung.
+
+## F.2 Toolstruktur: pro Aktion oder pro Thema?
+
+### Was heute wirklich da ist
+
+Die Struktur ist bereits ein **Mischform**, nicht „ein Tool pro Aktion":
+
+| Achse | Tools |
+|---|---|
+| Pro Thema (Konfiguration) | `configure_tournament`, `configure_sprt`, `configure_epd`, dazu `select_engines`, `select_sprt_engines`, `select_epd_engines` |
+| Pro Verb, Thema als Parameter | `start`, `stop`, `get_status`, `clear_result`, `show_result` — alle mit `type` = tournament/sprt/epd |
+| Übergreifend | `get_running_status` |
+| Anwendung / Katalog | `list_installed_engines`, `open_add_engine_dialog`, `open_pgn_file`, `close_application` |
+
+16 Tools. Die fünf Verb-Tools sind **schon** eine Zusammenlegung — der Kommentar in
+`gui-tools.h:58-65` sagt genau warum: „ein kleines Modell trifft aus fünf Tools plus einem
+Enum weit zuverlässiger die richtige Wahl als aus fünfzehn Namen." Die Erfahrung, die zu
+diesem Vorschlag geführt hat, ist im Code also bereits verarbeitet — nur nicht auf der
+Themenachse, sondern auf der Verbachse.
+
+### Was gegen die reine Themenlösung spricht
+
+Ein Tool pro Thema (`tournament(action, …)`, `sprt(action, …)`, …) reduziert 16 Namen auf etwa
+5. Es verlagert das Problem aber, statt es zu lösen:
+
+- **Das Schema wird zur Vereinigungsmenge.** `tournament` müsste die Felder von Konfigurieren,
+  Starten, Stoppen, Löschen und Anzeigen gemeinsam führen. Alle wären optional, weil jedes nur
+  für manche Aktionen gilt. Damit fällt die Schemaprüfung als Schutz weg: heute lehnt der Mapper
+  einen fehlenden Pflichtparameter ab (`llm-tool-api.h`), künftig wäre „`action=stop` mit
+  `games=10`" schematisch einwandfrei und fachlich Unsinn.
+- **Die Beschreibung wird nicht kürzer, sondern länger.** Sie muss zusätzlich erklären, welches
+  Feld zu welcher Aktion gehört. Die Token-Ersparnis ist gering (siehe F.3: die Namen sind
+  wenige Prozent, der Beschreibungstext ist alles).
+- **Die zerstörende Aktion wird zum Parameterwert.** `stop` als Toolname ist auf einen Blick
+  erkennbar — im Verlauf, in einem Freigabedialog, in einer Auswertung. `tournament` mit
+  `action="stop"` ist es nicht. Für eine Fernsteuerung, bei der ein Mensch zuschaut, ist das ein
+  echter Verlust.
+
+### Wo die Verwechslung tatsächlich sitzt
+
+Nicht bei `start`/`stop` — sondern bei den **drei Auskunftstools**: `get_status`,
+`get_running_status`, `show_result`. Ihre Beschreibungen sind heute die längsten überhaupt und
+bestehen zum großen Teil daraus, sich gegeneinander abzugrenzen („use this instead of that",
+„this is only needed for a pure check that changes nothing"). Das ist das Eingeständnis, dass
+der Schnitt nicht selbsterklärend ist.
+
+### Vorschlag: der Mittelweg
+
+Nicht die Achse wechseln, sondern dort zusammenlegen, wo die Fehlgriffe passieren:
+
+| Maßnahme | Wirkung |
+|---|---|
+| Die drei Auskunftstools zu **einem** zusammenführen, das Konfiguration, Laufzustand **und** Ergebnis liefert (Umfang über einen Parameter, Vorgabe „alles") | 3 → 1; die längsten Abgrenzungstexte entfallen; löst gleichzeitig das Widget/Text-Problem (F.6) |
+| `select_*_engines` in `configure_*` aufgehen lassen — die Engineauswahl ist ein Konfigurationsfeld wie jedes andere (sie hat nur eine eigene Sperrregel, und die steht ohnehin schon im Konfigurationstool) | 3 → 0 |
+| `start`, `stop`, `clear_result` unverändert lassen | Verben bleiben Namen |
+
+Ergebnis: **16 → 10 Tools**, ohne Vereinigungsschema, ohne Verlust an Prüfbarkeit, mit
+spürbar weniger Beschreibungstext. Wenn CLOP dazukommt, wächst nur der `type`-Enum, nicht die
+Toolzahl.
+
+### Und: erst messen, dann schneiden
+
+Beides ist bereits vorhanden und beantwortet die Frage besser als eine Meinung:
+
+- `LlmChatLogger::logSystemPromptAndToolsOnce()` schreibt Systemprompt **und** die vollständige
+  Tools-JSON einmal pro Sitzung mit — daraus ist die tatsächliche Größe exakt bestimmbar.
+- `LlmChatLogger` protokolliert jeden Aufruf, `llm-finetuning-writer` sammelt bereits
+  Trainingsdaten.
+
+Damit lässt sich zählen, *welche* Tools tatsächlich verwechselt werden, statt es zu vermuten.
+Empfehlung: die Auskunftstools zusammenlegen (das ist unabhängig von der Messung richtig, weil
+es die Widget/Text-Frage mitlöst), den Rest anhand der Logs entscheiden.
+
+## F.3 MCP: was es kostet, was es bringt
+
+### Ausgangslage
+
+Der qapla-engine-tester hat einen funktionierenden MCP-Server (`src/mcp/`, über stdio). Er ist
+aus demselben Grund nicht nutzbar wie die CLI: seine `callTool`-Weiche führt über `AppRunner`
+aus und steuert die GUI nicht. Wiederverwendbar sind die **Form** und der Schema-Bauer
+(`mcp-schema-builder`, `mcp-converter`), nicht die Handler.
+
+### Wie viele Token kostet MCP zusätzlich?
+
+**Nahezu keine.** Das ist die wichtigste Antwort dieses Abschnitts, und sie ist leicht
+zu übersehen, weil MCP nach „mehr Protokoll" aussieht.
+
+Im Kontextfenster des Modells landet in beiden Fällen dasselbe: Name, Beschreibung und
+Parameterschema jedes Tools. Der JSON-RPC-Rahmen (`jsonrpc`, `id`, `method`), der
+`initialize`-Handschlag und die Ergebnishülle laufen zwischen Client und Server über die
+Leitung — sie erreichen das Modell nicht. Der Kostentreiber ist unser eigener
+Beschreibungstext, nicht das Protokoll.
+
+Größenordnung, gemessen an den heutigen Tool-Dateien:
+
+| Posten | Umfang |
+|---|---|
+| Reiner Text in `src/llm/tools/` (Beschreibungen, Parametertexte, Enumwerte) | ~17.500 Zeichen |
+| Zuzüglich JSON-Struktur (Schemarahmen, Eigenschaftsobjekte) | grob 22.000–23.000 Zeichen |
+| **Ergibt** | **grob 5.000–6.000 Token für die vollständige Werkzeugliste** |
+| Aufschlag durch MCP: Namenspräfixe des Clients (z. B. `qapla__start`), je nach Client | ~50–150 Token gesamt |
+| Aufschlag durch MCP: `instructions` aus `initialize`, sofern gesetzt | so viel, wie man hineinschreibt — also 0, wenn man es leer lässt |
+| Aufschlag durch MCP: Ergebnishülle pro Aufruf | wenige Token |
+
+Also **deutlich unter 5 % Aufschlag**, realistisch unter 2 %. Der exakte Wert ist nicht zu
+schätzen, sondern abzulesen — siehe die Tools-JSON im Log (F.2).
+
+Zwei Kostenfallen, die man sich mit MCP aber leicht *einhandelt*, weil das Protokoll sie anbietet:
+
+- **Resources und Prompts.** Beide landen zusätzlich im Kontext. Für unseren Zweck brauchen wir
+  keine. Bewusst weglassen.
+- **Ausführliche Fehlerobjekte.** Ein Fehler, der als Prosa zurückkommt, ist kürzer *und* für
+  das Modell brauchbarer als ein strukturierter Fehlercode, den es doch nur in Prosa übersetzt.
+  Die heutigen Ergebnistexte sind hier schon richtig gebaut.
+
+### Der lokale kleine Modell-Pfad bleibt unangetastet
+
+LM Studio spricht OpenAI-Funktionsaufrufe, nicht MCP. Für das kleine Modell im KI-Chat ändert
+sich also **gar nichts** — es bekommt weiter dieselbe Liste im selben Format aus derselben
+Registry. MCP ist ausschließlich die Hülle nach außen.
+
+Das ist der eigentliche Grund, warum MCP hier billig ist: **eine Quelle, zwei Hüllen.** Tools
+werden weiterhin einmal als Daten deklariert (`src/llm/tools/`); die eine Hülle rendert daraus
+das OpenAI-Format für LM Studio, die andere das MCP-Format für außen. Ein zweiter Handler-Satz
+entsteht nicht, und die beiden Hüllen können nicht auseinanderlaufen, weil es nur eine
+Deklaration gibt.
+
+### Was der Cache verlangt — als verbindliche Regeln
+
+Der Vorteil, den der Nutzer beschreibt (immer dieselbe vollständige Schnittstelle, dadurch
+stabiler Prompt-Präfix und schnelle Antworten), ist mit MCP genauso erreichbar — aber nur, wenn
+man ihn nicht selbst zerstört. Deshalb als Festlegung, für **beide** Hüllen:
+
+1. **Die Werkzeugliste ist statisch.** Sie hängt nie vom Zustand ab. Kein „`stop` erscheint nur,
+   wenn etwas läuft". Zustand gehört ins Ergebnis, nie in die Toolauswahl. (Heute schon so:
+   `registerGuiTools()` registriert unbedingt.)
+2. **Die Reihenfolge ist stabil.** Registrierung in fester Folge, keine Umsortierung, keine
+   Aufnahme über ungeordnete Behälter.
+3. **Keine `listChanged`-Benachrichtigungen.** Sie sind genau das Gegenteil eines stabilen
+   Präfixes.
+4. **Kein zweistufiges Entdecken.** Nichts, wofür das Modell erst ein Tool aufrufen muss, um zu
+   erfahren, wie es ein anderes aufruft. Alles Aufrufwissen steht in der Beschreibung. (Heute
+   schon so und ausdrücklich so gemeint — vgl. den Hinweis bei `select_engines`, dass
+   `list_installed_engines` vorher *nicht* nötig ist.)
+5. **Änderungen an Beschreibungen sind Cache-Ereignisse.** Sie sind trotzdem erlaubt und
+   erwünscht — aber gebündelt, nicht laufend im Betrieb.
+
+### Empfehlung
+
+MCP ja, aber als **zweiter Schritt**. Zuerst die schlanke HTTP-Fassung, weil sie ohne
+Protokollrand auskommt und die Fragen aus F.4/F.5 zuerst geklärt werden müssen — die sind
+protokollunabhängig und der eigentliche Inhalt. Steht das, ist MCP darüber eine Hülle und keine
+neue Schnittstelle.
+
+## F.4 Lücken und Härtung
+
+Grundsatz vorweg, in vier Sätzen — sie beschreiben, was die vorhandenen Aktionen bereits
+richtig machen, und sind deshalb als Regel für alles Neue formuliert:
+
+- **Ergebnis statt Absicht.** Eine Antwort beschreibt, was *jetzt gilt*, nicht was gleich
+  passieren wird. Wo das nicht geht, sagt sie ausdrücklich, dass es noch nicht so weit ist.
+- **„Nichts geändert" ist eine Antwort.** Ein Aufruf, der nichts bewirkt hat, muss das sagen —
+  sonst wird auf eine Änderung gewartet, die nie kommt.
+- **Der nächste Schritt steht im Fehlertext.** Nicht nur was falsch ist, sondern was zu tun ist.
+- **Zustand statt Gedächtnis.** Die Antwort trägt den relevanten Zustand mit, damit die
+  Gegenseite ihn nicht aus früheren Antworten rekonstruieren muss — der Nutzer kann ihn
+  zwischendurch geändert haben.
+
+### Die Stopp-Lücke — weitgehend geschlossen, aber nicht überall geprüft
+
+Das vom Nutzer beobachtete Verhalten ist im Code inzwischen adressiert, und zwar genau in der
+richtigen Weise:
+
+- `stopTournament(Abrupt)` ruft `stopPoolAbruptlyAndWait()` und kehrt erst zurück, wenn die
+  Partien wirklich weg sind. Der Kommentar dazu benennt den alten Fehler beim Namen: „Reporting
+  ‚is being aborted' and returning early is what produced the retry loops."
+  (`gui-action-tournament.cpp:529`). SPRT und EPD haben dieselbe Behandlung
+  (`gui-action-sprt.cpp:556`, `gui-action-epd.cpp:410`).
+- Der schonende Stopp sagt ausdrücklich „Not done yet".
+- Ein zweiter Stoppbefehl während des Stoppens antwortet „Already stopping. Nothing changed."
+- Die Zustände unterscheiden `Running`, `GracefulStopping` und `Stopping`, und `start` gibt je
+  Zustand einen anderen, jeweils richtigen Rat („Wait" statt „Stop it first").
+
+**Was bleibt:** Diese Sorgfalt ist an drei Stellen parallel implementiert. Sobald CLOP dazukommt,
+gilt sie dort erneut — deshalb sollte das Muster (Zustände, Sperrregeln, Wortlaut der
+Verweigerungen) als **gemeinsame Regel** festgehalten werden, nicht als drei Kopien, die je
+einzeln richtig sein müssen. Der Prüfpunkt ist konkret: **Wo endet ein Aufruf, während sein
+Effekt noch läuft?** Heute nur beim schonenden Stopp — und dort ausgesprochen.
+
+### Die verbleibenden Lücken
+
+| Lücke | Warum sie über HTTP stärker wiegt als im Chat | Richtung |
+|---|---|---|
+| **Keine Fertigmeldung.** Es gibt keine Möglichkeit zu warten, bis ein Lauf zu Ende ist. | Im Chat sitzt ein Mensch davor und sieht es. Von außen bleibt nur Pollen — teuer und ungenau. | Eigener Abschnitt F.5 |
+| **Ergebnisse gibt es nur als Bild.** `show_result` liefert bewusst ein Widget; `content` ist nur ein Begleitsatz. Die Beschreibung sagt sogar, es sei die *einzige* Quelle für Ergebnisse. | Über die Leitung käme damit nie ein Ergebnis an. Das ist die schwerste inhaltliche Lücke. | Ergebnis zusätzlich als Text (Grundlage vorhanden: `TableFormat::toText()`), zusammengelegt mit der Auskunft (F.2) |
+| **Kein Laufkennzeichen.** „Das SPRT ist fertig" — welches? Nach Stopp, Löschen und Neustart ist das von außen nicht unterscheidbar. | Der Chat hat den Gesprächsverlauf als Kontext, die Fernsteuerung nicht. Nutzer können dazwischenfunken. | Jeder Lauf bekommt eine Kennung, die in Status, Ergebnis und Fertigmeldung erscheint |
+| **Kein Änderungszähler.** Man kann nicht billig fragen „hat sich seit meinem letzten Blick etwas geändert". | Führt zu großen Statusabfragen im Sekundentakt. | Ein monoton wachsender Zähler je Betriebsart, der bei jeder Zustandsänderung steigt |
+| **Wiederholte Aufrufe nach Zeitüberschreitung.** Läuft ein Aufruf in den Timeout der Registry, weiß der Aufrufer nicht, ob die Aktion trotzdem lief. | Im Chat wiederholt ein Mensch bewusst; ein Werkzeug wiederholt automatisch. | Zerstörende Aufrufe (`clear_result`, `stop`) müssen wiederholbar sein, ohne zusätzlichen Schaden — heute weitgehend gegeben („Already stopping. Nothing changed."), aber ungeprüft |
+| **Dateidialoge.** `open_add_engine_dialog`, `pgn_file_dialog`, `openings_file_dialog` blockieren auf einen Menschen, mit sehr langen Zeitgrenzen. | Von außen aufgerufen hängt der Aufrufer minutenlang an einem Fenster, das er nicht sieht. | Über die Fernsteuerung nicht anbieten, oder nur mit sofortiger Rückmeldung „ein Dialog ist offen, der Nutzer ist am Zug" |
+| **`close_application`.** | Beendet genau das, was man beobachten wollte, und den Kanal gleich mit. | Über die Fernsteuerung nicht anbieten |
+| **`endsTurn` hat außen keine Bedeutung.** Das Feld steuert den Agenten-Loop des lokalen Chats. | Über HTTP gibt es keinen Turn, den man beenden könnte. | Als das kennzeichnen, was es ist: eine Eigenschaft der lokalen Hülle, nicht der Aktion |
+| **CLOP und SPSA fehlen.** | — | Kommt mit Punkt 1; die Schnittstelle wächst dann nur um Enumwerte |
+
+### Verständlichkeit
+
+Zwei Dinge, die die Schnittstelle unabhängig von allem anderen leichter benutzbar machen:
+
+- **Ein gemeinsames Vokabular für Zustände.** Heute sind die Zustände je Betriebsart eigene
+  Enums mit teils abweichenden Namen (`EpdData::State::Gracefully` gegenüber
+  `GracefulStopping` bei Turnier und SPRT). Nach außen sollte es **einen** Satz Zustandsnamen
+  geben, für alle Betriebsarten gleich, CLOP eingeschlossen.
+- **Sperrregeln als Zustand, nicht nur als Fehlermeldung.** Dass Einstellungen während eines
+  Laufs gesperrt sind, erfährt man heute erst, wenn man es versucht. Wenn die Auskunft mitliefert,
+  was gerade änderbar ist, entfällt eine ganze Klasse von Fehlversuchen.
+
+## F.5 Fertigmeldung: „das SPRT ist durch"
+
+Das ist die einzige wirklich fehlende Fähigkeit — alles andere in F.4 ist Schärfen von
+Vorhandenem.
+
+**Was gebraucht wird:** ein Aufruf, der **wartet**, statt sofort zu antworten. Er kehrt zurück,
+wenn sich der Zustand der beobachteten Betriebsart ändert — Lauf beendet, vom Nutzer gestoppt,
+abgebrochen — oder wenn eine mitgegebene Zeitgrenze abläuft (dann mit der Aussage „nichts
+passiert, es läuft noch"). Er verändert nichts.
+
+**Warum genau das die richtige Form ist:** Es bildet das Verhalten ab, das der Nutzer von der
+CLI kennt und schätzt. Dort startet die KI einen Hintergrundprozess; endet er, wird sie
+aktiviert. Ein wartender Aufruf leistet dasselbe, ohne dass die GUI irgendetwas „pushen" muss:
+Die Gegenseite wartet in einem Hintergrundprozess auf die Antwort, und dessen Ende ist das
+Aktivierungssignal. Die GUI braucht dafür weder eine Rückrufadresse noch Kenntnis davon, wer
+gerade zuhört.
+
+**Was die Meldung tragen muss:**
+
+- Wodurch das Warten endete: fertig, vom Nutzer gestoppt, abgebrochen, Zeitgrenze.
+- Die Laufkennung — damit klar ist, *welcher* Lauf gemeint war.
+- Genug Zustand, um ohne weiteren Aufruf weiterarbeiten zu können (vgl. „Zustand statt
+  Gedächtnis"). Ein SPRT, das mit einer Entscheidung endet, sollte die Entscheidung gleich
+  mitbringen.
+
+**Randfälle, die mitgeplant gehören:**
+
+- Mehrere Warteaufrufe gleichzeitig (etwa auf Turnier und SPRT) müssen sich nicht behindern.
+- „Fernsteuerung beenden" und das Schließen der GUI beenden alle Warteaufrufe **mit Begründung**,
+  nicht durch Verstummen.
+- Die Zeitgrenze muss vom Aufrufer kommen und darf nicht so großzügig sein, dass ein hängender
+  Aufruf nicht mehr von einem wartenden zu unterscheiden ist.
+- Wer wartet, muss auch **ohne** Warten an denselben Zustand kommen — sonst wird der Warteaufruf
+  zum Nadelöhr.
+
+**Bewusst nicht zuerst:** ein Ereignisstrom (SSE) oder ein Rückruf an die KI. Beides ist
+mächtiger, aber beides verlangt auf der Gegenseite eine dauerhaft lauschende Instanz. Der
+wartende Aufruf kommt mit dem aus, was ohnehin da ist. Ein Ereignisstrom ist später ergänzbar,
+wenn sich zeigt, dass Zwischenstände (Elo-Verlauf, CLOP-Schätzwerte) live gebraucht werden.
+
+## F.6 Wer sieht was: Tabelle auf den Schirm, Text auf die Leitung
+
+Der scheinbare Widerspruch — die GUI zeigt Ergebnisse als lebende Tabelle, die Leitung kann nur
+Text transportieren — löst sich, wenn man ihn nicht als Entweder-oder behandelt.
+
+Ein Aufruf erzeugt **beides aus einer Quelle**: die Tabelle wird im Fernsteuerungsfenster
+gezeichnet (der Mensch sieht sie, sie aktualisiert sich weiter), und derselbe Inhalt geht als
+Text über die Leitung. Der Mechanismus für die Anzeige existiert bereits
+(`GuiToolResult::renderWidget`, wird jedes Frame neu gezeichnet), der für den Text zur Hälfte
+(`TableFormat::toText()`).
+
+Damit fällt auch die heutige Ausnahme weg, dass `show_result` etwas anderes tut als alle
+übrigen Tools — und zusammen mit der Zusammenlegung aus F.2 verschwindet die längste
+Abgrenzungsbeschreibung der ganzen Schnittstelle.
+
+## F.7 Sicherheit und Betrieb
+
+- Nur an `127.0.0.1` binden, Port einstellbar, **standardmäßig aus** — an nur über den
+  Kommandozeilenschalter. Ein einfaches Merkmal zur Zuordnung (Token) genügt für den Fall, dass
+  auf dem Rechner mehrere Instanzen laufen; TLS ist nicht das Thema.
+- Aufrufe werden erst ausgeführt, **wenn die GUI rendert** (die Warteschlange wird im Frame-Lauf
+  abgearbeitet). Ein minimiertes oder hängendes Fenster verzögert also alles bis zur Zeitgrenze.
+  Für den Zweck unproblematisch, aber es gehört in die Dokumentation — und es ist ein Argument
+  dafür, dass die Fernsteuerung ein sichtbares Fenster hat.
+- Der Verlauf im Fernsteuerungsfenster ist **die** Nachvollziehbarkeit. Er sollte
+  mitgeschrieben werden wie der KI-Chat heute (`LlmChatLogger`), damit sich hinterher klären
+  lässt, wer was ausgelöst hat — die KI oder der Nutzer.
+
+## F.8 Abnahmefähige Ausbaustufen
+
+Jede Stufe endet mit etwas, das man sehen kann.
+
+**Stufe 1 — die GUI lässt sich von außen bedienen und man sieht dabei zu.**
+Kommandozeilenschalter, Fernsteuerungsfenster mit Verlauf, übrige Threads ausgeblendet,
+„Fernsteuerung beenden"-Knopf, Werkzeugliste und Aufruf über HTTP, Statusabfrage.
+*Fertig heißt:* Von außen ein Turnier konfigurieren und starten; die Partien laufen sichtbar auf
+den Brettern, jeder Aufruf steht im Verlauf, der Knopf gibt die GUI wieder frei.
+
+**Stufe 2 — Ergebnisse kommen auch außen an.**
+Auskunftstools zusammengelegt, Ergebnis zusätzlich als Text, Zustandsnamen vereinheitlicht,
+Dateidialoge und `close_application` außen nicht angeboten.
+*Fertig heißt:* Von außen ist der Turnierstand abfragbar, ohne auf den Bildschirm zu sehen — und
+dieselbe Abfrage zeichnet im Fenster die Tabelle.
+
+**Stufe 3 — die Fertigmeldung.**
+Wartender Aufruf, Laufkennung, Änderungszähler.
+*Fertig heißt:* Ein SPRT wird von außen gestartet; die Gegenseite wartet im Hintergrund und wird
+mit Entscheidung und Grund geweckt, sobald es durch ist — auch wenn der Nutzer es von Hand
+gestoppt hat.
+
+**Stufe 4 — MCP als Hülle.**
+Dieselbe Registry, MCP-Format nach außen, keine Resources, keine Prompts, statische
+Werkzeugliste.
+*Fertig heißt:* Ein MCP-Client sieht dieselben Werkzeuge und steuert dieselbe GUI; der lokale
+KI-Chat ist unverändert.
+
+**Stufe 5 — CLOP zieht ein.**
+Nur noch Enumwerte und ein Konfigurationstool, sonst nichts Neues an der Schnittstelle.
+
+## F.9 Offene Entscheidungen
+
+- **Toolschnitt:** Wird der Mittelweg aus F.2 (16 → 10) so genommen, oder soll erst anhand der
+  vorhandenen Logs gezählt werden, welche Tools tatsächlich verwechselt werden?
+- **Wirkt der Toolschnitt auch auf den lokalen Chat?** Aus meiner Sicht ja — eine Quelle, zwei
+  Hüllen ist nur so viel wert, wie beide Seiten dieselbe Schnittstelle sehen. Es bedeutet aber,
+  dass die gesammelten Feinabstimmungsdaten teilweise veralten.
+- **Wieviel Zustand trägt jede Antwort mit?** Heute hängen `start` und `stop` bereits die
+  betriebsartübergreifende Zusammenfassung an. Soll das für alle Antworten gelten (weniger
+  Rückfragen, mehr Token je Antwort) oder nur für zustandsändernde?
+- **Zeigt das Fernsteuerungsfenster auch, was der Nutzer selbst tut** (etwa „Turnier von Hand
+  gestoppt")? Dafür spricht, dass genau diese Eingriffe die KI später überraschen.
