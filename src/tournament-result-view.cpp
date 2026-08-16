@@ -324,7 +324,9 @@ std::string TournamentResultView::formatPlainText(const TournamentResult &result
     std::ostringstream oss;
     oss << "Tournament result:\n";
     TournamentResult r = result;
-    r.printRatingTableUciStyle(oss, averageElo);
+    // The standings the running tournament reports, rendered the same way -- a formatter of its
+    // own here is how the GUI's text export would drift away from the tester's report again.
+    oss << QaplaTester::TableFormat::toText(r.getRatingTableData(averageElo)) << "\n";
     return oss.str();
 }
 
