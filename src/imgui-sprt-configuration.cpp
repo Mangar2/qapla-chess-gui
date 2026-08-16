@@ -105,7 +105,8 @@ bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
     bool changed = ImGuiControls::inputFloat("Elo Lower (H0)", config_->eloH0, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Lower Elo bound (H0): null hypothesis threshold for SPRT test.\n"
-        "If true Elo difference is below this, H0 is accepted (no improvement).");
+        "H0 states that the engine is at most this many elo stronger. The test is set up to end\n"
+        "in H0 being accepted when that is the case.");
     return changed;
 }
 
@@ -114,7 +115,8 @@ bool ImGuiSprtConfiguration::drawEloUpper(float inputWidth) {
     bool changed = ImGuiControls::inputFloat("Elo Upper (H1)", config_->eloH1, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\n"
-        "If true Elo difference is above this, H1 is accepted (improvement confirmed).");
+        "H1 states that the engine is at least this many elo stronger. Accepting H1 says the\n"
+        "games speak for that hypothesis, not that the difference is at least this large.");
     return changed;
 }
 

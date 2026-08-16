@@ -59,11 +59,18 @@ std::string ChatbotStepSprtTournamentResult::draw() {
     auto eloLower = sprtData.sprtConfig().eloH0;
     auto eloUpper = sprtData.sprtConfig().eloH1;
     auto maxGames = sprtData.sprtConfig().maxGames;
+    // A decision says which hypothesis the games favour, at the configured error rates -- it
+    // neither proves the accepted value nor measures the difference. Saying "the engine is at
+    // least H1 elo stronger" claims both. The size of the difference is reported separately, the
+    // same way qapla-engine-tester words its result.
     QaplaWindows::ImGuiControls::textWrapped(std::format(
-        "The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n" 
-        "If LLR falls below lowerbound, then the engine is not {} elo stronger (H0 accepted).\n"
-        "If LLR exceeds upperbound, then the engine is at least {} elo stronger (H1 accepted).\n"
-        "The test continues as long as LLR stays between the bounds and the maximum number of games ({}) is not reached.", 
+        "The values shown are: [Lower Bound < LLR (Log-Likelihood Ratio) < Upper Bound]\n"
+        "Two hypotheses are weighed against each other: H0, that the engine is at most {:g} elo "
+        "stronger, and H1, that it is at least {:g} elo stronger.\n"
+        "If LLR falls below the lower bound, H0 is accepted; if it exceeds the upper bound, H1 is "
+        "accepted. The decision states which hypothesis the games speak for, not how large the "
+        "difference is -- the result reports the measured elo difference separately.\n"
+        "The test continues as long as LLR stays between the bounds and the maximum number of games ({}) is not reached.",
         eloLower, eloUpper, maxGames));
 
     ImGui::Spacing();
