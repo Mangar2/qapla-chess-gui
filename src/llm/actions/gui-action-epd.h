@@ -66,10 +66,13 @@ struct EpdSettings {
  *
  * Unlike SPRT there is no champion/challenger role: every engine is tested against the same
  * position set side by side, and any number of them (including one) is fine.
+ *
+ * On success it reports only the names skipped as not installed, and nothing at all when every
+ * name resolved (see selectTournamentEngines() for the same reasoning).
  */
 [[nodiscard]] ActionResult selectEpdEngines(const std::vector<std::string>& engineNames);
 
-/** @brief Applies an EpdSettings patch and reports what it changed. */
+/** @brief Applies an EpdSettings patch, then reports the full resulting configuration. */
 [[nodiscard]] ActionResult configureEpd(const EpdSettings& settings);
 
 /**

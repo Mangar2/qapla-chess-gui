@@ -74,7 +74,9 @@ void registerEngineTools(GuiToolRegistry& registry) {
     Api::defineTool<NoArguments>(registry,
         {.name = "list_installed_engines",
             .description = "Lists all chess engines configured in GUI's global engine catalog, "
-                           "name + protocol (uci/xboard).",
+                           "name + protocol (uci/xboard). Only needed when the user asks what is "
+                           "available -- the configure_* tools match names themselves, so never "
+                           "call this just to look one up before selecting engines.",
             .invoke = [](const NoArguments&) { return Actions::listInstalledEngines(); }});
 
     Api::defineTool<NoArguments>(registry,

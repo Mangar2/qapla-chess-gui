@@ -38,6 +38,23 @@
  * a reshape of the external API is a change to these files and (rarely) to the mapper in
  * src/llm/api/, and it stops there.
  *
+ * The tool set is deliberately small (currently eleven), and the two shapes it settled on say why
+ * one tool exists rather than another:
+ *
+ * - One tool per *topic* for configuration. configure_tournament / configure_sprt / configure_epd
+ *   each own everything about one activity, engine selection included, so "run A against B at
+ *   1+0" is one call rather than a two-call sequence in an order the caller had to know.
+ * - One tool per *verb* for the lifecycle. start / stop / clear_result / get_status take the topic
+ *   as a "type" argument. Keeping the verb in the name -- rather than folding all four into the
+ *   three topic tools as an "action" argument -- keeps the destructive ones visible at a glance in
+ *   a log, a permission prompt or a chat transcript, and keeps each tool's schema a real contract
+ *   instead of the union of four actions' fields where nothing can be required.
+ *
+ * Reporting is one tool, not three. get_status / get_running_status / show_result used to be
+ * separate, and their descriptions consisted largely of telling each other apart -- the surest
+ * sign that the split was ours rather than the caller's. Picking the wrong one of three is a real
+ * failure; being handed more than was asked for is not.
+ *
  * To add a tool: declare it with Api::defineTool() in the file for its feature, and add its
  * register function to registerGuiTools(). To change one: edit its declaration -- the parameter
  * list is simultaneously the schema the model is shown and the code that reads its arguments, so
@@ -46,22 +63,22 @@
 
 namespace QaplaLlm {
 
-/** @brief Registers the tournament tools: select_engines, configure_tournament. */
+/** @brief Registers the tournament tool: configure_tournament (engines included). */
 void registerTournamentTools(GuiToolRegistry& registry);
 
-/** @brief Registers the SPRT tools: select_sprt_engines, configure_sprt. */
+/** @brief Registers the SPRT tool: configure_sprt (champion/challenger included). */
 void registerSprtTools(GuiToolRegistry& registry);
 
-/** @brief Registers the EPD tools: select_epd_engines, configure_epd. */
+/** @brief Registers the EPD tool: configure_epd (engines included). */
 void registerEpdTools(GuiToolRegistry& registry);
 
 /**
- * @brief Registers the cross-feature tools: get_running_status, start, stop, get_status,
- * clear_result, show_result.
+ * @brief Registers the cross-feature tools: start, stop, get_status, clear_result.
  *
- * The latter five each take a "type" ("tournament"/"sprt"/"epd") rather than existing as fifteen
- * separate per-feature tools -- purely an external packaging decision, made because a small model
- * picks the right one far more reliably from five tools plus an enum than from fifteen names.
+ * Each takes a "type" ("tournament"/"sprt"/"epd") rather than existing as twelve separate
+ * per-feature tools -- purely an external packaging decision, made because a small model picks the
+ * right one far more reliably from four tools plus an enum than from twelve names. get_status
+ * takes it optionally: omitted, it reports across all three at once.
  */
 void registerActivityTools(GuiToolRegistry& registry);
 

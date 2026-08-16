@@ -27,30 +27,32 @@ namespace {
     using Actions::Activity;
     using Actions::StopMode;
 
-    /** @brief Arguments of a tool that takes none. */
-    struct NoArguments {};
-
     /**
-     * @brief Arguments shared by start/stop/get_status/clear_result/show_result.
+     * @brief Arguments shared by start/stop/get_status/clear_result.
      *
-     * `type` is required on all five; `mode` is only declared on stop. Both are optionals purely
-     * because that is how the mapper reads a parameter -- a required one is guaranteed present by
-     * the time invoke() runs.
+     * `type` is required on all but get_status; `mode` is only declared on stop. Both are
+     * optionals purely because that is how the mapper reads a parameter -- a required one is
+     * guaranteed present by the time invoke() runs.
      */
     struct ActivityRequest {
         std::optional<Activity> type;
         std::optional<StopMode> mode;
     };
 
-    Api::Param<ActivityRequest> typeParam() {
-        return Api::enumParam<ActivityRequest>("type", &ActivityRequest::type,
+    Api::Param<ActivityRequest> typeParam(bool required, std::string extraSentence = {}) {
+        std::string description =
             "Which of the three independent activities to act on. \"tournament\": classic "
             "multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": "
             "move-finding analysis vs a fixed position set. If unclear which the user means, "
-            "ask, don't guess -- wrong guess silently starts/stops the wrong one.",
+            "ask, don't guess -- wrong guess silently acts on the wrong one.";
+        if (!extraSentence.empty()) {
+            description += " " + extraSentence;
+        }
+        return Api::enumParam<ActivityRequest>("type", &ActivityRequest::type,
+            std::move(description),
             {{"tournament", Activity::Tournament}, {"sprt", Activity::Sprt},
                 {"epd", Activity::Epd}},
-            true);
+            required);
     }
 
     Api::Param<ActivityRequest> stopModeParam() {
@@ -62,9 +64,10 @@ namespace {
             {{"graceful", StopMode::Graceful}, {"abrupt", StopMode::Abrupt}});
     }
 
-    // start and stop always end with the cross-activity summary, so the model never needs a
-    // separate get_running_status round-trip just to confirm what it started or stopped. That is
-    // an external packaging choice about round-trip cost, not something the actions should know.
+    // Every tool that changes a run's state ends with the cross-activity summary, so a caller
+    // never needs a second round-trip to learn the state its own call produced -- and so a change
+    // the user made by hand in the meantime shows up rather than being silently assumed away.
+    // That is an external packaging choice about round-trip cost, not something the actions know.
     Actions::ActionResult withRunningSummary(Actions::ActionResult result) {
         result.text += " " + Actions::runningActivitiesText();
         return result;
@@ -72,40 +75,21 @@ namespace {
 } // namespace
 
 void registerActivityTools(GuiToolRegistry& registry) {
-    Api::defineTool<NoArguments>(registry,
-        {.name = "get_running_status",
-            .description =
-                "Reports what's currently running: classic tournament, SPRT test, EPD "
-                "analysis checked/reported separately (run independently, see "
-                "configure_sprt's/configure_epd's notes). Call whenever user asks "
-                "broadly if \"something\"/\"a test\"/\"anything\" running, or "
-                "specifically if TOURNAMENT running -- people often call SPRT test or "
-                "EPD analysis \"tournament\" informally (all look same: engines running "
-                "in background), so checking only get_status (type=\"tournament\") could "
-                "wrongly say nothing happening while SPRT test or EPD analysis actually "
-                "active. start/stop already return this same summary, so this is only needed "
-                "for a pure check that changes nothing. Distinguishes a graceful stop "
-                "still in progress from plain running/not running.",
-            .invoke = [](const NoArguments&) {
-                return Actions::succeeded(Actions::runningActivitiesText());
-            }});
-
     Api::defineTool<ActivityRequest>(registry,
         {.name = "start",
             .description =
                 "Starts a tournament, SPRT test, or EPD analysis (pick via \"type\") "
-                "using whatever engines/settings were configured via select_engines/"
-                "configure_tournament, select_sprt_engines/configure_sprt, or "
-                "select_epd_engines/configure_epd respectively. Requires that type's "
-                "own preconditions already met (engines selected, openings/EPD file "
-                "configured) -- result states exactly which is missing if it can't "
-                "start. EPD-specific: auto-resumes from a previous incomplete run "
-                "instead of restarting if its engines/file/timing are unchanged since; "
-                "if that previous run already completed, or its settings changed after "
-                "it stopped, starting fails until clear_result (type=\"epd\") is called "
-                "first. Response always reports what's running across all three "
-                "afterward, so no separate get_running_status call is normally needed.",
-            .params = {typeParam()},
+                "using whatever engines/settings were configured via "
+                "configure_tournament, configure_sprt or configure_epd respectively. "
+                "Requires that type's own preconditions already met (engines selected, "
+                "openings/EPD file configured) -- result states exactly which is missing "
+                "if it can't start. EPD-specific: auto-resumes from a previous incomplete "
+                "run instead of restarting if its engines/file/timing are unchanged "
+                "since; if that previous run already completed, or its settings changed "
+                "after it stopped, starting fails until clear_result (type=\"epd\") is "
+                "called first. Response always reports what's running across all three "
+                "afterward, so no separate status call is needed to confirm it.",
+            .params = {typeParam(true)},
             .invoke = [](const ActivityRequest& request) {
                 return withRunningSummary(Actions::startActivity(*request.type));
             },
@@ -119,30 +103,54 @@ void registerActivityTools(GuiToolRegistry& registry) {
                 "Stops a running tournament, SPRT test, or EPD analysis (pick via "
                 "\"type\"). Optional \"mode\": graceful (default) or abrupt. Fails if "
                 "that type isn't currently running. For EPD, progress is kept (not "
-                "cleared) -- starting again resumes from here. Response always reports "
-                "what's running across all three afterward, so no separate "
-                "get_running_status call is normally needed.",
-            .params = {typeParam(), stopModeParam()},
+                "cleared) -- starting again resumes from here. An abrupt stop only "
+                "returns once the run is really gone, so you may act immediately "
+                "afterward; a graceful one returns while its games are still finishing "
+                "and says so. Response always reports what's running across all three "
+                "afterward, so no separate status call is needed to confirm it.",
+            .params = {typeParam(true), stopModeParam()},
             .invoke = [](const ActivityRequest& request) {
                 return withRunningSummary(
                     Actions::stopActivity(*request.type, request.mode.value_or(StopMode::Graceful)));
             }});
 
+    // The one reporting tool. It used to be three (get_status / get_running_status /
+    // show_result), whose descriptions consisted largely of telling each other apart -- and a
+    // wrong pick there is a real failure, while getting more than was needed is not. So: omit
+    // "type" for the overview, pass it for everything known about one activity, results included.
     Api::defineTool<ActivityRequest>(registry,
         {.name = "get_status",
             .description =
-                "Reports the full current config/state of a tournament, SPRT test, or "
-                "EPD analysis (pick via \"type\"): engines, all its settings, and "
-                "whether/how it's running -- everything configure_tournament/"
-                "configure_sprt/configure_epd also already return after any change they "
-                "make, so this is only needed for a pure status check that changes "
-                "nothing (e.g. \"what's the SPRT test set to right now\"), or before "
-                "select_engines/select_sprt_engines/select_epd_engines. For \"is "
-                "anything running\" across all three at once, use get_running_status "
-                "instead.",
-            .params = {typeParam()},
+                "Reports what is going on, and changes nothing. Without \"type\": one "
+                "line naming everything currently running across all three activities -- "
+                "use this for any \"is something/anything/a tournament running\" "
+                "question, since people call an SPRT test or EPD analysis a "
+                "\"tournament\" informally and they all look alike from outside. With "
+                "\"type\": everything about that one activity -- engines, every setting, "
+                "whether and how it is running, what may be changed right now -- plus its "
+                "current results rendered as a real table in the chat (standings for "
+                "tournament, decision + duel score for sprt, per-position solved/not for "
+                "epd), partial while running, or a note that none exist yet. That table is "
+                "the ONLY place any score, standing, Elo or decision ever comes from: "
+                "never state, type or guess one yourself, and once it is shown don't "
+                "restate its numbers -- the user already sees them. configure_* and "
+                "start/stop already report this same state after every change, so call "
+                "this only when nothing was changed.",
+            .params = {typeParam(false,
+                "Omit it entirely for the cross-activity overview; that is the right call when "
+                "the user asks broadly whether anything is running.")},
             .invoke = [](const ActivityRequest& request) {
-                return Actions::activityStatus(*request.type);
+                if (!request.type) {
+                    return Actions::succeeded(Actions::runningActivitiesText());
+                }
+                // Status and results in one answer: the split between "what is it set to" and
+                // "what has it produced" was ours, never the caller's, and it cost a round-trip
+                // on every question that spanned both.
+                auto status = Actions::activityStatus(*request.type);
+                auto results = Actions::showActivityResult(*request.type);
+                status.text += " " + results.text;
+                status.widget = results.widget;
+                return status;
             }});
 
     Api::defineTool<ActivityRequest>(registry,
@@ -154,29 +162,11 @@ void registerActivityTools(GuiToolRegistry& registry) {
                 "e.g. before reconfiguring and starting fresh with the same engines. "
                 "For EPD specifically, this is also the required fix when start fails "
                 "because a previous run already completed or its settings changed after "
-                "it stopped.",
-            .params = {typeParam()},
+                "it stopped. Response always reports what's running across all three "
+                "afterward.",
+            .params = {typeParam(true)},
             .invoke = [](const ActivityRequest& request) {
-                return Actions::clearActivityResult(*request.type);
-            }});
-
-    Api::defineTool<ActivityRequest>(registry,
-        {.name = "show_result",
-            .description =
-                "Displays the current results of a tournament, SPRT test, or EPD "
-                "analysis (pick via \"type\") as a table in the chat -- ranked-by-Elo "
-                "standings for tournament, SPRT decision + duel score for sprt, "
-                "per-position solved/not-solved for epd. Renders a real table control "
-                "in the chat UI -- not for you to read the data and describe it in your "
-                "own words; just call it and briefly confirm you're showing results, "
-                "don't restate numbers. Works while running (partial results) or after "
-                "finish; reports none available if nothing played/analyzed yet. ONLY way "
-                "you ever learn any actual score/standing/Elo/decision -- no other "
-                "source. Never state/type/guess a result yourself instead of calling "
-                "this -- that's fabrication, not a real result.",
-            .params = {typeParam()},
-            .invoke = [](const ActivityRequest& request) {
-                return Actions::showActivityResult(*request.type);
+                return withRunningSummary(Actions::clearActivityResult(*request.type));
             }});
 }
 

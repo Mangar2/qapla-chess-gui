@@ -65,29 +65,29 @@ namespace {
         return "";
     }
 
+    constexpr ActivityNames TOURNAMENT_NAMES{
+        .withArticle = "a tournament", .bare = "tournament", .workItems = "games"};
+
     // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/
     // Stopping alike -- see TournamentData::isRunning()'s doc comment), so it can't tell those
-    // apart on its own; getState() can. Distinguishing GracefulStopping matters here since a
+    // apart on its own; getState() can. Distinguishing GracefulStopping matters since a
     // tournament in that state is still actively playing its in-progress games, just declining
     // to start new ones -- reporting it as plain "running" would hide that a stop was already
-    // requested.
-    std::string runStateText(TournamentData& tournamentData) {
+    // requested. The wording itself lives in gui-action-types.cpp, shared with SPRT and EPD.
+    RunState runStateOf(TournamentData& tournamentData) {
         switch (tournamentData.getState()) {
-            case TournamentData::State::Starting:
-                return "A tournament is currently starting.";
-            case TournamentData::State::Running:
-                return "A tournament is currently running.";
+            case TournamentData::State::Starting: return RunState::Starting;
+            case TournamentData::State::Running: return RunState::Running;
             case TournamentData::State::GracefulStopping:
-                // Never phrased as "running": in this state the tournament accepts no new games
-                // and cannot be reconfigured or restarted, so calling it running misleads.
-                return "A tournament is finishing its games after a graceful stop. No new games "
-                       "start.";
-            case TournamentData::State::Stopping:
-                return "A tournament is being aborted.";
+                return RunState::FinishingAfterGracefulStop;
+            case TournamentData::State::Stopping: return RunState::Aborting;
             case TournamentData::State::Stopped:
-            default:
-                return "No tournament is currently running.";
+            default: return RunState::Idle;
         }
+    }
+
+    std::string runStateText(TournamentData& tournamentData) {
+        return runStateSentence(runStateOf(tournamentData), TOURNAMENT_NAMES);
     }
 
     std::string adjudicationSummary(TournamentData& data) {
@@ -116,6 +116,14 @@ namespace {
         const auto& openingsFile = tournamentData.tournamentOpening().openings().file;
         const auto& pgnFile = tournamentData.pgnConfig().file;
 
+        // The lock note rides along with the run state so a caller learns what it may change by
+        // asking, instead of by attempting a change and being refused.
+        std::string runState = runStateText(tournamentData);
+        auto lockNote = settingsLockNote(lockOf(runStateOf(tournamentData)));
+        if (!lockNote.empty()) {
+            runState += " " + lockNote;
+        }
+
         return std::format(
             "Engines: {}. Time control: {}. Games per pairing: {}. Rounds: {}. "
             "Event name: {}. Openings file: {}. PGN output file: {}. Concurrency: {}. {} {}",
@@ -126,7 +134,7 @@ namespace {
             openingsFile.empty() ? "(not set)" : openingsFile,
             pgnFile.empty() ? "(not set)" : pgnFile,
             tournamentData.getExternalConcurrency(),
-            runStateText(tournamentData),
+            runState,
             adjudicationSummary(tournamentData));
     }
 
@@ -146,24 +154,6 @@ namespace {
             || settings.resignCentipawnThreshold || settings.resignTwoSided;
     }
 
-    // A running tournament owns its configuration. Split into two phases because the advice
-    // differs: one can still be stopped, the other is already stopping and only needs waiting out.
-    enum class RunLock { None, Running, Stopping };
-
-    RunLock runLockOf(TournamentData& data) {
-        switch (data.getState()) {
-            case TournamentData::State::Running:
-            case TournamentData::State::Starting:
-                return RunLock::Running;
-            case TournamentData::State::GracefulStopping:
-            case TournamentData::State::Stopping:
-                return RunLock::Stopping;
-            case TournamentData::State::Stopped:
-            default:
-                return RunLock::None;
-        }
-    }
-
     // Why the patch is refused, or nullopt if it may go through. The rationale (all games are
     // scheduled at start, so a mid-run change reaches none of them and would mix conditions into
     // one result) belongs here, not in the message: the model needs the rule and the next step,
@@ -173,35 +163,21 @@ namespace {
         if (!changesMoreThanConcurrency(settings)) {
             return std::nullopt;
         }
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Settings are locked while a tournament runs. Nothing changed. Ask the "
-                       "user: stop gracefully or abruptly? Then set the values and start. Only "
-                       "concurrency can be changed while running.";
-            case RunLock::Stopping:
-                return "Settings are locked until the tournament has stopped. Nothing changed. "
-                       "Wait, then set the values and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), TOURNAMENT_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
-    // Same rule for the engines: they are what the result table compares, so they are fixed for
-    // as long as the tournament that uses them. Adding engines to the catalog is unrelated.
+    // The engines are what the result table compares, so they are frozen for exactly as long as
+    // the settings are, and refused in the same words.
     std::optional<std::string> engineSelectionLockedReason(TournamentData& data) {
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Engine selection is locked while a tournament runs. Nothing changed. Ask "
-                       "the user: stop gracefully or abruptly? Then select and start. Installing "
-                       "engines still works.";
-            case RunLock::Stopping:
-                return "Engine selection is locked until the tournament has stopped. Nothing "
-                       "changed. Wait, then select and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), TOURNAMENT_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
     // ------------------------------------------------------------------
@@ -416,14 +392,13 @@ ActionResult selectTournamentEngines(const std::vector<std::string>& engineNames
     // doesn't persist on its own (see ImGuiTournamentConfiguration::updateConfiguration()).
     tournamentData.tournamentConfiguration().updateConfiguration();
 
-    std::vector<std::string> selectedNames;
-    for (const auto& engine : outcome.resolved) {
-        selectedNames.push_back(engine.getName());
-    }
-
-    std::string message = "Selected: " + joinList(selectedNames) + ".";
+    // Reports only what the caller cannot see anyway: every caller follows this with the full
+    // configuration status, which lists the resulting engines by name, so naming them here too
+    // would just say the same thing twice. Engines that were silently dropped are the one thing
+    // that status cannot show.
+    std::string message;
     if (!outcome.notFound.empty()) {
-        message += " Not installed (skipped): " + joinList(outcome.notFound) + ".";
+        message = "Not installed (skipped): " + joinList(outcome.notFound) + ".";
     }
     switchToTournamentView();
     return succeeded(message);
@@ -570,9 +545,9 @@ ActionResult showTournamentResult() {
     // snapshot of the results as they were when this action ran.
     return ActionResult{
         .ok = true,
-        .text = "Showing the current tournament results as a table in the chat -- it is "
-                "already visible to the user, so do not restate, list, or summarize the "
-                "numbers in your reply; just briefly confirm what you did.",
+        .text = "The current standings are now shown as a table in the chat. The user can "
+                "already see them: do not restate, list or summarize the numbers, and never "
+                "state a score, standing or Elo you did not get from here.",
         .widget = []() {
             auto& data = TournamentData::instance();
             ImGui::Text("Tournament Progress: %u / %u games completed",
@@ -583,17 +558,7 @@ ActionResult showTournamentResult() {
 }
 
 std::string tournamentActivityText() {
-    using State = TournamentData::State;
-    switch (TournamentData::instance().getState()) {
-        case State::Starting: return "a tournament is starting";
-        case State::Running: return "a tournament is running";
-        case State::GracefulStopping:
-            // Same reasoning as runStateText()'s GracefulStopping case: never call this "running".
-            return "a tournament is finishing its games after a graceful stop";
-        case State::Stopping: return "a tournament is stopping abruptly";
-        case State::Stopped:
-        default: return "";
-    }
+    return runStatePhrase(runStateOf(TournamentData::instance()), TOURNAMENT_NAMES);
 }
 
 } // namespace QaplaLlm::Actions

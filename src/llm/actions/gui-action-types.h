@@ -21,6 +21,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -48,6 +49,77 @@ namespace QaplaLlm::Actions {
  * Abrupt aborts in-progress work immediately.
  */
 enum class StopMode { Graceful, Abrupt };
+
+/**
+ * @brief The one run-state vocabulary every activity is reported in.
+ *
+ * The tournament, the SPRT test and the EPD analysis each keep their own state enum, and each
+ * used to phrase those states in its own words -- three hand-written wordings that agreed on the
+ * hard parts (never calling a gracefully stopping run "running") and drifted on the easy ones
+ * ("stopping abruptly" vs "being aborted" for the same state). A caller has no way to tell an
+ * intended difference from an accidental one, so the wording lives here once and every activity
+ * maps its own states onto it. A fourth activity (CLOP) only has to supply that mapping.
+ */
+enum class RunState {
+    Idle,
+    Starting,
+    Running,
+
+    /** @brief Stop requested, in-progress work still playing out, nothing new started. */
+    FinishingAfterGracefulStop,
+
+    /** @brief Abort under way; in-progress work is being torn down. */
+    Aborting
+};
+
+/**
+ * @brief What one activity is called, in the three forms the shared sentences need.
+ *
+ * Declared per activity next to its state mapping, so the wording below stays free of any
+ * activity-specific branching.
+ */
+struct ActivityNames {
+    std::string_view withArticle; ///< "a tournament", "an SPRT test", "an EPD analysis"
+    std::string_view bare;        ///< "tournament", "SPRT test", "EPD analysis"
+    std::string_view workItems;   ///< What it processes: "games", "positions"
+};
+
+/** @brief One full sentence naming the run state, for a status report. */
+[[nodiscard]] std::string runStateSentence(RunState state, const ActivityNames& names);
+
+/**
+ * @brief The same state as a lowercase clause for the cross-activity summary
+ * ("a tournament is running"), or "" when idle -- an idle activity is dropped from that summary
+ * rather than carrying an "is idle" wording that only reads well on its own.
+ */
+[[nodiscard]] std::string runStatePhrase(RunState state, const ActivityNames& names);
+
+/**
+ * @brief How far a run's own configuration is frozen right now.
+ *
+ * Two phases rather than one because the advice differs: a running activity can still be stopped,
+ * one that is already stopping only needs waiting out. Telling the second to "stop it first" is
+ * what used to send callers round a stop/start loop that could never succeed.
+ */
+enum class RunLock { None, Running, Stopping };
+
+/** @brief Maps a run state onto the lock it implies. */
+[[nodiscard]] RunLock lockOf(RunState state);
+
+/**
+ * @brief Why a settings or engine change is refused right now, or "" if it may go through.
+ *
+ * One message covers both because engine selection is a configuration field like any other; it is
+ * frozen for exactly as long, and for the same reason (a run whose engines or settings changed
+ * halfway would produce one result table measured under two different rules).
+ */
+[[nodiscard]] std::string settingsLockedSentence(RunLock lock, const ActivityNames& names);
+
+/**
+ * @brief The same fact as a note for a status report ("locked right now, only concurrency"), so a
+ * caller learns it by asking rather than by trying and being refused. Returns "" when unlocked.
+ */
+[[nodiscard]] std::string settingsLockNote(RunLock lock);
 
 /**
  * @brief Off / dry-run / active tri-state shared by draw and resign adjudication.

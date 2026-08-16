@@ -64,9 +64,8 @@ struct ResolveEnginesOutcome {
  * guessing one -- see AmbiguousEngineName -- so the caller can ask which one was meant.
  *
  * Pure/UI-independent (only touches EngineWorkerFactory's config manager, not
- * TournamentData) so it can be unit-tested directly; the "select_engines" tool
- * handler is a thin wrapper that hands the result to
- * TournamentData::instance().getEngineSelect().
+ * TournamentData) so it can be unit-tested directly; the engine selection actions are thin
+ * wrappers that hand the result to getEngineSelect() on the matching activity's data singleton.
  */
 [[nodiscard]] ResolveEnginesOutcome resolveEngines(const std::vector<std::string>& names);
 

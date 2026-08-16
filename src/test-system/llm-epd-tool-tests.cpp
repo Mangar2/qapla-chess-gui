@@ -101,12 +101,12 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: select_epd_engines / configure_epd / get_status (type=epd), called directly
+        // Test: configure_epd (engines + settings) / get_status (type=epd), called directly
         // through GuiToolRegistry (no LLM). No analysis needs to actually run for this.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "ConfigureEpdViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: select_epd_engines / configure_epd / get_status (type=epd) via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: configure_epd / get_status (type=epd) via GuiToolRegistry ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -114,12 +114,12 @@ namespace QaplaTest {
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
             IM_CHECK(!configs.empty());
 
-            ctx->LogInfo("Step 1: select_epd_engines");
+            ctx->LogInfo("Step 1: configure_epd (engines)");
             auto selectArgs = QaplaTester::Json::JsonValue::object();
             auto engineNames = QaplaTester::Json::JsonValue::array();
             engineNames.push_back(configs[0].getName());
             selectArgs["engines"] = engineNames;
-            auto selectResult = callToolAndYield(ctx, "select_epd_engines", selectArgs);
+            auto selectResult = callToolAndYield(ctx, "configure_epd", selectArgs);
             IM_CHECK(selectResult.success);
 
             auto& epdData = QaplaWindows::EpdData::instance();
@@ -130,9 +130,9 @@ namespace QaplaTest {
             auto badNames = QaplaTester::Json::JsonValue::array();
             badNames.push_back("Definitely Not An Installed Engine");
             badArgs["engines"] = badNames;
-            IM_CHECK(!callToolAndYield(ctx, "select_epd_engines", badArgs).success);
+            IM_CHECK(!callToolAndYield(ctx, "configure_epd", badArgs).success);
 
-            ctx->LogInfo("Step 2: configure_epd");
+            ctx->LogInfo("Step 2: configure_epd (settings)");
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["epd_file"] = getTestEpdPath();
             configureArgs["max_time_seconds"] = 5.0;
@@ -170,12 +170,12 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: start/stop/clear_result/show_result (type=epd), called directly through
+        // Test: start/stop/clear_result/get_status (type=epd), called directly through
         // GuiToolRegistry (no LLM).
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Epd/Tools", "StartStopClearShowEpdResultViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: start/stop/clear_result/show_result (type=epd) via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: start/stop/clear_result/get_status (type=epd) via GuiToolRegistry ===");
 
             cleanupEpdState();
             IM_CHECK(hasEnginesAvailable());
@@ -192,7 +192,7 @@ namespace QaplaTest {
             auto engineNames = QaplaTester::Json::JsonValue::array();
             engineNames.push_back(configs[0].getName());
             selectArgs["engines"] = engineNames;
-            IM_CHECK(callToolAndYield(ctx, "select_epd_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", selectArgs).success);
 
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["epd_file"] = getTestEpdPath();
@@ -203,8 +203,8 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "start", epdTypeArgs).success);
             IM_CHECK(waitForAnalysisRunning(ctx, 20.0f));
 
-            // show_result must succeed while running, even before any position finished.
-            auto resultWhileRunning = callToolAndYield(ctx, "show_result", epdTypeArgs);
+            // get_status must succeed while running, even before any position finished.
+            auto resultWhileRunning = callToolAndYield(ctx, "get_status", epdTypeArgs);
             IM_CHECK(resultWhileRunning.success);
 
             // Let the engine settle into the first position before stopping -- see the
@@ -225,7 +225,7 @@ namespace QaplaTest {
             auto clearResult = callToolAndYield(ctx, "clear_result", epdTypeArgs);
             IM_CHECK(clearResult.success);
 
-            auto resultAfterClear = callToolAndYield(ctx, "show_result", epdTypeArgs);
+            auto resultAfterClear = callToolAndYield(ctx, "get_status", epdTypeArgs);
             IM_CHECK(resultAfterClear.success);
             IM_CHECK(resultAfterClear.content.find("No EPD analysis results") != std::string::npos);
             IM_CHECK(!static_cast<bool>(resultAfterClear.renderWidget));
@@ -256,7 +256,7 @@ namespace QaplaTest {
             auto engineNames = QaplaTester::Json::JsonValue::array();
             engineNames.push_back(configs[0].getName());
             selectArgs["engines"] = engineNames;
-            IM_CHECK(callToolAndYield(ctx, "select_epd_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", selectArgs).success);
 
             constexpr uint32_t configuredConcurrency = 5;
             auto configureArgs = QaplaTester::Json::JsonValue::object();
@@ -306,7 +306,7 @@ namespace QaplaTest {
             auto engineNames = QaplaTester::Json::JsonValue::array();
             engineNames.push_back(configs[0].getName());
             selectArgs["engines"] = engineNames;
-            IM_CHECK(callToolAndYield(ctx, "select_epd_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_epd", selectArgs).success);
 
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["epd_file"] = getTestEpdPath();

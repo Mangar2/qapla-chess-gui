@@ -76,7 +76,11 @@ struct TournamentSettings {
  * global engine catalog (see resolveEngines() in gui-tool-tournament.h for the matching rules).
  *
  * Fails without changing anything if a name is ambiguous or nothing matched at all; names that
- * simply are not installed are skipped and reported alongside the ones that were selected.
+ * simply are not installed are skipped and reported.
+ *
+ * On success it reports only what a following configuration status cannot show -- the skipped
+ * names -- and reports nothing at all when every name resolved. Callers are expected to follow it
+ * with configureTournament(), whose status already lists the resulting engines by name.
  */
 [[nodiscard]] ActionResult selectTournamentEngines(const std::vector<std::string>& engineNames);
 

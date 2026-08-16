@@ -59,6 +59,26 @@ namespace {
         return "";
     }
 
+    constexpr ActivityNames EPD_NAMES{
+        .withArticle = "an EPD analysis", .bare = "EPD analysis", .workItems = "positions"};
+
+    // isStopping() alone can't tell graceful from abrupt (see its doc comment); the distinction
+    // matters since a gracefully-stopping analysis is still actively finishing its in-progress
+    // positions, just declining to start new ones -- reporting it as plain "running" (or an
+    // undifferentiated "stopping") would hide that a stop was already requested. The wording
+    // itself lives in gui-action-types.cpp, shared with the tournament and SPRT.
+    RunState runStateOf(EpdData& epdData) {
+        switch (epdData.state) {
+            case EpdData::State::Starting: return RunState::Starting;
+            case EpdData::State::Running: return RunState::Running;
+            case EpdData::State::Gracefully: return RunState::FinishingAfterGracefulStop;
+            case EpdData::State::Stopping: return RunState::Aborting;
+            case EpdData::State::Stopped:
+            case EpdData::State::Cleared:
+            default: return RunState::Idle;
+        }
+    }
+
     std::string statusText(EpdData& epdData) {
         std::vector<std::string> engineNames;
         for (const auto& engine : epdData.getEngineSelect().getSelectedEngines()) {
@@ -66,31 +86,18 @@ namespace {
         }
         const auto& config = epdData.config();
 
-        // isStopping() alone can't tell graceful from abrupt (see its doc comment); the
-        // distinction matters here since a gracefully-stopping analysis is still actively
-        // finishing its in-progress positions, just declining to start new ones -- reporting it
-        // as plain "running" (or an undifferentiated "stopping") would hide that a stop was
-        // already requested.
-        std::string runState = "No EPD analysis is currently running.";
-        if (epdData.isStarting()) {
-            runState = "An EPD analysis is currently starting.";
-        } else if (epdData.isRunning()) {
-            runState = "An EPD analysis is currently running.";
-        } else if (epdData.state == EpdData::State::Gracefully) {
-            // Deliberately not phrased as "running but stopping": an analysis in this state is on
-            // its way out and takes on no new positions, so calling it "running" invites the
-            // reader to treat it like a live analysis -- restart it, or expect settings to reach
-            // it. It is only finishing what was already under way.
-            runState = "An EPD analysis is finishing its positions after a graceful stop. No new "
-                       "positions start.";
-        } else if (epdData.state == EpdData::State::Stopping) {
-            runState = "An EPD analysis is being aborted.";
-        }
+        std::string runState = runStateSentence(runStateOf(epdData), EPD_NAMES);
         if (epdData.isFinished()) {
-            runState += " All positions have been analyzed -- show the EPD result to see it.";
+            runState += " All positions have been analyzed.";
         } else if (epdData.totalTests > 0) {
             runState += std::format(" Progress: {}/{} positions remaining.",
                 epdData.remainingTests, epdData.totalTests);
+        }
+        // The lock note rides along with the run state so a caller learns what it may change by
+        // asking, instead of by attempting a change and being refused.
+        auto lockNote = settingsLockNote(lockOf(runStateOf(epdData)));
+        if (!lockNote.empty()) {
+            runState += " " + lockNote;
         }
 
         return std::format(
@@ -142,25 +149,6 @@ namespace {
             || settings.minTimeInSeconds || settings.seenPlies;
     }
 
-    // A running analysis owns its configuration. Split into two phases because the advice differs:
-    // one can still be stopped, the other is already stopping and only needs waiting out.
-    enum class RunLock { None, Running, Stopping };
-
-    RunLock runLockOf(EpdData& data) {
-        switch (data.state) {
-            case EpdData::State::Running:
-            case EpdData::State::Starting:
-                return RunLock::Running;
-            case EpdData::State::Gracefully:
-            case EpdData::State::Stopping:
-                return RunLock::Stopping;
-            case EpdData::State::Stopped:
-            case EpdData::State::Cleared:
-            default:
-                return RunLock::None;
-        }
-    }
-
     // Why the patch is refused, or nullopt if it may go through. The rationale (the per-position
     // time limits decide what "solved" means, so mixing them mixes the result table) belongs
     // here, not in the message: the model needs the rule and the next step, nothing else.
@@ -168,35 +156,21 @@ namespace {
         if (!changesMoreThanConcurrency(settings)) {
             return std::nullopt;
         }
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Settings are locked while an EPD analysis runs. Nothing changed. Ask the "
-                       "user: stop gracefully or abruptly? Then set the values and start. Only "
-                       "concurrency can be changed while running.";
-            case RunLock::Stopping:
-                return "Settings are locked until the analysis has stopped. Nothing changed. "
-                       "Wait, then set the values and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), EPD_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
-    // Same rule for the engines: they are what the result table reports on. Adding engines to the
-    // catalog is unrelated.
+    // The engines are what the result table reports on, so they are frozen for exactly as long as
+    // the settings are, and refused in the same words.
     std::optional<std::string> engineSelectionLockedReason(EpdData& data) {
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Engine selection is locked while an EPD analysis runs. Nothing changed. "
-                       "Ask the user: stop gracefully or abruptly? Then select and start. "
-                       "Installing engines still works.";
-            case RunLock::Stopping:
-                return "Engine selection is locked until the analysis has stopped. Nothing "
-                       "changed. Wait, then select and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), EPD_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
     void pickEpdFile(EpdData& data, ConfigureOutcome& outcome) {
@@ -283,14 +257,10 @@ ActionResult selectEpdEngines(const std::vector<std::string>& engineNames) {
     // persistence call needed, same as the tournament's and SPRT's engine selection.
     EpdData::instance().getEngineSelect().setEngineConfigurations(outcome.resolved);
 
-    std::vector<std::string> selectedNames;
-    for (const auto& engine : outcome.resolved) {
-        selectedNames.push_back(engine.getName());
-    }
-
-    std::string message = "Selected for EPD analysis: " + joinList(selectedNames) + ".";
+    // Reports only what the caller cannot see anyway -- see selectTournamentEngines() for why.
+    std::string message;
     if (!outcome.notFound.empty()) {
-        message += " Not installed (skipped): " + joinList(outcome.notFound) + ".";
+        message = "Not installed (skipped): " + joinList(outcome.notFound) + ".";
     }
     switchToEpdView();
     return succeeded(message);
@@ -324,19 +294,15 @@ ActionResult configureEpd(const EpdSettings& settings) {
             .endsTurn = outcome.dialogShown, .remedy = outcome.remedy};
     }
 
+    // Ends with the full status, exactly as the tournament and SPRT configuration actions do: a
+    // caller then never needs a second round-trip to see what its own change produced, and the
+    // three read alike. The list of applied fields is dropped for the same reason -- the status
+    // below states every one of them as it now stands.
     std::string message;
-    if (!outcome.applied.empty()) {
-        message = "Configured: " + joinList(outcome.applied) + ".";
-    }
     if (!outcome.problems.empty()) {
-        if (!message.empty()) {
-            message += " ";
-        }
-        message += "Problems: " + joinList(outcome.problems) + ".";
+        message = "Problems: " + joinList(outcome.problems) + ". ";
     }
-    if (message.empty()) {
-        message = "No configuration changes were provided.";
-    }
+    message += statusText(epdData);
     return ActionResult{.ok = outcome.problems.empty(), .text = message, .widget = nullptr,
         .endsTurn = outcome.dialogShown, .remedy = outcome.remedy};
 }
@@ -447,12 +413,9 @@ ActionResult showEpdResult() {
     // reflects the analysis's current state.
     return ActionResult{
         .ok = true,
-        .text = "Showing the current EPD analysis results as a table in the chat -- it is "
-                "already visible to the user, so do not restate, list, or summarize the numbers "
-                "in your reply; just briefly confirm what you did. This is the ONLY way you ever "
-                "learn which positions were solved or not -- you have no other source for that. "
-                "Never state, type, or guess a result yourself instead of calling this; that "
-                "would be fabricated information, not a real result.",
+        .text = "The analyzed positions are now shown as a table in the chat. The user can "
+                "already see them: do not restate, list or summarize the numbers, and never "
+                "state which positions were solved unless you got it from here.",
         .widget = []() {
             auto& data = EpdData::instance();
             ImGui::Text("EPD Analysis Progress: %zu / %zu positions remaining",
@@ -463,19 +426,7 @@ ActionResult showEpdResult() {
 }
 
 std::string epdActivityText() {
-    auto& epdData = EpdData::instance();
-    using State = EpdData::State;
-    switch (epdData.state) {
-        case State::Starting: return "an EPD analysis is starting";
-        case State::Running: return "an EPD analysis is running";
-        case State::Gracefully:
-            // Same reasoning as statusText()'s Gracefully case: never call this "running".
-            return "an EPD analysis is finishing its positions after a graceful stop";
-        case State::Stopping: return "an EPD analysis is stopping abruptly";
-        case State::Stopped:
-        case State::Cleared:
-        default: return "";
-    }
+    return runStatePhrase(runStateOf(EpdData::instance()), EPD_NAMES);
 }
 
 } // namespace QaplaLlm::Actions

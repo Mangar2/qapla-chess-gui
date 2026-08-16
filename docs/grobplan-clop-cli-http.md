@@ -339,6 +339,9 @@ bekommen eine klare Absage statt einer Zeitüberschreitung.
 
 Die Struktur ist bereits ein **Mischform**, nicht „ein Tool pro Aktion":
 
+> Beschreibt den Stand **vor** dem Aufräumen aus Stufe 0 (F.8); die Bewertung führte zu genau
+> diesem Aufräumen.
+
 | Achse | Tools |
 |---|---|
 | Pro Thema (Konfiguration) | `configure_tournament`, `configure_sprt`, `configure_epd`, dazu `select_engines`, `select_sprt_engines`, `select_epd_engines` |
@@ -384,11 +387,11 @@ Nicht die Achse wechseln, sondern dort zusammenlegen, wo die Fehlgriffe passiere
 
 | Maßnahme | Wirkung |
 |---|---|
-| Die drei Auskunftstools zu **einem** zusammenführen, das Konfiguration, Laufzustand **und** Ergebnis liefert (Umfang über einen Parameter, Vorgabe „alles") | 3 → 1; die längsten Abgrenzungstexte entfallen; löst gleichzeitig das Widget/Text-Problem (F.6) |
+| Die drei Auskunftstools zu **einem** zusammenführen: ohne `type` die Übersicht über alle drei, mit `type` alles über eine — Konfiguration, Laufzustand **und** Ergebnis | 3 → 1; die längsten Abgrenzungstexte entfallen; löst gleichzeitig das Widget/Text-Problem (F.6) |
 | `select_*_engines` in `configure_*` aufgehen lassen — die Engineauswahl ist ein Konfigurationsfeld wie jedes andere (sie hat nur eine eigene Sperrregel, und die steht ohnehin schon im Konfigurationstool) | 3 → 0 |
 | `start`, `stop`, `clear_result` unverändert lassen | Verben bleiben Namen |
 
-Ergebnis: **16 → 10 Tools**, ohne Vereinigungsschema, ohne Verlust an Prüfbarkeit, mit
+Ergebnis: **16 → 11 Tools**, ohne Vereinigungsschema, ohne Verlust an Prüfbarkeit, mit
 spürbar weniger Beschreibungstext. Wenn CLOP dazukommt, wächst nur der `type`-Enum, nicht die
 Toolzahl.
 
@@ -429,7 +432,7 @@ Größenordnung, gemessen an den heutigen Tool-Dateien:
 
 | Posten | Umfang |
 |---|---|
-| Reiner Text in `src/llm/tools/` (Beschreibungen, Parametertexte, Enumwerte) | ~17.500 Zeichen |
+| Reiner Text in `src/llm/tools/` (Beschreibungen, Parametertexte, Enumwerte) | ~16.800 Zeichen (vor dem Aufräumen aus Schritt 0: ~17.500) |
 | Zuzüglich JSON-Struktur (Schemarahmen, Eigenschaftsobjekte) | grob 22.000–23.000 Zeichen |
 | **Ergibt** | **grob 5.000–6.000 Token für die vollständige Werkzeugliste** |
 | Aufschlag durch MCP: Namenspräfixe des Clients (z. B. `qapla__start`), je nach Client | ~50–150 Token gesamt |
@@ -619,6 +622,35 @@ Abgrenzungsbeschreibung der ganzen Schnittstelle.
 
 Jede Stufe endet mit etwas, das man sehen kann.
 
+**Stufe 0 — Aufräumen (erledigt).** Vor jeder Fernsteuerung, weil sie sonst eine Schnittstelle
+nach außen führt, die man gleich danach wieder ändert. Wirkt auf den KI-Chat genauso, denn es
+gibt nur eine Deklaration.
+
+- **16 → 11 Tools.** `select_engines`/`select_sprt_engines`/`select_epd_engines` sind in
+  `configure_tournament`/`configure_sprt`/`configure_epd` aufgegangen (die Engines sind ein Feld
+  wie jedes andere, und beim Turnier und bei EPD gilt: lässt sich ein Name nicht auflösen, wird
+  gar nichts angewendet). `get_status`/`get_running_status`/`show_result` sind ein `get_status`:
+  ohne `type` die Übersicht über alle drei, mit `type` Konfiguration, Laufzustand **und**
+  Ergebnistabelle in einer Antwort.
+- **Ein Zustandsvokabular für alle.** `RunState` plus die Formulierungen liegen einmal in
+  `src/llm/actions/gui-action-types.*`; Turnier, SPRT und EPD bilden nur noch ihre eigenen Enums
+  darauf ab. Vorher waren es drei handgeschriebene Wortlaute, die beim Schweren übereinstimmten
+  („ein schonend stoppender Lauf ist nicht ‚running'") und beim Leichten auseinanderliefen
+  („stopping abruptly" gegen „being aborted" für denselben Zustand). CLOP liefert später nur die
+  Abbildung.
+- **Sperrregeln als Zustand.** Die Statusantwort sagt jetzt selbst, was gerade änderbar ist,
+  statt es erst beim abgelehnten Versuch zu verraten. Einstellungen und Engineauswahl teilen sich
+  eine Sperre und einen Wortlaut.
+- **Vollständigere Antworten.** `clear_result` hängt wie `start`/`stop` die
+  betriebsartübergreifende Zusammenfassung an; `configure_epd` endet wie die beiden anderen
+  Konfigurationstools mit dem vollen Status statt mit einer Liste geänderter Felder.
+- **Weniger Text, nicht mehr.** Trotz der neuen Engine-Parameter ist die Schnittstelle um rund
+  700 Zeichen kleiner: die weggefallenen Abgrenzungstexte („nimm dieses statt jenes") waren die
+  längsten überhaupt.
+
+*Fertig heißt:* Die GUI und die Tests laufen gegen die neuen elf Tools; der KI-Chat benutzt
+dieselben.
+
 **Stufe 1 — die GUI lässt sich von außen bedienen und man sieht dabei zu.**
 Kommandozeilenschalter, Fernsteuerungsfenster mit Verlauf, übrige Threads ausgeblendet,
 „Fernsteuerung beenden"-Knopf, Werkzeugliste und Aufruf über HTTP, Statusabfrage.
@@ -646,15 +678,27 @@ KI-Chat ist unverändert.
 **Stufe 5 — CLOP zieht ein.**
 Nur noch Enumwerte und ein Konfigurationstool, sonst nichts Neues an der Schnittstelle.
 
-## F.9 Offene Entscheidungen
+## F.9 Entschiedenes und Offenes
 
-- **Toolschnitt:** Wird der Mittelweg aus F.2 (16 → 10) so genommen, oder soll erst anhand der
-  vorhandenen Logs gezählt werden, welche Tools tatsächlich verwechselt werden?
-- **Wirkt der Toolschnitt auch auf den lokalen Chat?** Aus meiner Sicht ja — eine Quelle, zwei
-  Hüllen ist nur so viel wert, wie beide Seiten dieselbe Schnittstelle sehen. Es bedeutet aber,
-  dass die gesammelten Feinabstimmungsdaten teilweise veralten.
-- **Wieviel Zustand trägt jede Antwort mit?** Heute hängen `start` und `stop` bereits die
-  betriebsartübergreifende Zusammenfassung an. Soll das für alle Antworten gelten (weniger
-  Rückfragen, mehr Token je Antwort) oder nur für zustandsändernde?
-- **Zeigt das Fernsteuerungsfenster auch, was der Nutzer selbst tut** (etwa „Turnier von Hand
-  gestoppt")? Dafür spricht, dass genau diese Eingriffe die KI später überraschen.
+**Entschieden (in Stufe 0 umgesetzt):**
+
+- **Toolschnitt:** der Mittelweg aus F.2, 16 → 11. Kein Wechsel auf ein Tool pro Thema.
+- **Er wirkt auch auf den KI-Chat.** Eine Quelle, zwei Hüllen ist nur so viel wert, wie beide
+  Seiten dieselbe Schnittstelle sehen. Folge: die bisher gesammelten Feinabstimmungsdaten
+  veralten in Teilen.
+- **Zustand in der Antwort:** die zustandsändernden Tools (`start`, `stop`, `clear_result`)
+  hängen die betriebsartübergreifende Zusammenfassung an, die Konfigurationstools enden mit dem
+  vollen Status ihrer eigenen Betriebsart. Nicht jede Antwort trägt alles.
+- **Das Fernsteuerungsfenster zeigt nicht, was der Nutzer selbst tut.** Es ist der Verlauf des
+  Fernsteuerkanals, keine allgemeine Ereignisliste. Dass ein Eingriff von Hand die KI überraschen
+  kann, wird stattdessen dort aufgefangen, wo es zählt: jede Antwort trägt den aktuellen Zustand
+  mit, und die Fertigmeldung (F.5) nennt ausdrücklich, wenn ein Lauf vom Nutzer beendet wurde.
+
+**Offen:**
+
+- **Welche Tools werden tatsächlich verwechselt?** `LlmChatLogger` schreibt jeden Aufruf mit; nach
+  ein paar Sitzungen mit einem kleinen Modell lässt sich das zählen, statt es zu vermuten. Erst
+  danach lohnt ein weiterer Schnitt.
+- **Braucht `get_status` mit `type` eine kurze Form?** Heute liefert es immer alles, auch wenn nur
+  nach einem Feld gefragt war. Bewusst so — ein falsch gewähltes Tool ist ein Fehler, zu viel
+  Information nicht —, aber bei sehr kleinem Kontextfenster könnte das kippen.

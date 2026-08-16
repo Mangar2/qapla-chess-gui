@@ -26,15 +26,32 @@ namespace QaplaLlm {
 namespace {
     using Actions::TournamentSettings;
 
-    /** @brief Arguments of select_engines. */
-    struct SelectEnginesRequest {
+    /**
+     * @brief Arguments of configure_tournament: the settings patch plus the engine selection.
+     *
+     * Engines used to be a tool of their own (select_engines). They are a configuration field
+     * like any other -- frozen for exactly as long, refused in the same words -- and a caller
+     * that wants "Stockfish vs Qapla at 1+0" had to know it needed two calls in the right order.
+     * Deriving keeps the settings struct itself free of the external shape, so the actions layer
+     * still never hears about this.
+     */
+    struct ConfigureTournamentRequest : TournamentSettings {
         std::vector<std::string> engines;
     };
 
-    std::vector<Api::Param<TournamentSettings>> configureParams() {
-        std::vector<Api::Param<TournamentSettings>> params;
-        params.push_back(Tools::timeControlParam<TournamentSettings>());
-        params.push_back(Api::integerParam<TournamentSettings>("games",
+    std::vector<Api::Param<ConfigureTournamentRequest>> configureParams() {
+        using Request = ConfigureTournamentRequest;
+        std::vector<Api::Param<Request>> params;
+        params.push_back(Api::stringListParam<Request>("engines", &Request::engines,
+            "Engine display names for the tournament, e.g. [\"Stockfish\",\"Qapla\"]. Replaces "
+            "the previous selection; sets up a round robin (every engine plays every other). "
+            "Matched case-insensitively against the installed engine catalog, and an informal or "
+            "shortened name (e.g. \"spike\") is matched to the one engine it can mean (e.g. "
+            "\"Spike 1.4.1\") -- pass the name the user said, no need to list the catalog first. "
+            "If a name could mean more than one installed engine, nothing at all is changed and "
+            "the result lists the candidates: ask the user which, never guess."));
+        params.push_back(Tools::timeControlParam<Request>());
+        params.push_back(Api::integerParam<Request>("games",
             &TournamentSettings::gamesPerPairing,
             "Games per engine pairing PER ROUND, not tournament total. Total per pairing = "
             "games*rounds, applies to every pairing. User gives one number, no rounds mention "
@@ -43,17 +60,17 @@ namespace {
             "games=total/rounds yourself (100/10 -> games=10, rounds=10), never put total as-is "
             "into games. If unclear whether given count is total or per-round (e.g. \"100 games "
             "and 10 rounds\", not specified which), ask user, never guess."));
-        params.push_back(Api::integerParam<TournamentSettings>("rounds", &TournamentSettings::rounds,
+        params.push_back(Api::integerParam<Request>("rounds", &TournamentSettings::rounds,
             "Times full pairing set repeats. Default 1. See \"games\" for how this multiplies "
             "into tournament total."));
-        params.push_back(Api::stringParam<TournamentSettings>("event", &TournamentSettings::event,
+        params.push_back(Api::stringParam<Request>("event", &TournamentSettings::event,
             "Tournament/event name."));
-        params.push_back(Tools::openingsFileParam<TournamentSettings>(
+        params.push_back(Tools::openingsFileParam<Request>(
             "Path to EPD/PGN opening book file."));
-        params.push_back(Tools::openingsFileDialogParam<TournamentSettings>());
-        params.push_back(Tools::pgnFileParam<TournamentSettings>());
-        params.push_back(Tools::pgnFileDialogParam<TournamentSettings>());
-        params.push_back(Api::integerParam<TournamentSettings>("concurrency",
+        params.push_back(Tools::openingsFileDialogParam<Request>());
+        params.push_back(Tools::pgnFileParam<Request>());
+        params.push_back(Tools::pgnFileDialogParam<Request>());
+        params.push_back(Api::integerParam<Request>("concurrency",
             &TournamentSettings::concurrency, "Games run in parallel."));
         Tools::appendAdjudicationParams(params);
         return params;
@@ -61,48 +78,46 @@ namespace {
 } // namespace
 
 void registerTournamentTools(GuiToolRegistry& registry) {
-    Api::defineTool<SelectEnginesRequest>(registry,
-        {.name = "select_engines",
-            .description =
-                "Selects configured engines for next tournament, replaces previous "
-                "selection. Names matched case-insensitively vs installed engine "
-                "catalog; informal/short name (e.g. \"spike\") auto-matched to the one "
-                "engine it can mean (e.g. \"Spike 1.4.1\") -- pass name user said, no "
-                "need to call list_installed_engines first for exact name. If name "
-                "matches multiple engines, result lists candidates -- ask user which, "
-                "never guess. Sets up round-robin (every engine plays every other); "
-                "gauntlet mode not supported via chat. Rejected while a tournament runs or "
-                "stops; stop it first. open_add_engine_dialog is not affected.",
-            .params = {Api::stringListParam<SelectEnginesRequest>("engines",
-                &SelectEnginesRequest::engines,
-                "Engine display names, e.g. [\"Stockfish\",\"Qapla\"].", true)},
-            .invoke = [](const SelectEnginesRequest& request) {
-                return Actions::selectTournamentEngines(request.engines);
-            }});
-
-    Api::defineTool<TournamentSettings>(registry,
+    Api::defineTool<ConfigureTournamentRequest>(registry,
         {.name = "configure_tournament",
             .description =
-                "Sets tournament options: time_control, games (per pairing), rounds, "
-                "event (name), openings_file, pgn_file, concurrency, draw_mode/"
-                "draw_min_full_moves/draw_required_consecutive_moves/"
-                "draw_centipawn_threshold, resign_mode/resign_required_consecutive_moves/"
-                "resign_centipawn_threshold/resign_two_sided. Each field independent/"
-                "optional -- pass ONLY what user asked to change (e.g. just \"games\"); "
-                "don't require/ask other fields first. Unpassed fields keep prior value "
-                "(this session or earlier), don't assume unset. Response reports the full "
-                "current tournament config, so no separate get_status (type=\"tournament\") "
-                "call is normally needed. While a tournament runs or stops, every field except "
-                "concurrency is rejected; stop it first. concurrency applies immediately. "
-                "openings_file must be set (here or earlier session) before start "
-                "(type=\"tournament\") succeeds, no safe default. For openings_file/"
-                "pgn_file, set openings_file_dialog/pgn_file_dialog to true instead of a "
-                "typed path to open a native file picker -- never type/guess a path "
-                "yourself. draw_mode/resign_mode "
+                "Sets everything about the classic tournament: engines, time_control, "
+                "games (per pairing), rounds, event (name), openings_file, pgn_file, "
+                "concurrency, draw_mode/draw_min_full_moves/"
+                "draw_required_consecutive_moves/draw_centipawn_threshold, resign_mode/"
+                "resign_required_consecutive_moves/resign_centipawn_threshold/"
+                "resign_two_sided. Each field independent/optional -- pass ONLY what user "
+                "asked to change (e.g. just \"games\"), and pass them together in one "
+                "call when they asked for several; don't require/ask other fields first. "
+                "Unpassed fields keep prior value (this session or earlier), don't assume "
+                "unset. Response reports the full resulting tournament config, so no "
+                "separate get_status call is needed to confirm it. While a tournament "
+                "runs or stops, every field except concurrency is rejected and nothing "
+                "changes; stop it first. concurrency applies immediately. If \"engines\" "
+                "can't be resolved, nothing at all is applied, not even the other fields. "
+                "engines and openings_file must both be set (here or in an earlier "
+                "session) before start (type=\"tournament\") succeeds, no safe default. "
+                "For openings_file/pgn_file, set openings_file_dialog/pgn_file_dialog to "
+                "true instead of a typed path to open a native file picker -- never "
+                "type/guess a path yourself. draw_mode/resign_mode "
                 "\"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
             .params = configureParams(),
-            .invoke = [](const TournamentSettings& settings) {
-                return Actions::configureTournament(settings);
+            .invoke = [](const ConfigureTournamentRequest& request) {
+                // Engines first, and all-or-nothing: applying the rest of a patch whose engine
+                // list turned out to be ambiguous would leave a configuration that matches
+                // neither what was asked for nor what was there before.
+                if (!request.engines.empty()) {
+                    auto selected = Actions::selectTournamentEngines(request.engines);
+                    if (!selected.ok) {
+                        return selected;
+                    }
+                    auto configured = Actions::configureTournament(request);
+                    if (!selected.text.empty()) {
+                        configured.text = selected.text + " " + configured.text;
+                    }
+                    return configured;
+                }
+                return Actions::configureTournament(request);
             },
             .timeout = Tools::FILE_DIALOG_TIMEOUT});
 }

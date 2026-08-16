@@ -25,7 +25,7 @@ struct ImGuiTestEngine;
 namespace QaplaTest {
 
     /**
-     * @brief Registers tests that drive the get_running_status GUI tool directly through
+     * @brief Registers tests that drive the get_status GUI tool directly through
      * GuiToolRegistry (no LLM involved) -- see src/llm/tools/gui-tools-activity.cpp.
      * @param engine The test engine instance.
      */

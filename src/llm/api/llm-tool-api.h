@@ -254,9 +254,17 @@ template <class Request>
  *
  * `type` only decides what the model is shown (integer vs number); the value is always read as a
  * JSON number and converted to the field's own type, so range/step rules stay with the action.
+ *
+ * `Owner` is a separate parameter, rather than just `Request`, so a request struct may *derive*
+ * from an actions-layer settings struct and still bind that struct's fields: template argument
+ * deduction does not perform the base-to-derived member-pointer conversion, so deducing against
+ * `std::optional<Number> Request::*` would reject `&Settings::field` outright. Reading through
+ * the resulting pointer is what makes it work -- `derivedRequest.*baseField` is plain member
+ * access. See ConfigureTournamentRequest in src/llm/tools/gui-tools-tournament.cpp for why the
+ * external request shape and the internal settings struct are related that way.
  */
-template <class Request, class Number>
-[[nodiscard]] Param<Request> numericParam(std::string name, std::optional<Number> Request::* field,
+template <class Request, class Owner, class Number>
+[[nodiscard]] Param<Request> numericParam(std::string name, std::optional<Number> Owner::* field,
     std::string description, ParamType type) {
     Param<Request> param{
         .name = std::move(name), .description = std::move(description), .type = type};
@@ -271,18 +279,18 @@ template <class Request, class Number>
     return param;
 }
 
-/** @brief Whole-number parameter (JSON Schema "integer"). */
-template <class Request, class Number>
+/** @brief Whole-number parameter (JSON Schema "integer"). See numericParam() re `Owner`. */
+template <class Request, class Owner, class Number>
 [[nodiscard]] Param<Request> integerParam(
-    std::string name, std::optional<Number> Request::* field, std::string description) {
-    return numericParam(std::move(name), field, std::move(description), ParamType::Integer);
+    std::string name, std::optional<Number> Owner::* field, std::string description) {
+    return numericParam<Request>(std::move(name), field, std::move(description), ParamType::Integer);
 }
 
-/** @brief Fractional-number parameter (JSON Schema "number"). */
-template <class Request, class Number>
+/** @brief Fractional-number parameter (JSON Schema "number"). See numericParam() re `Owner`. */
+template <class Request, class Owner, class Number>
 [[nodiscard]] Param<Request> numberParam(
-    std::string name, std::optional<Number> Request::* field, std::string description) {
-    return numericParam(std::move(name), field, std::move(description), ParamType::Number);
+    std::string name, std::optional<Number> Owner::* field, std::string description) {
+    return numericParam<Request>(std::move(name), field, std::move(description), ParamType::Number);
 }
 
 /** @brief Boolean parameter bound to an optional field (absent = leave the field untouched). */
@@ -356,9 +364,11 @@ template <class Request>
  *
  * The words and the internal values are declared side by side precisely so the words can be
  * changed (or a synonym added) without the action ever hearing about it.
+ *
+ * See numericParam() for why `Owner` is a parameter of its own.
  */
-template <class Request, class Enum>
-[[nodiscard]] Param<Request> enumParam(std::string name, std::optional<Enum> Request::* field,
+template <class Request, class Owner, class Enum>
+[[nodiscard]] Param<Request> enumParam(std::string name, std::optional<Enum> Owner::* field,
     std::string description, std::vector<std::pair<std::string, Enum>> values,
     bool required = false) {
     Param<Request> param{.name = std::move(name), .description = std::move(description),

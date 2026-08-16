@@ -19,7 +19,100 @@
 
 #include "gui-action-types.h"
 
+#include <cctype>
+#include <format>
+
 namespace QaplaLlm::Actions {
+
+namespace {
+    /** @brief "a tournament" -> "A tournament", for a name that starts a sentence. */
+    std::string capitalized(std::string_view text) {
+        std::string result{text};
+        if (!result.empty()) {
+            result[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(result[0])));
+        }
+        return result;
+    }
+} // namespace
+
+std::string runStateSentence(RunState state, const ActivityNames& names) {
+    switch (state) {
+        case RunState::Starting:
+            return std::format("{} is currently starting.", capitalized(names.withArticle));
+        case RunState::Running:
+            return std::format("{} is currently running.", capitalized(names.withArticle));
+        case RunState::FinishingAfterGracefulStop:
+            // Never phrased as "running": in this state it accepts no new work and can neither be
+            // reconfigured nor restarted, so calling it running invites the reader to treat it
+            // like a live run.
+            return std::format("{} is finishing its {} after a graceful stop. No new {} start.",
+                capitalized(names.withArticle), names.workItems, names.workItems);
+        case RunState::Aborting:
+            return std::format("{} is being aborted.", capitalized(names.withArticle));
+        case RunState::Idle:
+        default:
+            return std::format("No {} is currently running.", names.bare);
+    }
+}
+
+std::string runStatePhrase(RunState state, const ActivityNames& names) {
+    switch (state) {
+        case RunState::Starting: return std::format("{} is starting", names.withArticle);
+        case RunState::Running: return std::format("{} is running", names.withArticle);
+        case RunState::FinishingAfterGracefulStop:
+            return std::format(
+                "{} is finishing its {} after a graceful stop", names.withArticle, names.workItems);
+        case RunState::Aborting: return std::format("{} is being aborted", names.withArticle);
+        case RunState::Idle:
+        default: return "";
+    }
+}
+
+RunLock lockOf(RunState state) {
+    switch (state) {
+        case RunState::Starting:
+        case RunState::Running:
+            return RunLock::Running;
+        case RunState::FinishingAfterGracefulStop:
+        case RunState::Aborting:
+            return RunLock::Stopping;
+        case RunState::Idle:
+        default:
+            return RunLock::None;
+    }
+}
+
+std::string settingsLockedSentence(RunLock lock, const ActivityNames& names) {
+    switch (lock) {
+        case RunLock::Running:
+            return std::format(
+                "Settings and engine selection are locked while {} runs. Nothing changed. Ask the "
+                "user: stop gracefully or abruptly? Then set the values and start. Only "
+                "concurrency can be changed while running.",
+                names.withArticle);
+        case RunLock::Stopping:
+            return std::format(
+                "Settings and engine selection are locked until the {} has stopped. Nothing "
+                "changed. Wait, then set the values and start.",
+                names.bare);
+        case RunLock::None:
+        default:
+            return "";
+    }
+}
+
+std::string settingsLockNote(RunLock lock) {
+    switch (lock) {
+        case RunLock::Running:
+            return "Settings and engine selection are locked right now; only concurrency can be "
+                   "changed.";
+        case RunLock::Stopping:
+            return "Settings and engine selection are locked until it has stopped.";
+        case RunLock::None:
+        default:
+            return "";
+    }
+}
 
 std::string joinList(const std::vector<std::string>& values) {
     std::string joined;

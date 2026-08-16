@@ -53,7 +53,7 @@ namespace {
                 "this tool, even short confirmation/question/acknowledgement. Full answer in "
                 "\"text\" arg only -- anything outside \"text\" discarded, never shown. Never "
                 "split answer or use placeholder here+real answer elsewhere. If a tool already "
-                "displays its result in chat (e.g. show_result), don't repeat that data -- just "
+                "displayed a table in the chat (e.g. get_status), don't repeat that data -- just "
                 "a short confirmation sentence.",
             .parametersSchemaJson =
                 R"({"type":"object","properties":{"text":{"type":"string",)"
@@ -134,7 +134,7 @@ namespace {
 
         // Tracks the single most recently *executed* real tool call (name + raw arguments, as
         // sent by the model) across the whole turn, iterations included, so a call that's an
-        // exact repeat of the one immediately before it -- e.g. the model calling show_result
+        // exact repeat of the one immediately before it -- e.g. the model calling get_status
         // for the same type twice in a row -- can be answered from the cached result instead of
         // re-running it (side-effect-free to repeat, like re-showing a result table, or actively
         // wrong to repeat, like re-starting a tournament). Any other call in between (including

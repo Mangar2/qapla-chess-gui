@@ -63,13 +63,13 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: select_sprt_engines / configure_sprt (incl. its draw_*/resign_* adjudication
+        // Test: configure_sprt (engines, settings and its draw_*/resign_* adjudication
         // fields) / get_status (type=sprt), called directly through GuiToolRegistry (no LLM).
         // No SPRT test needs to actually run for this.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "ConfigureSprtViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: select_sprt_engines / configure_sprt / adjudication / get_status (type=sprt) via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: configure_sprt / adjudication / get_status (type=sprt) via GuiToolRegistry ===");
 
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -77,11 +77,11 @@ namespace QaplaTest {
             auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
             IM_CHECK(configs.size() >= 2);
 
-            ctx->LogInfo("Step 1: select_sprt_engines");
+            ctx->LogInfo("Step 1: configure_sprt (champion/challenger)");
             auto selectArgs = QaplaTester::Json::JsonValue::object();
             selectArgs["champion"] = configs[0].getName();
             selectArgs["challenger"] = configs[1].getName();
-            auto selectResult = callToolAndYield(ctx, "select_sprt_engines", selectArgs);
+            auto selectResult = callToolAndYield(ctx, "configure_sprt", selectArgs);
             IM_CHECK(selectResult.success);
 
             auto& sprtData = QaplaWindows::SprtTournamentData::instance();
@@ -99,9 +99,28 @@ namespace QaplaTest {
             auto sameArgs = QaplaTester::Json::JsonValue::object();
             sameArgs["champion"] = configs[0].getName();
             sameArgs["challenger"] = configs[0].getName();
-            IM_CHECK(!callToolAndYield(ctx, "select_sprt_engines", sameArgs).success);
+            IM_CHECK(!callToolAndYield(ctx, "configure_sprt", sameArgs).success);
 
-            ctx->LogInfo("Step 2: configure_sprt");
+            // Naming only one role is a complete request -- the other keeps its engine, exactly
+            // as an unpassed time_control does. This regressed when engine selection moved into
+            // configure_sprt: a {champion, time_control} patch was rejected whole, and the model
+            // then went asking the user for a challenger that was already configured.
+            ctx->LogInfo("Step 1b: configure_sprt with only one role named");
+            auto oneRoleArgs = QaplaTester::Json::JsonValue::object();
+            oneRoleArgs["champion"] = configs[0].getName();
+            oneRoleArgs["time_control"] = "60+0";
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", oneRoleArgs).success);
+            auto afterOneRole = sprtData.getEngineSelect().getSelectedEngines();
+            IM_CHECK(afterOneRole.size() == 2);
+            bool challengerKept = false;
+            for (const auto& e : afterOneRole) {
+                if (e.isGauntlet() && e.getName() == configs[1].getName()) {
+                    challengerKept = true;
+                }
+            }
+            IM_CHECK(challengerKept);
+
+            ctx->LogInfo("Step 2: configure_sprt (settings)");
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["openings_file"] = getTestOpeningPath();
             configureArgs["elo0"] = 0.0;
@@ -172,12 +191,12 @@ namespace QaplaTest {
         };
 
         // -----------------------------------------------------------------
-        // Test: start/stop/clear_result/show_result (type=sprt), called directly through
+        // Test: start/stop/clear_result/get_status (type=sprt), called directly through
         // GuiToolRegistry (no LLM).
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Sprt/Tools", "StartStopClearShowSprtResultViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: start/stop/clear_result/show_result (type=sprt) via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: start/stop/clear_result/get_status (type=sprt) via GuiToolRegistry ===");
 
             cleanupSprtTournamentState();
             IM_CHECK(hasEnginesAvailable());
@@ -193,7 +212,7 @@ namespace QaplaTest {
             auto selectArgs = QaplaTester::Json::JsonValue::object();
             selectArgs["champion"] = configs[0].getName();
             selectArgs["challenger"] = configs[1].getName();
-            IM_CHECK(callToolAndYield(ctx, "select_sprt_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", selectArgs).success);
 
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["openings_file"] = getTestOpeningPath();
@@ -203,8 +222,8 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "start", sprtTypeArgs).success);
             IM_CHECK(waitForSprtTournamentRunning(ctx, 20.0f));
 
-            // show_result must succeed while running, even before any game finished.
-            auto resultWhileRunning = callToolAndYield(ctx, "show_result", sprtTypeArgs);
+            // get_status must succeed while running, even before any game finished.
+            auto resultWhileRunning = callToolAndYield(ctx, "get_status", sprtTypeArgs);
             IM_CHECK(resultWhileRunning.success);
 
             // Let the engines settle into the first move before stopping -- see the identical
@@ -230,7 +249,7 @@ namespace QaplaTest {
             auto clearResult = callToolAndYield(ctx, "clear_result", sprtTypeArgs);
             IM_CHECK(clearResult.success);
 
-            auto resultAfterClear = callToolAndYield(ctx, "show_result", sprtTypeArgs);
+            auto resultAfterClear = callToolAndYield(ctx, "get_status", sprtTypeArgs);
             IM_CHECK(resultAfterClear.success);
             IM_CHECK(resultAfterClear.content.find("No SPRT results") != std::string::npos);
             IM_CHECK(!static_cast<bool>(resultAfterClear.renderWidget));
@@ -260,7 +279,7 @@ namespace QaplaTest {
             auto selectArgs = QaplaTester::Json::JsonValue::object();
             selectArgs["champion"] = configs[0].getName();
             selectArgs["challenger"] = configs[1].getName();
-            IM_CHECK(callToolAndYield(ctx, "select_sprt_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", selectArgs).success);
 
             constexpr uint32_t configuredConcurrency = 5;
             auto configureArgs = QaplaTester::Json::JsonValue::object();

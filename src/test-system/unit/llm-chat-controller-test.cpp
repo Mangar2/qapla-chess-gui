@@ -550,7 +550,7 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
 
 TEST_CASE("LlmChatController suppresses a tool call that exactly repeats the one right before it",
     "[llm][llm-chat-controller]") {
-    // Reproduces a real case: the model calling e.g. show_result for the same type twice in
+    // Reproduces a real case: the model calling e.g. get_status for the same type twice in
     // immediate succession within one turn. The second, identical call must not actually run
     // the handler again -- just reuse the first call's result -- and a ChatRole::Debug entry
     // must make the suppression visible in the chat.

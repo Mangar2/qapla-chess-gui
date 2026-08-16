@@ -60,21 +60,21 @@ namespace QaplaTest {
         ImGuiTest* t = nullptr;
 
         // -----------------------------------------------------------------
-        // Test: get_running_status, called directly through GuiToolRegistry (no LLM).
+        // Test: get_status without a "type", called directly through GuiToolRegistry (no LLM).
         // Reproduces the exact scenario reported by the user: asking "is a tournament
         // running?" while only an SPRT test is actually running must not say "no" without
         // qualification -- see src/llm/tools/gui-tools-activity.cpp.
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Llm/Status/Tools", "GetRunningStatusViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
-            ctx->LogInfo("=== Test: get_running_status via GuiToolRegistry ===");
+            ctx->LogInfo("=== Test: get_status via GuiToolRegistry ===");
 
             TournamentChatbot::cleanupTournamentState();
             SprtTournamentChatbot::cleanupSprtTournamentState();
             IM_CHECK(SprtTournamentChatbot::hasEnginesAvailable());
 
             ctx->LogInfo("Step 1: nothing running");
-            auto idleStatus = callToolAndYield(ctx, "get_running_status", QaplaTester::Json::JsonValue::object());
+            auto idleStatus = callToolAndYield(ctx, "get_status", QaplaTester::Json::JsonValue::object());
             IM_CHECK(idleStatus.success);
             IM_CHECK(idleStatus.content.find("Nothing is currently running") != std::string::npos);
             IM_CHECK(idleStatus.content.find("no tournament") != std::string::npos);
@@ -87,7 +87,7 @@ namespace QaplaTest {
             auto selectArgs = QaplaTester::Json::JsonValue::object();
             selectArgs["champion"] = configs[0].getName();
             selectArgs["challenger"] = configs[1].getName();
-            IM_CHECK(callToolAndYield(ctx, "select_sprt_engines", selectArgs).success);
+            IM_CHECK(callToolAndYield(ctx, "configure_sprt", selectArgs).success);
 
             auto configureArgs = QaplaTester::Json::JsonValue::object();
             configureArgs["openings_file"] = SprtTournamentChatbot::getTestOpeningPath();
@@ -99,8 +99,8 @@ namespace QaplaTest {
             IM_CHECK(callToolAndYield(ctx, "start", sprtTypeArgs).success);
             IM_CHECK(SprtTournamentChatbot::waitForSprtTournamentRunning(ctx, 20.0f));
 
-            ctx->LogInfo("Step 3: get_running_status must report SPRT running, no mention of a tournament");
-            auto runningStatus = callToolAndYield(ctx, "get_running_status", QaplaTester::Json::JsonValue::object());
+            ctx->LogInfo("Step 3: get_status must report SPRT running, no mention of a tournament");
+            auto runningStatus = callToolAndYield(ctx, "get_status", QaplaTester::Json::JsonValue::object());
             IM_CHECK(runningStatus.success);
             IM_CHECK(runningStatus.content.find("a tournament") == std::string::npos);
             IM_CHECK(runningStatus.content.find("an SPRT test is running") != std::string::npos ||

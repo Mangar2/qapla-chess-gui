@@ -98,30 +98,29 @@ namespace {
             resign.twoSided ? "yes" : "no");
     }
 
+    constexpr ActivityNames SPRT_NAMES{
+        .withArticle = "an SPRT test", .bare = "SPRT test", .workItems = "games"};
+
     // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/Stopping
     // alike), so it can't tell those apart on its own; state() can. Distinguishing the two
     // pending-stop states matters: a test in either is still busy with games that were already
     // under way, it just declines to start new ones -- and only GracefulStopping lets those games
-    // play out, while Stopping aborts them.
-    std::string runStateText(SprtTournamentData& sprtData) {
+    // play out, while Stopping aborts them. The wording itself lives in gui-action-types.cpp,
+    // shared with the tournament and EPD.
+    RunState runStateOf(SprtTournamentData& sprtData) {
         switch (sprtData.state()) {
-            case SprtTournamentData::State::Starting:
-                return "An SPRT test is currently starting.";
-            case SprtTournamentData::State::Running:
-                return "An SPRT test is currently running.";
+            case SprtTournamentData::State::Starting: return RunState::Starting;
+            case SprtTournamentData::State::Running: return RunState::Running;
             case SprtTournamentData::State::GracefulStopping:
-                // Deliberately not phrased as "running but stopping": a test in this state is on
-                // its way out and accepts no new games, so calling it "running" invites the reader
-                // to treat it like a live test (restart it, apply settings to it). It is only
-                // finishing what was already in progress.
-                return "An SPRT test is finishing its games after a graceful stop. No new games "
-                       "start.";
-            case SprtTournamentData::State::Stopping:
-                return "An SPRT test is being aborted.";
+                return RunState::FinishingAfterGracefulStop;
+            case SprtTournamentData::State::Stopping: return RunState::Aborting;
             case SprtTournamentData::State::Stopped:
-            default:
-                return "No SPRT test is currently running.";
+            default: return RunState::Idle;
         }
+    }
+
+    std::string runStateText(SprtTournamentData& sprtData) {
+        return runStateSentence(runStateOf(sprtData), SPRT_NAMES);
     }
 
     std::string statusText(SprtTournamentData& sprtData) {
@@ -132,8 +131,13 @@ namespace {
 
         std::string runState = runStateText(sprtData);
         if (sprtData.isFinished()) {
-            runState += " A decision has been reached (or the game limit was hit) -- show the "
-                        "SPRT result to see it.";
+            runState += " A decision has been reached (or the game limit was hit).";
+        }
+        // The lock note rides along with the run state so a caller learns what it may change by
+        // asking, instead of by attempting a change and being refused.
+        auto lockNote = settingsLockNote(lockOf(runStateOf(sprtData)));
+        if (!lockNote.empty()) {
+            runState += " " + lockNote;
         }
 
         return std::format(
@@ -200,24 +204,6 @@ namespace {
             || settings.resignCentipawnThreshold || settings.resignTwoSided;
     }
 
-    // A running test owns its configuration. Split into two phases because the advice differs:
-    // one can still be stopped, the other is already stopping and only needs waiting out.
-    enum class RunLock { None, Running, Stopping };
-
-    RunLock runLockOf(SprtTournamentData& data) {
-        switch (data.state()) {
-            case SprtTournamentData::State::Running:
-            case SprtTournamentData::State::Starting:
-                return RunLock::Running;
-            case SprtTournamentData::State::GracefulStopping:
-            case SprtTournamentData::State::Stopping:
-                return RunLock::Stopping;
-            case SprtTournamentData::State::Stopped:
-            default:
-                return RunLock::None;
-        }
-    }
-
     // Why the patch is refused, or nullopt if it may go through. The rationale (an SPRT decision
     // is only valid if every game ran under the same conditions) belongs here, not in the
     // message: the model needs the rule and the next step, nothing else.
@@ -226,35 +212,21 @@ namespace {
         if (!changesMoreThanConcurrency(settings)) {
             return std::nullopt;
         }
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Settings are locked while an SPRT test runs. Nothing changed. Ask the "
-                       "user: stop gracefully or abruptly? Then set the values and start. Only "
-                       "concurrency can be changed while running.";
-            case RunLock::Stopping:
-                return "Settings are locked until the test has stopped. Nothing changed. Wait, "
-                       "then set the values and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), SPRT_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
-    // Same rule for the pair of engines: the whole test is a statement about them, so they are
-    // fixed for as long as it runs. Adding engines to the catalog is unrelated.
+    // The pair of engines is what the whole test is a statement about, so it is frozen for exactly
+    // as long as the settings are, and refused in the same words.
     std::optional<std::string> engineSelectionLockedReason(SprtTournamentData& data) {
-        switch (runLockOf(data)) {
-            case RunLock::Running:
-                return "Engine selection is locked while an SPRT test runs. Nothing changed. Ask "
-                       "the user: stop gracefully or abruptly? Then select and start. Installing "
-                       "engines still works.";
-            case RunLock::Stopping:
-                return "Engine selection is locked until the test has stopped. Nothing changed. "
-                       "Wait, then select and start.";
-            case RunLock::None:
-            default:
-                return std::nullopt;
+        auto sentence = settingsLockedSentence(lockOf(runStateOf(data)), SPRT_NAMES);
+        if (sentence.empty()) {
+            return std::nullopt;
         }
+        return sentence;
     }
 
     void pickOpeningsFile(SprtTournamentData& data, ConfigureOutcome& outcome) {
@@ -415,46 +387,76 @@ namespace {
     }
 } // namespace
 
-ActionResult selectSprtEngines(const std::string& championName, const std::string& challengerName) {
-    if (auto locked = engineSelectionLockedReason(SprtTournamentData::instance())) {
+ActionResult selectSprtEngines(const std::optional<std::string>& championName,
+    const std::optional<std::string>& challengerName) {
+    auto& sprtData = SprtTournamentData::instance();
+    if (auto locked = engineSelectionLockedReason(sprtData)) {
         return failed(*locked);
     }
-    auto championOutcome = resolveEngines({championName});
-    auto challengerOutcome = resolveEngines({challengerName});
 
-    std::vector<AmbiguousEngineName> ambiguous = championOutcome.ambiguous;
-    ambiguous.insert(ambiguous.end(), challengerOutcome.ambiguous.begin(),
-        challengerOutcome.ambiguous.end());
+    // A role that is not named keeps whatever is configured -- the same patch semantics every
+    // other configuration field has. Naming only one ("test the new build against the same
+    // champion", "same challenger, stronger baseline") is the most common engine change there
+    // is; requiring both together instead sent callers off asking the user for a value that was
+    // already set, and rejected the whole patch (time control included) while they did.
+    std::optional<QaplaTester::EngineConfig> champion;
+    std::optional<QaplaTester::EngineConfig> challenger;
+    for (const auto& engine : sprtData.getEngineSelect().getSelectedEngines()) {
+        (engine.isGauntlet() ? challenger : champion) = engine;
+    }
+
+    std::vector<AmbiguousEngineName> ambiguous;
+    std::vector<std::string> notFound;
+    auto resolveRole = [&](const std::optional<std::string>& name,
+                           std::optional<QaplaTester::EngineConfig>& role) {
+        if (!name) {
+            return;
+        }
+        auto outcome = resolveEngines({*name});
+        ambiguous.insert(ambiguous.end(), outcome.ambiguous.begin(), outcome.ambiguous.end());
+        notFound.insert(notFound.end(), outcome.notFound.begin(), outcome.notFound.end());
+        if (!outcome.resolved.empty()) {
+            role = outcome.resolved.front();
+        }
+    };
+    resolveRole(championName, champion);
+    resolveRole(challengerName, challenger);
+
     if (!ambiguous.empty()) {
         return failed(formatAmbiguousEngineNames(ambiguous) + " Ask the user which one they mean.");
     }
-
-    std::vector<std::string> notFound = championOutcome.notFound;
-    notFound.insert(notFound.end(), challengerOutcome.notFound.begin(),
-        challengerOutcome.notFound.end());
     if (!notFound.empty()) {
         return failed("Not installed: " + joinList(notFound) +
             ". Look up which engines are available first.");
     }
-
-    auto champion = championOutcome.resolved.front();
-    auto challenger = challengerOutcome.resolved.front();
-    if (champion.getName() == challenger.getName()) {
-        return failed("Champion and challenger must be two different engines.");
+    if (!champion) {
+        return failed("No champion (comparison engine) is configured yet. Nothing changed: name "
+                      "both engines this time.");
     }
-    // resolveEngines() marks both selected + non-gauntlet; SPRT needs exactly one gauntlet engine
-    // (the "engine under test") -- see engineNamesOf() for the same convention read back.
-    challenger.setGauntlet(true);
+    if (!challenger) {
+        return failed("No challenger (engine under test) is configured yet. Nothing changed: name "
+                      "both engines this time.");
+    }
+    if (champion->getName() == challenger->getName()) {
+        return failed("Champion and challenger must be two different engines. Nothing changed.");
+    }
+    // The roles are carried by the gauntlet flag, and both have to be written every time: a role
+    // kept from the previous selection already has the right flag, but one that just swapped
+    // roles does not, and resolveEngines() hands back everything non-gauntlet either way -- see
+    // engineNamesOf() for the same convention read back.
+    champion->setGauntlet(false);
+    challenger->setGauntlet(true);
 
     // setEngineConfigurations() self-persists (see ImGuiEngineSelect::notifyConfigurationChanged())
     // and its registered callback keeps SprtTournamentData::engineConfigurations_ in sync -- no
     // separate updateConfiguration() call needed, same as the tournament's engine selection.
-    std::vector<QaplaTester::EngineConfig> configs{champion, challenger};
-    SprtTournamentData::instance().getEngineSelect().setEngineConfigurations(configs);
+    std::vector<QaplaTester::EngineConfig> configs{*champion, *challenger};
+    sprtData.getEngineSelect().setEngineConfigurations(configs);
 
+    // Reports nothing on success: every caller follows this with the full configuration status,
+    // which already names champion and challenger -- see selectTournamentEngines().
     switchToSprtView();
-    return succeeded("Champion (comparison engine): " + champion.getName() +
-        ". Challenger (engine under test): " + challenger.getName() + ".");
+    return succeeded("");
 }
 
 ActionResult configureSprt(const SprtSettings& settings) {
@@ -594,11 +596,9 @@ ActionResult showSprtResult() {
     // state on every frame.
     return ActionResult{
         .ok = true,
-        .text = "Showing the current SPRT results as tables in the chat -- they are already "
-                "visible to the user, so do not restate, list, or summarize the numbers in your "
-                "reply; just briefly confirm what you did. This is the ONLY way you ever learn "
-                "the actual SPRT decision or duel score -- never state, type, or guess one "
-                "yourself instead of calling this.",
+        .text = "The SPRT decision and the duel score are now shown as tables in the chat. The "
+                "user can already see them: do not restate, list or summarize the numbers, and "
+                "never state a decision or score you did not get from here.",
         .widget = []() {
             auto& data = SprtTournamentData::instance();
             ImGui::Text("SPRT Test Result:");
@@ -610,17 +610,7 @@ ActionResult showSprtResult() {
 }
 
 std::string sprtActivityText() {
-    using State = SprtTournamentData::State;
-    switch (SprtTournamentData::instance().state()) {
-        case State::Starting: return "an SPRT test is starting";
-        case State::Running: return "an SPRT test is running";
-        case State::GracefulStopping:
-            // Same reasoning as runStateText()'s GracefulStopping case: never call this "running".
-            return "an SPRT test is finishing its games after a graceful stop";
-        case State::Stopping: return "an SPRT test is being aborted";
-        case State::Stopped:
-        default: return "";
-    }
+    return runStatePhrase(runStateOf(SprtTournamentData::instance()), SPRT_NAMES);
 }
 
 } // namespace QaplaLlm::Actions

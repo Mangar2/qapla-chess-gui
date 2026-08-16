@@ -83,13 +83,20 @@ struct SprtSettings {
 };
 
 /**
- * @brief Sets the SPRT duel's two engines, resolved against the global engine catalog.
+ * @brief Sets the SPRT duel's engines, resolved against the global engine catalog.
  *
- * Fails without changing anything if either name is ambiguous, not installed, or if both resolve
- * to the same engine.
+ * Each role is a patch, like every other setting: a role given by name is replaced, a role left
+ * unset keeps whatever engine is configured for it. Naming only one is the common case -- a new
+ * build against the same baseline -- so requiring both would reject a perfectly complete request.
+ *
+ * Fails without changing anything if a given name is ambiguous or not installed, if the role that
+ * was not given has no engine configured yet, or if the resulting pair would be one engine twice.
+ *
+ * Reports nothing on success: callers are expected to follow it with configureSprt(), whose status
+ * already names champion and challenger (see selectTournamentEngines() for the same reasoning).
  */
-[[nodiscard]] ActionResult selectSprtEngines(
-    const std::string& championName, const std::string& challengerName);
+[[nodiscard]] ActionResult selectSprtEngines(const std::optional<std::string>& championName,
+    const std::optional<std::string>& challengerName);
 
 /** @brief Applies an SprtSettings patch, then reports the full resulting configuration. */
 [[nodiscard]] ActionResult configureSprt(const SprtSettings& settings);
