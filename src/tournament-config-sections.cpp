@@ -20,6 +20,7 @@
 #include "tournament-config-sections.h"
 
 #include <base-elements/string-helper.h>
+#include <engine-handling/engine-option.h>
 
 #include <algorithm>
 #include <initializer_list>
@@ -99,6 +100,23 @@ namespace {
         std::erase_if(section.entries, [&](const auto& entry) {
             return QaplaHelpers::to_lowercase(entry.first) == lowercaseKey;
         });
+    }
+
+    /**
+     * @brief Spells a restart mode the way the file format defines it.
+     *
+     * The GUI's control offers "Engine decides", "Always" and "Never"; the file knows "auto",
+     * "on" and "off". Both are understood on reading, but only one belongs in a file.
+     * @param value The value as the control left it.
+     * @return The file spelling, or the value lowercased if it names no known mode.
+     */
+    [[nodiscard]] std::string toFileRestart(const std::string& value) {
+        try {
+            return QaplaTester::to_string(QaplaTester::parseRestartOption(value));
+        }
+        catch (const std::exception&) {
+            return QaplaHelpers::to_lowercase(value);
+        }
     }
 
     [[nodiscard]] bool isUseFlag(std::string_view lowercaseKey) {
@@ -237,11 +255,14 @@ QaplaHelpers::IniFile::Section toEachSection(
     if (config.useGlobalPonder) {
         section.addEntry("ponder", config.ponder ? "true" : "false");
     }
+    // The controls label their choices for reading ("None", "Engine decides"); the file format
+    // defines them in lower case. Both spellings are accepted on reading, so this is not about
+    // being understood - it is about a file that says what the format documents.
     if (config.useGlobalTrace) {
-        section.addEntry("trace", config.traceLevel);
+        section.addEntry("trace", QaplaHelpers::to_lowercase(config.traceLevel));
     }
     if (config.useGlobalRestart) {
-        section.addEntry("restart", config.restart);
+        section.addEntry("restart", toFileRestart(config.restart));
     }
     return section;
 }

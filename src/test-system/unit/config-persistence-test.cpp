@@ -350,6 +350,21 @@ TEST_CASE("A state file's \"each\" section holds the settings in force only",
         CHECK_FALSE(section.getValue(key).has_value());
     }
 
+    SECTION("Values are spelled the way the file format defines them") {
+        // The controls label their choices for reading -- "None", "Engine decides". Both
+        // spellings are accepted on reading, so this is about a file that says what the format
+        // documents, not about being understood.
+        const auto labelled = toEachSection([] {
+            QaplaTester::EngineGlobalConfig settings;
+            settings.traceLevel = "None";
+            settings.restart = "Never";
+            return settings;
+        }(), "tournament");
+
+        CHECK(labelled.getValue("trace").value() == "none");
+        CHECK(labelled.getValue("restart").value() == "off");
+    }
+
     SECTION("The section parses against the CLI's \"each\" schema") {
         std::vector<std::pair<std::string, std::string>> reported;
         setConfigLoadErrorReporter([&](const std::string& sectionName, const std::string& message) {

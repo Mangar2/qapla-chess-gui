@@ -31,6 +31,34 @@
 
 using namespace QaplaWindows;
 
+namespace {
+
+    constexpr const char* restartLabels[] = { "Engine decides", "Always", "Never" };
+
+    /**
+     * @brief Names a restart mode the way the control lists it.
+     *
+     * A mode read from a tournament or SPRT file comes in the file format's spelling
+     * ("auto"/"on"/"off"), which matches none of the labels - the control would fall back to
+     * its first entry and show "Engine decides" for an engine that is set to never restart.
+     * @param value The stored value, in either spelling.
+     * @return The matching label, or the value unchanged if it names no known mode.
+     */
+    [[nodiscard]] std::string toRestartLabel(const std::string& value) {
+        try {
+            switch (QaplaTester::parseRestartOption(value)) {
+            case QaplaTester::RestartOption::Always: return restartLabels[1];
+            case QaplaTester::RestartOption::Never: return restartLabels[2];
+            default: return restartLabels[0];
+            }
+        }
+        catch (const std::exception&) {
+            return value;
+        }
+    }
+
+} // namespace
+
 ImGuiEngineGlobalSettings::ImGuiEngineGlobalSettings(ConfigurationChangedCallback callback)
     : configurationCallback_(std::move(callback))
     , timeControlCallback_(nullptr)
@@ -107,8 +135,9 @@ bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, bool show
     }
     ImGui::SetNextItemWidth(controlWidth);
     ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
+    globalSettings_.restart = toRestartLabel(globalSettings_.restart);
     modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
-        {"Engine decides", "Always", "Never"});
+        {restartLabels[0], restartLabels[1], restartLabels[2]});
     ImGuiControls::hooverTooltip("Whether to restart engine process between games");
     ImGui::EndDisabled();
     
