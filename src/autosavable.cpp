@@ -63,6 +63,17 @@ void Autosavable::autosave() {
 void Autosavable::saveFile() {
     namespace fs = std::filesystem;
 
+    if (!loadIncompleteReason_.empty()) {
+        // Saving now would write out only the part that was read and then delete the original,
+        // so everything unread would be lost for good. Keeping the file as it is leaves the user
+        // a file to go back to once the cause is fixed.
+        Logger::reportLogger().log(
+            "Not saving " + filePath_ + ": its stored content could not be read completely ("
+            + loadIncompleteReason_ + "). The file is left untouched so nothing is lost; "
+            "changes made in this session are not stored.", TraceLevel::error);
+        return;
+    }
+
     try {
         // Ensure the directory exists
         std::string directory = getDirectory();
@@ -197,24 +208,28 @@ void Autosavable::loadFile() {
     if (shouldPreferBackup()) {
         // Backup looks better than main file
         if (restoreAndLoadBackup()) {
-            return; 
+            return;
         }
         Logger::reportLogger().log("Backup load failed", TraceLevel::error);
+        markLoadIncomplete("neither the file nor its backup could be read");
         return;
     }
 
     if (fs::exists(filePath_)) {
         if (tryLoadFromFile(filePath_)) {
-            return; 
+            return;
         }
-        
+
         Logger::reportLogger().log("Main file failed to load, attempting backup recovery", TraceLevel::warning);
         if (restoreAndLoadBackup()) {
             Logger::reportLogger().log("Successfully recovered from backup", TraceLevel::info);
             return;
         }
-        
+
         Logger::reportLogger().log("Backup recovery also failed, no ini file loaded", TraceLevel::error);
+        // A file exists and holds settings that were not read. Saving over it would replace all
+        // of them with whatever this session happens to build up.
+        markLoadIncomplete("the file could not be read at all");
         return;
     }
     

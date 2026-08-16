@@ -216,6 +216,9 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/tournament-result-incremental.cpp
       src/config-group-loader.cpp
       src/tournament-config-sections.cpp
+      # The file that decides whether stored settings are overwritten. Free of the GUI stack.
+      src/autosavable.cpp
+      src/callback-manager.cpp
       src/llm/lm-studio-locator.cpp
       src/llm/lm-studio-client.cpp
       src/llm/gui-tool-registry.cpp

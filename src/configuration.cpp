@@ -45,9 +45,15 @@ using QaplaTester::EngineWorkerFactory;
 using namespace QaplaConfiguration;
 using namespace QaplaWindows;
 
-Configuration::Configuration() 
+Configuration::Configuration()
     : Autosavable(CONFIG_FILE, ".bak", 60000, []() { return Autosavable::getConfigDirectory(); })
 {
+    // Before anything is read: EngineConfig resolves the key names of an engine section through
+    // the central parameter definition, so reading the engine catalogue in loadData() throws
+    // while that definition is unregistered. Registering it here rather than relying on some
+    // earlier caller keeps loading independent of startup order.
+    ensureSettingsRegistered();
+
     saveCallbackHandle_ = QaplaWindows::StaticCallbacks::save().registerCallback([this]() {
         this->saveFile();
     });
@@ -82,8 +88,20 @@ void Configuration::loadData(std::ifstream& in) {
         std::string line;
 
         for (const auto& section : sectionList) {
-            if (!processSection(section)) {
-                configData_.addSection(section);
+            // A section this build cannot make sense of must not cost the user the rest of the
+            // file. Letting the exception through used to abandon the load at the first such
+            // section, and since the sections read so far were then all there was to save, the
+            // remainder was written out of existence on the next save.
+            try {
+                if (!processSection(section)) {
+                    configData_.addSection(section);
+                }
+            }
+            catch (const std::exception& e) {
+                Logger::reportLogger().log(
+                    std::string("Skipping unreadable section [") + section.name + "]: " + e.what(),
+                    TraceLevel::error);
+                markLoadIncomplete("section [" + section.name + "] could not be read");
             }
         }
         loadLoggerConfiguration();

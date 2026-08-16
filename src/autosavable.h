@@ -123,7 +123,32 @@ namespace QaplaHelpers {
             autosaveIntervalMs_ = intervalMs;
         }
 
+        /**
+         * @brief Tells why the stored file was not taken over completely, if it was not.
+         * @return The reason, or an empty string if everything stored was read.
+         */
+        [[nodiscard]] const std::string& getLoadIncompleteReason() const {
+            return loadIncompleteReason_;
+        }
+
     protected:
+        /**
+         * @brief Records that part of the stored file could not be read.
+         *
+         * Saving then writes out less than the file holds, and since the save renames the old
+         * file away and deletes it once the new one is written, whatever was not read is gone
+         * for good. That is how a single unreadable section once emptied a whole configuration
+         * file. Saving is therefore refused until the file has been read completely again --
+         * one session's changes are worth less than everything ever configured.
+         *
+         * @param reason What could not be read, for the log entry a user is pointed to.
+         */
+        void markLoadIncomplete(const std::string& reason) {
+            if (loadIncompleteReason_.empty()) {
+                loadIncompleteReason_ = reason;
+            }
+        }
+
         /**
          * @brief Pure virtual method to save data to an output stream.
          * Derived classes must implement this method to write their data.
@@ -190,6 +215,7 @@ namespace QaplaHelpers {
         std::string backupFilePath_;                ///< Full path to the backup file
         
         bool modified_ = false;                      ///< Flag indicating if data has been modified
+        std::string loadIncompleteReason_;           ///< Why the stored file was not fully read
         uint64_t lastSaveTimestamp_ = 0;            ///< Timestamp of last save operation
         uint64_t autosaveIntervalMs_;               ///< Auto-save interval in milliseconds
         
