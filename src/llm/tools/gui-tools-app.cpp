@@ -74,17 +74,23 @@ void registerEngineTools(GuiToolRegistry& registry) {
     Api::defineTool<NoArguments>(registry,
         {.name = "list_installed_engines",
             .description = "Lists all chess engines configured in GUI's global engine catalog, "
-                           "name + protocol (uci/xboard). Only needed when the user asks what is "
-                           "available -- the configure_* tools match names themselves, so never "
-                           "call this just to look one up before selecting engines.",
+                           "name + protocol (uci/xboard). Use it when the user asks which engines "
+                           "are available, or wants to pick one from a list. To set engines for a "
+                           "run just pass the name the user said to configure_tournament/"
+                           "configure_sprt/configure_epd -- they match names themselves.",
             .invoke = [](const NoArguments&) { return Actions::listInstalledEngines(); }});
 
     Api::defineTool<NoArguments>(registry,
         {.name = "open_add_engine_dialog",
             .description =
-                "Opens GUI's native file picker, user selects one+ chess engine "
-                "executables to add to global engine catalog. User picks file(s) "
-                "themselves -- you have no filesystem access. New engines detected "
+                "Installs a NEW engine program into the GUI's global engine catalog, one "
+                "that is not listed there yet: opens the GUI's native file picker so the "
+                "user can select engine executables on disk. This is the only thing it "
+                "does. Engines for a tournament, SPRT test or EPD analysis are chosen by "
+                "name in configure_tournament/configure_sprt/configure_epd, out of the "
+                "engines already installed -- so use this one only when the user says they "
+                "want to add or install an engine the catalog doesn't have. User picks "
+                "file(s) themselves -- you have no filesystem access. New engines detected "
                 "(protocol, options, etc.) synchronously before call returns -- result "
                 "already reflects final outcome, don't promise separate future update. "
                 "ENDS YOUR TURN: this result is the last thing you produce, it is shown "
@@ -94,13 +100,22 @@ void registerEngineTools(GuiToolRegistry& registry) {
             .timeout = Tools::FILE_DIALOG_TIMEOUT});
 }
 
+// The order is part of the external API, not an implementation detail: it is the order the tools
+// appear in for the model, and a small one weights the top of a long list heavily. So the four
+// short lifecycle tools come first -- they are what most requests actually want, and they used to
+// sit behind ~250 lines of configuration schema. The engine-catalog tools go last, because one of
+// them opens a modal dialog and ends the turn, which makes a wrong reach for it unrecoverable
+// within that turn.
+//
+// It is also a fixed order, never a computed one: the tool list is the stable head of every
+// request's prompt, and reordering it invalidates the cached prefix for every conversation.
 void registerGuiTools(GuiToolRegistry& registry) {
-    registerEngineTools(registry);
+    registerActivityTools(registry);
     registerTournamentTools(registry);
     registerSprtTools(registry);
     registerEpdTools(registry);
-    registerActivityTools(registry);
     registerAppTools(registry);
+    registerEngineTools(registry);
 }
 
 } // namespace QaplaLlm

@@ -119,4 +119,7 @@ struct SprtSettings {
 /** @brief Names what the SPRT test is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string sprtActivityText();
 
+/** @brief Whether the SPRT test could be started exactly as configured. */
+[[nodiscard]] bool sprtIsReadyToStart();
+
 } // namespace QaplaLlm::Actions

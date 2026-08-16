@@ -84,15 +84,45 @@ struct ActivityNames {
     std::string_view workItems;   ///< What it processes: "games", "positions"
 };
 
+inline constexpr ActivityNames TOURNAMENT_NAMES{
+    .withArticle = "a tournament", .bare = "tournament", .workItems = "games"};
+inline constexpr ActivityNames SPRT_NAMES{
+    .withArticle = "an SPRT test", .bare = "SPRT test", .workItems = "games"};
+inline constexpr ActivityNames EPD_NAMES{
+    .withArticle = "an EPD analysis", .bare = "EPD analysis", .workItems = "positions"};
+
+/**
+ * @brief The sentence an idle activity adds to its status when it could be started as it stands.
+ *
+ * It exists because "nothing is running" and "nothing is configured" are not the same fact, and
+ * only the first was ever reported. A caller told the first had no way to tell a fully configured
+ * activity from an empty one except by asking after each in turn -- and one that doesn't ask
+ * concludes it has to set something up first. That is how "just start the SPRT test" turned into
+ * listing the engine catalog and opening the install dialog, on a test that was ready all along.
+ *
+ * Deliberately one-sided: an activity that is NOT ready says nothing about it. Naming an obstacle
+ * reads as an assignment -- "its results have to be cleared first" is one resolution out of
+ * several, and the destructive one, so a caller that takes it at face value discards results
+ * nobody asked it to discard. Silence is not a gap either: the status still lists the engines and
+ * files themselves, and the moment readiness actually matters is when a start is attempted, where
+ * the refusal names its own reason to a caller who has just asked for exactly that.
+ */
+[[nodiscard]] std::string readyToStartSentence();
+
 /** @brief One full sentence naming the run state, for a status report. */
 [[nodiscard]] std::string runStateSentence(RunState state, const ActivityNames& names);
 
 /**
- * @brief The same state as a lowercase clause for the cross-activity summary
- * ("a tournament is running"), or "" when idle -- an idle activity is dropped from that summary
+ * @brief The same state as a lowercase clause for the cross-activity summary ("a tournament is
+ * running with concurrency 8"), or "" when idle -- an idle activity is dropped from that summary
  * rather than carrying an "is idle" wording that only reads well on its own.
+ *
+ * The summary is the one answer that says what is going on without listing any settings, so the
+ * one setting that decides how fast it is going belongs in it. Only stated for the states where
+ * it is in force; see the note in the implementation.
  */
-[[nodiscard]] std::string runStatePhrase(RunState state, const ActivityNames& names);
+[[nodiscard]] std::string runStatePhrase(
+    RunState state, const ActivityNames& names, unsigned int concurrency);
 
 /**
  * @brief How far a run's own configuration is frozen right now.
@@ -120,6 +150,24 @@ enum class RunLock { None, Running, Stopping };
  * caller learns it by asking rather than by trying and being refused. Returns "" when unlocked.
  */
 [[nodiscard]] std::string settingsLockNote(RunLock lock);
+
+/**
+ * @brief Reports a concurrency change, in the one sentence a caller needs to close the matter.
+ *
+ * Concurrency is the only setting that takes effect on a run that is already going, so it gets a
+ * sentence of its own rather than one "concurrency=15" item inside the full status, which read as
+ * if the change had been ignored and provoked stop/start cycles to force it through.
+ *
+ * Two things that sentence must do, both learned the hard way. It states the resulting run state
+ * itself, because a bare "concurrency is now 15" is the only answer in the whole tool set that
+ * ends without saying where things stand -- and a model with nothing to close its turn on goes
+ * looking for an action, which is how a plain concurrency change ended in a rejected start. And
+ * it says what is true rather than what not to do: an earlier wording ("do not restart it") was
+ * the one negated instruction anywhere in this API, and naming the very action it forbids is not
+ * how a small model reads it.
+ */
+[[nodiscard]] std::string concurrencySentence(
+    RunState state, const ActivityNames& names, unsigned int count);
 
 /**
  * @brief Off / dry-run / active tri-state shared by draw and resign adjudication.

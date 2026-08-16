@@ -122,4 +122,7 @@ struct TournamentSettings {
  */
 [[nodiscard]] std::string tournamentActivityText();
 
+/** @brief Whether the tournament could be started exactly as configured. */
+[[nodiscard]] bool tournamentIsReadyToStart();
+
 } // namespace QaplaLlm::Actions

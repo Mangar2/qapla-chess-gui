@@ -98,9 +98,6 @@ namespace {
             resign.twoSided ? "yes" : "no");
     }
 
-    constexpr ActivityNames SPRT_NAMES{
-        .withArticle = "an SPRT test", .bare = "SPRT test", .workItems = "games"};
-
     // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/Stopping
     // alike), so it can't tell those apart on its own; state() can. Distinguishing the two
     // pending-stop states matters: a test in either is still busy with games that were already
@@ -133,11 +130,14 @@ namespace {
         if (sprtData.isFinished()) {
             runState += " A decision has been reached (or the game limit was hit).";
         }
-        // The lock note rides along with the run state so a caller learns what it may change by
-        // asking, instead of by attempting a change and being refused.
+        // The lock note and the readiness both ride along with the run state -- see the same
+        // spot in gui-action-tournament.cpp for why.
         auto lockNote = settingsLockNote(lockOf(runStateOf(sprtData)));
         if (!lockNote.empty()) {
             runState += " " + lockNote;
+        }
+        if (runStateOf(sprtData) == RunState::Idle && sprtIsReadyToStart()) {
+            runState += " " + readyToStartSentence();
         }
 
         return std::format(
@@ -167,26 +167,13 @@ namespace {
         std::optional<std::string> concurrencyNote;
     };
 
-    // Concurrency is the one setting that takes effect on a test that is actually running, so it
-    // gets its own sentence saying whether it just did. Reporting it the usual way -- one
-    // "concurrency=5" item inside the full status -- reads as if the change was ignored, and has
-    // provoked stop/start cycles to force it through that were never needed.
-    //
-    // Switches on the exact state rather than isRunning(): that predicate is true for Starting,
-    // GracefulStopping and Stopping as well, and claiming "the running test now plays 5 in
-    // parallel" is wrong in every one of those. applySettings() applies the value live under
+    // See concurrencySentence() for why concurrency answers with a sentence of its own, and what
+    // that sentence has to do. Reads the exact state rather than isRunning(): that predicate is
+    // true for Starting, GracefulStopping and Stopping as well, and "the running test now plays 5
+    // in parallel" is wrong in every one of those. applySettings() applies the value live under
     // exactly the same condition, so text and behaviour cannot drift apart.
     std::string concurrencySummary(SprtTournamentData& data, uint32_t count) {
-        switch (data.state()) {
-            case SprtTournamentData::State::Running:
-                return std::format("Concurrency is now {}. The running SPRT test uses it already; "
-                                   "do not restart it.", count);
-            case SprtTournamentData::State::Starting:
-                return std::format("Concurrency is now {}. The starting SPRT test will use it.",
-                    count);
-            default:
-                return std::format("Concurrency is now {}. Applies to the next SPRT test.", count);
-        }
+        return concurrencySentence(runStateOf(data), SPRT_NAMES, count);
     }
 
     // Everything except concurrency is baked into the test when it starts, exactly as for the
@@ -610,7 +597,20 @@ ActionResult showSprtResult() {
 }
 
 std::string sprtActivityText() {
-    return runStatePhrase(runStateOf(SprtTournamentData::instance()), SPRT_NAMES);
+    auto& sprtData = SprtTournamentData::instance();
+    return runStatePhrase(runStateOf(sprtData), SPRT_NAMES, sprtData.getExternalConcurrency());
+}
+
+bool sprtIsReadyToStart() {
+    auto& sprtData = SprtTournamentData::instance();
+    auto names = engineNamesOf(sprtData);
+    // mayStartTournament(false) covers what the two name checks can't see -- a Monte Carlo run
+    // holding the test, or an engine selection that is not exactly one gauntlet plus one
+    // non-gauntlet, reachable by editing the checkboxes by hand. It reports its reason through
+    // the snackbar only, which is no use here, but its yes/no is exactly what is needed.
+    return !names.champion.empty() && !names.challenger.empty()
+        && !sprtData.tournamentOpening().openings().file.empty()
+        && sprtData.mayStartTournament(false);
 }
 
 } // namespace QaplaLlm::Actions

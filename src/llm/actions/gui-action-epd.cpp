@@ -59,9 +59,6 @@ namespace {
         return "";
     }
 
-    constexpr ActivityNames EPD_NAMES{
-        .withArticle = "an EPD analysis", .bare = "EPD analysis", .workItems = "positions"};
-
     // isStopping() alone can't tell graceful from abrupt (see its doc comment); the distinction
     // matters since a gracefully-stopping analysis is still actively finishing its in-progress
     // positions, just declining to start new ones -- reporting it as plain "running" (or an
@@ -93,11 +90,14 @@ namespace {
             runState += std::format(" Progress: {}/{} positions remaining.",
                 epdData.remainingTests, epdData.totalTests);
         }
-        // The lock note rides along with the run state so a caller learns what it may change by
-        // asking, instead of by attempting a change and being refused.
+        // The lock note and the readiness both ride along with the run state -- see the same
+        // spot in gui-action-tournament.cpp for why.
         auto lockNote = settingsLockNote(lockOf(runStateOf(epdData)));
         if (!lockNote.empty()) {
             runState += " " + lockNote;
+        }
+        if (runStateOf(epdData) == RunState::Idle && epdIsReadyToStart()) {
+            runState += " " + readyToStartSentence();
         }
 
         return std::format(
@@ -116,28 +116,15 @@ namespace {
         bool dialogShown = false;
         Remedy remedy = Remedy::None;
         // Set when the patch changed concurrency; lets configureEpd() answer a concurrency-only
-        // patch with just this sentence instead of the "Configured: ..." list.
+        // patch with just this sentence instead of the full status.
         std::optional<std::string> concurrencyNote;
     };
 
-    // Concurrency is the one setting that takes effect on an analysis that is actually running, so
-    // it gets its own sentence saying whether it just did. Reported the usual way -- one
-    // "concurrency=5" item among the others -- it reads as if the change would only apply to the
-    // next run, which has provoked stop/start cycles to force it through that were never needed.
-    //
-    // applySettings() applies the value live under exactly the same condition, so text and
-    // behaviour cannot drift apart.
+    // See concurrencySentence() for why concurrency answers with a sentence of its own, and what
+    // that sentence has to do. applySettings() applies the value live under exactly the same
+    // condition, so text and behaviour cannot drift apart.
     std::string concurrencySummary(EpdData& data, uint32_t count) {
-        switch (data.state) {
-            case EpdData::State::Running:
-                return std::format("Concurrency is now {}. The running analysis uses it already; "
-                                   "do not restart it.", count);
-            case EpdData::State::Starting:
-                return std::format("Concurrency is now {}. The starting analysis will use it.",
-                    count);
-            default:
-                return std::format("Concurrency is now {}. Applies to the next analysis.", count);
-        }
+        return concurrencySentence(runStateOf(data), EPD_NAMES, count);
     }
 
     // Everything except concurrency is fixed once the analysis starts, exactly as for the classic
@@ -426,7 +413,15 @@ ActionResult showEpdResult() {
 }
 
 std::string epdActivityText() {
-    return runStatePhrase(runStateOf(EpdData::instance()), EPD_NAMES);
+    auto& epdData = EpdData::instance();
+    return runStatePhrase(runStateOf(epdData), EPD_NAMES, epdData.getExternalConcurrency());
+}
+
+bool epdIsReadyToStart() {
+    // The whole check, and the authority on it: mayAnalyze() is the very predicate analyse()
+    // consults, covering the EPD file, the engines, the per-position time and the resume rule.
+    // Its yes/no is all that is reported; the reasons it keeps to its snackbar stay there.
+    return EpdData::instance().mayAnalyze(false);
 }
 
 } // namespace QaplaLlm::Actions

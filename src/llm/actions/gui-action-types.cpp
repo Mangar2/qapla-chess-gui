@@ -55,10 +55,17 @@ std::string runStateSentence(RunState state, const ActivityNames& names) {
     }
 }
 
-std::string runStatePhrase(RunState state, const ActivityNames& names) {
+std::string runStatePhrase(RunState state, const ActivityNames& names, unsigned int concurrency) {
     switch (state) {
-        case RunState::Starting: return std::format("{} is starting", names.withArticle);
-        case RunState::Running: return std::format("{} is running", names.withArticle);
+        // Concurrency belongs to the two states where it is actually in force. A run on its way
+        // out starts nothing new, so naming a parallelism it is no longer using would describe
+        // work that isn't happening -- the same reason concurrencySentence() reports those two
+        // states as applying to the next run rather than this one.
+        case RunState::Starting:
+            return std::format(
+                "{} is starting with concurrency {}", names.withArticle, concurrency);
+        case RunState::Running:
+            return std::format("{} is running with concurrency {}", names.withArticle, concurrency);
         case RunState::FinishingAfterGracefulStop:
             return std::format(
                 "{} is finishing its {} after a graceful stop", names.withArticle, names.workItems);
@@ -111,6 +118,31 @@ std::string settingsLockNote(RunLock lock) {
         case RunLock::None:
         default:
             return "";
+    }
+}
+
+std::string readyToStartSentence() {
+    return "Everything it needs is configured; it can be started exactly as it is.";
+}
+
+std::string concurrencySentence(
+    RunState state, const ActivityNames& names, unsigned int count) {
+    switch (state) {
+        case RunState::Running:
+            return std::format("{} is now running with concurrency {}. Nothing else needed.",
+                capitalized(names.withArticle), count);
+        case RunState::Starting:
+            return std::format("{} is starting with concurrency {}. Nothing else needed.",
+                capitalized(names.withArticle), count);
+        // Includes both pending-stop states: a run on its way out starts no new work, so the new
+        // value reaches nothing that is currently playing -- applySettings() pushes it to the pool
+        // under exactly the same condition, so text and behaviour cannot drift apart.
+        case RunState::FinishingAfterGracefulStop:
+        case RunState::Aborting:
+        case RunState::Idle:
+        default:
+            return std::format(
+                "Concurrency is now {}. The next {} will use it.", count, names.bare);
     }
 }
 

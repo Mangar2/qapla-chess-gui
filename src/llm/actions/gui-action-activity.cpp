@@ -22,6 +22,8 @@
 #include "gui-action-sprt.h"
 #include "gui-action-tournament.h"
 
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace QaplaLlm::Actions {
@@ -81,14 +83,35 @@ std::string runningActivitiesText() {
         }
     }
 
-    if (active.empty()) {
-        return "Nothing is currently running -- no tournament, no SPRT test, no EPD analysis.";
+    if (!active.empty()) {
+        std::string joined = active.front();
+        for (std::size_t i = 1; i < active.size(); ++i) {
+            joined += "; " + active[i];
+        }
+        return "Currently: " + joined + ".";
     }
-    std::string joined = active.front();
-    for (std::size_t i = 1; i < active.size(); ++i) {
-        joined += "; " + active[i];
+
+    // With nothing running, "nothing is running" on its own is the least useful true sentence
+    // there is: it leaves a caller unable to tell an activity that is one call away from starting
+    // from one that has never been set up. So the same answer names the ones that could go right
+    // now -- and only those. The rest are simply left out rather than listed as unready, for the
+    // reason given at readyToStartSentence(): a named obstacle is read as an assignment.
+    std::vector<std::string> ready;
+    const std::pair<const ActivityNames&, bool> entries[] = {
+        {TOURNAMENT_NAMES, tournamentIsReadyToStart()},
+        {SPRT_NAMES, sprtIsReadyToStart()},
+        {EPD_NAMES, epdIsReadyToStart()}};
+    for (const auto& [names, isReady] : entries) {
+        if (isReady) {
+            ready.emplace_back(names.bare);
+        }
     }
-    return "Currently: " + joined + ".";
+
+    std::string text = "Nothing is currently running.";
+    if (!ready.empty()) {
+        text += " Ready to start exactly as configured: " + joinList(ready) + ".";
+    }
+    return text;
 }
 
 } // namespace QaplaLlm::Actions

@@ -104,4 +104,7 @@ struct EpdSettings {
 /** @brief Names what the EPD analysis is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string epdActivityText();
 
+/** @brief Whether the EPD analysis could be started exactly as configured. */
+[[nodiscard]] bool epdIsReadyToStart();
+
 } // namespace QaplaLlm::Actions

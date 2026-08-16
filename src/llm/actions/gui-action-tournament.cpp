@@ -65,9 +65,6 @@ namespace {
         return "";
     }
 
-    constexpr ActivityNames TOURNAMENT_NAMES{
-        .withArticle = "a tournament", .bare = "tournament", .workItems = "games"};
-
     // isRunning() is true for every non-Stopped state (Starting/Running/GracefulStopping/
     // Stopping alike -- see TournamentData::isRunning()'s doc comment), so it can't tell those
     // apart on its own; getState() can. Distinguishing GracefulStopping matters since a
@@ -116,12 +113,17 @@ namespace {
         const auto& openingsFile = tournamentData.tournamentOpening().openings().file;
         const auto& pgnFile = tournamentData.pgnConfig().file;
 
-        // The lock note rides along with the run state so a caller learns what it may change by
-        // asking, instead of by attempting a change and being refused.
+        // The lock note and the readiness both ride along with the run state, so a caller learns
+        // what it may change, and whether it could just start, by asking -- instead of by trying
+        // and being refused. Readiness only while idle, and only when it holds (see
+        // readyToStartSentence()): in any other state the run state itself is the answer.
         std::string runState = runStateText(tournamentData);
         auto lockNote = settingsLockNote(lockOf(runStateOf(tournamentData)));
         if (!lockNote.empty()) {
             runState += " " + lockNote;
+        }
+        if (runStateOf(tournamentData) == RunState::Idle && tournamentIsReadyToStart()) {
+            runState += " " + readyToStartSentence();
         }
 
         return std::format(
@@ -211,23 +213,14 @@ namespace {
     // "concurrency=5" item inside the full status -- reads as if the change was ignored, and has
     // provoked stop/start cycles to force it through that were never needed.
     //
-    // Switches on the exact state rather than isRunning(): that predicate is true for Starting,
-    // GracefulStopping and Stopping as well, and claiming "the running tournament now plays 5 in
-    // parallel" is wrong in every one of those -- a gracefully stopping tournament starts no new
-    // games at all, so nothing there changes. applyConcurrency() below applies the value live
-    // under exactly the same condition, so text and behaviour cannot drift apart.
+    // See concurrencySentence() for why concurrency answers with a sentence of its own, and what
+    // that sentence has to do. Reads the exact state rather than isRunning(): that predicate is
+    // true for Starting, GracefulStopping and Stopping as well, and "the running tournament now
+    // plays 5 in parallel" is wrong in every one of those -- a gracefully stopping tournament
+    // starts no new games at all. applyConcurrency() below applies the value live under exactly
+    // the same condition, so text and behaviour cannot drift apart.
     std::string concurrencySummary(TournamentData& data, uint32_t count) {
-        switch (data.getState()) {
-            case TournamentData::State::Running:
-                return std::format("Concurrency is now {}. The running tournament uses it "
-                                   "already; do not restart it.", count);
-            case TournamentData::State::Starting:
-                return std::format("Concurrency is now {}. The starting tournament will use it.",
-                    count);
-            default:
-                return std::format("Concurrency is now {}. Applies to the next tournament.",
-                    count);
-        }
+        return concurrencySentence(runStateOf(data), TOURNAMENT_NAMES, count);
     }
 
     void applyOpeningsFile(TournamentData& data, const std::string& path, ConfigureOutcome& outcome) {
@@ -558,7 +551,22 @@ ActionResult showTournamentResult() {
 }
 
 std::string tournamentActivityText() {
-    return runStatePhrase(runStateOf(TournamentData::instance()), TOURNAMENT_NAMES);
+    auto& tournamentData = TournamentData::instance();
+    return runStatePhrase(
+        runStateOf(tournamentData), TOURNAMENT_NAMES, tournamentData.getExternalConcurrency());
+}
+
+bool tournamentIsReadyToStart() {
+    auto& tournamentData = TournamentData::instance();
+    // isFinished() is one of TournamentData::mayStartTournament()'s refusals. Its other one --
+    // no games left to play -- is deliberately not mirrored: it reads getTotalGames() off the
+    // tournament object as last created, which lags behind a games/rounds change until the next
+    // start, so a "not ready" derived from it would be wrong about half the times it fires. That
+    // asymmetry is safe here precisely because only readiness is ever reported: the worst case is
+    // staying quiet about a tournament that could in fact have started.
+    return tournamentData.getEngineSelect().getSelectedEngines().size() >= 2
+        && !tournamentData.tournamentOpening().openings().file.empty()
+        && !tournamentData.isFinished();
 }
 
 } // namespace QaplaLlm::Actions
