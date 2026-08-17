@@ -152,6 +152,17 @@ struct GuiToolDefinition {
     bool localOnly = false;
 
     /**
+     * @brief The mirror image: not offered to, and not callable by, a CallOrigin::Local caller.
+     *
+     * For a feature that is driven from outside and has no place in the window -- CLOP tuning is
+     * configured and read entirely over the remote control and has no tab, so offering it to the
+     * chat would put a tool in front of the model whose results the user cannot see. Keeping it
+     * out of the local tool list also keeps it out of the local prompt, which is where every
+     * unused tool costs tokens on every single turn.
+     */
+    bool remoteOnly = false;
+
+    /**
      * @brief Parameter names withheld from a remote caller: absent from the published schema,
      * and rejected if passed anyway.
      *

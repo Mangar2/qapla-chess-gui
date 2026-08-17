@@ -88,6 +88,9 @@ std::vector<ToolSpec> GuiToolRegistry::exportToolSpecs(CallOrigin origin) const 
         if (tool.localOnly && origin == CallOrigin::Remote) {
             continue;
         }
+        if (tool.remoteOnly && origin == CallOrigin::Local) {
+            continue;
+        }
         specs.push_back(ToolSpec{
             .name = tool.name,
             .description = tool.description,
@@ -109,6 +112,12 @@ GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::stri
         // Refused here rather than in the handler: the handler runs on the UI thread and would
         // have to know who called it, which is exactly the sort of thing the actions layer is
         // kept free of.
+        if (origin == CallOrigin::Local && it->remoteOnly) {
+            return GuiToolResult{.success = false,
+                .content = "'" + name
+                    + "' can only be used through the remote control, not from inside the "
+                      "application window."};
+        }
         if (origin == CallOrigin::Remote) {
             if (it->localOnly) {
                 return GuiToolResult{.success = false,

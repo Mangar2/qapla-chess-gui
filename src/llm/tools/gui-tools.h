@@ -72,6 +72,9 @@ void registerSprtTools(GuiToolRegistry& registry);
 /** @brief Registers the EPD tool: configure_epd (engines included). */
 void registerEpdTools(GuiToolRegistry& registry);
 
+/** @brief Registers the CLOP tuning tool. Remote-only -- see GuiToolDefinition::remoteOnly. */
+void registerClopTools(GuiToolRegistry& registry);
+
 /**
  * @brief Registers the cross-feature tools: start, stop, get_status, clear_result.
  *

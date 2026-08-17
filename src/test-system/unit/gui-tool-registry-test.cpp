@@ -174,6 +174,34 @@ TEST_CASE("GuiToolRegistry turns invalid argument JSON into a failed result inst
     REQUIRE(result.content.find("Invalid arguments") != std::string::npos);
 }
 
+TEST_CASE("GuiToolRegistry keeps a remote-only tool away from a local caller",
+    "[llm][gui-tool-registry]") {
+    GuiToolRegistry registry;
+    registry.registerTool(GuiToolDefinition{
+        .name = "remote_thing",
+        .description = "",
+        .parametersSchema = Json::JsonValue::object(),
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "ran"};
+        },
+        .remoteOnly = true
+    });
+
+    // Withheld from the local tool list, not merely refused when called: an unusable tool in the
+    // list costs prompt tokens on every turn and invites a call that can only fail.
+    REQUIRE(registry.exportToolSpecs(CallOrigin::Local).empty());
+    REQUIRE(registry.exportToolSpecs(CallOrigin::Remote).size() == 1);
+
+    auto refused = registry.callTool("remote_thing", "{}", CallOrigin::Local);
+    REQUIRE_FALSE(refused.success);
+    REQUIRE(refused.content.find("remote control") != std::string::npos);
+
+    auto allowed = runOnWorkerWhilePolling(registry, [&]() {
+        return registry.callTool("remote_thing", "{}", CallOrigin::Remote);
+    });
+    REQUIRE(allowed.success);
+}
+
 TEST_CASE("GuiToolRegistry does not blame the arguments when the handler itself throws",
     "[llm][gui-tool-registry]") {
     GuiToolRegistry registry;

@@ -45,12 +45,13 @@ ActivityWatch& ActivityWatch::instance() {
 }
 
 std::size_t ActivityWatch::indexOf(Actions::Activity activity) {
-    switch (activity) {
-        case Actions::Activity::Sprt: return 1;
-        case Actions::Activity::Epd: return 2;
-        case Actions::Activity::Tournament:
-        default: return 0;
+    const auto index = static_cast<std::size_t>(activity);
+    // The enum's own order is the index, so adding an activity needs no second list to update --
+    // the one thing that has to keep pace is ACTIVITY_COUNT, and this guards it.
+    if (index >= ACTIVITY_COUNT) {
+        return 0;
     }
+    return index;
 }
 
 void ActivityWatch::update(Actions::Activity activity, Actions::ActivityProgress progress) {

@@ -1,8 +1,8 @@
 [Translation]
 id=Button
-{s:"Add",t:"2026-08-16"}=Neu
-{s:"Remove",t:"2026-08-16"}=Löschen
-{s:"Detect",t:"2026-08-16"}=Erkennen
+{s:"Add",t:"2026-08-17"}=Neu
+{s:"Remove",t:"2026-08-17"}=Löschen
+{s:"Detect",t:"2026-08-17"}=Erkennen
 {s:"New",t:"2026-07-25"}=Neu
 {s:"Now",t:"2026-07-25"}=Jetzt
 {s:"Stop",t:"2026-08-16"}=Stopp
@@ -93,7 +93,7 @@ id=Button
 {s:"Engine Setup",t:"2025-12-14"}=Engine-Einrichtung
 {s:"Switch to Board & Start",t:"2025-12-18"}=Zur Brettansicht wechseln und starten
 {s:"More...",t:"2026-07-25"}=Mehr...
-{s:"End remote control",t:"2026-08-16"}=End remote control
+{s:"End remote control",t:"2026-08-17"}=End remote control
 
 [Translation]
 id=Checkbox
@@ -580,15 +580,15 @@ id=Table
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2026-08-16"}=Engines
-{s:"Tournament",t:"2026-08-16"}=Turnier
-{s:"Pgn",t:"2026-08-16"}=Pgn
-{s:"Epd",t:"2026-08-16"}=Epd
-{s:"Test",t:"2026-08-16"}=Test
-{s:"Settings",t:"2026-08-16"}=Einstellungen
-{s:"Board",t:"2026-08-16"}=Brett
-{s:"Chatbot",t:"2026-08-16"}=Chatbot
-{s:"SPRT",t:"2026-08-16"}=SPRT
+{s:"Engines",t:"2026-08-17"}=Engines
+{s:"Tournament",t:"2026-08-17"}=Turnier
+{s:"Pgn",t:"2026-08-17"}=Pgn
+{s:"Epd",t:"2026-08-17"}=Epd
+{s:"Test",t:"2026-08-17"}=Test
+{s:"Settings",t:"2026-08-17"}=Einstellungen
+{s:"Board",t:"2026-08-17"}=Brett
+{s:"Chatbot",t:"2026-08-17"}=Chatbot
+{s:"SPRT",t:"2026-08-17"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -772,7 +772,7 @@ id=Text
 {s:"Tournament",t:"2026-07-25"}=Tournament
 {s:"The tournament is starting up, please wait...",t:"2026-07-25"}=The tournament is starting up, please wait...
 {s:"EPD Analysis",t:"2026-07-25"}=EPD Analysis
-{s:"Nothing has been called yet.",t:"2026-08-16"}=Nothing has been called yet.
+{s:"Nothing has been called yet.",t:"2026-08-17"}=Nothing has been called yet.
 
 [Translation]
 id=TextButton

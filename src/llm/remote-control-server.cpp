@@ -85,6 +85,9 @@ namespace {
         if (name == "epd") {
             return Actions::Activity::Epd;
         }
+        if (name == "clop") {
+            return Actions::Activity::Clop;
+        }
         return std::nullopt;
     }
 

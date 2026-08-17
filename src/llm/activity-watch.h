@@ -23,6 +23,7 @@
 #include "actions/gui-action-types.h"
 
 #include <chrono>
+#include <array>
 #include <condition_variable>
 #include <cstdint>
 #include <mutex>
@@ -133,6 +134,10 @@ public:
     void cancelWaits();
 
 private:
+    /** @brief How many Activity values there are. Update alongside Actions::Activity. */
+    static constexpr std::size_t ACTIVITY_COUNT =
+        static_cast<std::size_t>(Actions::Activity::Clop) + 1;
+
     ActivityWatch() = default;
 
     [[nodiscard]] static std::size_t indexOf(Actions::Activity activity);
@@ -143,7 +148,16 @@ private:
     /** @brief Bumped by cancelWaits(); a wait started under an older value gives up. */
     uint64_t waitGeneration_ = 0;
 
-    ActivitySnapshot activities_[3];
+    /**
+     * @brief One slot per Activity, sized from the enum rather than by hand.
+     *
+     * It was a bare "[3]" until a fourth activity was added, and indexOf() then wrote past the
+     * end -- silently, since nothing checks. The counters a caller reads back came out as
+     * nonsense and a wait answered "nothing is running" about a run in full swing. Deriving the
+     * size means the next activity cannot repeat it: the array grows with the enum, and the
+     * static_assert in indexOf() catches a value nobody mapped.
+     */
+    std::array<ActivitySnapshot, ACTIVITY_COUNT> activities_{};
 };
 
 } // namespace QaplaLlm

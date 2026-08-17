@@ -41,9 +41,10 @@ namespace {
 
     Api::Param<ActivityRequest> typeParam(bool required, std::string extraSentence = {}) {
         std::string description =
-            "Which of the three independent activities to act on. \"tournament\": classic "
+            "Which of the independent activities to act on. \"tournament\": classic "
             "multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": "
-            "move-finding analysis vs a fixed position set. If unclear which the user means, "
+            "move-finding analysis vs a fixed position set. \"clop\": CLOP parameter tuning of "
+            "one engine against opponents. If unclear which the user means, "
             "ask, don't guess -- wrong guess silently acts on the wrong one.";
         if (!extraSentence.empty()) {
             description += " " + extraSentence;
@@ -51,7 +52,7 @@ namespace {
         return Api::enumParam<ActivityRequest>("type", &ActivityRequest::type,
             std::move(description),
             {{"tournament", Activity::Tournament}, {"sprt", Activity::Sprt},
-                {"epd", Activity::Epd}},
+                {"epd", Activity::Epd}, {"clop", Activity::Clop}},
             required);
     }
 

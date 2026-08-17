@@ -142,7 +142,7 @@ void initializeLlmChat() {
     static auto activityWatchPollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback(
         []() {
             for (auto activity : {Actions::Activity::Tournament, Actions::Activity::Sprt,
-                     Actions::Activity::Epd}) {
+                     Actions::Activity::Epd, Actions::Activity::Clop}) {
                 ActivityWatch::instance().update(activity, Actions::activityProgress(activity));
             }
         });

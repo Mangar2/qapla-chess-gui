@@ -124,6 +124,9 @@ struct ToolDef {
 
     /** @brief See GuiToolDefinition::localOnly -- set it for anything that needs that human. */
     bool localOnly = false;
+
+    /** @brief See GuiToolDefinition::remoteOnly -- set it for anything the window cannot show. */
+    bool remoteOnly = false;
 };
 
 namespace Detail {
@@ -225,6 +228,7 @@ void defineTool(GuiToolRegistry& registry, ToolDef<Request> tool) {
         },
         .timeout = tool.timeout,
         .localOnly = tool.localOnly,
+        .remoteOnly = tool.remoteOnly,
         .localOnlyParameters = std::move(localOnlyParameters)});
 }
 

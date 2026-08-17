@@ -33,6 +33,7 @@ namespace {
 
 constexpr auto SPRT = Activity::Sprt;
 constexpr auto TOURNAMENT = Activity::Tournament;
+constexpr auto CLOP = Activity::Clop;
 
 /** @brief Puts the watched activity back to a known idle starting point. */
 void reset(Activity activity) {
@@ -168,4 +169,27 @@ TEST_CASE("ActivityWatch keeps waits on different activities independent",
     REQUIRE(sprtResult.reason == WaitReason::Timeout);
     reset(SPRT);
     reset(TOURNAMENT);
+}
+
+TEST_CASE("ActivityWatch keeps a slot for every activity there is", "[llm][activity-watch]") {
+    // The storage was a hand-written "[3]" while the enum grew to four, so the last activity
+    // wrote past the end: its counters came back as whatever happened to be there, and a wait
+    // answered "nothing is running" about a run that was going. Every value has to round-trip.
+    for (auto activity : {Activity::Tournament, Activity::Sprt, Activity::Epd, Activity::Clop}) {
+        reset(activity);
+        ActivityWatch::instance().update(activity, ActivityProgress{.state = RunState::Running});
+    }
+    for (auto activity : {Activity::Tournament, Activity::Sprt, Activity::Epd, Activity::Clop}) {
+        REQUIRE(ActivityWatch::instance().snapshot(activity).progress.state == RunState::Running);
+    }
+
+    // And they must not share one: ending the last must leave the first alone.
+    ActivityWatch::instance().update(CLOP,
+        ActivityProgress{.state = RunState::Idle, .finished = true});
+    REQUIRE(ActivityWatch::instance().snapshot(TOURNAMENT).progress.state == RunState::Running);
+    REQUIRE(ActivityWatch::instance().snapshot(SPRT).progress.state == RunState::Running);
+
+    for (auto activity : {Activity::Tournament, Activity::Sprt, Activity::Epd, Activity::Clop}) {
+        reset(activity);
+    }
 }

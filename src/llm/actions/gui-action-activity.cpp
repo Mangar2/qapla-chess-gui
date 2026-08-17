@@ -18,6 +18,7 @@
  */
 
 #include "gui-action-activity.h"
+#include "gui-action-clop.h"
 #include "gui-action-epd.h"
 #include "gui-action-sprt.h"
 #include "gui-action-tournament.h"
@@ -48,6 +49,7 @@ ActionResult startActivity(Activity activity) {
     auto result = [&]() {
         switch (activity) {
             case Activity::Sprt: return startSprt();
+            case Activity::Clop: return startClop();
             case Activity::Epd: return startEpd();
             case Activity::Tournament:
             default: return startTournament();
@@ -61,6 +63,7 @@ ActionResult stopActivity(Activity activity, StopMode mode) {
     auto result = [&]() {
         switch (activity) {
             case Activity::Sprt: return stopSprt(mode);
+            case Activity::Clop: return stopClop(mode);
             case Activity::Epd: return stopEpd(mode);
             case Activity::Tournament:
             default: return stopTournament(mode);
@@ -73,6 +76,7 @@ ActionResult stopActivity(Activity activity, StopMode mode) {
 ActionResult activityStatus(Activity activity) {
     switch (activity) {
         case Activity::Sprt: return sprtStatus();
+        case Activity::Clop: return clopStatus();
         case Activity::Epd: return epdStatus();
         case Activity::Tournament:
         default: return tournamentStatus();
@@ -82,6 +86,7 @@ ActionResult activityStatus(Activity activity) {
 ActivityProgress activityProgress(Activity activity) {
     switch (activity) {
         case Activity::Sprt: return sprtProgress();
+        case Activity::Clop: return clopProgress();
         case Activity::Epd: return epdProgress();
         case Activity::Tournament:
         default: return tournamentProgress();
@@ -92,6 +97,7 @@ ActionResult clearActivityResult(Activity activity) {
     auto result = [&]() {
         switch (activity) {
             case Activity::Sprt: return clearSprtResult();
+            case Activity::Clop: return clearClopResult();
             case Activity::Epd: return clearEpdResult();
             case Activity::Tournament:
             default: return clearTournamentResult();
@@ -104,6 +110,7 @@ ActionResult clearActivityResult(Activity activity) {
 ActionResult showActivityResult(Activity activity) {
     switch (activity) {
         case Activity::Sprt: return showSprtResult();
+        case Activity::Clop: return showClopResult();
         case Activity::Epd: return showEpdResult();
         case Activity::Tournament:
         default: return showTournamentResult();
@@ -114,7 +121,8 @@ std::string runningActivitiesText() {
     // An idle activity reports "" (see tournamentActivityText() and friends) and is dropped here,
     // rather than each of the three carrying an "is idle" wording that only reads well alone.
     std::vector<std::string> active;
-    for (auto& text : {tournamentActivityText(), sprtActivityText(), epdActivityText()}) {
+    for (auto& text : {tournamentActivityText(), sprtActivityText(), epdActivityText(),
+             clopActivityText()}) {
         if (!text.empty()) {
             active.push_back(text);
         }
@@ -137,7 +145,7 @@ std::string runningActivitiesText() {
     const std::pair<const ActivityNames&, bool> entries[] = {
         {TOURNAMENT_NAMES, tournamentIsReadyToStart()},
         {SPRT_NAMES, sprtIsReadyToStart()},
-        {EPD_NAMES, epdIsReadyToStart()}};
+        {EPD_NAMES, epdIsReadyToStart()}, {CLOP_NAMES, clopIsReadyToStart()}};
     for (const auto& [names, isReady] : entries) {
         if (isReady) {
             ready.emplace_back(names.bare);

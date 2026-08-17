@@ -90,6 +90,8 @@ inline constexpr ActivityNames SPRT_NAMES{
     .withArticle = "an SPRT test", .bare = "SPRT test", .workItems = "games"};
 inline constexpr ActivityNames EPD_NAMES{
     .withArticle = "an EPD analysis", .bare = "EPD analysis", .workItems = "positions"};
+inline constexpr ActivityNames CLOP_NAMES{
+    .withArticle = "a CLOP tuning run", .bare = "CLOP tuning run", .workItems = "games"};
 
 /**
  * @brief The sentence an idle activity adds to its status when it could be started as it stands.

@@ -1,8 +1,8 @@
 [Translation]
 id=Button
-{s:"Add",t:"2026-08-16"}=Ajouter
-{s:"Remove",t:"2026-08-16"}=Retirer
-{s:"Detect",t:"2026-08-16"}=Detecter
+{s:"Add",t:"2026-08-17"}=Ajouter
+{s:"Remove",t:"2026-08-17"}=Retirer
+{s:"Detect",t:"2026-08-17"}=Detecter
 {s:"New",t:"2026-07-25"}=Nouveau
 {s:"Now",t:"2026-07-25"}=Maint
 {s:"Stop",t:"2026-08-16"}=Arret
@@ -95,7 +95,7 @@ id=Button
 {s:"Engine Setup",t:"2025-12-14"}=Configuration des moteurs
 {s:"Switch to Board & Start",t:"2025-12-18"}=Basculer vers le plateau et démarrer
 {s:"More...",t:"2026-07-25"}=More...
-{s:"End remote control",t:"2026-08-16"}=End remote control
+{s:"End remote control",t:"2026-08-17"}=End remote control
 
 [Translation]
 id=Checkbox
@@ -604,15 +604,15 @@ Tournament type:\n  gauntlet - One engine plays against all others\n  round-robi
 
 [Translation]
 id=Tab
-{s:"Engines",t:"2026-08-16"}=Moteurs
-{s:"Tournament",t:"2026-08-16"}=Tournoi
-{s:"Pgn",t:"2026-08-16"}=Pgn
-{s:"Epd",t:"2026-08-16"}=Epd
-{s:"Test",t:"2026-08-16"}=Test
-{s:"Settings",t:"2026-08-16"}=Paramètres
-{s:"Board",t:"2026-08-16"}=Échiquier
-{s:"Chatbot",t:"2026-08-16"}=Chatbot
-{s:"SPRT",t:"2026-08-16"}=SPRT
+{s:"Engines",t:"2026-08-17"}=Moteurs
+{s:"Tournament",t:"2026-08-17"}=Tournoi
+{s:"Pgn",t:"2026-08-17"}=Pgn
+{s:"Epd",t:"2026-08-17"}=Epd
+{s:"Test",t:"2026-08-17"}=Test
+{s:"Settings",t:"2026-08-17"}=Paramètres
+{s:"Board",t:"2026-08-17"}=Échiquier
+{s:"Chatbot",t:"2026-08-17"}=Chatbot
+{s:"SPRT",t:"2026-08-17"}=SPRT
 
 [Translation]
 id=Chatbot
@@ -827,7 +827,7 @@ id=Text
 {s:"Tournament",t:"2026-07-25"}=Tournament
 {s:"The tournament is starting up, please wait...",t:"2026-07-25"}=The tournament is starting up, please wait...
 {s:"EPD Analysis",t:"2026-07-25"}=EPD Analysis
-{s:"Nothing has been called yet.",t:"2026-08-16"}=Nothing has been called yet.
+{s:"Nothing has been called yet.",t:"2026-08-17"}=Nothing has been called yet.
 
 [Translation]
 id=TextButton

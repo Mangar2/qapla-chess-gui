@@ -26,13 +26,19 @@
 namespace QaplaLlm::Actions {
 
 /**
- * @brief One of the three independent things this GUI can have running at once.
+ * @brief One of the independent things this GUI can have running at once.
  *
  * They share no state: each has its own engine selection, time control, concurrency and results.
  * Every operation below simply forwards to the matching per-activity action, so a caller that
  * already knows which one it wants should call that action directly instead.
+ *
+ * Clop is the one without a tab of its own -- it is configured and read over the remote control
+ * (see QaplaWindows::ClopData) -- but it is an activity like the others in every way that matters
+ * here: it runs, it can be stopped, it has results, and its games appear on the boards. Which is
+ * why it joins this enum rather than getting a lifecycle of its own: start, stop, status, wait
+ * and clear then cover it without another line of external API.
  */
-enum class Activity { Tournament, Sprt, Epd };
+enum class Activity { Tournament, Sprt, Epd, Clop };
 
 /** @brief Starts the given activity. See startTournament() / startSprt() / startEpd(). */
 [[nodiscard]] ActionResult startActivity(Activity activity);

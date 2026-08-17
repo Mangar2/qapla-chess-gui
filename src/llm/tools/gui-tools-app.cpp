@@ -250,6 +250,7 @@ void registerGuiTools(GuiToolRegistry& registry) {
     registerTournamentTools(registry);
     registerSprtTools(registry);
     registerEpdTools(registry);
+    registerClopTools(registry);
     registerAppTools(registry);
     registerEngineTools(registry);
 }
