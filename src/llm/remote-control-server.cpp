@@ -28,11 +28,13 @@
 #include <httplib.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <format>
 #include <optional>
 #include <string_view>
+#include <thread>
 
 namespace QaplaLlm {
 
@@ -140,6 +142,15 @@ RemoteControlOptions parseRemoteControlOptions(int argc, char** argv) {
 struct RemoteControlServer::Impl {
     httplib::Server server;
     std::thread worker;
+
+    /**
+     * @brief Set by the worker just before it returns. Read by stop() -- see the note there.
+     *
+     * std::thread cannot be asked whether it has finished, only joined, and joining is exactly
+     * what must not happen unconditionally here.
+     */
+    std::atomic<bool> workerFinished{false};
+
     RemoteControlOptions options;
     int boundPort = 0;
 
@@ -310,7 +321,11 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         return false;
     }
 
-    impl_->worker = std::thread([this]() { impl_->server.listen_after_bind(); });
+    impl_->workerFinished.store(false);
+    impl_->worker = std::thread([this]() {
+        impl_->server.listen_after_bind();
+        impl_->workerFinished.store(true);
+    });
 
     // Waited for, not assumed: httplib's stop() is a no-op while the server has not started
     // listening yet (it checks is_running_ before touching the socket), so a start immediately
@@ -336,10 +351,31 @@ void RemoteControlServer::stop() {
     // about why it stopped being answered.
     ActivityWatch::instance().cancelWaits();
     impl_->server.stop();
+
+    // Reported as stopped before the join, not after: the channel is closed either way, and the
+    // window redraws during the wait below.
+    impl_->boundPort = 0;
+
+    // The join cannot simply be waited on, because this runs on the UI thread (the "End remote
+    // control" button calls it) and so does GuiToolRegistry::processQueue(). A request that is
+    // inside a tool handler right now is blocked in callTool(), waiting for this very thread to
+    // drain that queue; joining first means each waits for the other until the tool's own timeout
+    // expires -- up to two minutes of a frozen window, which is what the user saw and killed.
+    //
+    // So the queue is drained while waiting. The pending call completes, its handler returns, the
+    // request finishes, the worker leaves listen(), and the join is immediate.
+    using Clock = std::chrono::steady_clock;
+    const auto deadline = Clock::now() + std::chrono::seconds(10);
+    while (!impl_->workerFinished.load() && Clock::now() < deadline) {
+        GuiToolRegistry::instance().processQueue();
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    // Joined regardless once the deadline passes: callTool() times out on its own, so this
+    // returns even in the case the drain above could not resolve.
     if (impl_->worker.joinable()) {
         impl_->worker.join();
     }
-    impl_->boundPort = 0;
 }
 
 bool RemoteControlServer::isRunning() const {
