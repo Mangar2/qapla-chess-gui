@@ -174,6 +174,33 @@ TEST_CASE("GuiToolRegistry turns invalid argument JSON into a failed result inst
     REQUIRE(result.content.find("Invalid arguments") != std::string::npos);
 }
 
+TEST_CASE("GuiToolRegistry does not blame the arguments when the handler itself throws",
+    "[llm][gui-tool-registry]") {
+    GuiToolRegistry registry;
+    registry.registerTool(GuiToolDefinition{
+        .name = "throws_inside",
+        .description = "",
+        .parametersSchema = Json::JsonValue::object(),
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            throw std::runtime_error("Error; SPRT: elo0 must be less than elo1!");
+        }
+    });
+
+    auto result = runOnWorkerWhilePolling(registry, [&]() {
+        return registry.callTool("throws_inside", "{}");
+    });
+
+    REQUIRE_FALSE(result.success);
+    // The arguments here are an empty object -- there is nothing about them to fix. Telling the
+    // caller otherwise sends it rewriting arguments for a fault that lives in the GUI, which is
+    // what happened when get_status reported "invalid arguments" for an SPRT configuration error.
+    REQUIRE(result.content.find("Invalid arguments") == std::string::npos);
+    REQUIRE(result.content.find("elo0 must be less than elo1") != std::string::npos);
+    // And the caller has to be warned that a retry is not free, because the handler may have done
+    // part of its work before throwing.
+    REQUIRE(result.content.find("may already have taken effect") != std::string::npos);
+}
+
 TEST_CASE("GuiToolRegistry::callTool times out when nobody drains the queue", "[llm][gui-tool-registry]") {
     GuiToolRegistry registry;
     registry.registerTool(GuiToolDefinition{

@@ -168,17 +168,40 @@ void GuiToolRegistry::processQueue() {
             continue;
         }
 
+        // The two failures below are told apart deliberately, because they call for opposite
+        // things from the caller and used to be reported as the same one.
+        Json::JsonValue arguments;
+        try {
+            arguments = call.argumentsJson.empty() ? Json::JsonValue::object()
+                                                   : Json::JsonValue::parse(call.argumentsJson);
+        } catch (const std::exception& ex) {
+            // Nothing has run yet, and the arguments really are the problem: rewriting them is
+            // exactly the right response.
+            call.resultPromise.set_value(GuiToolResult{.success = false,
+                .content = "Invalid arguments for tool '" + call.name + "': " + ex.what()});
+            continue;
+        }
+
         GuiToolResult result;
         try {
-            auto arguments = call.argumentsJson.empty()
-                ? Json::JsonValue::object()
-                : Json::JsonValue::parse(call.argumentsJson);
             result = handler(arguments);
         } catch (const std::exception& ex) {
-            result = GuiToolResult{
-                .success = false,
-                .content = "Invalid arguments for tool '" + call.name + "': " + std::string(ex.what())
-            };
+            // Anything escaping the handler is a fault inside the GUI the call reached into, not
+            // a complaint about what was passed -- it reaches tools that take no arguments at
+            // all. get_status and clear_result both reported "invalid arguments" for an
+            // uninitialized SPRT configuration that had nothing to do with either, and a caller
+            // told its arguments are wrong rewrites them and tries again, which is the one thing
+            // that cannot help.
+            //
+            // Nor is it a clean failure: the handler threw part-way, so some of what was asked
+            // for may already have happened. Saying only "it failed" invites a retry that then
+            // applies the completed part twice. Argument problems the mapper detects before
+            // running anything are the case above's kind and never reach here -- see
+            // Api::Detail::problemsSentence().
+            result = GuiToolResult{.success = false,
+                .content = "The tool '" + call.name + "' failed part-way through: " + ex.what() +
+                    " Some of it may already have taken effect -- check the current state before "
+                    "calling it again."};
         }
         call.resultPromise.set_value(std::move(result));
     }
