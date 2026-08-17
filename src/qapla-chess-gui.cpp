@@ -47,7 +47,9 @@
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
 #include "chatbot/chatbot-window.h"
+#include "chatbot/chatbot-remote-control.h"
 #include "llm/llm-chat-integration.h"
+#include "llm/remote-control-server.h"
 #include "data/logo-data.h"
 #include "imgui-frame-rate-limiter.h"
 #include "os-helpers.h"
@@ -228,7 +230,7 @@ namespace {
         return workspace;
     }
 
-    int runApp() {
+    int runApp(const QaplaLlm::RemoteControlOptions& remoteControl) {
 
         // Installed before the first load so a stored section that no longer matches the
         // schema is reported rather than silently replaced by defaults -- registered here,
@@ -261,6 +263,12 @@ namespace {
 
         auto workspace = initWindows();
         QaplaLlm::initializeLlmChat();
+
+        // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
+        // into the frame loop -- the remote control serves exactly those and nothing of its own.
+        if (remoteControl.enabled) {
+            static_cast<void>(QaplaWindows::ChatBot::startRemoteControl(remoteControl));
+        }
 
         auto* window = initGlfwContext();
         initGlad();
@@ -368,6 +376,10 @@ namespace {
             QaplaWindows::StaticCallbacks::autosave().invokeAll();
         }
 
+        // Before the windows go: a handler still waiting on the tool queue would be waiting on a
+        // UI thread that is no longer running one.
+        QaplaLlm::RemoteControlServer::instance().stop();
+
         testManager.stop();
         shutdownImGui();
         testManager.destroy();
@@ -412,9 +424,11 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
     [[maybe_unused]] int nShowCmd) 
 {
     bool hasConsole = attachToParentConsole();
-    
+
     try {
-        auto code = runApp();
+        // WinMain hands the command line over as one unsplit string; __argc/__argv are the same
+        // arguments already tokenized by the CRT, which is what the parser wants.
+        auto code = runApp(QaplaLlm::parseRemoteControlOptions(__argc, __argv));
         if (hasConsole) {
             FreeConsole();
         }
@@ -432,12 +446,12 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
     }
 }
 #else
-int main() {
+int main(int argc, char** argv) {
     // Ignore SIGPIPE to prevent crashes when writing to closed pipes (e.g., chess engines)
     std::signal(SIGPIPE, SIG_IGN);
 
     try {
-        auto code = runApp();
+        auto code = runApp(QaplaLlm::parseRemoteControlOptions(argc, argv));
         return code;
     }
     catch (const std::exception& e) {

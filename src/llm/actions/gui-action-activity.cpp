@@ -21,6 +21,7 @@
 #include "gui-action-epd.h"
 #include "gui-action-sprt.h"
 #include "gui-action-tournament.h"
+#include "../activity-watch.h"
 
 #include <string>
 #include <utility>
@@ -28,22 +29,45 @@
 
 namespace QaplaLlm::Actions {
 
-ActionResult startActivity(Activity activity) {
-    switch (activity) {
-        case Activity::Sprt: return startSprt();
-        case Activity::Epd: return startEpd();
-        case Activity::Tournament:
-        default: return startTournament();
+namespace {
+    /**
+     * @brief Tells the watch what an action just did, without waiting for the next frame.
+     *
+     * The frame loop samples all three every frame anyway (see initializeLlmChat), which catches
+     * a run ending on its own or a user stopping one by hand. What it cannot catch in time is the
+     * sequence the wait exists for: start a run, then wait on it. Both calls land between two
+     * frames, so the watch would still have been showing "idle" and the wait would have answered
+     * "nothing is running" about a run that had just begun.
+     */
+    void publishProgress(Activity activity) {
+        QaplaLlm::ActivityWatch::instance().update(activity, activityProgress(activity));
     }
+} // namespace
+
+ActionResult startActivity(Activity activity) {
+    auto result = [&]() {
+        switch (activity) {
+            case Activity::Sprt: return startSprt();
+            case Activity::Epd: return startEpd();
+            case Activity::Tournament:
+            default: return startTournament();
+        }
+    }();
+    publishProgress(activity);
+    return result;
 }
 
 ActionResult stopActivity(Activity activity, StopMode mode) {
-    switch (activity) {
-        case Activity::Sprt: return stopSprt(mode);
-        case Activity::Epd: return stopEpd(mode);
-        case Activity::Tournament:
-        default: return stopTournament(mode);
-    }
+    auto result = [&]() {
+        switch (activity) {
+            case Activity::Sprt: return stopSprt(mode);
+            case Activity::Epd: return stopEpd(mode);
+            case Activity::Tournament:
+            default: return stopTournament(mode);
+        }
+    }();
+    publishProgress(activity);
+    return result;
 }
 
 ActionResult activityStatus(Activity activity) {
@@ -55,13 +79,26 @@ ActionResult activityStatus(Activity activity) {
     }
 }
 
-ActionResult clearActivityResult(Activity activity) {
+ActivityProgress activityProgress(Activity activity) {
     switch (activity) {
-        case Activity::Sprt: return clearSprtResult();
-        case Activity::Epd: return clearEpdResult();
+        case Activity::Sprt: return sprtProgress();
+        case Activity::Epd: return epdProgress();
         case Activity::Tournament:
-        default: return clearTournamentResult();
+        default: return tournamentProgress();
     }
+}
+
+ActionResult clearActivityResult(Activity activity) {
+    auto result = [&]() {
+        switch (activity) {
+            case Activity::Sprt: return clearSprtResult();
+            case Activity::Epd: return clearEpdResult();
+            case Activity::Tournament:
+            default: return clearTournamentResult();
+        }
+    }();
+    publishProgress(activity); // it stops a running activity first -- see publishProgress()
+    return result;
 }
 
 ActionResult showActivityResult(Activity activity) {

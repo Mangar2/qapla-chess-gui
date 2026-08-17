@@ -97,9 +97,9 @@ void registerTournamentTools(GuiToolRegistry& registry) {
                 "can't be resolved, nothing at all is applied, not even the other fields. "
                 "engines and openings_file must both be set (here or in an earlier "
                 "session) before start (type=\"tournament\") succeeds, no safe default. "
-                "For openings_file/pgn_file, set openings_file_dialog/pgn_file_dialog to "
-                "true instead of a typed path to open a native file picker -- never "
-                "type/guess a path yourself. draw_mode/resign_mode "
+                "Never type or guess a path yourself: ask the user for it, or -- if "
+                "openings_file_dialog/pgn_file_dialog are listed among the parameters above "
+                "-- set one to true to open a native file picker. draw_mode/resign_mode "
                 "\"off\"/\"test\"/\"active\"; both disabled (\"off\") by default.",
             .params = configureParams(),
             .invoke = [](const ConfigureTournamentRequest& request) {

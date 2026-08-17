@@ -139,6 +139,14 @@ namespace QaplaWindows {
         std::optional<size_t> drawEloTable(const ImVec2& size);
 
         /**
+         * @brief The same standings as plain text, for a caller that cannot see the screen.
+         *
+         * Read out of the very table drawEloTable() renders, so the two can never disagree about
+         * a number. Refreshes it first, hence non-const. Empty while nothing has been played.
+         */
+        [[nodiscard]] std::string resultsAsText();
+
+        /**
          * @brief Draws the tournament results matrix table.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.

@@ -400,9 +400,12 @@ ActionResult showEpdResult() {
     // reflects the analysis's current state.
     return ActionResult{
         .ok = true,
-        .text = "The analyzed positions are now shown as a table in the chat. The user can "
-                "already see them: do not restate, list or summarize the numbers, and never "
-                "state which positions were solved unless you got it from here.",
+        // Table and text from one set of numbers -- see showTournamentResult() for why both.
+        .text = "The analyzed positions are now shown as a table in the chat, and repeated below "
+                "so you can answer questions about them. The user can already see them, so don't "
+                "list or summarize the rows back -- just answer what was asked, and never state "
+                "which positions were solved unless it came from here.\n"
+            + epdData.resultsAsText(),
         .widget = []() {
             auto& data = EpdData::instance();
             ImGui::Text("EPD Analysis Progress: %zu / %zu positions remaining",
@@ -415,6 +418,11 @@ ActionResult showEpdResult() {
 std::string epdActivityText() {
     auto& epdData = EpdData::instance();
     return runStatePhrase(runStateOf(epdData), EPD_NAMES, epdData.getExternalConcurrency());
+}
+
+ActivityProgress epdProgress() {
+    auto& epdData = EpdData::instance();
+    return ActivityProgress{.state = runStateOf(epdData), .finished = epdData.isFinished()};
 }
 
 bool epdIsReadyToStart() {

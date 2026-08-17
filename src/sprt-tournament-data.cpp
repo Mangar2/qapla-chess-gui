@@ -531,6 +531,32 @@ void SprtTournamentData::populateResultTable() {
     resultTable_.push(row);
 }
 
+std::string SprtTournamentData::resultsAsText() {
+    // Refilled first, because these tables are a render cache: pollData() fills them while a test
+    // is running, and nothing does afterwards. Reading them straight would have answered "no
+    // results" for a finished test sitting right there on the screen -- the one moment the answer
+    // matters most. Both calls are a handful of rows and idempotent.
+    populateResultTable();
+    populateSprtTable();
+
+    auto sprtText = sprtTable_.toText();
+    auto duelText = resultTable_.toText();
+    if (sprtText.empty() && duelText.empty()) {
+        return {};
+    }
+    std::string text;
+    if (!sprtText.empty()) {
+        text += "SPRT test:\n" + sprtText;
+    }
+    if (!duelText.empty()) {
+        if (!text.empty()) {
+            text += "\n";
+        }
+        text += "Duel:\n" + duelText;
+    }
+    return text;
+}
+
 void SprtTournamentData::drawResultTable(const ImVec2& size) {
     auto duelResult = sprtManager_->getDuelResult();
     if (duelResult.total() == 0) {

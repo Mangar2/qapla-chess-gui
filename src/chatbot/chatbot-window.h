@@ -54,11 +54,27 @@ public:
 
     /**
      * @brief Resets the chatbot to its initial state.
-     * 
+     *
      * Clears all active and completed threads, returning to the main menu.
      * Use this in tests to ensure a clean starting state.
      */
     void reset();
+
+    /**
+     * @brief Makes one thread the only thing this panel offers, and starts it immediately.
+     *
+     * For a mode that owns the whole conversation rather than being one option among many --
+     * today the remote control (see ChatbotRemoteControl), where offering the classic flows
+     * alongside it would mean two steering wheels on the same car.
+     *
+     * The registered threads are hidden, not discarded: clearExclusiveThread() brings back
+     * exactly the list that was there, including anything added later through registerThread()
+     * (the AI chat entry appears whenever LM Studio is detected, which may be after this call).
+     */
+    void setExclusiveThread(std::unique_ptr<ChatbotThread> thread);
+
+    /** @brief Ends exclusive mode and restores the normal menu. Safe to call when not in it. */
+    void clearExclusiveThread();
 
 private:
     /**
@@ -81,7 +97,10 @@ private:
 
     std::vector<std::unique_ptr<ChatbotThread>> registeredThreads_;
     std::vector<std::unique_ptr<ChatbotThread>> completedThreads_;
-    
+
+    /** @brief Set while one thread owns the panel; see setExclusiveThread(). */
+    std::unique_ptr<ChatbotThread> exclusiveThread_;
+
     std::unique_ptr<ChatbotThread> activeThread_;
     std::unique_ptr<ChatbotStep> mainMenuStep_;
     

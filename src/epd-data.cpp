@@ -385,6 +385,13 @@ namespace QaplaWindows {
         return table_.draw(size);
     }
 
+    std::string EpdData::resultsAsText() {
+        // Refilled first -- see SprtTournamentData::resultsAsText() for why reading the render
+        // cache alone answered "no results" for a finished run still on screen.
+        populateTable();
+        return table_.toText();
+    }
+
     void EpdData::saveData(std::ofstream& out) {
         if (epdManager_) {
             epdManager_->saveResults(out);

@@ -513,6 +513,62 @@ namespace QaplaWindows {
         return indexManager_.getCurrentRow();
     }
 
+    std::string ImGuiTable::toText(size_t maxRows) const {
+        if (columns_.empty() || rows_.empty()) {
+            return {};
+        }
+
+        // Padded to the widest cell so the columns line up in a monospaced view, and so a reader
+        // (human or model) can tell which value belongs to which heading without counting
+        // separators. Measured in characters, not pixels -- the pixel widths this class computes
+        // elsewhere mean nothing outside a font.
+        std::vector<size_t> widths;
+        widths.reserve(columns_.size());
+        for (const auto& column : columns_) {
+            widths.push_back(column.name.size());
+        }
+        size_t shownRows = std::min(maxRows, rows_.size());
+        for (size_t rowIndex = 0; rowIndex < shownRows; ++rowIndex) {
+            const auto& row = rows_[rowIndex];
+            for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
+                widths[col] = std::max(widths[col], row[col].size());
+            }
+        }
+
+        auto appendPadded = [](std::string& target, const std::string& cell, size_t width,
+                                bool last) {
+            target += cell;
+            if (!last) {
+                target.append(width - std::min(width, cell.size()), ' ');
+                target += "  ";
+            }
+        };
+
+        std::string text;
+        size_t ruleWidth = 0;
+        for (size_t col = 0; col < columns_.size(); ++col) {
+            appendPadded(text, columns_[col].name, widths[col], col + 1 == columns_.size());
+            ruleWidth += widths[col] + 2;
+        }
+        text += "\n";
+        text.append(ruleWidth > 2 ? ruleWidth - 2 : ruleWidth, '-');
+        text += "\n";
+
+        for (size_t rowIndex = 0; rowIndex < shownRows; ++rowIndex) {
+            const auto& row = rows_[rowIndex];
+            for (size_t col = 0; col < columns_.size(); ++col) {
+                appendPadded(text, col < row.size() ? row[col] : std::string{}, widths[col],
+                    col + 1 == columns_.size());
+            }
+            text += "\n";
+        }
+        if (rows_.size() > shownRows) {
+            text += "(" + std::to_string(rows_.size() - shownRows)
+                + " further rows not listed here; the table in the application shows them all)\n";
+        }
+        return text;
+    }
+
     float ImGuiTable::computeColumnWidth(size_t colIdx, float padding) const {
         if (colIdx >= columns_.size()) {
             return 0.0F;

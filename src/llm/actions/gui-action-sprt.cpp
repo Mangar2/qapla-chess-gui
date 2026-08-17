@@ -583,9 +583,12 @@ ActionResult showSprtResult() {
     // state on every frame.
     return ActionResult{
         .ok = true,
-        .text = "The SPRT decision and the duel score are now shown as tables in the chat. The "
-                "user can already see them: do not restate, list or summarize the numbers, and "
-                "never state a decision or score you did not get from here.",
+        // Table and text from one set of numbers -- see showTournamentResult() for why both.
+        .text = "The SPRT decision and the duel score are now shown as tables in the chat, and "
+                "repeated below so you can answer questions about them. The user can already see "
+                "them, so don't list or summarize the numbers back -- just answer what was "
+                "asked, and never state a decision or score that did not come from here.\n"
+            + sprtData.resultsAsText(),
         .widget = []() {
             auto& data = SprtTournamentData::instance();
             ImGui::Text("SPRT Test Result:");
@@ -599,6 +602,11 @@ ActionResult showSprtResult() {
 std::string sprtActivityText() {
     auto& sprtData = SprtTournamentData::instance();
     return runStatePhrase(runStateOf(sprtData), SPRT_NAMES, sprtData.getExternalConcurrency());
+}
+
+ActivityProgress sprtProgress() {
+    auto& sprtData = SprtTournamentData::instance();
+    return ActivityProgress{.state = runStateOf(sprtData), .finished = sprtData.isFinished()};
 }
 
 bool sprtIsReadyToStart() {

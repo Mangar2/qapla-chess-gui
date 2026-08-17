@@ -42,27 +42,90 @@ bool GuiToolRegistry::hasTool(const std::string& name) const {
     return std::ranges::any_of(tools_, [&](const auto& tool) { return tool.name == name; });
 }
 
-std::vector<ToolSpec> GuiToolRegistry::exportToolSpecs() const {
+namespace {
+    /** @brief The tool's schema with the parameters this origin may not use removed. */
+    [[nodiscard]] Json::JsonValue schemaFor(const GuiToolDefinition& tool, CallOrigin origin) {
+        if (origin == CallOrigin::Local || tool.localOnlyParameters.empty()
+            || !tool.parametersSchema.contains("properties")) {
+            return tool.parametersSchema;
+        }
+        auto schema = tool.parametersSchema;
+        auto properties = Json::JsonValue::object();
+        for (const auto& [name, value] : schema["properties"].as_object()) {
+            if (std::ranges::find(tool.localOnlyParameters, name) == tool.localOnlyParameters.end()) {
+                properties[name] = value;
+            }
+        }
+        schema["properties"] = properties;
+        return schema;
+    }
+
+    /** @brief The withheld parameter names a caller passed anyway, if any. */
+    [[nodiscard]] std::vector<std::string> withheldParametersUsed(
+        const GuiToolDefinition& tool, const std::string& argumentsJson) {
+        std::vector<std::string> used;
+        if (tool.localOnlyParameters.empty() || argumentsJson.empty()) {
+            return used;
+        }
+        auto parsed = Json::JsonValue::try_parse(argumentsJson);
+        if (!parsed || !parsed->is_object()) {
+            return used;
+        }
+        for (const auto& name : tool.localOnlyParameters) {
+            if (parsed->contains(name) && !parsed->at(name).is_null()) {
+                used.push_back(name);
+            }
+        }
+        return used;
+    }
+} // namespace
+
+std::vector<ToolSpec> GuiToolRegistry::exportToolSpecs(CallOrigin origin) const {
     std::scoped_lock lock(toolsMutex_);
     std::vector<ToolSpec> specs;
     specs.reserve(tools_.size());
     for (const auto& tool : tools_) {
+        if (tool.localOnly && origin == CallOrigin::Remote) {
+            continue;
+        }
         specs.push_back(ToolSpec{
             .name = tool.name,
             .description = tool.description,
-            .parametersSchemaJson = tool.parametersSchema.stringify()
+            .parametersSchemaJson = schemaFor(tool, origin).stringify()
         });
     }
     return specs;
 }
 
-GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::string& argumentsJson) {
+GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::string& argumentsJson,
+    CallOrigin origin) {
     std::chrono::milliseconds timeout;
     {
         std::scoped_lock lock(toolsMutex_);
         auto it = std::ranges::find_if(tools_, [&](const auto& tool) { return tool.name == name; });
         if (it == tools_.end()) {
             return GuiToolResult{.success = false, .content = "Unknown tool: " + name};
+        }
+        // Refused here rather than in the handler: the handler runs on the UI thread and would
+        // have to know who called it, which is exactly the sort of thing the actions layer is
+        // kept free of.
+        if (origin == CallOrigin::Remote) {
+            if (it->localOnly) {
+                return GuiToolResult{.success = false,
+                    .content = "'" + name
+                        + "' can only be used from inside the application window, not through the "
+                          "remote control."};
+            }
+            if (auto withheld = withheldParametersUsed(*it, argumentsJson); !withheld.empty()) {
+                std::string names;
+                for (const auto& parameter : withheld) {
+                    names += (names.empty() ? "" : ", ") + parameter;
+                }
+                return GuiToolResult{.success = false,
+                    .content = "Nothing was changed. " + names
+                        + " opens a file dialog for the person at the window, which the remote "
+                          "control cannot answer -- pass the path itself instead."};
+            }
         }
         timeout = it->timeout;
     }

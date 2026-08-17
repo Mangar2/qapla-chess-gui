@@ -104,6 +104,9 @@ struct EpdSettings {
 /** @brief Names what the EPD analysis is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string epdActivityText();
 
+/** @brief What the EPD analysis is doing, for the watch a remote caller waits on. */
+[[nodiscard]] ActivityProgress epdProgress();
+
 /** @brief Whether the EPD analysis could be started exactly as configured. */
 [[nodiscard]] bool epdIsReadyToStart();
 

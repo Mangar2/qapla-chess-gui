@@ -49,8 +49,10 @@ namespace {
             "all is changed and the result lists the candidates: ask the user, never guess."));
         params.push_back(Api::stringParam<Request>("epd_file", &EpdSettings::epdFile,
             "Path to existing EPD (or RAW position) file on disk."));
-        params.push_back(Api::flagParam<Request>("epd_file_dialog", &EpdSettings::pickEpdFile,
-            "Set true to open a native file picker instead of passing epd_file."));
+        auto epdFileDialog = Api::flagParam<Request>("epd_file_dialog", &EpdSettings::pickEpdFile,
+            "Set true to open a native file picker instead of passing epd_file.");
+        epdFileDialog.localOnly = true; // see Tools::openingsFileDialogParam()
+        params.push_back(std::move(epdFileDialog));
         params.push_back(Api::integerParam<Request>("max_time_seconds",
             &EpdSettings::maxTimeInSeconds,
             "Max seconds engine may search each position. NOT tournament/SPRT time control -- "
@@ -88,8 +90,9 @@ void registerEpdTools(GuiToolRegistry& registry) {
                 "like another engine-testing mode. If request could mean tournament, SPRT, "
                 "or EPD and unclear which, ask, don't guess. engines and epd_file must "
                 "both be set (here or earlier session) before start (type=\"epd\") "
-                "succeeds. If the file is missing, invalid, or user wants to browse, set "
-                "epd_file_dialog=true instead of a typed path.",
+                "succeeds. Never type or guess a path yourself: ask the user for it, or -- if "
+                "epd_file_dialog is listed among the parameters above -- set it to true to open "
+                "a native file picker.",
             .params = configureParams(),
             .invoke = [](const ConfigureEpdRequest& request) {
                 // Engines first, and all-or-nothing -- see configure_tournament for why.

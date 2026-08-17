@@ -224,6 +224,12 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/llm/gui-tool-registry.cpp
       src/llm/gui-tool-engine-management.cpp
       src/llm/gui-tool-tournament.cpp
+      # The HTTP front door. It serves GuiToolRegistry and knows nothing else about the GUI, so
+      # it links here on its own -- see src/llm/remote-control-server.h.
+      src/llm/remote-control-server.cpp
+      # The wait bookkeeping, fed with plain values rather than reading the GUI itself, precisely
+      # so the concurrent part can be tested without a window -- see src/llm/activity-watch.h.
+      src/llm/activity-watch.cpp
       # The external<->internal tool mapper and its shared vocabulary. Both are free of the GUI
       # stack by design (see src/llm/tools/gui-tools.h), so the unit tests can exercise the
       # mapper directly; the actions themselves stay qapla-only.

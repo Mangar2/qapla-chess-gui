@@ -32,6 +32,7 @@ namespace {
             case ParamType::Number: return "number";
             case ParamType::Boolean: return "boolean";
             case ParamType::StringArray: return "array";
+            case ParamType::StringMap: return "object";
             case ParamType::String:
             default: return "string";
         }
@@ -46,11 +47,31 @@ namespace {
             case ParamType::Number: return "a number";
             case ParamType::Boolean: return "true or false";
             case ParamType::StringArray: return "a non-empty list of text values";
+            case ParamType::StringMap: return "a non-empty object of name/value pairs";
             case ParamType::String:
             default: return "text";
         }
     }
 } // namespace
+
+std::optional<std::string> asText(const Json::JsonValue& value) {
+    if (value.is_string()) {
+        return value.as_string();
+    }
+    if (value.is_boolean()) {
+        return value.as_boolean() ? "true" : "false";
+    }
+    if (value.is_number()) {
+        // Whole numbers go back as whole numbers: an engine shown "Hash 128.000000" would be
+        // within its rights to reject it, and every spin option is an integer to begin with.
+        const double number = value.as_number();
+        if (number == static_cast<double>(static_cast<long long>(number))) {
+            return std::to_string(static_cast<long long>(number));
+        }
+        return std::to_string(number);
+    }
+    return std::nullopt;
+}
 
 Json::JsonValue makeProperty(
     ParamType type, const std::string& description, const std::vector<std::string>& allowedValues) {
@@ -60,6 +81,14 @@ Json::JsonValue makeProperty(
         auto items = Json::JsonValue::object();
         items["type"] = "string";
         property["items"] = items;
+    }
+    if (type == ParamType::StringMap) {
+        // Says "any key, text value" in the one way a JSON Schema can. The keys themselves cannot
+        // be listed here -- they belong to whichever engine is being configured -- so the tool
+        // description points at get_engine_details for them instead.
+        auto values = Json::JsonValue::object();
+        values["type"] = "string";
+        property["additionalProperties"] = values;
     }
     if (!allowedValues.empty()) {
         auto values = Json::JsonValue::array();

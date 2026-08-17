@@ -119,6 +119,9 @@ struct SprtSettings {
 /** @brief Names what the SPRT test is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string sprtActivityText();
 
+/** @brief What the SPRT test is doing, for the watch a remote caller waits on. */
+[[nodiscard]] ActivityProgress sprtProgress();
+
 /** @brief Whether the SPRT test could be started exactly as configured. */
 [[nodiscard]] bool sprtIsReadyToStart();
 

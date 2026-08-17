@@ -18,8 +18,10 @@
  */
 
 #include "llm-chat-integration.h"
+#include "activity-watch.h"
 #include "lm-studio-locator.h"
 #include "gui-tool-registry.h"
+#include "actions/gui-action-activity.h"
 #include "tools/gui-tools.h"
 #include "../configuration.h"
 #include "../callback-manager.h"
@@ -131,6 +133,19 @@ void initializeLlmChat() {
     static auto toolQueuePollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([]() {
         GuiToolRegistry::instance().processQueue();
     });
+
+    // Samples the three activities every frame so a caller can wait on one of them (see
+    // ActivityWatch). Hooked here rather than inside each activity's own code because it must
+    // notice a run ending by any route at all -- finished on its own, stopped through a tool,
+    // stopped by the user clicking the button. Watching from outside catches all three; asking
+    // each stop path to report itself would have missed whichever one was added next.
+    static auto activityWatchPollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback(
+        []() {
+            for (auto activity : {Actions::Activity::Tournament, Actions::Activity::Sprt,
+                     Actions::Activity::Epd}) {
+                ActivityWatch::instance().update(activity, Actions::activityProgress(activity));
+            }
+        });
 
     static LlmChatMenuRegistrar menuRegistrar;
     static auto menuRegistrarPollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback([]() {

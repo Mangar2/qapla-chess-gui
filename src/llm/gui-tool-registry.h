@@ -91,6 +91,23 @@ struct GuiToolResult {
 }
 
 /**
+ * @brief Who is calling, for the few tools and parameters that are not for everyone.
+ *
+ * The distinction is not about trust -- the remote control listens on loopback only -- but about
+ * what makes sense at each end. Anything that opens a modal file dialog waits for a person who is
+ * sitting in front of the window; from outside it would hang the caller on something it cannot
+ * see and cannot answer. Closing the application ends the very thing an outside caller asked to
+ * watch, and takes its own channel down with it.
+ */
+enum class CallOrigin {
+    /** @brief The chat inside the window, where a user is present to answer a dialog. */
+    Local,
+
+    /** @brief Over the remote control, where nobody is watching the caller's end. */
+    Remote
+};
+
+/**
  * @brief One GUI-controllable action exposed to the LLM as a function tool.
  *
  * Handlers run exclusively on the UI thread (see GuiToolRegistry::processQueue()),
@@ -125,6 +142,19 @@ struct GuiToolDefinition {
      * running, orphaning its (eventually correct) result.
      */
     std::chrono::milliseconds timeout = std::chrono::seconds(30);
+
+    /** @brief Not offered to, and not callable by, a CallOrigin::Remote caller. */
+    bool localOnly = false;
+
+    /**
+     * @brief Parameter names withheld from a remote caller: absent from the published schema,
+     * and rejected if passed anyway.
+     *
+     * Rejected rather than quietly dropped. A caller that asked for a file dialog wants a file
+     * chosen; carrying on without one would apply the rest of its patch and report success for a
+     * request that was not carried out.
+     */
+    std::vector<std::string> localOnlyParameters;
 };
 
 /**
@@ -146,16 +176,23 @@ public:
 
     [[nodiscard]] bool hasTool(const std::string& name) const;
 
-    /** @brief Tool specs in the wire-agnostic shape LmStudioClient turns into the OpenAI "tools" format. */
-    [[nodiscard]] std::vector<ToolSpec> exportToolSpecs() const;
+    /**
+     * @brief Tool specs in the wire-agnostic shape LmStudioClient turns into the OpenAI "tools"
+     * format.
+     * @param origin Drops the tools and parameters that origin may not use (see CallOrigin).
+     */
+    [[nodiscard]] std::vector<ToolSpec> exportToolSpecs(
+        CallOrigin origin = CallOrigin::Local) const;
 
     /**
      * @brief Enqueues a tool call and blocks the calling thread until the UI
      * thread has executed it, or the tool's own timeout elapses.
      * @param name Registered tool name.
      * @param argumentsJson Raw JSON object text as received from the model (may be empty).
+     * @param origin Refused before reaching the UI thread if this origin may not make the call.
      */
-    [[nodiscard]] GuiToolResult callTool(const std::string& name, const std::string& argumentsJson);
+    [[nodiscard]] GuiToolResult callTool(const std::string& name, const std::string& argumentsJson,
+        CallOrigin origin = CallOrigin::Local);
 
     /** @brief Must be called once per frame from the UI thread. */
     void processQueue();

@@ -617,6 +617,13 @@ namespace QaplaWindows {
         return eloTable_.draw(size, true);
     }
 
+    std::string TournamentData::resultsAsText() {
+        // Refilled first -- see SprtTournamentData::resultsAsText() for why reading the render
+        // cache alone answered "no results" for a finished tournament still on screen.
+        populateEloTable();
+        return eloTable_.toText();
+    }
+
     std::optional<size_t> TournamentData::drawMatrixTable(const ImVec2& size) {
         if (matrixTable_.size() == 0) {
             return std::nullopt;

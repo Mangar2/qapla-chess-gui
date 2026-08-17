@@ -348,6 +348,15 @@ namespace QaplaWindows {
         void drawSprtTable(const ImVec2& size);
 
         /**
+         * @brief Both result tables as plain text, for a caller that cannot see the screen.
+         *
+         * The SPRT decision first, then the raw duel score -- read out of the very tables
+         * drawSprtTable() and drawResultTable() render, so the two can never disagree about a
+         * number. Refreshes them first, hence non-const. Empty while nothing has been played.
+         */
+        [[nodiscard]] std::string resultsAsText();
+
+        /**
          * @brief Draws the table displaying the causes for game termination.
          * @param size Size of the table to draw.
          */

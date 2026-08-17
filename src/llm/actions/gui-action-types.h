@@ -136,6 +136,19 @@ enum class RunLock { None, Running, Stopping };
 /** @brief Maps a run state onto the lock it implies. */
 [[nodiscard]] RunLock lockOf(RunState state);
 
+/** @brief What one activity is doing, in the two facts an onlooker needs. */
+struct ActivityProgress {
+    RunState state = RunState::Idle;
+
+    /**
+     * @brief Whether it ran to its own conclusion, as opposed to merely not running.
+     *
+     * Separates "the SPRT reached a decision" from "someone stopped it" -- the same state, and
+     * very different news for whoever was waiting on it (see QaplaLlm::ActivityWatch).
+     */
+    bool finished = false;
+};
+
 /**
  * @brief Why a settings or engine change is refused right now, or "" if it may go through.
  *

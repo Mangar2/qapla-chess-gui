@@ -22,9 +22,15 @@
 #include "../actions/gui-action-app.h"
 #include "../actions/gui-action-engines.h"
 
+#include <chrono>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace QaplaLlm {
 
 namespace {
+    using Actions::EngineTarget;
     using Actions::PgnSource;
 
     /** @brief Arguments of a tool that takes none. */
@@ -34,6 +40,23 @@ namespace {
     struct OpenPgnRequest {
         std::optional<PgnSource> source;
     };
+
+    /** @brief Arguments of install_engines. */
+    struct InstallEnginesRequest {
+        std::vector<std::pair<std::string, std::string>> engines;
+    };
+
+    /** @brief Arguments of get_engine_details. */
+    struct EngineDetailsRequest {
+        std::optional<std::string> engine;
+    };
+
+    /** @brief Arguments of set_engine_options. */
+    struct SetEngineOptionsRequest {
+        std::optional<std::string> engine;
+        std::optional<EngineTarget> target;
+        std::vector<std::pair<std::string, std::string>> options;
+    };
 } // namespace
 
 void registerAppTools(GuiToolRegistry& registry) {
@@ -42,7 +65,10 @@ void registerAppTools(GuiToolRegistry& registry) {
             .description = "Closes whole Qapla Chess GUI app (same as window's own close button). "
                            "Immediate -- on close/quit/exit request, call directly, no "
                            "confirmation first.",
-            .invoke = [](const NoArguments&) { return Actions::closeApplication(); }});
+            .invoke = [](const NoArguments&) { return Actions::closeApplication(); },
+            // Not over the remote control: it would end the very application the caller asked to
+            // watch, and take the channel down with it -- see CallOrigin.
+            .localOnly = true});
 
     Api::defineTool<OpenPgnRequest>(registry,
         {.name = "open_pgn_file",
@@ -67,7 +93,12 @@ void registerAppTools(GuiToolRegistry& registry) {
             .invoke = [](const OpenPgnRequest& request) {
                 return Actions::openPgnFile(request.source.value_or(PgnSource::AskUser));
             },
-            .timeout = Tools::FILE_DIALOG_TIMEOUT});
+            .timeout = Tools::FILE_DIALOG_TIMEOUT,
+            // Its default source is a file dialog, and the two that aren't only switch a tab the
+            // remote caller cannot see. Kept local whole rather than split by argument value:
+            // a tool that is safe for some values of one parameter and not others is a rule
+            // nobody reading the schema would infer.
+            .localOnly = true});
 }
 
 void registerEngineTools(GuiToolRegistry& registry) {
@@ -79,6 +110,98 @@ void registerEngineTools(GuiToolRegistry& registry) {
                            "run just pass the name the user said to configure_tournament/"
                            "configure_sprt/configure_epd -- they match names themselves.",
             .invoke = [](const NoArguments&) { return Actions::listInstalledEngines(); }});
+
+    Api::defineTool<EngineDetailsRequest>(registry,
+        {.name = "get_engine_details",
+            .description =
+                "Reports everything about ONE installed engine: where its executable is, its "
+                "protocol, time control, the UCI option values currently set on it, and the full "
+                "list of options its program supports -- each with its type, default and allowed "
+                "range or choices. Call this before set_engine_options: the supported list is the "
+                "only place option names and legal values come from, because every engine reports "
+                "its own, and they change from build to build.",
+            .params = {Api::stringParam<EngineDetailsRequest>("engine",
+                &EngineDetailsRequest::engine,
+                "Name of the engine, as list_installed_engines reports it. A distinctive part of "
+                "the name is enough.",
+                true)},
+            .invoke = [](const EngineDetailsRequest& request) {
+                return Actions::engineDetails(request.engine.value_or(""));
+            }});
+
+    Api::defineTool<InstallEnginesRequest>(registry,
+        {.name = "install_engines",
+            .description =
+                "Installs engine programs into the GUI's global engine catalog from their paths "
+                "on disk, and starts each one to find out what it supports (protocol and UCI "
+                "options) before returning -- so the result already says what can be configured, "
+                "and get_engine_details works straight afterwards. You choose the catalog name "
+                "for each: that name is how every other tool refers to the engine. The SAME "
+                "executable may be installed twice under two names -- that is how one build is "
+                "tested against itself with different UCI options, since options belong to the "
+                "catalog entry, not to the file. A name already in the catalog is refused.",
+            .params = {Api::stringMapParam<InstallEnginesRequest>("engines",
+                &InstallEnginesRequest::engines,
+                "The engines to install, as an object of catalog name to full executable path, "
+                "e.g. {\"Qapla baseline\": \"/home/me/build/qapla\", \"Qapla candidate\": "
+                "\"/home/me/build/qapla-new\"}.",
+                true)},
+            .invoke = [](const InstallEnginesRequest& request) {
+                std::vector<QaplaLlm::NamedEnginePath> engines;
+                engines.reserve(request.engines.size());
+                for (const auto& [name, path] : request.engines) {
+                    engines.push_back({.name = name, .path = path});
+                }
+                return Actions::installEngines(engines);
+            },
+            // Detection starts every engine and waits for it to answer, which is slower than a
+            // tool call normally is and slower still for several at once.
+            .timeout = std::chrono::seconds(120)});
+
+    Api::defineTool<SetEngineOptionsRequest>(registry,
+        {.name = "set_engine_options",
+            .description =
+                "Sets UCI option values (Hash, Threads, tuning parameters, ...) on one engine. "
+                "Get the option names and their legal values from get_engine_details first; "
+                "anything the engine does not support is refused rather than set. \"target\" "
+                "decides WHICH copy of the engine is changed -- an engine selected for a run is a "
+                "copy of the catalog entry, so setting options on the run does not touch the "
+                "catalog and vice versa. For a run, select the engines FIRST (configure_sprt, "
+                "configure_tournament, configure_epd) and set the options afterwards: selecting "
+                "takes a fresh copy from the catalog. That is also how the same program plays "
+                "against itself under two option sets -- install it twice under different names, "
+                "then give each copy its own values.",
+            .params = {
+                Api::stringParam<SetEngineOptionsRequest>("engine",
+                    &SetEngineOptionsRequest::engine,
+                    "Name of the engine, as list_installed_engines reports it. A distinctive part "
+                    "of the name is enough.",
+                    true),
+                Api::enumParam<SetEngineOptionsRequest>("target", &SetEngineOptionsRequest::target,
+                    "Which copy of the engine to change. \"sprt\", \"tournament\" or \"epd\": the "
+                    "copy that run uses, affecting that run only. \"catalog\": the installed "
+                    "engine itself, which is what future selections start from -- it does NOT "
+                    "change a run that has already selected it.",
+                    {{"sprt", EngineTarget::Sprt}, {"tournament", EngineTarget::Tournament},
+                        {"epd", EngineTarget::Epd}, {"catalog", EngineTarget::Catalog}},
+                    true),
+                Api::stringMapParam<SetEngineOptionsRequest>("options",
+                    &SetEngineOptionsRequest::options,
+                    "The option values to set, as an object of name/value pairs, e.g. "
+                    "{\"Hash\": \"256\", \"Threads\": \"2\"}. Names must be ones "
+                    "get_engine_details lists as supported. Options left out keep whatever they "
+                    "are; there is no way to unset one back to the engine default here.",
+                    true)},
+            .invoke = [](const SetEngineOptionsRequest& request) {
+                std::vector<QaplaLlm::EngineOptionAssignment> assignments;
+                assignments.reserve(request.options.size());
+                for (const auto& [name, value] : request.options) {
+                    assignments.push_back({.name = name, .value = value});
+                }
+                return Actions::setEngineOptions(
+                    request.target.value_or(EngineTarget::Catalog),
+                    request.engine.value_or(""), assignments);
+            }});
 
     Api::defineTool<NoArguments>(registry,
         {.name = "open_add_engine_dialog",
@@ -97,15 +220,18 @@ void registerEngineTools(GuiToolRegistry& registry) {
                 "to the user as-is. No further tool call, no reply_to_user afterwards -- "
                 "you won't be asked again.",
             .invoke = [](const NoArguments&) { return Actions::addEnginesViaDialog(); },
-            .timeout = Tools::FILE_DIALOG_TIMEOUT});
+            .timeout = Tools::FILE_DIALOG_TIMEOUT,
+            // The whole tool is a file dialog waiting on the person at the window; there is
+            // nothing left of it for a caller who has no window -- see CallOrigin.
+            .localOnly = true});
 }
 
 // The order is part of the external API, not an implementation detail: it is the order the tools
 // appear in for the model, and a small one weights the top of a long list heavily. So the four
 // short lifecycle tools come first -- they are what most requests actually want, and they used to
-// sit behind ~250 lines of configuration schema. The engine-catalog tools go last, because one of
-// them opens a modal dialog and ends the turn, which makes a wrong reach for it unrecoverable
-// within that turn.
+// sit behind ~250 lines of configuration schema. The engine-catalog tools go last, and within them
+// the file dialog goes last of all, because it ends the turn -- a wrong reach for it is
+// unrecoverable within that turn, while a wrong reach for any of the others is not.
 //
 // It is also a fixed order, never a computed one: the tool list is the stable head of every
 // request's prompt, and reordering it invalidates the cached prefix for every conversation.

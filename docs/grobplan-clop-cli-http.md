@@ -657,14 +657,49 @@ Kommandozeilenschalter, Fernsteuerungsfenster mit Verlauf, übrige Threads ausge
 *Fertig heißt:* Von außen ein Turnier konfigurieren und starten; die Partien laufen sichtbar auf
 den Brettern, jeder Aufruf steht im Verlauf, der Knopf gibt die GUI wieder frei.
 
-**Stufe 2 — Ergebnisse kommen auch außen an.**
-Auskunftstools zusammengelegt, Ergebnis zusätzlich als Text, Zustandsnamen vereinheitlicht,
-Dateidialoge und `close_application` außen nicht angeboten.
+**Stufe 2 — Ergebnisse kommen auch außen an (erledigt).**
+Auskunftstools zusammengelegt und Zustandsnamen vereinheitlicht waren schon in Stufe 0 dabei;
+dazugekommen sind:
+
+- **Ergebnisse als Text, aus derselben Tabelle.** `ImGuiTable::toText()` liest die Zeilen aus dem
+  Steuerelement, das die GUI ohnehin zeichnet — Turnierstand, SPRT-Entscheidung samt Duellstand,
+  EPD-Positionen. Kein zweiter Datenpfad, also kein Weg, auf dem Schirm und Leitung sich über
+  eine Zahl uneinig werden können. Lange Ergebnislisten werden nach 40 Zeilen mit einer Angabe
+  abgeschnitten, wie viele fehlen.
+- **Dabei eine Falle gefunden:** diese Tabellen sind ein Zeichen-Zwischenspeicher, den `pollData()`
+  nur während eines Laufs füllt. Ein fertiger Test, der sichtbar auf dem Schirm stand, hätte
+  „keine Ergebnisse" geliefert — genau im wichtigsten Moment. `resultsAsText()` füllt deshalb
+  zuerst neu und ist dafür nicht mehr `const`.
+- **`CallOrigin`.** Die Registry kennt jetzt „aus dem Fenster" und „von außen". Ein Tool oder ein
+  Parameter kann `localOnly` sein: aus der veröffentlichten Werkzeugliste entfernt und abgelehnt,
+  falls doch übergeben. Betroffen sind `open_add_engine_dialog`, `open_pgn_file` und
+  `close_application` sowie die drei Dateidialog-Schalter. Abgelehnt, nicht stillschweigend
+  ignoriert: wer einen Dateidialog wollte, will eine gewählte Datei, und der Rest des Patches
+  dürfte nicht als Erfolg zurückgemeldet werden.
+- Damit sieht ein Fernaufrufer 8 der 11 Tools.
+
 *Fertig heißt:* Von außen ist der Turnierstand abfragbar, ohne auf den Bildschirm zu sehen — und
 dieselbe Abfrage zeichnet im Fenster die Tabelle.
 
-**Stufe 3 — die Fertigmeldung.**
-Wartender Aufruf, Laufkennung, Änderungszähler.
+**Stufe 3 — die Fertigmeldung (erledigt).**
+
+- **`GET /wait?type=…&timeout=…`** antwortet nicht, bis der Lauf steht. Der Grund kommt mit:
+  `finished` (eigener Abschluss), `stopped` (jemand hat beendet), `timeout`, `closed` (Kanal zu),
+  `not_running` (es lief nichts). Dazu die **Laufkennung** und der **Änderungszähler**, und der
+  volle Status samt Ergebnistabelle — wer geweckt wird, hat die Entscheidung schon in der Hand
+  und braucht keinen zweiten Aufruf.
+- **`ActivityWatch`** hält die Buchführung: bewusst frei vom GUI-Stapel und von außen mit
+  einfachen Werten gefüttert, damit der wirklich nebenläufige Teil ohne Fenster testbar ist.
+  Gefüttert wird aus dem Frame-Takt — der bemerkt jedes Ende, egal auf welchem Weg, auch das
+  Stoppen von Hand.
+- **Ein Rennen dabei gefunden.** `start` kehrt zurück, bevor je ein Frame gezeichnet wurde. „Lauf
+  starten, dann warten" — also genau die Abfolge, für die der Warteaufruf existiert — bekam
+  deshalb `not_running` über einen Lauf, der gerade begonnen hatte. Die drei Aktionen melden ihren
+  Zustand jetzt zusätzlich sofort selbst.
+- **Was ein wartender Aufruf nicht tut:** er belegt eine Verbindung und einen Server-Thread, sonst
+  nichts. Der UI-Thread bleibt unberührt, das Fenster so bedienbar wie zuvor, und Warteaufrufe auf
+  die drei Betriebsarten behindern sich nicht gegenseitig.
+
 *Fertig heißt:* Ein SPRT wird von außen gestartet; die Gegenseite wartet im Hintergrund und wird
 mit Entscheidung und Grund geweckt, sobald es durch ist — auch wenn der Nutzer es von Hand
 gestoppt hat.

@@ -115,9 +115,10 @@ void registerSprtTools(GuiToolRegistry& registry) {
                 "tournament or champion-vs-challenger SPRT?); if still unclear from "
                 "context, ask which they mean, never guess -- wrong guess silently "
                 "configures other feature. Both engines and openings_file must be set "
-                "(here or earlier session) before start (type=\"sprt\") succeeds. If a "
-                "file is missing/invalid or user wants to browse, set "
-                "openings_file_dialog/pgn_file_dialog to true instead of a typed path. "
+                "(here or earlier session) before start (type=\"sprt\") succeeds. Never type "
+                "or guess a path yourself: ask the user for it, or -- if "
+                "openings_file_dialog/pgn_file_dialog are listed among the parameters above -- "
+                "set one to true to open a native file picker. "
                 "draw_mode/resign_mode \"off\"/\"test\"/\"active\"; both disabled "
                 "(\"off\") by default.",
             .params = configureParams(),

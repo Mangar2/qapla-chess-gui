@@ -61,6 +61,27 @@ void ChatbotWindow::initializeThreads() {
 
 void ChatbotWindow::registerThread(std::unique_ptr<ChatbotThread> thread) {
     registeredThreads_.push_back(std::move(thread));
+    // Not while a thread owns the panel: resetToMainMenu() would replace it with the very menu
+    // exclusive mode exists to suppress. The new entry is in the list and shows up on its own
+    // once exclusive mode ends -- which is exactly what the AI chat needs, since LM Studio may
+    // well be detected minutes into a remote-control session.
+    if (!exclusiveThread_) {
+        resetToMainMenu();
+    }
+}
+
+void ChatbotWindow::setExclusiveThread(std::unique_ptr<ChatbotThread> thread) {
+    exclusiveThread_ = std::move(thread);
+    activeThread_ = exclusiveThread_->clone();
+    activeThread_->start();
+    lastCursorY_ = 0.0F;
+}
+
+void ChatbotWindow::clearExclusiveThread() {
+    if (!exclusiveThread_) {
+        return;
+    }
+    exclusiveThread_.reset();
     resetToMainMenu();
 }
 
@@ -128,7 +149,16 @@ void ChatbotWindow::draw() {
             static_cast<void>(activeThread_->draw());
             if (activeThread_->isFinished()) {
                 completedThreads_.push_back(std::move(activeThread_));
-                resetToMainMenu();
+                // A thread that owns the panel is restarted rather than followed by the menu:
+                // in exclusive mode the menu is the one thing that must never appear. The
+                // orderly way out is clearExclusiveThread(), which the owning thread calls
+                // before reporting itself finished.
+                if (exclusiveThread_) {
+                    activeThread_ = exclusiveThread_->clone();
+                    activeThread_->start();
+                } else {
+                    resetToMainMenu();
+                }
             }
         } else {
             if (!mainMenuStep_) {

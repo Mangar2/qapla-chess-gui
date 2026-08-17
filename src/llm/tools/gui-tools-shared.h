@@ -113,8 +113,12 @@ template <class Settings>
 /** @brief Openings book file-picker opt-in, bound to `Settings::pickOpeningsFile`. */
 template <class Settings>
 [[nodiscard]] Api::Param<Settings> openingsFileDialogParam() {
-    return Api::flagParam<Settings>("openings_file_dialog", &Settings::pickOpeningsFile,
+    auto param = Api::flagParam<Settings>("openings_file_dialog", &Settings::pickOpeningsFile,
         "Set true to open a native file picker instead of passing openings_file.");
+    // Waits on the person at the window to pick a file, so it is not offered to a caller that
+    // has no window -- see GuiToolDefinition::localOnlyParameters.
+    param.localOnly = true;
+    return param;
 }
 
 /** @brief PGN output path, bound to `Settings::pgnFile`. */
@@ -127,8 +131,10 @@ template <class Settings>
 /** @brief PGN output file-picker opt-in, bound to `Settings::pickPgnFile`. */
 template <class Settings>
 [[nodiscard]] Api::Param<Settings> pgnFileDialogParam() {
-    return Api::flagParam<Settings>("pgn_file_dialog", &Settings::pickPgnFile,
+    auto param = Api::flagParam<Settings>("pgn_file_dialog", &Settings::pickPgnFile,
         "Set true to open a native save-file picker instead of passing pgn_file.");
+    param.localOnly = true; // see openingsFileDialogParam()
+    return param;
 }
 
 /**

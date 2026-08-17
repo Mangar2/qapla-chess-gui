@@ -68,7 +68,7 @@
 namespace QaplaLlm::Api {
 
 /** @brief JSON Schema type of a parameter, as the model is shown it. */
-enum class ParamType { String, Integer, Number, Boolean, StringArray };
+enum class ParamType { String, Integer, Number, Boolean, StringArray, StringMap };
 
 /**
  * @brief One model-facing tool parameter: how it is described, and how it is read.
@@ -87,6 +87,9 @@ struct Param {
 
     /** @brief Whether the call is rejected outright when this parameter is absent or malformed. */
     bool required = false;
+
+    /** @brief Withheld from a remote caller -- see GuiToolDefinition::localOnlyParameters. */
+    bool localOnly = false;
 
     /**
      * @brief Reads this parameter's value into `request`, appending to `problems` if it can't.
@@ -118,6 +121,9 @@ struct ToolDef {
 
     /** @brief See GuiToolDefinition::timeout -- raise it for anything that waits on a human. */
     std::chrono::milliseconds timeout = std::chrono::seconds(30);
+
+    /** @brief See GuiToolDefinition::localOnly -- set it for anything that needs that human. */
+    bool localOnly = false;
 };
 
 namespace Detail {
@@ -128,6 +134,11 @@ namespace Detail {
 
 /** @brief "\"games\" must be a whole number" -- the message for a value of the wrong JSON type. */
 [[nodiscard]] std::string wrongTypeProblem(const std::string& name, ParamType type);
+
+/**
+ * @brief A scalar JSON value as text, or nothing for a container/null -- see stringMapParam().
+ */
+[[nodiscard]] std::optional<std::string> asText(const QaplaTester::Json::JsonValue& value);
 
 /** @brief "\"type\" is required (one of: tournament, sprt, epd)" -- for an absent required value. */
 [[nodiscard]] std::string missingProblem(
@@ -161,11 +172,15 @@ template <class Request>
 void defineTool(GuiToolRegistry& registry, ToolDef<Request> tool) {
     auto schema = noArgsToolSchema();
     auto requiredNames = QaplaTester::Json::JsonValue::array();
+    std::vector<std::string> localOnlyParameters;
     for (const auto& param : tool.params) {
         schema["properties"][param.name] =
             Detail::makeProperty(param.type, param.description, param.allowedValues);
         if (param.required) {
             requiredNames.push_back(param.name);
+        }
+        if (param.localOnly) {
+            localOnlyParameters.push_back(param.name);
         }
     }
     if (requiredNames.size() > 0) {
@@ -208,7 +223,9 @@ void defineTool(GuiToolRegistry& registry, ToolDef<Request> tool) {
             }
             return result;
         },
-        .timeout = tool.timeout});
+        .timeout = tool.timeout,
+        .localOnly = tool.localOnly,
+        .localOnlyParameters = std::move(localOnlyParameters)});
 }
 
 // ---------------------------------------------------------------------------
@@ -352,6 +369,51 @@ template <class Request>
         }
         if (entries.empty()) {
             problems.push_back(Detail::wrongTypeProblem(name, ParamType::StringArray));
+            return;
+        }
+        request.*field = std::move(entries);
+    };
+    return param;
+}
+
+/**
+ * @brief Free-form object parameter: an open set of name/value pairs, both text.
+ *
+ * The one parameter shape in this API that is declared by form rather than by name, because its
+ * keys are not knowable when the schema is built: an engine's UCI options are whatever that
+ * engine reports about itself at startup (see QaplaConfiguration::EngineCapabilities), so they
+ * differ per engine and change with every new build. A fixed parameter list cannot express that,
+ * and the alternative -- one tool call per option -- turns setting a tuned configuration into a
+ * dozen round trips.
+ *
+ * Non-text values are accepted and stringified rather than refused: `{"Hash": 128}` means what
+ * `{"Hash": "128"}` means, and both protocols carry every option value as text on the wire
+ * anyway. Refusing the first would be a rule about JSON, not about engines.
+ */
+template <class Request>
+[[nodiscard]] Param<Request> stringMapParam(std::string name,
+    std::vector<std::pair<std::string, std::string>> Request::* field, std::string description,
+    bool required = false) {
+    Param<Request> param{.name = std::move(name), .description = std::move(description),
+        .type = ParamType::StringMap, .required = required};
+    param.read = [field, name = param.name](Request& request,
+                     const QaplaTester::Json::JsonValue& value, std::vector<std::string>& problems) {
+        if (!value.is_object()) {
+            problems.push_back(Detail::wrongTypeProblem(name, ParamType::StringMap));
+            return;
+        }
+        std::vector<std::pair<std::string, std::string>> entries;
+        for (const auto& [key, entry] : value.as_object()) {
+            auto text = Detail::asText(entry);
+            if (!text) {
+                problems.push_back("\"" + key + "\" in \"" + name + "\" must be a text, number or "
+                    "true/false value");
+                continue;
+            }
+            entries.emplace_back(key, *text);
+        }
+        if (entries.empty()) {
+            problems.push_back(Detail::wrongTypeProblem(name, ParamType::StringMap));
             return;
         }
         request.*field = std::move(entries);

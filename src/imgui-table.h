@@ -262,11 +262,27 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Renders the table as aligned plain text: header, rule, rows.
+         *
+         * For the callers that have to send a table somewhere ImGui cannot follow -- the text of
+         * a tool result, which reaches an LLM or an HTTP client rather than a screen (see
+         * docs/grobplan-clop-cli-http.md, F.6). Reading it back out of the very table the GUI
+         * draws is the point: the two cannot disagree about a number, because there is only one
+         * set of numbers.
+         *
+         * @param maxRows Rows to include before stopping; the rest are replaced by a line saying
+         *        how many were left out. A result with one row per EPD position can run into the
+         *        thousands, and a caller with a context window is worse off with all of it than
+         *        with the beginning of it and an honest count.
+         */
+        [[nodiscard]] std::string toText(size_t maxRows = 40) const;
+
+        /**
          * @brief Sets the current index directly. The current row not changed but the move is still scrolled in view.
          * @param row The index of the row to scroll to view.
          */
         void setScrollToRow(std::optional<size_t> row) {
-            scrollToRow_ = row; 
+            scrollToRow_ = row;
         }
 
         /**

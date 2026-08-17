@@ -536,11 +536,17 @@ ActionResult showTournamentResult() {
     // data. Always reads TournamentData::instance() fresh at draw time (every frame the entry
     // stays visible), so it reflects the tournament's current state rather than a one-time
     // snapshot of the results as they were when this action ran.
+    // Both at once, out of one set of numbers: the table for whoever is watching the screen, the
+    // text for whoever is not (see docs/grobplan-clop-cli-http.md, F.6). The text is not a
+    // licence to read it back out -- it is there so that an answer to "who is ahead" can be
+    // given from the real figures instead of invented ones.
     return ActionResult{
         .ok = true,
-        .text = "The current standings are now shown as a table in the chat. The user can "
-                "already see them: do not restate, list or summarize the numbers, and never "
-                "state a score, standing or Elo you did not get from here.",
+        .text = "The current standings are now shown as a table in the chat, and repeated below "
+                "so you can answer questions about them. The user can already see them, so "
+                "don't list or summarize the numbers back -- just answer what was asked, and "
+                "never state a score, standing or Elo that did not come from here.\n"
+            + tournamentData.resultsAsText(),
         .widget = []() {
             auto& data = TournamentData::instance();
             ImGui::Text("Tournament Progress: %u / %u games completed",
@@ -554,6 +560,12 @@ std::string tournamentActivityText() {
     auto& tournamentData = TournamentData::instance();
     return runStatePhrase(
         runStateOf(tournamentData), TOURNAMENT_NAMES, tournamentData.getExternalConcurrency());
+}
+
+ActivityProgress tournamentProgress() {
+    auto& tournamentData = TournamentData::instance();
+    return ActivityProgress{
+        .state = runStateOf(tournamentData), .finished = tournamentData.isFinished()};
 }
 
 bool tournamentIsReadyToStart() {

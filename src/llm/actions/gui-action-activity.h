@@ -43,6 +43,13 @@ enum class Activity { Tournament, Sprt, Epd };
 /** @brief Reports the given activity's full configuration and run state. */
 [[nodiscard]] ActionResult activityStatus(Activity activity);
 
+/**
+ * @brief What the given activity is doing, in the two facts a waiting caller needs.
+ *
+ * Cheap enough to ask every frame, which is what feeds QaplaLlm::ActivityWatch.
+ */
+[[nodiscard]] ActivityProgress activityProgress(Activity activity);
+
 /** @brief Discards the given activity's results, stopping it first if it is still running. */
 [[nodiscard]] ActionResult clearActivityResult(Activity activity);
 

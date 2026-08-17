@@ -73,6 +73,72 @@ TEST_CASE("GuiToolRegistry executes a tool call handed off to the UI thread", "[
     REQUIRE(result.content == "echo:hi");
 }
 
+TEST_CASE("GuiToolRegistry withholds local-only tools and parameters from a remote caller",
+    "[llm][gui-tool-registry]") {
+    GuiToolRegistry registry;
+    registry.registerTool(GuiToolDefinition{
+        .name = "needs_a_person",
+        .description = "Opens a dialog.",
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "should never run remotely"};
+        },
+        .localOnly = true
+    });
+    auto schema = Json::JsonValue::object();
+    schema["type"] = "object";
+    schema["properties"] = Json::JsonValue::object();
+    schema["properties"]["path"] = Json::JsonValue::object();
+    schema["properties"]["pick_a_file"] = Json::JsonValue::object();
+    registry.registerTool(GuiToolDefinition{
+        .name = "configure_something",
+        .description = "Takes a path, or offers to browse for one.",
+        .parametersSchema = schema,
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "configured"};
+        },
+        .localOnlyParameters = {"pick_a_file"}
+    });
+
+    SECTION("the local side sees everything") {
+        auto specs = registry.exportToolSpecs(CallOrigin::Local);
+        REQUIRE(specs.size() == 2);
+        REQUIRE(specs[1].parametersSchemaJson.find("pick_a_file") != std::string::npos);
+    }
+
+    SECTION("a remote caller is not shown what it cannot use") {
+        auto specs = registry.exportToolSpecs(CallOrigin::Remote);
+        REQUIRE(specs.size() == 1);
+        REQUIRE(specs[0].name == "configure_something");
+        REQUIRE(specs[0].parametersSchemaJson.find("path") != std::string::npos);
+        REQUIRE(specs[0].parametersSchemaJson.find("pick_a_file") == std::string::npos);
+    }
+
+    SECTION("a local-only tool called remotely is refused before it can run") {
+        // No polling: the refusal happens before the call is ever enqueued, which is also what
+        // keeps a remote caller from blocking on a dialog nobody will answer.
+        auto result = registry.callTool("needs_a_person", "{}", CallOrigin::Remote);
+        REQUIRE_FALSE(result.success);
+        REQUIRE(result.content.find("remote control") != std::string::npos);
+    }
+
+    SECTION("a withheld parameter passed anyway rejects the whole call") {
+        auto result = registry.callTool(
+            "configure_something", R"({"path":"/tmp/x","pick_a_file":true})", CallOrigin::Remote);
+        REQUIRE_FALSE(result.success);
+        REQUIRE(result.content.find("Nothing was changed") != std::string::npos);
+        REQUIRE(result.content.find("pick_a_file") != std::string::npos);
+    }
+
+    SECTION("the same call without the withheld parameter goes through") {
+        auto result = runOnWorkerWhilePolling(registry, [&]() {
+            return registry.callTool("configure_something", R"({"path":"/tmp/x"})",
+                CallOrigin::Remote);
+        });
+        REQUIRE(result.success);
+        REQUIRE(result.content == "configured");
+    }
+}
+
 TEST_CASE("GuiToolRegistry reports an error result for an unknown tool without touching the queue",
     "[llm][gui-tool-registry]") {
     GuiToolRegistry registry;

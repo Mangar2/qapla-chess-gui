@@ -108,6 +108,17 @@ namespace QaplaWindows {
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
         std::optional<size_t> drawTable(const ImVec2& size);
+
+        /**
+         * @brief The same per-position results as plain text, for a caller that cannot see the
+         * screen.
+         *
+         * Read out of the very table drawTable() renders, so the two can never disagree about a
+         * result. Refreshes it first, hence non-const. Long position sets are cut off with a
+         * count of what was left out (see ImGuiTable::toText); the progress figures in the status
+         * say how far the run got.
+         */
+        [[nodiscard]] std::string resultsAsText();
         
         EpdConfig& config() {
             return epdConfig_;

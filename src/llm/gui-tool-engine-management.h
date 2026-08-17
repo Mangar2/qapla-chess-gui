@@ -19,7 +19,11 @@
 
 #pragma once
 
+#include <engine-handling/engine-capabilities.h>
+#include <engine-handling/engine-config.h>
+
 #include <string>
+#include <utility>
 #include <vector>
 
 /**
@@ -59,5 +63,98 @@ struct AddEnginesOutcome {
  * the native file picker on top of this.
  */
 [[nodiscard]] AddEnginesOutcome addEnginesFromPaths(const std::vector<std::string>& paths);
+
+/** @brief One engine to install: the executable, and what it is to be called in the catalog. */
+struct NamedEnginePath {
+    std::string name;
+    std::string path;
+};
+
+/**
+ * @brief Outcome of adding engines that were named by the caller.
+ */
+struct AddNamedEnginesOutcome {
+    std::vector<std::string> addedNames;
+    std::vector<std::string> takenNames; ///< Names already used in the catalog; nothing was added for these.
+};
+
+/**
+ * @brief Adds engines under caller-chosen names, refusing only a name that is already taken.
+ *
+ * Two differences from addEnginesFromPaths(), and both follow from the name being given rather
+ * than derived:
+ *
+ * The same executable may be added more than once, under different names. That is not an accident
+ * to be guarded against but the point: an SPRT of one build against itself under two option sets
+ * needs two catalog entries pointing at the same file, since option values belong to the
+ * configuration and the configuration is keyed by name. Deduplicating by executable -- which is
+ * right when the name is only a filename, and is what addEnginesFromPaths() does for the file
+ * dialog -- would make that impossible to express.
+ *
+ * And the name survives detection. An engine that reports its own name replaces a name that is
+ * still just the executable's filename (see EngineCapabilities::storeCapabilities and
+ * EngineConfig::hasDefaultName), which is helpful for a file picked in a dialog and destructive
+ * here: two builds of one engine would both come back named after the engine, leaving neither
+ * selectable by name. A name the caller chose is never a default name, so detection leaves it be.
+ */
+[[nodiscard]] AddNamedEnginesOutcome addNamedEngines(const std::vector<NamedEnginePath>& engines);
+
+/**
+ * @brief Reports one engine configuration together with what its program can actually be told.
+ *
+ * Three things, and they come from two different places on purpose. The configuration's own
+ * properties and its set option values belong to *this* configuration, keyed by name. The list of
+ * supported options belongs to the executable, keyed by cmd+protocol (see
+ * EngineCapabilities::makeKey) -- which is why two configurations of the same build share one
+ * option list and can still hold different values for it.
+ *
+ * The supported options are reported with their full domain -- type, default, range, choices --
+ * not just their names. A caller setting values out of a CLOP result has no other way to tell
+ * whether what it is about to set is even in range, and an engine handed an out-of-range value is
+ * free to ignore it silently, which turns into a test result that measures nothing.
+ *
+ * @param capabilities Passed in rather than reached for, so this stays free of the GUI singleton
+ *        and can be unit-tested with a hand-built capability set.
+ */
+[[nodiscard]] std::string engineDetailsText(const QaplaTester::EngineConfig& config,
+    const QaplaConfiguration::EngineCapabilities& capabilities);
+
+/** @brief One requested UCI option value, as the caller named it. */
+struct EngineOptionAssignment {
+    std::string name;
+    std::string value;
+};
+
+/**
+ * @brief What applyEngineOptions() did, in the three outcomes worth telling apart.
+ */
+struct ApplyOptionsOutcome {
+    /**
+     * @brief False when the executable has never been started, so nothing is known about it.
+     *
+     * Distinct from "the option does not exist": here the question could not be asked at all, and
+     * the answer is to run detection, not to pick a different option name.
+     */
+    bool detected = true;
+
+    std::vector<std::string> applied;  ///< "Hash = 128", using the engine's own spelling.
+    std::vector<std::string> unknown;  ///< Names this engine does not offer.
+    std::vector<std::string> rejected; ///< Values outside the option's declared domain, with it named.
+};
+
+/**
+ * @brief Sets UCI option values on one engine configuration, checked against its capability list.
+ *
+ * Checked rather than stored blindly, because an engine silently ignores what it does not
+ * understand: a misspelt option name or an out-of-range value would otherwise produce a test that
+ * ran to completion and measured the wrong build. Every rejection names the domain it violated, so
+ * the caller can correct it without a second lookup.
+ *
+ * Accepted values are stored under the engine's own spelling of the option name, not the caller's:
+ * matching is case-insensitive, but what goes to the engine is what the engine called it.
+ */
+[[nodiscard]] ApplyOptionsOutcome applyEngineOptions(QaplaTester::EngineConfig& config,
+    const std::vector<EngineOptionAssignment>& assignments,
+    const QaplaConfiguration::EngineCapabilities& capabilities);
 
 } // namespace QaplaLlm
