@@ -125,11 +125,16 @@ enum class CallOrigin {
  * to the user (see ChatbotLlmChat) -- so write it as a short, friendly
  * sentence, never raw data dumps or internal identifiers.
  */
+// Every member below carries a default, including the ones a default already gives. Callers
+// build these with designated initializers and name only the fields they care about, which is
+// what -Wmissing-field-initializers complains about unless the omitted member has an initializer
+// of its own. Spelling out the empty ones keeps that idiom warning-free at the source, rather
+// than making every call site list fields it has nothing to say about.
 struct GuiToolDefinition {
-    std::string name;
-    std::string description;
+    std::string name{};
+    std::string description{};
     QaplaTester::Json::JsonValue parametersSchema = noArgsToolSchema(); ///< JSON Schema for "arguments".
-    std::function<GuiToolResult(const QaplaTester::Json::JsonValue& arguments)> handler;
+    std::function<GuiToolResult(const QaplaTester::Json::JsonValue& arguments)> handler{};
 
     /**
      * @brief How long callTool() waits for this tool's handler to run.
@@ -154,7 +159,7 @@ struct GuiToolDefinition {
      * chosen; carrying on without one would apply the rest of its patch and report success for a
      * request that was not carried out.
      */
-    std::vector<std::string> localOnlyParameters;
+    std::vector<std::string> localOnlyParameters{};
 };
 
 /**

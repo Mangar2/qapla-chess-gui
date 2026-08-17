@@ -61,15 +61,14 @@ namespace {
         capability.setPath(ENGINE_PATH);
         capability.setProtocol(QaplaTester::EngineProtocol::Uci);
         capability.setSupportedOptions(QaplaTester::EngineOptions{
-            EngineOption{.name = "Hash", .type = EngineOption::Type::Spin,
-                .defaultValue = "16", .min = 1, .max = 65536, .vars = {}},
+            EngineOption{
+                .name = "Hash", .type = EngineOption::Type::Spin, .defaultValue = "16",
+                .min = 1, .max = 65536},
             EngineOption{.name = "Ponder", .type = EngineOption::Type::Check,
-                .defaultValue = "false", .min = {}, .max = {}, .vars = {}},
+                .defaultValue = "false"},
             EngineOption{.name = "Style", .type = EngineOption::Type::Combo,
-                .defaultValue = "normal", .min = {}, .max = {},
-                .vars = {"normal", "aggressive"}},
-            EngineOption{.name = "Clear Hash", .type = EngineOption::Type::Button,
-                .defaultValue = "", .min = {}, .max = {}, .vars = {}}});
+                .defaultValue = "normal", .vars = {"normal", "aggressive"}},
+            EngineOption{.name = "Clear Hash", .type = EngineOption::Type::Button}});
         capabilities.addOrReplace(capability);
     }
 

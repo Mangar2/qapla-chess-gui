@@ -259,11 +259,16 @@ ActionResult engineDetails(const std::string& name) {
 
 namespace {
 
-    /** @brief A located engine configuration, ready to be changed and written back. */
+    /**
+     * @brief A located engine configuration, ready to be changed and written back.
+     *
+     * Members carry their own empty defaults so the returns below can name just the one or two
+     * fields that matter -- see the note on GuiToolDefinition for the same reasoning.
+     */
     struct EditOutcome {
-        std::optional<ActionResult> refusal; ///< Set when the engine could not be reached at all.
-        std::string canonicalName;
-        ApplyOptionsOutcome result;
+        std::optional<ActionResult> refusal{}; ///< Set when the engine could not be reached at all.
+        std::string canonicalName{};
+        ApplyOptionsOutcome result{};
     };
 
     /**
