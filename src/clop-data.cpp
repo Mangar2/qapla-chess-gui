@@ -21,6 +21,8 @@
 
 #include <game-manager/game-manager-pool.h>
 
+#include <imgui.h>
+
 #include <filesystem>
 #include <format>
 #include <system_error>
@@ -28,13 +30,22 @@
 namespace QaplaWindows {
 
 namespace {
-    /** @brief One TableCell as text, whichever of its three types it holds. */
+    /**
+     * @brief One TableCell as text, whichever of its three types it holds.
+     *
+     * Fractional values are cut to two decimals. The estimate arrives as a raw double and prints
+     * as 18132.57604311625 in full, which is seventeen digits of a number that moves with every
+     * sample -- the precision is real but none of it is information to someone watching a run.
+     * Whole-number cells keep their exact form.
+     */
     std::string cellText(const QaplaTester::TableCell& cell) {
         return std::visit(
             [](const auto& value) -> std::string {
                 using Value = std::decay_t<decltype(value)>;
                 if constexpr (std::is_same_v<Value, std::string>) {
                     return value;
+                } else if constexpr (std::is_same_v<Value, double>) {
+                    return std::format("{:.2f}", value);
                 } else {
                     return std::format("{}", value);
                 }
@@ -204,38 +215,79 @@ std::vector<std::pair<std::string, double>> ClopData::estimatedParameters() cons
     return estimate;
 }
 
-void ClopData::populateResultTable() {
-    resultTable_.clear();
-    if (!optimizer_) {
+void ClopData::fill(ImGuiTable& target, const QaplaTester::TableData& source) {
+    target.clear();
+    if (source.headers.empty()) {
         return;
     }
 
-    const auto table = optimizer_->getStatusTable();
-    if (table.headers.empty()) {
-        return;
-    }
-
-    // Columns come from the optimizer rather than being declared here: its status table changes
+    // Columns come from the source rather than being declared here: the status table changes
     // shape with the number of parameters being tuned, so a fixed column list would either be
     // wrong or would have to be rebuilt on every configuration change anyway.
-    resultTable_.resizeColumns(table.headers.size());
-    for (std::size_t column = 0; column < table.headers.size(); ++column) {
-        resultTable_.setColumnHead(column, ImGuiTable::ColumnDef{.name = table.headers[column]});
+    target.resizeColumns(source.headers.size());
+    for (std::size_t column = 0; column < source.headers.size(); ++column) {
+        // WidthFixed goes with compute: ImGui asserts on a column given a width without a
+        // sizing policy that can honour it, and a computed width is still a width.
+        target.setColumnHead(column,
+            ImGuiTable::ColumnDef{.name = source.headers[column],
+                .flags = ImGuiTableColumnFlags_WidthFixed, .compute = true});
     }
 
-    for (const auto& row : table.body) {
+    for (const auto& row : source.body) {
         std::vector<std::string> cells;
         cells.reserve(row.size());
         for (const auto& cell : row) {
             cells.push_back(cellText(cell));
         }
-        resultTable_.push(cells);
+        target.push(cells);
     }
 }
 
-std::string ClopData::resultsAsText() {
+void ClopData::populateResultTable() {
+    if (!optimizer_) {
+        resultTable_.clear();
+        return;
+    }
+    fill(resultTable_, optimizer_->getStatusTable());
+}
+
+void ClopData::populateIndicatorTable() {
+    if (!optimizer_) {
+        indicatorTable_.clear();
+        return;
+    }
+    fill(indicatorTable_, optimizer_->getIndicatorTable());
+}
+
+void ClopData::drawTables() {
+    if (!optimizer_) {
+        return;
+    }
+
+    // Refilled here as well as in pollData(), because this is also reached for a run that has
+    // already stopped -- pollData() has nothing left to do then, and the tables would show
+    // whatever they held when the last frame of the run went by.
+    populateIndicatorTable();
     populateResultTable();
-    return resultTable_.toText();
+
+    indicatorTable_.draw(ImVec2(0.0F, 0.0F), false);
+    ImGui::Spacing();
+    resultTable_.draw(ImVec2(0.0F, 0.0F), false);
+}
+
+std::string ClopData::resultsAsText() {
+    // Both tables, in the order the CLI writes them: the estimates say what the run currently
+    // believes, the indicator says how far along and in which phase it believes it. The first
+    // without the second reads as a settled answer when it may still be the warm-up talking.
+    populateIndicatorTable();
+    populateResultTable();
+
+    const auto indicator = indicatorTable_.toText();
+    const auto status = resultTable_.toText();
+    if (indicator.empty()) {
+        return status;
+    }
+    return indicator + "\n" + status;
 }
 
 void ClopData::pollData() {
@@ -245,6 +297,7 @@ void ClopData::pollData() {
 
     boardWindowList_.populateViews();
     populateResultTable();
+    populateIndicatorTable();
 
     const bool anyRunning = boardWindowList_.isAnyRunning();
     if (state_ == State::Starting && anyRunning) {

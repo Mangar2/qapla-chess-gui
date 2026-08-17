@@ -147,6 +147,20 @@ public:
     /** @brief The current best estimate, one entry per configured parameter. */
     [[nodiscard]] std::vector<std::pair<std::string, double>> estimatedParameters() const;
 
+    /**
+     * @brief Draws the live status and indicator tables.
+     *
+     * The pair the CLI writes to its report every outcomeInterval samples, except that here they
+     * are redrawn every frame instead -- there is no interval to pick when the reader is a person
+     * looking at a window, and a table that only moves every tenth sample looks stuck.
+     *
+     * Safe to call when nothing has run: it draws a line saying so rather than an empty frame.
+     */
+    void drawTables();
+
+    /** @brief Whether there is anything for drawTables() to show. */
+    [[nodiscard]] bool hasTables() const { return optimizer_ != nullptr; }
+
 private:
     ClopData();
     ~ClopData();
@@ -155,6 +169,10 @@ private:
     void pollData();
 
     void populateResultTable();
+    void populateIndicatorTable();
+
+    /** @brief Fills one ImGuiTable from a TableData, taking its columns from the headers. */
+    static void fill(ImGuiTable& target, const QaplaTester::TableData& source);
 
     std::unique_ptr<QaplaTester::CLOPOptimizer> optimizer_;
     QaplaTester::CLOPConfig config_{};
@@ -169,6 +187,7 @@ private:
     GameManagerPoolAccess poolAccess_;
     ViewerBoardWindowList boardWindowList_;
     ImGuiTable resultTable_;
+    ImGuiTable indicatorTable_;
 
     std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
 };

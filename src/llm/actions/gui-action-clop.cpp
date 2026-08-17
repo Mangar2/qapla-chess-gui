@@ -87,7 +87,7 @@ namespace {
         std::vector<std::string> entries;
         entries.reserve(estimate.size());
         for (const auto& [name, value] : estimate) {
-            entries.push_back(std::format("{} = {:.3f}", name, value));
+            entries.push_back(std::format("{} = {:.2f}", name, value));
         }
         return " Best estimate so far: " + joinList(entries) +
             ". Apply it with the engine tool when you are satisfied with it; nothing is written to "

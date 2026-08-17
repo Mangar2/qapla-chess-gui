@@ -18,6 +18,7 @@
  */
 
 #include "chatbot-remote-control.h"
+#include "../clop-data.h"
 
 #include "chatbot-step.h"
 #include "chatbot-window.h"
@@ -80,6 +81,19 @@ bool ChatbotRemoteControl::draw() {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
+
+    // The one activity with nothing of its own to look at: CLOP has no tab, so its live numbers
+    // belong here, above the call log, where they stay put instead of scrolling away with
+    // whatever call happened to ask for them last. Redrawn every frame, which is what "the CLI
+    // prints this every n samples" turns into when the reader is a person watching a window.
+    auto& clop = QaplaWindows::ClopData::instance();
+    if (clop.hasTables()) {
+        ImGui::TextColored(StepColors::SUCCESS_COLOR, "%s", "CLOP tuning");
+        clop.drawTables();
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+    }
 
     auto entries = server.entries();
     if (entries.empty()) {

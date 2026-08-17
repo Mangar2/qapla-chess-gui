@@ -541,7 +541,7 @@ id=Table
 {s:"Nodes",t:"2026-07-25"}=Knoten
 {s:"NPS",t:"2026-07-25"}=NPS
 {s:"Tb hits",t:"2026-07-25"}=TB
-{s:"Value",t:"2026-07-25"}=Wert
+{s:"Value",t:"2026-08-17"}=Wert
 {s:"Primary variant",t:"2026-07-25"}=Hauptvariante
 {s:"Name",t:"2026-08-16"}=Name
 {s:"Elo",t:"2025-12-28"}=Elo
@@ -577,6 +577,11 @@ id=Table
 {s:"Type",t:"2026-08-16"}=Type
 {s:"Spike \\1.\\2.",t:"2026-07-21"}=Spike \1.\2.
 {s:"Qapla \\1.\\2.",t:"2026-08-09"}=Qapla \1.\2.
+{s:"Indicator",t:"2026-08-17"}=Indicator
+{s:"Parameter",t:"2026-08-17"}=Parameter
+{s:"Estimated",t:"2026-08-17"}=Estimated
+{s:"Min",t:"2026-08-17"}=Min
+{s:"Max",t:"2026-08-17"}=Max
 
 [Translation]
 id=Tab

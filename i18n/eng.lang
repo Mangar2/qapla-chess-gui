@@ -313,7 +313,7 @@ id=Table
 {s:"Nodes",t:"2026-07-25"}=Nodes
 {s:"NPS",t:"2026-07-25"}=NPS
 {s:"Tb hits",t:"2026-07-25"}=Tb
-{s:"Value",t:"2026-07-25"}=Value
+{s:"Value",t:"2026-08-17"}=Value
 {s:"Primary variant",t:"2026-07-25"}=Primary variant
 {s:"Name",t:"2026-08-16"}=Name
 {s:"Elo",t:"2025-12-28"}=Elo
@@ -357,6 +357,11 @@ id=Table
 {s:"Mi",t:"2025-12-22"}=Mi
 {s:"Opening",t:"2025-12-23"}=Opening
 {s:"Type",t:"2026-08-16"}=Type
+{s:"Indicator",t:"2026-08-17"}=Indicator
+{s:"Parameter",t:"2026-08-17"}=Parameter
+{s:"Estimated",t:"2026-08-17"}=Estimated
+{s:"Min",t:"2026-08-17"}=Min
+{s:"Max",t:"2026-08-17"}=Max
 
 [Translation]
 id=Tooltip
