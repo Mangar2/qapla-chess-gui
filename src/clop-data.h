@@ -135,15 +135,6 @@ public:
 
     [[nodiscard]] std::size_t completedSamples() const;
 
-    /**
-     * @brief The optimizer's own status table, as plain text.
-     *
-     * Repopulates the table first, like the other activities' resultsAsText(): the cache is
-     * otherwise only filled while a run is being polled, so a caller asking about a finished run
-     * would be told there is nothing to report.
-     */
-    [[nodiscard]] std::string resultsAsText();
-
     /** @brief The current best estimate, one entry per configured parameter. */
     [[nodiscard]] std::vector<std::pair<std::string, double>> estimatedParameters() const;
 

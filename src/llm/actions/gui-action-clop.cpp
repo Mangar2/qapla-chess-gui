@@ -251,24 +251,16 @@ ActionResult clopStatus() {
 }
 
 ActionResult showClopResult() {
-    auto& data = ClopData::instance();
-
-    // Results only, never the configuration: get_status composes this with activityStatus(), so
-    // anything said in both is said twice to the caller.
-    auto text = estimateText(data);
-    const auto table = data.resultsAsText();
-    if (table.empty()) {
-        return succeeded(text.empty() ? " No samples have been taken yet." : text);
-    }
-    text += " The CLOP status table is shown in the remote-control window and repeated below so "
-            "you can answer questions about it. Never state an estimate that did not come from "
-            "here.\n" + table;
-
-    // Drawn from the same table the text was rendered from, so the window and the wire cannot
-    // disagree -- see GuiToolResult::renderWidget.
-    return ActionResult{.ok = true, .text = std::move(text), .widget = [&data]() {
-        ImGui::TextUnformatted(data.resultsAsText().c_str());
-    }};
+    // No table and no widget, deliberately, and this is where CLOP differs from the other three.
+    // Theirs render a results table into the chat and repeat it as text for the model, because
+    // the model would otherwise have no numbers at all and was caught inventing them. CLOP's
+    // numbers are already in prose: the estimate below, the progress and phase in the status
+    // sentence next to it. Repeating them as an ASCII table would cost the caller tokens on every
+    // status call for nothing, and would pile duplicate copies into the remote-control window
+    // that push the live tables out of view -- those are drawn once, permanently, by
+    // ClopData::drawTables().
+    auto text = estimateText(ClopData::instance());
+    return succeeded(text.empty() ? " No samples have been taken yet." : text);
 }
 
 ActionResult clearClopResult() {

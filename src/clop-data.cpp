@@ -275,21 +275,6 @@ void ClopData::drawTables() {
     resultTable_.draw(ImVec2(0.0F, 0.0F), false);
 }
 
-std::string ClopData::resultsAsText() {
-    // Both tables, in the order the CLI writes them: the estimates say what the run currently
-    // believes, the indicator says how far along and in which phase it believes it. The first
-    // without the second reads as a settled answer when it may still be the warm-up talking.
-    populateIndicatorTable();
-    populateResultTable();
-
-    const auto indicator = indicatorTable_.toText();
-    const auto status = resultTable_.toText();
-    if (indicator.empty()) {
-        return status;
-    }
-    return indicator + "\n" + status;
-}
-
 void ClopData::pollData() {
     if (state_ == State::Idle) {
         return;
