@@ -93,6 +93,36 @@ enum class EngineTarget { Catalog, Tournament, Sprt, Epd };
  * already holds a copy alone.
  */
 [[nodiscard]] ActionResult setEngineOptions(EngineTarget target, const std::string& engineName,
-    const std::vector<EngineOptionAssignment>& options);
+    const std::vector<EngineAssignment>& options, const std::vector<std::string>& unset);
+
+/**
+ * @brief Sets generic engine properties (executable, time control, protocol, ...) in the given set.
+ *
+ * Same target rules as setEngineOptions(), and the same reason for them: what is being changed is
+ * one engine configuration, and the target says which set that configuration lives in.
+ */
+[[nodiscard]] ActionResult updateEngine(EngineTarget target, const std::string& engineName,
+    const std::vector<EngineAssignment>& properties);
+
+/**
+ * @brief Copies a catalog engine under a new name, optionally changing values in the same step.
+ *
+ * The changes are part of this call rather than a follow-up on purpose: a copy exists in order to
+ * differ from its source, and a caller that copies first and edits second has, in between, two
+ * catalog entries that are indistinguishable except by name -- which is exactly the state that
+ * makes a mix-up in a running test possible.
+ */
+[[nodiscard]] ActionResult copyEngine(const std::string& sourceName, const std::string& newName,
+    const std::vector<EngineAssignment>& options,
+    const std::vector<EngineAssignment>& properties);
+
+/**
+ * @brief Removes an engine from the global catalog.
+ *
+ * Leaves every run's own copy alone: a test that has already selected the engine keeps playing
+ * with what it holds, since that copy is a configuration in its own right. What is lost is the
+ * ability to select it again.
+ */
+[[nodiscard]] ActionResult deleteEngine(const std::string& name);
 
 } // namespace QaplaLlm::Actions

@@ -300,6 +300,114 @@ TEST_CASE("engineDetailsText says so when the engine never reported anything",
     REQUIRE(text.find("unknown") != std::string::npos);
 }
 
+TEST_CASE("unsetEngineOptions puts an option back to the engine default",
+    "[llm][gui-tool-engine-management]") {
+    auto config = makeConfig();
+    const DetectedEngine engine;
+    const auto& capabilities = engine.capabilities;
+    REQUIRE(applyEngineOptions(config,
+        {{.name = "Hash", .value = "256"}, {.name = "Style", .value = "aggressive"}}, capabilities)
+                .applied.size() == 2);
+
+    // Clearing has to actually remove the entry, not store the default: an option that is not
+    // configured is never sent to the engine at all, and that is the state being restored.
+    auto removed = unsetEngineOptions(config, {"hash"});
+
+    REQUIRE(removed == std::vector<std::string>{"Hash"});
+    REQUIRE_FALSE(config.getOptionValues().contains("Hash"));
+    REQUIRE(config.getOptionValues().at("Style") == "aggressive");
+}
+
+TEST_CASE("unsetEngineOptions reports nothing for an option that was never set",
+    "[llm][gui-tool-engine-management]") {
+    auto config = makeConfig();
+
+    REQUIRE(unsetEngineOptions(config, {"Hash"}).empty());
+}
+
+TEST_CASE("applyEngineProperties writes generic keys and refuses the rest",
+    "[llm][gui-tool-engine-management]") {
+    auto config = makeConfig();
+
+    auto outcome = applyEngineProperties(config,
+        {{.name = "tc", .value = "20+0.1"}, {.name = "restart", .value = "auto"},
+            {.name = "Hash", .value = "256"}});
+
+    // "Hash" is a UCI option, not a property. It must be refused rather than written, because
+    // EngineConfig::setValue() would otherwise take an unrecognised key for an option and store
+    // it -- turning a wrong command into a silent, plausible-looking success.
+    REQUIRE(outcome.applied.size() == 2);
+    REQUIRE(outcome.unknown == std::vector<std::string>{"Hash"});
+    REQUIRE(config.getOptionValues().empty());
+}
+
+TEST_CASE("applyEngineProperties reports a value the property will not take",
+    "[llm][gui-tool-engine-management]") {
+    auto config = makeConfig();
+
+    auto outcome = applyEngineProperties(config, {{.name = "proto", .value = "telepathy"}});
+
+    REQUIRE(outcome.applied.empty());
+    REQUIRE(outcome.rejected.size() == 1);
+    REQUIRE(outcome.unknown.empty());
+    // The accessor is shared with the CLI and answers in its words: keep the part that says what
+    // would have worked, drop the line telling a caller with no command line to run --help.
+    REQUIRE(outcome.rejected[0].find("uci, xboard") != std::string::npos);
+    REQUIRE(outcome.rejected[0].find("--help") == std::string::npos);
+    REQUIRE(outcome.rejected[0].find('\n') == std::string::npos);
+}
+
+TEST_CASE("copyCatalogEngine carries the source's values into the copy",
+    "[llm][gui-tool-engine-management]") {
+    EngineConfigGuard guard;
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    configManager.getAllConfigsMutable().clear();
+    REQUIRE(addNamedEngines({{.name = "baseline", .path = ENGINE_PATH}}).addedNames.size() == 1);
+    configManager.getConfigMutable("baseline")->setOptionValue("Hash", "256");
+
+    auto outcome = copyCatalogEngine("baseline", "candidate");
+
+    REQUIRE_FALSE(outcome.sourceMissing);
+    REQUIRE_FALSE(outcome.nameTaken);
+    const auto* copy = configManager.getConfig("candidate");
+    REQUIRE(copy != nullptr);
+    // Starting from the source rather than from the engine's defaults is the point: "same as the
+    // baseline but with one parameter moved" has to be one step, or the two entries differ in
+    // ways nobody chose.
+    REQUIRE(copy->getOptionValues().at("Hash") == "256");
+    REQUIRE(copy->getCmd() == configManager.getConfig("baseline")->getCmd());
+}
+
+TEST_CASE("copyCatalogEngine refuses to reuse a name", "[llm][gui-tool-engine-management]") {
+    EngineConfigGuard guard;
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    configManager.getAllConfigsMutable().clear();
+    REQUIRE(addNamedEngines({{.name = "baseline", .path = ENGINE_PATH},
+        {.name = "candidate", .path = ENGINE_PATH}})
+                .addedNames.size() == 2);
+
+    REQUIRE(copyCatalogEngine("baseline", "candidate").nameTaken);
+    REQUIRE(copyCatalogEngine("nobody", "fresh").sourceMissing);
+    REQUIRE(configManager.getAllConfigs().size() == 2);
+}
+
+TEST_CASE("deleteCatalogEngine removes exactly the named entry",
+    "[llm][gui-tool-engine-management]") {
+    EngineConfigGuard guard;
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    configManager.getAllConfigsMutable().clear();
+    REQUIRE(addNamedEngines({{.name = "baseline", .path = ENGINE_PATH},
+        {.name = "candidate", .path = ENGINE_PATH}})
+                .addedNames.size() == 2);
+
+    // Both entries share an executable, so removal has to go by name -- by value it would be
+    // ambiguous, which is exactly the case this catalog is built to allow.
+    REQUIRE(deleteCatalogEngine("baseline"));
+    REQUIRE_FALSE(deleteCatalogEngine("baseline"));
+    REQUIRE(configManager.getAllConfigs().size() == 1);
+    REQUIRE(configManager.getConfig("candidate") != nullptr);
+}
+
 // The engine actions themselves (src/llm/actions/gui-action-engines.cpp) are not covered here:
 // they wire up OsDialogs + Configuration, which transitively pull in the ImGui/GLFW GUI stack
 // that the unit-tests target deliberately does not link against (same reasoning as

@@ -257,78 +257,220 @@ ActionResult engineDetails(const std::string& name) {
         QaplaConfiguration::Configuration::instance().getEngineCapabilities()));
 }
 
-ActionResult setEngineOptions(EngineTarget target, const std::string& engineName,
-    const std::vector<EngineOptionAssignment>& options) {
-    const auto traits = traitsOf(target);
+namespace {
 
-    // A run's engine configuration is frozen for exactly as long as its settings are, and for the
-    // same reason: one result table measured under two option sets is not a result.
-    if (traits.names != nullptr) {
-        if (const auto lock = lockOf(stateOf(target)); lock != RunLock::None) {
-            return failed(settingsLockedSentence(lock, *traits.names));
+    /** @brief A located engine configuration, ready to be changed and written back. */
+    struct EditOutcome {
+        std::optional<ActionResult> refusal; ///< Set when the engine could not be reached at all.
+        std::string canonicalName;
+        ApplyOptionsOutcome result;
+    };
+
+    /**
+     * @brief Finds one engine in the given set, applies a change to it, and persists the set.
+     *
+     * The lookup, the run lock and the write-back are identical whether the change is a UCI option
+     * or a generic property; only the mutation differs, so only that is passed in. Doing it any
+     * other way was how the two paths drifted apart the last time -- see the note on
+     * settingsLockedSentence() about one rule, one wording.
+     */
+    EditOutcome editEngineIn(EngineTarget target, const std::string& engineName,
+        const std::function<ApplyOptionsOutcome(QaplaTester::EngineConfig&)>& mutate) {
+        const auto traits = traitsOf(target);
+
+        // A run's engine configuration is frozen for exactly as long as its settings are, and for
+        // the same reason: one result table measured under two option sets is not a result.
+        if (traits.names != nullptr) {
+            if (const auto lock = lockOf(stateOf(target)); lock != RunLock::None) {
+                return {.refusal = failed(settingsLockedSentence(lock, *traits.names))};
+            }
         }
+
+        auto resolution = resolveEngines({engineName});
+        if (!resolution.ambiguous.empty()) {
+            return {.refusal = failed(formatAmbiguousEngineNames(resolution.ambiguous) +
+                        " Ask the user which one they mean.")};
+        }
+        if (resolution.resolved.empty()) {
+            return {.refusal = failed(std::format("\"{}\" is not in the engine catalog. List the "
+                                                  "installed engines to see what is there.",
+                        engineName))};
+        }
+        const auto canonicalName = resolution.resolved.front().getName();
+
+        if (target == EngineTarget::Catalog) {
+            auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+            auto* config = configManager.getConfigMutable(canonicalName);
+            if (config == nullptr) {
+                return {.refusal = failed(
+                            std::format("\"{}\" is not in the engine catalog.", canonicalName))};
+            }
+            auto result = mutate(*config);
+            if (!result.applied.empty()) {
+                QaplaConfiguration::Configuration::instance().setModified();
+            }
+            return {.canonicalName = canonicalName, .result = std::move(result)};
+        }
+
+        auto* selection = selectionOf(target);
+        auto configs = selection->getEngineConfigurations();
+        auto match = std::ranges::find_if(
+            configs, [&](const auto& config) { return config.getName() == canonicalName; });
+        if (match == configs.end()) {
+            return {.refusal = failed(std::format(
+                        "{} is not among the engines of {}. Select it there first; selecting "
+                        "copies the engine out of the catalog, and this changes that copy.",
+                        canonicalName, traits.label))};
+        }
+
+        auto result = mutate(*match);
+        if (!result.applied.empty()) {
+            // Write the whole list back, not just the one entry: setEngineConfigurations() is what
+            // persists and notifies (see selectSprtEngines()), and it takes the set as a whole.
+            selection->setEngineConfigurations(configs);
+            if (!traits.tabMessage.empty()) {
+                QaplaWindows::StaticCallbacks::message().invokeAll(std::string(traits.tabMessage));
+            }
+        }
+        return {.canonicalName = canonicalName, .result = std::move(result)};
     }
 
-    auto resolution = resolveEngines({engineName});
+} // namespace
+
+ActionResult setEngineOptions(EngineTarget target, const std::string& engineName,
+    const std::vector<EngineAssignment>& options, const std::vector<std::string>& unset) {
+    const auto traits = traitsOf(target);
+    auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+
+    std::vector<std::string> removed;
+    auto edit = editEngineIn(target, engineName, [&](QaplaTester::EngineConfig& config) {
+        // Unset first, so a caller that clears an option and sets it again in one call ends up
+        // with it set. The other order would silently drop the new value.
+        removed = unsetEngineOptions(config, unset);
+        auto result = applyEngineOptions(config, options, capabilities);
+        if (!removed.empty()) {
+            result.applied.push_back("back to the engine default: " + joinList(removed));
+        }
+        return result;
+    });
+    if (edit.refusal) {
+        return *edit.refusal;
+    }
+
+    const auto& outcome = edit.result;
+    if (!outcome.detected) {
+        return failed(std::format("{} has not reported what it supports, so nothing was set. It "
+                                  "did not answer when it was installed.", edit.canonicalName));
+    }
+    if (outcome.applied.empty() && outcome.unknown.empty() && outcome.rejected.empty()) {
+        return failed("No options were given, so nothing changed.");
+    }
+
+    auto message = describeOutcome(outcome, edit.canonicalName, traits.label);
+    return outcome.unknown.empty() && outcome.rejected.empty() ? succeeded(message)
+                                                               : failed(message);
+}
+
+ActionResult updateEngine(EngineTarget target, const std::string& engineName,
+    const std::vector<EngineAssignment>& properties) {
+    const auto traits = traitsOf(target);
+
+    auto edit = editEngineIn(target, engineName, [&](QaplaTester::EngineConfig& config) {
+        return applyEngineProperties(config, properties);
+    });
+    if (edit.refusal) {
+        return *edit.refusal;
+    }
+
+    const auto& outcome = edit.result;
+    if (outcome.applied.empty() && outcome.unknown.empty() && outcome.rejected.empty()) {
+        return failed("No properties were given, so nothing changed.");
+    }
+
+    std::string message;
+    if (!outcome.applied.empty()) {
+        message += std::format("Changed on {} in {}: {}.", edit.canonicalName, traits.label,
+            joinList(outcome.applied));
+    }
+    if (!outcome.unknown.empty()) {
+        if (!message.empty()) {
+            message += " ";
+        }
+        message += "Not engine properties, left alone: " + joinList(outcome.unknown) +
+            ". Settable are: " + joinList(settableEngineKeys()) +
+            ". For UCI options use the option command instead.";
+    }
+    if (!outcome.rejected.empty()) {
+        if (!message.empty()) {
+            message += " ";
+        }
+        message += "Refused, left unchanged: " + joinList(outcome.rejected) + ".";
+    }
+    return outcome.unknown.empty() && outcome.rejected.empty() ? succeeded(message)
+                                                               : failed(message);
+}
+
+ActionResult copyEngine(const std::string& sourceName, const std::string& newName,
+    const std::vector<EngineAssignment>& options,
+    const std::vector<EngineAssignment>& properties) {
+    if (newName.empty()) {
+        return failed("The copy needs a name of its own. Nothing was copied.");
+    }
+
+    auto resolution = resolveEngines({sourceName});
     if (!resolution.ambiguous.empty()) {
         return failed(formatAmbiguousEngineNames(resolution.ambiguous) +
             " Ask the user which one they mean.");
     }
     if (resolution.resolved.empty()) {
         return failed(std::format("\"{}\" is not in the engine catalog. List the installed engines "
-                                  "to see what is there.", engineName));
+                                  "to see what is there.", sourceName));
+    }
+    const auto canonicalSource = resolution.resolved.front().getName();
+
+    auto outcome = copyCatalogEngine(canonicalSource, newName);
+    if (outcome.sourceMissing) {
+        return failed(std::format("\"{}\" is not in the engine catalog.", canonicalSource));
+    }
+    if (outcome.nameTaken) {
+        return failed(std::format("\"{}\" is already in the catalog, so nothing was copied. Pick "
+                                  "another name for the copy.", newName));
+    }
+    QaplaConfiguration::Configuration::instance().setModified();
+
+    std::string message = std::format("Copied {} to {}.", canonicalSource, newName);
+
+    // The copy shares its source's executable, so it shares its capability entry too and needs no
+    // detection -- see EngineCapabilities::makeKey(). Its own values can therefore be set right
+    // away, in this same call.
+    if (!properties.empty()) {
+        message += " " + updateEngine(EngineTarget::Catalog, newName, properties).text;
+    }
+    if (!options.empty()) {
+        message += " " + setEngineOptions(EngineTarget::Catalog, newName, options, {}).text;
+    }
+    return succeeded(message);
+}
+
+ActionResult deleteEngine(const std::string& name) {
+    auto resolution = resolveEngines({name});
+    if (!resolution.ambiguous.empty()) {
+        return failed(formatAmbiguousEngineNames(resolution.ambiguous) +
+            " Ask the user which one they mean.");
+    }
+    if (resolution.resolved.empty()) {
+        return failed(std::format("\"{}\" is not in the engine catalog, so there was nothing to "
+                                  "delete.", name));
     }
     const auto canonicalName = resolution.resolved.front().getName();
 
-    auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-    ApplyOptionsOutcome outcome;
-
-    if (target == EngineTarget::Catalog) {
-        auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
-        auto* config = configManager.getConfigMutable(canonicalName);
-        if (config == nullptr) {
-            return failed(std::format("\"{}\" is not in the engine catalog.", canonicalName));
-        }
-        outcome = applyEngineOptions(*config, options, capabilities);
-    } else {
-        auto* selection = selectionOf(target);
-        auto configs = selection->getEngineConfigurations();
-        auto match = std::ranges::find_if(configs, [&](const auto& config) {
-            return config.getName() == canonicalName;
-        });
-        if (match == configs.end()) {
-            return failed(std::format("{} is not among the engines of {}. Select it there first; "
-                                      "selecting copies the engine out of the catalog, and this "
-                                      "sets options on that copy.", canonicalName, traits.label));
-        }
-        outcome = applyEngineOptions(*match, options, capabilities);
-        if (!outcome.applied.empty()) {
-            // Write the whole list back, not just the one entry: setEngineConfigurations() is what
-            // persists and notifies (see selectSprtEngines()), and it takes the set as a whole.
-            selection->setEngineConfigurations(configs);
-        }
+    if (!deleteCatalogEngine(canonicalName)) {
+        return failed(std::format("\"{}\" could not be removed from the catalog.", canonicalName));
     }
-
-    if (!outcome.detected) {
-        return failed(std::format("{} has not reported what it supports, so nothing was set. It "
-                                  "did not answer when it was installed.", canonicalName));
-    }
-
-    if (outcome.applied.empty() && outcome.unknown.empty() && outcome.rejected.empty()) {
-        return failed("No options were given, so nothing changed.");
-    }
-
-    if (!outcome.applied.empty()) {
-        if (target == EngineTarget::Catalog) {
-            QaplaConfiguration::Configuration::instance().setModified();
-        } else if (!traits.tabMessage.empty()) {
-            QaplaWindows::StaticCallbacks::message().invokeAll(std::string(traits.tabMessage));
-        }
-    }
-
-    auto message = describeOutcome(outcome, canonicalName, traits.label);
-    return outcome.unknown.empty() && outcome.rejected.empty() ? succeeded(message)
-                                                               : failed(message);
+    QaplaConfiguration::Configuration::instance().setModified();
+    return succeeded(std::format("{} was removed from the engine catalog. Runs that already "
+                                 "selected it keep their own copy and are unaffected.",
+        canonicalName));
 }
 
 } // namespace QaplaLlm::Actions

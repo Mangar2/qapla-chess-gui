@@ -64,6 +64,36 @@ namespace {
         return key;
     }
 
+    /**
+     * @brief Trims a message written for the command line down to what applies here.
+     *
+     * The property accessors are shared with qapla-engine-tester's CLI and phrase their
+     * complaints for it: several lines, ending in "Use --help to display all supported
+     * parameters". The list of valid values in the middle is exactly what a caller here needs;
+     * the invitation to run --help is advice about a program nobody is running.
+     */
+    std::string forThisCaller(std::string message) {
+        if (const auto hint = message.find("Hint: Use --help"); hint != std::string::npos) {
+            message.erase(hint);
+        }
+        std::string flattened;
+        flattened.reserve(message.size());
+        for (const char character : message) {
+            const bool isBreak = character == '\n' || character == '\r';
+            if (isBreak || character == ' ') {
+                if (!flattened.empty() && flattened.back() != ' ') {
+                    flattened += ' ';
+                }
+                continue;
+            }
+            flattened += character;
+        }
+        while (!flattened.empty() && flattened.back() == ' ') {
+            flattened.pop_back();
+        }
+        return flattened;
+    }
+
     /** @brief "spin, default 16, 1..65536" -- everything a caller needs to pick a legal value. */
     std::string describeDomain(const EngineOption& option) {
         std::string text = EngineOption::to_string(option.type);
@@ -201,6 +231,89 @@ AddNamedEnginesOutcome addNamedEngines(const std::vector<NamedEnginePath>& engin
     return outcome;
 }
 
+std::vector<std::string> unsetEngineOptions(
+    QaplaTester::EngineConfig& config, const std::vector<std::string>& names) {
+    // Read the spellings first: removeOptionValue() matches case-insensitively, but what the
+    // caller should be told back is what the engine calls the option, not what was typed.
+    const auto values = config.getOptionValues();
+    std::vector<std::string> removed;
+
+    for (const auto& name : names) {
+        const auto wanted = QaplaHelpers::to_lowercase(name);
+        const auto match = std::ranges::find_if(values, [&](const auto& entry) {
+            return QaplaHelpers::to_lowercase(entry.first) == wanted;
+        });
+        if (match != values.end() && config.removeOptionValue(name)) {
+            removed.push_back(match->first);
+        }
+    }
+
+    return removed;
+}
+
+const std::vector<std::string>& settableEngineKeys() {
+    // "name" is deliberately absent: the catalog is keyed by it, so a rename needs the same
+    // collision check a copy does and belongs with copyCatalogEngine() rather than among the
+    // properties. "author" and "originalName" are absent because detection owns them, and
+    // "selected" because it is deprecated.
+    static const std::vector<std::string> keys{
+        "cmd", "dir", "args", "proto", "tc", "trace", "restart", "ponder", "gauntlet", "whitepov"};
+    return keys;
+}
+
+ApplyOptionsOutcome applyEngineProperties(
+    QaplaTester::EngineConfig& config, const std::vector<EngineAssignment>& assignments) {
+    ApplyOptionsOutcome outcome;
+
+    for (const auto& assignment : assignments) {
+        const auto wanted = QaplaHelpers::to_lowercase(assignment.name);
+        const auto& keys = settableEngineKeys();
+        if (std::ranges::find(keys, wanted) == keys.end()) {
+            outcome.unknown.push_back(assignment.name);
+            continue;
+        }
+        try {
+            config.setValue(wanted, assignment.value);
+            outcome.applied.push_back(std::format("{} = {}", wanted, assignment.value));
+        } catch (const std::exception& ex) {
+            // setProtocol() and setTimeControl() throw on what they cannot parse. Caught per key
+            // so one unusable value costs only itself, and reported with the accessor's own words,
+            // which name the alternatives ("uci", "xboard") better than anything phrased here.
+            outcome.rejected.push_back(
+                std::format("{} = {} ({})", wanted, assignment.value, forThisCaller(ex.what())));
+        }
+    }
+
+    return outcome;
+}
+
+CopyEngineOutcome copyCatalogEngine(const std::string& sourceName, const std::string& newName) {
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+
+    const auto* source = configManager.getConfig(sourceName);
+    if (source == nullptr) {
+        return {.sourceMissing = true, .nameTaken = false};
+    }
+    if (configManager.getConfig(newName) != nullptr) {
+        return {.sourceMissing = false, .nameTaken = true};
+    }
+
+    auto copy = *source;
+    copy.setName(newName);
+    configManager.addConfig(copy);
+    return {};
+}
+
+bool deleteCatalogEngine(const std::string& name) {
+    auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
+    const auto* config = configManager.getConfig(name);
+    if (config == nullptr) {
+        return false;
+    }
+    configManager.removeConfig(*config);
+    return true;
+}
+
 std::string engineDetailsText(const QaplaTester::EngineConfig& config,
     const QaplaConfiguration::EngineCapabilities& capabilities) {
     std::ostringstream out;
@@ -246,7 +359,7 @@ std::string engineDetailsText(const QaplaTester::EngineConfig& config,
 }
 
 ApplyOptionsOutcome applyEngineOptions(QaplaTester::EngineConfig& config,
-    const std::vector<EngineOptionAssignment>& assignments,
+    const std::vector<EngineAssignment>& assignments,
     const QaplaConfiguration::EngineCapabilities& capabilities) {
     ApplyOptionsOutcome outcome;
 

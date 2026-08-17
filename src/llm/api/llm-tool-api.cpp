@@ -85,7 +85,7 @@ Json::JsonValue makeProperty(
     if (type == ParamType::StringMap) {
         // Says "any key, text value" in the one way a JSON Schema can. The keys themselves cannot
         // be listed here -- they belong to whichever engine is being configured -- so the tool
-        // description points at get_engine_details for them instead.
+        // description points at manage_engines' "details" command for them instead.
         auto values = Json::JsonValue::object();
         values["type"] = "string";
         property["additionalProperties"] = values;

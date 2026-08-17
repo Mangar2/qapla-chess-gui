@@ -120,7 +120,7 @@ struct AddNamedEnginesOutcome {
     const QaplaConfiguration::EngineCapabilities& capabilities);
 
 /** @brief One requested UCI option value, as the caller named it. */
-struct EngineOptionAssignment {
+struct EngineAssignment {
     std::string name;
     std::string value;
 };
@@ -154,7 +154,64 @@ struct ApplyOptionsOutcome {
  * matching is case-insensitive, but what goes to the engine is what the engine called it.
  */
 [[nodiscard]] ApplyOptionsOutcome applyEngineOptions(QaplaTester::EngineConfig& config,
-    const std::vector<EngineOptionAssignment>& assignments,
+    const std::vector<EngineAssignment>& assignments,
     const QaplaConfiguration::EngineCapabilities& capabilities);
+
+/**
+ * @brief Removes option values so those options fall back to the engine's own default.
+ *
+ * The counterpart applyEngineOptions() has no way to express: an option carries no "unset" value,
+ * it is either configured or it is not, and a configuration that has been through several tuning
+ * rounds needs a way back to the untouched state. Names are matched case-insensitively, as
+ * everywhere else, and one that was never set is reported rather than silently accepted -- a
+ * caller clearing what it believes it set wants to hear that its belief was wrong.
+ *
+ * @return The names actually removed, in the engine's own spelling.
+ */
+[[nodiscard]] std::vector<std::string> unsetEngineOptions(QaplaTester::EngineConfig& config,
+    const std::vector<std::string>& names);
+
+/**
+ * @brief The generic engine keys a caller may set, in the spelling the ini file and CLI use.
+ *
+ * A closed list, and it has to be: EngineConfig::setValue() treats any key it does not recognise
+ * as a UCI option written without its prefix -- which is right when reading an engines.ini that
+ * predates the prefix rule, and wrong here, where a misspelt "protocol" would silently become an
+ * option named "protocol" that no engine ever asked for.
+ */
+[[nodiscard]] const std::vector<std::string>& settableEngineKeys();
+
+/**
+ * @brief Sets generic engine properties (cmd, tc, proto, ...) on one configuration.
+ *
+ * Same reporting split as applyEngineOptions(), for the same reason: a key this configuration has
+ * no place for, and a value the key will not take, are different mistakes with different fixes.
+ * Values are validated by the accessors themselves -- setProtocol() and setTimeControl() reject
+ * what they cannot parse -- and their complaint is caught per key, so one bad value does not cost
+ * the caller the rest of the call.
+ */
+[[nodiscard]] ApplyOptionsOutcome applyEngineProperties(
+    QaplaTester::EngineConfig& config, const std::vector<EngineAssignment>& assignments);
+
+/** @brief Outcome of copying a catalog entry. Both flags false means it was copied. */
+struct CopyEngineOutcome {
+    bool sourceMissing = false;
+    bool nameTaken = false;
+};
+
+/**
+ * @brief Copies a catalog entry, values and all, under a new name.
+ *
+ * The cheapest way to get a second configuration of one build, and therefore the normal way to
+ * vary options: the copy shares the executable, so it needs no detection, and it starts from the
+ * source's values rather than from the engine's defaults -- which is what makes "same as the
+ * baseline but with one parameter moved" a single step. See addNamedEngines() for why sharing an
+ * executable across catalog entries is intended rather than a duplicate to be prevented.
+ */
+[[nodiscard]] CopyEngineOutcome copyCatalogEngine(
+    const std::string& sourceName, const std::string& newName);
+
+/** @brief Removes a catalog entry. @return false if there was no such entry. */
+[[nodiscard]] bool deleteCatalogEngine(const std::string& name);
 
 } // namespace QaplaLlm

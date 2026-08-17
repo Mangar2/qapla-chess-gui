@@ -41,22 +41,40 @@ namespace {
         std::optional<PgnSource> source;
     };
 
-    /** @brief Arguments of install_engines. */
-    struct InstallEnginesRequest {
-        std::vector<std::pair<std::string, std::string>> engines;
-    };
+    /** @brief The operations manage_engines dispatches to. */
+    enum class EngineCommand { List, Details, Install, Copy, Delete, Update, SetOptions };
 
-    /** @brief Arguments of get_engine_details. */
-    struct EngineDetailsRequest {
+    /**
+     * @brief Arguments of manage_engines -- the union of what its commands need.
+     *
+     * One tool rather than seven, for the reason the engine-tester's manage_engines is one tool:
+     * every command works on the same thing, an engine configuration, and they share most of
+     * their arguments. Seven schemas would repeat "which engine" and "which set" seven times over
+     * in the part of the prompt that has to stay stable, and a small model picking from a longer
+     * list of near-identical tool names does worse than one picking a command out of an enum.
+     */
+    struct ManageEnginesRequest {
+        std::optional<EngineCommand> command;
         std::optional<std::string> engine;
-    };
-
-    /** @brief Arguments of set_engine_options. */
-    struct SetEngineOptionsRequest {
-        std::optional<std::string> engine;
+        std::optional<std::string> new_name;
+        std::optional<std::string> path;
         std::optional<EngineTarget> target;
         std::vector<std::pair<std::string, std::string>> options;
+        std::vector<std::string> unset_options;
+        std::vector<std::pair<std::string, std::string>> set;
     };
+
+    /** @brief Carries the model's name/value object into the actions layer's own pair type. */
+    std::vector<QaplaLlm::EngineAssignment> assignmentsOf(
+        const std::vector<std::pair<std::string, std::string>>& pairs) {
+        std::vector<QaplaLlm::EngineAssignment> assignments;
+        assignments.reserve(pairs.size());
+        for (const auto& [name, value] : pairs) {
+            assignments.push_back({.name = name, .value = value});
+        }
+        return assignments;
+    }
+
 } // namespace
 
 void registerAppTools(GuiToolRegistry& registry) {
@@ -102,123 +120,115 @@ void registerAppTools(GuiToolRegistry& registry) {
 }
 
 void registerEngineTools(GuiToolRegistry& registry) {
-    Api::defineTool<NoArguments>(registry,
-        {.name = "list_installed_engines",
-            .description = "Lists all chess engines configured in GUI's global engine catalog, "
-                           "name + protocol (uci/xboard). Use it when the user asks which engines "
-                           "are available, or wants to pick one from a list. To set engines for a "
-                           "run just pass the name the user said to configure_tournament/"
-                           "configure_sprt/configure_epd -- they match names themselves.",
-            .invoke = [](const NoArguments&) { return Actions::listInstalledEngines(); }});
-
-    Api::defineTool<EngineDetailsRequest>(registry,
-        {.name = "get_engine_details",
+    Api::defineTool<ManageEnginesRequest>(registry,
+        {.name = "manage_engines",
             .description =
-                "Reports everything about ONE installed engine: where its executable is, its "
-                "protocol, time control, the UCI option values currently set on it, and the full "
-                "list of options its program supports -- each with its type, default and allowed "
-                "range or choices. Call this before set_engine_options: the supported list is the "
-                "only place option names and legal values come from, because every engine reports "
-                "its own, and they change from build to build.",
-            .params = {Api::stringParam<EngineDetailsRequest>("engine",
-                &EngineDetailsRequest::engine,
-                "Name of the engine, as list_installed_engines reports it. A distinctive part of "
-                "the name is enough.",
-                true)},
-            .invoke = [](const EngineDetailsRequest& request) {
-                return Actions::engineDetails(request.engine.value_or(""));
-            }});
-
-    Api::defineTool<InstallEnginesRequest>(registry,
-        {.name = "install_engines",
-            .description =
-                "Installs engine programs into the GUI's global engine catalog from their paths "
-                "on disk, and starts each one to find out what it supports (protocol and UCI "
-                "options) before returning -- so the result already says what can be configured, "
-                "and get_engine_details works straight afterwards. You choose the catalog name "
-                "for each: that name is how every other tool refers to the engine. The SAME "
-                "executable may be installed twice under two names -- that is how one build is "
-                "tested against itself with different UCI options, since options belong to the "
-                "catalog entry, not to the file. A name already in the catalog is refused.",
-            .params = {Api::stringMapParam<InstallEnginesRequest>("engines",
-                &InstallEnginesRequest::engines,
-                "The engines to install, as an object of catalog name to full executable path, "
-                "e.g. {\"Qapla baseline\": \"/home/me/build/qapla\", \"Qapla candidate\": "
-                "\"/home/me/build/qapla-new\"}.",
-                true)},
-            .invoke = [](const InstallEnginesRequest& request) {
-                std::vector<QaplaLlm::NamedEnginePath> engines;
-                engines.reserve(request.engines.size());
-                for (const auto& [name, path] : request.engines) {
-                    engines.push_back({.name = name, .path = path});
-                }
-                return Actions::installEngines(engines);
-            },
-            // Detection starts every engine and waits for it to answer, which is slower than a
-            // tool call normally is and slower still for several at once.
-            .timeout = std::chrono::seconds(120)});
-
-    Api::defineTool<SetEngineOptionsRequest>(registry,
-        {.name = "set_engine_options",
-            .description =
-                "Sets UCI option values (Hash, Threads, tuning parameters, ...) on one engine. "
-                "Get the option names and their legal values from get_engine_details first; "
-                "anything the engine does not support is refused rather than set. \"target\" "
-                "decides WHICH copy of the engine is changed -- an engine selected for a run is a "
-                "copy of the catalog entry, so setting options on the run does not touch the "
-                "catalog and vice versa. For a run, select the engines FIRST (configure_sprt, "
-                "configure_tournament, configure_epd) and set the options afterwards: selecting "
-                "takes a fresh copy from the catalog. That is also how the same program plays "
-                "against itself under two option sets -- install it twice under different names, "
-                "then give each copy its own values.",
+                "Everything about the GUI's engine catalog, by \"command\". An engine "
+                "configuration is one complete thing -- executable, protocol, time control, UCI "
+                "option values -- and it exists in sets: the catalog is the library, and each run "
+                "(SPRT, tournament, EPD) holds its own copies of the engines selected for it. "
+                "Selecting an engine copies it out of the catalog, so change a run's copy AFTER "
+                "selecting, and know that changing the catalog does not reach a run that already "
+                "selected it. Commands: \"list\" every catalog engine; \"details\" one engine "
+                "with the UCI options its program supports; \"install\" a program from a path; "
+                "\"copy\" a catalog entry under a new name; \"delete\" one; \"update\" generic "
+                "properties; \"set_options\" UCI option values.",
             .params = {
-                Api::stringParam<SetEngineOptionsRequest>("engine",
-                    &SetEngineOptionsRequest::engine,
-                    "Name of the engine, as list_installed_engines reports it. A distinctive part "
-                    "of the name is enough.",
+                Api::enumParam<ManageEnginesRequest>("command", &ManageEnginesRequest::command,
+                    "What to do. \"list\": all catalog engines with their protocol -- needs "
+                    "nothing else. \"details\": everything about \"engine\", including which UCI "
+                    "options its program supports, with types and ranges; read this before "
+                    "setting any option. \"install\": adds the program at \"path\" as "
+                    "\"new_name\" and starts it to find out what it supports. \"copy\": duplicates "
+                    "\"engine\" as \"new_name\", carrying its values over; pass \"options\"/"
+                    "\"set\" in the same call to make the copy differ. \"delete\": removes "
+                    "\"engine\" from the catalog. \"update\": writes \"set\" (generic properties) "
+                    "onto \"engine\" in \"target\". \"set_options\": writes \"options\" and "
+                    "clears \"unset_options\" on \"engine\" in \"target\".",
+                    {{"list", EngineCommand::List}, {"details", EngineCommand::Details},
+                        {"install", EngineCommand::Install}, {"copy", EngineCommand::Copy},
+                        {"delete", EngineCommand::Delete}, {"update", EngineCommand::Update},
+                        {"set_options", EngineCommand::SetOptions}},
                     true),
-                Api::enumParam<SetEngineOptionsRequest>("target", &SetEngineOptionsRequest::target,
-                    "Which copy of the engine to change. \"sprt\", \"tournament\" or \"epd\": the "
-                    "copy that run uses, affecting that run only. \"catalog\": the installed "
-                    "engine itself, which is what future selections start from -- it does NOT "
-                    "change a run that has already selected it.",
-                    {{"sprt", EngineTarget::Sprt}, {"tournament", EngineTarget::Tournament},
-                        {"epd", EngineTarget::Epd}, {"catalog", EngineTarget::Catalog}},
-                    true),
-                Api::stringMapParam<SetEngineOptionsRequest>("options",
-                    &SetEngineOptionsRequest::options,
-                    "The option values to set, as an object of name/value pairs, e.g. "
-                    "{\"Hash\": \"256\", \"Threads\": \"2\"}. Names must be ones "
-                    "get_engine_details lists as supported. Options left out keep whatever they "
-                    "are; there is no way to unset one back to the engine default here.",
-                    true)},
-            .invoke = [](const SetEngineOptionsRequest& request) {
-                std::vector<QaplaLlm::EngineOptionAssignment> assignments;
-                assignments.reserve(request.options.size());
-                for (const auto& [name, value] : request.options) {
-                    assignments.push_back({.name = name, .value = value});
+                Api::stringParam<ManageEnginesRequest>("engine", &ManageEnginesRequest::engine,
+                    "The engine to act on, as \"list\" reports it -- a distinctive part of the "
+                    "name is enough. Needed by details, copy (the source), delete, update and "
+                    "set_options."),
+                Api::stringParam<ManageEnginesRequest>("new_name", &ManageEnginesRequest::new_name,
+                    "The catalog name to create: for install, what the program is to be called; "
+                    "for copy, the name of the copy. It is how every other tool refers to the "
+                    "engine, so make it say which build it is. A name already in the catalog is "
+                    "refused."),
+                Api::stringParam<ManageEnginesRequest>("path", &ManageEnginesRequest::path,
+                    "Full path of the engine executable on disk. For install only. The same "
+                    "executable may be installed more than once under different names -- that is "
+                    "how one build is tested against itself under different UCI options, since "
+                    "the options belong to the catalog entry and not to the file."),
+                Api::enumParam<ManageEnginesRequest>("target", &ManageEnginesRequest::target,
+                    "Which copy of the engine update and set_options change. \"catalog\" "
+                    "(default): the installed engine, which is what future selections start from "
+                    "-- it does NOT change a run that already selected it. \"sprt\", "
+                    "\"tournament\", \"epd\": the copy that run uses, affecting that run only.",
+                    {{"catalog", EngineTarget::Catalog}, {"sprt", EngineTarget::Sprt},
+                        {"tournament", EngineTarget::Tournament}, {"epd", EngineTarget::Epd}}),
+                Api::stringMapParam<ManageEnginesRequest>("options",
+                    &ManageEnginesRequest::options,
+                    "UCI option values to set, as an object of name to value, e.g. {\"Hash\": "
+                    "\"256\", \"Threads\": \"2\"}. Names must be ones the \"details\" command "
+                    "lists as supported; anything else is refused rather than set. Used by "
+                    "set_options, and by copy to give the copy its own values."),
+                Api::stringListParam<ManageEnginesRequest>("unset_options",
+                    &ManageEnginesRequest::unset_options,
+                    "UCI options to clear, so the engine uses its own default for them again. "
+                    "There is no other way back: leaving an option out of \"options\" keeps "
+                    "whatever it already is. For set_options only."),
+                Api::stringMapParam<ManageEnginesRequest>("set", &ManageEnginesRequest::set,
+                    "Generic engine properties to change, as an object of name to value. "
+                    "Settable: cmd (the executable), dir, args, proto (uci/xboard), tc (this "
+                    "engine's own time control), trace, restart, ponder, gauntlet, whitepov. NOT "
+                    "for UCI options -- those go in \"options\". Used by update, and by copy.")},
+            .invoke = [](const ManageEnginesRequest& request) {
+                // The dispatch belongs here rather than in the actions: which commands exist and
+                // what they are called is an external decision, and the actions stay one function
+                // per operation, unaware they are reached through a shared name.
+                const auto target = request.target.value_or(EngineTarget::Catalog);
+                const auto engine = request.engine.value_or("");
+                switch (request.command.value_or(EngineCommand::List)) {
+                    case EngineCommand::Details:
+                        return Actions::engineDetails(engine);
+                    case EngineCommand::Install:
+                        return Actions::installEngines({{.name = request.new_name.value_or(""),
+                            .path = request.path.value_or("")}});
+                    case EngineCommand::Copy:
+                        return Actions::copyEngine(engine, request.new_name.value_or(""),
+                            assignmentsOf(request.options), assignmentsOf(request.set));
+                    case EngineCommand::Delete:
+                        return Actions::deleteEngine(engine);
+                    case EngineCommand::Update:
+                        return Actions::updateEngine(target, engine, assignmentsOf(request.set));
+                    case EngineCommand::SetOptions:
+                        return Actions::setEngineOptions(target, engine,
+                            assignmentsOf(request.options), request.unset_options);
+                    case EngineCommand::List:
+                    default:
+                        return Actions::listInstalledEngines();
                 }
-                return Actions::setEngineOptions(
-                    request.target.value_or(EngineTarget::Catalog),
-                    request.engine.value_or(""), assignments);
-            }});
+            },
+            // Installing starts every named engine and waits for it to answer, which is slower
+            // than a tool call normally is.
+            .timeout = std::chrono::seconds(120)});
 
     Api::defineTool<NoArguments>(registry,
         {.name = "open_add_engine_dialog",
             .description =
-                "Installs a NEW engine program into the GUI's global engine catalog, one "
-                "that is not listed there yet: opens the GUI's native file picker so the "
-                "user can select engine executables on disk. This is the only thing it "
-                "does. Engines for a tournament, SPRT test or EPD analysis are chosen by "
-                "name in configure_tournament/configure_sprt/configure_epd, out of the "
-                "engines already installed -- so use this one only when the user says they "
-                "want to add or install an engine the catalog doesn't have. User picks "
-                "file(s) themselves -- you have no filesystem access. New engines detected "
-                "(protocol, options, etc.) synchronously before call returns -- result "
-                "already reflects final outcome, don't promise separate future update. "
-                "ENDS YOUR TURN: this result is the last thing you produce, it is shown "
-                "to the user as-is. No further tool call, no reply_to_user afterwards -- "
-                "you won't be asked again.",
+                "Installs a NEW engine program into the GUI's global engine catalog by opening "
+                "the GUI's native file picker, so the user selects the executable themselves. Use "
+                "this ONLY when you do not know the path -- with a path, manage_engines "
+                "command=\"install\" does the same thing without interrupting the user. New "
+                "engines are detected (protocol, options) synchronously before the call returns. "
+                "ENDS YOUR TURN: this result is the last thing you produce, it is shown to the "
+                "user as-is. No further tool call, no reply_to_user afterwards -- you won't be "
+                "asked again.",
             .invoke = [](const NoArguments&) { return Actions::addEnginesViaDialog(); },
             .timeout = Tools::FILE_DIALOG_TIMEOUT,
             // The whole tool is a file dialog waiting on the person at the window; there is
