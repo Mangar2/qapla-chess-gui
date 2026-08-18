@@ -116,6 +116,21 @@ struct SprtSettings {
 /** @brief Shows the SPRT decision table and the raw duel score as live ImGui tables in the chat. */
 [[nodiscard]] ActionResult showSprtResult();
 
+/**
+ * @brief Writes the SPRT test -- configuration and results together -- to a .qsprt file.
+ *
+ * See saveTournamentToFile(): same file the window's "Save As" button writes, same reason for
+ * taking the path as an argument, same refusal while the test runs.
+ */
+[[nodiscard]] ActionResult saveSprtToFile(const std::string& file);
+
+/**
+ * @brief Reads a .qsprt file back, replacing the current SPRT configuration and results.
+ *
+ * Destructive in the same way loadTournamentFromFile() is.
+ */
+[[nodiscard]] ActionResult loadSprtFromFile(const std::string& file);
+
 /** @brief Names what the SPRT test is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string sprtActivityText();
 

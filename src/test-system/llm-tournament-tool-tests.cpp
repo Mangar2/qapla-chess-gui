@@ -30,6 +30,7 @@
 #include <engine-handling/engine-worker-factory.h>
 
 #include <atomic>
+#include <filesystem>
 #include <thread>
 
 namespace QaplaTest {
@@ -311,6 +312,104 @@ namespace QaplaTest {
             tournamentData.drawConfig() = {};
             tournamentData.resignConfig() = {};
             ctx->LogInfo("=== Test ConfigureAdjudicationViaRegistry PASSED ===");
+        };
+
+        // -----------------------------------------------------------------
+        // Test: save_results / load_results (type=tournament) through GuiToolRegistry.
+        //
+        // The point of these two tools is that they take the path as an argument instead of
+        // opening the native picker the window's Load and "Save As" buttons use -- a picker has
+        // nobody to answer it when the caller is the remote control. So what is checked here is
+        // the round trip itself: settings written, changed, and brought back by the file.
+        //
+        // No tournament needs to run for it, which is what keeps it deterministic.
+        // -----------------------------------------------------------------
+        t = IM_REGISTER_TEST(engine, "Llm/Tournament/Tools", "SaveAndLoadResultsViaRegistry");
+        t->TestFunc = [](ImGuiTestContext* ctx) {
+            ctx->LogInfo("=== Test: save_results/load_results (type=tournament) via GuiToolRegistry ===");
+
+            cleanupTournamentState();
+            IM_CHECK(hasEnginesAvailable());
+
+            auto configs = QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs();
+            IM_CHECK(configs.size() >= 2);
+
+            const auto savePath =
+                (std::filesystem::temp_directory_path() / "qapla-llm-tool-test.qtour").string();
+            std::filesystem::remove(savePath);
+
+            ctx->LogInfo("Step 1: configure a tournament worth saving");
+            auto engineArgs = QaplaTester::Json::JsonValue::object();
+            auto engineNames = QaplaTester::Json::JsonValue::array();
+            engineNames.push_back(configs[0].getName());
+            engineNames.push_back(configs[1].getName());
+            engineArgs["engines"] = engineNames;
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", engineArgs).success);
+
+            auto configureArgs = QaplaTester::Json::JsonValue::object();
+            configureArgs["openings_file"] = getTestOpeningPath();
+            configureArgs["games"] = 4.0;
+            configureArgs["rounds"] = 3.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", configureArgs).success);
+
+            ctx->LogInfo("Step 2: save_results writes the file at the path given, no dialog");
+            auto saveArgs = QaplaTester::Json::JsonValue::object();
+            saveArgs["type"] = "tournament";
+            saveArgs["file"] = savePath;
+            auto saveResult = callToolAndYield(ctx, "save_results", saveArgs);
+            IM_CHECK(saveResult.success);
+            IM_CHECK(std::filesystem::exists(savePath));
+            IM_CHECK(std::filesystem::file_size(savePath) > 0);
+
+            ctx->LogInfo("Step 3: change the settings the file holds");
+            auto changedArgs = QaplaTester::Json::JsonValue::object();
+            changedArgs["games"] = 7.0;
+            changedArgs["rounds"] = 1.0;
+            IM_CHECK(callToolAndYield(ctx, "configure_tournament", changedArgs).success);
+
+            auto typeArgs = QaplaTester::Json::JsonValue::object();
+            typeArgs["type"] = "tournament";
+            auto changedStatus = callToolAndYield(ctx, "get_status", typeArgs);
+            IM_CHECK(changedStatus.content.find("Games per pairing: 7") != std::string::npos);
+
+            ctx->LogInfo("Step 4: load_results brings the saved settings back");
+            auto loadArgs = QaplaTester::Json::JsonValue::object();
+            loadArgs["type"] = "tournament";
+            loadArgs["file"] = savePath;
+            auto loadResult = callToolAndYield(ctx, "load_results", loadArgs);
+            IM_CHECK(loadResult.success);
+            // The load reports the loaded configuration itself, so a caller needs no follow-up
+            // get_status -- which is exactly what is checked here rather than only the singleton.
+            IM_CHECK(loadResult.content.find("Games per pairing: 4") != std::string::npos);
+            IM_CHECK(loadResult.content.find("Rounds: 3") != std::string::npos);
+
+            ctx->LogInfo("Step 5: a path that does not exist fails and changes nothing");
+            auto missingArgs = QaplaTester::Json::JsonValue::object();
+            missingArgs["type"] = "tournament";
+            missingArgs["file"] =
+                (std::filesystem::temp_directory_path() / "qapla-no-such-file.qtour").string();
+            auto missingResult = callToolAndYield(ctx, "load_results", missingArgs);
+            IM_CHECK(!missingResult.success);
+            auto statusAfterMissing = callToolAndYield(ctx, "get_status", typeArgs);
+            IM_CHECK(statusAfterMissing.content.find("Games per pairing: 4") != std::string::npos);
+
+            ctx->LogInfo("Step 6: \"file\" is required -- a call without it is refused outright");
+            auto noFileArgs = QaplaTester::Json::JsonValue::object();
+            noFileArgs["type"] = "tournament";
+            IM_CHECK(!callToolAndYield(ctx, "save_results", noFileArgs).success);
+
+            ctx->LogInfo("Step 7: CLOP has no file format and says so instead of writing one");
+            auto clopArgs = QaplaTester::Json::JsonValue::object();
+            clopArgs["type"] = "clop";
+            clopArgs["file"] =
+                (std::filesystem::temp_directory_path() / "qapla-clop.qtour").string();
+            auto clopResult = callToolAndYield(ctx, "save_results", clopArgs);
+            IM_CHECK(!clopResult.success);
+            IM_CHECK(!std::filesystem::exists(clopArgs["file"].as_string()));
+
+            std::filesystem::remove(savePath);
+            cleanupTournamentState();
+            ctx->LogInfo("=== Test SaveAndLoadResultsViaRegistry PASSED ===");
         };
     }
 

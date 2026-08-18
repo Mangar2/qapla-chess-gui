@@ -101,6 +101,26 @@ struct EpdSettings {
 /** @brief Shows the per-position solved/not-solved table as a live ImGui table in the chat. */
 [[nodiscard]] ActionResult showEpdResult();
 
+/**
+ * @brief Writes the per-position results to a file of the caller's choosing.
+ *
+ * Unlike the tournament and SPRT state files this carries the results ONLY -- the EPD window has
+ * no Save As button to match, and EpdData keeps its configuration in the application's own ini
+ * rather than in a file of its own. What that costs on the way back is spelled out at
+ * loadEpdFromFile(). It is still worth having: the automatic save in the configuration directory
+ * keeps exactly one result set, which the next run overwrites.
+ */
+[[nodiscard]] ActionResult saveEpdToFile(const std::string& file);
+
+/**
+ * @brief Reads per-position results back from a file written by saveEpdToFile().
+ *
+ * Read against the EPD analysis as configured right now, because that is all the file gives it to
+ * go on: results recorded against a different position file match nothing, and are reported as
+ * such rather than mistaken for an empty run. Configure the same epd_file first.
+ */
+[[nodiscard]] ActionResult loadEpdFromFile(const std::string& file);
+
 /** @brief Names what the EPD analysis is doing right now, or "" when it is idle. */
 [[nodiscard]] std::string epdActivityText();
 

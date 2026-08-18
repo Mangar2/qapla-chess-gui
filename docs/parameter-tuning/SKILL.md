@@ -86,9 +86,23 @@ Set it up by copying the baseline catalog entry under a new name, setting the tu
 copy, then `configure_sprt` with `champion` = baseline and `challenger` = copy, and `start` with
 `type=sprt`.
 
+## Keeping a run
+
+`save_results` with `type` and `file` writes a run to a path you give; `load_results` reads it
+back. No file dialog opens, which is what makes them usable from here.
+
+Tournament and SPRT write the whole thing — engines, settings and every game — as `.qtour` /
+`.qsprt`, the same files the window's *Save As* button writes. EPD writes its per-position results
+alone, so loading one needs the same `epd_file` still configured.
+
+Both are refused while that run is going; stop it first. CLOP has no file at all: read its
+estimate with `get_status` and put the values on an engine, then save the SPRT that judged them.
+That SPRT file is what makes a tuning result worth anything later — it carries the decision
+together with the configuration it was measured under.
+
 ## Whole flow
 
 Expose the chosen parameters as UCI options in the engine source and build. Install that build
 twice under distinct names. Run CLOP. Copy the baseline entry, set the estimated values on the
 copy. Run SPRT of the copy against the baseline with a different seed. Keep the new values only if
-SPRT accepts them.
+SPRT accepts them, and save that SPRT run to a file before starting the next one.

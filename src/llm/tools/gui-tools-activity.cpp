@@ -37,6 +37,9 @@ namespace {
     struct ActivityRequest {
         std::optional<Activity> type;
         std::optional<StopMode> mode;
+
+        /** @brief Only declared on save_results/load_results, where it is required. */
+        std::optional<std::string> file;
     };
 
     Api::Param<ActivityRequest> typeParam(bool required, std::string extraSentence = {}) {
@@ -63,6 +66,20 @@ namespace {
             "\"stop\" unqualified, use \"graceful\" -- ask only if they've previously shown "
             "they care about the distinction.",
             {{"graceful", StopMode::Graceful}, {"abrupt", StopMode::Abrupt}});
+    }
+
+    /**
+     * @brief The path a state file is written to or read from.
+     *
+     * Deliberately NOT paired with a file-dialog flag the way openings_file and pgn_file are (see
+     * Tools::openingsFileDialogParam). Those pick an input the user already has somewhere and may
+     * not be able to name; this one names a file the caller itself decides on, and the window
+     * already has Load and "Save As" buttons for the person who would rather browse. Adding a
+     * dialog here would only give a remote caller a parameter it is then refused for using.
+     */
+    Api::Param<ActivityRequest> fileParam(std::string description) {
+        return Api::stringParam<ActivityRequest>("file", &ActivityRequest::file,
+            std::move(description), true);
     }
 
     // Every tool that changes a run's state ends with the cross-activity summary, so a caller
@@ -174,6 +191,51 @@ void registerActivityTools(GuiToolRegistry& registry) {
             .params = {typeParam(true)},
             .invoke = [](const ActivityRequest& request) {
                 return withRunningSummary(Actions::clearActivityResult(*request.type));
+            }});
+
+    Api::defineTool<ActivityRequest>(registry,
+        {.name = "save_results",
+            .description =
+                "Writes a tournament, SPRT test or EPD analysis (pick via \"type\") to a file at "
+                "\"file\", so a finished run is kept instead of being overwritten by the next "
+                "one. This is the same file the window's \"Save As\" button writes, except the "
+                "path is passed here rather than browsed for, so it works with no one at the "
+                "screen. For tournament and SPRT the file holds the full configuration AND every "
+                "game played (extension .qtour / .qsprt); for EPD it holds the per-position "
+                "results only, so reading it back needs the same epd_file still configured. "
+                "Refused while that type is running or still stopping -- stop it first, and a "
+                "half-written run is not what the user wants kept anyway. Refused for "
+                "type=\"clop\", which has no file format at all. Never invent a path: use the one "
+                "the user gave, and ask for it if they gave none -- writing to a guessed path "
+                "silently overwrites whatever is already there.",
+            .params = {typeParam(true), fileParam(
+                "Full path of the file to write, e.g. \"/home/me/runs/qapla-vs-spike.qtour\". An "
+                "existing file at that path is overwritten without warning. Use the extension "
+                "matching the type (.qtour, .qsprt) so the window's Load button offers it.")},
+            .invoke = [](const ActivityRequest& request) {
+                return Actions::saveActivityToFile(*request.type, *request.file);
+            }});
+
+    Api::defineTool<ActivityRequest>(registry,
+        {.name = "load_results",
+            .description =
+                "Reads a tournament, SPRT test or EPD analysis (pick via \"type\") back from the "
+                "file at \"file\", written earlier by save_results or by the window's \"Save As\" "
+                "button. DESTRUCTIVE: for tournament and SPRT it replaces that type's entire "
+                "current configuration -- engines, time control, openings, adjudication -- along "
+                "with all its results, and whatever was there is gone. Say so and get the user's "
+                "agreement before calling it on a type that still holds results they have not "
+                "saved; get_status (with \"type\") shows what would be lost. Refused while that "
+                "type is running or still stopping, and for type=\"clop\". EPD-specific: the file "
+                "carries results only, so configure the same epd_file first -- against a "
+                "different position set it matches nothing. The response reports the full "
+                "configuration that was loaded, so no separate get_status is needed after it.",
+            .params = {typeParam(true), fileParam(
+                "Full path of the file to read, e.g. \"/home/me/runs/qapla-vs-spike.qtour\". Must "
+                "already exist; ask the user for it rather than guessing a name.")},
+            .invoke = [](const ActivityRequest& request) {
+                return withRunningSummary(
+                    Actions::loadActivityFromFile(*request.type, *request.file));
             }});
 }
 

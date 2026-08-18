@@ -556,6 +556,43 @@ ActionResult showTournamentResult() {
         }};
 }
 
+ActionResult saveTournamentToFile(const std::string& file) {
+    auto& tournamentData = TournamentData::instance();
+    auto locked = fileLockedSentence(
+        lockOf(runStateOf(tournamentData)), TOURNAMENT_NAMES, FileAccess::Save);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    auto reason = TournamentData::saveTournament(file);
+    if (!reason.empty()) {
+        return failed("The tournament was not saved: " + reason + ".");
+    }
+    return succeeded("Tournament saved to " + file
+        + ". The file holds the full configuration and every game played so far.");
+}
+
+ActionResult loadTournamentFromFile(const std::string& file) {
+    auto& tournamentData = TournamentData::instance();
+    auto locked = fileLockedSentence(
+        lockOf(runStateOf(tournamentData)), TOURNAMENT_NAMES, FileAccess::Load);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    auto reason = tournamentData.loadTournament(file);
+    if (!reason.empty()) {
+        return failed("Nothing was loaded: " + reason
+            + ". The tournament is unchanged. Have the user check the path.");
+    }
+    switchToTournamentView();
+    // The full status rather than a bare confirmation: a load replaces engines, time control,
+    // openings and results in one go, and a caller that is told only "loaded" has no idea what it
+    // is now holding -- which is the one moment it matters most.
+    return succeeded("Tournament loaded from " + file + ". It now holds: "
+        + statusText(tournamentData));
+}
+
 std::string tournamentActivityText() {
     auto& tournamentData = TournamentData::instance();
     return runStatePhrase(

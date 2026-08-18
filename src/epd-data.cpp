@@ -392,6 +392,61 @@ namespace QaplaWindows {
         return table_.toText();
     }
 
+    std::string EpdData::saveResultsTo(const std::string& filename) {
+        if (!epdManager_) {
+            return "the EPD analysis has not been set up yet";
+        }
+        try {
+            std::ofstream out(filename, std::ios::trunc);
+            if (!out) {
+                return "the file could not be opened for writing";
+            }
+            epdManager_->saveResults(out);
+            if (!out.good()) {
+                return "writing stopped part-way through";
+            }
+        }
+        catch (const std::exception& e) {
+            return e.what();
+        }
+        return {};
+    }
+
+    std::string EpdData::loadResultsFrom(const std::string& filename) {
+        if (!epdManager_) {
+            return "the EPD analysis has not been set up yet";
+        }
+        if (epdConfig_.filepath.empty()) {
+            // The stored results name positions but do not carry them, so without a position file
+            // there is nothing to match them onto -- and initialize() below would have nothing to
+            // read either. Refusing here says why; going ahead would just load nothing.
+            return "no EPD position file is configured to match the stored results against";
+        }
+        try {
+            std::ifstream in(filename);
+            if (!in) {
+                return "the file could not be opened for reading";
+            }
+            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS,
+                epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
+            if (!epdManager_->loadResults(in)) {
+                return "the file holds no results for the configured position set";
+            }
+            state = State::Stopped;
+        }
+        catch (const std::exception& e) {
+            return e.what();
+        }
+
+        // pollData() would pick this up on the next frame anyway, but a caller that asks for its
+        // results in the very same turn must not be told the old figures -- see resultsAsText().
+        epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
+        updateCnt_ = epdManager_->getUpdateCount();
+        populateTable();
+        setModified();
+        return {};
+    }
+
     void EpdData::saveData(std::ofstream& out) {
         if (epdManager_) {
             epdManager_->saveResults(out);

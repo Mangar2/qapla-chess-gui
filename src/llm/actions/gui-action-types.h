@@ -166,6 +166,24 @@ struct ActivityProgress {
  */
 [[nodiscard]] std::string settingsLockNote(RunLock lock);
 
+/** @brief Which direction a state file is being moved in -- see fileLockedSentence(). */
+enum class FileAccess { Save, Load };
+
+/**
+ * @brief Why a run's state file cannot be written or read right now, or "" if it may go through.
+ *
+ * Both directions are refused for as long as a run is going, which is what the window's own Load
+ * and Save As buttons do, and for two different reasons worth telling apart. Writing mid-run would
+ * capture a file the run's own threads are still changing underneath it -- a torn half-game that
+ * reads back as a finished one. Reading would replace the configuration the running games were
+ * scheduled from, leaving a result table measured under two different sets of rules.
+ *
+ * Separate from settingsLockedSentence() despite the same lock, because that one ends by telling
+ * the caller to set values and start -- advice that has nothing to do with a file.
+ */
+[[nodiscard]] std::string fileLockedSentence(
+    RunLock lock, const ActivityNames& names, FileAccess access);
+
 /**
  * @brief Reports a concurrency change, in the one sentence a caller needs to close the matter.
  *

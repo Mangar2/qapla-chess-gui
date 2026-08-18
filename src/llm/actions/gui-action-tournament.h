@@ -114,6 +114,23 @@ struct TournamentSettings {
 [[nodiscard]] ActionResult showTournamentResult();
 
 /**
+ * @brief Writes the tournament -- configuration and results together -- to a .qtour file.
+ *
+ * The same file the window's "Save As" button writes, to a path given rather than picked, which is
+ * what makes it usable from the remote control: a native file dialog has nobody to answer it there.
+ * Refused while the tournament runs, see fileLockedSentence().
+ */
+[[nodiscard]] ActionResult saveTournamentToFile(const std::string& file);
+
+/**
+ * @brief Reads a .qtour file back, replacing the current tournament configuration and results.
+ *
+ * The counterpart of saveTournamentToFile(), and destructive in the same way the window's "Load"
+ * button is: whatever was configured and played before is gone afterwards.
+ */
+[[nodiscard]] ActionResult loadTournamentFromFile(const std::string& file);
+
+/**
  * @brief Names what the tournament is doing right now, or "" when it is idle.
  *
  * Used to describe the tournament as one of several independent activities (see

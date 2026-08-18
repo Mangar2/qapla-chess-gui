@@ -415,6 +415,53 @@ ActionResult showEpdResult() {
         }};
 }
 
+ActionResult saveEpdToFile(const std::string& file) {
+    auto& epdData = EpdData::instance();
+    auto locked = fileLockedSentence(lockOf(runStateOf(epdData)), EPD_NAMES, FileAccess::Save);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    // Refused rather than written, unlike the tournament and SPRT files: those carry the whole
+    // configuration, so saving one before a single game is a perfectly good way to keep a setup,
+    // whereas this file holds nothing but results. Writing the empty one and reporting success
+    // would leave the caller believing a run had been kept, and only the eventual load -- which
+    // cannot tell an empty file from a mismatched one -- would say otherwise.
+    if (epdData.totalTests == 0) {
+        return failed("There are no EPD results to save yet; nothing was written. This file would "
+                      "hold results only, so there would be nothing in it. Run the analysis "
+                      "first (start, type=\"epd\").");
+    }
+
+    auto reason = epdData.saveResultsTo(file);
+    if (!reason.empty()) {
+        return failed("The EPD results were not saved: " + reason + ".");
+    }
+    // The one thing a caller must know before it puts the file somewhere and forgets about it:
+    // read back against a different position file it matches nothing, and there is no error to
+    // find out from -- the file does not name the positions it was recorded against.
+    return succeeded("EPD results saved to " + file
+        + ". The file holds the per-position results only, not the position file, engines or "
+          "timing -- reading it back needs the same epd_file configured.");
+}
+
+ActionResult loadEpdFromFile(const std::string& file) {
+    auto& epdData = EpdData::instance();
+    auto locked = fileLockedSentence(lockOf(runStateOf(epdData)), EPD_NAMES, FileAccess::Load);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    auto reason = epdData.loadResultsFrom(file);
+    if (!reason.empty()) {
+        return failed("Nothing was loaded: " + reason
+            + ". The EPD analysis is unchanged. Have the user check the path, and that epd_file "
+              "is the position file these results were recorded against.");
+    }
+    switchToEpdView();
+    return succeeded("EPD results loaded from " + file + ". " + statusText(epdData));
+}
+
 std::string epdActivityText() {
     auto& epdData = EpdData::instance();
     return runStatePhrase(runStateOf(epdData), EPD_NAMES, epdData.getExternalConcurrency());

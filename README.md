@@ -139,6 +139,13 @@ curl -H "Authorization: Bearer secret" http://127.0.0.1:8137/status
 Tournaments, SPRT runs, EPD analysis and CLOP parameter tuning can all be started, watched and
 read back this way, while the window stays usable by hand.
 
+A finished run is kept with `save_results` and brought back with `load_results`, which take the
+path as an argument rather than opening the file picker the *Load* and *Save As* buttons use — a
+native dialog has nobody to answer it when the caller is a script. Tournament and SPRT write the
+same `.qtour`/`.qsprt` file those buttons write, configuration and results together; EPD writes
+its per-position results only, so reading one back needs the same EPD file still configured. Both
+are refused while that run is going.
+
 ### Configuration Files
 
 The application creates a configuration directory on first run:

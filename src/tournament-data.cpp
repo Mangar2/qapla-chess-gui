@@ -823,11 +823,11 @@ namespace QaplaWindows {
         loadConfigStep("global engine settings", [this] { loadGlobalSettingsConfig(); });
     }
 
-    void TournamentData::saveTournament(const std::string& filename) {
+    std::string TournamentData::saveTournament(const std::string& filename) {
         if (filename.empty()) {
-            SnackbarManager::instance().showError("No filename specified for saving tournament.", 
+            SnackbarManager::instance().showError("No filename specified for saving tournament.",
                 false, "tournament");
-            return;
+            return "no filename was given";
         }
 
         try {
@@ -859,16 +859,18 @@ namespace QaplaWindows {
                 false, "tournament");
         }
         catch (const std::exception& e) {
-            SnackbarManager::instance().showError("Failed to save tournament: " + std::string(e.what()), 
+            SnackbarManager::instance().showError("Failed to save tournament: " + std::string(e.what()),
                 false, "tournament");
+            return e.what();
         }
+        return {};
     }
 
-    void TournamentData::loadTournament(const std::string& filename) {
+    std::string TournamentData::loadTournament(const std::string& filename) {
         if (filename.empty()) {
-            SnackbarManager::instance().showError("No filename specified for loading tournament.", 
+            SnackbarManager::instance().showError("No filename specified for loading tournament.",
                 false, "tournament");
-            return;
+            return "no filename was given";
         }
 
         try {
@@ -882,13 +884,15 @@ namespace QaplaWindows {
             // Create tournament based on the configuration and load the tournament data
             loadTournament(true);
 
-            SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename, 
+            SnackbarManager::instance().showSuccess("Tournament loaded from: " + filename,
                 false, "tournament");
         }
         catch (const std::exception& e) {
-            SnackbarManager::instance().showError("Failed to load tournament: " + std::string(e.what()), 
+            SnackbarManager::instance().showError("Failed to load tournament: " + std::string(e.what()),
                 false, "tournament");
+            return e.what();
         }
+        return {};
     }
 
 }

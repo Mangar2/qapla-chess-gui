@@ -63,6 +63,25 @@ enum class Activity { Tournament, Sprt, Epd, Clop };
 [[nodiscard]] ActionResult showActivityResult(Activity activity);
 
 /**
+ * @brief Writes the given activity to a file at the given path.
+ *
+ * Tournament and SPRT write the same .qtour/.qsprt state file the window's "Save As" button
+ * writes, configuration and results together; EPD writes its per-position results only (see
+ * saveEpdToFile()). Clop has no file format of its own and is refused.
+ *
+ * The path is an argument rather than something a dialog asks for, which is the whole point: the
+ * remote control has nobody at a window to answer a file picker.
+ */
+[[nodiscard]] ActionResult saveActivityToFile(Activity activity, const std::string& file);
+
+/**
+ * @brief Reads the given activity back from a file written by saveActivityToFile().
+ *
+ * Destructive: what the activity held before is replaced. Refused while it runs, and for Clop.
+ */
+[[nodiscard]] ActionResult loadActivityFromFile(Activity activity, const std::string& file);
+
+/**
  * @brief One sentence naming everything currently running across all three activities.
  *
  * Exists because the three are easy to confuse from the outside -- to someone watching, an SPRT

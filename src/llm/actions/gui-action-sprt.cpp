@@ -599,6 +599,37 @@ ActionResult showSprtResult() {
         }};
 }
 
+ActionResult saveSprtToFile(const std::string& file) {
+    auto& sprtData = SprtTournamentData::instance();
+    auto locked = fileLockedSentence(lockOf(runStateOf(sprtData)), SPRT_NAMES, FileAccess::Save);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    auto reason = SprtTournamentData::saveTournament(file);
+    if (!reason.empty()) {
+        return failed("The SPRT test was not saved: " + reason + ".");
+    }
+    return succeeded("SPRT test saved to " + file
+        + ". The file holds the full configuration and every game played so far.");
+}
+
+ActionResult loadSprtFromFile(const std::string& file) {
+    auto& sprtData = SprtTournamentData::instance();
+    auto locked = fileLockedSentence(lockOf(runStateOf(sprtData)), SPRT_NAMES, FileAccess::Load);
+    if (!locked.empty()) {
+        return failed(locked);
+    }
+
+    auto reason = sprtData.loadTournament(file);
+    if (!reason.empty()) {
+        return failed("Nothing was loaded: " + reason
+            + ". The SPRT test is unchanged. Have the user check the path.");
+    }
+    switchToSprtView();
+    return succeeded("SPRT test loaded from " + file + ". It now holds: " + statusText(sprtData));
+}
+
 std::string sprtActivityText() {
     auto& sprtData = SprtTournamentData::instance();
     return runStatePhrase(runStateOf(sprtData), SPRT_NAMES, sprtData.getExternalConcurrency());

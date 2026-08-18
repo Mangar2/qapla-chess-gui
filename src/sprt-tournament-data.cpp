@@ -713,11 +713,11 @@ void SprtTournamentData::drawMonteCarloTable(const ImVec2& size) {
     montecarloTable_.draw(size);
 }
 
-void SprtTournamentData::saveTournament(const std::string& filename) {
+std::string SprtTournamentData::saveTournament(const std::string& filename) {
     if (filename.empty()) {
         SnackbarManager::instance().showError("No filename specified for saving SPRT tournament.",
             false, "sprt-tournament");
-        return;
+        return "no filename was given";
     }
 
     try {
@@ -751,14 +751,16 @@ void SprtTournamentData::saveTournament(const std::string& filename) {
     catch (const std::exception& e) {
         SnackbarManager::instance().showError("Failed to save SPRT tournament: " + std::string(e.what()),
             false, "sprt-tournament");
+        return e.what();
     }
+    return {};
 }
 
-void SprtTournamentData::loadTournament(const std::string& filename) {
+std::string SprtTournamentData::loadTournament(const std::string& filename) {
     if (filename.empty()) {
         SnackbarManager::instance().showError("No filename specified for loading SPRT tournament.",
             false, "sprt-tournament");
-        return;
+        return "no filename was given";
     }
 
     try {
@@ -782,7 +784,9 @@ void SprtTournamentData::loadTournament(const std::string& filename) {
     catch (const std::exception& e) {
         SnackbarManager::instance().showError("Failed to load SPRT tournament: " + std::string(e.what()),
             false, "sprt-tournament");
+        return e.what();
     }
+    return {};
 }
 
 bool SprtTournamentData::runMonteCarloTest() {

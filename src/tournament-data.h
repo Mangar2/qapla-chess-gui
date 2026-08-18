@@ -381,15 +381,22 @@ namespace QaplaWindows {
 
         /**
          * @brief Saves all tournament data including configuration and results to a file.
+         *
+         * Reports the outcome as well as showing it: the snackbar is for the person at the window,
+         * and a caller that has no window (see QaplaLlm::Actions) would otherwise have no way to
+         * tell a written file from a failed write.
+         *
          * @param filename The file path to save the tournament data to.
+         * @return Why nothing was saved, or an empty string when it was.
          */
-        static void saveTournament(const std::string& filename);
+        static std::string saveTournament(const std::string& filename);
 
         /**
          * @brief Loads all tournament data from a file.
          * @param filename The file path to load the tournament data from.
+         * @return Why nothing was loaded, or an empty string when it was. See saveTournament().
          */
-        void loadTournament(const std::string& filename);
+        std::string loadTournament(const std::string& filename);
 
 	private:
   

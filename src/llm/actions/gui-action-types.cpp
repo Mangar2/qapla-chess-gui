@@ -121,6 +121,23 @@ std::string settingsLockNote(RunLock lock) {
     }
 }
 
+std::string fileLockedSentence(RunLock lock, const ActivityNames& names, FileAccess access) {
+    if (lock == RunLock::None) {
+        return "";
+    }
+    const std::string_view what = access == FileAccess::Save ? "written" : "read";
+    if (lock == RunLock::Running) {
+        return std::format(
+            "No file was {}: {} is running, and its file can only be {} once it has stopped. Ask "
+            "the user: stop gracefully or abruptly? Then try again.",
+            what, names.withArticle, what);
+    }
+    return std::format(
+        "No file was {}: the {} is still stopping, and its file can only be {} once it has. Wait, "
+        "then try again.",
+        what, names.bare, what);
+}
+
 std::string readyToStartSentence() {
     return "Everything it needs is configured; it can be started exactly as it is.";
 }

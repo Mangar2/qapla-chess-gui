@@ -370,15 +370,21 @@ namespace QaplaWindows {
 
         /**
          * @brief Saves all SPRT tournament data including configuration and results to a file.
+         *
+         * Reports the outcome as well as showing it -- see TournamentData::saveTournament() for
+         * why the snackbar alone is not enough.
+         *
          * @param filename The file path to save the tournament data to.
+         * @return Why nothing was saved, or an empty string when it was.
          */
-        static void saveTournament(const std::string& filename);
+        static std::string saveTournament(const std::string& filename);
 
         /**
          * @brief Loads all SPRT tournament data from a file.
          * @param filename The file path to load the tournament data from.
+         * @return Why nothing was loaded, or an empty string when it was. See saveTournament().
          */
-        void loadTournament(const std::string& filename);
+        std::string loadTournament(const std::string& filename);
 
         /**
          * @brief Runs a Monte Carlo test on the current SPRT configuration.

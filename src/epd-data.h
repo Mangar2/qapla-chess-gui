@@ -119,7 +119,38 @@ namespace QaplaWindows {
          * say how far the run got.
          */
         [[nodiscard]] std::string resultsAsText();
-        
+
+        /**
+         * @brief Writes the current results to a file of the caller's choosing.
+         *
+         * The autosave in the configuration directory keeps exactly one result set, which the next
+         * run overwrites; this is how a run worth keeping is put somewhere else. It writes the same
+         * format saveData() does, and deliberately leaves the autosave paths alone -- saving a copy
+         * elsewhere must not redirect where this session saves itself from then on.
+         *
+         * Unlike the tournament and SPRT state files, what is written is the results ONLY: the
+         * position file, engines and timing stay in the configuration. See loadResultsFrom() for
+         * what that means when reading one back.
+         *
+         * @param filename Full path to write to. An existing file is overwritten.
+         * @return Why nothing was written, or an empty string when it was.
+         */
+        [[nodiscard]] std::string saveResultsTo(const std::string& filename);
+
+        /**
+         * @brief Reads results back from a file written by saveResultsTo().
+         *
+         * The file carries no positions and no engines, so it is read against the EPD analysis as
+         * it is configured *now* -- that configuration is applied first, exactly as loadData() does
+         * it, and the stored results are matched onto it. Reading a file that was recorded against
+         * a different position set therefore does not fail, it simply matches nothing; configure
+         * the same epd_file first.
+         *
+         * @param filename Full path to read from.
+         * @return Why nothing was loaded, or an empty string when results were.
+         */
+        [[nodiscard]] std::string loadResultsFrom(const std::string& filename);
+
         EpdConfig& config() {
             return epdConfig_;
 		}

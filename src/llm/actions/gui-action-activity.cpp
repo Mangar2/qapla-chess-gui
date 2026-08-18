@@ -117,6 +117,52 @@ ActionResult showActivityResult(Activity activity) {
     }
 }
 
+namespace {
+    /**
+     * @brief What a caller is told when it asks for a CLOP file.
+     *
+     * CLOP is the one activity with nothing to write: its configuration is not persisted at all
+     * (a GUI restart loses it) and its estimates live only in the running fit. Rather than let
+     * "clop" through to an action that would invent a format, it is refused here in the one place
+     * both directions pass through -- and the refusal names what CAN be kept, because a caller
+     * that asked to save a tuning run wants its numbers, not a lesson about file formats.
+     */
+    ActionResult clopHasNoFile(FileAccess access) {
+        return failed(std::string(access == FileAccess::Save ? "A CLOP run cannot be saved"
+                                                             : "A CLOP run cannot be loaded")
+            + " to a file: it has no file format, and its configuration is not even kept across a "
+              "restart. Read its current estimate with get_status (type=\"clop\") and apply the "
+              "values you want to keep to an engine with manage_engines; the SPRT test that "
+              "verifies them is what gets saved.");
+    }
+} // namespace
+
+ActionResult saveActivityToFile(Activity activity, const std::string& file) {
+    switch (activity) {
+        case Activity::Sprt: return saveSprtToFile(file);
+        case Activity::Clop: return clopHasNoFile(FileAccess::Save);
+        case Activity::Epd: return saveEpdToFile(file);
+        case Activity::Tournament:
+        default: return saveTournamentToFile(file);
+    }
+}
+
+ActionResult loadActivityFromFile(Activity activity, const std::string& file) {
+    auto result = [&]() {
+        switch (activity) {
+            case Activity::Sprt: return loadSprtFromFile(file);
+            case Activity::Clop: return clopHasNoFile(FileAccess::Load);
+            case Activity::Epd: return loadEpdFromFile(file);
+            case Activity::Tournament:
+            default: return loadTournamentFromFile(file);
+        }
+    }();
+    // A load brings results in without anything having run, which is a state change the watch has
+    // no other way of hearing about -- see publishProgress().
+    publishProgress(activity);
+    return result;
+}
+
 std::string runningActivitiesText() {
     // An idle activity reports "" (see tournamentActivityText() and friends) and is dropped here,
     // rather than each of the three carrying an "is idle" wording that only reads well alone.
