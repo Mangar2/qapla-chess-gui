@@ -33,7 +33,6 @@
 #include <ctime>
 #include <format>
 #include <optional>
-#include <string_view>
 #include <thread>
 
 namespace QaplaLlm {
@@ -44,14 +43,6 @@ namespace {
 
     /** @brief Keeps the on-screen log from growing without bound over a long session. */
     constexpr std::size_t MAX_LOG_ENTRIES = 500;
-
-    /** @brief "--remote-control-port=8137" -> "8137" for prefix "--remote-control-port=". */
-    [[nodiscard]] std::string valueAfter(std::string_view argument, std::string_view prefix) {
-        if (argument.size() <= prefix.size() || argument.compare(0, prefix.size(), prefix) != 0) {
-            return {};
-        }
-        return std::string(argument.substr(prefix.size()));
-    }
 
     [[nodiscard]] std::string localTimeText() {
         auto now = std::chrono::system_clock::now();
@@ -113,31 +104,6 @@ namespace {
     }
 
 } // namespace
-
-RemoteControlOptions parseRemoteControlOptions(int argc, char** argv) {
-    RemoteControlOptions options;
-    for (int i = 1; i < argc; ++i) {
-        std::string_view argument = argv[i] != nullptr ? argv[i] : "";
-        if (argument == "--remote-control") {
-            options.enabled = true;
-            continue;
-        }
-        if (auto port = valueAfter(argument, "--remote-control-port="); !port.empty()) {
-            // A malformed port is left at the default rather than aborting startup: the GUI is
-            // still perfectly usable by hand, and start() reports the port it actually bound.
-            try {
-                options.port = std::stoi(port);
-            } catch (const std::exception&) {
-                // keep the default
-            }
-            continue;
-        }
-        if (auto token = valueAfter(argument, "--remote-control-token="); !token.empty()) {
-            options.token = token;
-        }
-    }
-    return options;
-}
 
 struct RemoteControlServer::Impl {
     httplib::Server server;
@@ -269,7 +235,8 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         if (!activity) {
             response.status = 400;
             response.set_content(
-                jsonError("Pass type=tournament, type=sprt or type=epd."), "application/json");
+                jsonError("Pass type=tournament, type=sprt, type=epd or type=clop."),
+                "application/json");
             return;
         }
 

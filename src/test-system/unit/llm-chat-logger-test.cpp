@@ -43,6 +43,31 @@ namespace {
         return out.str();
     }
 
+    // Owns the test log directory for the length of a test case.
+    //
+    // Declare it before the LlmChatLogger: locals are destroyed in reverse order, so the
+    // logger has closed its file before the directory disappears. Removing it while the
+    // logger was still alive threw "the process cannot access the file because it is
+    // being used by another process" and failed the test on its own cleanup.
+    //
+    // The removal uses the non throwing overload as well: cleanup must not be able to
+    // decide a test, and whether it succeeds says nothing about the logger.
+    struct ScopedTestLogDirectory {
+        ScopedTestLogDirectory() {
+            std::error_code error;
+            std::filesystem::remove_all(testLogDirectory(), error);
+            std::filesystem::create_directories(testLogDirectory(), error);
+        }
+
+        ~ScopedTestLogDirectory() {
+            std::error_code error;
+            std::filesystem::remove_all(testLogDirectory(), error);
+        }
+
+        ScopedTestLogDirectory(const ScopedTestLogDirectory&) = delete;
+        ScopedTestLogDirectory& operator=(const ScopedTestLogDirectory&) = delete;
+    };
+
     // Total characters logged with the "UNSTRUCTURED: " tag, ignoring the timestamp/tag prefix
     // and any other (unrelated) line -- i.e. what logUnstructured() actually got to write.
     std::size_t unstructuredCharsIn(const std::string& fileContent) {
@@ -64,8 +89,7 @@ namespace {
 
 TEST_CASE("LlmChatLogger caps cumulative unstructured output at 1000 chars until the next logLine",
     "[llm][llm-chat-logger]") {
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatLogger logger(/*enabled=*/true, testLogDirectory().string());
 
@@ -88,13 +112,10 @@ TEST_CASE("LlmChatLogger caps cumulative unstructured output at 1000 chars until
     content = readFile(logger.openedFilePath());
     REQUIRE(unstructuredCharsIn(content) == 1500);
     REQUIRE(content.find("USER: hello") != std::string::npos);
-
-    std::filesystem::remove_all(testLogDirectory());
 }
 
 TEST_CASE("LlmChatLogger writes nothing and creates no file when disabled", "[llm][llm-chat-logger]") {
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatLogger logger(/*enabled=*/false, testLogDirectory().string());
     logger.logLine("USER", "hello");
@@ -102,13 +123,10 @@ TEST_CASE("LlmChatLogger writes nothing and creates no file when disabled", "[ll
 
     REQUIRE(logger.openedFilePath().empty());
     REQUIRE(std::filesystem::is_empty(testLogDirectory()));
-
-    std::filesystem::remove_all(testLogDirectory());
 }
 
 TEST_CASE("LlmChatLogger logLine writes the tag and full text, unbounded", "[llm][llm-chat-logger]") {
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatLogger logger(/*enabled=*/true, testLogDirectory().string());
     std::string longText(2000, 'Z'); // well past the 1000-char unstructured cap -- must NOT apply here
@@ -116,13 +134,10 @@ TEST_CASE("LlmChatLogger logLine writes the tag and full text, unbounded", "[llm
 
     auto content = readFile(logger.openedFilePath());
     REQUIRE(content.find("TOOL_RESULT: " + longText) != std::string::npos);
-
-    std::filesystem::remove_all(testLogDirectory());
 }
 
 TEST_CASE("LlmChatLogger logSystemPromptAndToolsOnce writes only on its first call", "[llm][llm-chat-logger]") {
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatLogger logger(/*enabled=*/true, testLogDirectory().string());
     logger.logSystemPromptAndToolsOnce("be helpful", "{\n  \"a\": 1\n}");
@@ -134,6 +149,4 @@ TEST_CASE("LlmChatLogger logSystemPromptAndToolsOnce writes only on its first ca
     // The second call must be a no-op -- only the first prompt/tools pair is ever logged.
     REQUIRE(content.find("a different prompt") == std::string::npos);
     REQUIRE(content.find("\"b\": 2") == std::string::npos);
-
-    std::filesystem::remove_all(testLogDirectory());
 }

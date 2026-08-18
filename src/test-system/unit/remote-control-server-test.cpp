@@ -197,34 +197,3 @@ TEST_CASE("RemoteControlServer refuses to start twice and reports the port it bo
     second.port = 0;
     REQUIRE_FALSE(RemoteControlServer::instance().start(second));
 }
-
-TEST_CASE("parseRemoteControlOptions reads only its own switches", "[llm][remote-control]") {
-    SECTION("absent means off") {
-        const char* argv[] = {"qapla"};
-        auto options = parseRemoteControlOptions(1, const_cast<char**>(argv));
-        REQUIRE_FALSE(options.enabled);
-    }
-
-    SECTION("a port or token alone does not switch it on") {
-        const char* argv[] = {"qapla", "--remote-control-port=9000"};
-        auto options = parseRemoteControlOptions(2, const_cast<char**>(argv));
-        REQUIRE_FALSE(options.enabled);
-        REQUIRE(options.port == 9000);
-    }
-
-    SECTION("all three together") {
-        const char* argv[] = {
-            "qapla", "--remote-control", "--remote-control-port=9001", "--remote-control-token=t"};
-        auto options = parseRemoteControlOptions(4, const_cast<char**>(argv));
-        REQUIRE(options.enabled);
-        REQUIRE(options.port == 9001);
-        REQUIRE(options.token == "t");
-    }
-
-    SECTION("an unparseable port keeps the default rather than aborting startup") {
-        const char* argv[] = {"qapla", "--remote-control", "--remote-control-port=nonsense"};
-        auto options = parseRemoteControlOptions(3, const_cast<char**>(argv));
-        REQUIRE(options.enabled);
-        REQUIRE(options.port == RemoteControlOptions{}.port);
-    }
-}

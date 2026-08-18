@@ -53,6 +53,7 @@
 #include "data/logo-data.h"
 #include "imgui-frame-rate-limiter.h"
 #include "os-helpers.h"
+#include "command-line.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -391,6 +392,18 @@ namespace {
         return 0;
     }
 
+    /**
+     * @brief Says what the command line got wrong, before anything is opened.
+     *
+     * None of it stops the start: an option nobody recognised is worth a line on stderr, not a
+     * refusal to run an application that is driven by hand anyway.
+     */
+    void reportCommandLineMessages(const QaplaApp::CommandLineOptions& options) {
+        for (const auto& message : options.messages) {
+            std::cerr << message << '\n';
+        }
+    }
+
 } // namespace
 
 #ifdef _WIN32
@@ -428,7 +441,23 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
     try {
         // WinMain hands the command line over as one unsplit string; __argc/__argv are the same
         // arguments already tokenized by the CRT, which is what the parser wants.
-        auto code = runApp(QaplaLlm::parseRemoteControlOptions(__argc, __argv));
+        auto options = QaplaApp::parseCommandLine(__argc, __argv);
+        reportCommandLineMessages(options);
+
+        if (options.helpRequested) {
+            // Started from a console, the help belongs in it. Double-clicked there is no console
+            // to write to, and a message box is the only place the answer can be read at all.
+            if (hasConsole) {
+                std::cout << QaplaApp::helpText() << std::flush;
+                FreeConsole();
+            } else {
+                MessageBoxA(nullptr, QaplaApp::helpText().c_str(), "Qapla Chess GUI",
+                    MB_ICONINFORMATION | MB_OK);
+            }
+            return 0;
+        }
+
+        auto code = runApp(options.remoteControl);
         if (hasConsole) {
             FreeConsole();
         }
@@ -451,7 +480,15 @@ int main(int argc, char** argv) {
     std::signal(SIGPIPE, SIG_IGN);
 
     try {
-        auto code = runApp(QaplaLlm::parseRemoteControlOptions(argc, argv));
+        auto options = QaplaApp::parseCommandLine(argc, argv);
+        reportCommandLineMessages(options);
+
+        if (options.helpRequested) {
+            std::cout << QaplaApp::helpText() << std::flush;
+            return 0;
+        }
+
+        auto code = runApp(options.remoteControl);
         return code;
     }
     catch (const std::exception& e) {

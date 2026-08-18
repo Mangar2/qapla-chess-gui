@@ -48,6 +48,63 @@ namespace {
         out << in.rdbuf();
         return out.str();
     }
+
+    // Owns the test log directory for the length of a test case.
+    //
+    // Declare it before the LlmChatController: locals are destroyed in reverse order,
+    // so the controller is gone before the directory disappears. Removing the directory
+    // while the controller is still alive made its destructor write a finetuning
+    // correction into a path that no longer existed - and an exception leaving a
+    // destructor, which is noexcept, ends the process instead of failing the test.
+    //
+    // The removal uses the non throwing overload for the same reason: cleanup must not
+    // be able to abort a run, and whether it succeeds says nothing about the test.
+    struct ScopedTestLogDirectory {
+        ScopedTestLogDirectory() {
+            std::error_code error;
+            std::filesystem::remove_all(testLogDirectory(), error);
+            std::filesystem::create_directories(testLogDirectory(), error);
+        }
+
+        ~ScopedTestLogDirectory() {
+            std::error_code error;
+            std::filesystem::remove_all(testLogDirectory(), error);
+        }
+
+        ScopedTestLogDirectory(const ScopedTestLogDirectory&) = delete;
+        ScopedTestLogDirectory& operator=(const ScopedTestLogDirectory&) = delete;
+    };
+
+    // Runs an already configured server on its own thread and shuts it down again.
+    //
+    // Stopping and joining by hand at the end of a test only works when the test reaches
+    // that end. A failing REQUIRE throws, the hand written join is skipped, and the still
+    // joinable std::thread terminates the process while unwinding - turning a reported
+    // failure into a crash. MockToolCallingServer above already does it this way.
+    struct ScopedServerThread {
+        explicit ScopedServerThread(httplib::Server& serverToRun) : server(serverToRun) {
+            port = server.bind_to_any_port("127.0.0.1");
+            REQUIRE(port > 0);
+            thread = std::thread([this]() { server.listen_after_bind(); });
+            while (!server.is_running()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
+
+        ~ScopedServerThread() {
+            server.stop();
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+
+        ScopedServerThread(const ScopedServerThread&) = delete;
+        ScopedServerThread& operator=(const ScopedServerThread&) = delete;
+
+        httplib::Server& server;
+        std::thread thread;
+        int port = 0;
+    };
 }
 
 namespace {
@@ -128,8 +185,7 @@ TEST_CASE("LlmChatController shows a tool result before the model's slower final
     // This turn's successful tool call + "Done." final reply is exactly the "clean but
     // unstructured final reply" shape LlmChatController now corrects into finetuning.json
     // (see the dedicated test for that) -- redirect away from the real config directory.
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(
         mock.connection(), "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
@@ -170,8 +226,6 @@ TEST_CASE("LlmChatController shows a tool result before the model's slower final
         }
     }
     REQUIRE(sawFinalAssistantText);
-
-    std::filesystem::remove_all(testLogDirectory());
 }
 
 TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEntry",
@@ -217,12 +271,8 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
                 "application/json");
         }
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
@@ -231,8 +281,7 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
 
     // Same reasoning as the probe test above: this turn's successful tool call + "Done." final
     // reply now gets corrected into finetuning.json -- redirect away from the real directory.
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(
         connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false, testLogDirectory().string());
@@ -259,10 +308,6 @@ TEST_CASE("LlmChatController carries a tool's renderWidget through to its ChatEn
     toolEntry->renderWidget();
     REQUIRE(widgetCallCount == 1);
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController automatically pings a model when it is selected", "[llm][llm-chat-controller]") {
@@ -277,12 +322,8 @@ TEST_CASE("LlmChatController automatically pings a model when it is selected", "
         }
         res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Done."}}]})", "application/json");
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
@@ -321,8 +362,6 @@ TEST_CASE("LlmChatController automatically pings a model when it is selected", "
     controller.setModel("model-b");
     REQUIRE(pingCallCount.load() == 2);
 
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController cancels an in-flight ping when a real message is sent",
@@ -340,20 +379,15 @@ TEST_CASE("LlmChatController cancels an in-flight ping when a real message is se
         }
         res.set_content(R"({"choices":[{"message":{"role":"assistant","content":"Done."}}]})", "application/json");
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(
         connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false, testLogDirectory().string());
@@ -379,10 +413,6 @@ TEST_CASE("LlmChatController cancels an in-flight ping when a real message is se
     controller.update();
     REQUIRE(controller.pingStatus() == LlmChatController::PingStatus::Reachable);
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController routes the model's reply through the reply_to_user tool",
@@ -405,20 +435,15 @@ TEST_CASE("LlmChatController routes the model's reply through the reply_to_user 
             R"("function":{"name":"reply_to_user","arguments":"{\"text\":\"Hello from model\"}"}}]}}]})",
             "application/json");
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
         testLogDirectory().string());
@@ -459,10 +484,6 @@ TEST_CASE("LlmChatController routes the model's reply through the reply_to_user 
     REQUIRE(fineTuningContent.find(R"("name":"reply_to_user")") != std::string::npos);
     REQUIRE(std::ranges::count(fineTuningContent, '\n') == 1); // exactly one line, one turn
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController does not record a turn in finetuning.json if any tool call failed",
@@ -501,20 +522,15 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
                 "application/json");
         }
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
         testLogDirectory().string());
@@ -542,10 +558,6 @@ TEST_CASE("LlmChatController does not record a turn in finetuning.json if any to
     // actually-recorded turn, and this turn was never clean.
     REQUIRE_FALSE(std::filesystem::exists(testLogDirectory() / "finetuning.json"));
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController suppresses a tool call that exactly repeats the one right before it",
@@ -590,20 +602,15 @@ TEST_CASE("LlmChatController suppresses a tool call that exactly repeats the one
                 "application/json");
         }
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
         testLogDirectory().string());
@@ -636,10 +643,6 @@ TEST_CASE("LlmChatController suppresses a tool call that exactly repeats the one
     REQUIRE(toolEntryCount == 2);
     REQUIRE(sawDebugEntry);
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController aborts a turn after the same tool call repeats more than 3 times in a row",
@@ -689,20 +692,15 @@ TEST_CASE("LlmChatController aborts a turn after the same tool call repeats more
             R"(test_llm_chat_controller_dedupe_abort_probe","arguments":"{}"}}]}}]})",
             "application/json");
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
         testLogDirectory().string());
@@ -737,10 +735,6 @@ TEST_CASE("LlmChatController aborts a turn after the same tool call repeats more
     REQUIRE(toolEntryCount == 3);
     REQUIRE(sawAbortDebugEntry);
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply for finetuning.json",
@@ -780,20 +774,15 @@ TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply fo
                 "application/json");
         }
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10, /*logTraffic=*/false,
         testLogDirectory().string());
@@ -825,10 +814,6 @@ TEST_CASE("LlmChatController corrects a clean turn's unstructured final reply fo
     REQUIRE(fineTuningContent.find(R"("arguments":"{\"text\":\"Tournament started!\"}")") != std::string::npos);
     REQUIRE(std::ranges::count(fineTuningContent, '\n') == 1);
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }
 
 TEST_CASE("LlmChatController keeps the replayed history alternating after a failed turn",
@@ -860,20 +845,15 @@ TEST_CASE("LlmChatController keeps the replayed history alternating after a fail
             R"("function":{"name":"reply_to_user","arguments":"{\"text\":\"Second\"}"}}]}}]})",
             "application/json");
     });
-    int port = server.bind_to_any_port("127.0.0.1");
-    REQUIRE(port > 0);
-    std::thread serverThread([&server]() { server.listen_after_bind(); });
-    while (!server.is_running()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
+    ScopedServerThread serverThread(server);
+    const int port = serverThread.port;
 
     LmStudioConnection connection;
     connection.host = "127.0.0.1";
     connection.port = port;
     connection.timeoutMs = 5000;
 
-    std::filesystem::remove_all(testLogDirectory());
-    std::filesystem::create_directories(testLogDirectory());
+    ScopedTestLogDirectory testLogDirectoryGuard;
 
     LlmChatController controller(connection, "system prompt", /*maxToolIterations=*/10,
         /*logTraffic=*/false, testLogDirectory().string());
@@ -923,8 +903,4 @@ TEST_CASE("LlmChatController keeps the replayed history alternating after a fail
     }
     REQUIRE(visibleAssistants == 1); // only the second turn's real reply
 
-    std::filesystem::remove_all(testLogDirectory());
-
-    server.stop();
-    serverThread.join();
 }

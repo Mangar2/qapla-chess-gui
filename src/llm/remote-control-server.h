@@ -50,6 +50,9 @@ namespace QaplaLlm {
  *
  * Deliberately not a tool and not a button: whoever starts the GUI decides what the session is
  * for. A remote control that could switch itself on would be a way in that nobody opened.
+ *
+ * Filled by QaplaApp::parseCommandLine (see src/command-line.h), which is where the switches
+ * that set these fields are spelled out, together with every other option the executable has.
  */
 struct RemoteControlOptions {
     bool enabled = false;
@@ -64,14 +67,6 @@ struct RemoteControlOptions {
     /** @brief Shared secret required as "Authorization: Bearer <token>"; empty means none. */
     std::string token;
 };
-
-/**
- * @brief Reads the remote-control switches out of argv, ignoring everything else.
- *
- * Accepted: `--remote-control`, `--remote-control-port=<n>`, `--remote-control-token=<t>`.
- * A port or token alone does not switch it on; `--remote-control` has to be there.
- */
-[[nodiscard]] RemoteControlOptions parseRemoteControlOptions(int argc, char** argv);
 
 /**
  * @brief One executed call, kept for the on-screen log.

@@ -37,6 +37,7 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Multilingual Support** - Localization support (English, Deutsch, Français) with language selector in Settings
 - **Comprehensive Tooltips** - Helpful tooltips on all controls
 - **Smart File Dialogs** - File filtering by appropriate extensions for tournaments and SPRT tests
+- **HTTP Remote Control** - Drive the running GUI from a script or another program with `--remote-control`; everything it starts is played in the visible window (see [Command Line Options](#command-line-options))
 - **Remote Desktop Optimization** - Option to reduce GUI resource usage when using remote desktop on Linux
 
 ## Screenshots
@@ -91,6 +92,52 @@ All tournament and testing capabilities are powered by the integrated **[qapla-e
 **macOS:**
 - Copy `qapla-chess-gui` from the build directory
 - Run directly: `./qapla-chess-gui`
+
+### Command Line Options
+
+The GUI starts without any arguments; the options below exist for driving it from scripts and
+other programs. `--help` prints the same list and exits without opening a window:
+
+```bash
+qapla-chess-gui --help
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--help`, `-h`, `/?` | Print the option list and exit. The GUI does not start. |
+| `--remote-control` | Serve the GUI's tools over HTTP on `127.0.0.1`, so another program can drive the running window. Off unless given. |
+| `--remote-control-port=<port>` | Port of the remote control (default `8137`). `0` asks the operating system for a free one, which the Remote Control panel then reports. |
+| `--remote-control-token=<token>` | Shared secret every caller has to send as `Authorization: Bearer <token>`. Without it, any program on this machine may drive the GUI. |
+
+Values are written with an equals sign. A misspelled option or a value passed with a space
+(`--remote-control-port 8137`) is reported on stderr and the GUI still starts, so a typo never
+costs more than a wrong setting.
+
+All options live in one table in [`src/command-line.cpp`](src/command-line.cpp), and that table is
+what `--help` prints — a new option appears in the help output by being added there.
+
+#### Remote Control over HTTP
+
+`--remote-control` puts an HTTP server in front of the same tools the built-in AI chat uses.
+Everything started this way runs in the visible GUI: the games appear on the boards, the tables
+fill in, and the *Remote Control* panel logs every call with its result. The server binds
+`127.0.0.1` only and is never reachable from another machine.
+
+```bash
+qapla-chess-gui --remote-control --remote-control-token=secret
+curl -H "Authorization: Bearer secret" http://127.0.0.1:8137/status
+```
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /health` | Answers `{"ok":true}` without touching the GUI, so "the app is up" can be told from "the app is busy". The only endpoint that works without the token. |
+| `GET /tools` | The available tools, in the same OpenAI function-calling shape the local chat uses. |
+| `POST /tools/<name>` | Body is the arguments object; answers `{"ok":…, "content":…}` once the GUI has actually done it. |
+| `GET /status` | Shortcut for `POST /tools/get_status` with no arguments. |
+| `GET /wait?type=<tournament\|sprt\|epd\|clop>[&timeout=<seconds>]` | Does not answer until that activity has stopped, then reports why (`finished`, `stopped`, `timeout`, `closed`, `not_running`) together with the full status, results included. Timeout defaults to 300 s and is clamped to 1…3600 s. |
+
+Tournaments, SPRT runs, EPD analysis and CLOP parameter tuning can all be started, watched and
+read back this way, while the window stays usable by hand.
 
 ### Configuration Files
 

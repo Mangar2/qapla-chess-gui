@@ -215,6 +215,8 @@ if(QAPLA_BUILD_UNIT_TESTS)
     set(GUI_TEST_DEPENDENCIES
       src/tournament-result-incremental.cpp
       src/config-group-loader.cpp
+      # The option table behind --help and the parser. Pure argv in, struct out, no GUI.
+      src/command-line.cpp
       src/tournament-config-sections.cpp
       # The file that decides whether stored settings are overwritten. Free of the GUI stack.
       src/autosavable.cpp
