@@ -32,6 +32,14 @@ extern/stb/
 # ImGui settings file
 imgui.ini
 
+# Integrationstests: Engine-Binärdateien und Laufzeitspuren bleiben draussen, die
+# Testmodule und die Vorlagen kommen mit. Wie beim Engine-Tester (test/integration).
+/test/integration/engines/*
+!/test/integration/engines/*.ini
+!/test/integration/engines/.gitkeep
+/test/integration/sandbox/
+/test/integration/test_results.log
+
 # Persönliche Arbeitspläne -- Notizen zum aktuellen Stand einer grösseren Aufgabe,
 # nicht Teil der Projektdokumentation (die steht in docs/).
 /docs/plans/

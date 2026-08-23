@@ -253,6 +253,26 @@ cmake --preset default
 cmake --build --preset diagnostic
 ```
 
+## Testing
+
+Three layers, cheapest first. All of them keep to a configuration directory of their own, so
+running them never changes — and never depends on — the configuration you work with.
+
+| Layer | Checks | How to run |
+|---|---|---|
+| Unit | Logic without a GUI | `./build/default/unit-tests` |
+| Integration | Whole flows against the running application, driven over the HTTP remote control | `test/integration/run.sh` |
+| GUI | What only mouse and keyboard can check: board, dialogs, tutorial | `QAPLA_AUTO_RUN_TESTS=1 ./build/default/qapla --config-dir=/tmp/gui-tests` |
+
+```bash
+scripts/release-check.sh          # build, then all three, stopping at the first failure
+```
+
+Every one of them reports its verdict through the exit code, so a release script can gate on it
+instead of reading output. The integration suite has a
+[readme of its own](test/integration/README.md) and a list of
+[what it covers](test/integration/tests.md).
+
 ## External Dependencies
 
 This project uses the following libraries as Git submodules in the `extern/` directory:
