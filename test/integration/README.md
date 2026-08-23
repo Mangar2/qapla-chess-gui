@@ -12,13 +12,17 @@ control. They sit between the unit tests and the on-screen GUI tests:
 ## Running them
 
 ```bash
-test/integration/run.sh                        # everything
-test/integration/run.sh --filter 'tournament-*'
-test/integration/run.sh --test session-starts --keep-sandbox
-test/integration/run.sh --list
-test/integration/run.sh --skip-passed           # continue after a failure
-test/integration/run.ps1                        # Windows
+python3 test/integration/test_runner.py                        # everything
+python3 test/integration/test_runner.py --filter 'tournament-*'
+python3 test/integration/test_runner.py --test session-starts --keep-sandbox
+python3 test/integration/test_runner.py --list
+python3 test/integration/test_runner.py --skip-passed          # continue after a failure
 ```
+
+One entry point on all three platforms, and no wrapper scripts: Windows would need a second one
+saying the same thing, and two files that have to agree eventually stop agreeing. On Linux
+without a desktop session the runner starts itself again under `xvfb-run`, since the tests really
+do open a window.
 
 Before the first run, build the project (`cmake --build --preset default`): the GUI and the
 diagnostic engines are build output. The two real engines, `Qapla` and `SpikeEngine`, are

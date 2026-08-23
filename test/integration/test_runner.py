@@ -6,6 +6,9 @@
     python3 test/integration/test_runner.py --test session-starts --keep-sandbox
     python3 test/integration/test_runner.py --list
 
+The one entry point, on all three platforms. On Linux without a desktop session it puts itself
+under xvfb-run, so nothing outside needs to know about that.
+
 Each test starts its own GUI with a configuration directory of its own and drives it over the
 HTTP remote control. The runner adds three things around that: it says up front what is missing
 instead of letting a run fail piecemeal, it keeps a protocol so a long run can be picked up where
@@ -15,10 +18,13 @@ it stopped, and it checks that the suite left the developer's own configuration 
 import argparse
 import hashlib
 import importlib.util
+import os
+import platform
 import re
+import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
@@ -29,6 +35,37 @@ from test_framework import Colors, format_duration, invoke_test  # noqa: E402
 
 RESULTS_FILE = HERE / "test_results.log"
 _RESULT_ENTRY = re.compile(r"^(?P<verdict>PASSED|FAILED)(?: \((?P<runtime>.+)\))?$")
+
+#: Set on the way into xvfb-run, so the second start does not try the same thing again.
+_UNDER_XVFB = "QAPLA_IT_UNDER_XVFB"
+
+
+def ensure_a_display() -> None:
+    """On Linux without a desktop session, starts this run again under a virtual display.
+
+    The tests really open a window -- that is the point of the suite, since it drives the same
+    application a person would be watching. A machine without a display cannot do that, so the
+    run puts xvfb in front of itself rather than failing at the first test with an error about
+    GLFW.
+    """
+    if platform.system() != "Linux":
+        return
+    if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+        return
+    if os.environ.get(_UNDER_XVFB):
+        return
+
+    xvfb_run = shutil.which("xvfb-run")
+    if xvfb_run is None:
+        print("No display, and xvfb-run is not installed: the GUI cannot open a window.",
+              file=sys.stderr)
+        print("Install it (apt install xvfb) or run from a desktop session.", file=sys.stderr)
+        raise SystemExit(2)
+
+    print("No display found -- running under xvfb-run.")
+    os.environ[_UNDER_XVFB] = "1"
+    os.execvp(xvfb_run, [xvfb_run, "-a", sys.executable, str(Path(__file__).resolve()),
+                         *sys.argv[1:]])
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +180,9 @@ def main() -> int:
     parser.add_argument("--timeout-scale", type=float, default=1.0,
                         help="stretch every timeout, for slow machines and CI")
     arguments = parser.parse_args()
+
+    if not arguments.list:
+        ensure_a_display()
 
     all_tests = collect_tests()
     if arguments.list:

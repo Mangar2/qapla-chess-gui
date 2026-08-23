@@ -4,8 +4,8 @@ Every test here starts its own Qapla Chess GUI, with a configuration directory o
 drives it over the HTTP remote control (`--remote-control`). Runtimes are recorded per test in
 `test_results.log` after each run.
 
-Run them with `test/integration/run.sh` (`run.ps1` on Windows), or
-`python3 test/integration/test_runner.py` from the repository root.
+Run them with `python3 test/integration/test_runner.py`, from anywhere. On Linux without a
+desktop session the runner puts itself under `xvfb-run`.
 
 ## session (7 tests)
 

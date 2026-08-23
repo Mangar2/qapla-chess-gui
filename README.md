@@ -261,11 +261,11 @@ running them never changes — and never depends on — the configuration you wo
 | Layer | Checks | How to run |
 |---|---|---|
 | Unit | Logic without a GUI | `./build/default/unit-tests` |
-| Integration | Whole flows against the running application, driven over the HTTP remote control | `test/integration/run.sh` |
-| GUI | What only mouse and keyboard can check: board, dialogs, tutorial | `QAPLA_AUTO_RUN_TESTS=1 ./build/default/qapla --config-dir=/tmp/gui-tests` |
+| Integration | Whole flows against the running application, driven over the HTTP remote control | `python3 test/integration/test_runner.py` |
+| GUI | What only mouse and keyboard can check: board, dialogs, tutorial | `QAPLA_AUTO_RUN_TESTS=1 ./build/default/qapla --config-dir=<a directory of its own>` |
 
 ```bash
-scripts/release-check.sh          # build, then all three, stopping at the first failure
+python3 scripts/release-check.py   # build, then all three, stopping at the first failure
 ```
 
 Every one of them reports its verdict through the exit code, so a release script can gate on it
