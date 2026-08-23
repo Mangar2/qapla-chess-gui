@@ -7,6 +7,11 @@ drives it over the HTTP remote control (`--remote-control`). Runtimes are record
 Run them with `python3 test/integration/test_runner.py`, from anywhere. On Linux without a
 desktop session the runner puts itself under `xvfb-run`.
 
+These tests took over from the `Llm/Tournament/Tools`, `Llm/Sprt/Tools`, `Llm/Epd/Tools` and
+`Llm/Status/Tools` suites of the on-screen GUI tests, which drove the same tool registry in
+process. What remains there is what only a window can be asked: the chat itself, and the tools
+that need a person in front of it.
+
 ## session (7 tests)
 
 The channel itself, before any chess happens. If these fail, nothing else in the suite means
@@ -48,18 +53,21 @@ it; the sentences are written for a language model and are free to be reworded.
 | engines-details-of-unknown-engine | Asking about an engine that was never installed is an error, not an empty answer |
 | engines-real-engines-install | Qapla and Spike install and are detected as UCI |
 
-## tournament (6 tests)
+## tournament (9 tests)
 
 | Name | Description |
 |---|---|
-| tournament-basic | Two engines play a two-game tournament to the end; PGN is written |
+| tournament-basic | Two engines play a two-game tournament to the end; standings and PGN checked as data |
 | tournament-needs-openings | A tournament without an openings file is refused, with the reason |
 | tournament-reports-the-standings | The finished run answers with the standings table, not just a verdict |
 | tournament-is-reproducible | With `QAPLA_DIAG_SEED` fixed, the same tournament produces the same table |
 | tournament-stop-while-running | A long tournament can be stopped, and `/wait` reports `stopped` |
-| tournament-clear-result | Clearing takes the finished run's results away |
+| tournament-concurrency-survives-a-stop | An abrupt stop leaves the configured concurrency alone |
+| tournament-adjudication-settings | Draw and resign adjudication arrive, are reported back, and survive a restart |
+| tournament-closes-while-a-run-is-going | The application shuts down properly with games still playing |
+| tournament-clear-result | Clearing takes the finished run's results away — checked as an absent table, not a sentence |
 
-## epd (4 tests)
+## epd (6 tests)
 
 The position file is four mates in one, written into every sandbox by the framework — so a real
 engine finds all four in hundredths of a second and the test can assert *how many* were solved.
@@ -68,7 +76,9 @@ engine finds all four in hundredths of a second and the test can assert *how man
 |---|---|
 | epd-solves-mates-in-one | A real engine analyses four mates in one and finds all of them |
 | epd-reports-what-was-not-found | An engine playing at random solves none, and the run still ends |
+| epd-concurrency-survives-a-stop | An abrupt stop leaves the configured concurrency alone |
 | epd-needs-a-position-file | Starting without a position file is refused, with the reason |
+| epd-start-after-a-config-change-is-refused | Re-analysing without clearing is refused, and the refusal says how |
 | epd-two-engines-side-by-side | Two engines analyse the same positions and both get a column |
 
 ## clop (3 tests)
@@ -87,12 +97,13 @@ engine finds all four in hundredths of a second and the test can assert *how man
 | parallel-stopping-one-leaves-the-other | Stopping one run does not stop the other sharing the pool |
 | parallel-second-start-of-the-same-type-is-refused | One tournament at a time: starting it twice is an error |
 
-## sprt (3 tests)
+## sprt (4 tests)
 
 | Name | Description |
 |---|---|
 | sprt-runs-to-the-game-limit | An undecidable SPRT test stops at `max_games` and reports it |
 | sprt-has-its-own-configuration | Configuring a tournament leaves the SPRT settings alone |
+| sprt-concurrency-survives-a-stop | An abrupt stop leaves the configured concurrency alone |
 | sprt-stop-while-running | A long SPRT test can be stopped from outside |
 
 ## persistence (4 tests)

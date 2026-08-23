@@ -144,6 +144,76 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
         },
         {
+            "name": "tournament-concurrency-survives-a-stop",
+            "description": "An abrupt stop leaves the configured concurrency alone",
+            "engines": PAIR,
+            "steps": [
+                # A regression test with a bug behind it: concurrency used to fall back to the
+                # clamp floor of 1 when a run was stopped, throwing away what had been set.
+                {"call": "configure_tournament",
+                 "args": _basic_configuration(games=100, time_control="2+0.1", concurrency=5),
+                 "id": "config"},
+                {"call": "start", "args": {"type": "tournament"}},
+                {"call": "stop", "args": {"type": "tournament", "mode": "abrupt"}, "id": "stop"},
+                {"wait": "tournament", "timeout": 120},
+                {"call": "get_status", "args": {"type": "tournament"}, "id": "after"},
+            ],
+            "validators": [
+                {"type": "content", "step": "config", "pattern": "Concurrency: 5"},
+                {"type": "ok", "step": "stop"},
+                {"type": "content", "step": "after", "pattern": "Concurrency: 5"},
+            ],
+        },
+        {
+            "name": "tournament-adjudication-settings",
+            "description": "The draw and resign adjudication fields arrive and are reported back",
+            "engines": PAIR,
+            "steps": [
+                {"call": "configure_tournament",
+                 "args": {"draw_mode": "active", "draw_min_full_moves": 60,
+                          "draw_required_consecutive_moves": 10,
+                          "draw_centipawn_threshold": 15},
+                 "id": "draw"},
+                {"call": "configure_tournament",
+                 "args": {"resign_mode": "test", "resign_required_consecutive_moves": 8,
+                          "resign_centipawn_threshold": 600, "resign_two_sided": True},
+                 "id": "resign"},
+                {"restart": True},
+                {"call": "get_status", "args": {"type": "tournament"}, "id": "after_restart"},
+            ],
+            "validators": [
+                {"type": "content", "step": "draw",
+                 "pattern": "min full moves=60, required consecutive moves=10, "
+                            "centipawn threshold=15"},
+                {"type": "content", "step": "resign",
+                 "pattern": "required consecutive moves=8, centipawn threshold=600, "
+                            "two-sided=yes"},
+                # Adjudication is a stored setting like any other, so it has to survive a restart.
+                {"type": "content", "step": "after_restart", "pattern": "min full moves=60"},
+                {"type": "content", "step": "after_restart", "pattern": "two-sided=yes"},
+            ],
+        },
+        {
+            "name": "tournament-closes-while-a-run-is-going",
+            "description": "The application shuts down properly with a tournament still playing",
+            "engines": PAIR,
+            "steps": [
+                # No stop, on purpose: the session's own shutdown has to cope with games in
+                # flight, which is what happens whenever somebody closes the window mid-run.
+                # Measured at around twenty seconds on this machine -- slow, but an end.
+                {"call": "configure_tournament",
+                 "args": _basic_configuration(games=100, time_control="2+0.1")},
+                {"call": "start", "args": {"type": "tournament"}},
+                {"state": True, "id": "state"},
+            ],
+            "validators": [
+                {"type": "stateField", "step": "state", "activity": "tournament",
+                 "field": "running", "expected": True},
+                # The verdict on the shutdown itself is the framework's: a session that had to be
+                # killed, or that ended with a non-zero code, fails the test it belonged to.
+            ],
+        },
+        {
             "name": "tournament-clear-result",
             "description": "Clearing takes the finished run's results away",
             "engines": PAIR,

@@ -122,10 +122,9 @@ namespace QaplaTest::SprtTournamentChatbot {
     void selectFirstEngineViaUI(ImGuiTestContext* ctx) {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
-        if (configs.empty()) {
-            ctx->LogWarning("No engines available to select");
-            return;
-        }
+        // See the same check in tournament-test-helpers.cpp: a helper that skips its work in
+        // silence turns a test into a report about nothing.
+        IM_CHECK(!configs.empty());
         
         // Check if first engine is already selected
         auto& sprtTournamentData = QaplaWindows::SprtTournamentData::instance();
@@ -152,10 +151,7 @@ namespace QaplaTest::SprtTournamentChatbot {
     void selectSecondEngineViaUI(ImGuiTestContext* ctx) {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
-        if (configs.size() < 2) {
-            ctx->LogWarning("Not enough engines available to select second");
-            return;
-        }
+        IM_CHECK(configs.size() >= 2);
         
         // Check if second engine is already selected
         auto& sprtTournamentData = QaplaWindows::SprtTournamentData::instance();
@@ -184,10 +180,7 @@ namespace QaplaTest::SprtTournamentChatbot {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
         
-        if (configs.size() < 2) {
-            ctx->LogWarning("Not enough engines for SPRT tournament");
-            return;
-        }
+        IM_CHECK(configs.size() >= 2);
 
         // Clear and setup tournament
         sprtTournamentData.clear();

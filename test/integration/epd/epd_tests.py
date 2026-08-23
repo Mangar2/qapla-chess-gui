@@ -67,6 +67,26 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
         },
         {
+            "name": "epd-concurrency-survives-a-stop",
+            "description": "An abrupt stop leaves the configured concurrency alone",
+            "engines": [ec.QAPLA],
+            "steps": [
+                {"call": "configure_epd",
+                 "args": {"engines": [ec.QAPLA], "epd_file": "{epd}",
+                          "max_time_seconds": 30, "min_time_seconds": 5, "concurrency": 5},
+                 "id": "config"},
+                {"call": "start", "args": {"type": "epd"}},
+                {"call": "stop", "args": {"type": "epd", "mode": "abrupt"}, "id": "stop"},
+                {"wait": "epd", "timeout": 120},
+                {"call": "get_status", "args": {"type": "epd"}, "id": "after"},
+            ],
+            "validators": [
+                {"type": "content", "step": "config", "pattern": "Concurrency: 5"},
+                {"type": "ok", "step": "stop"},
+                {"type": "content", "step": "after", "pattern": "Concurrency: 5"},
+            ],
+        },
+        {
             "name": "epd-needs-a-position-file",
             "description": "Starting without a position file is refused, with the reason",
             "engines": [ec.DIAG],
@@ -76,6 +96,33 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
             "validators": [
                 {"type": "failed", "step": "start"},
+            ],
+        },
+        {
+            "name": "epd-start-after-a-config-change-is-refused",
+            "description": "Re-analysing without clearing is refused, and the refusal says how",
+            "engines": [ec.QAPLA],
+            "steps": [
+                {"call": "configure_epd",
+                 "args": {"engines": [ec.QAPLA], "epd_file": "{epd}", "max_time_seconds": 2,
+                          "min_time_seconds": 0}},
+                {"call": "start", "args": {"type": "epd"}},
+                {"wait": "epd", "timeout": 120},
+                # Changed but not cleared: the results on screen were produced under the old
+                # setting, and re-running would silently mix the two.
+                {"call": "configure_epd", "args": {"max_time_seconds": 1}, "id": "change"},
+                {"call": "start", "args": {"type": "epd"}, "expect_ok": False, "id": "blocked"},
+                {"call": "clear_result", "args": {"type": "epd"}, "id": "clear"},
+                {"call": "start", "args": {"type": "epd"}, "id": "allowed"},
+                {"wait": "epd", "timeout": 120},
+            ],
+            "validators": [
+                {"type": "ok", "step": "change"},
+                {"type": "failed", "step": "blocked"},
+                # A refusal that names its own way out, rather than leaving the caller guessing.
+                {"type": "content", "step": "blocked", "pattern": "clear_result"},
+                {"type": "ok", "step": "clear"},
+                {"type": "ok", "step": "allowed"},
             ],
         },
         {

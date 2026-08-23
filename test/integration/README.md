@@ -31,6 +31,12 @@ missing, rather than failing test by test.
 
 The exit code is 0 only if every test passed, so a release script can gate on it.
 
+On a busy machine, pass `--timeout-scale 3`. The tests drive a real application playing real
+games, and several of its operations -- detecting an engine, starting a CLOP run -- run on the UI
+thread, so under load they can outlast the timeouts that are generous when the machine is idle.
+Three consecutive runs on an idle machine came out 52/52, 52/52 and, with heavy other work going
+on, 51/52.
+
 ## What each test does
 
 1. A fresh, empty configuration directory is made under `sandbox/<test name>/`.

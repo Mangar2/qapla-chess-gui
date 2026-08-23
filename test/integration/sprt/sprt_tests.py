@@ -70,6 +70,26 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
         },
         {
+            "name": "sprt-concurrency-survives-a-stop",
+            "description": "An abrupt stop leaves the configured concurrency alone",
+            "engines": [ec.DIAG, ec.DIAG_B],
+            "steps": [
+                {"call": "configure_sprt",
+                 "args": _sprt_configuration(max_games=1000, time_control="2+0.1",
+                                             concurrency=5),
+                 "id": "config"},
+                {"call": "start", "args": {"type": "sprt"}},
+                {"call": "stop", "args": {"type": "sprt", "mode": "abrupt"}, "id": "stop"},
+                {"wait": "sprt", "timeout": 120},
+                {"call": "get_status", "args": {"type": "sprt"}, "id": "after"},
+            ],
+            "validators": [
+                {"type": "content", "step": "config", "pattern": "Concurrency: 5"},
+                {"type": "ok", "step": "stop"},
+                {"type": "content", "step": "after", "pattern": "Concurrency: 5"},
+            ],
+        },
+        {
             "name": "sprt-stop-while-running",
             "description": "A long SPRT test can be stopped from outside",
             "engines": [ec.DIAG, ec.DIAG_B],

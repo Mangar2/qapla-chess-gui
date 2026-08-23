@@ -27,10 +27,6 @@
 #include "test-system/tutorial-test/engine-setup/tutorial-tests.h"
 #include "test-system/tutorial-test/board-window/tutorial-tests.h"
 #include "test-system/llm-chat-tests.h"
-#include "test-system/llm-tournament-tool-tests.h"
-#include "test-system/llm-sprt-tool-tests.h"
-#include "test-system/llm-epd-tool-tests.h"
-#include "test-system/llm-status-tool-tests.h"
 #include "test-system/llm-app-tool-tests.h"
 #include "os-helpers.h"
 #include <glad/glad.h>
@@ -81,10 +77,13 @@ namespace QaplaTest {
         registerEngineSetupTutorialTests(engine_);
         registerBoardWindowTutorialTests(engine_);
         registerLlmChatTests(engine_);
-        registerLlmTournamentToolTests(engine_);
-        registerLlmSprtToolTests(engine_);
-        registerLlmEpdToolTests(engine_);
-        registerLlmStatusToolTests(engine_);
+        // The tool suites for tournament, SPRT, EPD and the running-status overview used to sit
+        // here. They drove GuiToolRegistry::callTool from a worker thread while this loop drained
+        // the queue -- which is what test/integration does now, out of process and over HTTP,
+        // with a configuration directory of its own per test. Keeping both would have meant
+        // maintaining the same checks twice, and these were the part of this suite that did not
+        // report the same result twice running. What is left here is what only a window can be
+        // asked: the chat itself, and the tools that need a person in front of it.
         registerLlmAppToolTests(engine_);
 #endif
     }

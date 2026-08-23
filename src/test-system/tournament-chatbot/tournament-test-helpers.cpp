@@ -107,10 +107,10 @@ namespace QaplaTest::TournamentChatbot {
     void selectFirstEngineViaUI(ImGuiTestContext* ctx) {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
-        if (configs.empty()) {
-            ctx->LogWarning("No engines available to select");
-            return;
-        }
+        // A helper that quietly does nothing leaves the test that called it asserting on a
+        // state nobody set up -- which is how a suite comes to report success for work it never
+        // did. The engines are the caller's to provide.
+        IM_CHECK(!configs.empty());
         
         // Check if first engine is already selected
         auto& tournamentData = QaplaWindows::TournamentData::instance();
@@ -137,10 +137,7 @@ namespace QaplaTest::TournamentChatbot {
     void selectSecondEngineViaUI(ImGuiTestContext* ctx) {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
-        if (configs.size() < 2) {
-            ctx->LogWarning("Not enough engines available to select second");
-            return;
-        }
+        IM_CHECK(configs.size() >= 2);
         
         // Check if second engine is already selected
         auto& tournamentData = QaplaWindows::TournamentData::instance();
@@ -169,10 +166,7 @@ namespace QaplaTest::TournamentChatbot {
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
         auto configs = configManager.getAllConfigs();
         
-        if (configs.size() < 2) {
-            ctx->LogWarning("Not enough engines for tournament");
-            return;
-        }
+        IM_CHECK(configs.size() >= 2);
 
         // Clear and setup tournament
         tournamentData.clear(false);
