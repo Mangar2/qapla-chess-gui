@@ -132,7 +132,11 @@ class GuiSession:
                 "--remote-control-port=0",
                 f"--remote-control-token={self.token}",
             ],
-            cwd=str(REPO_ROOT),
+            # The sandbox, not the repository. Whatever the session and its engines drop next to
+            # the working directory -- the diagnostic engine writes a log per process -- lands
+            # there and is thrown away with it. Started from the repository root once, this left
+            # two and a half thousand log files in it.
+            cwd=str(self.config_dir),
             stdout=self._output_file,
             stderr=subprocess.STDOUT,
             env=environment,
