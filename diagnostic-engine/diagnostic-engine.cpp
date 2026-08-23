@@ -17,7 +17,9 @@
 #include <sstream>
 #include <csignal>
 #include <ctime>
+#include <cstdlib>
 #include <random>
+#include <stdexcept>
 #include <vector>
 #include <filesystem>
 #include <algorithm>
@@ -55,7 +57,45 @@ std::ofstream logFile;
 std::string logFileName;
 EngineMode engineMode = EngineMode::LOG;
 std::unique_ptr<GameState> gameState;
-std::mt19937 rng(std::random_device{}());
+
+/**
+ * @brief Builds the move-choice random source, seeded from QAPLA_DIAG_SEED when that is set.
+ *
+ * Random by default: a diagnostic engine that always played the same game would hide exactly the
+ * timing-dependent problems it exists to provoke. Seeded on request, because the other user of
+ * this engine is an automated test, and a test that wants to assert a result -- a final score, a
+ * PGN, an Elo table -- needs the same moves to come out every time. The variable is read from the
+ * environment rather than taken as an option so that a whole tournament can be made reproducible
+ * by setting it once, on the process that starts the engines.
+ */
+std::mt19937 makeRng() {
+    std::string seedText;
+#ifdef _MSC_VER
+    // The MSVC runtime deprecates std::getenv in favour of _dupenv_s, which hands out an owned
+    // buffer the caller has to release.
+    char* buffer = nullptr;
+    size_t length = 0;
+    if (_dupenv_s(&buffer, &length, "QAPLA_DIAG_SEED") == 0 && buffer != nullptr) {
+        seedText = buffer;
+        free(buffer);
+    }
+#else
+    if (const char* value = std::getenv("QAPLA_DIAG_SEED")) {
+        seedText = value;
+    }
+#endif
+
+    if (!seedText.empty()) {
+        try {
+            return std::mt19937(static_cast<std::mt19937::result_type>(std::stoul(seedText)));
+        } catch (const std::exception&) {
+            // An unreadable seed is a mistake in the caller, not a reason to refuse to play.
+        }
+    }
+    return std::mt19937(std::random_device{}());
+}
+
+std::mt19937 rng(makeRng());
 int moveCounter = 0; // Counter for LOSSONTIME mode
 
 // =============================================================================

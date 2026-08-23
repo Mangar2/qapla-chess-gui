@@ -19,6 +19,8 @@
 
 #include "remote-control-server.h"
 
+#include "../os-helpers.h"
+
 #include "activity-watch.h"
 #include "gui-tool-registry.h"
 #include "lm-studio-client.h"
@@ -31,8 +33,11 @@
 #include <atomic>
 #include <chrono>
 #include <ctime>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <optional>
+#include <system_error>
 #include <thread>
 
 namespace QaplaLlm {
@@ -103,6 +108,36 @@ namespace {
         return std::chrono::seconds(seconds);
     }
 
+    /**
+     * @brief Writes the bound port into the configuration directory, and says where.
+     *
+     * The stdout line above it is for a person reading a log. This file is for a program: a test
+     * harness that starts the GUI with --remote-control-port=0 has to learn which port it got,
+     * and stdout is not dependable for that -- on Windows the executable is a GUI subsystem
+     * binary, so a parent without a console gets nothing at all. The configuration directory is
+     * the natural place: the caller chose it with --config-dir, so it already knows where to
+     * look, and a fresh one per run means a leftover file from a killed session cannot be
+     * mistaken for this one's.
+     *
+     * @return The file written, or an empty path when it could not be.
+     */
+    std::filesystem::path writePortFile(int port) {
+        std::error_code error;
+        std::filesystem::path directory(QaplaHelpers::OsHelpers::getConfigDirectory());
+        std::filesystem::create_directories(directory, error);
+        if (error) {
+            return {};
+        }
+
+        auto path = directory / "remote-control.port";
+        std::ofstream out(path, std::ios::trunc);
+        if (!out) {
+            return {};
+        }
+        out << port << '\n';
+        return out ? path : std::filesystem::path{};
+    }
+
 } // namespace
 
 struct RemoteControlServer::Impl {
@@ -119,6 +154,12 @@ struct RemoteControlServer::Impl {
 
     RemoteControlOptions options;
     int boundPort = 0;
+
+    /** @brief Set by POST /shutdown, read by the frame loop -- see isShutdownRequested(). */
+    std::atomic<bool> shutdownRequested{false};
+
+    /** @brief The file the bound port was written to, so stop() can take it away again. */
+    std::filesystem::path portFile;
 
     mutable std::mutex entriesMutex;
     std::vector<RemoteCallEntry> entries;
@@ -275,6 +316,25 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         impl_->runTool("get_status", "{}", response);
     });
 
+    impl_->server.Post("/shutdown", [this](const httplib::Request& request, httplib::Response& response) {
+        if (!impl_->isAuthorized(request)) {
+            response.status = 401;
+            response.set_content(jsonError("Unauthorized."), "application/json");
+            return;
+        }
+
+        // Only a flag: the frame loop closes the window, on the UI thread, exactly as the close
+        // button does -- see isShutdownRequested(). Answering before that has happened is not a
+        // half-truth but the only honest thing available, since the connection dies with the
+        // process it is asking to end; the caller's real confirmation is the process exiting.
+        impl_->shutdownRequested.store(true, std::memory_order_release);
+
+        auto object = QaplaTester::Json::JsonValue::object();
+        object["ok"] = true;
+        object["content"] = std::string("Closing the application.");
+        response.set_content(object.stringify(), "application/json");
+    });
+
     // Bound here rather than inside the worker so a port that is already taken is an answer this
     // function can give, instead of a silent failure the user only notices by nothing responding.
     // Port 0 asks the OS for a free one; port() then reports which, so a caller that does not
@@ -287,6 +347,11 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         impl_->boundPort = 0;
         return false;
     }
+    impl_->portFile = writePortFile(impl_->boundPort);
+
+    // A new serving session starts without the previous one's shutdown request -- see
+    // isShutdownRequested(). Within one session the flag latches.
+    impl_->shutdownRequested.store(false, std::memory_order_release);
 
     impl_->workerFinished.store(false);
     impl_->worker = std::thread([this]() {
@@ -323,6 +388,14 @@ void RemoteControlServer::stop() {
     // window redraws during the wait below.
     impl_->boundPort = 0;
 
+    // Taken away with the channel it described. Failure is nothing to report: the file says
+    // where the server was, and the server is gone either way.
+    if (!impl_->portFile.empty()) {
+        std::error_code error;
+        std::filesystem::remove(impl_->portFile, error);
+        impl_->portFile.clear();
+    }
+
     // The join cannot simply be waited on, because this runs on the UI thread (the "End remote
     // control" button calls it) and so does GuiToolRegistry::processQueue(). A request that is
     // inside a tool handler right now is blocked in callTool(), waiting for this very thread to
@@ -351,6 +424,10 @@ bool RemoteControlServer::isRunning() const {
 
 int RemoteControlServer::port() const {
     return impl_->boundPort;
+}
+
+bool RemoteControlServer::isShutdownRequested() const {
+    return impl_->shutdownRequested.load(std::memory_order_acquire);
 }
 
 std::vector<RemoteCallEntry> RemoteControlServer::entries() const {

@@ -172,6 +172,13 @@ curl -H "Authorization: Bearer secret" http://127.0.0.1:8137/status
 | `POST /tools/<name>` | Body is the arguments object; answers `{"ok":…, "content":…}` once the GUI has actually done it. |
 | `GET /status` | Shortcut for `POST /tools/get_status` with no arguments. |
 | `GET /wait?type=<tournament\|sprt\|epd\|clop>[&timeout=<seconds>]` | Does not answer until that activity has stopped, then reports why (`finished`, `stopped`, `timeout`, `closed`, `not_running`) together with the full status, results included. Timeout defaults to 300 s and is clamped to 1…3600 s. |
+| `POST /shutdown` | Asks the application to close, exactly as the window's close button does — so what the session stored is written out properly. Not a tool: `close_application` stays local-only, because a caller watching the GUI has no business ending it, while a test harness does. |
+
+With `--remote-control-port=0` the operating system picks a free port. It is reported in two
+places: as a line on stdout (`QAPLA_REMOTE_CONTROL port=…`) for anyone reading a log, and in
+`remote-control.port` in the configuration directory for a program that has to read it back —
+stdout is not dependable for that on Windows, where the executable has no console unless it
+inherits one. The file is removed when the server stops.
 
 Tournaments, SPRT runs, EPD analysis and CLOP parameter tuning can all be started, watched and
 read back this way, while the window stays usable by hand.

@@ -285,7 +285,14 @@ namespace {
         // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
         // into the frame loop -- the remote control serves exactly those and nothing of its own.
         if (remoteControl.enabled) {
-            static_cast<void>(QaplaWindows::ChatBot::startRemoteControl(remoteControl));
+            if (QaplaWindows::ChatBot::startRemoteControl(remoteControl)) {
+                // For a person reading a log. A program that has to know the port reads
+                // remote-control.port in the configuration directory instead, which does not
+                // depend on there being a console to write to -- see RemoteControlServer.
+                std::cout << "QAPLA_REMOTE_CONTROL port="
+                          << QaplaLlm::RemoteControlServer::instance().port() << "\n"
+                          << std::flush;
+            }
         }
 
         auto* window = initGlfwContext();
@@ -390,6 +397,13 @@ namespace {
             glfwSwapBuffers(window);
             
             testManager.onPostSwap();
+
+            // Asked for over POST /shutdown, carried out here: the request arrives on a server
+            // thread, and ending the application is the UI thread's job -- same flag, same
+            // effect and same shutdown sequence as the window's close button.
+            if (QaplaLlm::RemoteControlServer::instance().isShutdownRequested()) {
+                glfwSetWindowShouldClose(window, 1);
+            }
 
             if (autoRunTests) {
                 ++autoRunFrameCount;

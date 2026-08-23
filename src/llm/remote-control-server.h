@@ -104,8 +104,18 @@ struct RemoteCallEntry {
  * - `GET /wait?type=<tournament|sprt|epd>[&timeout=<seconds>]` -- does not answer until that
  *   activity has stopped running, then reports why (`finished`, `stopped`, `timeout`, `closed`,
  *   `not_running`) together with the full status, results included. See ActivityWatch.
+ * - `POST /shutdown` -- asks the application to close, the same way the window's close button
+ *   does. Not a tool: `close_application` is deliberately local-only, because an AI watching the
+ *   GUI has no business ending it. A test harness does, and it needs the ordinary shutdown to
+ *   run so that what the session stored is actually written. See isShutdownRequested().
  *
  * Every call that reaches a tool is appended to the log, whether it succeeded or not.
+ *
+ * While it listens, the bound port is also written to `remote-control.port` in the configuration
+ * directory (QaplaHelpers::OsHelpers::getConfigDirectory()) and removed again by stop(). A caller
+ * that started the GUI with `--remote-control-port=0` and `--config-dir` therefore has a reliable
+ * way to learn the port it got, on every platform -- the line printed on stdout is for people
+ * reading a log, and on Windows there may not be a console to print it to.
  */
 class RemoteControlServer {
 public:
@@ -138,6 +148,17 @@ public:
 
     /** @brief The port actually bound, or 0 when not running. */
     [[nodiscard]] int port() const;
+
+    /**
+     * @brief Whether a caller has asked, over `POST /shutdown`, for the application to close.
+     *
+     * A flag rather than an action, and read by the frame loop, because closing has to happen on
+     * the UI thread: the request arrives on a server thread, and the subscribers of the message
+     * that ends the application touch state the UI thread draws from. Within one serving session
+     * it latches -- there is nothing to take back after asking an application to quit; start()
+     * begins the next session without it.
+     */
+    [[nodiscard]] bool isShutdownRequested() const;
 
     /** @brief A copy of the log, for the UI thread to draw. Cheap enough at this call volume. */
     [[nodiscard]] std::vector<RemoteCallEntry> entries() const;
