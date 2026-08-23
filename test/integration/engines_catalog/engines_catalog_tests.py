@@ -95,6 +95,7 @@ def get_tests() -> List[Dict[str, Any]]:
         {
             "name": "engines-real-engines-install",
             "description": "The two real engines install and are detected as UCI",
+            "allow_ui_stalls": "installing an engine detects it synchronously on the UI thread (Actions::installEngines -> autoDetectSync). Remove this line when that moves off the UI thread.",
             "engines": [ec.QAPLA, ec.SPIKE],
             "steps": [
                 {"call": "manage_engines", "args": {"command": "list"}, "id": "list"},

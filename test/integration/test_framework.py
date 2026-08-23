@@ -544,6 +544,19 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
             except Exception as error:
                 _fail(f"the application did not shut down cleanly: {error}")
                 passed = False
+            # What the UI thread did while the test drove it. A frame that takes longer than a
+            # twentieth of a second is a frame in which the window is not drawing and the tool
+            # queue is not being served -- so the application is answering nobody, the caller
+            # included. Every one of these is work that belongs on a thread of its own.
+            if session.stalls_seen:
+                message = (f"the UI thread stalled {session.stalls_seen}x, worst "
+                           f"{session.worst_frame_ms:.0f} ms in {session.worst_section or '?'}")
+                if test.get("allow_ui_stalls"):
+                    _info(f"[known] {message} -- {test['allow_ui_stalls']}")
+                else:
+                    _fail(message)
+                    passed = False
+
             if session.was_killed:
                 _fail("the application had to be killed -- it did not answer /shutdown")
                 passed = False

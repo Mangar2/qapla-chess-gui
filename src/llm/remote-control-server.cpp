@@ -20,6 +20,7 @@
 #include "remote-control-server.h"
 
 #include "../os-helpers.h"
+#include "../ui-thread-watch.h"
 
 #include "activity-watch.h"
 #include "gui-tool-registry.h"
@@ -230,6 +231,23 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         // truthful "the process is alive" even while the UI thread is busy with a long call.
         auto object = QaplaTester::Json::JsonValue::object();
         object["ok"] = true;
+
+        // And how alive: the frame timings ride along, for the same reason they can. A caller
+        // watching a long call can see whether the window is still drawing or has stopped, and a
+        // test can read afterwards whether anything blocked the UI thread and what it was. See
+        // QaplaWindows::UiThreadWatch.
+        auto watch = QaplaWindows::UiThreadWatch::instance().report();
+        auto frames = QaplaTester::Json::JsonValue::object();
+        frames["count"] = static_cast<double>(watch.frames);
+        frames["stalls"] = static_cast<double>(watch.stalls);
+        frames["stall_threshold_ms"] = static_cast<double>(
+            QaplaWindows::UiThreadWatch::STALL_THRESHOLD.count());
+        frames["worst_frame_ms"] = watch.worstFrameMs;
+        frames["worst_section"] = watch.worstSection;
+        frames["current_frame_ms"] = watch.currentFrameMs;
+        frames["current_section"] = watch.currentSection;
+        object["frames"] = frames;
+
         response.set_content(object.stringify(), "application/json");
     });
 

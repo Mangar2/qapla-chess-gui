@@ -76,6 +76,12 @@ class GuiSession:
         self.process: Optional[subprocess.Popen] = None
         self.remote: Optional[RemoteControl] = None
 
+        #: What the UI thread did, accumulated across restarts -- see collect_frame_report().
+        self.frames_seen = 0
+        self.stalls_seen = 0
+        self.worst_frame_ms = 0.0
+        self.worst_section = ""
+
         #: How the process ended, kept after it is gone.
         #:
         #: Read from the Popen object while it is still there. Asking it afterwards would ask
@@ -164,17 +170,26 @@ class GuiSession:
         )
 
     def _await_health(self) -> None:
+        """Waits until the window is actually drawing, not merely until the socket answers.
+
+        The server is started before the window exists, so /health answers first. A test that took
+        that as its cue was talking to an application that had not drawn a frame yet -- its first
+        tool call landed in the very first frame, together with everything the startup does. The
+        frame counter is the honest signal, and it costs nothing: it rides along on /health.
+        """
         deadline = time.monotonic() + START_TIMEOUT * self.timeout_scale
         last_error = ""
         while time.monotonic() < deadline:
             try:
-                if self.remote and self.remote.health().get("ok"):
+                answer = self.remote.health() if self.remote else {}
+                if answer.get("ok") and answer.get("frames", {}).get("count", 0) >= 1:
                     return
             except RemoteControlError as error:
                 last_error = str(error)
             time.sleep(0.05)
         self.kill()
-        raise GuiStartError(f"the remote control never answered ({last_error})\n{self.output_tail()}")
+        raise GuiStartError(
+            f"the window never drew a frame ({last_error})\n{self.output_tail()}")
 
     def stop(self) -> None:
         """Asks the application to close and waits for it; kills it only if that fails."""
@@ -182,6 +197,7 @@ class GuiSession:
             self._close_output()
             return
         if self.process.poll() is None:
+            self.collect_frame_report()
             try:
                 if self.remote:
                     self.remote.shutdown()
@@ -198,6 +214,18 @@ class GuiSession:
         self.process = None
         self.remote = None
         self._close_output()
+
+    def collect_frame_report(self) -> None:
+        """Takes the UI-thread report before the session is closed, since it dies with it."""
+        report = self.frame_report()
+        if not report:
+            return
+        self.frames_seen += int(report.get("count", 0))
+        if report.get("stalls"):
+            self.stalls_seen += int(report["stalls"])
+        if report.get("worst_frame_ms", 0) > self.worst_frame_ms:
+            self.worst_frame_ms = float(report["worst_frame_ms"])
+            self.worst_section = str(report.get("worst_section", ""))
 
     def restart(self) -> None:
         """Closes the application and starts it again on the same configuration directory.
@@ -258,6 +286,13 @@ class GuiSession:
 
     def state(self) -> Dict[str, Any]:
         return self._remote().state()
+
+    def frame_report(self) -> Dict[str, Any]:
+        """How the UI thread has been doing: frames, stalls, and the worst offender by name."""
+        try:
+            return self._remote().health().get("frames", {})
+        except RemoteControlError:
+            return {}
 
     def tool_names(self) -> List[str]:
         return self._remote().tool_names()

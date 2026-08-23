@@ -54,6 +54,21 @@ on, 51/52.
    session stored is really written. A sandbox is kept when the test failed and thrown away when
    it passed.
 
+**The UI thread is watched throughout.** A frame whose work takes longer than 50 ms — under 20
+frames a second — is a frame in which the window is not drawing and the tool queue is not being
+served, so the application is answering nobody. Every one of those is work that belongs on a
+thread of its own. Any test whose session stalls fails, and the failure names the culprit
+(`worst 43157 ms in tool:manage_engines`) rather than saying the GUI was slow.
+
+A test that runs into a stall which is known and not yet fixed says so in one line:
+
+```python
+"allow_ui_stalls": "installing an engine detects it synchronously on the UI thread ...",
+```
+
+Those lines are the list of what is still to be fixed. There are three of them, all the same
+cause. Deleting them is how the fix gets checked.
+
 Two properties are the reason for that shape:
 
 * **Nothing reaches your own configuration.** Every session runs out of its own directory, and the

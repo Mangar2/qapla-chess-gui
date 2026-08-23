@@ -19,6 +19,8 @@
 
 #include "gui-tool-registry.h"
 
+#include "../ui-thread-watch.h"
+
 #include <algorithm>
 
 namespace QaplaLlm {
@@ -195,6 +197,9 @@ void GuiToolRegistry::processQueue() {
         }
 
         GuiToolResult result;
+        // Named so that a frame spent inside this handler is reported as this tool rather than as
+        // "the GUI was slow" -- see QaplaWindows::UiThreadWatch.
+        QaplaWindows::UiThreadWatch::Section section("tool:" + call.name);
         try {
             result = handler(arguments);
         } catch (const std::exception& ex) {

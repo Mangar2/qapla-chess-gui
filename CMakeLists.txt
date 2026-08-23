@@ -241,6 +241,7 @@ if(QAPLA_BUILD_UNIT_TESTS)
       src/llm/llm-chat-logger.cpp
       src/llm/llm-finetuning-writer.cpp
       src/os-helpers.cpp
+      src/ui-thread-watch.cpp
     )
 
     # os-helpers.cpp leaves the macOS specific parts to os-helpers-apple.cpp

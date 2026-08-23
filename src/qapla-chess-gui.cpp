@@ -54,6 +54,7 @@
 #include "imgui-frame-rate-limiter.h"
 #include "os-helpers.h"
 #include "command-line.h"
+#include "ui-thread-watch.h"
 
 #include <filesystem>
 #include <iostream>
@@ -384,17 +385,30 @@ namespace {
             // so it can access ImGuiIO for activity detection
             frameRateLimiter.waitForNextFrame();
 
-            QaplaWindows::StaticCallbacks::poll().invokeAll();
+            // From here to the end of the loop body is work. The waiting above is deliberate --
+            // it keeps the GUI from spinning -- and counting it would hide the thing being
+            // looked for: a frame that takes long because something on this thread would not let
+            // go. See QaplaWindows::UiThreadWatch.
+            QaplaWindows::UiThreadWatch::instance().frameBegin();
 
-            workspace.draw();
-			QaplaWindows::SnackbarManager::instance().draw();
+            {
+                QaplaWindows::UiThreadWatch::Section section("poll");
+                QaplaWindows::StaticCallbacks::poll().invokeAll();
+            }
 
-            testManager.drawDebugWindows();
+            {
+                QaplaWindows::UiThreadWatch::Section section("draw");
+                workspace.draw();
+                QaplaWindows::SnackbarManager::instance().draw();
+                testManager.drawDebugWindows();
+            }
 
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-            glfwSwapBuffers(window);
+            {
+                QaplaWindows::UiThreadWatch::Section section("render");
+                ImGui::Render();
+                ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+                glfwSwapBuffers(window);
+            }
             
             testManager.onPostSwap();
 
@@ -421,7 +435,12 @@ namespace {
                 }
             }
 
-            QaplaWindows::StaticCallbacks::autosave().invokeAll();
+            {
+                QaplaWindows::UiThreadWatch::Section section("autosave");
+                QaplaWindows::StaticCallbacks::autosave().invokeAll();
+            }
+
+            QaplaWindows::UiThreadWatch::instance().frameEnd();
         }
 
         // Before the windows go: a handler still waiting on the tool queue would be waiting on a

@@ -167,7 +167,7 @@ curl -H "Authorization: Bearer secret" http://127.0.0.1:8137/status
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /health` | Answers `{"ok":true}` without touching the GUI, so "the app is up" can be told from "the app is busy". The only endpoint that works without the token. |
+| `GET /health` | Answers `{"ok":true}` without touching the GUI, so "the app is up" can be told from "the app is busy". The only endpoint that works without the token. It also carries `frames`: how many frames the window has drawn, how many of them took longer than 50 ms (20 fps), the worst one and what the UI thread was busy with — and, for a caller watching a long call, how long the frame running right now has been going. |
 | `GET /tools` | The available tools, in the same OpenAI function-calling shape the local chat uses. |
 | `POST /tools/<name>` | Body is the arguments object; answers `{"ok":…, "content":…}` once the GUI has actually done it. |
 | `GET /status` | Shortcut for `POST /tools/get_status` with no arguments. |
