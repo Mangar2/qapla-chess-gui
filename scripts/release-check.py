@@ -29,6 +29,14 @@ from typing import Dict, List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+#: The preset that carries the ImGui Test Engine, per build configuration.
+#:
+#: The GUI suites are compiled in only when QAPLA_WITH_TEST_ENGINE is on, and it is off in both
+#: ordinary presets. Running the plain binary with QAPLA_AUTO_RUN_TESTS set does not fail loudly,
+#: it reports nothing tested -- which this check treats as a failure, correctly, but for a reason
+#: that would take a while to work out.
+GUI_TEST_PRESET = {"default": "test", "release": "releasetest"}
+
 
 def executable(name: str) -> str:
     return f"{name}.exe" if platform.system() == "Windows" else name
@@ -38,6 +46,18 @@ def format_duration(seconds: float) -> str:
     if seconds < 60:
         return f"{seconds:.1f}s"
     return f"{int(seconds // 60)}m {seconds % 60:.0f}s"
+
+
+def ensure_configured(preset: str) -> bool:
+    """Runs `cmake --preset` when that preset has no build directory yet.
+
+    So that asking for the release check does not first require knowing which presets it uses.
+    """
+    if (REPO_ROOT / "build" / preset / "CMakeCache.txt").is_file():
+        return True
+    print(f"  configuring preset '{preset}' (no build directory yet)", flush=True)
+    completed = subprocess.run(["cmake", "--preset", preset], cwd=str(REPO_ROOT), check=False)
+    return completed.returncode == 0
 
 
 def run_stage(number: int, title: str, command: List[str],
@@ -52,7 +72,14 @@ def run_stage(number: int, title: str, command: List[str],
     started = time.monotonic()
     merged = dict(os.environ)
     merged.update(environment or {})
-    completed = subprocess.run(command, cwd=str(REPO_ROOT), env=merged, check=False)
+    try:
+        completed = subprocess.run(command, cwd=str(REPO_ROOT), env=merged, check=False)
+    except OSError as error:
+        # A missing binary is a failed stage with a reason, not a stack trace. It is also a real
+        # possibility: `cmake --build` builds the default target set, and a test executable that
+        # is in it can still be absent from a build directory configured before it existed.
+        print(f"-- {title}: FAILED, could not run it: {error}", file=sys.stderr)
+        return False
     runtime = format_duration(time.monotonic() - started)
 
     if completed.returncode == 0:
@@ -64,13 +91,22 @@ def run_stage(number: int, title: str, command: List[str],
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build and run every test layer before a release")
-    parser.add_argument("--config", default="default",
-                        help="build configuration to check (default, release)")
+    parser.add_argument("--config", default="release",
+                        help="build configuration to check: 'release' (the default -- a release "
+                             "check should check what ships) or 'default' for the debug build")
     parser.add_argument("--skip-gui", action="store_true",
                         help="leave out the on-screen GUI suite")
     arguments = parser.parse_args()
 
     build_dir = REPO_ROOT / "build" / arguments.config
+    gui_preset = GUI_TEST_PRESET.get(arguments.config, "test")
+
+    if not ensure_configured(arguments.config):
+        print(f"Could not configure preset '{arguments.config}'.", file=sys.stderr)
+        return 1
+    if not arguments.skip_gui and not ensure_configured(gui_preset):
+        print(f"Could not configure preset '{gui_preset}'.", file=sys.stderr)
+        return 1
 
     with tempfile.TemporaryDirectory(prefix="qapla-release-check-") as scratch:
         stages = [
@@ -87,9 +123,15 @@ def main() -> int:
             # Last, because it is the slowest and, today, the least steady of the three: a full
             # run does not always report the same number of tests. Still a gate, with --skip-gui
             # as the deliberate way past it rather than a quiet exclusion.
+            #
+            # Its own build, because the suites are only compiled in with QAPLA_WITH_TEST_ENGINE.
+            gui_build_dir = REPO_ROOT / "build" / gui_preset
+            stages.append((
+                f"Build with the test engine ({gui_preset})",
+                ["cmake", "--build", "--preset", gui_preset], None))
             stages.append((
                 "GUI tests (ImGui Test Engine)",
-                [str(build_dir / executable("qapla")),
+                [str(gui_build_dir / executable("qapla")),
                  f"--config-dir={Path(scratch) / 'gui-tests'}"],
                 {"QAPLA_AUTO_RUN_TESTS": "1"},
             ))

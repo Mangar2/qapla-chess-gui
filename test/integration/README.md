@@ -24,6 +24,10 @@ saying the same thing, and two files that have to agree eventually stop agreeing
 without a desktop session the runner starts itself again under `xvfb-run`, since the tests really
 do open a window.
 
+`--config` picks the build: `default` (debug) unless told otherwise, `release` for what ships.
+Both were measured across a full run -- 52/52 in 5m27s on debug, and the same suite on release is
+no faster, because what the slow tests spend their time on is protocol timeouts, not computation.
+
 Before the first run, build the project (`cmake --build --preset default`): the GUI and the
 diagnostic engines are build output. The two real engines, `Qapla` and `SpikeEngine`, are
 expected in `engines/` at the top of the repository; the runner says so up front if any engine is

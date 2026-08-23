@@ -266,8 +266,14 @@ running them never changes — and never depends on — the configuration you wo
 | GUI | What only mouse and keyboard can check: board, dialogs, tutorial | `QAPLA_AUTO_RUN_TESTS=1 ./build/default/qapla --config-dir=<a directory of its own>` |
 
 ```bash
-python3 scripts/release-check.py   # build, then all three, stopping at the first failure
+python3 scripts/release-check.py                 # release build: all three, first failure stops it
+python3 scripts/release-check.py --config default  # the debug build instead
 ```
+
+The release check builds the **release** configuration by default, because that is what ships.
+The GUI suites need `QAPLA_WITH_TEST_ENGINE`, which neither ordinary preset sets, so that stage
+builds and runs the matching `releasetest` (or `test`) preset; presets without a build directory
+are configured on the way.
 
 Every one of them reports its verdict through the exit code, so a release script can gate on it
 instead of reading output. The integration suite has a
