@@ -19,14 +19,65 @@
 
 #pragma once
 
+#include "chatbot-step.h"
 #include "chatbot-thread.h"
 
-#include "../llm/remote-control-server.h"
+#include "../callback-manager.h"
+#include "../remote-call-entry.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
+#include <vector>
 
 namespace QaplaWindows::ChatBot {
+
+/**
+ * @brief One call from outside, shown as a step that holds its own content.
+ *
+ * Exactly what ChatbotStepSnackbarMessage is for a captured snackbar: the text belongs to the
+ * step, in the window, and nowhere else. Nothing keeps a log to be read back -- the entry arrived
+ * once and lives here from then on.
+ */
+class ChatbotStepRemoteCall : public ChatbotStep {
+public:
+    explicit ChatbotStepRemoteCall(RemoteCallEntry entry);
+
+    [[nodiscard]] std::string draw() override;
+
+private:
+    RemoteCallEntry entry_;
+};
+
+/**
+ * @brief Collects calls announced on StaticCallbacks::remoteCall() and turns them into steps.
+ *
+ * The same shape as SnackbarCapture, with one difference that matters: those arrive on the UI
+ * thread, these do not -- the channel fires on whichever thread answered the call. So what comes
+ * in is parked under a lock and picked up in draw(), which is on the UI thread by definition.
+ */
+class RemoteCallCapture {
+public:
+    ~RemoteCallCapture() = default;
+
+    RemoteCallCapture() = default;
+    RemoteCallCapture(const RemoteCallCapture&) = delete;
+    RemoteCallCapture& operator=(const RemoteCallCapture&) = delete;
+
+    /** @brief Starts listening. Calls announced from now on become steps. */
+    void install();
+
+    /** @brief Stops listening. Anything already collected stays where it is. */
+    void uninstall();
+
+    /** @brief Appends a step for everything collected since the last call. */
+    void appendCapturedSteps(std::vector<std::unique_ptr<ChatbotStep>>& steps);
+
+private:
+    mutable std::mutex mutex_;
+    std::vector<RemoteCallEntry> pending_;
+    std::unique_ptr<Callback::UnregisterHandle> handle_;
+};
 
 /**
  * @brief The log of everything the remote control has done, shown while it is active.
@@ -34,8 +85,12 @@ namespace QaplaWindows::ChatBot {
  * Looks like the AI chat and is not it: there is no input field, because the other side of this
  * conversation is not in the room. What it does have is the same rendering, tables included -- a
  * result the caller received as text is drawn here as the real ImGuiTable (see
- * QaplaLlm::RemoteCallEntry::renderWidget), so one call answers the caller and shows the user at
- * the same time.
+ * RemoteCallEntry::renderWidget), so one call answers the caller and shows the user at the same
+ * time.
+ *
+ * It knows nothing about how those calls arrive. There is no HTTP here, no server, no port to ask
+ * -- the port is text it was handed when it was made, and the calls are announcements it
+ * registered for. Ending the remote control is a message it sends, not a function it calls.
  *
  * While it runs it is the only thread the ChatbotWindow offers (see
  * ChatbotWindow::setExclusiveThread): one steering wheel at a time, and it is the remote one.
@@ -47,6 +102,12 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotRemoteControl : public ChatbotThread {
 public:
+    /** @brief The message that ends the remote control, sent when the button is pressed. */
+    static constexpr const char* END_MESSAGE = "end_remote_control";
+
+    explicit ChatbotRemoteControl(int port = 0);
+    ~ChatbotRemoteControl() override = default;
+
     [[nodiscard]] std::string getTitle() const override {
         return "Remote Control";
     }
@@ -57,21 +118,12 @@ public:
     [[nodiscard]] std::unique_ptr<ChatbotThread> clone() const override;
 
 private:
-    /** @brief Draws one logged call: its heading line, then its result or its live table. */
-    static void drawEntry(const QaplaLlm::RemoteCallEntry& entry);
-
+    int port_;
+    bool ended_ = false;
     bool finished_ = false;
-};
 
-/**
- * @brief Starts the remote control and makes its log the only thing the chatbot panel offers.
- *
- * Reports failure to the user through the snackbar (an occupied port is the realistic case) and
- * leaves the GUI in its ordinary state, since a GUI nobody can reach from outside is still a
- * perfectly good GUI.
- *
- * @return Whether the server is now listening.
- */
-bool startRemoteControl(const QaplaLlm::RemoteControlOptions& options);
+    RemoteCallCapture capture_;
+    std::vector<std::unique_ptr<ChatbotStep>> steps_;
+};
 
 } // namespace QaplaWindows::ChatBot

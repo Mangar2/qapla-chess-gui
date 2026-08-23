@@ -19,6 +19,7 @@
 
 #include "remote-control-server.h"
 
+#include "../callback-manager.h"
 #include "../os-helpers.h"
 #include "../ui-thread-watch.h"
 
@@ -48,8 +49,6 @@ namespace {
     constexpr const char* LOOPBACK = "127.0.0.1";
 
     /** @brief Keeps the on-screen log from growing without bound over a long session. */
-    constexpr std::size_t MAX_LOG_ENTRIES = 500;
-
     [[nodiscard]] std::string localTimeText() {
         auto now = std::chrono::system_clock::now();
         auto asTime = std::chrono::system_clock::to_time_t(now);
@@ -162,17 +161,6 @@ struct RemoteControlServer::Impl {
     /** @brief The file the bound port was written to, so stop() can take it away again. */
     std::filesystem::path portFile;
 
-    mutable std::mutex entriesMutex;
-    std::vector<RemoteCallEntry> entries;
-
-    void appendEntry(RemoteCallEntry entry) {
-        std::scoped_lock lock(entriesMutex);
-        entries.push_back(std::move(entry));
-        if (entries.size() > MAX_LOG_ENTRIES) {
-            entries.erase(entries.begin(), entries.begin() + (entries.size() - MAX_LOG_ENTRIES));
-        }
-    }
-
     [[nodiscard]] bool isAuthorized(const httplib::Request& request) const {
         if (options.token.empty()) {
             return true;
@@ -194,12 +182,15 @@ struct RemoteControlServer::Impl {
         auto result =
             GuiToolRegistry::instance().callTool(name, argumentsJson, CallOrigin::Remote);
 
-        appendEntry(RemoteCallEntry{.time = localTimeText(),
-            .toolName = name,
-            .arguments = argumentsJson,
-            .success = result.success,
-            .content = result.content,
-            .renderWidget = result.renderWidget});
+        // Told, not stored. Whoever wants to show this registered for it; this server has no
+        // idea whether anybody did, and no log of its own to keep in step.
+        QaplaWindows::StaticCallbacks::remoteCall().invokeAll(
+            QaplaWindows::RemoteCallEntry{.time = localTimeText(),
+                .toolName = name,
+                .arguments = argumentsJson,
+                .success = result.success,
+                .content = result.content,
+                .renderWidget = result.renderWidget});
 
         auto object = QaplaTester::Json::JsonValue::object();
         object["ok"] = result.success;
@@ -474,11 +465,6 @@ int RemoteControlServer::port() const {
 
 bool RemoteControlServer::isShutdownRequested() const {
     return impl_->shutdownRequested.load(std::memory_order_acquire);
-}
-
-std::vector<RemoteCallEntry> RemoteControlServer::entries() const {
-    std::scoped_lock lock(impl_->entriesMutex);
-    return impl_->entries;
 }
 
 } // namespace QaplaLlm

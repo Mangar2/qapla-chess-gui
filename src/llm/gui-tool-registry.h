@@ -61,6 +61,19 @@ struct GuiToolResult {
     std::function<void()> renderWidget{};
 
     /**
+     * @brief Work to run on the calling thread before the answer is complete.
+     *
+     * Carried over from Actions::ActionResult, and handled by callTool(): it runs this on the
+     * thread that made the call, then queues `continuation` back to the UI thread. That is how a
+     * tool can wait for something without the window standing still while it does -- see
+     * Actions::ActionResult::awaitOffUiThread for why that matters.
+     */
+    std::function<void()> awaitOffUiThread{};
+
+    /** @brief Completes the answer after awaitOffUiThread, back on the UI thread. */
+    std::function<GuiToolResult()> continuation{};
+
+    /**
      * @brief Ends the agent turn right after this call, skipping any further model round-trip.
      *
      * `content` still reaches the user exactly as usual, via the normal tool-result chat entry
@@ -231,6 +244,9 @@ private:
         std::string name;
         std::string argumentsJson;
         std::promise<GuiToolResult> resultPromise;
+
+        /** @brief A continuation to run as-is, instead of looking a tool up by name. */
+        std::function<GuiToolResult()> direct;
     };
 
     mutable std::mutex toolsMutex_;

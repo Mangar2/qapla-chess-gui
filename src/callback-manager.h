@@ -30,6 +30,8 @@
 
 #include <chess-game/game-record.h>
 
+#include "remote-call-entry.h"
+
 namespace QaplaWindows {
 
 namespace Callback {
@@ -323,6 +325,21 @@ public:
 
     static Callback::Manager<const QaplaTester::GameRecord&>& gameUpdated() {
         static Callback::Manager<const QaplaTester::GameRecord&> instance;
+        return instance;
+    }
+
+    /**
+     * @brief One call that arrived from outside, for whoever wants to show or record it.
+     *
+     * Kept separate from message() and from the snackbar on purpose. The snackbar's job is to
+     * put a message in front of the user; sending call after call through it would pop one up
+     * for every single one. This is a report to whoever asked for it, and nobody else.
+     *
+     * Invoked from the thread that answered the call, which is not the UI thread -- a subscriber
+     * collects and draws on its own terms (see ChatBot::RemoteCallCapture).
+     */
+    static Callback::Manager<const RemoteCallEntry&>& remoteCall() {
+        static Callback::Manager<const RemoteCallEntry&> instance;
         return instance;
     }
   

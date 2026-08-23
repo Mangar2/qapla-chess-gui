@@ -85,6 +85,12 @@ void ChatbotWindow::clearExclusiveThread() {
     resetToMainMenu();
 }
 
+void ChatbotWindow::releaseThreads() {
+    exclusiveThread_.reset();
+    activeThread_.reset();
+    mainMenuStep_.reset();
+}
+
 void ChatbotWindow::startThread(const ChatbotThread& threadPrototype) {
     activeThread_ = threadPrototype.clone();
     activeThread_->start();

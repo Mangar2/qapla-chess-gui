@@ -47,7 +47,7 @@
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
 #include "chatbot/chatbot-window.h"
-#include "chatbot/chatbot-remote-control.h"
+#include "llm/remote-control-integration.h"
 #include "llm/llm-chat-integration.h"
 #include "llm/remote-control-server.h"
 #include "data/logo-data.h"
@@ -286,7 +286,7 @@ namespace {
         // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
         // into the frame loop -- the remote control serves exactly those and nothing of its own.
         if (remoteControl.enabled) {
-            if (QaplaWindows::ChatBot::startRemoteControl(remoteControl)) {
+            if (QaplaLlm::startRemoteControl(remoteControl)) {
                 // For a person reading a log. A program that has to know the port reads
                 // remote-control.port in the configuration directory instead, which does not
                 // depend on there being a console to write to -- see RemoteControlServer.
@@ -446,6 +446,13 @@ namespace {
         // Before the windows go: a handler still waiting on the tool queue would be waiting on a
         // UI thread that is no longer running one.
         QaplaLlm::RemoteControlServer::instance().stop();
+
+        // And before anything static goes: whatever the chatbot window is holding has to let go
+        // of its callback registrations here, while the callback managers are still alive. A
+        // subscription released during static destruction reaches a manager whose mutex has
+        // already been destroyed -- which does not fail quietly, it aborts the process on the
+        // way out. Torn down deliberately at a known point instead.
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->releaseThreads();
 
         testManager.stop();
         shutdownImGui();

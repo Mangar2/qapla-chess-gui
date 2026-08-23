@@ -146,9 +146,19 @@ std::string remedyInstruction(Actions::Remedy remedy) {
 }
 
 GuiToolResult toGuiToolResult(Actions::ActionResult result) {
-    return GuiToolResult{.success = result.ok,
+    GuiToolResult converted{.success = result.ok,
         .content = std::move(result.text) + remedyInstruction(result.remedy),
         .renderWidget = std::move(result.widget), .terminal = result.endsTurn};
+
+    // An action that handed its waiting back (see ActionResult::awaitOffUiThread) carries its
+    // continuation over as well, converted the same way when it eventually runs.
+    if (result.awaitOffUiThread) {
+        converted.awaitOffUiThread = std::move(result.awaitOffUiThread);
+        converted.continuation = [step = std::move(result.continuation)]() -> GuiToolResult {
+            return step ? toGuiToolResult(step()) : GuiToolResult{};
+        };
+    }
+    return converted;
 }
 
 } // namespace QaplaLlm::Api::Detail

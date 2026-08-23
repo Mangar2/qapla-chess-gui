@@ -76,6 +76,18 @@ public:
     /** @brief Ends exclusive mode and restores the normal menu. Safe to call when not in it. */
     void clearExclusiveThread();
 
+    /**
+     * @brief Lets go of every thread it holds. Only for shutting the application down.
+     *
+     * Separate from clearExclusiveThread() because that one is called from inside the running
+     * thread's own draw(), where destroying it would pull the ground from under the call. This
+     * one must be called from outside any draw, once, on the way out -- while the callback
+     * managers are still alive. A thread that releases a subscription during static destruction
+     * reaches a manager whose mutex has already gone, and that aborts the process instead of
+     * failing quietly.
+     */
+    void releaseThreads();
+
 private:
     /**
      * @brief Starts a new instance of the given thread prototype.

@@ -291,6 +291,26 @@ struct ActionResult {
 
     /** @brief What would have to be done differently, when this failed and there is a way out. */
     Remedy remedy = Remedy::None;
+
+    /**
+     * @brief Work that must not happen on the UI thread, and what to do once it is done.
+     *
+     * The GUI does its work asynchronously everywhere: a button starts something and returns, and
+     * the frame loop only ever displays. An action that waits instead -- for an engine to answer,
+     * for a run to wind down -- stops the window drawing and stops the tool queue being served,
+     * so the application answers nobody for as long as it takes. Detecting a single engine that
+     * never replies costs three quarters of a minute that way.
+     *
+     * So an action that needs to wait does not wait. It starts the work, hands the waiting back
+     * here, and says what to do afterwards: `awaitOffUiThread` runs on the thread that made the
+     * call -- which is waiting anyway, and is the right place for it -- and `continuation` then
+     * runs on the UI thread to finish the answer. Two short visits to the UI thread, with the
+     * long part in between on somebody else's.
+     */
+    std::function<void()> awaitOffUiThread{};
+
+    /** @brief Completes the answer after awaitOffUiThread; runs on the UI thread. */
+    std::function<ActionResult()> continuation{};
 };
 
 /** @brief Convenience for a successful ActionResult carrying only text. */

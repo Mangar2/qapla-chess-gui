@@ -21,6 +21,7 @@
 
 #include "llm/gui-tool-registry.h"
 #include "llm/remote-control-server.h"
+#include "callback-manager.h"
 #include "os-helpers.h"
 
 #include <httplib.h>
@@ -29,6 +30,8 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -182,6 +185,16 @@ TEST_CASE("RemoteControlServer runs a tool on the UI thread and reports its real
     ensureProbeToolRegistered();
     RunningServer server{""};
 
+    // Registered before the call, exactly as the window does it.
+    std::optional<QaplaWindows::RemoteCallEntry> announced;
+    std::mutex announcedMutex;
+    auto subscription = QaplaWindows::StaticCallbacks::remoteCall().registerCallback(
+        [&](const QaplaWindows::RemoteCallEntry& entry) {
+            // The channel fires on whichever thread answered the call, not this one.
+            std::scoped_lock lock(announcedMutex);
+            announced = entry;
+        });
+
     auto response = requestWhilePolling([&]() {
         return server.client().Post(
             std::string("/tools/") + PROBE_TOOL, R"({"text":"hello"})", "application/json");
@@ -192,15 +205,14 @@ TEST_CASE("RemoteControlServer runs a tool on the UI thread and reports its real
     REQUIRE(response->body.find("probe:hello") != std::string::npos);
     REQUIRE(response->body.find("\"ok\":true") != std::string::npos);
 
-    // The same call has to be visible to the user, not just to the caller -- that is the whole
-    // point of the mode (see ChatbotRemoteControl).
-    auto entries = RemoteControlServer::instance().entries();
-    REQUIRE_FALSE(entries.empty());
-    const auto& last = entries.back();
-    REQUIRE(last.toolName == PROBE_TOOL);
-    REQUIRE(last.success);
-    REQUIRE(last.content == "probe:hello");
-    REQUIRE(last.arguments.find("hello") != std::string::npos);
+    // The same call has to reach whoever is showing it, not just the caller -- that is the whole
+    // point of the mode (see ChatbotRemoteControl). Checked by listening the way that window
+    // does, because that is the whole of the contract: the server keeps no log to read back.
+    REQUIRE(announced.has_value());
+    REQUIRE(announced->toolName == PROBE_TOOL);
+    REQUIRE(announced->success);
+    REQUIRE(announced->content == "probe:hello");
+    REQUIRE(announced->arguments.find("hello") != std::string::npos);
 }
 
 TEST_CASE("RemoteControlServer rejects an unknown tool by name", "[llm][remote-control]") {

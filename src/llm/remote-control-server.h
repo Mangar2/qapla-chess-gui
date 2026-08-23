@@ -19,12 +19,8 @@
 
 #pragma once
 
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
-#include <vector>
 
 /**
  * @file
@@ -68,28 +64,6 @@ struct RemoteControlOptions {
     std::string token;
 };
 
-/**
- * @brief One executed call, kept for the on-screen log.
- *
- * `renderWidget` is the same live control the local chat would show (see
- * GuiToolResult::renderWidget): built on the UI thread inside the tool handler, carried through
- * here as an inert std::function, and invoked back on the UI thread every frame it stays visible.
- * This is what lets one call answer twice -- the table goes to the screen, the text goes down the
- * wire -- rather than forcing a choice between the two.
- */
-struct RemoteCallEntry {
-    /** @brief Wall-clock time the call was answered, "19:43:41". */
-    std::string time;
-
-    std::string toolName;
-
-    /** @brief The raw arguments object as received, for the log line. */
-    std::string arguments;
-
-    bool success = true;
-    std::string content;
-    std::function<void()> renderWidget;
-};
 
 /**
  * @brief The HTTP server, its worker thread, and the log of what has been called.
@@ -109,7 +83,10 @@ struct RemoteCallEntry {
  *   GUI has no business ending it. A test harness does, and it needs the ordinary shutdown to
  *   run so that what the session stored is actually written. See isShutdownRequested().
  *
- * Every call that reaches a tool is appended to the log, whether it succeeded or not.
+ * Every call that reaches a tool is announced on StaticCallbacks::remoteCall(), whether it
+ * succeeded or not. The server keeps no log of its own: whoever wants to show one registers for
+ * it and keeps its own -- so the window that displays these calls need not know that they arrive
+ * over HTTP, and this server need not know that anything is displaying them.
  *
  * While it listens, the bound port is also written to `remote-control.port` in the configuration
  * directory (QaplaHelpers::OsHelpers::getConfigDirectory()) and removed again by stop(). A caller
@@ -159,9 +136,6 @@ public:
      * begins the next session without it.
      */
     [[nodiscard]] bool isShutdownRequested() const;
-
-    /** @brief A copy of the log, for the UI thread to draw. Cheap enough at this call volume. */
-    [[nodiscard]] std::vector<RemoteCallEntry> entries() const;
 
 private:
     RemoteControlServer();
