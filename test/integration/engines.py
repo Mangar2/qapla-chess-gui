@@ -106,6 +106,24 @@ def _materialize(source: Path, target_name: Optional[str] = None) -> Path:
     return target
 
 
+def surviving_engine_processes() -> List[str]:
+    """Engines from this suite's directory that are still running.
+
+    A leak detector, and it has caught one: an engine orphaned by a killed GUI does not idle, it
+    sits at a full core. One went unnoticed for an hour and a quarter and was the real reason a
+    run took half again as long as the one before it and started timing out.
+    """
+    if platform.system() == "Windows":
+        return []  # tasklist gives no command line; not worth a WMI dependency for a warning
+    try:
+        listing = subprocess.run(["ps", "-Ao", "pid=,command="], capture_output=True, text=True,
+                                 check=False, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return []
+    marker = str(SUITE_ENGINES_DIR)
+    return [line.strip() for line in listing.splitlines() if marker in line]
+
+
 class EngineCatalog:
     """The engine binaries available to a run, by the catalog name the tests use."""
 

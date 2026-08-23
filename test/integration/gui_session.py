@@ -18,6 +18,7 @@ calls in each test:
 
 import os
 import platform
+import signal
 import subprocess
 import time
 from pathlib import Path
@@ -74,6 +75,13 @@ class GuiSession:
         self.timeout_scale = max(1.0, timeout_scale)
         self.process: Optional[subprocess.Popen] = None
         self.remote: Optional[RemoteControl] = None
+
+        #: How the process ended, kept after it is gone.
+        #:
+        #: Read from the Popen object while it is still there. Asking it afterwards would ask
+        #: nothing at all, and "nothing" is indistinguishable from a clean exit -- which is how a
+        #: session that aborted with SIGABRT was once reported as a passing test.
+        self.exit_code: Optional[int] = None
         self.output_path = self.config_dir / "gui-output.log"
         self._output_file = None
         self.was_killed = False
@@ -122,6 +130,11 @@ class GuiSession:
             stdout=self._output_file,
             stderr=subprocess.STDOUT,
             env=environment,
+            # Its own process group, so that killing it can take its engines with it. A GUI that
+            # has to be killed -- or that aborts on its own -- otherwise leaves them behind, and
+            # an orphaned engine does not idle: it sits at a full core, slowing down every test
+            # after it until somebody notices. One did, for an hour and a quarter.
+            start_new_session=(os.name != "nt"),
         )
 
         port = self._await_port()
@@ -181,6 +194,7 @@ class GuiSession:
                 # that ran into it is told so.
                 self.was_killed = True
                 self.kill()
+        self.exit_code = self.process.returncode
         self.process = None
         self.remote = None
         self._close_output()
@@ -192,20 +206,25 @@ class GuiSession:
         the second one to find.
         """
         self.stop()
-        self.was_killed = False
+        # A restart is one session continuing, so the first half's verdict has to be kept: a
+        # first process that aborted must not be forgotten because the second one exited cleanly.
+        if self.exit_code in (None, 0) and not self.was_killed:
+            self.exit_code = None
         self.start()
 
     def kill(self) -> None:
         """Last resort. Takes the engines with it, which killing the GUI alone would not."""
         if self.process is not None and self.process.poll() is None:
             if platform.system() == "Windows":
-                # A killed process on Windows leaves its children running, and the GUI's children
-                # are chess engines that would then sit there forever holding a CPU each. /T ends
-                # the tree.
+                # Windows has no process groups of this kind; /T walks the tree instead.
                 subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.process.pid)],
                                check=False, capture_output=True)
             else:
-                self.process.kill()
+                # The whole group, not just the GUI: its engines are in it (see start()).
+                try:
+                    os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    self.process.kill()
             try:
                 self.process.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -216,10 +235,6 @@ class GuiSession:
         if self._output_file is not None:
             self._output_file.close()
             self._output_file = None
-
-    @property
-    def exit_code(self) -> Optional[int]:
-        return self.process.returncode if self.process else None
 
     def output_tail(self, lines: int = 25) -> str:
         """The last of what the GUI wrote -- the first thing anybody wants after a failure."""

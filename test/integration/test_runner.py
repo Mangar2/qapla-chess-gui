@@ -302,6 +302,16 @@ def main() -> int:
           f"Failed: {failed_count} | Skipped: {len(skipped)} | "
           f"Runtime: {format_duration(total_runtime)}{Colors.RESET}")
 
+    leaked = engine_catalog.surviving_engine_processes()
+    if leaked:
+        # Reported, not cleaned up: something let these through, and quietly killing them would
+        # hide the thing worth knowing.
+        print()
+        print(f"{Colors.RED}Engine processes outlived the run -- each of these holds a core "
+              f"until it is killed:{Colors.RESET}")
+        for line in leaked:
+            print(f"{Colors.RED}  {line}{Colors.RESET}")
+
     fingerprint_after = real_config_fingerprint()
     if fingerprint_after != fingerprint_before:
         print()
@@ -311,6 +321,9 @@ def main() -> int:
     print(f"{Colors.GRAY}Your own configuration directory is unchanged.{Colors.RESET}")
 
     print()
+    if leaked:
+        print(f"{Colors.RED}{len(leaked)} engine process(es) were left running.{Colors.RESET}")
+        return 1
     if failed_count == 0:
         print(f"{Colors.GREEN}All tests passed!{Colors.RESET}")
         return 0

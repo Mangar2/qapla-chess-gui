@@ -548,7 +548,10 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
                 _fail("the application had to be killed -- it did not answer /shutdown")
                 passed = False
             elif session.exit_code not in (None, 0):
-                _fail(f"the application ended with code {session.exit_code}")
+                # Negative codes are signals: -6 is SIGABRT, which the GUI reaches by way of an
+                # uncaught exception. macOS writes a report to ~/Library/Logs/DiagnosticReports.
+                signal_note = (f" (signal {-session.exit_code})" if session.exit_code < 0 else "")
+                _fail(f"the application ended with code {session.exit_code}{signal_note}")
                 passed = False
 
     runtime = time.monotonic() - started
