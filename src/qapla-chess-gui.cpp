@@ -55,6 +55,7 @@
 #include "os-helpers.h"
 #include "command-line.h"
 #include "ui-thread-watch.h"
+#include "ui-update-queue.h"
 
 #include <filesystem>
 #include <iostream>
@@ -281,6 +282,13 @@ namespace {
             });
 
         auto workspace = initWindows();
+        // Detection runs on a thread of its own; its results are data, and data is written in
+        // the frame loop. Installed before anything can start detecting.
+        QaplaConfiguration::EngineCapabilities::setApplyChangeCallback(
+            [](std::function<void()> change) {
+                QaplaWindows::UiUpdateQueue::instance().post(std::move(change));
+            });
+
         QaplaLlm::initializeLlmChat();
 
         // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
@@ -390,6 +398,13 @@ namespace {
             // looked for: a frame that takes long because something on this thread would not let
             // go. See QaplaWindows::UiThreadWatch.
             QaplaWindows::UiThreadWatch::instance().frameBegin();
+
+            {
+                // Data first: whatever another thread worked out since the last frame is written
+                // into the GUI's data here, before anything reads it to draw. See UiUpdateQueue.
+                QaplaWindows::UiThreadWatch::Section section("apply");
+                QaplaWindows::UiUpdateQueue::instance().applyAll();
+            }
 
             {
                 QaplaWindows::UiThreadWatch::Section section("poll");

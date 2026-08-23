@@ -128,7 +128,6 @@ def get_tests() -> List[Dict[str, Any]]:
         {
             "name": "epd-two-engines-side-by-side",
             "description": "Two engines analyse the same positions and both get a column",
-            "allow_ui_stalls": "installing an engine detects it synchronously on the UI thread (Actions::installEngines -> autoDetectSync). Remove this line when that moves off the UI thread.",
             "engines": [ec.QAPLA, ec.SPIKE],
             "steps": [
                 {"call": "configure_epd",

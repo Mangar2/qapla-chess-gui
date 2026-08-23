@@ -164,6 +164,65 @@ ActionResult addEnginesViaDialog() {
     return ActionResult{.ok = true, .text = message, .widget = nullptr, .endsTurn = true};
 }
 
+namespace {
+
+/**
+ * @brief Says what became of an install, read off the catalog as it now stands.
+ *
+ * Separate from installEngines() because it runs later: the engines are detected on a thread of
+ * their own, and the report can only be written once that has landed.
+ */
+[[nodiscard]] ActionResult installReport(const std::vector<std::string>& addedNames,
+    const std::vector<std::string>& takenNames, const std::vector<std::string>& missing) {
+    std::vector<std::string> reports;
+    const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+    const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
+    for (const auto& name : addedNames) {
+        const auto* config = configManager.getConfig(name);
+        if (config == nullptr) {
+            // Cannot happen while names are the catalog's key and detection leaves a chosen name
+            // alone -- reported rather than skipped, because a silently dropped entry reads as
+            // "nothing was installed" for an engine that in fact was.
+            reports.push_back(
+                std::format("{} (added, but it can no longer be found by name)", name));
+            continue;
+        }
+        const auto capability = capabilities.getCapability(config->getCmd(), config->getProtocol());
+        if (!capability) {
+            reports.push_back(std::format("{} (added, but it did not answer -- it reports no "
+                                          "protocol and no options)", name));
+            continue;
+        }
+        reports.push_back(std::format("{} ({}, {} options)", name,
+            QaplaTester::to_string(config->getProtocol()),
+            capability->getSupportedOptions().size()));
+    }
+
+    std::string message;
+    if (!reports.empty()) {
+        message += "Installed and detected: " + joinList(reports) + ".";
+    }
+    if (!takenNames.empty()) {
+        if (!message.empty()) {
+            message += " ";
+        }
+        message += "These names are already in use, so nothing was installed under them: " +
+            joinList(takenNames) + ". Pick different names, or use the engines already there.";
+    }
+    if (!missing.empty()) {
+        if (!message.empty()) {
+            message += " ";
+        }
+        message += "No such file: " + joinList(missing) + ".";
+    }
+    if (message.empty()) {
+        message = "No engines were installed.";
+    }
+    return missing.empty() && takenNames.empty() ? succeeded(message) : failed(message);
+}
+
+} // namespace
+
 ActionResult installEngines(const std::vector<NamedEnginePath>& engines) {
     // Checked here rather than in addNamedEngines(), which stays free of the filesystem so it can
     // be unit-tested with fabricated paths. A catalog entry outlives the call that made it, so a
@@ -185,62 +244,31 @@ ActionResult installEngines(const std::vector<NamedEnginePath>& engines) {
         outcome = addNamedEngines(usable);
     }
 
-    std::vector<std::string> reports;
-    if (!outcome.addedNames.empty()) {
-        auto& configuration = QaplaConfiguration::Configuration::instance();
-        configuration.setModified();
-        // Synchronous, like addEnginesViaDialog(): detection is what turns an executable into
-        // something configurable, and a caller that installs an engine is about to set its
-        // options. Reporting "added, ask again later" would make that a guessing game.
-        configuration.getEngineCapabilities().autoDetectSync();
-
-        const auto& capabilities = configuration.getEngineCapabilities();
-        const auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManager();
-        for (const auto& name : outcome.addedNames) {
-            const auto* config = configManager.getConfig(name);
-            if (config == nullptr) {
-                // Cannot happen while names are the catalog's key and detection leaves a chosen
-                // name alone -- reported rather than skipped, because a silently dropped entry
-                // reads as "nothing was installed" for an engine that in fact was.
-                reports.push_back(std::format("{} (added, but it can no longer be found by name)",
-                    name));
-                continue;
-            }
-            const auto capability =
-                capabilities.getCapability(config->getCmd(), config->getProtocol());
-            if (!capability) {
-                reports.push_back(std::format("{} (added, but it did not answer -- it reports no "
-                                              "protocol and no options)", name));
-                continue;
-            }
-            reports.push_back(std::format("{} ({}, {} options)", name,
-                QaplaTester::to_string(config->getProtocol()),
-                capability->getSupportedOptions().size()));
-        }
+    if (outcome.addedNames.empty()) {
+        return installReport({}, outcome.takenNames, missing);
     }
 
-    std::string message;
-    if (!reports.empty()) {
-        message += "Installed and detected: " + joinList(reports) + ".";
-    }
-    if (!outcome.takenNames.empty()) {
-        if (!message.empty()) {
-            message += " ";
-        }
-        message += "These names are already in use, so nothing was installed under them: " +
-            joinList(outcome.takenNames) + ". Pick different names, or use the engines already "
-            "there.";
-    }
-    if (!missing.empty()) {
-        if (!message.empty()) {
-            message += " ";
-        }
-        message += "No such file: " + joinList(missing) + ".";
-    }
-    if (message.empty()) {
-        message = "No engines were installed.";
-    }
-    return missing.empty() && outcome.takenNames.empty() ? succeeded(message) : failed(message);
+    auto& configuration = QaplaConfiguration::Configuration::instance();
+    configuration.setModified();
+
+    // Started, not waited for. Detection means launching each engine and giving it time to
+    // answer -- three quarters of a minute for one that never does -- and none of that belongs
+    // on the thread that draws the window. It runs on its own and posts what it finds into the
+    // frame loop (see EngineCapabilities::setApplyChangeCallback and UiUpdateQueue).
+    configuration.getEngineCapabilities().autoDetect();
+
+    // The answer is still the one this call promised: installed AND detected, in one reply. The
+    // waiting simply happens on the thread that asked, which is waiting anyway, and the report
+    // is put together afterwards where the data lives.
+    ActionResult pending;
+    pending.awaitOffUiThread = []() {
+        QaplaConfiguration::Configuration::instance().getEngineCapabilities().waitForDetection();
+    };
+    pending.continuation = [addedNames = outcome.addedNames,
+                               takenNames = outcome.takenNames, missing]() {
+        return installReport(addedNames, takenNames, missing);
+    };
+    return pending;
 }
 
 ActionResult engineDetails(const std::string& name) {

@@ -147,8 +147,28 @@ GuiToolResult GuiToolRegistry::callTool(const std::string& name, const std::stri
     QueuedCall call;
     call.name = name;
     call.argumentsJson = argumentsJson;
-    auto future = call.resultPromise.get_future();
+    auto result = enqueueAndWait(std::move(call), timeout, name);
 
+    // A handler that had to wait for something did not wait: it handed the waiting back, and it
+    // happens here, on the thread that made the call and is waiting anyway. The UI thread has
+    // been free the whole time -- which is the point, since it is the thread that draws.
+    if (!result.awaitOffUiThread) {
+        return result;
+    }
+    result.awaitOffUiThread();
+
+    if (!result.continuation) {
+        return result;
+    }
+    QueuedCall completion;
+    completion.name = name;
+    completion.direct = std::move(result.continuation);
+    return enqueueAndWait(std::move(completion), timeout, name);
+}
+
+GuiToolResult GuiToolRegistry::enqueueAndWait(
+    QueuedCall call, std::chrono::milliseconds timeout, const std::string& name) {
+    auto future = call.resultPromise.get_future();
     {
         std::scoped_lock lock(queueMutex_);
         queue_.push_back(std::move(call));
@@ -168,6 +188,19 @@ void GuiToolRegistry::processQueue() {
     }
 
     for (auto& call : pending) {
+        if (call.direct) {
+            // The second half of a call that had to wait: no arguments to read, no tool to look
+            // up, just the answer being finished off where the data lives.
+            QaplaWindows::UiThreadWatch::Section section("tool:" + call.name);
+            try {
+                call.resultPromise.set_value(call.direct());
+            } catch (const std::exception& ex) {
+                call.resultPromise.set_value(GuiToolResult{.success = false,
+                    .content = "Tool '" + call.name + "' failed after waiting: " + ex.what()});
+            }
+            continue;
+        }
+
         std::function<GuiToolResult(const Json::JsonValue&)> handler;
         {
             std::scoped_lock lock(toolsMutex_);

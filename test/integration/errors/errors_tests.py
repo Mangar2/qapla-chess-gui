@@ -38,9 +38,6 @@ def get_tests() -> List[Dict[str, Any]]:
         {
             "name": "errors-engine-that-never-answers",
             "slow": True,
-            # Three quarters of a minute of it, because detecting an engine that never answers
-            # waits out both protocol timeouts -- and it does so on the UI thread.
-            "allow_ui_stalls": "installing an engine detects it synchronously on the UI thread (Actions::installEngines -> autoDetectSync). Remove this line when that moves off the UI thread.",
             "description": "An engine that ignores everything loses its games; the run still ends",
             "engines": [ec.DIAG, ec.DIAG_NOINIT],
             "steps": [

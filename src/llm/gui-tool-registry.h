@@ -249,6 +249,10 @@ private:
         std::function<GuiToolResult()> direct;
     };
 
+    /** @brief Puts one call on the queue and waits for the UI thread to answer it. */
+    GuiToolResult enqueueAndWait(
+        QueuedCall call, std::chrono::milliseconds timeout, const std::string& name);
+
     mutable std::mutex toolsMutex_;
     std::vector<GuiToolDefinition> tools_;
 
