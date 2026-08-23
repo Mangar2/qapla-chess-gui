@@ -251,6 +251,13 @@ void ClopData::populateResultTable() {
     fill(resultTable_, optimizer_->getStatusTable());
 }
 
+TableContents ClopData::resultsAsTable() {
+    // Refilled first: the table is a render cache that pollData() keeps current while a run is
+    // going and nobody touches afterwards -- see TournamentData::resultsAsTable().
+    populateResultTable();
+    return resultTable_.contents();
+}
+
 void ClopData::populateIndicatorTable() {
     if (!optimizer_) {
         indicatorTable_.clear();

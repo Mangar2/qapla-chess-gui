@@ -39,6 +39,19 @@
 namespace QaplaLlm::Actions {
 
 namespace {
+
+/** @brief Carries a drawn table's contents into the actions layer's own, GUI-free vocabulary. */
+[[nodiscard]] std::optional<ResultTable> asResultTable(QaplaWindows::TableContents contents) {
+    if (contents.rows.empty()) {
+        return std::nullopt;
+    }
+    return ResultTable{.headers = std::move(contents.headers), .rows = std::move(contents.rows)};
+}
+
+} // namespace
+
+
+namespace {
     using QaplaWindows::TournamentData;
 
     // Tab-only variant of the classic (non-AI) tournament chatbot flow's "Switch to Tournament
@@ -597,6 +610,10 @@ std::string tournamentActivityText() {
     auto& tournamentData = TournamentData::instance();
     return runStatePhrase(
         runStateOf(tournamentData), TOURNAMENT_NAMES, tournamentData.getExternalConcurrency());
+}
+
+std::optional<ResultTable> tournamentResultTable() {
+    return asResultTable(TournamentData::instance().resultsAsTable());
 }
 
 ActivityProgress tournamentProgress() {

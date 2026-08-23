@@ -30,7 +30,9 @@ setup quietly failed will report on a state nobody asked for.
 """
 
 import json
+import os
 import re
+import sys
 import time
 import traceback
 from pathlib import Path
@@ -42,15 +44,29 @@ from http_client import RemoteControlError
 from sandbox import discard, fresh_sandbox
 
 
+def _colours_are_usable() -> bool:
+    """Whether escape codes will be shown as colour rather than as gibberish.
+
+    Off when the output is being captured (a log file, a CI step summary) and off when NO_COLOR
+    is set. Windows consoles older than the current terminal do not interpret these codes either,
+    but they are not distinguishable from here -- redirect the output there and it comes out
+    clean.
+    """
+    if os.environ.get("NO_COLOR"):
+        return False
+    return bool(getattr(sys.stdout, "isatty", lambda: False)())
+
+
 class Colors:
     """ANSI colours, in the engine tester's palette so both suites read the same."""
 
-    GREEN = "\033[92m"
-    RED = "\033[91m"
-    YELLOW = "\033[93m"
-    CYAN = "\033[96m"
-    GRAY = "\033[90m"
-    RESET = "\033[0m"
+    _ON = _colours_are_usable()
+    GREEN = "\033[92m" if _ON else ""
+    RED = "\033[91m" if _ON else ""
+    YELLOW = "\033[93m" if _ON else ""
+    CYAN = "\033[96m" if _ON else ""
+    GRAY = "\033[90m" if _ON else ""
+    RESET = "\033[0m" if _ON else ""
 
 
 def format_duration(seconds: float) -> str:
@@ -126,6 +142,29 @@ OPENINGS_PGN = """[Event "Integration openings"]
 """
 
 
+#: Four positions with a forced mate in one, written into every sandbox as ``positions.epd``.
+#:
+#: Generated for the same reason as the opening book: ``*.epd`` is git-ignored repository-wide.
+#: Mates in one rather than quiet positions, so that a real engine finds all four in a fraction
+#: of a second and the test can assert the number it found instead of merely that it finished.
+POSITIONS_EPD = """6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - bm Ra8+; id "mate-back-rank";
+k7/8/1K6/8/8/8/8/7R w - - bm Rh8+; id "mate-rook-corner";
+6k1/5ppp/8/8/8/8/8/4R1K1 w - - bm Re8+; id "mate-rook-e8";
+6k1/5ppp/8/8/8/8/8/2R3K1 w - - bm Rc8+; id "mate-rook-c8";
+"""
+
+
+def _seed_language(sandbox: Path, language: str) -> None:
+    """Puts a language setting into the sandbox before the GUI reads it.
+
+    Written as an ini section rather than set through a tool, because the language is read once at
+    startup -- there is no moment after the session is up at which it could still be changed.
+    Mirrors Configuration::updateLanguageConfiguration (src/configuration.cpp).
+    """
+    (sandbox / "qapla-chess-gui.ini").write_text(
+        "[languagesettings]\nid=general\nlanguagecode=" + language + "\n", encoding="utf-8")
+
+
 def _engine_key(name: str) -> str:
     """``Diag NoInit`` -> ``engine_diag_noinit``, the placeholder a test writes."""
     return "engine_" + "".join(
@@ -142,9 +181,12 @@ def _prepare_fixtures(sandbox: Path, catalog: engine_catalog.EngineCatalog) -> D
     """
     openings = sandbox / "openings.pgn"
     openings.write_text(OPENINGS_PGN, encoding="utf-8")
+    positions = sandbox / "positions.epd"
+    positions.write_text(POSITIONS_EPD, encoding="utf-8")
     fixtures = {
         "sandbox": str(sandbox),
         "openings": str(openings),
+        "epd": str(positions),
         "pgn": str(sandbox / "games.pgn"),
         "results": str(sandbox / "results.qtour"),
         "sprt_results": str(sandbox / "results.qsprt"),
@@ -220,6 +262,10 @@ def _run_step(session: GuiSession, step: Dict[str, Any], index: int,
     if "status" in step:
         _info(f"{index}. status")
         return session.status()
+
+    if "state" in step:
+        _info(f"{index}. state")
+        return session.state()
 
     if "restart" in step:
         _info(f"{index}. restart the application on the same configuration directory")
@@ -321,10 +367,17 @@ def _validate(validator: Dict[str, Any], session: GuiSession, sandbox: Path,
         if answer is None:
             return False
         reason = answer.get("reason")
-        if reason == validator["expected"]:
+        # A list of acceptable reasons, not just one, because some of the distinctions are a
+        # race and not a property. "stopped" means the wait was there to see it stop;
+        # "not_running" means it was already over by the time the wait arrived. Which of the two
+        # a caller gets depends on how fast the machine is, so a test that insists on one of them
+        # is a test that fails on somebody else's laptop.
+        expected = validator["expected"]
+        acceptable = [expected] if isinstance(expected, str) else list(expected)
+        if reason in acceptable:
             _ok(f"wait ended with '{reason}'")
             return True
-        _fail(f"wait ended with '{reason}' (expected '{validator['expected']}')")
+        _fail(f"wait ended with '{reason}' (expected {' or '.join(acceptable)})")
         return False
 
     if kind == "httpStatus":
@@ -363,6 +416,59 @@ def _validate(validator: Dict[str, Any], session: GuiSession, sandbox: Path,
         _fail(f"{path.name} does not contain {pattern!r}")
         return False
 
+    if kind in ("stateField", "resultRows", "resultCell"):
+        answer = _resolve_step(validator, results)
+        if answer is None:
+            return False
+        activity = validator["activity"]
+        activities = answer.get("activities") or {}
+        if activity not in activities:
+            _fail(f"/state says nothing about '{activity}'")
+            return False
+        reported = activities[activity]
+
+        if kind == "stateField":
+            field = validator["field"]
+            expected = validator["expected"]
+            actual = reported.get(field)
+            if actual == expected:
+                _ok(f"{activity}.{field} is {actual!r}")
+                return True
+            _fail(f"{activity}.{field} is {actual!r} (expected {expected!r})")
+            return False
+
+        table = reported.get("results")
+        if table is None:
+            _fail(f"{activity} has no result table")
+            return False
+
+        if kind == "resultRows":
+            expected = validator["count"]
+            actual = len(table.get("rows", []))
+            if actual == expected:
+                _ok(f"{activity} reports {actual} result rows")
+                return True
+            _fail(f"{activity} reports {actual} result rows (expected {expected})")
+            return False
+
+        headers = table.get("headers", [])
+        column = validator["column"]
+        if column not in headers:
+            _fail(f"{activity} has no column {column!r}; it has {headers}")
+            return False
+        rows = table.get("rows", [])
+        wanted_row = validator.get("row", 0)
+        if wanted_row >= len(rows):
+            _fail(f"{activity} has {len(rows)} result rows, so row {wanted_row} does not exist")
+            return False
+        actual = rows[wanted_row][headers.index(column)]
+        expected = validator["expected"]
+        if actual == expected:
+            _ok(f"{activity} result [{wanted_row}].{column} is {actual!r}")
+            return True
+        _fail(f"{activity} result [{wanted_row}].{column} is {actual!r} (expected {expected!r})")
+        return False
+
     if kind == "custom":
         check: Callable[[GuiSession, Dict[str, Any]], Tuple[bool, str]] = validator["check"]
         passed, message = check(session, results)
@@ -388,6 +494,8 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
     print(f"  {Colors.GRAY}{test.get('description', '')}{Colors.RESET}")
 
     sandbox = fresh_sandbox(name)
+    if test.get("language"):
+        _seed_language(sandbox, test["language"])
     started = time.monotonic()
     passed = True
     session: Optional[GuiSession] = None

@@ -179,6 +179,8 @@ def main() -> int:
                         help="keep the configuration directory of tests that passed, too")
     parser.add_argument("--timeout-scale", type=float, default=1.0,
                         help="stretch every timeout, for slow machines and CI")
+    parser.add_argument("--skip-missing-engines", action="store_true",
+                        help="skip tests needing an engine that is not here, instead of stopping")
     arguments = parser.parse_args()
 
     if not arguments.list:
@@ -206,14 +208,33 @@ def main() -> int:
         return 1
 
     catalog = engine_catalog.EngineCatalog(arguments.config)
+    skipped: List[str] = []
     if catalog.missing:
         # Said once, here, rather than as one failure per test that needed an engine.
-        print(f"{Colors.RED}Engines missing:{Colors.RESET}")
+        colour = Colors.YELLOW if arguments.skip_missing_engines else Colors.RED
+        print(f"{colour}Engines missing:{Colors.RESET}")
         for line in catalog.missing:
-            print(f"  {Colors.RED}- {line}{Colors.RESET}")
-        print(f"{Colors.YELLOW}Build the project, and put Qapla and SpikeEngine into "
-              f"{engine_catalog.REPO_ROOT / 'engines'}.{Colors.RESET}")
-        return 1
+            print(f"  {colour}- {line}{Colors.RESET}")
+        if not arguments.skip_missing_engines:
+            print(f"{Colors.YELLOW}Build the project, and put Qapla and SpikeEngine into "
+                  f"{engine_catalog.REPO_ROOT / 'engines'}. Pass --skip-missing-engines to run "
+                  f"what does not need them.{Colors.RESET}")
+            return 1
+
+        # Only for a machine that cannot have the real engines -- a CI runner, where they are
+        # nobody's to publish. What is skipped is named in the summary, never silently dropped:
+        # a suite that quietly shrinks is worse than one that says it cannot run.
+        runnable = []
+        for test in tests_to_run:
+            absent = [name for name in test.get("engines", []) if not catalog.has(name)]
+            if absent:
+                skipped.append(f"{test['name']} (needs {', '.join(absent)})")
+            else:
+                runnable.append(test)
+        tests_to_run = runnable
+        if not tests_to_run:
+            print(f"{Colors.RED}Every selected test needs an engine that is not here.{Colors.RESET}")
+            return 1
 
     cumulative = load_previous_results()
     if arguments.skip_passed:
@@ -270,9 +291,16 @@ def main() -> int:
         for name, _, runtime in sorted(results, key=lambda r: r[2], reverse=True)[:3]:
             print(f"{Colors.GRAY}  {format_duration(runtime):>10}  {name}{Colors.RESET}")
 
+    if skipped:
+        print()
+        print(f"{Colors.YELLOW}Skipped for want of an engine:{Colors.RESET}")
+        for line in skipped:
+            print(f"{Colors.GRAY}  - {line}{Colors.RESET}")
+
     print()
     print(f"{Colors.YELLOW}Total: {len(results)} | Passed: {passed_count} | "
-          f"Failed: {failed_count} | Runtime: {format_duration(total_runtime)}{Colors.RESET}")
+          f"Failed: {failed_count} | Skipped: {len(skipped)} | "
+          f"Runtime: {format_duration(total_runtime)}{Colors.RESET}")
 
     fingerprint_after = real_config_fingerprint()
     if fingerprint_after != fingerprint_before:

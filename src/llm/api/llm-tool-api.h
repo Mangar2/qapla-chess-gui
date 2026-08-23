@@ -127,6 +127,9 @@ struct ToolDef {
 
     /** @brief See GuiToolDefinition::remoteOnly -- set it for anything the window cannot show. */
     bool remoteOnly = false;
+
+    /** @brief See GuiToolDefinition::unpublished -- set it for an endpoint that is not a tool. */
+    bool unpublished = false;
 };
 
 namespace Detail {
@@ -229,6 +232,7 @@ void defineTool(GuiToolRegistry& registry, ToolDef<Request> tool) {
         .timeout = tool.timeout,
         .localOnly = tool.localOnly,
         .remoteOnly = tool.remoteOnly,
+        .unpublished = tool.unpublished,
         .localOnlyParameters = std::move(localOnlyParameters)});
 }
 

@@ -171,6 +171,7 @@ curl -H "Authorization: Bearer secret" http://127.0.0.1:8137/status
 | `GET /tools` | The available tools, in the same OpenAI function-calling shape the local chat uses. |
 | `POST /tools/<name>` | Body is the arguments object; answers `{"ok":…, "content":…}` once the GUI has actually done it. |
 | `GET /status` | Shortcut for `POST /tools/get_status` with no arguments. |
+| `GET /state` | The same facts as data instead of sentences: for each of the four run types its run state (`idle`, `starting`, `running`, `finishing`, `aborting`), whether it is running, whether it could be started, and its result table as `headers` and `rows`. The sentences elsewhere are written for a language model and are free to be reworded; this is what a program should read. |
 | `GET /wait?type=<tournament\|sprt\|epd\|clop>[&timeout=<seconds>]` | Does not answer until that activity has stopped, then reports why (`finished`, `stopped`, `timeout`, `closed`, `not_running`) together with the full status, results included. Timeout defaults to 300 s and is clamped to 1…3600 s. |
 | `POST /shutdown` | Asks the application to close, exactly as the window's close button does — so what the session stored is written out properly. Not a tool: `close_application` stays local-only, because a caller watching the GUI has no business ending it, while a test harness does. |
 

@@ -316,6 +316,34 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         impl_->runTool("get_status", "{}", response);
     });
 
+    impl_->server.Get("/state", [this](const httplib::Request& request, httplib::Response& response) {
+        if (!impl_->isAuthorized(request)) {
+            response.status = 401;
+            response.set_content(jsonError("Unauthorized."), "application/json");
+            return;
+        }
+
+        // The same facts /status reports as sentences, as data. get_state is a tool only in the
+        // sense that it runs through the queue on the UI thread; it is deliberately not published
+        // to anyone (see GuiToolDefinition::unpublished), because this endpoint is its caller.
+        auto result =
+            GuiToolRegistry::instance().callTool("get_state", "{}", CallOrigin::Remote);
+
+        auto object = QaplaTester::Json::JsonValue::object();
+        object["ok"] = result.success;
+        if (result.success) {
+            // Inlined rather than nested as a string: the handler built this JSON, so a caller
+            // should not have to parse a value out of a value.
+            auto parsed = QaplaTester::Json::JsonValue::parse(result.content);
+            object["activities"] = parsed.contains("activities")
+                ? parsed.at("activities")
+                : QaplaTester::Json::JsonValue::object();
+        } else {
+            object["content"] = result.content;
+        }
+        response.set_content(object.stringify(), "application/json");
+    });
+
     impl_->server.Post("/shutdown", [this](const httplib::Request& request, httplib::Response& response) {
         if (!impl_->isAuthorized(request)) {
             response.status = 401;

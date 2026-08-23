@@ -557,6 +557,18 @@ std::string SprtTournamentData::resultsAsText() {
     return text;
 }
 
+TableContents SprtTournamentData::resultsAsTable() {
+    // Refilled first -- see resultsAsText() for why.
+    populateResultTable();
+    populateSprtTable();
+
+    // The SPRT table is the one a caller means by "the result": the verdict, the LLR, the games
+    // played. The duel table beside it is the same games counted as a head-to-head score, and is
+    // left to resultsAsText(), which has room for both.
+    auto sprtContents = sprtTable_.contents();
+    return sprtContents.rows.empty() ? resultTable_.contents() : sprtContents;
+}
+
 void SprtTournamentData::drawResultTable(const ImVec2& size) {
     auto duelResult = sprtManager_->getDuelResult();
     if (duelResult.total() == 0) {

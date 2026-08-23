@@ -147,6 +147,11 @@ namespace QaplaWindows {
         [[nodiscard]] std::string resultsAsText();
 
         /**
+         * @brief The same standings as data, for a caller that cannot see the drawn table.
+         */
+        [[nodiscard]] TableContents resultsAsTable();
+
+        /**
          * @brief Draws the tournament results matrix table.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.

@@ -357,6 +357,11 @@ namespace QaplaWindows {
         [[nodiscard]] std::string resultsAsText();
 
         /**
+         * @brief The same result table as data, for a caller that cannot see the drawn one.
+         */
+        [[nodiscard]] TableContents resultsAsTable();
+
+        /**
          * @brief Draws the table displaying the causes for game termination.
          * @param size Size of the table to draw.
          */

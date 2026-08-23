@@ -121,6 +121,11 @@ namespace QaplaWindows {
         [[nodiscard]] std::string resultsAsText();
 
         /**
+         * @brief The same per-position results as data, for a caller outside the window.
+         */
+        [[nodiscard]] TableContents resultsAsTable();
+
+        /**
          * @brief Writes the current results to a file of the caller's choosing.
          *
          * The autosave in the configuration directory keeps exactly one result set, which the next

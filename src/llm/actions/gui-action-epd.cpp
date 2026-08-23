@@ -36,6 +36,19 @@
 namespace QaplaLlm::Actions {
 
 namespace {
+
+/** @brief Carries a drawn table's contents into the actions layer's own, GUI-free vocabulary. */
+[[nodiscard]] std::optional<ResultTable> asResultTable(QaplaWindows::TableContents contents) {
+    if (contents.rows.empty()) {
+        return std::nullopt;
+    }
+    return ResultTable{.headers = std::move(contents.headers), .rows = std::move(contents.rows)};
+}
+
+} // namespace
+
+
+namespace {
     using QaplaWindows::EpdData;
 
     // Same message the classic (non-AI) EPD chatbot flow's own "Switch to EPD View" button sends
@@ -465,6 +478,10 @@ ActionResult loadEpdFromFile(const std::string& file) {
 std::string epdActivityText() {
     auto& epdData = EpdData::instance();
     return runStatePhrase(runStateOf(epdData), EPD_NAMES, epdData.getExternalConcurrency());
+}
+
+std::optional<ResultTable> epdResultTable() {
+    return asResultTable(EpdData::instance().resultsAsTable());
 }
 
 ActivityProgress epdProgress() {

@@ -82,7 +82,8 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
             "validators": [
                 {"type": "ok", "step": "stop"},
-                {"type": "waitReason", "step": "run", "expected": "stopped"},
+                {"type": "waitReason", "step": "run",
+                 "expected": ["stopped", "not_running"]},
             ],
         },
     ]

@@ -137,6 +137,9 @@ struct SprtSettings {
 /** @brief What the SPRT test is doing, for the watch a remote caller waits on. */
 [[nodiscard]] ActivityProgress sprtProgress();
 
+/** @brief The SPRT result table as data, or nothing when the test has none. */
+[[nodiscard]] std::optional<ResultTable> sprtResultTable();
+
 /** @brief Whether the SPRT test could be started exactly as configured. */
 [[nodiscard]] bool sprtIsReadyToStart();
 

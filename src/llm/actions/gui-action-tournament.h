@@ -142,6 +142,9 @@ struct TournamentSettings {
 /** @brief What the tournament is doing, for the watch a remote caller waits on. */
 [[nodiscard]] ActivityProgress tournamentProgress();
 
+/** @brief The standings as data, or nothing when the tournament has none. */
+[[nodiscard]] std::optional<ResultTable> tournamentResultTable();
+
 /** @brief Whether the tournament could be started exactly as configured. */
 [[nodiscard]] bool tournamentIsReadyToStart();
 

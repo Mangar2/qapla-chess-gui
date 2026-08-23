@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+      - llm-chatbot
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  linux:
+    name: Unit and integration tests (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            libc++-dev \
+            libc++abi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            xorg-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libgtk-3-dev \
+            xvfb
+
+      - name: Configure
+        run: cmake --preset=default
+
+      - name: Build
+        run: cmake --build --preset=default
+
+      - name: Unit tests
+        run: ./build/default/unit-tests
+
+      # The GUI really opens a window -- that is what this suite exists to drive -- so the runner
+      # puts itself under xvfb-run when it finds no display. Nothing to do here but let it.
+      #
+      # --skip-missing-engines because Qapla and SpikeEngine are somebody's builds and are not in
+      # the repository; the few tests that need them are named as skipped in the summary rather
+      # than quietly dropped. Everything resting on the diagnostic engines runs in full.
+      - name: Integration tests
+        run: python3 test/integration/test_runner.py --skip-missing-engines --timeout-scale 3
+
+      - name: Keep the sandboxes of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-sandboxes
+          path: test/integration/sandbox/
+          retention-days: 7

@@ -17,6 +17,7 @@ calls in each test:
 """
 
 import os
+import platform
 import subprocess
 import time
 from pathlib import Path
@@ -30,7 +31,12 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 START_TIMEOUT = 60.0
 
 #: How long a shutdown may take before the process is killed and the test called failed.
-SHUTDOWN_TIMEOUT = 30.0
+#:
+#: Generous, because the flag POST /shutdown sets is read by the frame loop: while the UI thread
+#: is inside a long tool handler -- starting a CLOP run is the measured case -- no frame runs and
+#: nothing happens. Being killed is reported as a failure rather than tolerated, so that a GUI
+#: which really will not close is a finding and not a shrug.
+SHUTDOWN_TIMEOUT = 60.0
 
 #: Fixed by default, so a test that asserts a game result gets the same game every time.
 DEFAULT_SEED = 4242
@@ -190,8 +196,16 @@ class GuiSession:
         self.start()
 
     def kill(self) -> None:
+        """Last resort. Takes the engines with it, which killing the GUI alone would not."""
         if self.process is not None and self.process.poll() is None:
-            self.process.kill()
+            if platform.system() == "Windows":
+                # A killed process on Windows leaves its children running, and the GUI's children
+                # are chess engines that would then sit there forever holding a CPU each. /T ends
+                # the tree.
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.process.pid)],
+                               check=False, capture_output=True)
+            else:
+                self.process.kill()
             try:
                 self.process.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -226,6 +240,9 @@ class GuiSession:
 
     def status(self) -> Dict[str, Any]:
         return self._remote().status()
+
+    def state(self) -> Dict[str, Any]:
+        return self._remote().state()
 
     def tool_names(self) -> List[str]:
         return self._remote().tool_names()

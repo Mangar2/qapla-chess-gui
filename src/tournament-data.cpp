@@ -624,6 +624,13 @@ namespace QaplaWindows {
         return eloTable_.toText();
     }
 
+    TableContents TournamentData::resultsAsTable() {
+        // Refilled first, for the same reason resultsAsText() does it: these tables are a render
+        // cache, and a finished tournament still on screen would otherwise report no results.
+        populateEloTable();
+        return eloTable_.contents();
+    }
+
     std::optional<size_t> TournamentData::drawMatrixTable(const ImVec2& size) {
         if (matrixTable_.size() == 0) {
             return std::nullopt;

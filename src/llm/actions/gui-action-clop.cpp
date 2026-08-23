@@ -31,6 +31,19 @@
 namespace QaplaLlm::Actions {
 
 namespace {
+
+/** @brief Carries a drawn table's contents into the actions layer's own, GUI-free vocabulary. */
+[[nodiscard]] std::optional<ResultTable> asResultTable(QaplaWindows::TableContents contents) {
+    if (contents.rows.empty()) {
+        return std::nullopt;
+    }
+    return ResultTable{.headers = std::move(contents.headers), .rows = std::move(contents.rows)};
+}
+
+} // namespace
+
+
+namespace {
     using QaplaWindows::ClopData;
 
     RunState runStateOf(ClopData::State state) {
@@ -272,6 +285,10 @@ ActionResult clearClopResult() {
 std::string clopActivityText() {
     auto& data = ClopData::instance();
     return runStatePhrase(runStateOf(data.state()), CLOP_NAMES, data.concurrency());
+}
+
+std::optional<ResultTable> clopResultTable() {
+    return asResultTable(ClopData::instance().resultsAsTable());
 }
 
 ActivityProgress clopProgress() {

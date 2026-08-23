@@ -91,6 +91,9 @@ std::vector<ToolSpec> GuiToolRegistry::exportToolSpecs(CallOrigin origin) const 
         if (tool.remoteOnly && origin == CallOrigin::Local) {
             continue;
         }
+        if (tool.unpublished) {
+            continue;
+        }
         specs.push_back(ToolSpec{
             .name = tool.name,
             .description = tool.description,

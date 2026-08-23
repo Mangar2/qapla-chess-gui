@@ -21,6 +21,8 @@
 
 #include <imgui.h>
 #include <mutex>
+#include <algorithm>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <optional>
@@ -35,6 +37,19 @@ namespace QaplaWindows {
     /**
      * @brief Encapsulates an ImGui table with static configuration and dynamic row content.
      */
+    /**
+     * @brief A table's contents as plain strings: the header row, then the body rows.
+     *
+     * What ImGuiTable::toText() produces for a person reading it, in the form a program can act
+     * on. Everything is a string, because these values are already formatted for display by the
+     * time they reach a table -- an Elo with its error margin, a score as "1.0/2" -- and parsing
+     * them back into numbers here would only invent a second opinion about what they mean.
+     */
+    struct TableContents {
+        std::vector<std::string> headers;
+        std::vector<std::vector<std::string>> rows;
+    };
+
     class ImGuiTable {
     public:
         struct ColumnDef {
@@ -172,6 +187,25 @@ namespace QaplaWindows {
         std::optional<size_t> draw(const ImVec2 &size, bool shrink = false);
 
         /**
+         * @brief Number of columns the table currently has.
+         */
+        [[nodiscard]] size_t columnCount() const {
+            return columns_.size();
+        }
+
+        /**
+         * @brief The header of one column, or an empty string when there is no such column.
+         *
+         * Together with columnCount(), size() and getField(), this is everything needed to read
+         * a table back out as plain data -- which is what a caller outside the window needs: it
+         * cannot see the drawn table, and toText() gives it a picture of one rather than its
+         * contents. See QaplaLlm::Actions::ResultTable.
+         */
+        [[nodiscard]] std::string getColumnName(size_t column) const {
+            return column < columns_.size() ? columns_[column].name : std::string();
+        }
+
+        /**
          * @brief Returns the content of a specific cell.
          * @param row Row index.
          * @param column Column index.
@@ -276,6 +310,25 @@ namespace QaplaWindows {
          *        with the beginning of it and an honest count.
          */
         [[nodiscard]] std::string toText(size_t maxRows = 40) const;
+
+        /**
+         * @brief The same content toText() renders, as data rather than as a picture of a table.
+         *
+         * For callers outside the window -- the HTTP remote control, and the tests that drive it
+         * -- which cannot see the drawn table and need the values, not a layout.
+         *
+         * @param maxRows At most this many body rows; the rest is left out, as in toText().
+         */
+        [[nodiscard]] TableContents contents(size_t maxRows = 200) const {
+            TableContents result;
+            result.headers.reserve(columns_.size());
+            for (const auto& column : columns_) {
+                result.headers.push_back(column.name);
+            }
+            const size_t rowCount = std::min(maxRows, rows_.size());
+            result.rows.assign(rows_.begin(), rows_.begin() + static_cast<ptrdiff_t>(rowCount));
+            return result;
+        }
 
         /**
          * @brief Sets the current index directly. The current row not changed but the move is still scrolled in view.

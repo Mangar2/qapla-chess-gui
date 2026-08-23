@@ -127,6 +127,9 @@ struct EpdSettings {
 /** @brief What the EPD analysis is doing, for the watch a remote caller waits on. */
 [[nodiscard]] ActivityProgress epdProgress();
 
+/** @brief The per-position results as data, or nothing when the analysis has none. */
+[[nodiscard]] std::optional<ResultTable> epdResultTable();
+
 /** @brief Whether the EPD analysis could be started exactly as configured. */
 [[nodiscard]] bool epdIsReadyToStart();
 

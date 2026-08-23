@@ -163,6 +163,19 @@ struct GuiToolDefinition {
     bool remoteOnly = false;
 
     /**
+     * @brief Callable by name, but not listed by exportToolSpecs() to anyone.
+     *
+     * For the parts of the remote control that are endpoints rather than tools: GET /state reads
+     * the run states and result tables as data, which is what a program driving the GUI wants and
+     * what a language model has no use for -- it already gets the same facts as sentences from
+     * get_status. Publishing it would put a second, near-identical status tool in front of every
+     * model on every turn, which is exactly the confusion the shared status tool was merged to
+     * avoid. It still runs through the queue like any tool, because reading GUI state is the UI
+     * thread's business.
+     */
+    bool unpublished = false;
+
+    /**
      * @brief Parameter names withheld from a remote caller: absent from the published schema,
      * and rejected if passed anyway.
      *

@@ -392,6 +392,12 @@ namespace QaplaWindows {
         return table_.toText();
     }
 
+    TableContents EpdData::resultsAsTable() {
+        // Refilled first -- see resultsAsText() for why.
+        populateTable();
+        return table_.contents();
+    }
+
     std::string EpdData::saveResultsTo(const std::string& filename) {
         if (!epdManager_) {
             return "the EPD analysis has not been set up yet";

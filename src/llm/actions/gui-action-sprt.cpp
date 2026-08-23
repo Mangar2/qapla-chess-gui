@@ -40,6 +40,19 @@
 namespace QaplaLlm::Actions {
 
 namespace {
+
+/** @brief Carries a drawn table's contents into the actions layer's own, GUI-free vocabulary. */
+[[nodiscard]] std::optional<ResultTable> asResultTable(QaplaWindows::TableContents contents) {
+    if (contents.rows.empty()) {
+        return std::nullopt;
+    }
+    return ResultTable{.headers = std::move(contents.headers), .rows = std::move(contents.rows)};
+}
+
+} // namespace
+
+
+namespace {
     using QaplaWindows::SprtTournamentData;
 
     // Tab-only variant of the classic (non-AI) SPRT chatbot flow's "Switch to SPRT View" message
@@ -633,6 +646,10 @@ ActionResult loadSprtFromFile(const std::string& file) {
 std::string sprtActivityText() {
     auto& sprtData = SprtTournamentData::instance();
     return runStatePhrase(runStateOf(sprtData), SPRT_NAMES, sprtData.getExternalConcurrency());
+}
+
+std::optional<ResultTable> sprtResultTable() {
+    return asResultTable(SprtTournamentData::instance().resultsAsTable());
 }
 
 ActivityProgress sprtProgress() {

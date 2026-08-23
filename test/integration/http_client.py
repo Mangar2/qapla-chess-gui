@@ -105,6 +105,15 @@ class RemoteControl:
     def status(self) -> Dict[str, Any]:
         return self._request("/status")
 
+    def state(self) -> Dict[str, Any]:
+        """What every activity is doing, as data rather than as sentences.
+
+        The counterpart to status(): same facts, but comparable. A test that needs a number or a
+        run state asks here; the sentences status() answers with are written for a language model
+        and follow the GUI's language setting.
+        """
+        return self._request("/state")
+
     def wait(self, activity: str, timeout: float = 300.0) -> Dict[str, Any]:
         """Blocks until that activity stops, then reports why plus the full status.
 

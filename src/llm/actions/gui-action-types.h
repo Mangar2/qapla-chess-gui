@@ -73,6 +73,23 @@ enum class RunState {
 };
 
 /**
+ * @brief A result table as plain data: the header row, then the body rows.
+ *
+ * The same numbers the window draws as a table and the status reports as a paragraph, in the one
+ * form a program can act on. The sentences are written for a language model -- they change
+ * wording, and they change language with the GUI's own setting -- so a caller that needs a value
+ * rather than a description has nothing dependable to read. This is that.
+ *
+ * Everything is a string, including the numbers. They are already formatted for display by the
+ * time they reach a table (an Elo with its error margin, a score as "1.0/2"), and re-parsing them
+ * into numbers here would only invent a second opinion about what they mean.
+ */
+struct ResultTable {
+    std::vector<std::string> headers;
+    std::vector<std::vector<std::string>> rows;
+};
+
+/**
  * @brief What one activity is called, in the three forms the shared sentences need.
  *
  * Declared per activity next to its state mapping, so the wording below stays free of any

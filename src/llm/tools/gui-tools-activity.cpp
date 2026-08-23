@@ -21,6 +21,10 @@
 #include "gui-tools-shared.h"
 #include "../actions/gui-action-activity.h"
 
+#include <base-elements/qapla-json.h>
+
+#include <string_view>
+
 namespace QaplaLlm {
 
 namespace {
@@ -89,6 +93,60 @@ namespace {
     Actions::ActionResult withRunningSummary(Actions::ActionResult result) {
         result.text += " " + Actions::runningActivitiesText();
         return result;
+    }
+
+    /** @brief Arguments of get_state: none. It reports everything, always. */
+    struct NoArguments {};
+
+    /**
+     * @brief The machine-readable name of a run state.
+     *
+     * Deliberately not the sentence runStateSentence() produces. That one is written for a person
+     * or a model to read and is free to be reworded, and it follows the GUI's language setting; a
+     * program comparing against it would break on both counts. These five words are the contract.
+     */
+    [[nodiscard]] std::string_view runStateName(Actions::RunState state) {
+        switch (state) {
+            case Actions::RunState::Starting: return "starting";
+            case Actions::RunState::Running: return "running";
+            case Actions::RunState::FinishingAfterGracefulStop: return "finishing";
+            case Actions::RunState::Aborting: return "aborting";
+            case Actions::RunState::Idle:
+            default: return "idle";
+        }
+    }
+
+    /** @brief One activity as data: what it is doing, whether it could start, what it produced. */
+    [[nodiscard]] QaplaTester::Json::JsonValue activityStateJson(Actions::Activity activity) {
+        auto progress = Actions::activityProgress(activity);
+        auto object = QaplaTester::Json::JsonValue::object();
+        object["state"] = std::string(runStateName(progress.state));
+        // "running" as its own field rather than left to be derived: three of the five states
+        // mean games are still being played, and a caller that has to know which is a caller
+        // that will eventually get it wrong.
+        object["running"] = progress.state != Actions::RunState::Idle;
+        object["finished"] = progress.finished;
+        object["ready_to_start"] = Actions::activityIsReadyToStart(activity);
+
+        if (auto table = Actions::activityResultTable(activity)) {
+            auto headers = QaplaTester::Json::JsonValue::array();
+            for (const auto& header : table->headers) {
+                headers.push_back(header);
+            }
+            auto rows = QaplaTester::Json::JsonValue::array();
+            for (const auto& row : table->rows) {
+                auto cells = QaplaTester::Json::JsonValue::array();
+                for (const auto& cell : row) {
+                    cells.push_back(cell);
+                }
+                rows.push_back(cells);
+            }
+            auto results = QaplaTester::Json::JsonValue::object();
+            results["headers"] = headers;
+            results["rows"] = rows;
+            object["results"] = results;
+        }
+        return object;
     }
 } // namespace
 
@@ -237,6 +295,27 @@ void registerActivityTools(GuiToolRegistry& registry) {
                 return withRunningSummary(
                     Actions::loadActivityFromFile(*request.type, *request.file));
             }});
+
+    Api::defineTool<NoArguments>(registry,
+        {.name = "get_state",
+            .description =
+                "Everything every activity is doing, as data rather than as sentences: run "
+                "state, whether it could be started, and its result table if it has one. Serves "
+                "GET /state.",
+            .invoke = [](const NoArguments&) {
+                auto activities = QaplaTester::Json::JsonValue::object();
+                activities["tournament"] = activityStateJson(Actions::Activity::Tournament);
+                activities["sprt"] = activityStateJson(Actions::Activity::Sprt);
+                activities["epd"] = activityStateJson(Actions::Activity::Epd);
+                activities["clop"] = activityStateJson(Actions::Activity::Clop);
+
+                auto object = QaplaTester::Json::JsonValue::object();
+                object["activities"] = activities;
+                return Actions::ActionResult{.ok = true, .text = object.stringify()};
+            },
+            // Not offered to any caller: a program asks for this by its endpoint, and a model
+            // gets the same facts as sentences from get_status. See GuiToolDefinition::unpublished.
+            .unpublished = true});
 }
 
 } // namespace QaplaLlm

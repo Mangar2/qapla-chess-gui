@@ -288,3 +288,30 @@ TEST_CASE("GuiToolRegistry::exportToolSpecs reflects registered tools", "[llm][g
     REQUIRE(registry.hasTool("sample"));
     REQUIRE_FALSE(registry.hasTool("other"));
 }
+
+TEST_CASE("GuiToolRegistry keeps an unpublished tool callable but out of every list",
+    "[llm][gui-tool-registry]") {
+    // What GET /state is built on: an endpoint that has to run on the UI thread, and so has to be
+    // a tool, but that no caller should be offered. Publishing it would put a second, nearly
+    // identical status tool in front of every model on every turn.
+    GuiToolRegistry registry;
+    registry.registerTool(GuiToolDefinition{
+        .name = "endpoint_only",
+        .description = "Serves an endpoint, not a caller.",
+        .parametersSchema = Json::JsonValue::object(),
+        .handler = [](const Json::JsonValue&) -> GuiToolResult {
+            return GuiToolResult{.success = true, .content = "served"};
+        },
+        .unpublished = true});
+
+    REQUIRE(registry.exportToolSpecs(CallOrigin::Remote).empty());
+    REQUIRE(registry.exportToolSpecs(CallOrigin::Local).empty());
+
+    // Absent from the lists, and still there when asked for by name.
+    REQUIRE(registry.hasTool("endpoint_only"));
+    auto result = runOnWorkerWhilePolling(registry, [&registry]() {
+        return registry.callTool("endpoint_only", "{}", CallOrigin::Remote);
+    });
+    REQUIRE(result.success);
+    REQUIRE(result.content == "served");
+}

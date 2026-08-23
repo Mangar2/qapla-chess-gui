@@ -152,6 +152,14 @@ public:
     /** @brief Whether there is anything for drawTables() to show. */
     [[nodiscard]] bool hasTables() const { return optimizer_ != nullptr; }
 
+    /**
+     * @brief The estimates table as data, for a caller that cannot see the drawn one.
+     *
+     * CLOP is driven entirely from outside the window (see GuiToolDefinition::remoteOnly), so
+     * this is the form its results are actually read in.
+     */
+    [[nodiscard]] TableContents resultsAsTable();
+
 private:
     ClopData();
     ~ClopData();

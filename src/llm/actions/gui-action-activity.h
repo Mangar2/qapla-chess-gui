@@ -21,6 +21,7 @@
 
 #include "gui-action-types.h"
 
+#include <optional>
 #include <string>
 
 namespace QaplaLlm::Actions {
@@ -55,6 +56,22 @@ enum class Activity { Tournament, Sprt, Epd, Clop };
  * Cheap enough to ask every frame, which is what feeds QaplaLlm::ActivityWatch.
  */
 [[nodiscard]] ActivityProgress activityProgress(Activity activity);
+
+/**
+ * @brief The given activity's results as data, or nothing when it has none.
+ *
+ * The counterpart to activityStatus(): the same numbers, without the sentences around them. A
+ * program driving the GUI from outside -- the HTTP remote control, and the tests that use it --
+ * needs a value it can compare, not a paragraph whose wording and language are free to change.
+ */
+[[nodiscard]] std::optional<ResultTable> activityResultTable(Activity activity);
+
+/**
+ * @brief Whether the given activity could be started exactly as it now stands.
+ *
+ * The same fact activityStatus() phrases as a closing sentence for an idle, ready activity.
+ */
+[[nodiscard]] bool activityIsReadyToStart(Activity activity);
 
 /** @brief Discards the given activity's results, stopping it first if it is still running. */
 [[nodiscard]] ActionResult clearActivityResult(Activity activity);

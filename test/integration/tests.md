@@ -22,6 +22,21 @@ anything.
 | session-local-only-tool-is-refused | `close_application` exists, but not for a remote caller |
 | session-status-when-idle | The overview answers even when nothing is running |
 
+## state (7 tests)
+
+`GET /state` reports what `GET /status` says in sentences, as data. Tests that need a value use
+it; the sentences are written for a language model and are free to be reworded.
+
+| Name | Description |
+|---|---|
+| state-reports-every-activity | A fresh session reports all four run types as idle and not running |
+| state-knows-when-a-run-could-start | Configuring a tournament flips `ready_to_start`, without starting it |
+| state-reports-a-run-while-it-is-going | A running tournament is reported as running, and as running only |
+| state-reports-the-standings-as-data | A finished tournament's table comes back as headers and rows |
+| state-agrees-with-the-spoken-status | The data answer and the sentence answer report the same fact |
+| state-answers-in-english-with-a-german-gui | The remote control does not follow the GUI's language setting |
+| state-is-not-a-published-tool | `get_state` serves the endpoint; it is not offered to a model |
+
 ## engines_catalog (6 tests)
 
 | Name | Description |
@@ -43,6 +58,34 @@ anything.
 | tournament-is-reproducible | With `QAPLA_DIAG_SEED` fixed, the same tournament produces the same table |
 | tournament-stop-while-running | A long tournament can be stopped, and `/wait` reports `stopped` |
 | tournament-clear-result | Clearing takes the finished run's results away |
+
+## epd (4 tests)
+
+The position file is four mates in one, written into every sandbox by the framework — so a real
+engine finds all four in hundredths of a second and the test can assert *how many* were solved.
+
+| Name | Description |
+|---|---|
+| epd-solves-mates-in-one | A real engine analyses four mates in one and finds all of them |
+| epd-reports-what-was-not-found | An engine playing at random solves none, and the run still ends |
+| epd-needs-a-position-file | Starting without a position file is refused, with the reason |
+| epd-two-engines-side-by-side | Two engines analyse the same positions and both get a column |
+
+## clop (3 tests)
+
+| Name | Description |
+|---|---|
+| clop-runs-to-the-end | A short tuning run plays its samples and reports an estimate |
+| clop-needs-a-parameter | Tuning nothing is refused: a run without a parameter has no subject |
+| clop-stop-while-running | A long tuning run can be stopped from outside |
+
+## parallel (3 tests)
+
+| Name | Description |
+|---|---|
+| parallel-overview-names-both-runs | A tournament and an SPRT test at once are both reported as running |
+| parallel-stopping-one-leaves-the-other | Stopping one run does not stop the other sharing the pool |
+| parallel-second-start-of-the-same-type-is-refused | One tournament at a time: starting it twice is an error |
 
 ## sprt (3 tests)
 

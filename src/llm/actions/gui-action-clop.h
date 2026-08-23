@@ -107,6 +107,9 @@ struct ClopSettings {
 /** @brief What the run is doing, for QaplaLlm::ActivityWatch. */
 [[nodiscard]] ActivityProgress clopProgress();
 
+/** @brief The estimates as data, or nothing when no tuning run has produced any. */
+[[nodiscard]] std::optional<ResultTable> clopResultTable();
+
 /** @brief Whether a start would go through exactly as things stand. */
 [[nodiscard]] bool clopIsReadyToStart();
 

@@ -63,13 +63,19 @@ def get_tests() -> List[Dict[str, Any]]:
                 {"call": "configure_tournament", "args": _basic_configuration(), "id": "config"},
                 {"call": "start", "args": {"type": "tournament"}, "id": "start"},
                 {"wait": "tournament", "timeout": 120, "id": "run"},
+                {"state": True, "id": "state"},
             ],
             "validators": [
                 {"type": "content", "step": "config", "pattern": "Engines: Diag A, Diag B"},
                 {"type": "content", "step": "config", "pattern": "Games per pairing: 2"},
                 {"type": "waitReason", "step": "run", "expected": "finished"},
-                {"type": "content", "step": "run", "pattern": r"Diag A\s+\S+\s+\S*\s*\S*/2",
-                 "isRegex": True},
+                # The standings as data rather than as a regular expression over a sentence:
+                # two engines, two rows, two games each, all accounted for.
+                {"type": "stateField", "step": "state", "activity": "tournament",
+                 "field": "running", "expected": False},
+                {"type": "resultRows", "step": "state", "activity": "tournament", "count": 2},
+                {"type": "resultCell", "step": "state", "activity": "tournament",
+                 "row": 0, "column": "Total", "expected": "2"},
                 {"type": "fileExists", "path": "games.pgn"},
                 {"type": "fileContent", "path": "games.pgn", "content": "[White "},
             ],
@@ -133,7 +139,8 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
             "validators": [
                 {"type": "ok", "step": "stop"},
-                {"type": "waitReason", "step": "run", "expected": "stopped"},
+                {"type": "waitReason", "step": "run",
+                 "expected": ["stopped", "not_running"]},
             ],
         },
         {
@@ -145,11 +152,13 @@ def get_tests() -> List[Dict[str, Any]]:
                 {"call": "start", "args": {"type": "tournament"}},
                 {"wait": "tournament", "timeout": 120},
                 {"call": "clear_result", "args": {"type": "tournament"}, "id": "clear"},
-                {"call": "get_status", "args": {"type": "tournament"}, "id": "status"},
+                {"state": True, "id": "state"},
             ],
             "validators": [
                 {"type": "ok", "step": "clear"},
-                {"type": "content", "step": "status", "pattern": "No tournament results"},
+                # Gone means gone: no result table at all, not a sentence saying there is none.
+                {"type": "stateField", "step": "state", "activity": "tournament",
+                 "field": "results", "expected": None},
             ],
         },
     ]

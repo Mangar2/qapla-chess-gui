@@ -93,6 +93,26 @@ ActivityProgress activityProgress(Activity activity) {
     }
 }
 
+std::optional<ResultTable> activityResultTable(Activity activity) {
+    switch (activity) {
+        case Activity::Sprt: return sprtResultTable();
+        case Activity::Clop: return clopResultTable();
+        case Activity::Epd: return epdResultTable();
+        case Activity::Tournament:
+        default: return tournamentResultTable();
+    }
+}
+
+bool activityIsReadyToStart(Activity activity) {
+    switch (activity) {
+        case Activity::Sprt: return sprtIsReadyToStart();
+        case Activity::Clop: return clopIsReadyToStart();
+        case Activity::Epd: return epdIsReadyToStart();
+        case Activity::Tournament:
+        default: return tournamentIsReadyToStart();
+    }
+}
+
 ActionResult clearActivityResult(Activity activity) {
     auto result = [&]() {
         switch (activity) {
