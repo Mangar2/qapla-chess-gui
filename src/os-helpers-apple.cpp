@@ -42,7 +42,7 @@
 
 namespace QaplaHelpers {
 
-std::string OsHelpers::getConfigDirectory() {
+std::string OsHelpers::defaultConfigDirectory() {
     std::string homeDir;
 
     if (const auto home = getEnv("HOME")) {

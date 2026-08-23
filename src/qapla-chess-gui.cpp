@@ -55,8 +55,11 @@
 #include "os-helpers.h"
 #include "command-line.h"
 
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <system_error>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -191,6 +194,20 @@ namespace {
     void initImGui(GLFWwindow* window) {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
+
+        // The window layout is session state like everything else, but ImGui writes it to
+        // "imgui.ini" next to the working directory rather than to our configuration directory.
+        // Left that way for an ordinary start -- moving it would lose the layout people already
+        // have -- and redirected when --config-dir asked for a directory of its own, or a test run
+        // would still write into whatever directory it happened to be started from. The string has
+        // to outlive the context: ImGui keeps the pointer, not a copy.
+        static std::string imGuiIniPath;
+        auto configDirectory = QaplaHelpers::OsHelpers::configDirectoryOverride();
+        if (!configDirectory.empty()) {
+            imGuiIniPath = (std::filesystem::path(configDirectory) / "imgui.ini").string();
+            ImGui::GetIO().IniFilename = imGuiIniPath.c_str();
+        }
+
         ImGui::StyleColorsDark();
         ImGui::GetStyle().Colors[ImGuiCol_BorderShadow] = ImVec4(0.25F, 0.28F, 0.32F, 0.40F);
         //ImGui::StyleColorsClassic();
@@ -305,9 +322,22 @@ namespace {
         // ImGui Test Engine suites, print a summary once they finish, and exit.
         const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
         if (autoRunTests) {
+            if (QaplaHelpers::OsHelpers::configDirectoryOverride().empty()) {
+                // Not refused, because that would break every way these tests are started today,
+                // but not passed over in silence either: this run reads the settings of the last
+                // real session and writes its own over them when it ends.
+                std::cerr << "WARNING: the tests are running against the configuration in "
+                          << QaplaHelpers::OsHelpers::getConfigDirectory()
+                          << " and will overwrite it. Pass --config-dir=<path> to keep them "
+                             "apart.\n";
+            }
             testManager.queueAllTests();
         }
         int autoRunFrameCount = 0;
+
+        // What runApp() returns when the tests were run: only an all-green run is a zero, so a
+        // release script can gate on the exit code instead of reading stdout.
+        int autoRunExitCode = 0;
 
         bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
         auto frameRateLimiter = ImGuiFrameRateLimiter::forMode(remoteDesktopMode);
@@ -370,6 +400,9 @@ namespace {
                     testManager.getResultSummary(tested, success, inQueue);
                     std::cout << "QAPLA_TEST_SUMMARY tested=" << tested
                         << " success=" << success << " inQueue=" << inQueue << "\n";
+                    // Nothing tested is not a pass, it is a run that never happened -- a suite
+                    // that registers no test at all has to be as loud as a failing one.
+                    autoRunExitCode = (tested > 0 && success == tested) ? 0 : 1;
                     glfwSetWindowShouldClose(window, 1);
                 }
             }
@@ -389,7 +422,7 @@ namespace {
         GameManagerPool::getInstance().stopAll();
         GameManagerPool::getInstance().waitForTask();
         QaplaWindows::StaticCallbacks::save().invokeAll();
-        return 0;
+        return autoRunExitCode;
     }
 
     /**
@@ -402,6 +435,40 @@ namespace {
         for (const auto& message : options.messages) {
             std::cerr << message << '\n';
         }
+    }
+
+    /**
+     * @brief Sends everything this session stores to the directory --config-dir named, if it did.
+     *
+     * Called before runApp(), because the first setting is read the moment a window is built and
+     * the answer has to be final by then.
+     *
+     * Unlike every other option, a bad value stops the start instead of being reported and
+     * ignored. The others are settings, and a wrong setting still leaves a usable GUI; this one is
+     * a promise that this session will not touch the configuration the user works with. Falling
+     * back on that configuration is precisely the outcome the caller was ruling out.
+     *
+     * @return false when the directory could not be used, and the GUI must not start.
+     */
+    bool applyConfigDirectory(const QaplaApp::CommandLineOptions& options) {
+        if (options.configDirectory.empty()) {
+            return true;
+        }
+
+        std::error_code error;
+        std::filesystem::create_directories(options.configDirectory, error);
+        if (error) {
+            std::cerr << "Cannot use \"" << options.configDirectory
+                      << "\" as the configuration directory: " << error.message() << '\n';
+            return false;
+        }
+
+        // Stored as an absolute path so it stays the same directory no matter what the engines and
+        // dialogs started from here do with the working directory.
+        auto absolutePath = std::filesystem::absolute(options.configDirectory, error);
+        QaplaHelpers::OsHelpers::setConfigDirectoryOverride(
+            error ? options.configDirectory : absolutePath.string());
+        return true;
     }
 
 } // namespace
@@ -457,6 +524,13 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
             return 0;
         }
 
+        if (!applyConfigDirectory(options)) {
+            if (hasConsole) {
+                FreeConsole();
+            }
+            return 1;
+        }
+
         auto code = runApp(options.remoteControl);
         if (hasConsole) {
             FreeConsole();
@@ -486,6 +560,10 @@ int main(int argc, char** argv) {
         if (options.helpRequested) {
             std::cout << QaplaApp::helpText() << std::flush;
             return 0;
+        }
+
+        if (!applyConfigDirectory(options)) {
+            return 1;
         }
 
         auto code = runApp(options.remoteControl);

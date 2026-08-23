@@ -65,6 +65,18 @@ namespace {
          "",
          [](CommandLineOptions& options, std::string_view) { options.helpRequested = true; }},
 
+        {{"--config-dir"},
+         "<path>",
+         "Keep everything this session stores in <path> instead of the per-user configuration "
+         "directory: qapla-chess-gui.ini with the engine list and the window settings, EPD "
+         "results, logs, the auto-saved PGN, and the window layout. The directory is created if "
+         "it is not there. An automated test run points this at a directory of its own, so it "
+         "starts from a known state and cannot change the configuration you work with.",
+         "the per-user configuration directory",
+         [](CommandLineOptions& options, std::string_view value) {
+             options.configDirectory = std::string(value);
+         }},
+
         {{"--remote-control"},
          "",
          "Serve the tools of this GUI over HTTP on 127.0.0.1, so another program can drive the "

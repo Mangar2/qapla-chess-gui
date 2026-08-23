@@ -32,6 +32,10 @@ extern/stb/
 # ImGui settings file
 imgui.ini
 
+# Persönliche Arbeitspläne -- Notizen zum aktuellen Stand einer grösseren Aufgabe,
+# nicht Teil der Projektdokumentation (die steht in docs/).
+/docs/plans/
+
 # Optional: weitere persönliche Dateien
 .vscode/c_cpp_properties.json
 .vscode/launch.json

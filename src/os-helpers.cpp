@@ -26,6 +26,8 @@
 #include <format>
 #include <array>
 #include <memory>
+#include <mutex>
+#include <utility>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -65,10 +67,42 @@ std::optional<std::string> OsHelpers::getEnv(const std::string& name) {
 #endif
 }
 
+namespace {
+
+/**
+ * @brief The directory --config-dir asked for; empty while the per-user default applies.
+ *
+ * Written once at startup, but read from every thread that stores something -- the UI thread, the
+ * autosave callbacks, the chat logger's worker. The lock costs nothing at this call volume and is
+ * cheaper than a data race that would only ever show up in a test run.
+ */
+std::mutex configDirectoryMutex;
+std::string configDirectoryOverrideValue;
+
+} // namespace
+
+void OsHelpers::setConfigDirectoryOverride(std::string directory) {
+    const std::lock_guard<std::mutex> lock(configDirectoryMutex);
+    configDirectoryOverrideValue = std::move(directory);
+}
+
+std::string OsHelpers::configDirectoryOverride() {
+    const std::lock_guard<std::mutex> lock(configDirectoryMutex);
+    return configDirectoryOverrideValue;
+}
+
+// Shared by all three operating systems on purpose: the override has to win everywhere, and a
+// second copy of that rule is a second place to forget it. Only what the default directory is
+// stays platform-specific, in defaultConfigDirectory() below.
+std::string OsHelpers::getConfigDirectory() {
+    auto chosen = configDirectoryOverride();
+    return chosen.empty() ? defaultConfigDirectory() : chosen;
+}
+
 // macOS has its own definition in os-helpers-apple.cpp, so that changes to it cannot reach the
 // Windows or Linux path. The #else branch below therefore belongs to Linux alone.
 #ifndef __APPLE__
-std::string OsHelpers::getConfigDirectory() {
+std::string OsHelpers::defaultConfigDirectory() {
 #ifdef _WIN32
     const auto localAppData = getEnv("LOCALAPPDATA");
     // Fallback if LOCALAPPDATA is not set

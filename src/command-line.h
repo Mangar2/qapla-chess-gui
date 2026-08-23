@@ -49,6 +49,17 @@ struct CommandLineOptions {
      */
     bool helpRequested = false;
 
+    /**
+     * @brief `--config-dir=<path>`: where this session keeps its stored files. Empty for the
+     *        per-user configuration directory, which is what an ordinary start uses.
+     *
+     * Handed to QaplaHelpers::OsHelpers::setConfigDirectoryOverride() before the first setting is
+     * read. An automated test run points this at a directory of its own: it then starts from a
+     * known state instead of from whatever the last real session left behind, and it cannot write
+     * back into the configuration the user works with.
+     */
+    std::string configDirectory;
+
     /** @brief The `--remote-control` switches. Off unless explicitly asked for. */
     QaplaLlm::RemoteControlOptions remoteControl;
 

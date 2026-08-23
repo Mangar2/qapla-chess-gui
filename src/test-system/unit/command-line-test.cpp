@@ -41,7 +41,42 @@ TEST_CASE("parseCommandLine leaves everything off when nothing is asked for", "[
     auto options = parse({});
     REQUIRE_FALSE(options.helpRequested);
     REQUIRE_FALSE(options.remoteControl.enabled);
+    REQUIRE(options.configDirectory.empty());
     REQUIRE(options.messages.empty());
+}
+
+TEST_CASE("parseCommandLine reads --config-dir", "[command-line][config-directory]") {
+    SECTION("the path is taken as written") {
+        auto options = parse({"--config-dir=/tmp/qapla-test-run"});
+        REQUIRE(options.configDirectory == "/tmp/qapla-test-run");
+        REQUIRE(options.messages.empty());
+    }
+
+    SECTION("it does not switch anything else on") {
+        auto options = parse({"--config-dir=/tmp/qapla-test-run"});
+        REQUIRE_FALSE(options.remoteControl.enabled);
+        REQUIRE_FALSE(options.helpRequested);
+    }
+
+    SECTION("a path with spaces survives, since only the first equals sign separates") {
+        auto options = parse({"--config-dir=/Users/someone/My Test Run"});
+        REQUIRE(options.configDirectory == "/Users/someone/My Test Run");
+    }
+
+    SECTION("a Windows path keeps its drive letter, colon and all") {
+        // The value is split at the first '=', never at ':', so "C:\\..." arrives intact.
+        auto options = parse({"--config-dir=C:\\Temp\\qapla"});
+        REQUIRE(options.configDirectory == "C:\\Temp\\qapla");
+    }
+
+    SECTION("without a value it is reported and nothing is redirected") {
+        // Silently starting with the user's own configuration is the one outcome a test run must
+        // not get, so the caller has to be told rather than left to find out afterwards.
+        auto options = parse({"--config-dir"});
+        REQUIRE(options.configDirectory.empty());
+        REQUIRE(options.messages.size() == 1);
+        REQUIRE(options.messages.front().find("--config-dir=<path>") != std::string::npos);
+    }
 }
 
 TEST_CASE("parseCommandLine recognises every spelling of --help", "[command-line]") {
@@ -107,8 +142,8 @@ TEST_CASE("helpText lists every option the parser accepts", "[command-line]") {
     // The point of the shared table in command-line.cpp: a switch that works but is not in
     // --help is a switch nobody finds. This is what holds the two together.
     auto text = helpText();
-    for (const auto* flag : {"--help", "-h", "/?", "--remote-control", "--remote-control-port",
-             "--remote-control-token"}) {
+    for (const auto* flag : {"--help", "-h", "/?", "--config-dir", "--remote-control",
+             "--remote-control-port", "--remote-control-token"}) {
         INFO("missing from --help: " << flag);
         REQUIRE(text.find(flag) != std::string::npos);
     }

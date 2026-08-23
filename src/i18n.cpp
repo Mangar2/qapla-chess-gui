@@ -1,5 +1,6 @@
 #include "i18n.h"
 #include "callback-manager.h"
+#include "os-helpers.h"
 #include "translation-normalizer.h"
 #include "translation-key.h"
 
@@ -24,6 +25,27 @@ using QaplaTester::Logger;
 using QaplaTester::TraceLevel;
 
 namespace QaplaWindows {
+
+#ifdef QAPLA_DEBUG_I18N
+namespace {
+
+/**
+ * @brief Whether this session may write back into the language files in the source tree.
+ *
+ * The debug build keeps the .lang files under i18n current while the GUI is used: a key without a translation is
+ * added, and every key that was shown gets today's date, so the ones nobody asks for any more can
+ * be found. That is a maintenance feature for a developer at the keyboard, and the wrong thing
+ * entirely for an automated run, which would leave the working tree changed after every pass.
+ *
+ * --config-dir is how a run says it is that kind of run: it keeps what it stores to itself, and
+ * the language sources are part of what it must leave alone.
+ */
+bool mayWriteLanguageSources() {
+    return QaplaHelpers::OsHelpers::configDirectoryOverride().empty();
+}
+
+} // namespace
+#endif
 
 Translator& Translator::instance() {
     static Translator instance;
@@ -78,9 +100,11 @@ std::string Translator::translate(const std::string& topic, const std::string& k
     std::string currentDate = TranslationKey::getCurrentDate();
     std::string keyString = translationKey.getKeyString(currentDate);
     
-    for (const auto& lang : {"deu", "eng", "fra"}) {
-        auto langFile = i18nDir / (std::string(lang) + ".lang");
-        addMissingTranslationToFile(langFile, topic, keyString, toFileFormat(normalizedKey));
+    if (mayWriteLanguageSources()) {
+        for (const auto& lang : {"deu", "eng", "fra"}) {
+            auto langFile = i18nDir / (std::string(lang) + ".lang");
+            addMissingTranslationToFile(langFile, topic, keyString, toFileFormat(normalizedKey));
+        }
     }
     
     // Also add to current translations so we don't write it again
@@ -331,7 +355,7 @@ void Translator::markTimestampUpdate(const std::string& langCode,
 }
 
 void Translator::applyPendingUpdates() {
-    if (pendingUpdates_.empty()) {
+    if (pendingUpdates_.empty() || !mayWriteLanguageSources()) {
         return;
     }
     

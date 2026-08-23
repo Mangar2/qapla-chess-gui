@@ -105,6 +105,7 @@ qapla-chess-gui --help
 | Option | Meaning |
 | --- | --- |
 | `--help`, `-h`, `/?` | Print the option list and exit. The GUI does not start. |
+| `--config-dir=<path>` | Keep everything this session stores in `<path>` instead of the per-user configuration directory. Created if it is not there. See [Running against a configuration of its own](#running-against-a-configuration-of-its-own). |
 | `--remote-control` | Serve the GUI's tools over HTTP on `127.0.0.1`, so another program can drive the running window. Off unless given. |
 | `--remote-control-port=<port>` | Port of the remote control (default `8137`). `0` asks the operating system for a free one, which the Remote Control panel then reports. |
 | `--remote-control-token=<token>` | Shared secret every caller has to send as `Authorization: Bearer <token>`. Without it, any program on this machine may drive the GUI. |
@@ -115,6 +116,42 @@ costs more than a wrong setting.
 
 All options live in one table in [`src/command-line.cpp`](src/command-line.cpp), and that table is
 what `--help` prints — a new option appears in the help output by being added there.
+
+#### Running against a configuration of its own
+
+Everything the GUI keeps between sessions lives in one per-user directory
+(`%LOCALAPPDATA%\qapla-chess-gui` on Windows, `~/.qapla-chess-gui` on Linux and macOS):
+`qapla-chess-gui.ini` with the engine list and every window's settings, EPD results, the chat and
+finetuning logs, the auto-saved PGN. `--config-dir` points all of it somewhere else for one run:
+
+```bash
+qapla-chess-gui --config-dir=/tmp/qapla-run-42
+```
+
+This is what an automated test run uses. It buys two different things:
+
+- **The configuration you work with is not touched.** The GUI saves its state when it ends, so
+  without this a test run writes its own settings over yours.
+- **The run starts from a known state.** A fresh directory is a fresh installation. Without it, a
+  test silently depends on what the last real session happened to leave behind — which is the
+  difference between a test that passes and a test that proves something.
+
+A directory that cannot be created ends the start rather than quietly falling back on your own
+configuration, since avoiding exactly that is the point of the switch. The window layout
+(`imgui.ini`) follows along; without the switch it stays next to the working directory, where
+ImGui puts it.
+
+The GUI test suites are run by starting the executable with `QAPLA_AUTO_RUN_TESTS` set — they are
+then played automatically and the process ends with a summary line on stdout:
+
+```bash
+QAPLA_AUTO_RUN_TESTS=1 qapla-chess-gui --config-dir=/tmp/qapla-run-42
+# QAPLA_TEST_SUMMARY tested=54 success=54 inQueue=0
+```
+
+The exit code is 0 only when every registered test ran and passed, so a release script can gate on
+it. Started without `--config-dir`, the run says on stderr that it is using — and will overwrite —
+your own configuration.
 
 #### Remote Control over HTTP
 

@@ -32,6 +32,7 @@
 #ifdef _WIN32
 
 #include "os-dialogs.h"
+#include "os-helpers.h"
 #include <base-elements/string-helper.h>
 #include <vector>
 #include <filesystem>
@@ -284,6 +285,14 @@ std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
 }
 
 std::string OsDialogs::getConfigDirectory() {
+    // A session started with --config-dir keeps everything it stores in that one directory, so
+    // this second way of naming the configuration directory has to answer with it too -- the
+    // auto-saved PGN is written through here. Only what the default is stays below.
+    auto overrideDirectory = QaplaHelpers::OsHelpers::configDirectoryOverride();
+    if (!overrideDirectory.empty()) {
+        return overrideDirectory;
+    }
+
     // TODO: Give Windows the same separation macOS already has, once someone can build and run it
     // on Windows. Left untouched on purpose: the change was prepared on a Mac, and touching shared
     // code for one OS is exactly what must not happen here.

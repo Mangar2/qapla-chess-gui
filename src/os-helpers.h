@@ -47,13 +47,39 @@ public:
     static std::optional<std::string> getEnv(const std::string& name);
 
     /**
+     * @brief Puts everything this session stores into @p directory instead of the user's own
+     *        configuration directory.
+     *
+     * This is the one switch that makes an automated test run harmless. Everything the GUI keeps
+     * between sessions is addressed through getConfigDirectory(): qapla-chess-gui.ini with the
+     * engine list and every window's settings, the EPD results, the chat and finetuning logs, the
+     * auto-saved PGN. Redirecting that one function is therefore enough to leave the
+     * configuration the user works with untouched -- and, just as important, to keep a test from
+     * silently depending on what an earlier session happened to leave behind.
+     *
+     * Set once at startup from --config-dir, before the first setting is read; see
+     * QaplaApp::CommandLineOptions::configDirectory.
+     *
+     * @param directory Where to keep this session's files. Empty restores the per-user default.
+     */
+    static void setConfigDirectoryOverride(std::string directory);
+
+    /**
+     * @brief What setConfigDirectoryOverride() was given, or an empty string when it was not used.
+     *
+     * For the few places that need to know whether this session is running out of a directory of
+     * its own, or that compute a configuration path themselves instead of calling
+     * getConfigDirectory() -- today the Windows and Linux variants of OsDialogs.
+     */
+    static std::string configDirectoryOverride();
+
+    /**
      * @brief Gets the configuration directory for the application.
-     * 
-     * Returns platform-specific config directory:
+     *
+     * A directory set with setConfigDirectoryOverride() wins. Without one, the platform-specific
+     * per-user directory:
      * - Windows: %LOCALAPPDATA%/qapla-chess-gui
      * - Linux/macOS: ~/.qapla-chess-gui
-     *
-     * The macOS variant is implemented in os-helpers-apple.cpp, all others in os-helpers.cpp.
      *
      * @return Path to the configuration directory. Falls back to a relative path below the
      *         working directory when the home directory cannot be determined.
@@ -107,6 +133,15 @@ public:
      * @return Country name or "Unknown" if unavailable.
      */
     static std::string getCountry();
+
+private:
+    /**
+     * @brief The per-user configuration directory of this operating system, ignoring any override.
+     *
+     * The macOS variant is implemented in os-helpers-apple.cpp, all others in os-helpers.cpp, so a
+     * change to one cannot reach the other. getConfigDirectory() is the only caller.
+     */
+    static std::string defaultConfigDirectory();
 };
 
 } // namespace QaplaHelpers
