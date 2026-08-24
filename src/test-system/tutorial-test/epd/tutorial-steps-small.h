@@ -114,6 +114,13 @@ namespace QaplaTest::EpdTutorialTest {
         ctx->ItemClick("**/###Epd/Clear");
         ctx->Yield();
 
+        // Waited for as a state, not as five seconds of hope: the tutorial only asks to continue
+        // once the results are actually cleared, and under load that took longer than the
+        // user-input wait allowed -- which is why this passed alone and failed in a full run.
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, []() {
+            return QaplaWindows::EpdData::instance().state == QaplaWindows::EpdData::State::Cleared;
+        }, 30.0f));
+
         clickContinueAndAdvance(ctx, 9);
     }
 

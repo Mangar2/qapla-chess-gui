@@ -64,11 +64,20 @@ def main() -> int:
         print(f"No diagnostic engine in {engine_dir} -- build the project first.", file=sys.stderr)
         return 2
 
+    # The tests play with real engines: the diagnostic one moves at random, which is no use where
+    # a test waits for an engine to find a move.
+    for stem in ("Qapla", "SpikeEngine"):
+        if not (REPO_ROOT / "engines" / executable(stem)).is_file():
+            print(f"No {executable(stem)} in {REPO_ROOT / 'engines'} -- the tests need it.",
+                  file=sys.stderr)
+            return 2
+
     config_dir = Path(tempfile.mkdtemp(prefix="qapla-gui-tests-"))
     environment = dict(os.environ)
     environment["QAPLA_AUTO_RUN_TESTS"] = "1"
     environment["QAPLA_TEST_ENGINE_DIR"] = str(engine_dir)
     environment["QAPLA_TEST_DATA_DIR"] = str(REPO_ROOT / "src" / "test-system" / "test-data")
+    environment["QAPLA_TEST_REAL_ENGINE_DIR"] = str(REPO_ROOT / "engines")
     if arguments.filter:
         environment["QAPLA_TEST_FILTER"] = arguments.filter
 

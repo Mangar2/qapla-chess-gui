@@ -68,6 +68,12 @@ namespace QaplaTest {
             IM_CHECK(waitForTutorialProgress(ctx, 1, 5.0f));
             ctx->LogInfo("Tutorial started, progress: %d", QaplaWindows::BoardWindow::tutorialBoardProgress_);
             
+            // The board keeps its own engine selection, and nothing else fills it: engines being
+            // installed, detected, or selected for a tournament does not give this board an
+            // opponent. Chosen here the way a user would -- through the board's own Config
+            // dialog -- because the tutorial starts one step later and assumes it is done.
+            IM_CHECK(selectEnginesOnBoard(ctx));
+
             // Execute all tutorial steps on the board with snackbar guidance
             executeStep01_ClickPlay(ctx);
             executeStep02_MakeCounterMove(ctx);

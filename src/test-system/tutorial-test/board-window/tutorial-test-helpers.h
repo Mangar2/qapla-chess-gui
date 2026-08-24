@@ -32,6 +32,32 @@ namespace QaplaTest::BoardWindowTutorialTest {
     /**
      * @brief Cleans up board window tutorial state by resetting the static progress counter
      */
+    /**
+     * @brief Picks two engines for the board itself, through its Config dialog.
+     *
+     * A board has an engine selection of its own; the catalog, the tournament and the SPRT view
+     * each have theirs, and none of them feeds this one. Without it the Play button has nothing
+     * to ask for a move, which looks exactly like an engine that will not answer.
+     */
+    inline bool selectEnginesOnBoard(ImGuiTestContext* ctx) {
+        // The Config button belongs to the engine pane beside the board, not to the board
+        // itself, so it is looked for anywhere rather than under a guessed path.
+        ctx->ItemClick("**/Config");
+        ctx->Yield(10);
+
+        // Inside the dialog window, so the checkboxes are looked for there rather than anywhere:
+        // an item found in a popup that is not the current reference cannot be hovered.
+        ctx->SetRef("Select Engines");
+        ctx->ItemClick("**/engineSettings/$$0/##select");
+        ctx->Yield(2);
+        ctx->ItemClick("**/engineSettings/$$1/##select");
+        ctx->Yield(2);
+        ctx->ItemClick("**/###Ok");
+        ctx->SetRef("");
+        ctx->Yield(10);
+        return true;
+    }
+
     inline void cleanupBoardWindowState() {
         QaplaWindows::BoardWindow::tutorialBoardProgress_ = 0;
     }

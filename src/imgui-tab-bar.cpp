@@ -171,7 +171,11 @@ namespace QaplaWindows {
             { "switch_to_tournament_tab", "Tournament" },
             { "switch_to_sprt_tab", "SPRT" },
             { "switch_to_epd_view", "Epd" },
-            { "switch_to_pgn_view", "Pgn" }
+            { "switch_to_pgn_view", "Pgn" },
+            // Not reachable from any button: this is how a caller says "put the view back where
+            // it started". A test run needs it, since one test leaving a board tab in the
+            // foreground made the next one unable to reach the chat at all.
+            { "switch_to_chatbot", "Chatbot" }
         };
         for (const auto& [cmd, tabName] : commands) {
             if (message == cmd) {

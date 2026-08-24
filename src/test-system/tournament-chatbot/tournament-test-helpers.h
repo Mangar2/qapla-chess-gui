@@ -36,7 +36,7 @@ namespace QaplaTest::TournamentChatbot {
      * @brief Gets path to test opening file (EPD)
      */
     inline std::string getTestOpeningPath() {
-        return QaplaTest::testDataPath("wmtest.epd");
+        return QaplaTest::testOpeningsFile();
     }
 
     /**

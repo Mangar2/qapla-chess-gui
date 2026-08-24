@@ -52,7 +52,10 @@ namespace QaplaTest {
 
             resetChatbotToInitialState(ctx);
 
-            ctx->ItemClick("**/Chatbot###Chatbot");
+            // The tab is "###Chatbot"; the ref used to carry a label in front of it that no
+            // widget has, so the click never landed -- and the check after it was
+            // reading a window nobody had switched to.
+            ctx->ItemClick("**/###Chatbot");
             ctx->Yield(2);
 
             IM_CHECK(!ctx->ItemExists("**/###AI Chat"));
@@ -77,7 +80,10 @@ namespace QaplaTest {
                     QaplaLlm::LmStudioStatus::ServerRunning));
             ctx->Yield();
 
-            ctx->ItemClick("**/Chatbot###Chatbot");
+            // The tab is "###Chatbot"; the ref used to carry a label in front of it that no
+            // widget has, so the click never landed -- and the check after it was
+            // reading a window nobody had switched to.
+            ctx->ItemClick("**/###Chatbot");
             ctx->Yield(2);
 
             IM_CHECK(ctx->ItemExists("**/###AI Chat"));

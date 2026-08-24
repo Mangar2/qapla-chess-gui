@@ -41,7 +41,7 @@ namespace QaplaTest::TutorialTest {
         // ending in .epd and fall back to "dummy.epd" when it found nothing -- which satisfied
         // the check two lines down and then made the tournament refuse to start eight steps
         // later, for a reason nothing in between mentioned.
-        const auto openingFile = QaplaTest::testDataPath("wmtest.epd");
+        const auto openingFile = QaplaTest::testOpeningsFile();
         IM_CHECK(std::filesystem::is_regular_file(openingFile));
         tournamentData.tournamentOpening().openings().file = openingFile;
 

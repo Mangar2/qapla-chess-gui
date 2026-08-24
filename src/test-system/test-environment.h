@@ -72,6 +72,16 @@ void prepareTestEnvironment(ImGuiTestContext* ctx,
 [[nodiscard]] std::string testEnginePath(const std::string& variant = {});
 
 /**
+ * @brief An opening book for the tests, written into the run's own directory.
+ *
+ * Four ordinary openings, so that a game started from one lasts long enough to be observed. The
+ * tests used to point the openings setting at wmtest.epd -- a set of tactical positions, several
+ * of them a move from mate. An engine playing at random reaches the end of such a game almost at
+ * once, so a tournament was over before the test that started it could see it running.
+ */
+[[nodiscard]] std::string testOpeningsFile();
+
+/**
  * @brief A file the tests read, by name, wherever the source tree happens to be.
  *
  * The tests used to build these paths from the working directory, which meant they only ran when

@@ -24,6 +24,7 @@
 #include "imgui_te_context.h"
 
 #include "chatbot/chatbot-window.h"
+#include "callback-manager.h"
 #include "configuration.h"
 #include "llm/gui-tool-engine-management.h"
 #include "os-helpers.h"
@@ -32,6 +33,7 @@
 #include <engine-handling/engine-worker-factory.h>
 
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -41,9 +43,16 @@ namespace {
 
 namespace fs = std::filesystem;
 
-/** @brief The name a test engine is installed under. Two, because a tournament needs opponents. */
-constexpr const char* FIRST_ENGINE = "Test Engine A";
-constexpr const char* SECOND_ENGINE = "Test Engine B";
+/**
+ * @brief The names the test engines are installed under.
+ *
+ * Real engines, not the diagnostic one. The diagnostic engine plays random legal moves, which is
+ * fine for driving a tournament and useless anywhere a test needs a move to actually be found: it
+ * answers "bestmove (none)" in positions it has no move for, and a game from a sharp position is
+ * over in a ply or two. The board tutorial in particular waits for an engine to move.
+ */
+constexpr const char* FIRST_ENGINE = "Qapla";
+constexpr const char* SECOND_ENGINE = "Spike";
 
 [[nodiscard]] std::string executableSuffix() {
 #ifdef _WIN32
@@ -87,27 +96,35 @@ constexpr const char* SECOND_ENGINE = "Test Engine B";
 }
 
 /**
- * @brief Makes a second engine out of the first, so a tournament has two sides.
+ * @brief Finds one of the real engines the tests play with.
  *
- * The build produces one playing diagnostic engine (the other variants are deliberately broken).
- * The GUI tells engines apart by their executable, so a second opponent has to be a second file.
- * It is put in the configuration directory, which for a test run is thrown away with everything
- * else. The copy carries no mode word in its name, so it plays like the original.
+ * They are somebody's builds rather than build output, so they live in `engines/` beside the
+ * repository, which is git-ignored. QAPLA_TEST_REAL_ENGINE_DIR names that directory outright;
+ * without it, it is looked for upwards from where the process was started.
  */
-[[nodiscard]] fs::path secondEngineFrom(const fs::path& source) {
-    const fs::path target = fs::path(QaplaHelpers::OsHelpers::getConfigDirectory())
-        / ("test-engine-b" + executableSuffix());
-    std::error_code error;
-    if (!fs::is_regular_file(target)) {
-        fs::create_directories(target.parent_path(), error);
-        fs::copy_file(source, target, fs::copy_options::overwrite_existing, error);
-        if (error) {
-            return {};
+[[nodiscard]] fs::path findRealEngine(const std::string& fileStem) {
+    const std::string name = fileStem + executableSuffix();
+
+    if (const auto configured = QaplaHelpers::OsHelpers::getEnv("QAPLA_TEST_REAL_ENGINE_DIR")) {
+        const fs::path candidate = fs::path(*configured) / name;
+        if (fs::is_regular_file(candidate)) {
+            return candidate;
         }
-        fs::permissions(target, fs::perms::owner_all | fs::perms::group_exec | fs::perms::others_exec,
-            fs::perm_options::add, error);
     }
-    return target;
+
+    std::error_code error;
+    fs::path here = fs::current_path(error);
+    for (int level = 0; level < 6 && !here.empty(); ++level) {
+        const fs::path candidate = here / "engines" / name;
+        if (fs::is_regular_file(candidate)) {
+            return candidate;
+        }
+        if (!here.has_parent_path() || here.parent_path() == here) {
+            break;
+        }
+        here = here.parent_path();
+    }
+    return {};
 }
 
 void selectAllEngines();
@@ -128,14 +145,13 @@ void installTestEngines(ImGuiTestContext* ctx) {
         return;
     }
 
-    const fs::path first = findDiagnosticEngine({});
-    if (first.empty()) {
-        IM_CHECK_SILENT(!"the diagnostic engine was not found -- build the project, or set "
-                         "QAPLA_TEST_ENGINE_DIR to the directory holding it");
+    const fs::path first = findRealEngine("Qapla");
+    const fs::path second = findRealEngine("SpikeEngine");
+    if (first.empty() || second.empty()) {
+        IM_CHECK_SILENT(!"the test engines were not found -- put Qapla and SpikeEngine into "
+                         "engines/, or set QAPLA_TEST_REAL_ENGINE_DIR to where they are");
         return;
     }
-    const fs::path second = secondEngineFrom(first);
-    IM_CHECK_SILENT(!second.empty());
 
     std::vector<QaplaLlm::NamedEnginePath> engines{
         {.name = FIRST_ENGINE, .path = first.string()},
@@ -228,6 +244,23 @@ void removeAllEngines() {
 }
 
 
+std::string testOpeningsFile() {
+    const fs::path path =
+        fs::path(QaplaHelpers::OsHelpers::getConfigDirectory()) / "test-openings.pgn";
+    std::error_code error;
+    if (!fs::is_regular_file(path)) {
+        fs::create_directories(path.parent_path(), error);
+        std::ofstream out(path, std::ios::trunc);
+        for (const char* moves : {"1. e4 e5 2. Nf3 Nc6", "1. d4 d5 2. c4 e6",
+                 "1. c4 Nf6 2. Nc3 g6", "1. Nf3 d5 2. g3 Nf6"}) {
+            out << "[Event \"Test openings\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n"
+                << "[Round \"-\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n\n"
+                << moves << " *\n\n";
+        }
+    }
+    return path.string();
+}
+
 std::string testEnginePath(const std::string& variant) {
     return findDiagnosticEngine(variant).string();
 }
@@ -241,7 +274,11 @@ void prepareTestEnvironment(ImGuiTestContext* ctx, TestEngines engines) {
         removeAllEngines();
     }
     QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
-    ctx->Yield();
+
+    // And the view itself back to the chat. A test that left a board tab in the foreground made
+    // the next one unable to reach the chat: the tab was there, and covered.
+    QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_chatbot");
+    ctx->Yield(3);
 }
 
 } // namespace QaplaTest

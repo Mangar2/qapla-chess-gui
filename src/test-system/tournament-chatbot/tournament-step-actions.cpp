@@ -293,6 +293,7 @@ namespace QaplaTest::TournamentChatbot {
 
     bool executeStartStep(ImGuiTestContext* ctx, StartAction action) {
         ctx->LogInfo("Executing Start step...");
+
         ctx->Yield(5);
 
         switch (action) {
