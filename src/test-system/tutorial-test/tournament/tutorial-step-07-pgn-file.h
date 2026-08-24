@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../../test-environment.h"
 #include "tutorial-test-helpers.h"
 
 namespace QaplaTest::TutorialTest {
@@ -35,8 +36,10 @@ namespace QaplaTest::TutorialTest {
         ctx->ItemOpen("**/###Pgn");
         ctx->Yield();
 
-        // Set PGN file programmatically
-        tournamentData.tournamentPgn().pgnOptions().file = "log/test-tutorial-output.pgn";
+        // Into the run's own directory: a path relative to the working directory only worked
+        // when that happened to be the top of the repository, and left the file there afterwards.
+        tournamentData.tournamentPgn().pgnOptions().file =
+            QaplaTest::testOutputPath("tutorial-tournament.pgn");
         
         // Verify PGN file is set
         IM_CHECK(!tournamentData.tournamentPgn().pgnOptions().file.empty());

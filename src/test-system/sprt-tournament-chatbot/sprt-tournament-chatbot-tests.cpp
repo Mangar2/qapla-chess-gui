@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "../test-environment.h"
 #include "sprt-tournament-chatbot-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -49,6 +50,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Flow", "NewSprtTournamentComplete");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Complete New SPRT Tournament Flow ===");
             
             cleanupSprtTournamentState();
@@ -116,6 +118,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Flow", "NewSprtTournamentSwitchView");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: New SPRT Tournament with Switch to View ===");
             
             cleanupSprtTournamentState();
@@ -163,6 +166,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Cancel", "AllCancelButtons");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: All Cancel Buttons ===");
             
             cleanupSprtTournamentState();
@@ -296,6 +300,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Continue", "ExistingYesAndNo");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing SPRT Tournament - Yes and No ===");
             
             cleanupSprtTournamentState();
@@ -367,6 +372,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Continue", "ExistingCancel");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing SPRT Tournament - Cancel ===");
             
             cleanupSprtTournamentState();
@@ -405,6 +411,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/StopRunning", "EndTournament");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Stop Running SPRT Tournament - End ===");
             
             cleanupSprtTournamentState();
@@ -447,6 +454,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/StopRunning", "KeepRunning");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Stop Running SPRT Tournament - Keep Running ===");
             
             cleanupSprtTournamentState();
@@ -486,6 +494,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "SprtTournament/Chatbot/Options", "ToggleAllOptions");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Toggle All Options ===");
             
             cleanupSprtTournamentState();

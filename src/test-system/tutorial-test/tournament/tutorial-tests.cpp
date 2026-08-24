@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "../../test-environment.h"
 #include "tutorial-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -75,6 +76,7 @@ namespace QaplaTest {
         // =================================================================
         tst = IM_REGISTER_TEST(engine, "Tutorial/Tournament", "CompleteTutorial");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Tournament Tutorial - Complete Flow ===");
             
             // Precondition: Clean state and engines available

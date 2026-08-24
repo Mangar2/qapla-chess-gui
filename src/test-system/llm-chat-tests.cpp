@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2026 Volker Böhm
  */
 
+#include "test-environment.h"
 #include "test-system/llm-chat-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -46,6 +47,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "LlmChat/Registration", "AbsentByDefault");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: AI Chat entry absent by default ===");
 
             resetChatbotToInitialState(ctx);
@@ -63,6 +65,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "LlmChat/Registration", "AppearsWhenDetected");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: AI Chat entry appears after detection ===");
 
             resetChatbotToInitialState(ctx);

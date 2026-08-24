@@ -293,8 +293,12 @@ namespace {
 
         // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
         // into the frame loop -- the remote control serves exactly those and nothing of its own.
+        // Read here because the remote control below needs to know: during an automated test run
+        // the chatbot window belongs to the tests, so the channel is opened without its panel.
+        const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
+
         if (remoteControl.enabled) {
-            if (QaplaLlm::startRemoteControl(remoteControl)) {
+            if (QaplaLlm::startRemoteControl(remoteControl, !autoRunTests)) {
                 // For a person reading a log. A program that has to know the port reads
                 // remote-control.port in the configuration directory instead, which does not
                 // depend on there being a console to write to -- see RemoteControlServer.
@@ -336,7 +340,6 @@ namespace {
 
         // Headless/CI support: when QAPLA_AUTO_RUN_TESTS is set, queue all registered
         // ImGui Test Engine suites, print a summary once they finish, and exit.
-        const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
         if (autoRunTests) {
             if (QaplaHelpers::OsHelpers::configDirectoryOverride().empty()) {
                 // Not refused, because that would break every way these tests are started today,

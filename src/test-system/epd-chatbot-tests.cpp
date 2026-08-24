@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "test-environment.h"
 #include "test-system/epd-chatbot-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -34,10 +35,7 @@ namespace QaplaTest {
     namespace {
         // Helper to get the test data path
         std::string getTestEpdPath() {
-            // Get the executable directory and navigate to test-data
-            auto currentPath = std::filesystem::current_path();
-            auto testDataPath = currentPath / "src" / "test-system" / "test-data" / "wmtest.epd";
-            return testDataPath.string();
+            return QaplaTest::testDataPath("wmtest.epd");
         }
 
         // Helper to check if engines are available
@@ -140,6 +138,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Flow", "StartAnalysis");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Complete EPD Chatbot Flow - Start Analysis ===");
             
             // Precondition: Clean state
@@ -207,6 +206,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Flow", "StopRunning");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Stop Running Analysis Flow ===");
             
             // Precondition: Start an analysis first
@@ -274,6 +274,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Cancel", "AtStopDialog");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Stop Running Dialog ===");
             
             cleanupEpdState();
@@ -331,6 +332,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Cancel", "AtEngineSelection");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Engine Selection ===");
             
             cleanupEpdState();
@@ -361,6 +363,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Cancel", "AtConfiguration");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Configuration Step ===");
             
             cleanupEpdState();
@@ -404,6 +407,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Cancel", "AtStartStep");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Start Step ===");
             
             cleanupEpdState();
@@ -454,6 +458,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Flow", "SwitchToEpdView");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Switch to EPD View after Start ===");
             
             cleanupEpdState();
@@ -509,6 +514,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Continue", "ExistingYes");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Analysis - Yes ===");
             
             cleanupEpdState();
@@ -588,6 +594,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Continue", "ExistingNo");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Analysis - No (New Setup) ===");
             
             cleanupEpdState();
@@ -651,6 +658,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Continue", "ExistingCancel");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Analysis - Cancel ===");
             
             cleanupEpdState();
@@ -715,6 +723,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "EPD/Chatbot/Continue", "NoDialogWhenComplete");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: No Continue Dialog When Analysis Complete ===");
             
             cleanupEpdState();

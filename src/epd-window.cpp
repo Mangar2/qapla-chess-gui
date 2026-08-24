@@ -353,9 +353,15 @@ void EpdWindow::showNextEpdTutorialStep([[maybe_unused]] const std::string& clic
         return;
         
         case 7:
-        // Step 6: Running again - wait for Grace (Stopping state)
+        // Step 6: Running again - wait for the graceful stop to have been asked for.
+        //
+        // Any state that is no longer running counts, not just Gracefully. A graceful stop can
+        // be over before the next frame -- the positions in flight finish early, or the run had
+        // reached its last ones anyway -- and waiting for the intermediate state meant the
+        // tutorial sat on this step for good when that happened.
         applyHighlighting({.highlightedButton = "Grace"});
-        if (epdState == EpdData::State::Gracefully) {
+        if (epdState == EpdData::State::Gracefully || epdState == EpdData::State::Stopping
+            || epdState == EpdData::State::Stopped || epdState == EpdData::State::Cleared) {
             Tutorial::instance().requestNextTutorialStep(tutorialName);
         }
         return;

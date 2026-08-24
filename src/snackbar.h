@@ -243,6 +243,18 @@ public:
         history_.clear();
     }
 
+    /**
+     * @brief Takes every message currently on screen away at once.
+     *
+     * A snackbar sits over the window until its time is up, which is exactly what it is for and
+     * exactly what a test driving the GUI cannot work around: it has to click where the message
+     * is. This clears the slate; the history is left alone, since that is a record rather than
+     * something in the way.
+     */
+    void dismissAll() {
+        snackbarStack_.clear();
+    }
+
 private:
     static constexpr size_t MAX_HISTORY_SIZE = 100;
 

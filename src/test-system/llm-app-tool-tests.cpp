@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2026 Volker Böhm
  */
 
+#include "test-environment.h"
 #include "llm-app-tool-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -59,6 +60,7 @@ namespace QaplaTest {
 
         t = IM_REGISTER_TEST(engine, "Llm/App/Tools", "OpenPgnFileFromTournamentAndSprtSourcesViaRegistry");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: open_pgn_file(source=tournament/sprt) via GuiToolRegistry ===");
 
             TournamentChatbot::cleanupTournamentState();

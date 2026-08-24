@@ -324,6 +324,11 @@ bool ImGuiEngineSelect::areAllEnginesDetected() {
     return capabilities.areAllEnginesDetected();
 }
 
+bool ImGuiEngineSelect::areAllEnginesUsable() {
+    const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+    return capabilities.areAllEnginesUsable();
+}
+
 void ImGuiEngineSelect::setConfigurationChangedCallback(ConfigurationChangedCallback callback) {
     configurationCallback_ = std::move(callback);
     notifyConfigurationChanged();

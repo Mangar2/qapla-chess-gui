@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../../test-environment.h"
 #include "tutorial-test-helpers.h"
 #include <filesystem>
 
@@ -36,26 +37,13 @@ namespace QaplaTest::TutorialTest {
         ctx->ItemOpen("**/###Opening");
         ctx->Yield();
 
-        // Find any .epd file in the workspace
-        std::filesystem::path openingFile;
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(".")) {
-            if (entry.is_regular_file() && entry.path().extension() == ".epd") {
-                openingFile = entry.path();
-                break;
-            }
-        }
-        
-        if (openingFile.empty()) {
-            ctx->LogWarning("No .epd file found in workspace - skipping opening configuration");
-            // Set a dummy path to satisfy tutorial
-            tournamentData.tournamentOpening().openings().file = "dummy.epd";
-        } else {
-            // Set the opening file programmatically
-            tournamentData.tournamentOpening().openings().file = openingFile.string();
-        }
-        
-        // Verify opening file is set
-        IM_CHECK(!tournamentData.tournamentOpening().openings().file.empty());
+        // The suite's own position file. This used to scan the working directory for anything
+        // ending in .epd and fall back to "dummy.epd" when it found nothing -- which satisfied
+        // the check two lines down and then made the tournament refuse to start eight steps
+        // later, for a reason nothing in between mentioned.
+        const auto openingFile = QaplaTest::testDataPath("wmtest.epd");
+        IM_CHECK(std::filesystem::is_regular_file(openingFile));
+        tournamentData.tournamentOpening().openings().file = openingFile;
 
         // Close Opening section
         ctx->ItemClose("**/###Opening");

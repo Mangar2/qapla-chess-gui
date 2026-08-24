@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../test-environment.h"
 #include "imgui_te_context.h"
 #include <string>
 #include <filesystem>
@@ -35,18 +36,14 @@ namespace QaplaTest::TournamentChatbot {
      * @brief Gets path to test opening file (EPD)
      */
     inline std::string getTestOpeningPath() {
-        auto currentPath = std::filesystem::current_path();
-        auto testDataPath = currentPath / "src" / "test-system" / "test-data" / "wmtest.epd";
-        return testDataPath.string();
+        return QaplaTest::testDataPath("wmtest.epd");
     }
 
     /**
      * @brief Gets path to test PGN output file
      */
     inline std::string getTestPgnPath() {
-        auto currentPath = std::filesystem::current_path();
-        auto testDataPath = currentPath / "output" / "test-tournament.pgn";
-        return testDataPath.string();
+        return QaplaTest::testOutputPath("test-tournament.pgn");
     }
 
     // =========================================================================

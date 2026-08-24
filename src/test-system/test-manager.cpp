@@ -29,11 +29,14 @@
 #include "test-system/llm-chat-tests.h"
 #include "test-system/llm-app-tool-tests.h"
 #include "os-helpers.h"
+
+#include <filesystem>
 #include <glad/glad.h>
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 #include <imgui.h>
 #include "imgui_te_engine.h"
+#include "imgui_te_exporters.h"
 #include "imgui_te_ui.h"
 #endif
 
@@ -47,6 +50,18 @@ namespace QaplaTest {
         io.ConfigVerboseLevel = ImGuiTestVerboseLevel_Info;
         io.ConfigRunSpeed = ImGuiTestRunSpeed_Normal;
         io.ConfigNoThrottle = false;
+
+        // An unattended run has nobody to read the on-screen log, so it goes to the terminal and
+        // to a file. Without this, a failure reports itself as "tested=4 success=0" and the one
+        // thing worth knowing -- which step did not work -- stays in a window that has closed.
+        if (QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS")) {
+            io.ConfigLogToTTY = true;
+            exportResultsPath_ =
+                (std::filesystem::path(QaplaHelpers::OsHelpers::getConfigDirectory())
+                    / "gui-test-results.xml").string();
+            io.ExportResultsFilename = exportResultsPath_.c_str();
+            io.ExportResultsFormat = ImGuiTestEngineExportFormat_JUnitXml;
+        }
         io.ScreenCaptureFunc = []([[maybe_unused]] ImGuiID viewport_id, int x, int y, int w, int h, unsigned int* pixels, [[maybe_unused]] void* user_data) {
             GLint last_buffer;
             glGetIntegerv(GL_READ_BUFFER, &last_buffer);

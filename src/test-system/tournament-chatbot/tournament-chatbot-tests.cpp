@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "../test-environment.h"
 #include "tournament-chatbot-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -47,6 +48,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Flow", "NewTournamentComplete");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Complete New Tournament Flow ===");
 
             cleanupTournamentState();
@@ -116,6 +118,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Flow", "NewTournamentSwitchView");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: New Tournament with Switch to View ===");
             
             cleanupTournamentState();
@@ -163,6 +166,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtMenu");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Menu ===");
             
             cleanupTournamentState();
@@ -183,6 +187,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtGlobalSettings");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at GlobalSettings ===");
             
             cleanupTournamentState();
@@ -206,6 +211,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtSelectEngines");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at SelectEngines ===");
             
             cleanupTournamentState();
@@ -232,6 +238,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtConfiguration");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Configuration ===");
             
             cleanupTournamentState();
@@ -262,6 +269,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtOpening");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Opening ===");
             
             cleanupTournamentState();
@@ -294,6 +302,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtPgn");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at PGN ===");
             
             cleanupTournamentState();
@@ -328,6 +337,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Cancel", "AtStart");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Cancel at Start ===");
             
             cleanupTournamentState();
@@ -372,6 +382,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Continue", "ExistingYes");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Tournament - Yes ===");
             
             cleanupTournamentState();
@@ -416,6 +427,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Continue", "ExistingNo");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Tournament - No ===");
             
             cleanupTournamentState();
@@ -447,6 +459,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Continue", "ExistingCancel");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Continue Existing Tournament - Cancel ===");
             
             cleanupTournamentState();
@@ -485,6 +498,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/StopRunning", "EndTournament");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Stop Running Tournament - End ===");
             
             cleanupTournamentState();
@@ -527,6 +541,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/StopRunning", "KeepRunning");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Stop Running Tournament - Keep Running ===");
             
             cleanupTournamentState();
@@ -567,6 +582,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         tst = IM_REGISTER_TEST(engine, "Tournament/Chatbot/Options", "ToggleAllOptions");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("=== Test: Toggle All Options ===");
             
             cleanupTournamentState();

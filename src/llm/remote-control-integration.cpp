@@ -29,7 +29,7 @@
 
 namespace QaplaLlm {
 
-bool startRemoteControl(const RemoteControlOptions& options) {
+bool startRemoteControl(const RemoteControlOptions& options, bool withPanel) {
     auto& server = RemoteControlServer::instance();
     if (!server.start(options)) {
         QaplaWindows::SnackbarManager::instance().showError(
@@ -50,9 +50,11 @@ bool startRemoteControl(const RemoteControlOptions& options) {
             }
         });
 
-    // The port as text, handed over once. The panel has nothing to ask afterwards.
-    QaplaWindows::ChatBot::ChatbotWindow::instance()->setExclusiveThread(
-        std::make_unique<QaplaWindows::ChatBot::ChatbotRemoteControl>(server.port()));
+    if (withPanel) {
+        // The port as text, handed over once. The panel has nothing to ask afterwards.
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->setExclusiveThread(
+            std::make_unique<QaplaWindows::ChatBot::ChatbotRemoteControl>(server.port()));
+    }
     return true;
 }
 

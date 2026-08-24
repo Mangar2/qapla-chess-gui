@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <string>
+
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 struct ImGuiTestEngine;
 #endif
@@ -88,6 +90,12 @@ namespace QaplaTest {
     private:
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         ImGuiTestEngine* engine_ = nullptr;
+
+        /**
+         * @brief Where the run writes its per-test results, kept because the engine stores the
+         *        pointer rather than the string.
+         */
+        std::string exportResultsPath_;
 #endif
     };
 

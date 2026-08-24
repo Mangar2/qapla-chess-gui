@@ -105,8 +105,9 @@ namespace QaplaTest::EpdTutorialTest {
         
         auto& epdData = QaplaWindows::EpdData::instance();
 
-        // Wait for analysis to stop completely
-        IM_CHECK(waitForAnalysisStopped(ctx, 15.0f));
+        // The graceful stop lets the positions in flight finish, and with a ten-second limit
+        // each that takes a moment. Clear only becomes available once it has stopped.
+        IM_CHECK(waitForAnalysisStopped(ctx, 60.0f));
         IM_CHECK(!epdData.isRunning());
 
         // Click Clear button

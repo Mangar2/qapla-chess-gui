@@ -320,9 +320,11 @@ void EngineSetupWindow::showNextTutorialStep() {
         return;
         case 3:
         {
-            // Wait for detect to complete
+            // Usable, not merely tried: an engine that failed both protocols is recorded as
+            // not supported, and "we have tried them all" was enough to tell the user the setup
+            // was done -- with two engines that do not exist.
             const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
-            if (engineCount >= initialEngineCount_ + 2 && capabilities.areAllEnginesDetected()) {
+            if (engineCount >= initialEngineCount_ + 2 && capabilities.areAllEnginesUsable()) {
                 Tutorial::instance().requestNextTutorialStep(tutorialName);
             }
         }

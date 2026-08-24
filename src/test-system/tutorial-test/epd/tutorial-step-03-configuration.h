@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../../test-environment.h"
 #include "tutorial-test-helpers.h"
 #include <filesystem>
 
@@ -57,26 +58,12 @@ namespace QaplaTest::EpdTutorialTest {
         ctx->Yield();
         IM_CHECK_EQ(config.minTimeInS, 1ULL);
 
-        // Find any .epd or .raw file in the workspace
-        std::filesystem::path epdFile;
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(".")) {
-            if (entry.is_regular_file()) {
-                auto ext = entry.path().extension();
-                if (ext == ".epd" || ext == ".raw") {
-                    epdFile = entry.path();
-                    break;
-                }
-            }
-        }
-        
-        if (epdFile.empty()) {
-            ctx->LogWarning("No .epd or .raw file found in workspace - using dummy path");
-            // Set a dummy path to satisfy tutorial
-            config.filepath = "test.epd";
-        } else {
-            // Set the EPD file programmatically
-            config.filepath = epdFile.string();
-        }
+        // The suite's own position file, rather than the first .epd or .raw the working
+        // directory happened to contain -- with "test.epd" as a fallback that does not exist and
+        // makes the analysis refuse to start several steps later.
+        const auto epdFile = QaplaTest::testDataPath("wmtest.epd");
+        IM_CHECK(std::filesystem::is_regular_file(epdFile));
+        config.filepath = epdFile;
         
         // Verify EPD file is set
         IM_CHECK(!config.filepath.empty());

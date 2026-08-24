@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "../../test-environment.h"
 #include "tutorial-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -46,6 +47,9 @@ namespace QaplaTest {
         // =================================================================
         tst = IM_REGISTER_TEST(engine, "Tutorial/EngineSetup", "CompleteTutorial");
         tst->TestFunc = [](ImGuiTestContext* ctx) {
+            // This tutorial is about getting from no engines to a working one, so an empty
+            // catalog is its starting state rather than an accident of what came before.
+            prepareTestEnvironment(ctx, TestEngines::None);
             ctx->LogInfo("=== Test: Engine Setup Tutorial - Complete Flow ===");
             
             // RAII guard: backs up engine configs and restores them when test ends (success or failure)

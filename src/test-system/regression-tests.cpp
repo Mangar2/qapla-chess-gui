@@ -3,6 +3,7 @@
  * ... (License header) ...
  */
 
+#include "test-environment.h"
 #include "test-system/regression-tests.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
@@ -20,6 +21,7 @@ namespace QaplaTest {
         // -----------------------------------------------------------------
         t = IM_REGISTER_TEST(engine, "Regression", "SmokeTest");
         t->TestFunc = [](ImGuiTestContext* ctx) {
+            prepareTestEnvironment(ctx);
             ctx->LogInfo("Starting Smoke Test");
 
             // Click Play

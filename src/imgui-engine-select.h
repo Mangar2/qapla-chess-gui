@@ -155,6 +155,12 @@ namespace QaplaWindows {
         [[nodiscard]] static bool areAllEnginesDetected();
 
         /**
+         * @brief Whether every configured engine answered -- see
+         *        EngineCapabilities::areAllEnginesUsable().
+         */
+        [[nodiscard]] static bool areAllEnginesUsable();
+
+        /**
          * @brief Draws the available engines section (without checkboxes)
          * @return true if something changed, false otherwise
          */

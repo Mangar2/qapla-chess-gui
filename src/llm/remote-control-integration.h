@@ -40,8 +40,12 @@ namespace QaplaLlm {
  * leaves the GUI in its ordinary state, since a GUI nobody can reach from outside is still a
  * perfectly good GUI.
  *
+ * @param withPanel Whether the chatbot window is given over to the remote control's log. Off
+ *        during an automated GUI test run: those tests drive the chat themselves, and the panel
+ *        takes it over exclusively. The channel is wanted there all the same -- it is how one
+ *        asks a failing test what the application actually thinks its state is.
  * @return Whether the server is now listening.
  */
-bool startRemoteControl(const RemoteControlOptions& options);
+bool startRemoteControl(const RemoteControlOptions& options, bool withPanel = true);
 
 } // namespace QaplaLlm

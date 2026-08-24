@@ -21,6 +21,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include "../../test-environment.h"
 #include "tutorial-test-helpers.h"
 
 namespace QaplaTest::EngineSetupTutorialTest {
@@ -84,7 +85,7 @@ namespace QaplaTest::EngineSetupTutorialTest {
         }
 
         // Verify detection FAILED (as expected with fake engines)
-        IM_CHECK(!QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected());
+        IM_CHECK(!QaplaWindows::ImGuiEngineSelect::areAllEnginesUsable());
 
         // Verify we did NOT reach step 4 (because detection failed)
         IM_CHECK(QaplaWindows::EngineSetupWindow::tutorialProgress_ < 4);
@@ -120,12 +121,20 @@ namespace QaplaTest::EngineSetupTutorialTest {
 
         auto& configManager = QaplaTester::EngineWorkerFactory::getConfigManagerMutable();
         
-        // Add two different diagnostic engines (real, working engines)
-        auto config1 = QaplaTester::EngineConfig::createFromPath("src/test-system/test-data/diagnostic-engine.exe");
+        // Two engines the build produced, found wherever it put them. The paths used to be
+        // spelled out relative to the working directory, with a .exe on the end -- so this step
+        // only ever worked on Windows, started from the top of the repository, with the engines
+        // copied somewhere they are not built to.
+        const auto playing = QaplaTest::testEnginePath();
+        const auto overspending = QaplaTest::testEnginePath("lossontime");
+        IM_CHECK(!playing.empty());
+        IM_CHECK(!overspending.empty());
+
+        auto config1 = QaplaTester::EngineConfig::createFromPath(playing);
         config1.setName("DiagnosticEngine");
         configManager.addConfig(std::move(config1));
 
-        auto config2 = QaplaTester::EngineConfig::createFromPath("src/test-system/test-data/diagnostic-engine-lossontime.exe");
+        auto config2 = QaplaTester::EngineConfig::createFromPath(overspending);
         config2.setName("DiagnosticEngineLossOnTime");
         configManager.addConfig(std::move(config2));
 
@@ -151,7 +160,7 @@ namespace QaplaTest::EngineSetupTutorialTest {
         }
 
         // Verify detection was successful
-        IM_CHECK(QaplaWindows::ImGuiEngineSelect::areAllEnginesDetected());
+        IM_CHECK(QaplaWindows::ImGuiEngineSelect::areAllEnginesUsable());
         ctx->Yield(5);
         
         auto& tutorial = QaplaWindows::Tutorial::instance();
