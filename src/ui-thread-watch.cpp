@@ -61,6 +61,10 @@ void UiThreadWatch::frameEnd() {
     if (frameMs <= thresholdMs) {
         return;
     }
+    if (worstSectionThisFrame_ == SWAP_SECTION) {
+        // Waiting for the window system, not blocked by us -- see SWAP_SECTION.
+        return;
+    }
 
     ++stalls_;
     if (frameMs > worstFrameMs_) {

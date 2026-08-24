@@ -43,6 +43,7 @@ imgui.ini
 # Persönliche Arbeitspläne -- Notizen zum aktuellen Stand einer grösseren Aufgabe,
 # nicht Teil der Projektdokumentation (die steht in docs/).
 /docs/plans/
+/delivery/
 
 # Optional: weitere persönliche Dateien
 .vscode/c_cpp_properties.json

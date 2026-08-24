@@ -22,7 +22,6 @@ import os
 import platform
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -75,9 +74,9 @@ def run_stage(number: int, title: str, command: List[str],
     try:
         completed = subprocess.run(command, cwd=str(REPO_ROOT), env=merged, check=False)
     except OSError as error:
-        # A missing binary is a failed stage with a reason, not a stack trace. It is also a real
-        # possibility: `cmake --build` builds the default target set, and a test executable that
-        # is in it can still be absent from a build directory configured before it existed.
+        # A missing binary is a failed stage with a reason, not a stack trace, and it is a real
+        # possibility: every build preset here restricts itself to the "qapla" target, so anything
+        # else this check runs has to be named as a target above or it is simply not there.
         print(f"-- {title}: FAILED, could not run it: {error}", file=sys.stderr)
         return False
     runtime = format_duration(time.monotonic() - started)
@@ -108,39 +107,45 @@ def main() -> int:
         print(f"Could not configure preset '{gui_preset}'.", file=sys.stderr)
         return 1
 
-    with tempfile.TemporaryDirectory(prefix="qapla-release-check-") as scratch:
-        stages = [
-            (f"Build ({arguments.config})",
-             ["cmake", "--build", "--preset", arguments.config], None),
-            ("Unit tests",
-             [str(build_dir / executable("unit-tests"))], None),
-            ("Integration tests (HTTP)",
-             [sys.executable, str(REPO_ROOT / "test" / "integration" / "test_runner.py"),
-              "--config", arguments.config], None),
-        ]
+    # Named targets rather than the preset's own: every build preset restricts itself to "qapla",
+    # so a check that trusted it built the GUI and then ran a unit-tests binary and diagnostic
+    # engines that nothing had rebuilt. A release check that certifies stale binaries is worse
+    # than none.
+    stages = [
+        (f"Build ({arguments.config})",
+         ["cmake", "--build", "--preset", arguments.config,
+          "--target", "qapla", "unit-tests", "diagnostic-engine"], None),
+        ("Unit tests",
+         [str(build_dir / executable("unit-tests"))], None),
+        ("Integration tests (HTTP)",
+         [sys.executable, str(REPO_ROOT / "test" / "integration" / "test_runner.py"),
+          "--config", arguments.config], None),
+    ]
 
-        if not arguments.skip_gui:
-            # Last, because it is the slowest and, today, the least steady of the three: a full
-            # run does not always report the same number of tests. Still a gate, with --skip-gui
-            # as the deliberate way past it rather than a quiet exclusion.
-            #
-            # Its own build, because the suites are only compiled in with QAPLA_WITH_TEST_ENGINE.
-            gui_build_dir = REPO_ROOT / "build" / gui_preset
-            stages.append((
-                f"Build with the test engine ({gui_preset})",
-                ["cmake", "--build", "--preset", gui_preset], None))
-            stages.append((
-                "GUI tests (ImGui Test Engine)",
-                [str(gui_build_dir / executable("qapla")),
-                 f"--config-dir={Path(scratch) / 'gui-tests'}"],
-                {"QAPLA_AUTO_RUN_TESTS": "1"},
-            ))
+    if not arguments.skip_gui:
+        # Last, because it is the slowest of the three. Still a gate, with --skip-gui as the
+        # deliberate way past it rather than a quiet exclusion.
+        #
+        # Its own build, because the suites are only compiled in with QAPLA_WITH_TEST_ENGINE.
+        stages.append((
+            f"Build with the test engine ({gui_preset})",
+            ["cmake", "--build", "--preset", gui_preset,
+             "--target", "qapla", "diagnostic-engine"], None))
+        # Through the runner rather than by starting the binary here: the suite needs a starting
+        # state -- an empty configuration, the two real engines, a directory of its own to leave
+        # engine logs in -- and that state is set up in one place. Started by hand from the
+        # repository, the run left its engine logs in the repository and depended on having been
+        # started from exactly the right directory.
+        stages.append((
+            "GUI tests (ImGui Test Engine)",
+            [sys.executable, str(REPO_ROOT / "scripts" / "run-gui-tests.py"),
+             "--config", arguments.config], None))
 
-        for number, (title, command, environment) in enumerate(stages, start=1):
-            if not run_stage(number, title, command, environment):
-                print()
-                print(f"Release check failed at: {title}", file=sys.stderr)
-                return 1
+    for number, (title, command, environment) in enumerate(stages, start=1):
+        if not run_stage(number, title, command, environment):
+            print()
+            print(f"Release check failed at: {title}", file=sys.stderr)
+            return 1
 
     print()
     print("=" * 46)

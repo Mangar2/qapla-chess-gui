@@ -54,6 +54,17 @@ public:
     /** @brief A frame whose work takes longer than this counts as a stall: 20 frames a second. */
     static constexpr std::chrono::milliseconds STALL_THRESHOLD{50};
 
+    /**
+     * @brief The section a frame may spend any amount of time in without counting as a stall.
+     *
+     * The buffer swap is where the window system parks the process on purpose: a fraction of a
+     * frame for vsync, and minutes at a time when the window is occluded or the display has gone
+     * to sleep. That is not this thread being blocked by work of ours, and counting it made an
+     * unattended test run fail because of the screensaver -- frames of five minutes "in render".
+     * Drawing itself is timed separately and still counts.
+     */
+    static constexpr const char* SWAP_SECTION = "swap";
+
     [[nodiscard]] static UiThreadWatch& instance();
 
     UiThreadWatch(const UiThreadWatch&) = delete;

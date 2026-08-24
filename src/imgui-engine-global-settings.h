@@ -39,6 +39,14 @@ namespace QaplaWindows {
     struct DrawControlOptions {
         float controlWidth = 150.0F;      ///< Width of input controls
         float controlIndent = 10.0F;      ///< Indentation for controls
+
+        /**
+         * @brief Width of a path input, which needs more room than a number does.
+         *
+         * Derived from the control width the same way the tournament window derives its own, so
+         * that a path in this panel is as wide as the opening file beneath it.
+         */
+        [[nodiscard]] float fileInputWidth() const { return controlWidth + 100.0F; }
     };
 
     /**
@@ -251,11 +259,11 @@ namespace QaplaWindows {
          * simply apply them; a tablebase path is empty until somebody names one, and forcing the
          * setting on would push that empty path onto every engine.
          *
-         * @param controlWidth Width of the input controls
+         * @param controls Options for control dimensions (width, indent)
          * @param tutorialContext Tutorial context for annotations
          * @return true if modified, false otherwise
          */
-        bool drawSyzygyControls(float controlWidth,
+        bool drawSyzygyControls(DrawControlOptions controls,
             const Tutorial::TutorialContext& tutorialContext);
 
         std::string id_ = "unset";                              ///< Unique identifier for this instance

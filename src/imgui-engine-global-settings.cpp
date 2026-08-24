@@ -88,7 +88,7 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls,
             modified |= drawPonderControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
         }
         if (options.showSyzygy) {
-            modified |= drawSyzygyControls(controls.controlWidth, tutorialContext);
+            modified |= drawSyzygyControls(controls, tutorialContext);
         }
         
         ImGui::Unindent(controls.controlIndent);
@@ -201,7 +201,7 @@ bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, bool showU
     return modified;
 }
 
-bool ImGuiEngineGlobalSettings::drawSyzygyControls(float controlWidth,
+bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
     const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
     constexpr uint32_t maxProbeDepth = 100;
@@ -215,26 +215,33 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(float controlWidth,
         "Switched off, every engine keeps the tablebase settings of its own.");
 
     ImGui::BeginDisabled(!globalSettings_.useGlobalSyzygy);
-    ImGui::Indent(10.0F);
+
+    // Indented to where the settings above start, not by a round number: each of those is a
+    // checkbox followed by its control on the same line, so their controls begin one checkbox and
+    // one gap in from the margin. These sit under one switch of their own and would otherwise
+    // stand to the left of everything they belong with.
+    const float toTheirControls = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.x;
+    ImGui::Indent(toTheirControls);
 
     // Translated here rather than by the control: existingDirectoryInput() shows its label as
     // given, because the engine option editor uses it with option names, which are never
     // translated.
     modified |= ImGuiControls::existingDirectoryInput(
         Translator::instance().translate("Input", "Tablebase folder"),
-        globalSettings_.syzygyPath, controlWidth);
+        globalSettings_.syzygyPath, controls.fileInputWidth());
     ImGuiControls::hooverTooltip(
         "The folder holding the .rtbw and .rtbz files (UCI option 'SyzygyPath').\n"
         "Several folders are separated the way the engine expects it.");
 
-    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::SetNextItemWidth(controls.controlWidth);
     modified |= ImGuiControls::inputInt<uint32_t>("Probe Depth", globalSettings_.syzygyProbeDepth,
         1, maxProbeDepth);
     ImGuiControls::hooverTooltip(
-        "Least search depth at which the tablebases are read (UCI option 'SyzygyProbeDepth').\n"
+        "Least remaining search depth at which the tablebases are read (UCI option "
+        "'SyzygyProbeDepth').\n"
         "Higher values probe less often and cost less time.");
 
-    ImGui::SetNextItemWidth(controlWidth);
+    ImGui::SetNextItemWidth(controls.controlWidth);
     modified |= ImGuiControls::inputInt<uint32_t>("Probe Limit", globalSettings_.syzygyProbeLimit,
         0, maxProbeLimit);
     ImGuiControls::hooverTooltip(
@@ -244,9 +251,9 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(float controlWidth,
     modified |= ImGuiControls::checkbox("50 Move Rule", globalSettings_.syzygy50MoveRule);
     ImGuiControls::hooverTooltip(
         "Whether a tablebase result counts the fifty-move rule (UCI option 'Syzygy50MoveRule').\n"
-        "Switched off, wins that need more than fifty moves are reported as wins.");
+        "Switched off, mates that need more than fifty moves count as wins rather than draws.");
 
-    ImGui::Unindent(10.0F);
+    ImGui::Unindent(toTheirControls);
     ImGui::EndDisabled();
 
     auto it = tutorialContext.annotations.find("Syzygy tablebases");

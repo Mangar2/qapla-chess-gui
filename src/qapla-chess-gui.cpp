@@ -425,6 +425,13 @@ namespace {
                 QaplaWindows::UiThreadWatch::Section section("render");
                 ImGui::Render();
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            }
+
+            {
+                // Timed apart from the drawing above, and not counted as a stall: this is where
+                // the window system decides when the frame is over. See UiThreadWatch::SWAP_SECTION.
+                QaplaWindows::UiThreadWatch::Section section(
+                    QaplaWindows::UiThreadWatch::SWAP_SECTION);
                 glfwSwapBuffers(window);
             }
             

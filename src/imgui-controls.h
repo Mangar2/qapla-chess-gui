@@ -210,7 +210,7 @@ namespace QaplaWindows::ImGuiControls {
      * @return True if the file path was modified, false otherwise.
      */
     bool existingFileInput(const std::string& label, std::string& filePath, 
-        float inputWidth = 200.0F, const char* buttonLabel = "Select");
+        float inputWidth = 200.0F, const char* buttonLabel = "Browse");
 
     /**
      * @brief Directory input control for selecting and displaying directory paths.
@@ -234,7 +234,7 @@ namespace QaplaWindows::ImGuiControls {
      */
     bool newFileInput(const std::string& label, std::string& filePath,
         const std::vector<std::pair<std::string, std::string>>& filters = {},
-        float inputWidth = 200.0F, const char* buttonLabel = "Select");
+        float inputWidth = 200.0F, const char* buttonLabel = "Browse");
 
 
     /**
