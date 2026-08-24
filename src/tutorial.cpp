@@ -114,6 +114,19 @@ void Tutorial::startNextTutorialIfAllowed()
 }
 
 void Tutorial::startTutorial(TutorialName name) {
+    // Asked for by name -- from the chatbot's tutorial menu -- and therefore not something the
+    // introduction may swallow. allPrecedingCompleted() refuses every step while the Snackbar
+    // tutorial is still running, which on a fresh installation it always is; requestNextTutorialStep()
+    // then returned without starting anything and the runner read "not running" as "finished", so
+    // the tutorial announced itself complete before showing its first message. Only tutorials that
+    // started themselves are ended here, and only the ones that stand in the way.
+    for (size_t i = 0; i < toIndex(name); ++i) {
+        auto& preceding = entries_[i];
+        if (preceding.autoStart && preceding.running()) {
+            preceding.finish();
+        }
+    }
+
     auto& entry = entries_[toIndex(name)];
     entry.reset();
     requestNextTutorialStep(name, false);

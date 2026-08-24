@@ -57,17 +57,23 @@ namespace QaplaTest::TutorialTest {
     }
 
     /**
-     * @brief Gets the effective tutorial progress, handling finished state
-     * @param targetProgress The target progress to compare against
-     * @return The effective tutorial progress value
+     * @brief Gets the tutorial progress, as the tutorial itself counts it.
+     *
+     * Not TournamentWindow::tutorialProgress_: the window clears that back to zero the moment the
+     * tutorial ends (see clearTournamentTutorialState()), so the last two steps cannot be observed
+     * through it -- the counter runs 13, 14, 15, 0 within about two frames. That is what the
+     * "progress of zero means finished" rule here used to paper over, and it papered over rather
+     * more: while the tutorial had not started at all, every wait for a step passed at once and
+     * the whole test reported success without a single step having run.
+     *
+     * The entry's own counter is monotone from start to finish and is what the tutorial advances.
+     *
+     * @param targetProgress Unused; kept so the callers read like the other suites.
+     * @return The tutorial progress value
      */
-    inline uint32_t getTutorialProgress(uint32_t targetProgress) {
-        auto progress = QaplaWindows::TournamentWindow::tutorialProgress_;
-        if (progress == 0 && targetProgress > 1) {
-            // Tutorial finished
-            return targetProgress;
-        }
-        return progress;
+    inline uint32_t getTutorialProgress([[maybe_unused]] uint32_t targetProgress) {
+        return QaplaWindows::Tutorial::instance()
+            .getEntry(QaplaWindows::Tutorial::TutorialName::Tournament).counter;
     }
 
     /**
@@ -131,7 +137,16 @@ namespace QaplaTest::TutorialTest {
         IM_CHECK(waitForContinueButton(ctx, 5.0f));
         ctx->ItemClick("**/###Continue");
         ctx->Yield();
-        IM_CHECK(waitForTutorialProgress(ctx, expectedProgress, 5.0f));
+        const bool advanced = waitForTutorialProgress(ctx, expectedProgress, 5.0f);
+        if (!advanced) {
+            // Which of the two it is decides where to look: the click not landing is a test
+            // problem, the tutorial not moving after it landed is the window's.
+            ctx->LogWarning("Continue clicked but progress stayed at %u (wanted %u), waiting for "
+                            "user input: %d",
+                getTutorialProgress(expectedProgress), expectedProgress,
+                QaplaWindows::Tutorial::instance().doWaitForUserInput() ? 1 : 0);
+        }
+        IM_CHECK(advanced);
     }
 
 } // namespace QaplaTest::TutorialTest

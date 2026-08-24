@@ -23,6 +23,7 @@
 
 #include "../tutorial-test-common.h"
 #include "board-window.h"
+#include "interactive-board-window.h"
 #include "chatbot/chatbot-window.h"
 
 namespace QaplaTest::BoardWindowTutorialTest {
@@ -33,28 +34,47 @@ namespace QaplaTest::BoardWindowTutorialTest {
      * @brief Cleans up board window tutorial state by resetting the static progress counter
      */
     /**
-     * @brief Picks two engines for the board itself, through its Config dialog.
+     * @brief Gives the board two playing engines, on the board's own data.
      *
-     * A board has an engine selection of its own; the catalog, the tournament and the SPRT view
-     * each have theirs, and none of them feeds this one. Without it the Play button has nothing
-     * to ask for a move, which looks exactly like an engine that will not answer.
+     * A board keeps an engine selection of its own; the catalog, the tournament and the SPRT view
+     * each have theirs and none of them feeds this one. Without it the Play button has nothing to
+     * ask for a move, which looks exactly like an engine that will not answer -- and every step of
+     * the tutorial then waits for a move that is never coming.
+     *
+     * Set here rather than clicked through the "Select Engines" dialog: this is a precondition of
+     * the test, not the thing it is testing, and setActiveEngines() is the same call the dialog's
+     * "Use" button makes.
      */
     inline bool selectEnginesOnBoard(ImGuiTestContext* ctx) {
-        // The Config button belongs to the engine pane beside the board, not to the board
-        // itself, so it is looked for anywhere rather than under a guessed path.
-        ctx->ItemClick("**/Config");
-        ctx->Yield(10);
+        auto& manager = QaplaWindows::InteractiveBoardWindow::getInstanceManager();
+        const auto ids = manager.getKeys();
+        if (ids.empty()) {
+            ctx->LogError("No board to give engines to.");
+            return false;
+        }
+        auto* board = QaplaWindows::InteractiveBoardWindow::getBoard(ids.front());
+        if (board == nullptr) {
+            ctx->LogError("Board %u is registered but not there.", ids.front());
+            return false;
+        }
 
-        // Inside the dialog window, so the checkboxes are looked for there rather than anywhere:
-        // an item found in a popup that is not the current reference cannot be hovered.
-        ctx->SetRef("Select Engines");
-        ctx->ItemClick("**/engineSettings/$$0/##select");
+        std::vector<QaplaTester::EngineConfig> engines;
+        for (const auto& config : QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs()) {
+            auto selected = config;
+            selected.setSelected(true);
+            engines.push_back(selected);
+            if (engines.size() == 2) {
+                break;
+            }
+        }
+        if (engines.size() < 2) {
+            ctx->LogError("The catalog holds %zu engines, the board needs two.", engines.size());
+            return false;
+        }
+
+        board->getEngineSelect().setEngineConfigurations(engines);
+        board->setActiveEngines();
         ctx->Yield(2);
-        ctx->ItemClick("**/engineSettings/$$1/##select");
-        ctx->Yield(2);
-        ctx->ItemClick("**/###Ok");
-        ctx->SetRef("");
-        ctx->Yield(10);
         return true;
     }
 

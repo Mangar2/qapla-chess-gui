@@ -183,9 +183,15 @@ namespace QaplaTest::TutorialTest {
     inline void executeStep15_TutorialComplete(ImGuiTestContext* ctx) {
         ctx->LogInfo("Step 15: Tutorial Complete");
         ctx->Yield(2);
-        QaplaTest::Common::waitForCondition(ctx, []() {
-            return QaplaWindows::TournamentWindow::tutorialProgress_ != 15U;
-        }, 5.0f);
+
+        // Checked rather than merely waited for: the wait that stood here read the window's
+        // progress counter, which is cleared to zero when the tutorial ends, so its condition was
+        // true whatever had happened -- and its result was thrown away as well.
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, []() {
+            return !QaplaWindows::Tutorial::instance()
+                .getEntry(QaplaWindows::Tutorial::TutorialName::Tournament).running();
+        }, 5.0f));
+
         ctx->ItemClick("**/###Close");
         ctx->LogInfo("Tutorial Complete!");
     }

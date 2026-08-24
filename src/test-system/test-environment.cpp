@@ -29,6 +29,7 @@
 #include "llm/gui-tool-engine-management.h"
 #include "os-helpers.h"
 #include "snackbar.h"
+#include "tutorial.h"
 
 #include <engine-handling/engine-worker-factory.h>
 
@@ -265,6 +266,24 @@ std::string testEnginePath(const std::string& variant) {
     return findDiagnosticEngine(variant).string();
 }
 
+/**
+ * @brief Ends every tutorial that is still running.
+ *
+ * On a fresh configuration the Snackbar tutorial starts by itself and stays running until
+ * somebody clicks through it -- and while it runs, Tutorial::allPrecedingCompleted() blocks every
+ * other tutorial. A test starting its own tutorial then got a tutorial that reported itself
+ * finished before its first step. It also stops one test's half-finished tutorial from reaching
+ * the next.
+ */
+namespace {
+void finishRunningTutorials() {
+    auto& tutorial = QaplaWindows::Tutorial::instance();
+    for (size_t i = 0; i < static_cast<size_t>(QaplaWindows::Tutorial::TutorialName::Count); ++i) {
+        tutorial.finishTutorial(static_cast<QaplaWindows::Tutorial::TutorialName>(i));
+    }
+}
+} // namespace
+
 void prepareTestEnvironment(ImGuiTestContext* ctx, TestEngines engines) {
     shortenSnackbarMessages();
     QaplaWindows::SnackbarManager::instance().dismissAll();
@@ -274,6 +293,7 @@ void prepareTestEnvironment(ImGuiTestContext* ctx, TestEngines engines) {
         removeAllEngines();
     }
     QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+    finishRunningTutorials();
 
     // And the view itself back to the chat. A test that left a board tab in the foreground made
     // the next one unable to reach the chat: the tab was there, and covered.
