@@ -346,9 +346,12 @@ TEST_CASE("A state file's \"each\" section holds the settings in force only",
     CHECK_FALSE(section.getValue("ponder").has_value());
     CHECK_FALSE(section.getValue("restart").has_value());
     // The flags themselves are GUI state and have no meaning in a state file
-    for (const auto& key : {"usehash", "useponder", "usetrace", "userestart", "hash"}) {
+    for (const auto& key : {"usehash", "useponder", "usetrace", "userestart", "hash", "usesyzygy"}) {
         CHECK_FALSE(section.getValue(key).has_value());
     }
+    // Switched off, and so not written -- not even the three settings that have a value
+    CHECK_FALSE(section.getValue("option.SyzygyPath").has_value());
+    CHECK_FALSE(section.getValue("option.SyzygyProbeDepth").has_value());
 
     SECTION("Values are spelled the way the file format defines them") {
         // The controls label their choices for reading -- "None", "Engine decides". Both
@@ -386,6 +389,33 @@ TEST_CASE("A state file's \"each\" section holds the settings in force only",
         CHECK(roundtripped.timeControl == "20.0+0.02");
         CHECK(roundtripped.useGlobalPonder == false);
         CHECK(roundtripped.useGlobalRestart == false);
+        CHECK(roundtripped.useGlobalSyzygy == false);
+    }
+
+    SECTION("The four Syzygy settings go out as engine options, under their one switch") {
+        auto withTablebases = config;
+        withTablebases.useGlobalSyzygy = true;
+        withTablebases.syzygyPath = "/tables/syzygy";
+        withTablebases.syzygyProbeDepth = 4;
+        withTablebases.syzygyProbeLimit = 6;
+        withTablebases.syzygy50MoveRule = false;
+
+        const auto written = toEachSection(withTablebases, "tournament");
+
+        // The engines' own spelling: "each" passes any "option.[name]" through unread, which is
+        // what makes the section mean the same to the CLI as to the GUI.
+        CHECK(written.getValue("option.SyzygyPath").value() == "/tables/syzygy");
+        CHECK(written.getValue("option.SyzygyProbeDepth").value() == "4");
+        CHECK(written.getValue("option.SyzygyProbeLimit").value() == "6");
+        CHECK(written.getValue("option.Syzygy50MoveRule").value() == "false");
+
+        const auto readBack = fromEachSection(written);
+
+        CHECK(readBack.useGlobalSyzygy == true);
+        CHECK(readBack.syzygyPath == "/tables/syzygy");
+        CHECK(readBack.syzygyProbeDepth == 4);
+        CHECK(readBack.syzygyProbeLimit == 6);
+        CHECK(readBack.syzygy50MoveRule == false);
     }
 }
 
@@ -528,4 +558,101 @@ TEST_CASE("The GUI's own \"each\" section keeps its switched-off values", "[conf
     CHECK(config.useGlobalTrace == false);
     CHECK(config.useGlobalRestart == false);
     CHECK(config.timeControl.empty());
+}
+
+TEST_CASE("A switched-off Syzygy setting stays out of the engine sections",
+          "[config-persistence]") {
+    // The GUI's own file states every flag, switched on or off. A flag is not a setting, and what
+    // it switches off is not in force -- pushed into an engine section either would be a key the
+    // CLI refuses to read.
+    QaplaHelpers::IniFile::Section each;
+    each.name = "each";
+    each.addEntry("id", "tournament");
+    each.addEntry("usesyzygy", "false");
+    each.addEntry("syzygypath", "/tables/syzygy");
+
+    const auto resolved = resolveEachDefaults(
+        each, {sectionOf("engine", "tournament", {{"name", "A"}})});
+
+    CHECK_FALSE(resolved.engines.at(0).getValue("usesyzygy").has_value());
+    CHECK_FALSE(resolved.engines.at(0).getValue("syzygypath").has_value());
+}
+
+TEST_CASE("The Syzygy settings are switched as one", "[config-persistence]") {
+    // Four engine options, one switch: a probe depth without a path names nothing to probe, so
+    // they are configured together and applied together.
+    QaplaHelpers::IniFile::Section section;
+    section.name = "each";
+    section.addEntry("id", "tournament");
+    section.addEntry("usesyzygy", "false");
+    section.addEntry("syzygypath", "/tables/syzygy");
+    section.addEntry("syzygyprobedepth", "3");
+    section.addEntry("syzygyprobelimit", "5");
+    section.addEntry("syzygy50moverule", "false");
+
+    const auto config = fromEachSection(section);
+
+    CHECK(config.useGlobalSyzygy == false);
+    CHECK(config.syzygyPath == "/tables/syzygy");   // remembered although switched off
+    CHECK(config.syzygyProbeDepth == 3);
+    CHECK(config.syzygyProbeLimit == 5);
+    CHECK(config.syzygy50MoveRule == false);
+
+    SECTION("A state file naming a path counts as switched on") {
+        QaplaHelpers::IniFile::Section stateFile;
+        stateFile.name = "each";
+        stateFile.addEntry("id", "tournament");
+        stateFile.addEntry("option.SyzygyPath", "/tables/syzygy");
+
+        const auto fromState = fromEachSection(stateFile);
+
+        CHECK(fromState.useGlobalSyzygy == true);
+        CHECK(fromState.syzygyPath == "/tables/syzygy");
+        // Not named, so the engines' own defaults
+        CHECK(fromState.syzygyProbeDepth == 1);
+        CHECK(fromState.syzygyProbeLimit == 7);
+        CHECK(fromState.syzygy50MoveRule == true);
+    }
+
+    SECTION("Settings without a path name nothing to probe") {
+        QaplaHelpers::IniFile::Section depthOnly;
+        depthOnly.name = "each";
+        depthOnly.addEntry("id", "tournament");
+        depthOnly.addEntry("option.SyzygyProbeDepth", "4");
+
+        const auto fromDepthOnly = fromEachSection(depthOnly);
+
+        CHECK(fromDepthOnly.useGlobalSyzygy == false);
+        CHECK(fromDepthOnly.syzygyProbeDepth == 4);
+    }
+
+    SECTION("Switched on, all four reach the engine") {
+        QaplaTester::EngineGlobalConfig global;
+        global.useGlobalSyzygy = true;
+        global.syzygyPath = "/tables/syzygy";
+        global.syzygyProbeDepth = 4;
+        global.syzygyProbeLimit = 6;
+        global.syzygy50MoveRule = false;
+
+        QaplaTester::EngineConfig engine;
+        QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, global);
+
+        const auto options = engine.getOptionValues();
+        CHECK(options.at("SyzygyPath") == "/tables/syzygy");
+        CHECK(options.at("SyzygyProbeDepth") == "4");
+        CHECK(options.at("SyzygyProbeLimit") == "6");
+        CHECK(options.at("Syzygy50MoveRule") == "false");
+    }
+
+    SECTION("Switched off, the engine keeps its own") {
+        QaplaTester::EngineGlobalConfig global;
+        global.useGlobalSyzygy = false;
+        global.syzygyPath = "/tables/syzygy";
+
+        QaplaTester::EngineConfig engine;
+        engine.setOptionValue("SyzygyPath", "/the/engine/own/tables");
+        QaplaTester::EngineGlobalConfigFile::applyGlobalConfig(engine, global);
+
+        CHECK(engine.getOptionValues().at("SyzygyPath") == "/the/engine/own/tables");
+    }
 }

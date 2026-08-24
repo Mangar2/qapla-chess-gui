@@ -341,7 +341,7 @@ namespace QaplaTest {
 
             // Stop the tournament
             sprtTournamentData.stopPool(false);
-            IM_CHECK(waitForSprtTournamentStopped(ctx, 10.0f));
+            IM_CHECK(waitForSprtTournamentStopped(ctx));
 
             // === PART 2: Choose NOT to continue - start fresh ===
             ctx->LogInfo("Part 2: Testing 'No'");

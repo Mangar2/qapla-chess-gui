@@ -55,6 +55,7 @@ std::string ChatbotStepGlobalSettings::draw() {
     options.showPonder = true;
     options.showTrace = showMoreOptions_;
     options.showRestart = showMoreOptions_;
+    options.showSyzygy = showMoreOptions_;
     options.showUseCheckboxes = false;
     options.alwaysOpen = true;
 

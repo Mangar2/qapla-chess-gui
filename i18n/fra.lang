@@ -117,6 +117,8 @@ id=Checkbox
 {s:"Gauntlet",t:"2026-01-11"}=Gauntlet
 {s:"Use Pentanomial",t:"2026-07-25"}=Use Pentanomial
 {s:"Show all SPRT model variants",t:"2026-08-16"}=Show all SPRT model variants
+{s:"Syzygy tablebases",t:"2026-08-24"}=Tables de finale Syzygy
+{s:"50 Move Rule",t:"2026-08-24"}=Règle des 50 coups
 
 [Translation]
 id=Input
@@ -215,6 +217,9 @@ File format=Format de fichier
 {s:"kAttackActivation",t:"2026-01-11"}=kAttackActivation
 {s:"kAttackDampening",t:"2026-01-11"}=kAttackDampening
 {s:"kAttackScale",t:"2026-01-11"}=kAttackScale
+{s:"Probe Depth",t:"2026-08-24"}=Profondeur de sondage
+{s:"Probe Limit",t:"2026-08-24"}=Limite de sondage
+{s:"Tablebase folder",t:"2026-08-24"}=Dossier des tables
 
 [Translation]
 id=Option

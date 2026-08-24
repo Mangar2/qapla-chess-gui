@@ -44,7 +44,7 @@ namespace QaplaTest::SprtTournamentChatbot {
                 }
                 ctx->Yield(10);
                 // Wait for tournament to actually stop
-                return waitForSprtTournamentStopped(ctx, 10.0f);
+                return waitForSprtTournamentStopped(ctx);
 
             case StopRunningAction::Cancel:
                 return itemClick(ctx, "**/###Cancel");

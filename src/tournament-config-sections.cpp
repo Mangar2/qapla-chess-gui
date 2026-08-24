@@ -82,12 +82,20 @@ namespace {
         if (lowercaseKey == "ponder") { return "useponder"; }
         if (lowercaseKey == "trace") { return "usetrace"; }
         if (lowercaseKey == "restart") { return "userestart"; }
+        // Four keys, one switch: the Syzygy settings are one setting of the global panel, so all
+        // of them name the same flag. See EngineGlobalConfig::useGlobalSyzygy.
+        if (lowercaseKey == "option.syzygypath" || lowercaseKey == "syzygypath"
+            || lowercaseKey == "option.syzygyprobedepth" || lowercaseKey == "syzygyprobedepth"
+            || lowercaseKey == "option.syzygyprobelimit" || lowercaseKey == "syzygyprobelimit"
+            || lowercaseKey == "option.syzygy50moverule" || lowercaseKey == "syzygy50moverule") {
+            return "usesyzygy";
+        }
         return {};
     }
 
     /**
      * @brief Tells whether the GUI has a global control for a setting.
-     * The CLI's "each" takes any engine option; the GUI's global panel is the four settings with a
+     * The CLI's "each" takes any engine option; the GUI's global panel is the settings with a
      * switch plus the time control. Anything else has to stay with the engines, because
      * toEachSection() would not write it back and it would be lost on the next save.
      * @param lowercaseKey The "each" key, lowercased.
@@ -121,7 +129,8 @@ namespace {
 
     [[nodiscard]] bool isUseFlag(std::string_view lowercaseKey) {
         return lowercaseKey == "usehash" || lowercaseKey == "useponder"
-            || lowercaseKey == "usetrace" || lowercaseKey == "userestart";
+            || lowercaseKey == "usetrace" || lowercaseKey == "userestart"
+            || lowercaseKey == "usesyzygy";
     }
 
     /**
@@ -264,6 +273,14 @@ QaplaHelpers::IniFile::Section toEachSection(
     if (config.useGlobalRestart) {
         section.addEntry("restart", toFileRestart(config.restart));
     }
+    // As engine options, in the engines' own spelling, because that is what they are -- the CLI
+    // takes any "option.[name]" in "each" and passes it on unread.
+    if (config.useGlobalSyzygy) {
+        section.addEntry("option.SyzygyPath", config.syzygyPath);
+        section.addEntry("option.SyzygyProbeDepth", std::to_string(config.syzygyProbeDepth));
+        section.addEntry("option.SyzygyProbeLimit", std::to_string(config.syzygyProbeLimit));
+        section.addEntry("option.Syzygy50MoveRule", config.syzygy50MoveRule ? "true" : "false");
+    }
     return section;
 }
 
@@ -295,6 +312,26 @@ QaplaTester::EngineGlobalConfig fromEachSection(const QaplaHelpers::IniFile::Sec
     config.useGlobalRestart = isUsed(section, "userestart", restart.has_value());
     if (restart) {
         config.restart = *restart;
+    }
+
+    // A path names tablebases; the other three only say how to use them. So the path alone decides
+    // whether the setting counts as switched on when no explicit flag says otherwise -- a file that
+    // carries a probe depth and no path names nothing to probe.
+    const auto syzygyPath = findValue(section, { "option.syzygypath", "syzygypath" });
+    config.useGlobalSyzygy = isUsed(section, "usesyzygy", syzygyPath.has_value());
+    if (syzygyPath) {
+        config.syzygyPath = *syzygyPath;
+    }
+    if (const auto depth = findValue(section, { "option.syzygyprobedepth", "syzygyprobedepth" })) {
+        config.syzygyProbeDepth =
+            QaplaHelpers::to_unsigned_int<uint32_t>(*depth).value_or(config.syzygyProbeDepth);
+    }
+    if (const auto limit = findValue(section, { "option.syzygyprobelimit", "syzygyprobelimit" })) {
+        config.syzygyProbeLimit =
+            QaplaHelpers::to_unsigned_int<uint32_t>(*limit).value_or(config.syzygyProbeLimit);
+    }
+    if (const auto fiftyMoveRule = findValue(section, { "option.syzygy50moverule", "syzygy50moverule" })) {
+        config.syzygy50MoveRule = toBool(*fiftyMoveRule);
     }
 
     if (const auto timeControl = findValue(section, { "tc" })) {

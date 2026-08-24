@@ -68,13 +68,14 @@ namespace QaplaWindows {
             // default parameters in the same class.
             Options() : 
                 showHash(true), showPonder(true), showTrace(true), 
-                showRestart(true), showUseCheckboxes(true), alwaysOpen(false)
+                showRestart(true), showSyzygy(true), showUseCheckboxes(true), alwaysOpen(false)
             {}
             
             bool showHash = true;          ///< Show hash size control
             bool showPonder = true;        ///< Show ponder control
             bool showTrace = true;         ///< Show trace level control
             bool showRestart = true;       ///< Show restart option control
+            bool showSyzygy = true;        ///< Show the Syzygy tablebase controls
             bool showUseCheckboxes = true; ///< Show "use global" checkboxes (if false, controls are always global)
             bool alwaysOpen = false;
         };
@@ -240,6 +241,21 @@ namespace QaplaWindows {
          * @return true if modified, false otherwise
          */
         bool drawPonderControl(float controlWidth, bool showUseCheckboxes,
+            const Tutorial::TutorialContext& tutorialContext);
+
+        /**
+         * @brief Draws the four Syzygy tablebase controls, under one switch.
+         *
+         * The switch is drawn whatever showUseCheckboxes says, unlike the settings above. Those
+         * have a value that means something everywhere, so a panel that hides the switches can
+         * simply apply them; a tablebase path is empty until somebody names one, and forcing the
+         * setting on would push that empty path onto every engine.
+         *
+         * @param controlWidth Width of the input controls
+         * @param tutorialContext Tutorial context for annotations
+         * @return true if modified, false otherwise
+         */
+        bool drawSyzygyControls(float controlWidth,
             const Tutorial::TutorialContext& tutorialContext);
 
         std::string id_ = "unset";                              ///< Unique identifier for this instance

@@ -226,13 +226,15 @@ namespace QaplaTest::SprtTournamentChatbot {
         
         // Wait for actual results (at least one game completed)
         ctx->LogInfo("Waiting for SPRT tournament results...");
-        waitForSprtTournamentResults(ctx, 30.0f);
+        IM_CHECK(waitForSprtTournamentResults(ctx, 30.0f));
         
         // Stop tournament
         sprtTournamentData.stopPool(false);
         
-        // Wait for it to stop
-        waitForSprtTournamentStopped(ctx, 10.0f);
+        // Checked rather than thrown away: the result of this wait used to be discarded, so the
+        // test failed one line later on a state it had stopped waiting for rather than on
+        // anything the tournament did wrong.
+        IM_CHECK(waitForSprtTournamentStopped(ctx));
     }
 
 } // namespace QaplaTest::SprtTournamentChatbot

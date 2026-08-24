@@ -58,9 +58,15 @@ namespace QaplaTest::SprtTournamentChatbot {
 
     /**
      * @brief Waits for SPRT tournament to fully stop
+     *
+     * Long enough for an engine that has to be put down: at these time controls an engine
+     * sometimes misses its bestmove, and the pool then waits five seconds before sending quit and
+     * restarting it. Ten seconds ran out in the middle of that, which is not the tournament
+     * failing to stop -- it is the test failing to wait.
+     *
      * @return true if stopped within timeout, false otherwise
      */
-    bool waitForSprtTournamentStopped(ImGuiTestContext* ctx, float maxWaitSeconds = 10.0f);
+    bool waitForSprtTournamentStopped(ImGuiTestContext* ctx, float maxWaitSeconds = 30.0f);
 
     /**
      * @brief Waits for SPRT tournament to have results

@@ -21,6 +21,7 @@
 #include "imgui-engine-controls.h"
 #include "imgui-controls.h"
 #include "configuration.h"
+#include "i18n.h"
 #include "tournament-config-sections.h"
 #include "tutorial.h"
 
@@ -85,6 +86,9 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls,
         }
         if (options.showPonder) {
             modified |= drawPonderControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
+        }
+        if (options.showSyzygy) {
+            modified |= drawSyzygyControls(controls.controlWidth, tutorialContext);
         }
         
         ImGui::Unindent(controls.controlIndent);
@@ -197,6 +201,61 @@ bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, bool showU
     return modified;
 }
 
+bool ImGuiEngineGlobalSettings::drawSyzygyControls(float controlWidth,
+    const Tutorial::TutorialContext& tutorialContext) {
+    bool modified = false;
+    constexpr uint32_t maxProbeDepth = 100;
+    constexpr uint32_t maxProbeLimit = 7;
+
+    // The switch is always drawn -- see the declaration for why it does not follow
+    // showUseCheckboxes like the settings above it.
+    modified |= ImGuiControls::checkbox("Syzygy tablebases", globalSettings_.useGlobalSyzygy);
+    ImGuiControls::hooverTooltip(
+        "Configure the tablebase settings for all engines at once.\n"
+        "Switched off, every engine keeps the tablebase settings of its own.");
+
+    ImGui::BeginDisabled(!globalSettings_.useGlobalSyzygy);
+    ImGui::Indent(10.0F);
+
+    // Translated here rather than by the control: existingDirectoryInput() shows its label as
+    // given, because the engine option editor uses it with option names, which are never
+    // translated.
+    modified |= ImGuiControls::existingDirectoryInput(
+        Translator::instance().translate("Input", "Tablebase folder"),
+        globalSettings_.syzygyPath, controlWidth);
+    ImGuiControls::hooverTooltip(
+        "The folder holding the .rtbw and .rtbz files (UCI option 'SyzygyPath').\n"
+        "Several folders are separated the way the engine expects it.");
+
+    ImGui::SetNextItemWidth(controlWidth);
+    modified |= ImGuiControls::inputInt<uint32_t>("Probe Depth", globalSettings_.syzygyProbeDepth,
+        1, maxProbeDepth);
+    ImGuiControls::hooverTooltip(
+        "Least search depth at which the tablebases are read (UCI option 'SyzygyProbeDepth').\n"
+        "Higher values probe less often and cost less time.");
+
+    ImGui::SetNextItemWidth(controlWidth);
+    modified |= ImGuiControls::inputInt<uint32_t>("Probe Limit", globalSettings_.syzygyProbeLimit,
+        0, maxProbeLimit);
+    ImGuiControls::hooverTooltip(
+        "Largest tablebase to read, counted in pieces (UCI option 'SyzygyProbeLimit').\n"
+        "Set it to the largest set of tables you actually have; 0 switches probing off.");
+
+    modified |= ImGuiControls::checkbox("50 Move Rule", globalSettings_.syzygy50MoveRule);
+    ImGuiControls::hooverTooltip(
+        "Whether a tablebase result counts the fifty-move rule (UCI option 'Syzygy50MoveRule').\n"
+        "Switched off, wins that need more than fifty moves are reported as wins.");
+
+    ImGui::Unindent(10.0F);
+    ImGui::EndDisabled();
+
+    auto it = tutorialContext.annotations.find("Syzygy tablebases");
+    if (it != tutorialContext.annotations.end()) {
+        ImGuiControls::annotate(it->second);
+    }
+    return modified;
+}
+
 bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls, 
     bool blitz, bool alwaysOpen, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
@@ -282,7 +341,14 @@ void ImGuiEngineGlobalSettings::updateConfiguration() const {
                 {"usetrace", globalSettings_.useGlobalTrace ? "true" : "false"},
                 {"trace", globalSettings_.traceLevel},
                 {"userestart", globalSettings_.useGlobalRestart ? "true" : "false"},
-                {"restart", globalSettings_.restart}
+                {"restart", globalSettings_.restart},
+                // Written whether the setting is switched on or not, like the settings above:
+                // this is the GUI's own file, where a switched-off value has to survive a restart.
+                {"usesyzygy", globalSettings_.useGlobalSyzygy ? "true" : "false"},
+                {"syzygypath", globalSettings_.syzygyPath},
+                {"syzygyprobedepth", std::to_string(globalSettings_.syzygyProbeDepth)},
+                {"syzygyprobelimit", std::to_string(globalSettings_.syzygyProbeLimit)},
+                {"syzygy50moverule", globalSettings_.syzygy50MoveRule ? "true" : "false"}
             }
     }});
 }
