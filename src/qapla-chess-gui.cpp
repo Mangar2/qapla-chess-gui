@@ -486,6 +486,13 @@ namespace {
         glfwTerminate();
         GameManagerPool::getInstance().stopAll();
         GameManagerPool::getInstance().waitForTask();
+        // And then the managers themselves, which is what takes the engines with them: stopAll()
+        // ends the games, but every engine keeps a worker thread that sends "quit" and writes
+        // that down. Left to finish on their own, those threads were still logging while static
+        // destruction had begun -- the process aborted on the way out with "Pure virtual function
+        // called", reproducibly on Linux. shutdown() destroys the managers here, and destroying a
+        // worker joins its threads.
+        GameManagerPool::getInstance().shutdown();
         QaplaWindows::StaticCallbacks::save().invokeAll();
         return autoRunExitCode;
     }
