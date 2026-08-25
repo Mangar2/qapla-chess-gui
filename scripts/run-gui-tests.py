@@ -94,7 +94,10 @@ def main() -> int:
     if arguments.filter:
         environment["QAPLA_TEST_FILTER"] = arguments.filter
 
-    command = [str(binary), f"--config-dir={config_dir}"]
+    # Always: no background image and 30 frames a second is what a test run wants, and it is the
+    # only sensible mode over a remote display, which is where these runs happen on the other two
+    # platforms. Given on the command line, it applies to this run and changes nothing stored.
+    command = [str(binary), f"--config-dir={config_dir}", "--remote-desktop"]
     if not arguments.no_remote_control:
         command += [
             "--remote-control",

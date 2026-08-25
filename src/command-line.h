@@ -60,6 +60,15 @@ struct CommandLineOptions {
      */
     std::string configDirectory;
 
+    /**
+     * @brief `--remote-desktop`: draw for a screen that is somewhere else.
+     *
+     * Applied for this session only, without changing the stored setting -- the same switch is in
+     * the Settings window, and a run over a remote display must not silently rewrite what the
+     * person at the machine chose.
+     */
+    bool remoteDesktop = false;
+
     /** @brief The `--remote-control` switches. Off unless explicitly asked for. */
     QaplaLlm::RemoteControlOptions remoteControl;
 

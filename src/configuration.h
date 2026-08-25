@@ -109,6 +109,15 @@ namespace QaplaConfiguration {
         static void setRemoteDesktopMode(bool enabled);
 
         /**
+         * @brief Switches Remote Desktop mode on for this session without storing it.
+         *
+         * What `--remote-desktop` does. It wins over the stored setting and is never written
+         * back: a session started over a remote display, or an automated test run, must not
+         * rewrite the setting the person at the machine chose.
+         */
+        static void setRemoteDesktopOverride();
+
+        /**
          * @brief Configuration for the LLM chat feature ([llmchat] section).
          */
         struct LlmChatConfig {

@@ -209,7 +209,19 @@ void Configuration::updateLanguageConfiguration(const std::string& languageCode)
     Configuration::instance().getConfigData().setSectionList("languagesettings", "general", { section });
 }
 
+namespace {
+    /** @brief Set by --remote-desktop; see Configuration::setRemoteDesktopOverride(). */
+    bool remoteDesktopOverride = false;
+}
+
+void Configuration::setRemoteDesktopOverride() {
+    remoteDesktopOverride = true;
+}
+
 bool Configuration::isRemoteDesktopMode() {
+    if (remoteDesktopOverride) {
+        return true;
+    }
     auto sections = Configuration::instance().
         getConfigData().getSectionList("performance", "general").value_or(std::vector<QaplaHelpers::IniFile::Section>{});
     

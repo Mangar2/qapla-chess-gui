@@ -128,6 +128,10 @@ class GuiSession:
             [
                 str(self.binary),
                 f"--config-dir={self.config_dir}",
+                # No background image, 30 frames a second: what a test run wants, and the only
+                # sensible mode where these runs happen over a remote display. It applies to this
+                # session and changes nothing stored.
+                "--remote-desktop",
                 "--remote-control",
                 "--remote-control-port=0",
                 f"--remote-control-token={self.token}",

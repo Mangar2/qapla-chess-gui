@@ -77,6 +77,15 @@ namespace {
              options.configDirectory = std::string(value);
          }},
 
+        {{"--remote-desktop"},
+         "",
+         "Draw for a screen that is somewhere else: no background image, and the frame rate "
+         "capped at 30. The same switch is in the Settings window; given here it applies to this "
+         "session only and does not change what is stored. Use it over a remote desktop, over a "
+         "forwarded display, and for automated test runs.",
+         "off",
+         [](CommandLineOptions& options, std::string_view) { options.remoteDesktop = true; }},
+
         {{"--remote-control"},
          "",
          "Serve the tools of this GUI over HTTP on 127.0.0.1, so another program can drive the "

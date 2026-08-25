@@ -515,6 +515,13 @@ namespace {
      *
      * @return false when the directory could not be used, and the GUI must not start.
      */
+    /** @brief Applies the options that only hold for this session, before anything is drawn. */
+    void applySessionOptions(const QaplaApp::CommandLineOptions& options) {
+        if (options.remoteDesktop) {
+            QaplaConfiguration::Configuration::setRemoteDesktopOverride();
+        }
+    }
+
     bool applyConfigDirectory(const QaplaApp::CommandLineOptions& options) {
         if (options.configDirectory.empty()) {
             return true;
@@ -595,6 +602,7 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
             }
             return 1;
         }
+        applySessionOptions(options);
 
         auto code = runApp(options.remoteControl);
         if (hasConsole) {
@@ -630,6 +638,7 @@ int main(int argc, char** argv) {
         if (!applyConfigDirectory(options)) {
             return 1;
         }
+        applySessionOptions(options);
 
         auto code = runApp(options.remoteControl);
         return code;
