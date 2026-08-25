@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """The check that goes in front of a release.
 
-Builds, then runs all three test layers in the order that finds the cheapest failures first. The
-first stage that fails ends the run, and the exit code is 0 only if every stage passed -- so this
-is something a release script can gate on rather than something a person has to read.
+Builds, then runs all three test layers in the order that finds the cheapest failures first,
+for the debug build and then for the release build. The first stage that fails ends the run, and
+the exit code is 0 only if every stage passed -- so this is something a release script can gate
+on rather than something a person has to read.
 
-    python3 scripts/release-check.py
-    python3 scripts/release-check.py --config release
+Debug first because a failure there is worth more: it carries the symbols, so a crash or a hang
+can be read rather than merely counted. Release afterwards because that is what ships, and the
+two do not fail in the same places.
+
+    python3 scripts/release-check.py                  # debug first, then release
+    python3 scripts/release-check.py --config release # one configuration only
     python3 scripts/release-check.py --skip-gui
 
 Every stage that starts the GUI gives it a configuration directory of its own, so a release check
@@ -88,41 +93,40 @@ def run_stage(number: int, title: str, command: List[str],
     return False
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Build and run every test layer before a release")
-    parser.add_argument("--config", default="release",
-                        help="build configuration to check: 'release' (the default -- a release "
-                             "check should check what ships) or 'default' for the debug build")
-    parser.add_argument("--skip-gui", action="store_true",
-                        help="leave out the on-screen GUI suite")
-    arguments = parser.parse_args()
+def run_configuration(configuration: str, skip_gui: bool, announce: bool) -> bool:
+    """Builds one configuration and runs every test layer against it."""
+    build_dir = REPO_ROOT / "build" / configuration
+    gui_preset = GUI_TEST_PRESET.get(configuration, "test")
 
-    build_dir = REPO_ROOT / "build" / arguments.config
-    gui_preset = GUI_TEST_PRESET.get(arguments.config, "test")
+    if announce:
+        print()
+        print("#" * 46)
+        print(f"  Configuration: {configuration}")
+        print("#" * 46)
 
-    if not ensure_configured(arguments.config):
-        print(f"Could not configure preset '{arguments.config}'.", file=sys.stderr)
-        return 1
-    if not arguments.skip_gui and not ensure_configured(gui_preset):
+    if not ensure_configured(configuration):
+        print(f"Could not configure preset '{configuration}'.", file=sys.stderr)
+        return False
+    if not skip_gui and not ensure_configured(gui_preset):
         print(f"Could not configure preset '{gui_preset}'.", file=sys.stderr)
-        return 1
+        return False
 
     # Named targets rather than the preset's own: every build preset restricts itself to "qapla",
     # so a check that trusted it built the GUI and then ran a unit-tests binary and diagnostic
     # engines that nothing had rebuilt. A release check that certifies stale binaries is worse
     # than none.
     stages = [
-        (f"Build ({arguments.config})",
-         ["cmake", "--build", "--preset", arguments.config,
+        (f"Build ({configuration})",
+         ["cmake", "--build", "--preset", configuration,
           "--target", "qapla", "unit-tests", "diagnostic-engine"], None),
         ("Unit tests",
          [str(build_dir / executable("unit-tests"))], None),
         ("Integration tests (HTTP)",
          [sys.executable, str(REPO_ROOT / "test" / "integration" / "test_runner.py"),
-          "--config", arguments.config], None),
+          "--config", configuration], None),
     ]
 
-    if not arguments.skip_gui:
+    if not skip_gui:
         # Last, because it is the slowest of the three. Still a gate, with --skip-gui as the
         # deliberate way past it rather than a quiet exclusion.
         #
@@ -139,12 +143,34 @@ def main() -> int:
         stages.append((
             "GUI tests (ImGui Test Engine)",
             [sys.executable, str(REPO_ROOT / "scripts" / "run-gui-tests.py"),
-             "--config", arguments.config], None))
+             "--config", configuration], None))
 
     for number, (title, command, environment) in enumerate(stages, start=1):
         if not run_stage(number, title, command, environment):
             print()
-            print(f"Release check failed at: {title}", file=sys.stderr)
+            print(f"Release check failed at: {title} ({configuration})", file=sys.stderr)
+            return False
+    return True
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Build and run every test layer before a release")
+    parser.add_argument("--config", default=None,
+                        help="check one configuration only: 'default' (debug) or 'release'. "
+                             "Without it both are checked, debug first")
+    parser.add_argument("--skip-gui", action="store_true",
+                        help="leave out the on-screen GUI suite")
+    arguments = parser.parse_args()
+
+    # Debug first, then release. A failure is worth more in the debug build: it carries the
+    # symbols, so a crash or a hang can be read where the release build only says that one
+    # happened. Once that is clean, the same suites run again against what actually ships --
+    # the two do not fail in the same places, as optimisation changes the timing, and this
+    # project has already had a bug that only the release build showed.
+    configurations = [arguments.config] if arguments.config else ["default", "release"]
+
+    for configuration in configurations:
+        if not run_configuration(configuration, arguments.skip_gui, len(configurations) > 1):
             return 1
 
     print()
