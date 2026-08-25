@@ -421,3 +421,9 @@ imgui.ini
 # Sicherheitsnetz: Modellgewichte gehoeren grundsaetzlich nicht ins Repo
 *.safetensors
 *.gguf
+
+# Test fixtures. The patterns above exclude games and position files as a class, which is right
+# for what a session produces and wrong for the two files the tests are built on: without them a
+# fresh checkout fails seven unit tests and the EPD suites, on every platform.
+!src/test-system/unit/test-openings.pgn
+!src/test-system/test-data/wmtest.epd
