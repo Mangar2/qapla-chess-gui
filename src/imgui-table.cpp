@@ -180,9 +180,15 @@ namespace QaplaWindows {
     }
 
     static void alignRight(const std::string& content) {
-        float colWidth = ImGui::GetColumnWidth();
-        float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + colWidth - textWidth - 10);
+        constexpr float RIGHT_PADDING = 10.0F;
+        const float colWidth = ImGui::GetColumnWidth();
+        const float textWidth = ImGui::CalcTextSize(content.c_str()).x;
+        // Never to the left of the cell: text wider than its column used to be pushed out on the
+        // left, where the cell's clip rectangle cut it off -- so "-280.00" in a column with room
+        // for six characters showed as "280.00", a tablebase loss read as a winning score. Too
+        // wide now starts at the left edge and loses its last characters instead of its first.
+        const float offset = std::max(0.0F, colWidth - textWidth - RIGHT_PADDING);
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
 	}
 
     static void textAligned(const std::string& content, bool right) {

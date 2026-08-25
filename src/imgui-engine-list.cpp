@@ -252,10 +252,10 @@ void ImGuiEngineList::addTables(size_t size) {
                 std::vector<ImGuiTable::ColumnDef>{
                     { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
                     { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                    { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                    { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 90.0F, .alignRight = true },
                     { .name = "NPS", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
-                    { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                    { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
+                    { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 65.0F, .alignRight = true },
                     { .name = "Primary variant", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 1660.0F }
             }),
             std::make_unique<ImGuiTable>(std::format("EngineLogTable{}", i),
