@@ -55,13 +55,13 @@ TEST_CASE("UiThreadWatch counts a frame that took too long", "[ui-thread-watch]"
     watch.reset();
 
     watch.frameBegin();
-    spend(UiThreadWatch::STALL_THRESHOLD + std::chrono::milliseconds(20));
+    spend(UiThreadWatch::stallThreshold() + std::chrono::milliseconds(20));
     watch.frameEnd();
 
     auto report = watch.report();
     REQUIRE(report.frames == 1);
     REQUIRE(report.stalls == 1);
-    REQUIRE(report.worstFrameMs > static_cast<double>(UiThreadWatch::STALL_THRESHOLD.count()));
+    REQUIRE(report.worstFrameMs > static_cast<double>(UiThreadWatch::stallThreshold().count()));
     watch.reset();
 }
 
@@ -78,7 +78,7 @@ TEST_CASE("UiThreadWatch blames the innermost section, not the one around it",
         UiThreadWatch::Section outer("poll");
         {
             UiThreadWatch::Section inner("tool:manage_engines");
-            spend(UiThreadWatch::STALL_THRESHOLD + std::chrono::milliseconds(20));
+            spend(UiThreadWatch::stallThreshold() + std::chrono::milliseconds(20));
         }
     }
     watch.frameEnd();
@@ -100,7 +100,7 @@ TEST_CASE("UiThreadWatch names the enclosing section when the time really was sp
         {
             UiThreadWatch::Section inner("tool:get_status");
         }
-        spend(UiThreadWatch::STALL_THRESHOLD + std::chrono::milliseconds(20));
+        spend(UiThreadWatch::stallThreshold() + std::chrono::milliseconds(20));
     }
     watch.frameEnd();
 
