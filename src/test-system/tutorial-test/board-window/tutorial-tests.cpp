@@ -74,6 +74,15 @@ namespace QaplaTest {
             // dialog -- because the tutorial starts one step later and assumes it is done.
             IM_CHECK(selectEnginesOnBoard(ctx));
 
+            // In front, and asserted rather than assumed. "Switch to Board & Start" only marks the
+            // tab as selected, which takes effect on some later frame; the test then looked for a
+            // button on a board that was not being drawn and reported "Unable to locate item:
+            // /**/Board/Play" -- on Windows every time, on the slower machines never.
+            switchToBoardView(ctx);
+            IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [ctx]() {
+                return ctx->ItemExists("**/Board/Play");
+            }, 10.0f));
+
             // And the board itself at the start of a game. Usually it already is, but not always
             // -- whatever the previous test left on it stays there, and every step of this
             // tutorial counts half moves from zero.
