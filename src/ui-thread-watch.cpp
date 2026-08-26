@@ -19,6 +19,10 @@
 
 #include "ui-thread-watch.h"
 
+#include "os-helpers.h"
+
+#include <base-elements/string-helper.h>
+
 #include <algorithm>
 #include <utility>
 
@@ -32,6 +36,23 @@ namespace {
 }
 
 } // namespace
+
+std::chrono::milliseconds UiThreadWatch::stallThreshold() {
+    // Read once: it belongs to the run, and reading the environment per frame would itself cost
+    // more than the thing being measured.
+    static const std::chrono::milliseconds threshold = [] {
+        const auto configured = QaplaHelpers::OsHelpers::getEnv("QAPLA_STALL_THRESHOLD_MS");
+        if (!configured) {
+            return DEFAULT_STALL_THRESHOLD;
+        }
+        const auto milliseconds = QaplaHelpers::to_uint32(*configured);
+        if (!milliseconds || *milliseconds == 0) {
+            return DEFAULT_STALL_THRESHOLD;
+        }
+        return std::chrono::milliseconds{*milliseconds};
+    }();
+    return threshold;
+}
 
 UiThreadWatch& UiThreadWatch::instance() {
     static UiThreadWatch instance;
@@ -57,7 +78,7 @@ void UiThreadWatch::frameEnd() {
     ++frames_;
 
     const double thresholdMs =
-        std::chrono::duration<double, std::milli>(STALL_THRESHOLD).count();
+        std::chrono::duration<double, std::milli>(stallThreshold()).count();
     if (frameMs <= thresholdMs) {
         return;
     }

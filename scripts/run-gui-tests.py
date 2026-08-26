@@ -31,9 +31,16 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+#: What counts as a UI-thread stall, per build. The unoptimised build does the same work
+#: measurably slower -- 76 ms was the worst frame of a clean debug run, and a tuning run
+#: took 64 ms to start -- so the 50 ms of the release build would fail it for being a debug
+#: build. 150 ms is under seven frames a second: still unmistakably blocked.
+DEBUG_STALL_THRESHOLD_MS = "150"
 
 #: Presets that carry the ImGui Test Engine. Without it the run reports nothing tested.
 TEST_PRESETS = {"default": "test", "release": "releasetest"}
@@ -91,6 +98,8 @@ def main() -> int:
     environment["QAPLA_TEST_ENGINE_DIR"] = str(engine_dir)
     environment["QAPLA_TEST_DATA_DIR"] = str(REPO_ROOT / "src" / "test-system" / "test-data")
     environment["QAPLA_TEST_REAL_ENGINE_DIR"] = str(REPO_ROOT / "engines")
+    if arguments.config != "release":
+        environment["QAPLA_STALL_THRESHOLD_MS"] = DEBUG_STALL_THRESHOLD_MS
     if arguments.filter:
         environment["QAPLA_TEST_FILTER"] = arguments.filter
 
@@ -126,8 +135,10 @@ def main() -> int:
 
     # In the configuration directory, so that what the engines write lands with the rest of the
     # run's leavings rather than in the repository.
+    started = time.monotonic()
     completed = subprocess.run(command, cwd=str(config_dir), env=environment, check=False,
                                capture_output=True, text=True, errors="replace")
+    elapsed = time.monotonic() - started
 
     output = completed.stdout + completed.stderr
     print(output)
@@ -136,6 +147,14 @@ def main() -> int:
     if summary:
         tested, success, in_queue = (int(value) for value in summary.groups())
         print(f"Tested {tested}, passed {success}, left in the queue {in_queue}.")
+
+    frames = re.search(r"QAPLA_FRAME_REPORT frames=(\d+) stalls=(\d+) worstFrameMs=(\S+) "
+                       r"worstSection=(\S+)", output)
+    if frames:
+        drawn, stalls, worst_ms, worst_section = frames.groups()
+        rate = int(drawn) / elapsed if elapsed > 0 else 0.0
+        print(f"Ran {elapsed:.0f}s, {drawn} frames ({rate:.1f}/s), {stalls} stalls, "
+              f"worst frame {float(worst_ms):.0f} ms in {worst_section}.")
 
     if arguments.keep or completed.returncode != 0:
         print(f"Configuration directory kept: {config_dir}")

@@ -60,6 +60,10 @@ namespace QaplaTest::EpdTutorialTest {
         
         auto& epdData = QaplaWindows::EpdData::instance();
 
+        // A button needs a moment before it takes a click, and how long varies from run to
+        // run -- which is why this test failed only in company. Frames, not sleep.
+        ctx->SleepNoSkip(1.0f, QaplaTest::Common::FRAME_STEP);
+
         // Click Stop button (same as Run/Stop)
         ctx->ItemClick("**/###Epd/RunStop");
         ctx->Yield();
@@ -92,6 +96,10 @@ namespace QaplaTest::EpdTutorialTest {
     inline void executeStep07_GraceStop(ImGuiTestContext* ctx) {
         ctx->LogInfo("Step 7: Grace Stop");
 
+        // A button needs a moment before it takes a click, and how long varies from run to
+        // run -- which is why this test failed only in company. Frames, not sleep.
+        ctx->SleepNoSkip(1.0f, QaplaTest::Common::FRAME_STEP);
+
         // Click Grace button
         ctx->ItemClick("**/###Epd/Grace");
         ctx->Yield();
@@ -109,6 +117,11 @@ namespace QaplaTest::EpdTutorialTest {
         // each that takes a moment. Clear only becomes available once it has stopped.
         IM_CHECK(waitForAnalysisStopped(ctx, 60.0f));
         IM_CHECK(!epdData.isRunning());
+
+        // Clear only becomes clickable once the run has actually produced results, and stopped
+        // does not yet mean scored: the positions in flight are still being written down. Two
+        // seconds of frames, not of sleep, so the application keeps running while we wait.
+        ctx->SleepNoSkip(2.0f, QaplaTest::Common::FRAME_STEP);
 
         // Click Clear button
         ctx->ItemClick("**/###Epd/Clear");

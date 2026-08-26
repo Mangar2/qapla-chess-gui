@@ -52,7 +52,17 @@ namespace QaplaWindows {
 class UiThreadWatch {
 public:
     /** @brief A frame whose work takes longer than this counts as a stall: 20 frames a second. */
-    static constexpr std::chrono::milliseconds STALL_THRESHOLD{50};
+    static constexpr std::chrono::milliseconds DEFAULT_STALL_THRESHOLD{50};
+
+    /**
+     * @brief What counts as a stall in this session, in milliseconds.
+     *
+     * A property of the build, not of the application: the same work takes measurably longer in
+     * an unoptimised binary, and a debug run failed a test on 64 ms spent starting a tuning run
+     * -- correct arithmetic, wrong conclusion. QAPLA_STALL_THRESHOLD_MS sets it; a test runner
+     * gives the debug build a number that fits it, and nothing else changes.
+     */
+    [[nodiscard]] static std::chrono::milliseconds stallThreshold();
 
     /**
      * @brief The section a frame may spend any amount of time in without counting as a stall.
@@ -78,7 +88,7 @@ public:
      */
     void frameBegin();
 
-    /** @brief Ends the frame, and records it if it took longer than STALL_THRESHOLD. */
+    /** @brief Ends the frame, and records it if it took longer than stallThreshold(). */
     void frameEnd();
 
     /**

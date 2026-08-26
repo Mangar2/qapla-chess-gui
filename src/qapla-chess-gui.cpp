@@ -453,6 +453,15 @@ namespace {
                     testManager.getResultSummary(tested, success, inQueue);
                     std::cout << "QAPLA_TEST_SUMMARY tested=" << tested
                         << " success=" << success << " inQueue=" << inQueue << "\n";
+                    // What the run cost the UI thread, in the run's own output: the frame report
+                    // was only readable through the remote control, which goes away with the
+                    // process -- so a finished run said nothing about how it had behaved.
+                    const auto frames = QaplaWindows::UiThreadWatch::instance().report();
+                    std::cout << "QAPLA_FRAME_REPORT frames=" << frames.frames
+                        << " stalls=" << frames.stalls
+                        << " worstFrameMs=" << frames.worstFrameMs
+                        << " worstSection=" << (frames.worstSection.empty() ? "-" : frames.worstSection)
+                        << "\n";
                     // Nothing tested is not a pass, it is a run that never happened -- a suite
                     // that registers no test at all has to be as loud as a failing one.
                     autoRunExitCode = (tested > 0 && success == tested) ? 0 : 1;

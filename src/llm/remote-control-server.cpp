@@ -232,7 +232,7 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         frames["count"] = static_cast<double>(watch.frames);
         frames["stalls"] = static_cast<double>(watch.stalls);
         frames["stall_threshold_ms"] = static_cast<double>(
-            QaplaWindows::UiThreadWatch::STALL_THRESHOLD.count());
+            QaplaWindows::UiThreadWatch::stallThreshold().count());
         frames["worst_frame_ms"] = watch.worstFrameMs;
         frames["worst_section"] = watch.worstSection;
         frames["current_frame_ms"] = watch.currentFrameMs;
