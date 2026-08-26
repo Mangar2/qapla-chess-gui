@@ -80,13 +80,15 @@ namespace QaplaTest {
             // /**/Board/Play" -- on Windows every time, on the slower machines never.
             const bool boardIsThere = switchToBoardView(ctx);
             if (!boardIsThere) {
-                ctx->LogWarning("No **/Board/Play. Board window exists: %d, tab exists: %d",
+                ctx->LogWarning("No **/Board/Play. Board=%d, 'Board 1'=%d, Chatbot=%d, tab=%d",
                     ctx->ItemExists("**/Board") ? 1 : 0,
+                    ctx->ItemExists("**/Board 1") ? 1 : 0,
+                    ctx->ItemExists("**/Chatbot") ? 1 : 0,
                     ctx->ItemExists("**/QaplaTabBar/###Board 1") ? 1 : 0);
                 ImGuiTestItemList items;
-                ctx->GatherItems(&items, "//Board", 2);
+                ctx->GatherItems(&items, "//QaplaTabBar", 1);
                 for (const auto& item : items) {
-                    ctx->LogWarning("  under Board: '%s' (id %08X)", item.DebugLabel, item.ID);
+                    ctx->LogWarning("  tab: '%s' (id %08X)", item.DebugLabel, item.ID);
                 }
             }
             IM_CHECK(boardIsThere);
