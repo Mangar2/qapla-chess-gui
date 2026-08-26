@@ -50,6 +50,12 @@ namespace QaplaTest {
         io.ConfigVerboseLevel = ImGuiTestVerboseLevel_Info;
         io.ConfigRunSpeed = ImGuiTestRunSpeed_Normal;
         io.ConfigNoThrottle = false;
+        // A little more room between actions than the defaults (0.15 and 0.40). The suite is not
+        // in a hurry, and a control that needs a moment to become clickable is the commonest
+        // reason for a step that fails only in company -- the faster the machine, the likelier
+        // the test gets there first.
+        io.ActionDelayShort = 0.25F;
+        io.ActionDelayStandard = 0.50F;
 
         // An unattended run has nobody to read the on-screen log, so it goes to the terminal and
         // to a file. Without this, a failure reports itself as "tested=4 success=0" and the one

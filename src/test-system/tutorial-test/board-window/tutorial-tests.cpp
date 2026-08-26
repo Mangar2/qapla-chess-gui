@@ -74,6 +74,12 @@ namespace QaplaTest {
             // dialog -- because the tutorial starts one step later and assumes it is done.
             IM_CHECK(selectEnginesOnBoard(ctx));
 
+            // And the board itself at the start of a game. Usually it already is, but not always
+            // -- whatever the previous test left on it stays there, and every step of this
+            // tutorial counts half moves from zero.
+            ctx->ItemClick("**/Board/New");
+            ctx->Yield(2);
+
             // Execute all tutorial steps on the board with snackbar guidance
             executeStep01_ClickPlay(ctx);
             executeStep02_MakeCounterMove(ctx);

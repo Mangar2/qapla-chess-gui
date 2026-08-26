@@ -193,15 +193,16 @@ void selectAllEngines() {
  * @brief Takes the snackbar out of the way.
  *
  * It is a notification that sits over the window for ten to twenty seconds, and a test driving
- * the GUI has to click where it is. One second is long enough to still see one in a recording
- * and short enough that the next step is not fighting it.
+ * the GUI has to click where it is. Two seconds is long enough that a test waiting for one still
+ * finds it -- at one second they were gone again before a fast machine looked -- and short enough
+ * that the next step is not fighting it.
  */
 void shortenSnackbarMessages() {
     QaplaWindows::SnackbarManager::SnackbarConfig config;
-    config.noteDurationInS = 1;
-    config.successDurationInS = 1;
-    config.warningDurationInS = 1;
-    config.errorDurationInS = 1;
+    config.noteDurationInS = 2;
+    config.successDurationInS = 2;
+    config.warningDurationInS = 2;
+    config.errorDurationInS = 2;
     QaplaWindows::SnackbarManager::instance().setConfig(config);
 }
 
