@@ -8,6 +8,7 @@ that a run can be stopped while it is going.
 """
 
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -51,6 +52,60 @@ def _plays_the_same_game_twice(session, results):
     if standings(first) == standings(second):
         return True, "the same seed plays the same tournament twice"
     return False, f"the standings differ between two runs of the same seed:\n{standings(first)}\n---\n{standings(second)}"
+
+
+
+def _survives_a_stop_straight_after_the_start(session, results):
+    """Starts a tournament and stops it at once, over and over, watching the frame counter.
+
+    This is the regression test for the freeze of 2026-08-25, and it is written the way the fault
+    was found rather than the way a test is usually written. The fault was a stop that reached the
+    *next* run: the pool answered "nothing left to do" while the stop it had just been given was
+    still in a manager's queue, and the run started a moment later was torn down by it. Whoever
+    waited for that run waited for ever -- and that waiting happens on the UI thread, so the whole
+    application stopped answering.
+
+    What makes it visible is the frame counter, not the call: a frozen UI thread still answers
+    /health, and a tool call that never returns is exactly the symptom. Both are checked.
+
+    Ten rounds because the fault was never certain: it showed at the second, third, fifth and
+    eleventh attempt on the machine it was found on. Ten is far from proof and cheap enough to
+    run every time -- see docs/bugs/gui-freeze-2026-08-25.md for what was actually established.
+    """
+    # The placeholders of a step are substituted by the framework; a validator that calls the
+    # application itself has to name the paths, and the sandbox is where they are.
+    sandbox = session.config_dir
+    configuration = _basic_configuration(
+        games=100, time_control="2+0.1",
+        openings_file=str(sandbox / "openings.pgn"), pgn_file=str(sandbox / "games.pgn"))
+
+    rounds = 10
+    for round_number in range(1, rounds + 1):
+        session.call("configure_tournament", configuration)
+        session.call("start", {"type": "tournament"})
+
+        deadline = time.time() + 30
+        while time.time() < deadline:
+            if session.state()["activities"]["tournament"]["running"]:
+                break
+            time.sleep(0.05)
+        else:
+            return False, f"round {round_number}: the tournament never reported itself running"
+
+        before = session.remote.health()["frames"]["count"]
+        try:
+            session.call("stop", {"type": "tournament", "mode": "abrupt"}, timeout=30)
+        except Exception as error:  # noqa: BLE001 -- a call that never returns is the finding
+            return False, f"round {round_number}: the stop never came back ({error})"
+
+        frames = session.remote.health()["frames"]
+        if frames["count"] == before:
+            return False, (f"round {round_number}: the stop returned but the UI thread drew no "
+                           f"further frame (stuck {frames['current_frame_ms']:.0f} ms in "
+                           f"{frames['current_section']!r})")
+        session.call("clear_result", {"type": "tournament"})
+
+    return True, f"{rounds} stops straight after the start, and the frame loop kept running"
 
 
 def get_tests() -> List[Dict[str, Any]]:
@@ -123,6 +178,15 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
             "validators": [
                 {"type": "custom", "check": _plays_the_same_game_twice},
+            ],
+        },
+        {
+            "name": "tournament-stop-right-after-the-start",
+            "description": "Stopping a tournament the moment it starts does not freeze the GUI",
+            "engines": PAIR,
+            "steps": [],
+            "validators": [
+                {"type": "custom", "check": _survives_a_stop_straight_after_the_start},
             ],
         },
         {
