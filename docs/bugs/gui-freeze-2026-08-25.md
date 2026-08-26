@@ -176,3 +176,14 @@ a frozen UI thread still answers `/health`.
 
 The state of the manager the pool waits for is the same as in the first freeze, five days of
 guessing earlier: `NotRunning`, no provider, empty queue, `finishedPromiseValid_ == true`.
+
+## What was deliberately left as it is
+
+`TournamentData::stopPoolAbruptlyAndWait()` and `clear()` still wait on the UI thread for the stop
+to have been carried out. Taking that wait off the frame loop was considered and rejected: it
+would introduce a "stopping, not yet stopped" state that every view and every tool would have to
+account for, and that is a larger source of new faults than a frame the user waits through. The
+wait is bounded now -- it ends when the stop has left the queue -- which is what it was not
+before.
+
+Decided 2026-08-26.
