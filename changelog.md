@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026
 
 ### Added
+- **Version number**: The GUI carries the version of `qapla-engine-tester` it is built on (0.6.0) and shows it in the window title and in `--help`, so a GUI and a tester that belong together can be told apart from a pair that does not.
 - **SprtEnginesResult struct**: New data structure to hold trinomial and pentanomial statistics for SPRT testing
 - **simulateGamePair method**: Extracts game pair simulation logic for cleaner Monte Carlo code
 - **Pentanomial SPRT support**: Added pentanomial statistics collection for paired games (WW, WD, WL, DD, LD, LL counters)

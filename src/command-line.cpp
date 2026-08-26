@@ -18,6 +18,7 @@
  */
 
 #include "command-line.h"
+#include "version.h"
 
 #include <algorithm>
 #include <array>
@@ -237,7 +238,8 @@ std::string helpText() {
     const std::size_t indent = widest + 4;
 
     std::ostringstream out;
-    out << "Qapla Chess GUI - a chess GUI for engine developers and testers.\n\n"
+    out << "Qapla Chess GUI " << VERSION
+        << " - a chess GUI for engine developers and testers.\n\n"
         << "Usage: qapla-chess-gui [options]\n\n"
         << "Options:\n";
     for (const auto& option : OPTIONS) {

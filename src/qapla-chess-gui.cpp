@@ -54,6 +54,7 @@
 #include "imgui-frame-rate-limiter.h"
 #include "os-helpers.h"
 #include "command-line.h"
+#include "version.h"
 #include "ui-thread-watch.h"
 #include "ui-update-queue.h"
 
@@ -125,7 +126,8 @@ namespace {
         glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
         glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-        auto* window = glfwCreateWindow(1400, 800, "Qapla Chess GUI", nullptr, nullptr);
+        const std::string title = "Qapla Chess GUI " + std::string(QaplaApp::VERSION);
+        auto* window = glfwCreateWindow(1400, 800, title.c_str(), nullptr, nullptr);
         if (window == nullptr) {
             throw std::runtime_error("Failed to create GLFW window");
         }
