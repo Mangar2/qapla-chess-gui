@@ -22,6 +22,7 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
+#include <imgui_internal.h>
 #include "tutorial-test-helpers.h"
 #include "tutorial-steps-small.h"
 
@@ -85,10 +86,12 @@ namespace QaplaTest {
                     ctx->ItemExists("**/Board 1") ? 1 : 0,
                     ctx->ItemExists("**/Chatbot") ? 1 : 0,
                     ctx->ItemExists("**/QaplaTabBar/###Board 1") ? 1 : 0);
-                ImGuiTestItemList items;
-                ctx->GatherItems(&items, "//QaplaTabBar", 1);
-                for (const auto& item : items) {
-                    ctx->LogWarning("  tab: '%s' (id %08X)", item.DebugLabel, item.ID);
+                const ImGuiContext& context = *ImGui::GetCurrentContext();
+                for (const ImGuiWindow* window : context.Windows) {
+                    if (window != nullptr && window->WasActive) {
+                        ctx->LogWarning("  window: '%s' size %.0fx%.0f", window->Name,
+                            window->Size.x, window->Size.y);
+                    }
                 }
             }
             IM_CHECK(boardIsThere);
