@@ -688,8 +688,10 @@ namespace QaplaWindows {
         auto oldState = state_;
         state_ = graceful ? State::GracefulStopping : State::Stopping;
         if (!graceful) {
-            // If we are not graceful, we stop all immediately
-            poolAccess_->stopAll();
+            // If we are not graceful, we stop all immediately, and remember the receipts: a stop
+            // that is merely sent can still be sitting in a manager's queue when the next run
+            // starts, and it then tears that one down. stopPoolAbruptlyAndWait() waits on these.
+            pendingStopTickets_ = poolAccess_->stopAll();
         }
         if (oldState == State::Stopping) {
             SnackbarManager::instance().showNote("Tournament is already stopping.", 
@@ -753,6 +755,11 @@ namespace QaplaWindows {
 
     void TournamentData::stopPoolAbruptlyAndWait() {
         stopPool(false);
+        // Every stop this just sent has left its manager's queue before we go on. Without it,
+        // "the pool has no work" was answered by a manager that was already idle while our stop
+        // was still queued for it.
+        QaplaTester::GameManagerPool::waitForStops(pendingStopTickets_);
+        pendingStopTickets_.clear();
         // Drains the pool instead of waiting for populateRunningTable() to notice on some later
         // frame -- that never happens while this call is holding the UI thread anyway.
         poolAccess_->waitForTask();

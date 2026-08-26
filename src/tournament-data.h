@@ -538,6 +538,9 @@ namespace QaplaWindows {
         std::unique_ptr<ImGuiTournamentConfiguration> tournamentConfiguration_{std::make_unique<ImGuiTournamentConfiguration>()};
 
         GameManagerPoolAccess poolAccess_;
+
+        /** @brief Receipts of the stops last sent; see stopPoolAbruptlyAndWait(). */
+        std::vector<QaplaHelpers::TaskTicketPtr> pendingStopTickets_;
         QaplaTester::EngineGlobalConfig eachEngineConfig_;
         std::vector<ImGuiEngineSelect::EngineConfiguration> engineConfigurations_; 
         std::unique_ptr<Callback::UnregisterHandle> pollCallbackHandle_;
