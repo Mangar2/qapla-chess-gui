@@ -78,10 +78,7 @@ namespace QaplaTest {
             // tab as selected, which takes effect on some later frame; the test then looked for a
             // button on a board that was not being drawn and reported "Unable to locate item:
             // /**/Board/Play" -- on Windows every time, on the slower machines never.
-            switchToBoardView(ctx);
-            const bool boardIsThere = QaplaTest::Common::waitForCondition(ctx, [ctx]() {
-                return ctx->ItemExists("**/Board/Play");
-            }, 10.0f);
+            const bool boardIsThere = switchToBoardView(ctx);
             if (!boardIsThere) {
                 ctx->LogWarning("No **/Board/Play. Board window exists: %d, tab exists: %d",
                     ctx->ItemExists("**/Board") ? 1 : 0,

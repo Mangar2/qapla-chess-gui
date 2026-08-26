@@ -23,6 +23,7 @@
 
 #include "../tutorial-test-common.h"
 #include "board-window.h"
+#include "callback-manager.h"
 #include "interactive-board-window.h"
 #include "chatbot/chatbot-window.h"
 
@@ -117,9 +118,27 @@ namespace QaplaTest::BoardWindowTutorialTest {
      * @brief Switches to the board view (Board 1 tab)
      * @param ctx The ImGui test context
      */
-    inline void switchToBoardView(ImGuiTestContext* ctx) {
-        ctx->ItemClick("**/QaplaTabBar/###Board 1");
-        ctx->Yield();
+    /**
+     * @brief Brings the first board to the front and waits until it is really being drawn.
+     *
+     * Both ways at once, because neither alone was enough: the message is what the application
+     * uses ("Switch to Board & Start" sends exactly this), and the click is what a person does.
+     * On Windows the tab was there while the board window was not -- the tab had not become the
+     * selected one -- and every step of the tutorial then failed looking for a button on a board
+     * nobody was drawing.
+     *
+     * @return true once the board is on screen.
+     */
+    [[nodiscard]] inline bool switchToBoardView(ImGuiTestContext* ctx) {
+        QaplaWindows::StaticCallbacks::message().invokeAll("switch_to_board_1");
+        ctx->Yield(2);
+        if (ctx->ItemExists("**/QaplaTabBar/###Board 1")) {
+            ctx->ItemClick("**/QaplaTabBar/###Board 1");
+        }
+        ctx->Yield(2);
+        return QaplaTest::Common::waitForCondition(ctx, [ctx]() {
+            return ctx->ItemExists("**/Board/Play");
+        }, 10.0f);
     }
 
 } // namespace QaplaTest::BoardWindowTutorialTest
