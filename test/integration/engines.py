@@ -35,6 +35,11 @@ DIAG_LOSSONTIME = "Diag LossOnTime"
 QAPLA = "Qapla"
 SPIKE = "Spike"
 
+#: The engine the cross-tool tests play with, and the one qapla-engine-tester is given as well.
+#: A build of its own rather than QAPLA, so that both tools are demonstrably driving the same
+#: binary and a newer Qapla in engines/ cannot quietly change what those tests measure.
+QAPLA_040 = "Qapla 0.4.0"
+
 
 def platform_suffix() -> str:
     """``windows`` / ``linux`` / ``macos`` -- the same three words the engine tester uses."""
@@ -150,7 +155,7 @@ class EngineCatalog:
             else:
                 self.missing.append(f"{name}: no {source} (build the project first)")
 
-        for name, stem in ((QAPLA, "Qapla"), (SPIKE, "SpikeEngine")):
+        for name, stem in ((QAPLA, "Qapla"), (SPIKE, "SpikeEngine"), (QAPLA_040, "Qapla0.4.0")):
             source = _real_engine_source(stem)
             if source is not None:
                 self._paths[name] = _materialize(source)
