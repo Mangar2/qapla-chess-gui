@@ -565,25 +565,62 @@ namespace {
 #include <io.h>
 #include <fcntl.h>
 
-bool attachToParentConsole() {
-    if (AttachConsole(ATTACH_PARENT_PROCESS) != 0) {
-        // Redirect the CRT standard input, output, and error handles to the console
-        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
-        freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
-        
-        // Synchronize C++ streams with C streams
-        std::ios::sync_with_stdio(true);
-        std::wcout.clear();
-        std::cout.clear();
-        std::wcerr.clear();
-        std::cerr.clear();
-        std::wcin.clear();
-        std::cin.clear();
-        
-        return true;
+namespace {
+
+/** @brief Whether a standard handle already leads somewhere: a pipe, or a file. */
+[[nodiscard]] bool isRedirected(DWORD standardHandle) {
+    const HANDLE handle = GetStdHandle(standardHandle);
+    if (handle == nullptr || handle == INVALID_HANDLE_VALUE) {
+        return false;
     }
-    return false;
+    const DWORD type = GetFileType(handle);
+    return type == FILE_TYPE_PIPE || type == FILE_TYPE_DISK;
+}
+
+} // namespace
+
+/**
+ * @brief Gives a windowed application a console to print to, when nobody else is listening.
+ *
+ * Whatever the caller redirected stays redirected. Started from a test runner, the standard
+ * handles are pipes the runner reads, and pointing them at CONOUT$ instead threw every line of
+ * the run at a console nobody was looking at: the test summary, the test log, the frame report.
+ * The runner saw an empty stream and could not tell a passing run from a failing one -- on
+ * Windows the whole GUI suite reported nothing at all.
+ *
+ * @return true if a console was attached and has to be freed on the way out.
+ */
+bool attachToParentConsole() {
+    const bool outputRedirected = isRedirected(STD_OUTPUT_HANDLE);
+    const bool errorRedirected = isRedirected(STD_ERROR_HANDLE);
+    if (outputRedirected && errorRedirected) {
+        return false;
+    }
+    if (AttachConsole(ATTACH_PARENT_PROCESS) == 0) {
+        return false;
+    }
+
+    FILE* reopened = nullptr;
+    if (!outputRedirected) {
+        freopen_s(&reopened, "CONOUT$", "w", stdout);
+    }
+    if (!errorRedirected) {
+        freopen_s(&reopened, "CONOUT$", "w", stderr);
+    }
+    if (!isRedirected(STD_INPUT_HANDLE)) {
+        freopen_s(&reopened, "CONIN$", "r", stdin);
+    }
+
+    // Synchronize C++ streams with C streams
+    std::ios::sync_with_stdio(true);
+    std::wcout.clear();
+    std::cout.clear();
+    std::wcerr.clear();
+    std::cerr.clear();
+    std::wcin.clear();
+    std::cin.clear();
+
+    return true;
 }
 
 int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance, 
