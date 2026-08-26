@@ -120,11 +120,6 @@ class GuiSession:
         environment = dict(os.environ)
         if self.seed is not None:
             environment["QAPLA_DIAG_SEED"] = str(self.seed)
-        if self.build_config != "release":
-            # What counts as a UI-thread stall belongs to the build: the unoptimised one does the
-            # same work measurably slower, and a debug run failed a test for taking 64 ms to start
-            # a tuning run. 150 ms is under seven frames a second -- still unmistakably blocked.
-            environment["QAPLA_STALL_THRESHOLD_MS"] = "150"
 
         self._output_file = open(self.output_path, "a", encoding="utf-8", errors="replace")
         self._output_file.write(f"\n===== start {time.strftime('%H:%M:%S')} =====\n")

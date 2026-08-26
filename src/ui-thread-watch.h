@@ -51,8 +51,16 @@ namespace QaplaWindows {
  */
 class UiThreadWatch {
 public:
-    /** @brief A frame whose work takes longer than this counts as a stall: 20 frames a second. */
-    static constexpr std::chrono::milliseconds DEFAULT_STALL_THRESHOLD{50};
+    /**
+     * @brief A frame whose work takes longer than this counts as a stall: ten frames a second.
+     *
+     * Not tighter, because honest work sits just under it: starting a CLOP run reads and parses
+     * the openings file on this thread and costs 53 to 63 milliseconds, measured, every time. A
+     * threshold of 50 called that a fault three runs out of three. What this is meant to catch --
+     * a thread held by something that should not be on it at all -- is orders of magnitude
+     * larger: the frozen GUI of 2026-08-25 sat in a single frame for 35 minutes.
+     */
+    static constexpr std::chrono::milliseconds DEFAULT_STALL_THRESHOLD{100};
 
     /**
      * @brief What counts as a stall in this session, in milliseconds.

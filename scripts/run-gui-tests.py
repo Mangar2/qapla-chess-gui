@@ -36,12 +36,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-#: What counts as a UI-thread stall, per build. The unoptimised build does the same work
-#: measurably slower -- 76 ms was the worst frame of a clean debug run, and a tuning run
-#: took 64 ms to start -- so the 50 ms of the release build would fail it for being a debug
-#: build. 150 ms is under seven frames a second: still unmistakably blocked.
-DEBUG_STALL_THRESHOLD_MS = "150"
-
 #: Presets that carry the ImGui Test Engine. Without it the run reports nothing tested.
 TEST_PRESETS = {"default": "test", "release": "releasetest"}
 
@@ -98,8 +92,6 @@ def main() -> int:
     environment["QAPLA_TEST_ENGINE_DIR"] = str(engine_dir)
     environment["QAPLA_TEST_DATA_DIR"] = str(REPO_ROOT / "src" / "test-system" / "test-data")
     environment["QAPLA_TEST_REAL_ENGINE_DIR"] = str(REPO_ROOT / "engines")
-    if arguments.config != "release":
-        environment["QAPLA_STALL_THRESHOLD_MS"] = DEBUG_STALL_THRESHOLD_MS
     if arguments.filter:
         environment["QAPLA_TEST_FILTER"] = arguments.filter
 

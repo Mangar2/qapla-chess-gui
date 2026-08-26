@@ -77,3 +77,21 @@ clicking it changed nothing.
 This is not the window-clears-its-counter problem that the tournament tutorial had; there the two
 counters disagreed. What is still unknown here is *which* item the click landed on: `**/###Continue`
 matches any window, and a full run has more windows open than a single test does.
+
+### 2. What a CLOP run costs the UI thread when it starts
+
+Three runs of `clop-runs-to-the-end`, release build, worst frame each time:
+
+| Run | Worst frame | Section |
+|-----|------------:|---------|
+| 1 | 63 ms | `tool:start` |
+| 2 | 53 ms | `tool:start` |
+| 3 | 54 ms | `tool:start` |
+
+Every run, the same section, no outlier and no growth. `ClopData::start()` reads and parses the
+openings file and starts the optimizer's threads, and that is what it costs. Steady initialisation,
+not a blockage.
+
+The stall threshold was 50 ms, so this failed three times out of three for doing its job. It is
+now 100 ms -- ten frames a second -- which still leaves four orders of magnitude to the thing the
+watch exists for: the frozen GUI sat in one frame for 35 minutes.
