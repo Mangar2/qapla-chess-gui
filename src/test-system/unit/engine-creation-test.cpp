@@ -28,10 +28,13 @@ using namespace QaplaTester::Test;
 TEST_CASE("Engine creation", "[engine-tester]") {
     
     SECTION("Engine with custom name and command") {
-        auto engine = createEngine({.name = "Stockfish", .cmd = "/usr/bin/stockfish"});
+        // Absolute for this platform, not a Unix literal: "/usr/bin/stockfish" has no drive
+        // letter, so Windows counts it as relative and setCmd() prefixes the working directory.
+        const std::string path = (std::filesystem::current_path() / "stockfish").string();
+        auto engine = createEngine({.name = "Stockfish", .cmd = path});
         
         REQUIRE(engine.getName() == "Stockfish");
-        REQUIRE(engine.getCmd() == "/usr/bin/stockfish");
+        REQUIRE(engine.getCmd() == path);
     }
     
     SECTION("Create multiple engines with different configurations") {

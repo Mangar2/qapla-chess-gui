@@ -39,7 +39,19 @@ namespace {
 
     using QaplaTester::EngineOption;
 
-    constexpr const char* ENGINE_PATH = "/fake/path/tuned.exe";
+    /**
+     * @brief A path that is absolute on every platform, for an engine that does not exist.
+     *
+     * Not a literal like "/fake/path/tuned.exe": that has no drive letter, so Windows counts it
+     * as relative and EngineConfig::setCmd() prefixes the working directory. The configuration
+     * then carries a different path than the capabilities were stored under, and every lookup
+     * misses -- nine of these tests failed on Windows for that alone.
+     */
+    [[nodiscard]] std::string fakeEnginePath(const std::string& name) {
+        return (std::filesystem::current_path() / "fake-engines" / name).string();
+    }
+
+    const std::string ENGINE_PATH = fakeEnginePath("tuned.exe");
 
     /** @brief An engine configuration for ENGINE_PATH, without touching the catalog singleton. */
     QaplaTester::EngineConfig makeConfig() {
@@ -83,11 +95,11 @@ TEST_CASE("addEnginesFromPaths adds new engines and skips duplicates", "[llm][gu
     EngineConfigGuard guard;
     QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable().clear();
 
-    auto outcome = addEnginesFromPaths({"/fake/path/engineA.exe", "/fake/path/engineB.exe"});
+    auto outcome = addEnginesFromPaths({fakeEnginePath("engineA.exe"), fakeEnginePath("engineB.exe")});
     REQUIRE(outcome.addedNames.size() == 2);
     REQUIRE(outcome.duplicateNames.empty());
 
-    auto secondOutcome = addEnginesFromPaths({"/fake/path/engineA.exe"});
+    auto secondOutcome = addEnginesFromPaths({fakeEnginePath("engineA.exe")});
     REQUIRE(secondOutcome.addedNames.empty());
     REQUIRE(secondOutcome.duplicateNames.size() == 1);
 
@@ -98,7 +110,7 @@ TEST_CASE("listInstalledEnginesJson reflects the configured engines", "[llm][gui
     EngineConfigGuard guard;
     QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable().clear();
 
-    auto addOutcome = addEnginesFromPaths({"/fake/path/stockfish.exe"});
+    auto addOutcome = addEnginesFromPaths({fakeEnginePath("stockfish.exe")});
     REQUIRE(addOutcome.addedNames.size() == 1);
 
     auto json = listInstalledEnginesJson();
@@ -136,7 +148,7 @@ TEST_CASE("addNamedEngines refuses a name that is already taken",
     QaplaTester::EngineWorkerFactory::getConfigManagerMutable().getAllConfigsMutable().clear();
 
     REQUIRE(addNamedEngines({{.name = "baseline", .path = ENGINE_PATH}}).addedNames.size() == 1);
-    auto outcome = addNamedEngines({{.name = "baseline", .path = "/fake/path/other.exe"}});
+    auto outcome = addNamedEngines({{.name = "baseline", .path = fakeEnginePath("other.exe")}});
 
     // The name is the key every other tool refers to the engine by, so a second entry under it
     // would leave neither reachable.
