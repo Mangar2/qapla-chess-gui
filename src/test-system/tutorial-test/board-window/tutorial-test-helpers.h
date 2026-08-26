@@ -119,6 +119,40 @@ namespace QaplaTest::BoardWindowTutorialTest {
      * @param ctx The ImGui test context
      */
     /**
+     * @brief Presses one of the board's buttons, wherever the layout has currently put it.
+     *
+     * The bar shows as many buttons as fit from the left and moves the rest into a pull-down at
+     * its end, so which of the two holds a given button depends on how wide the board pane is. On
+     * a 1024x768 screen -- what a Windows session without a logged-in desktop offers -- the pane
+     * is 205 pixels and Play is in the pull-down. A test that knew only the direct button failed
+     * there with "Unable to locate item", and it looked for all the world like a missing board.
+     *
+     * @return true if the button was found and pressed, either way round.
+     */
+    [[nodiscard]] inline bool clickBoardButton(ImGuiTestContext* ctx, const std::string& name) {
+        const std::string direct = "**/Board/" + name;
+        if (ctx->ItemExists(direct.c_str())) {
+            ctx->ItemClick(direct.c_str());
+            ctx->Yield();
+            return true;
+        }
+        if (!ctx->ItemExists("**/Board/More")) {
+            return false;
+        }
+        ctx->ItemClick("**/Board/More");
+        ctx->Yield(2);
+        // One entry of the pull-down: showCommandPopup() pushes the command's name and draws an
+        // invisible button called "##item" over the whole row.
+        const std::string inPopup = "**/" + name + "/##item";
+        if (!ctx->ItemExists(inPopup.c_str())) {
+            return false;
+        }
+        ctx->ItemClick(inPopup.c_str());
+        ctx->Yield();
+        return true;
+    }
+
+    /**
      * @brief Brings the first board to the front and waits until it is really being drawn.
      *
      * Both ways at once, because neither alone was enough: the message is what the application
@@ -136,8 +170,10 @@ namespace QaplaTest::BoardWindowTutorialTest {
             ctx->ItemClick("**/QaplaTabBar/###Board 1");
         }
         ctx->Yield(2);
+        // Any of the board's own controls will do: which buttons are on the bar and which are in
+        // its pull-down depends on the width, but "More" is always there.
         return QaplaTest::Common::waitForCondition(ctx, [ctx]() {
-            return ctx->ItemExists("**/Board/Play");
+            return ctx->ItemExists("**/Board/More") || ctx->ItemExists("**/Board/Play");
         }, 10.0f);
     }
 

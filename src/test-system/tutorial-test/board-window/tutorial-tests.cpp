@@ -22,7 +22,6 @@
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 
-#include <imgui_internal.h>
 #include "tutorial-test-helpers.h"
 #include "tutorial-steps-small.h"
 
@@ -80,26 +79,12 @@ namespace QaplaTest {
             // button on a board that was not being drawn and reported "Unable to locate item:
             // /**/Board/Play" -- on Windows every time, on the slower machines never.
             const bool boardIsThere = switchToBoardView(ctx);
-            if (!boardIsThere) {
-                ctx->LogWarning("No **/Board/Play. Board=%d, 'Board 1'=%d, Chatbot=%d, tab=%d",
-                    ctx->ItemExists("**/Board") ? 1 : 0,
-                    ctx->ItemExists("**/Board 1") ? 1 : 0,
-                    ctx->ItemExists("**/Chatbot") ? 1 : 0,
-                    ctx->ItemExists("**/QaplaTabBar/###Board 1") ? 1 : 0);
-                const ImGuiContext& context = *ImGui::GetCurrentContext();
-                for (const ImGuiWindow* window : context.Windows) {
-                    if (window != nullptr && window->WasActive) {
-                        ctx->LogWarning("  window: '%s' size %.0fx%.0f", window->Name,
-                            window->Size.x, window->Size.y);
-                    }
-                }
-            }
             IM_CHECK(boardIsThere);
 
             // And the board itself at the start of a game. Usually it already is, but not always
             // -- whatever the previous test left on it stays there, and every step of this
             // tutorial counts half moves from zero.
-            ctx->ItemClick("**/Board/New");
+            IM_CHECK(clickBoardButton(ctx, "New"));
             ctx->Yield(2);
 
             // Execute all tutorial steps on the board with snackbar guidance

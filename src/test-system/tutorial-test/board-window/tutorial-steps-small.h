@@ -37,7 +37,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Play button on the board
-        ctx->ItemClick("**/Board/Play");
+        IM_CHECK(clickBoardButton(ctx, "Play"));
         ctx->Yield();
 
         // Wait for progress to advance to step 2 (engine made a move)
@@ -78,7 +78,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Play button again
-        ctx->ItemClick("**/Board/Play");
+        IM_CHECK(clickBoardButton(ctx, "Play"));
         ctx->Yield();
 
         // Wait for progress to advance to step 4 (engine plays for black)
@@ -98,7 +98,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Stop button
-        ctx->ItemClick("**/Board/Stop");
+        IM_CHECK(clickBoardButton(ctx, "Stop"));
         ctx->Yield();
         // White side to move after "play move"
         // Make a manual pawn move a2-a4
@@ -123,7 +123,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Analyze button
-        ctx->ItemClick("**/Board/Analyze");
+        IM_CHECK(clickBoardButton(ctx, "Analyze"));
         ctx->Yield();
 
         // Wait for progress to advance to step 6
@@ -143,7 +143,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Stop button
-        ctx->ItemClick("**/Board/Stop");
+        IM_CHECK(clickBoardButton(ctx, "Stop"));
         ctx->Yield();
 
         // Wait for progress to advance to step 7
@@ -163,7 +163,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Auto button
-        ctx->ItemClick("**/Board/Auto");
+        IM_CHECK(clickBoardButton(ctx, "Auto"));
         ctx->Yield();
 
         // Wait for progress to advance to step 8
@@ -183,7 +183,7 @@ namespace QaplaTest::BoardWindowTutorialTest {
         IM_CHECK(waitForSnackbarTutorialMessage(ctx, 5.0f));
         
         // Click Stop button
-        ctx->ItemClick("**/Board/Stop");
+        IM_CHECK(clickBoardButton(ctx, "Stop"));
         ctx->Yield();
 
         // Wait for progress to advance to step 9 (completion)
