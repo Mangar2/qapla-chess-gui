@@ -235,6 +235,16 @@ namespace QaplaWindows {
         if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
             state = State::Running;
         }
+        // A run can be over before it was ever seen running. Leaving Starting only by way of
+        // "a manager is running right now" is a guess about a moment, and four positions on a
+        // fast machine are done inside a single frame: no poll ever sees one. Measured on
+        // Windows, where the results were complete after a tenth of a second and the analysis
+        // still called itself "starting" five minutes later, so nothing that waits for it to
+        // finish ever came back. Every position carrying a result is not a guess.
+        if (state == State::Starting && allPositionsTested()) {
+            state = State::Stopped;
+            SnackbarManager::instance().showSuccess("Analysis finished.", false, "epd");
+        }
         if (state == State::Stopping || state == State::Gracefully || state == State::Running) {
             if (poolAccess_->runningGameCount() == 0) {
                 state = State::Stopped;
@@ -243,6 +253,23 @@ namespace QaplaWindows {
         }
 
         viewerBoardWindows_.populateViews();
+    }
+
+    bool EpdData::allPositionsTested() const {
+        if (!epdResults_ || epdResults_->empty()) {
+            return false;
+        }
+        for (const auto& engineResult : *epdResults_) {
+            if (engineResult.result.empty()) {
+                return false;
+            }
+            for (const auto& testCase : engineResult.result) {
+                if (!testCase.tested) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     bool EpdData::configChanged() const {

@@ -258,6 +258,15 @@ namespace QaplaWindows {
         bool configChanged() const;
 
         /**
+         * @brief Whether every position of every engine has been analysed.
+         *
+         * The authoritative answer to "is the work done", as against reading it off the number
+         * of managers that happen to be running at the moment of a poll -- which is zero both
+         * before a run gets going and after it is over.
+         */
+        [[nodiscard]] bool allPositionsTested() const;
+
+        /**
          * @brief Checks if the EPD analysis is currently starting.
          * @return true if the analysis is in the starting state, false otherwise.
          */
