@@ -139,3 +139,40 @@ What the code allows, given that state:
 only caller, and it starts every idle manager with a null provider, which matches the measured
 `taskProvider_ == nullptr`. It is reached from `setConcurrency(count, nice, start = true)` and
 from the schedulers. Which of them ran, and why after everything had been stopped, is not measured.
+
+### 4. Reproduced on demand, over HTTP (2026-08-26)
+
+A standalone probe, no GUI suite: configure a tournament, start it, wait until it reports itself
+running, then stop it. Progress is judged by the frame counter, not by whether the call returns --
+a frozen UI thread still answers `/health`.
+
+**Proven:**
+
+* **A single abrupt stop right after the start freezes the application.** One `stop` call, no
+  second stop, no clear. It froze at attempt 5 of 30; earlier variants of the probe froze at
+  attempts 2, 3 and 11. The freeze is inside the first stop: `POST /tools/stop` never returns.
+
+      runApp -> Callback::invokeAll()                  the frame loop
+        -> GuiToolRegistry::processQueue()
+          -> Actions::stopActivity(tournament, Abrupt)
+            -> TournamentData::stopPoolAbruptlyAndWait()   tournament-data.cpp:758
+              -> GameManagerPool::waitForTask()            game-manager-pool.cpp:313
+
+  So the double stop of the GUI test's cleanup is not needed: the second call never even reached
+  the queue, because the first was already holding the UI thread.
+
+* **Waiting three seconds after the start makes it go away.** Same probe with `--pause 3`: 30
+  attempts, no freeze. The fault is bound to the window right after the start, while the run is
+  still settling.
+
+* **Writing to stdout or stderr hides it.** The first tracing attempt wrote one line per event to
+  stderr with a flush. With it: 25 attempts clean. Without it, same binary and same fixes: frozen
+  at attempt 2. Any instrumentation of this bug has to stay in memory -- a ring buffer read
+  afterwards -- or it will observe a fault that is no longer there.
+
+* **The two fixes committed so far do not fix it.** `finishedPromiseValid_` as an atomic, and
+  `start()` waiting up to 50 ms for the previous run, are both in the build that froze at attempt
+  2. They remain correct on their own account; they are not the cause.
+
+The state of the manager the pool waits for is the same as in the first freeze, five days of
+guessing earlier: `NotRunning`, no provider, empty queue, `finishedPromiseValid_ == true`.
