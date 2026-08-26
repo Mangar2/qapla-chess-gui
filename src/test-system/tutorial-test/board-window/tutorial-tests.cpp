@@ -79,9 +79,20 @@ namespace QaplaTest {
             // button on a board that was not being drawn and reported "Unable to locate item:
             // /**/Board/Play" -- on Windows every time, on the slower machines never.
             switchToBoardView(ctx);
-            IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [ctx]() {
+            const bool boardIsThere = QaplaTest::Common::waitForCondition(ctx, [ctx]() {
                 return ctx->ItemExists("**/Board/Play");
-            }, 10.0f));
+            }, 10.0f);
+            if (!boardIsThere) {
+                ctx->LogWarning("No **/Board/Play. Board window exists: %d, tab exists: %d",
+                    ctx->ItemExists("**/Board") ? 1 : 0,
+                    ctx->ItemExists("**/QaplaTabBar/###Board 1") ? 1 : 0);
+                ImGuiTestItemList items;
+                ctx->GatherItems(&items, "//Board", 2);
+                for (const auto& item : items) {
+                    ctx->LogWarning("  under Board: '%s' (id %08X)", item.DebugLabel, item.ID);
+                }
+            }
+            IM_CHECK(boardIsThere);
 
             // And the board itself at the start of a game. Usually it already is, but not always
             // -- whatever the previous test left on it stays there, and every step of this
