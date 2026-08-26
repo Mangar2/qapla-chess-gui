@@ -95,3 +95,47 @@ not a blockage.
 The stall threshold was 50 ms, so this failed three times out of three for doing its job. It is
 now 100 ms -- ten frames a second -- which still leaves four orders of magnitude to the thing the
 watch exists for: the frozen GUI sat in one frame for 35 minutes.
+
+### 3. The state of the manager the pool waits for (2026-08-26)
+
+Reproduced on the first of ten planned release runs, caught alive: the `releasetest` build was
+rebuilt with `-O2 -g` first -- same optimisation, so the same timing, but with readable variables.
+The harness inspects a run that stops making progress before it ends it.
+
+Same stacks as the first freeze, now with source lines:
+
+* UI thread waits for the test coroutine inside `ImGui::EndFrame()`.
+* Test coroutine: `cleanupTournamentState()` (tournament-test-helpers.cpp:77) ->
+  `TournamentData::clear(false)` (tournament-data.cpp:728) -> `GameManagerPool::waitForTask()`
+  (game-manager-pool.cpp:313) -> `future.wait()`.
+* `frames.count` frozen at 5105, current frame 178 seconds and counting, section `render`.
+
+The pool held exactly one manager, and this is its state, read from the frozen process:
+
+| Field | Value | Meaning |
+|-------|-------|---------|
+| `managerState_` | 6 = `NotRunning` | torn down |
+| `taskProvider_` | `nullptr` | no provider |
+| `eventQueue_` | empty | nothing will ever wake it |
+| `stopThread_` | false | its thread is alive |
+| `finishedPromiseValid_` | **true** | **the promise was never fulfilled** |
+| pool's `maxConcurrency_` | 0 | nothing is being started any more |
+
+So the manager is finished without having reported itself finished, and the pool waits for it
+forever. Because `TournamentData::clear()` waits on the UI thread, the application freezes.
+
+What the code allows, given that state:
+
+* `managerState_` is written in only two places: `tearDown()` (to `NotRunning`) and `executeTask()`
+  (to the task type), plus the compare-exchange in `start()`. So the manager reached `NotRunning`
+  through `tearDown()` -- which signals.
+* `initializeFinishedFuture()` is called in exactly one place: `GameManager::start()`. So a
+  `start()` must have run *after* that teardown, creating a fresh promise nobody fulfils.
+* `tearDown()` returns early when the manager is already not running, without signalling:
+
+      if (!isRunning()) { return; }
+
+**Still unknown: who called `start()` at that point.** `GameManagerPool::startManagers()` is the
+only caller, and it starts every idle manager with a null provider, which matches the measured
+`taskProvider_ == nullptr`. It is reached from `setConcurrency(count, nice, start = true)` and
+from the schedulers. Which of them ran, and why after everything had been stopped, is not measured.
