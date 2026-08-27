@@ -121,6 +121,7 @@ public:
                 return boardWindows_[gameIndex].isActive();
             }
         );
+        }
     }
 
     /**
