@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "sprt-tournament-data.h"
 #include "imgui-sprt-configuration.h"
 #include "configuration.h"
@@ -362,6 +363,10 @@ void SprtTournamentData::startTournament() {
 }
 
 void SprtTournamentData::pollData() {
+    // Named apart from the other polls so that a frame spent here says which run
+    // it was spent on -- the same reason a tool call is timed as "tool:<name>".
+    QaplaWindows::UiThreadWatch::Section section("poll:sprt");
+
     if (sprtManager_) {
         updateTournamentResults();
         populateResultTable();

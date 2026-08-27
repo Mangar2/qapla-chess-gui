@@ -18,6 +18,7 @@
  */
 
 
+#include "ui-thread-watch.h"
 #include <functional>
 #include "tournament-data.h"
 #include "tournament-result-incremental.h"
@@ -561,6 +562,10 @@ namespace QaplaWindows {
 	}
 
     void TournamentData::pollData() {
+        // Named apart from the other polls so that a frame spent here says which run
+        // it was spent on -- the same reason a tool call is timed as "tool:<name>".
+        QaplaWindows::UiThreadWatch::Section section("poll:tournament");
+
         if (tournament_) {
             if (result_->poll(*tournament_, config_->averageElo)) {
                 updateTournamentResults();

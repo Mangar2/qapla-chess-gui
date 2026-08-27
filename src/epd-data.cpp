@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "epd-data.h"
 
 #include "imgui-table.h"
@@ -226,6 +227,10 @@ namespace QaplaWindows {
     }
 
     void EpdData::pollData() {
+        // Named apart from the other polls so that a frame spent here says which run
+        // it was spent on -- the same reason a tool call is timed as "tool:<name>".
+        QaplaWindows::UiThreadWatch::Section section("poll:epd");
+
         if (updateCnt_ != epdManager_->getUpdateCount()) {
 			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt_ = epdManager_->getUpdateCount();

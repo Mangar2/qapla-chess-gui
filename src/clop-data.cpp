@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2026 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "clop-data.h"
 
 #include <game-manager/game-manager-pool.h>
@@ -283,6 +284,10 @@ void ClopData::drawTables() {
 }
 
 void ClopData::pollData() {
+    // Named apart from the other polls so that a frame spent here says which run
+    // it was spent on -- the same reason a tool call is timed as "tool:<name>".
+    QaplaWindows::UiThreadWatch::Section section("poll:clop");
+
     if (state_ == State::Idle) {
         return;
     }
