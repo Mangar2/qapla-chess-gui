@@ -15,7 +15,7 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Gauntlet & Round-Robin** formats with comprehensive rating tracking
 - **Live Monitoring** - Watch any ongoing game via tab-based interface; switch between games in real-time
 - **Result Matrix** - View comprehensive tournament results in matrix format via chatbot
-- **Interactive Chatbot** - Get help using the GUI with the integrated assistant
+- **CLOP Parameter Tuning** - Tune engine parameters from the GUI, with a live status table beside the run
 
 #### Position Analysis
 - **Multi-threaded EPD Analysis** - Analyze positions from EPD files using multiple engines in parallel
@@ -29,7 +29,12 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 - **Advanced Filtering** - Search and filter games by various criteria with persistent filter states
 - **Detailed Tab Information** - Hover tooltips showing round, game, engines, and position details
 
+#### Engine Settings
+- **Global Settings for Every Engine** - Hash size, restart behaviour, protocol tracing and the four Syzygy tablebase settings (path, probe depth, probe limit, 50-move rule) set once for all engines, each with its own switch
+- **Per-Engine Overrides** - Command-line arguments, working directory and protocol per engine, kept apart from the global settings
+
 #### User Experience
+- **AI Chat** - A chat panel that talks to a local model through LM Studio and can operate the GUI through it: installing engines, configuring and running tournaments, SPRT tests, EPD analyses and CLOP tuning. Answers appear as tables and reports, and the same tools are what `--remote-control` serves over HTTP
 - **Integrated Tutorial** - Built-in help system with clear button for new users
 - **Comprehensive Settings** - All features of the command-line engine tester accessible via GUI
 - **Real-time Control** - Adjust concurrency, monitor progress, and control running tournaments on the fly
@@ -69,7 +74,14 @@ The GUI supports running multiple games in parallel during SPRT tournaments. You
 ### Architecture
 
 All tournament and testing capabilities are powered by the integrated **[qapla-engine-tester](https://github.com/Mangar2/qapla-engine-tester)** engine, which provides:
-- UInstallation
+- UCI and WinBoard engine handling, with protocol logging
+- Tournament scheduling, SPRT statistics and EPD analysis
+- Draw and resign adjudication
+- The `.qtour`/`.qsprt` files both programs read and write
+
+Both are released as a matching pair and carry the same version number, currently **0.6.0**: a run set up in the GUI can be continued on the command line and handed back.
+
+### Installation
 
 **No installation required!** The compiled executable is a self-contained, portable application.
 
@@ -146,7 +158,7 @@ then played automatically and the process ends with a summary line on stdout:
 
 ```bash
 QAPLA_AUTO_RUN_TESTS=1 qapla-chess-gui --config-dir=/tmp/qapla-run-42
-# QAPLA_TEST_SUMMARY tested=54 success=54 inQueue=0
+# QAPLA_TEST_SUMMARY tested=41 success=41 inQueue=0
 ```
 
 The exit code is 0 only when every registered test ran and passed, so a release script can gate on
@@ -205,16 +217,13 @@ This directory contains:
 
 ## Supported Platforms
 
-- **Windows** (tested)
-- **Linux** (X11 with CMake support, tested)
-- **macOS** (with Clang/LLVM, tested
-**No installation required!** The compiled executable is a self-contained, portable application. Simply copy the executable file anywhere and run it directly from that location. All fonts and assets are embedded in the binary.
+Every release is built and tested on all three:
 
-## Supported Platforms
+- **Windows** (clang)
+- **Linux** (X11)
+- **macOS** (clang/LLVM)
 
-- **Windows** (tested)
-- **Linux** (X11 with CMake support)
-- **macOS** (with Clang/LLVM)
+The executable is self-contained: copy it anywhere and run it from there, fonts and assets are embedded in the binary.
 
 ## Build
 
@@ -263,6 +272,7 @@ running them never changes — and never depends on — the configuration you wo
 |---|---|---|
 | Unit | Logic without a GUI | `./build/default/unit-tests` |
 | Integration | Whole flows against the running application, driven over the HTTP remote control | `python3 test/integration/test_runner.py` |
+| Cross-tool | A run started in the GUI, continued in `qapla-engine-tester` on the command line and handed back | part of the integration suite; offered only where the engine tester is built beside this repository |
 | GUI | What only mouse and keyboard can check: board, dialogs, tutorial | `QAPLA_AUTO_RUN_TESTS=1 ./build/default/qapla --config-dir=<a directory of its own>` |
 
 ```bash
