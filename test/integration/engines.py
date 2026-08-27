@@ -19,6 +19,7 @@ import os
 import platform
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -111,22 +112,40 @@ def _materialize(source: Path, target_name: Optional[str] = None) -> Path:
     return target
 
 
-def surviving_engine_processes() -> List[str]:
-    """Engines from this suite's directory that are still running.
-
-    A leak detector, and it has caught one: an engine orphaned by a killed GUI does not idle, it
-    sits at a full core. One went unnoticed for an hour and a quarter and was the real reason a
-    run took half again as long as the one before it and started timing out.
-    """
+def _engine_processes_now() -> List[str]:
+    """Engines from this suite's directory running at this instant."""
     if platform.system() == "Windows":
         return []  # tasklist gives no command line; not worth a WMI dependency for a warning
     try:
-        listing = subprocess.run(["ps", "-Ao", "pid=,command="], capture_output=True, text=True,
-                                 check=False, timeout=10).stdout
+        # With the elapsed time, so that a report says which kind of survivor it is: seconds old
+        # is an engine still shutting down, minutes old is one nobody is going to stop.
+        listing = subprocess.run(["ps", "-Ao", "pid=,etime=,command="], capture_output=True,
+                                 text=True, check=False, timeout=10).stdout
     except (OSError, subprocess.SubprocessError):
         return []
     marker = str(SUITE_ENGINES_DIR)
     return [line.strip() for line in listing.splitlines() if marker in line]
+
+
+def surviving_engine_processes(grace_seconds: float = 5.0) -> List[str]:
+    """Engines from this suite's directory that are still running, after a grace period.
+
+    A leak detector, and it has caught one: an engine orphaned by a killed GUI does not idle, it
+    sits at a full core. One went unnoticed for an hour and a quarter and was the real reason a
+    run took half again as long as the one before it and started timing out.
+
+    The grace period is what separates a leak from an ordinary ending. An engine quits when the
+    pipe to its parent closes, which is a moment *after* the parent is gone -- so a check made
+    the instant a run ends sees engines that are already on their way out, and reporting those as
+    leaked cost a green run its verdict. Five seconds is far more than that handover needs and
+    far less than a leaked engine's lifetime, which is forever.
+    """
+    deadline = time.monotonic() + grace_seconds
+    while True:
+        running = _engine_processes_now()
+        if not running or time.monotonic() >= deadline:
+            return running
+        time.sleep(0.5)
 
 
 class EngineCatalog:
