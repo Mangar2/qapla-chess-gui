@@ -99,7 +99,7 @@ public:
         }
         {
         QaplaWindows::UiThreadWatch::Section engines("boards:engines");
-        poolAccess_->withEngineRecords(
+        poolAccess_->tryWithEngineRecords(
             [&](const QaplaTester::EngineRecords& records, uint32_t gameIndex) {
                 if (gameIndex >= boardWindows_.size()) {
                     return;
@@ -117,7 +117,7 @@ public:
         }
         {
         QaplaWindows::UiThreadWatch::Section moves("boards:moves");
-        poolAccess_->withMoveRecord(
+        poolAccess_->tryWithMoveRecord(
             [&](const QaplaTester::MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) {
                 if (gameIndex >= boardWindows_.size()) {
                     return;

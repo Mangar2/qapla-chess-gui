@@ -533,22 +533,33 @@ namespace QaplaWindows {
     }
 
     void TournamentData::populateRunningTable() {
-        runningTable_.clear();
         if (tournament_) {
-            poolAccess_->withGameRecords(
+            // Never waits for a game that is writing its record: this runs on the thread that
+            // draws the window, forty times a second, and waiting there cost frames of half a
+            // second with sixteen games running. Rows are collected first and only put into the
+            // table if every game answered, so a busy game leaves the table a frame old rather
+            // than making its row disappear and come back.
+            std::vector<std::vector<std::string>> rows;
+            uint32_t running = 0;
+            const size_t skipped = poolAccess_->tryWithGameRecords(
                 [&](const GameRecord& game, [[maybe_unused]] uint32_t gameIndex) {
-                    std::vector<std::string> row;
-                    row.push_back(game.getWhiteEngineName());
-                    row.push_back(game.getBlackEngineName());
-                    row.push_back(std::to_string(game.getRound()));
-                    row.push_back(std::to_string(game.getGameInRound()));
-                    row.push_back(std::to_string(game.getOpeningNo()));
-                    runningTable_.push(row);
-                    runningCount_++;
+                    rows.push_back({game.getWhiteEngineName(),
+                                    game.getBlackEngineName(),
+                                    std::to_string(game.getRound()),
+                                    std::to_string(game.getGameInRound()),
+                                    std::to_string(game.getOpeningNo())});
+                    ++running;
                 },
             [&]([[maybe_unused]] uint32_t gameIndex) -> bool {
                 return true;
             });
+            if (skipped == 0) {
+                runningTable_.clear();
+                for (auto& row : rows) {
+                    runningTable_.push(row);
+                }
+                runningCount_ = running;
+            }
             bool anyRunning = boardWindowList_.isAnyRunning();
             if (state_ == State::Starting && anyRunning) {
                 state_ = State::Running;
