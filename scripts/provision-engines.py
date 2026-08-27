@@ -82,15 +82,17 @@ def is_current(source: Path, target: Path) -> bool:
 
 def provision(check_only: bool, force: bool) -> int:
     TARGET_DIR.mkdir(parents=True, exist_ok=True)
-    missing: List[Tuple[str, List[Path]]] = []
+    without_source: List[Tuple[str, List[Path]]] = []
+    to_copy: List[str] = []
     copied, current = 0, 0
 
     for name, candidates in sorted(sources_for_this_machine().items()):
         target = TARGET_DIR / name
         source = first_existing(candidates)
         if source is None:
-            missing.append((name, candidates))
-            print(f"  MISSING  {name}: no source found")
+            state = "here, source gone" if target.is_file() else "not here"
+            without_source.append((name, candidates))
+            print(f"  MISSING  {name} ({state}): no source on this machine")
             continue
 
         if is_current(source, target) and not force:
@@ -99,8 +101,9 @@ def provision(check_only: bool, force: bool) -> int:
             continue
 
         if check_only:
-            missing.append((name, candidates))
-            print(f"  OUTDATED {name}  <- {source}")
+            to_copy.append(name)
+            verb = "would be refreshed from" if target.is_file() else "would be copied from"
+            print(f"  {'DIFFERS' if target.is_file() else 'ABSENT '}  {name} {verb} {source}")
             continue
 
         # copy2 keeps the modification time, which is what is_current() compares next time.
@@ -109,17 +112,22 @@ def provision(check_only: bool, force: bool) -> int:
         copied += 1
         print(f"  copied   {name}  <- {source}")
 
-    if missing:
+    if without_source:
         print()
-        print("Not provisioned:")
-        for name, candidates in missing:
+        print("No source on this machine for:")
+        for name, candidates in without_source:
             print(f"  {name}, looked in:")
             for candidate in candidates:
                 print(f"    {candidate}")
         print()
-        print("Build the project it comes from, or put the file at one of those paths. The test "
-              "suites stop before their first test while one is missing -- see "
+        print("Build the project it comes from, or put the file at one of those paths. A suite "
+              "stops before its first test while an engine is missing -- see "
               "test/integration/engines.py.")
+        return 1
+
+    if to_copy:
+        print()
+        print(f"Would copy: {', '.join(to_copy)}. Run without --check to do it.")
         return 1
 
     print()

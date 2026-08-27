@@ -76,6 +76,10 @@ public:
         QaplaWindows::UiThreadWatch::Section games("boards:games");
         poolAccess_->withGameRecords(
             [&](const QaplaTester::GameRecord& game, uint32_t gameIndex) {
+                // Inside the manager's own lock. Timed apart from the pass around it, because
+                // the two answer different questions: this is the work, the difference is the
+                // waiting for a manager that is busy playing.
+                QaplaWindows::UiThreadWatch::Section fill("boards:fill");
                 ensureWindowExists(gameIndex);
                 boardWindows_[gameIndex].setFromGameRecord(game);
                 boardWindows_[gameIndex].setRunning(true);
