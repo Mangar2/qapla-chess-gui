@@ -630,7 +630,13 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
     [[maybe_unused]] LPSTR lpCmdLine, 
     [[maybe_unused]] int nShowCmd) 
 {
-    bool hasConsole = attachToParentConsole();
+    const bool hasConsole = attachToParentConsole();
+    // Two different questions, and they used to share one answer. attachToParentConsole() says
+    // whether a console was attached and therefore has to be freed again; it says nothing about
+    // whether anyone can read what the process prints. A caller that redirected stdout is read
+    // by whoever set up that pipe -- and is precisely the caller for whom no console is
+    // attached, since redirected handles are left alone.
+    const bool canPrint = hasConsole || isRedirected(STD_OUTPUT_HANDLE);
 
     try {
         // WinMain hands the command line over as one unsplit string; __argc/__argv are the same
@@ -639,11 +645,16 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
         reportCommandLineMessages(options);
 
         if (options.helpRequested) {
-            // Started from a console, the help belongs in it. Double-clicked there is no console
-            // to write to, and a message box is the only place the answer can be read at all.
-            if (hasConsole) {
+            // Anywhere the output can be read -- a console, or a pipe the caller set up -- the
+            // help is written there. Double-clicked there is neither, and a message box is the
+            // only place the answer can be read at all. Printing into a redirect matters beyond
+            // tidiness: a message box in a session with no screen waits for a click that nobody
+            // can give, which is a hung process rather than an answer.
+            if (canPrint) {
                 std::cout << QaplaApp::helpText() << std::flush;
-                FreeConsole();
+                if (hasConsole) {
+                    FreeConsole();
+                }
             } else {
                 MessageBoxA(nullptr, QaplaApp::helpText().c_str(), "Qapla Chess GUI",
                     MB_ICONINFORMATION | MB_OK);
