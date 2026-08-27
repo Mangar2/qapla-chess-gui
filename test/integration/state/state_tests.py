@@ -87,7 +87,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": PAIR,
             "steps": [
                 {"call": "configure_tournament",
-                 "args": {"engines": PAIR, "games": 2, "time_control": FAST_TC,
+                 "args": {"engines": PAIR, "games": 16, "time_control": FAST_TC,
                           "openings_file": "{openings}"}},
                 {"state": True, "id": "state"},
             ],
@@ -127,7 +127,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": PAIR,
             "steps": [
                 {"call": "configure_tournament",
-                 "args": {"engines": PAIR, "games": 2, "time_control": FAST_TC,
+                 "args": {"engines": PAIR, "games": 16, "time_control": FAST_TC,
                           "openings_file": "{openings}"}},
                 {"call": "start", "args": {"type": "tournament"}},
                 {"wait": "tournament", "timeout": 120},
@@ -140,9 +140,9 @@ def get_tests() -> List[Dict[str, Any]]:
                 # the prose version could only approximate with a regular expression.
                 {"type": "resultRows", "step": "state", "activity": "tournament", "count": 2},
                 {"type": "resultCell", "step": "state", "activity": "tournament",
-                 "row": 0, "column": "Total", "expected": "2"},
+                 "row": 0, "column": "Total", "expected": "16"},
                 {"type": "resultCell", "step": "state", "activity": "tournament",
-                 "row": 1, "column": "Total", "expected": "2"},
+                 "row": 1, "column": "Total", "expected": "16"},
             ],
         },
         {

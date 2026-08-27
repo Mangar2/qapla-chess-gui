@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """EPD tests -- analysing a set of positions rather than playing games.
 
-The position file is four mates in one, written into every sandbox by the framework. Mates rather
-than quiet positions on purpose: a real engine finds all four in hundredths of a second, so the
-test can assert *how many* were solved instead of only that the run ended. The engine that plays
-random moves solves none of them, which makes the opposite case just as checkable.
+The position file is sixteen mates in one, written into every sandbox by the framework. Mates
+rather than quiet positions on purpose: a real engine finds every one in hundredths of a second,
+so the test can assert *how many* were solved instead of only that the run ended. The engine that
+plays random moves solves none of them, which makes the opposite case just as checkable. Sixteen
+of them so that the analysis really runs sixteen positions at once.
 """
 
 import sys
@@ -22,7 +23,7 @@ def _solved_every_position(_session, results):
                 if line.startswith("mate-") and (" - " in line or line.rstrip().endswith("?"))]
     if unsolved:
         return False, "positions a real engine should have solved were not: " + "; ".join(unsolved)
-    return True, "all four mates in one were found"
+    return True, "every mate in one in the set was found"
 
 
 def get_tests() -> List[Dict[str, Any]]:

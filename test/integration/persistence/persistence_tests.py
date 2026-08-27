@@ -41,14 +41,14 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": [ec.DIAG, ec.DIAG_B],
             "steps": [
                 {"call": "configure_tournament",
-                 "args": {"engines": [ec.DIAG, ec.DIAG_B], "games": 7,
+                 "args": {"engines": [ec.DIAG, ec.DIAG_B], "games": 17,
                           "time_control": FAST_TC, "openings_file": "{openings}",
                           "event": "Restart Check"}},
                 {"restart": True},
                 {"call": "get_status", "args": {"type": "tournament"}, "id": "after"},
             ],
             "validators": [
-                {"type": "content", "step": "after", "pattern": "Games per pairing: 7"},
+                {"type": "content", "step": "after", "pattern": "Games per pairing: 17"},
                 {"type": "content", "step": "after", "pattern": "Restart Check"},
                 {"type": "content", "step": "after", "pattern": "Diag A"},
             ],
@@ -59,7 +59,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": [ec.DIAG, ec.DIAG_B],
             "steps": [
                 {"call": "configure_tournament",
-                 "args": {"engines": [ec.DIAG, ec.DIAG_B], "games": 2,
+                 "args": {"engines": [ec.DIAG, ec.DIAG_B], "games": 16,
                           "time_control": FAST_TC, "openings_file": "{openings}",
                           "event": "Saved Run"}},
                 {"call": "start", "args": {"type": "tournament"}},

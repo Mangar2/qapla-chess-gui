@@ -21,7 +21,8 @@ def _sprt_configuration(**overrides: Any) -> Dict[str, Any]:
         "champion": ec.DIAG,
         "challenger": ec.DIAG_B,
         "time_control": FAST_TC,
-        "max_games": 4,
+        # Sixteen, so the default concurrency has sixteen games to run at once.
+        "max_games": 16,
         "openings_file": "{openings}",
         "pgn_file": "{pgn}",
     }

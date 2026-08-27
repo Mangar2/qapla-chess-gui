@@ -24,7 +24,7 @@ FAST_TC = "0.2+0.01"
 def _tournament_with(opponent: str, **overrides: Any) -> Dict[str, Any]:
     configuration = {
         "engines": [ec.DIAG, opponent],
-        "games": 2,
+        "games": 16,
         "time_control": FAST_TC,
         "openings_file": "{openings}",
         "pgn_file": "{pgn}",
@@ -49,7 +49,7 @@ def get_tests() -> List[Dict[str, Any]]:
                 {"type": "ok", "step": "start"},
                 # The point: a broken opponent must not leave the application waiting forever.
                 {"type": "waitReason", "step": "run", "expected": "finished"},
-                {"type": "content", "step": "run", "pattern": r"Diag NoInit\s+\S+\s+-\s+0\.0/2",
+                {"type": "content", "step": "run", "pattern": r"Diag NoInit\s+\S+\s+-\s+0\.0/16",
                  "isRegex": True},
             ],
         },

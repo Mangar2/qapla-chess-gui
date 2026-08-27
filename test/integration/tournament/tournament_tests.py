@@ -24,7 +24,8 @@ FAST_TC = "0.2+0.01"
 def _basic_configuration(**overrides: Any) -> Dict[str, Any]:
     configuration = {
         "engines": PAIR,
-        "games": 2,
+        # Sixteen, so that the default concurrency has sixteen games to actually run at once.
+        "games": 16,
         "time_control": FAST_TC,
         "openings_file": "{openings}",
         "pgn_file": "{pgn}",
@@ -98,11 +99,20 @@ def _survives_a_stop_straight_after_the_start(session, results):
         except Exception as error:  # noqa: BLE001 -- a call that never returns is the finding
             return False, f"round {round_number}: the stop never came back ({error})"
 
-        frames = session.remote.health()["frames"]
-        if frames["count"] == before:
-            return False, (f"round {round_number}: the stop returned but the UI thread drew no "
-                           f"further frame (stuck {frames['current_frame_ms']:.0f} ms in "
-                           f"{frames['current_section']!r})")
+        # A frame within two seconds, not within the instant the stop returned: the loop draws
+        # roughly forty a second when it is healthy, so two seconds is a hundred-fold margin --
+        # and the freeze this test was written for never ends on its own, at any margin.
+        deadline = time.time() + 2
+        while True:
+            frames = session.remote.health()["frames"]
+            if frames["count"] != before:
+                break
+            if time.time() >= deadline:
+                return False, (f"round {round_number}: the stop returned but the UI thread drew "
+                               f"no further frame for two seconds (stuck "
+                               f"{frames['current_frame_ms']:.0f} ms in "
+                               f"{frames['current_section']!r})")
+            time.sleep(0.05)
         session.call("clear_result", {"type": "tournament"})
 
     return True, f"{rounds} stops straight after the start, and the frame loop kept running"
@@ -122,7 +132,7 @@ def get_tests() -> List[Dict[str, Any]]:
             ],
             "validators": [
                 {"type": "content", "step": "config", "pattern": "Engines: Diag A, Diag B"},
-                {"type": "content", "step": "config", "pattern": "Games per pairing: 2"},
+                {"type": "content", "step": "config", "pattern": "Games per pairing: 16"},
                 {"type": "waitReason", "step": "run", "expected": "finished"},
                 # The standings as data rather than as a regular expression over a sentence:
                 # two engines, two rows, two games each, all accounted for.
@@ -130,7 +140,7 @@ def get_tests() -> List[Dict[str, Any]]:
                  "field": "running", "expected": False},
                 {"type": "resultRows", "step": "state", "activity": "tournament", "count": 2},
                 {"type": "resultCell", "step": "state", "activity": "tournament",
-                 "row": 0, "column": "Total", "expected": "2"},
+                 "row": 0, "column": "Total", "expected": "16"},
                 {"type": "fileExists", "path": "games.pgn"},
                 {"type": "fileContent", "path": "games.pgn", "content": "[White "},
             ],
@@ -141,7 +151,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": PAIR,
             "steps": [
                 {"call": "configure_tournament",
-                 "args": {"engines": PAIR, "games": 2, "time_control": FAST_TC}},
+                 "args": {"engines": PAIR, "games": 16, "time_control": FAST_TC}},
                 {"call": "start", "args": {"type": "tournament"}, "expect_ok": False,
                  "id": "start"},
             ],

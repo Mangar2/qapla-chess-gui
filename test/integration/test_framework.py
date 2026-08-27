@@ -142,15 +142,34 @@ OPENINGS_PGN = """[Event "Integration openings"]
 """
 
 
-#: Four positions with a forced mate in one, written into every sandbox as ``positions.epd``.
+#: Sixteen positions with a forced mate in one, written into every sandbox as ``positions.epd``.
 #:
-#: Generated for the same reason as the opening book: ``*.epd`` is git-ignored repository-wide.
-#: Mates in one rather than quiet positions, so that a real engine finds all four in a fraction
-#: of a second and the test can assert the number it found instead of merely that it finished.
+#: Generated rather than committed, because ``*.epd`` is git-ignored repository-wide -- and a
+#: position set written here is easier to reason about than one that has to be found and opened.
+#: Mates in one rather than quiet positions, so that a real engine finds every one of them in a
+#: fraction of a second and a test can assert the number solved instead of merely that the run
+#: ended. Sixteen of them rather than a handful, so that an analysis at the default concurrency
+#: really has sixteen positions being worked on at once.
+#:
+#: Two motifs, each from both sides: a rook coming to the back rank behind a castled king, and a
+#: rook mating a king boxed into the corner by the enemy king. The file the rook comes down is
+#: what varies -- enough to make sixteen distinct positions, all of them mate in one.
 POSITIONS_EPD = """6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - bm Ra8+; id "mate-back-rank";
+6k1/5ppp/8/8/8/8/5PPP/1R4K1 w - - bm Rb8+; id "mate-rook-b8";
+6k1/5ppp/8/8/8/8/5PPP/2R3K1 w - - bm Rc8+; id "mate-rook-c8";
+6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - bm Rd8+; id "mate-rook-d8";
+6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - bm Re8+; id "mate-rook-e8";
+r5k1/5ppp/8/8/8/8/5PPP/6K1 b - - bm Ra1+; id "mate-black-a1";
+1r4k1/5ppp/8/8/8/8/5PPP/6K1 b - - bm Rb1+; id "mate-black-b1";
+2r3k1/5ppp/8/8/8/8/5PPP/6K1 b - - bm Rc1+; id "mate-black-c1";
+3r2k1/5ppp/8/8/8/8/5PPP/6K1 b - - bm Rd1+; id "mate-black-d1";
+4r1k1/5ppp/8/8/8/8/5PPP/6K1 b - - bm Re1+; id "mate-black-e1";
 k7/8/1K6/8/8/8/8/7R w - - bm Rh8+; id "mate-rook-corner";
-6k1/5ppp/8/8/8/8/8/4R1K1 w - - bm Re8+; id "mate-rook-e8";
-6k1/5ppp/8/8/8/8/8/2R3K1 w - - bm Rc8+; id "mate-rook-c8";
+k7/8/1K6/8/8/8/8/6R1 w - - bm Rg8+; id "mate-rook-g8";
+k7/8/1K6/8/8/8/8/5R2 w - - bm Rf8+; id "mate-rook-f8";
+7r/8/8/8/8/1k6/8/K7 b - - bm Rh1+; id "mate-black-corner";
+6r1/8/8/8/8/1k6/8/K7 b - - bm Rg1+; id "mate-black-g1";
+5r2/8/8/8/8/1k6/8/K7 b - - bm Rf1+; id "mate-black-f1";
 """
 
 
@@ -210,6 +229,32 @@ def _substitute(value: Any, mapping: Dict[str, str]) -> Any:
 # ---------------------------------------------------------------------------
 # Engine catalog
 # ---------------------------------------------------------------------------
+
+
+#: Games (or positions) run at once, in every test that does not say otherwise.
+#:
+#: The application starts at one, which is no setting to test anything at: a suite that only ever
+#: ran one game at a time would never touch the scheduling, the pool, or the concurrency control
+#: -- and those are where this application's hard bugs have been. Sixteen puts real load on all
+#: three.
+#:
+#: A number here is only half of it: a run needs at least this many games to have sixteen of them
+#: going at once, so the runs are sized accordingly (see each module's configuration). A test that
+#: needs a different number passes ``"concurrency"``, or sets it in a configure call of its own.
+DEFAULT_CONCURRENCY = 16
+
+
+def set_concurrency(session: GuiSession, concurrency: int) -> None:
+    """Sets the same concurrency on all four run types, before the test configures anything.
+
+    Applied first so that a later configure call in the test keeps it -- an unpassed field keeps
+    its prior value -- while a test that names its own concurrency still wins.
+    """
+    for activity in ("tournament", "sprt", "epd", "clop"):
+        answer = session.call(f"configure_{activity}", {"concurrency": concurrency})
+        if not answer.get("ok"):
+            raise RemoteControlError(
+                f"could not set the {activity} concurrency: {answer.get('content')}")
 
 
 def install_engines(session: GuiSession, catalog: engine_catalog.EngineCatalog,
@@ -513,6 +558,8 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
         if needed:
             install_engines(session, catalog, needed)
             _info(f"catalog: {', '.join(needed)}")
+
+        set_concurrency(session, test.get("concurrency", DEFAULT_CONCURRENCY))
 
         fixtures = _prepare_fixtures(sandbox, catalog)
         results: Dict[str, Dict[str, Any]] = {}
