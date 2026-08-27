@@ -181,6 +181,13 @@ def get_tests() -> List[Dict[str, Any]]:
             "name": "tournament-is-reproducible",
             "description": "With a fixed engine seed, the same tournament produces the same table",
             "engines": PAIR,
+            # The one test that runs games one at a time, and the reason is its subject: the
+            # seeded engine repeats a game, not a schedule. Which of sixteen parallel games gets
+            # which opening, and in what order the results come back, is not fixed -- so at any
+            # other concurrency this test asks for something the application never promised. It
+            # passed here and on Linux and failed on Windows, which is what a test measuring an
+            # undefined thing looks like.
+            "concurrency": 1,
             "steps": [
                 {"call": "configure_tournament", "args": _basic_configuration()},
                 {"call": "start", "args": {"type": "tournament"}},
