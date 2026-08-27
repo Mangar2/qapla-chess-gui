@@ -69,20 +69,14 @@ public:
     void populateViews() {
         clearRunningFlags();
 
-        {
-            // TEMPORARY, removed once the answer is in: takes the pool's lock and does next to
-            // nothing under it. Its time in the breakdown is the wait for that lock alone, so
-            // what boards:games has beyond it is the wait for the managers' own locks.
-            QaplaWindows::UiThreadWatch::Section poolLock("boards:poollock");
-            (void)poolAccess_->areAllTasksFinished();
-        }
-
         // Three passes over every game manager, each taking the pool's lock and then the lock of
-        // a manager that is playing a game. Timed apart while it is being found out where half a
-        // second goes -- see the frame report's worst section.
+        // a manager that is playing a game. Timed apart, because this is where a stalled frame
+        // has been found before -- see the frame report's breakdown.
         {
         QaplaWindows::UiThreadWatch::Section games("boards:games");
-        poolAccess_->withGameRecords(
+        // Never waits: a game that is writing its record right now is drawn a frame later
+        // instead. See GameManagerPool::tryWithGameRecords for what waiting here cost.
+        poolAccess_->tryWithGameRecords(
             [&](const QaplaTester::GameRecord& game, uint32_t gameIndex) {
                 // Inside the manager's own lock. Timed apart from the pass around it, because
                 // the two answer different questions: this is the work, the difference is the
