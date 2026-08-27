@@ -567,15 +567,28 @@ namespace QaplaWindows {
         QaplaWindows::UiThreadWatch::Section section("poll:tournament");
 
         if (tournament_) {
-            if (result_->poll(*tournament_, config_->averageElo)) {
-                updateTournamentResults();
-                populateEloTable();
-                populateCauseTable();
-                populateAdjudicationTable();
-                populateMatrixTable();
+            // Each named while it is being found out where a 248 ms frame went on Windows.
+            bool changed = false;
+            {
+                QaplaWindows::UiThreadWatch::Section step("poll:tournament:results");
+                changed = result_->poll(*tournament_, config_->averageElo);
             }
-            populateRunningTable();
-            boardWindowList_.populateViews();
+            if (changed) {
+                { QaplaWindows::UiThreadWatch::Section step("poll:tournament:store");
+                  updateTournamentResults(); }
+                { QaplaWindows::UiThreadWatch::Section step("poll:tournament:elo");
+                  populateEloTable(); }
+                { QaplaWindows::UiThreadWatch::Section step("poll:tournament:causes");
+                  populateCauseTable(); }
+                { QaplaWindows::UiThreadWatch::Section step("poll:tournament:adjudication");
+                  populateAdjudicationTable(); }
+                { QaplaWindows::UiThreadWatch::Section step("poll:tournament:matrix");
+                  populateMatrixTable(); }
+            }
+            { QaplaWindows::UiThreadWatch::Section step("poll:tournament:running");
+              populateRunningTable(); }
+            { QaplaWindows::UiThreadWatch::Section step("poll:tournament:boards");
+              boardWindowList_.populateViews(); }
         }
     }
 
