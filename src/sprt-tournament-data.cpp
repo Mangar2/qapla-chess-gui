@@ -368,12 +368,14 @@ void SprtTournamentData::pollData() {
     QaplaWindows::UiThreadWatch::Section section("poll:sprt");
 
     if (sprtManager_) {
-        updateTournamentResults();
-        populateResultTable();
-        populateSprtTable();
-        populateCausesTable();
-        boardWindowList_.populateViews();
-        populateMonteCarloTable();
+        // Each named, for as long as it takes to find out which of them costs the frame. A
+        // Section is a timestamp and a string swap; what it measures is worth that.
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:store"); updateTournamentResults(); }
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:results"); populateResultTable(); }
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:sprt"); populateSprtTable(); }
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:causes"); populateCausesTable(); }
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:boards"); boardWindowList_.populateViews(); }
+        { QaplaWindows::UiThreadWatch::Section step("poll:sprt:montecarlo"); populateMonteCarloTable(); }
         
         // Update state based on running games
         bool anyRunning = boardWindowList_.isAnyRunning();
