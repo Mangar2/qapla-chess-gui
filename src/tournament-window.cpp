@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "tournament-window.h"
 #include "tournament-data.h"
 #include "imgui-table.h"
@@ -292,6 +293,10 @@ void TournamentWindow::drawProgress()
 }
 
 void TournamentWindow::draw() {
+    // Named so that a long frame says which view was being drawn -- the same
+    // reason a poll is timed as "poll:<run>".
+    QaplaWindows::UiThreadWatch::Section section("draw:tournament");
+
     constexpr float rightBorder = 5.0F;
     auto& tournamentData = TournamentData::instance();
     auto clickedButton = drawButtons();

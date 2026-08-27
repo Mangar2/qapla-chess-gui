@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "epd-window.h"
 #include "imgui-table.h"
 #include "imgui-button.h"
@@ -229,6 +230,10 @@ void EpdWindow::drawProgress()
 
 void EpdWindow::draw()
 {
+    // Named so that a long frame says which view was being drawn -- the same
+    // reason a poll is timed as "poll:<run>".
+    QaplaWindows::UiThreadWatch::Section section("draw:epd");
+
     constexpr float rightBorder = 5.0F;
     auto clickedButton = drawButtons();
     

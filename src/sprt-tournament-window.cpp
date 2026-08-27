@@ -17,6 +17,7 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
+#include "ui-thread-watch.h"
 #include "sprt-tournament-window.h"
 #include "sprt-tournament-data.h"
 #include "imgui-sprt-configuration.h"
@@ -269,6 +270,10 @@ void SprtTournamentWindow::drawProgress() {
 }
 
 void SprtTournamentWindow::draw() {
+    // Named so that a long frame says which view was being drawn -- the same
+    // reason a poll is timed as "poll:<run>".
+    QaplaWindows::UiThreadWatch::Section section("draw:sprt");
+
     constexpr float rightBorder = 5.0F;
     constexpr float windowMaxHeight = 4000.0F;
     auto& tournamentData = SprtTournamentData::instance();

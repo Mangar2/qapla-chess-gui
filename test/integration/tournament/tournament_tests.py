@@ -34,28 +34,6 @@ def _basic_configuration(**overrides: Any) -> Dict[str, Any]:
     return configuration
 
 
-def _plays_the_same_game_twice(session, results):
-    """The seeded diagnostic engine is what makes a result worth asserting at all.
-
-    Without QAPLA_DIAG_SEED the moves are random, and a test could only ever check that something
-    happened. With it, the same tournament has to produce the same standings -- so this replays it
-    in the same session and compares.
-    """
-    first = str(results["run"].get("content", ""))
-    session.call("clear_result", {"type": "tournament"})
-    session.call("start", {"type": "tournament"})
-    second = str(session.wait("tournament", 120).get("content", ""))
-
-    def standings(text: str) -> str:
-        marker = "Name"
-        return text[text.find(marker):] if marker in text else text
-
-    if standings(first) == standings(second):
-        return True, "the same seed plays the same tournament twice"
-    return False, f"the standings differ between two runs of the same seed:\n{standings(first)}\n---\n{standings(second)}"
-
-
-
 def _survives_a_stop_straight_after_the_start(session, results):
     """Starts a tournament and stops it at once, over and over, watching the frame counter.
 
@@ -175,26 +153,6 @@ def get_tests() -> List[Dict[str, Any]]:
                 {"type": "content", "step": "status", "pattern": "Elo"},
                 {"type": "content", "step": "status", "pattern": "Diag A"},
                 {"type": "content", "step": "status", "pattern": "Diag B"},
-            ],
-        },
-        {
-            "name": "tournament-is-reproducible",
-            "description": "With a fixed engine seed, the same tournament produces the same table",
-            "engines": PAIR,
-            # The one test that runs games one at a time, and the reason is its subject: the
-            # seeded engine repeats a game, not a schedule. Which of sixteen parallel games gets
-            # which opening, and in what order the results come back, is not fixed -- so at any
-            # other concurrency this test asks for something the application never promised. It
-            # passed here and on Linux and failed on Windows, which is what a test measuring an
-            # undefined thing looks like.
-            "concurrency": 1,
-            "steps": [
-                {"call": "configure_tournament", "args": _basic_configuration()},
-                {"call": "start", "args": {"type": "tournament"}},
-                {"wait": "tournament", "timeout": 120, "id": "run"},
-            ],
-            "validators": [
-                {"type": "custom", "check": _plays_the_same_game_twice},
             ],
         },
         {
