@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026
 
 ### Added
+- **AI chat**: A chat panel that talks to a local LM Studio model and can operate the GUI through it -- installing engines, configuring and running tournaments, SPRT tests, EPD analyses and CLOP tuning. Thinking can be switched off, and the chat can be cleared.
+- **Remote control over HTTP**: `--remote-control` offers the same operations to a program instead of a person, secured by a token. `/state` reports what every activity is doing as data, and results can be saved and loaded by path.
+- **CLOP parameter tuning**: Engine parameters can be tuned from the GUI, with a live status table beside the run.
+- **Syzygy tablebases for all engines at once**: One switch sets path, probe depth, probe limit and the 50-move rule for every engine, the way the global hash setting does.
+- **Engine command-line arguments**: An engine can be given arguments in its configuration.
 - **Version number**: The GUI carries the version of `qapla-engine-tester` it is built on (0.6.0) and shows it in the window title and in `--help`, so a GUI and a tester that belong together can be told apart from a pair that does not.
+- **Command-line options**: `--config-dir` runs the GUI on a configuration directory of its own, `--remote-desktop` adapts it to a remote session, `--help` lists them all.
 - **SprtEnginesResult struct**: New data structure to hold trinomial and pentanomial statistics for SPRT testing
 - **simulateGamePair method**: Extracts game pair simulation logic for cleaner Monte Carlo code
 - **Pentanomial SPRT support**: Added pentanomial statistics collection for paired games (WW, WD, WL, DD, LD, LL counters)
@@ -18,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pentanomial checkbox**: UI control to enable/disable pentanomial statistics (auto-disabled for bayesian model)
 
 ### Changed
+- **Tournament and SPRT files**: A run is autosaved as it goes and reports what could not be read back, and a restart continues the tournament in the file rather than starting a new one.
+- **Result tables**: The engine filter counts only the games of the engines it shows, and the result text matches what the GUI exports.
 - **SPRT ELO configuration**: Changed ELO bounds (eloLower, eloUpper) from integer to float for more precise SPRT testing
 - **Monte Carlo simulation**: Rewritten to simulate game pairs (white/black swaps) with full pentanomial statistics support
 - **Monte Carlo simulation**: Updated to use float ELO values with step sizes rounded to one decimal place
@@ -26,6 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SPRT calculation**: Integrated fastchess SPRT implementation with support for multiple models and pentanomial statistics
 - **Tournament persistence**: Pentanomial statistics are now recalculated when loading saved tournaments
 - **Monte Carlo test**: Now supports pentanomial statistics when enabled in configuration
+
+### Fixed
+- **A stop straight after the start could freeze the GUI**: The stop is now waited out properly, so the window keeps drawing and the next run starts on a clean pool.
+- **Large scores lost their minus sign**: A score too wide for its column, such as a tablebase loss, is no longer cut off at the front.
+- **An EPD analysis that finished within a single frame** reported itself as still starting.
+- **A tutorial started by name** reported itself finished before its first step.
+- **Engines outlived a crashed session**: They are now taken down with it.
+- **Windows**: Output redirected into a pipe stays redirected, so a test runner sees what the GUI prints.
 
 ## [0.2.0] - 2025-12-28
 
