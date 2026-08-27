@@ -231,17 +231,22 @@ def _substitute(value: Any, mapping: Dict[str, str]) -> Any:
 # ---------------------------------------------------------------------------
 
 
-#: Games (or positions) run at once, in every test that does not say otherwise.
+#: Games (or positions) a test may have going at once, across everything it runs.
 #:
 #: The application starts at one, which is no setting to test anything at: a suite that only ever
 #: ran one game at a time would never touch the scheduling, the pool, or the concurrency control
-#: -- and those are where this application's hard bugs have been. Sixteen puts real load on all
-#: three.
+#: -- and those are where this application's hard bugs have been. Ten puts real load on all three
+#: and still leaves the machine able to draw a window; sixteen, on the slower of the three hosts,
+#: cost frames rather than found bugs.
 #:
-#: A number here is only half of it: a run needs at least this many games to have sixteen of them
-#: going at once, so the runs are sized accordingly (see each module's configuration). A test that
-#: needs a different number passes ``"concurrency"``, or sets it in a configure call of its own.
-DEFAULT_CONCURRENCY = 16
+#: It is a budget for the test, not a number per run: a test that has a tournament and an SPRT
+#: going at the same time says ``"parallel_runs": 2`` and each of them gets five, so that what is
+#: actually being played stays ten either way. A test that needs another number passes
+#: ``"concurrency"``, which is then used per run and not divided.
+#:
+#: The number is only half of it: a run needs at least this many games to have ten going at once,
+#: so the runs are sized accordingly (see each module's configuration).
+DEFAULT_CONCURRENCY = 10
 
 
 def set_concurrency(session: GuiSession, concurrency: int) -> None:
@@ -531,7 +536,8 @@ def _validate(validator: Dict[str, Any], session: GuiSession, sandbox: Path,
 
 def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
                 build_config: str = "default", keep_sandbox: bool = False,
-                timeout_scale: float = 1.0) -> Tuple[bool, float]:
+                timeout_scale: float = 1.0,
+                concurrency: Optional[int] = None) -> Tuple[bool, float]:
     """Starts a GUI, walks the steps, checks the validators. Returns verdict and runtime."""
     name = test["name"]
     print()
@@ -559,7 +565,12 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
             install_engines(session, catalog, needed)
             _info(f"catalog: {', '.join(needed)}")
 
-        set_concurrency(session, test.get("concurrency", DEFAULT_CONCURRENCY))
+        # A test that names its own concurrency keeps it: it says so because its subject depends
+        # on it, and a caller measuring load has no business overruling that. Otherwise the
+        # budget is shared out between the runs the test has going at the same time.
+        budget = concurrency if concurrency else DEFAULT_CONCURRENCY
+        share = max(1, budget // max(1, int(test.get("parallel_runs", 1))))
+        set_concurrency(session, test.get("concurrency", share))
 
         fixtures = _prepare_fixtures(sandbox, catalog)
         results: Dict[str, Dict[str, Any]] = {}

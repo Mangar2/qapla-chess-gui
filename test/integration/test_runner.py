@@ -181,6 +181,9 @@ def main() -> int:
                         help="stretch every timeout, for slow machines and CI")
     parser.add_argument("--skip-missing-engines", action="store_true",
                         help="skip tests needing an engine that is not here, instead of stopping")
+    parser.add_argument("--concurrency", type=int,
+                        help="games at once, overriding the suite's default; a test that names "
+                             "its own keeps it. For measuring how a machine behaves under load.")
     arguments = parser.parse_args()
 
     if not arguments.list:
@@ -266,6 +269,7 @@ def main() -> int:
             build_config=arguments.config,
             keep_sandbox=arguments.keep_sandbox,
             timeout_scale=arguments.timeout_scale,
+            concurrency=arguments.concurrency,
         )
         results.append((test["name"], passed, runtime))
         cumulative[test["name"]] = \

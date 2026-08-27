@@ -34,6 +34,10 @@ def get_tests() -> List[Dict[str, Any]]:
     return [
         {
             "name": "parallel-overview-names-both-runs",
+            # A tournament and an SPRT at the same time: the suite's concurrency is a
+            # budget for the test, so each run gets half of it and what is actually
+            # being played stays what every other test plays.
+            "parallel_runs": 2,
             "description": "A tournament and an SPRT test at once are both reported as running",
             "engines": PAIR,
             "steps": _configure_both() + [
@@ -59,6 +63,10 @@ def get_tests() -> List[Dict[str, Any]]:
         },
         {
             "name": "parallel-stopping-one-leaves-the-other",
+            # A tournament and an SPRT at the same time: the suite's concurrency is a
+            # budget for the test, so each run gets half of it and what is actually
+            # being played stays what every other test plays.
+            "parallel_runs": 2,
             "description": "Stopping the tournament does not stop the SPRT test beside it",
             "engines": PAIR,
             "steps": _configure_both() + [
