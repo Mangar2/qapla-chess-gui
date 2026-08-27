@@ -25,10 +25,26 @@ from typing import Any, Dict, List, Tuple
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import engines as engine_catalog  # noqa: E402  (needs the path above)
 
-#: qapla-engine-tester, built beside this repository. The delivery ships the two together, so a
-#: machine that has one usually has the other; a machine that has not is simply told so once.
-CLI = (engine_catalog.REPO_ROOT.parent / "engine-tester" / "build" / "release"
-       / ("qapla-engine-tester.exe" if sys.platform == "win32" else "qapla-engine-tester"))
+#: What the engine tester's binary is called, per platform.
+CLI_NAME = "qapla-engine-tester.exe" if sys.platform == "win32" else "qapla-engine-tester"
+
+
+def _find_cli() -> Path:
+    """The engine tester's release build, wherever this machine keeps it.
+
+    Beside this repository, under either of the two names the checkouts use -- ``engine-tester``
+    on the development machine, ``qapla-engine-tester`` on the Linux and Windows hosts. Returns
+    the first that exists, and otherwise the first candidate, so that the message naming what is
+    missing names a plausible place rather than nothing.
+    """
+    candidates = [engine_catalog.REPO_ROOT.parent / directory / "build" / "release" / CLI_NAME
+                  for directory in ("engine-tester", "qapla-engine-tester")]
+    return next((path for path in candidates if path.is_file()), candidates[0])
+
+
+#: The delivery ships the two together, so a machine that has one usually has the other; a
+#: machine that has not is simply told so once.
+CLI = _find_cli()
 
 #: Ten games at a time, on both sides. At one, a stretch of this time control takes long enough
 #: that nobody would run the suite; what is being tested is the handover, not the wait.
