@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "ui-thread-watch.h"
 #include "viewer-board-window.h"
 #include "game-manager-pool-access.h"
 #include "imgui-table.h"
@@ -68,6 +69,11 @@ public:
     void populateViews() {
         clearRunningFlags();
 
+        // Three passes over every game manager, each taking the pool's lock and then the lock of
+        // a manager that is playing a game. Timed apart while it is being found out where half a
+        // second goes -- see the frame report's worst section.
+        {
+        QaplaWindows::UiThreadWatch::Section games("boards:games");
         poolAccess_->withGameRecords(
             [&](const QaplaTester::GameRecord& game, uint32_t gameIndex) {
                 ensureWindowExists(gameIndex);
@@ -80,6 +86,9 @@ public:
             }
         );
 
+        }
+        {
+        QaplaWindows::UiThreadWatch::Section engines("boards:engines");
         poolAccess_->withEngineRecords(
             [&](const QaplaTester::EngineRecords& records, uint32_t gameIndex) {
                 if (gameIndex >= boardWindows_.size()) {
@@ -95,6 +104,9 @@ public:
             }
         );
 
+        }
+        {
+        QaplaWindows::UiThreadWatch::Section moves("boards:moves");
         poolAccess_->withMoveRecord(
             [&](const QaplaTester::MoveRecord& record, uint32_t gameIndex, uint32_t playerIndex) {
                 if (gameIndex >= boardWindows_.size()) {
