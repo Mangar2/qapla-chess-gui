@@ -69,6 +69,14 @@ public:
     void populateViews() {
         clearRunningFlags();
 
+        {
+            // TEMPORARY, removed once the answer is in: takes the pool's lock and does next to
+            // nothing under it. Its time in the breakdown is the wait for that lock alone, so
+            // what boards:games has beyond it is the wait for the managers' own locks.
+            QaplaWindows::UiThreadWatch::Section poolLock("boards:poollock");
+            (void)poolAccess_->areAllTasksFinished();
+        }
+
         // Three passes over every game manager, each taking the pool's lock and then the lock of
         // a manager that is playing a game. Timed apart while it is being found out where half a
         // second goes -- see the frame report's worst section.
