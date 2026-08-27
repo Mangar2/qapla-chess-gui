@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Monte Carlo test**: Now supports pentanomial statistics when enabled in configuration
 
 ### Fixed
+- **Drawing the boards waited for the running games**: With many games at once the window could stand still for over a second at a time while it read a game that was writing its record. It now draws such a game one frame later instead of waiting for it.
 - **A stop straight after the start could freeze the GUI**: The stop is now waited out properly, so the window keeps drawing and the next run starts on a clean pool.
 - **Large scores lost their minus sign**: A score too wide for its column, such as a tablebase loss, is no longer cut off at the front.
 - **An EPD analysis that finished within a single frame** reported itself as still starting.
