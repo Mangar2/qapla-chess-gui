@@ -82,6 +82,8 @@ class GuiSession:
         self.stalls_seen = 0
         self.worst_frame_ms = 0.0
         self.worst_section = ""
+        #: Every section of the worst frame, longest first -- what the stall was made of.
+        self.worst_frame_sections: list = []
 
         #: How the process ended, kept after it is gone.
         #:
@@ -235,6 +237,10 @@ class GuiSession:
         if report.get("worst_frame_ms", 0) > self.worst_frame_ms:
             self.worst_frame_ms = float(report["worst_frame_ms"])
             self.worst_section = str(report.get("worst_section", ""))
+            sections = report.get("worst_frame_sections") or {}
+            self.worst_frame_sections = sorted(
+                ((str(name), float(value)) for name, value in sections.items()),
+                key=lambda entry: entry[1], reverse=True)
 
     def restart(self) -> None:
         """Closes the application and starts it again on the same configuration directory.

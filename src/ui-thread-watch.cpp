@@ -66,6 +66,7 @@ void UiThreadWatch::frameBegin() {
     worstSectionMsThisFrame_ = 0.0;
     worstSectionThisFrame_.clear();
     worstSectionDepthThisFrame_ = 0;
+    sectionsThisFrame_.clear();
 }
 
 void UiThreadWatch::frameEnd() {
@@ -93,6 +94,12 @@ void UiThreadWatch::frameEnd() {
         // The longest section inside it, or the frame itself when nothing was named -- which is
         // an answer too: it means the time went on drawing rather than on anything identifiable.
         worstSection_ = worstSectionThisFrame_.empty() ? "frame" : worstSectionThisFrame_;
+
+        // And the whole frame broken down, because one name explains a frame that one thing
+        // blocked, and explains nothing about a frame in which six things were each too slow.
+        worstFrameSections_.assign(sectionsThisFrame_.begin(), sectionsThisFrame_.end());
+        std::ranges::sort(worstFrameSections_,
+            [](const auto& left, const auto& right) { return left.second > right.second; });
     }
 }
 
@@ -118,6 +125,7 @@ UiThreadWatch::Section::~Section() {
     const bool clearlyLonger = elapsedMs > watch.worstSectionMsThisFrame_ * CLEARLY_LONGER;
     const bool deeperAndComparable = depth_ > watch.worstSectionDepthThisFrame_
         && elapsedMs >= watch.worstSectionMsThisFrame_;
+    watch.sectionsThisFrame_[watch.currentName_] += elapsedMs;
     if (clearlyLonger || deeperAndComparable) {
         watch.worstSectionMsThisFrame_ = elapsedMs;
         watch.worstSectionThisFrame_ = watch.currentName_;
@@ -135,6 +143,7 @@ UiThreadWatch::Report UiThreadWatch::report() const {
     report.stalls = stalls_;
     report.worstFrameMs = worstFrameMs_;
     report.worstSection = worstSection_;
+    report.worstFrameSections = worstFrameSections_;
     report.currentSection = currentName_;
     // Read while the UI thread may be stuck inside the frame this is timing -- which is the one
     // moment the number matters most, so it is computed here rather than published per frame.
@@ -147,6 +156,7 @@ void UiThreadWatch::reset() {
     frames_ = 0;
     stalls_ = 0;
     worstFrameMs_ = 0.0;
+    worstFrameSections_.clear();
     worstSection_.clear();
 }
 

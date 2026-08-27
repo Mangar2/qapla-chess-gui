@@ -19,6 +19,9 @@
 
 #pragma once
 
+#include <map>
+#include <utility>
+#include <vector>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -132,6 +135,16 @@ public:
         /** @brief The longest section inside that frame -- who to talk to about it. */
         std::string worstSection;
 
+        /**
+         * @brief Every section of the worst frame with its total time, longest first.
+         *
+         * The one name is not always the answer. A frame can be long because one thing blocked,
+         * and it can be long because six things each took a little too long -- and those two
+         * have nothing in common except the number. Nested sections are each counted in full,
+         * so an enclosing one includes what it encloses; the names say which is which.
+         */
+        std::vector<std::pair<std::string, double>> worstFrameSections;
+
         /** @brief How long the current frame has been running, for a caller watching live. */
         double currentFrameMs = 0.0;
 
@@ -163,6 +176,12 @@ private:
     double worstSectionMsThisFrame_ = 0.0;
     std::string worstSectionThisFrame_;
     int worstSectionDepthThisFrame_ = 0;
+
+    /** @brief Every section of the frame being timed right now, by name, totalled. */
+    std::map<std::string, double> sectionsThisFrame_;
+
+    /** @brief The same, kept from the worst frame so far. */
+    std::vector<std::pair<std::string, double>> worstFrameSections_;
 
     /** @brief How many sections are open right now. */
     int depth_ = 0;

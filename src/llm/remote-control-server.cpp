@@ -235,6 +235,13 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
             QaplaWindows::UiThreadWatch::stallThreshold().count());
         frames["worst_frame_ms"] = watch.worstFrameMs;
         frames["worst_section"] = watch.worstSection;
+        // The worst frame in full, so a caller that fails a test on a stall can say where the
+        // time went instead of only how much of it there was.
+        auto sections = QaplaTester::Json::JsonValue::object();
+        for (const auto& [name, milliseconds] : watch.worstFrameSections) {
+            sections[name] = milliseconds;
+        }
+        frames["worst_frame_sections"] = sections;
         frames["current_frame_ms"] = watch.currentFrameMs;
         frames["current_section"] = watch.currentSection;
         object["frames"] = frames;

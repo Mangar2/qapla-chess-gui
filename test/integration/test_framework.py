@@ -596,8 +596,13 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
             # queue is not being served -- so the application is answering nobody, the caller
             # included. Every one of these is work that belongs on a thread of its own.
             if session.stalls_seen:
+                # The breakdown, not just the name: a frame blocked by one thing and a frame in
+                # which six things were each too slow read the same without it.
+                breakdown = ", ".join(f"{name} {milliseconds:.0f}ms"
+                                      for name, milliseconds in session.worst_frame_sections[:6])
                 message = (f"the UI thread stalled {session.stalls_seen}x, worst "
-                           f"{session.worst_frame_ms:.0f} ms in {session.worst_section or '?'}")
+                           f"{session.worst_frame_ms:.0f} ms in {session.worst_section or '?'}"
+                           + (f" -- {breakdown}" if breakdown else ""))
                 if test.get("allow_ui_stalls"):
                     _info(f"[known] {message} -- {test['allow_ui_stalls']}")
                 else:
