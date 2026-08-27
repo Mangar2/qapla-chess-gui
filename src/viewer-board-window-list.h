@@ -85,6 +85,10 @@ public:
                 boardWindows_[gameIndex].setRunning(true);
             },
             [&](uint32_t gameIndex) -> bool {
+                // Runs under the pool's lock, before the manager's own is taken: window
+                // bookkeeping, no game data. Named so that the breakdown of a stalled frame can
+                // tell it from the waiting.
+                QaplaWindows::UiThreadWatch::Section ensure("boards:ensure");
                 ensureWindowExists(gameIndex);
                 return true;
             }
