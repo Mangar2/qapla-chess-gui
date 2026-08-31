@@ -23,8 +23,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_definitions(QAPLA_DEBUG_I18N)
 endif()
 
-if(NOT WIN32)
+if(APPLE)
+  # macOS: libc++ is the system C++ runtime and always present.
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+elseif(NOT WIN32)
+  # Linux: build against libc++ as well, but link the C++ runtime into the
+  # binary. Distributions do not install libc++ by default, so a dynamically
+  # linked binary fails to start with "libc++.so.1: cannot open shared object
+  # file". -static-libgcc additionally removes libgcc_s.so.1 and the unwinder.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  add_link_options(-static-libstdc++ -static-libgcc)
 endif()
 
 # --------------------------------

@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026
+## [Unreleased]
+
+### Fixed
+- **Linux binary starts without an LLVM runtime installed**: The C++ runtime is now linked into the binary instead of being loaded from `libc++.so.1`, which most distributions do not ship.
+
+## [0.6.0] - 2026-08-27
 
 ### Added
 - **AI chat**: A chat panel that talks to a local LM Studio model and can operate the GUI through it -- installing engines, configuring and running tournaments, SPRT tests, EPD analyses and CLOP tuning. Thinking can be switched off, and the chat can be cleared.
