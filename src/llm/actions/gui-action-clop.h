@@ -21,6 +21,7 @@
 
 #include "gui-action-types.h"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>

@@ -35,6 +35,7 @@
 
 #include <imgui.h>
 
+#include <cmath>
 #include <string>
 #include <format>
 #include <memory>
