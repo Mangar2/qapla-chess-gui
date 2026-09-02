@@ -29,11 +29,13 @@ if(APPLE)
 elseif(NOT WIN32)
   # Linux: build against libstdc++, the runtime every distribution ships. libc++
   # has to be installed on purpose, and a machine that carries only a 32-bit copy
-  # of it fails the link with "libc++.so.1: file in wrong format". The runtime is
-  # still linked into the binary so the executable stays portable: without it a
-  # user of the release gets "libstdc++.so.6: version GLIBCXX_... not found" on an
-  # older distribution. -static-libgcc removes libgcc_s.so.1 and the unwinder too.
-  add_link_options(-static-libstdc++ -static-libgcc)
+  # of it fails the link with "libc++.so.1: file in wrong format". libstdc++ is
+  # still linked into the binary, because its version is the one that travels
+  # badly: an older distribution answers a newer one with "libstdc++.so.6:
+  # version GLIBCXX_... not found". libgcc_s stays dynamic on purpose -- linking
+  # it in drags GCC 13's unwinder along, which calls _dl_find_object and so
+  # demands glibc 2.35, locking out RHEL 9. The library itself is everywhere.
+  add_link_options(-static-libstdc++)
 endif()
 
 # --------------------------------
