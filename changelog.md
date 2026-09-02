@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Linux binary starts without an LLVM runtime installed**: The Linux build now uses `libstdc++`, the runtime every distribution ships, and links it into the binary. It no longer needs `libc++` -- neither to build, where a machine carrying only a 32-bit copy failed the link, nor to start, where the released 0.6.0 binary asked for a `libc++.so.1` that was not there.
+- **EPD runs no longer end in a crash**: Two unrelated types shared the name `EpdTest`, so the wrong destructor ran on every EPD result and the application aborted on shutdown with `free(): invalid size`.
 
 ## [0.6.0] - 2026-08-27
 
