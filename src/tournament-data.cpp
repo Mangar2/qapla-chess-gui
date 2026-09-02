@@ -56,6 +56,10 @@ using namespace QaplaTester;
 namespace QaplaWindows {
 
     TournamentData::TournamentData() : 
+        tournament_(std::make_unique<QaplaTester::Tournament>()),
+        config_(std::make_unique<QaplaTester::TournamentConfig>()),
+        result_(std::make_unique<TournamentResultIncremental>()),
+        imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         eloTable_(
             "TournamentResult",
             ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
