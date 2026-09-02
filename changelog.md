@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **Linux binary starts without an LLVM runtime installed**: The C++ runtime is now linked into the binary instead of being loaded from `libc++.so.1`, which most distributions do not ship.
+- **Linux binary starts without an LLVM runtime installed**: The Linux build now uses `libstdc++`, the runtime every distribution ships, and links it into the binary. It no longer needs `libc++` -- neither to build, where a machine carrying only a 32-bit copy failed the link, nor to start, where the released 0.6.0 binary asked for a `libc++.so.1` that was not there.
 
 ## [0.6.0] - 2026-08-27
 

@@ -235,6 +235,7 @@ This project uses [CMake](https://cmake.org) with [Presets](https://cmake.org/cm
 - Ninja
 - Clang/LLVM (clang++)
 - Git
+- Linux only: the GCC 13 or newer C++ standard library (`libstdc++`), for `std::format`
 
 ### Clone with Submodules
 

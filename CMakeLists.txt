@@ -27,11 +27,12 @@ if(APPLE)
   # macOS: libc++ is the system C++ runtime and always present.
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 elseif(NOT WIN32)
-  # Linux: build against libc++ as well, but link the C++ runtime into the
-  # binary. Distributions do not install libc++ by default, so a dynamically
-  # linked binary fails to start with "libc++.so.1: cannot open shared object
-  # file". -static-libgcc additionally removes libgcc_s.so.1 and the unwinder.
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  # Linux: build against libstdc++, the runtime every distribution ships. libc++
+  # has to be installed on purpose, and a machine that carries only a 32-bit copy
+  # of it fails the link with "libc++.so.1: file in wrong format". The runtime is
+  # still linked into the binary so the executable stays portable: without it a
+  # user of the release gets "libstdc++.so.6: version GLIBCXX_... not found" on an
+  # older distribution. -static-libgcc removes libgcc_s.so.1 and the unwinder too.
   add_link_options(-static-libstdc++ -static-libgcc)
 endif()
 
