@@ -28,8 +28,6 @@ jobs:
           sudo apt-get install -y \
             cmake \
             ninja-build \
-            libc++-dev \
-            libc++abi-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
             xorg-dev \
