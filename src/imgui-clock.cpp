@@ -28,6 +28,7 @@
 
 #include <imgui.h>
 
+#include <cmath>
 #include <sstream>
 #include <string>
 #include <format>

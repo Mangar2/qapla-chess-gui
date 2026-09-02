@@ -2,6 +2,8 @@
 
 #include "chatbot-step.h"
 
+#include <cstdint>
+
 namespace QaplaWindows::ChatBot {
 
 /**
