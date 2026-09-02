@@ -526,10 +526,13 @@ namespace QaplaWindows {
 
         ViewerBoardWindowList boardWindowList_{"Tournament"};
 
-        std::unique_ptr<QaplaTester::Tournament> tournament_{std::make_unique<QaplaTester::Tournament>()};
-        std::unique_ptr<QaplaTester::TournamentConfig> config_{std::make_unique<QaplaTester::TournamentConfig>()};
-        std::unique_ptr<TournamentResultIncremental> result_{std::make_unique<TournamentResultIncremental>()};
-        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_{std::make_unique<ImGuiConcurrency>()};
+        // The next four types are only forward declared above, so they are filled in
+        // the constructor rather than here: an in-class initialiser calling make_unique
+        // needs the complete type, and GCC asks for it while reading the header.
+        std::unique_ptr<QaplaTester::Tournament> tournament_;
+        std::unique_ptr<QaplaTester::TournamentConfig> config_;
+        std::unique_ptr<TournamentResultIncremental> result_;
+        std::unique_ptr<ImGuiConcurrency> imguiConcurrency_;
         std::unique_ptr<ImGuiEngineSelect> engineSelect_{std::make_unique<ImGuiEngineSelect>()};
         std::unique_ptr<ImGuiEngineGlobalSettings> globalSettings_{std::make_unique<ImGuiEngineGlobalSettings>()};
         std::unique_ptr<ImGuiTournamentOpening> tournamentOpening_{std::make_unique<ImGuiTournamentOpening>()};
