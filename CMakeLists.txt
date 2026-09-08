@@ -225,6 +225,9 @@ if(QAPLA_BUILD_UNIT_TESTS)
     # GUI sources needed by unit tests
     set(GUI_TEST_DEPENDENCIES
       src/tournament-result-incremental.cpp
+      # The clock display logic, split off from imgui-clock.cpp so it can be driven with a
+      # fake clock and without a window -- see src/clock-model.h.
+      src/clock-model.cpp
       src/config-group-loader.cpp
       # The option table behind --help and the parser. Pure argv in, struct out, no GUI.
       src/command-line.cpp

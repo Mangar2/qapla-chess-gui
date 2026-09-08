@@ -21,22 +21,12 @@
 #include "font.h"
 #include "imgui-controls.h"
 #include <qapla-engine/types.h>
-#include <base-elements/string-helper.h>
-#include <chess-game/game-record.h>
-#include <chess-game/move-record.h>
-#include <base-elements/time-control.h>
 
 #include <imgui.h>
 
 #include <cmath>
-#include <sstream>
 #include <string>
-#include <format>
-#include <memory>
-
-using QaplaTester::GameRecord;
-using QaplaTester::MoveRecord;
-using QaplaTester::GoLimits;
+#include <string_view>
 
 using namespace QaplaWindows;
 
@@ -44,115 +34,6 @@ constexpr float MIN_ENGINE_NAME_FONT_SIZE = 10.0F;
 
 ImGuiClock::ImGuiClock() = default;
 ImGuiClock::~ImGuiClock() = default;
-
-void ImGuiClock::setFromGameRecord(const GameRecord& gameRecord) {
-    auto [modification, update] = gameRecordTracker_.checkModification(gameRecord.getChangeTracker());
-    if (!update) {
-        return;
-    }
-    gameRecordTracker_.updateFrom(gameRecord.getChangeTracker());
-
-    const auto& wtc = gameRecord.getWhiteTimeControl();
-    const auto& btc = gameRecord.getBlackTimeControl();
-    if (!wtc.isValid() || !btc.isValid()) {
-        return;
-    }
-    auto [whiteTime, blackTime] = gameRecord.timeUsed();
-    auto nextMoveIndex = gameRecord.nextMoveIndex();
-    auto halfMoves = gameRecord.halfmoveNoAtPly(nextMoveIndex);
-    GoLimits goLimits = createGoLimits(wtc, btc,
-        halfMoves, whiteTime, blackTime, gameRecord.isWhiteToMove());
-
-    if (modification) {
-        clockData_.wEngineName = gameRecord.getWhiteEngineName();
-        clockData_.bEngineName = gameRecord.getBlackEngineName();
-    }
-    clockData_.wTimeLeftMs = goLimits.wtimeMs;
-    clockData_.bTimeLeftMs = goLimits.btimeMs;
-    clockData_.wTimeCurMove = 0;
-    clockData_.bTimeCurMove = 0;
-    clockData_.wtm = gameRecord.isWhiteToMove();
-    clockData_.wTimer.reset();
-    clockData_.bTimer.reset();
-    nextHalfmoveNo_ = gameRecord.halfmoveNoAtPly(nextMoveIndex);
-
-    if (nextMoveIndex > 0) {
-        setFromHistoryMove(gameRecord.history()[nextMoveIndex - 1]);
-    }
-}
-
-void QaplaWindows::ImGuiClock::setFromHistoryMove(const MoveRecord& moveRecord) {
-    // if wtm, then black just moved (currMove is black's move)
-    if (clockData_.wtm)
-    {
-        if (!stopped_) {
-            clockData_.wTimer.start();
-        } else {
-            clockData_.bTimeCurMove = moveRecord.timeMs;
-            // bTimeLeftMs has the time after current move.
-            clockData_.bTimeLeftMs += moveRecord.timeMs;
-            clockData_.bEngineName = moveRecord.engineName_;
-        }
-    } else {
-        if (!stopped_) {
-            clockData_.bTimer.start();
-        } else {
-            clockData_.wTimeCurMove = moveRecord.timeMs;
-            // wTimeLeftMs has the time after current move.
-            clockData_.wTimeLeftMs += moveRecord.timeMs;
-            clockData_.wEngineName = moveRecord.engineName_;
-        }
-    }
-}
-
-
-void ImGuiClock::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t playerIndex) {
-    if (stopped_) {
-        return;
-    }
-    if (!moveRecord.ponderMove.empty()) {
-        // Time used from pondering is not relevant
-        return;
-    }
-    auto halfmoveNo = moveRecord.halfmoveNo_;
-    if (infoCnt_.size() <= playerIndex) {
-        infoCnt_.resize(playerIndex + 1, 0);
-        displayedMoveNo_.resize(playerIndex + 1, 0);
-    }
-    if (halfmoveNo != nextHalfmoveNo_) {
-        return; 
-    }
-    if (moveRecord.infoUpdateCount == infoCnt_[playerIndex] && halfmoveNo == displayedMoveNo_[playerIndex]) {
-        return; 
-    }
-    infoCnt_[playerIndex] = moveRecord.infoUpdateCount;
-    displayedMoveNo_[playerIndex] = halfmoveNo;
-
-    uint64_t cur = moveRecord.timeMs;
-
-    if (clockData_.wtm) {
-        if (cur > clockData_.wTimeCurMove) {
-            if (stopped_) {
-                clockData_.wTimer.reset(); 
-            } else {
-                clockData_.wTimer.start();
-            }
-        }
-        clockData_.wTimeCurMove = cur;
-        clockData_.wEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
-    } 
-    else {
-        if (cur > clockData_.bTimeCurMove) {
-            if (stopped_) {
-                clockData_.bTimer.reset(); 
-            } else {
-                clockData_.bTimer.start();
-            }
-        }
-        clockData_.bTimeCurMove = cur;
-        clockData_.bEngineName = analyze_ ? "Analyze" : moveRecord.engineName_;
-    }
-}
 
 namespace {
 
@@ -168,26 +49,6 @@ ImVec2 textSizeAt(ImFont* font, float size, const std::string& str) {
  */
 float textWidthAt(ImFont* font, float size, const std::string& str) {
     return textSizeAt(font, size, str).x;
-}
-
-/**
- * @brief Prepares the time strings for display.
- * @param totalMs Total remaining time in milliseconds.
- * @param moveMs Time for the current move in milliseconds.
- * @param analyze Whether in analyze mode.
- * @return Pair of formatted time strings (total, move).
- */
-std::pair<std::string, std::string> prepareTimeStrings(uint64_t totalMs, uint64_t moveMs, bool analyze) {
-    uint64_t adjustedTotal = totalMs - std::min(totalMs, moveMs);
-    if (!analyze) {
-        adjustedTotal += 999; // Add 999ms to compensate for formatMs truncating to full seconds
-    } else {
-        adjustedTotal = moveMs;
-    }
-    return {
-        QaplaHelpers::formatMs(adjustedTotal, 0),
-        QaplaHelpers::formatMs(moveMs, 0)
-    };
 }
 
 /**
@@ -298,23 +159,21 @@ void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font,
         nameStr.c_str(), nameStr.c_str() + nameStr.size());
 }
 
-} // anonymous namespace
-
 /**
  * Draws a single-side chess clock (engine name, total time, current move time).
  * The MM:SS colon of both time strings is horizontally centered within the given width.
  *
  * @param topLeft   Top-left anchor of the clock area.
  * @param bottomRight Bottom-right anchor of the clock area. 
- * @param totalMs   Total remaining time in milliseconds.
- * @param moveMs    Time for the current move in milliseconds.
+ * @param totalStr  Formatted remaining time, as decided by ClockModel.
+ * @param moveStr   Formatted time for the current move, as decided by ClockModel.
  * @param engineName Name of the chess engine.
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
- * @param analyze   True if in analyze mode.
  */
-static void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
-    uint64_t totalMs, uint64_t moveMs, std::string_view engineName, bool white, bool wtm, bool analyze)
+void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
+    const std::string& totalStr, const std::string& moveStr,
+    std::string_view engineName, bool white, bool wtm)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
@@ -328,8 +187,6 @@ static void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight,
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
     const float availableWidth = bottomRight.x - topLeft.x - 10.0F; // 5px margin on each side
     float y = topLeft.y + 7.0F;
-
-    auto [totalStr, moveStr] = prepareTimeStrings(totalMs, moveMs, analyze);
 
     ImGuiControls::drawBoxWithShadow(topLeft, bottomRight);
     drawKingIcon(drawList, topLeft, white, wtm);
@@ -349,14 +206,13 @@ static void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight,
  *
  * @param topLeft   Top-left anchor of the clock area.
  * @param bottomRight Bottom-right anchor of the clock area. 
- * @param totalMs   Total remaining time in milliseconds.
- * @param moveMs    Time for the current move in milliseconds.
+ * @param totalStr  Formatted remaining time, as decided by ClockModel.
+ * @param moveStr   Formatted time for the current move, as decided by ClockModel.
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
- * @param analyze   True if in analyze mode.
  */
-static void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
-    uint64_t totalMs, uint64_t moveMs, bool white, bool wtm, bool analyze)
+void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
+    const std::string& totalStr, const std::string& moveStr, bool white, bool wtm)
 {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImFont* font = ImGui::GetFont();
@@ -369,8 +225,6 @@ static void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight,
     const float xCenter = topLeft.x + (bottomRight.x - topLeft.x) * 0.5F;
     float y = topLeft.y + 7.0F;
 
-    auto [totalStr, moveStr] = prepareTimeStrings(totalMs, moveMs, analyze);
-
     drawKingIcon(drawList, topLeft, white, wtm);
     
     // Total time (bigger)
@@ -379,7 +233,11 @@ static void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight,
     drawCenteredTimeText(drawList, font, moveSize, moveStr, xCenter, y, style);
 }
 
+} // anonymous namespace
+
 void ImGuiClock::draw() const {
+
+    const ClockView view = model_.view();
 
     ImVec2 topLeft = ImGui::GetCursorScreenPos();
 	constexpr float clockWidth = 180.0F;
@@ -400,16 +258,13 @@ void ImGuiClock::draw() const {
     auto whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
-    auto wCur = clockData_.wTimeCurMove + clockData_.wTimer.elapsedMs();
-    auto bCur = clockData_.bTimeCurMove + clockData_.bTimer.elapsedMs();
-
     if (smallClock) {
-        drawSmallClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
-            true, clockData_.wtm, analyze_);
+        drawSmallClock(whiteMin, whiteMax, view.whiteTotal, view.whiteMove,
+            true, view.whiteToMove);
     }
     else {
-        drawClock(whiteMin, whiteMax, clockData_.wTimeLeftMs, wCur,
-            clockData_.wEngineName, true, clockData_.wtm, analyze_);
+        drawClock(whiteMin, whiteMax, view.whiteTotal, view.whiteMove,
+            view.whiteEngineName, true, view.whiteToMove);
     }
 
     // Black Clock
@@ -419,12 +274,12 @@ void ImGuiClock::draw() const {
     auto blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
 
     if (smallClock) {
-        drawSmallClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
-            false, clockData_.wtm, analyze_);
+        drawSmallClock(blackMin, blackMax, view.blackTotal, view.blackMove,
+            false, view.whiteToMove);
     }
     else {
-        drawClock(blackMin, blackMax, clockData_.bTimeLeftMs, bCur,
-            clockData_.bEngineName, false, clockData_.wtm, analyze_);
+        drawClock(blackMin, blackMax, view.blackTotal, view.blackMove,
+            view.blackEngineName, false, view.whiteToMove);
     }
 
     ImGui::Dummy(ImVec2(0.0F, 0.0F));
