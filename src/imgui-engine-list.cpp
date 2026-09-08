@@ -134,7 +134,9 @@ void ImGuiEngineList::setFromGameRecord(const GameRecord& gameRecord) {
         }
         const auto& moveRecord = history[static_cast<size_t>(moveIndex)];
         setInfoTable(tableIndex, moveRecord);
-        displayedMoveNo_[tableIndex] = moveRecord.halfmoveNo_;
+        // Derive the halfmove number from the game record. Moves set from outside (e.g. a pasted
+        // PGN) have no halfmoveNo_ set, only manually entered and engine played moves have.
+        displayedMoveNo_[tableIndex] = gameRecord.halfmoveNoAtPly(static_cast<size_t>(moveIndex));
     }
 }
 
@@ -147,7 +149,10 @@ void ImGuiEngineList::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t p
         return;
     }
 
-    bool analyzeMode = (gameStatus == "Analyze");
+    // A recomputed game searches the moves backwards, so the move being searched is not the one
+    // that follows the move on the board -- which is all shouldDisplayMoveRecord() accepts. It is
+    // an analysis either way: what the engine is looking at right now is what belongs on screen.
+    bool analyzeMode = (gameStatus == "Analyze" || gameStatus == "Analyze Game");
     if (!analyzeMode && !shouldDisplayMoveRecord(moveRecord, playerIndex)) {
         return;
     }

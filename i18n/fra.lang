@@ -36,6 +36,7 @@ id=Button
 {s:"Apply",t:"2026-08-26"}=Appliquer
 {s:"Reset All Tutorials",t:"2025-12-16"}=Réinitialiser tous les tutoriels
 {s:"Use",t:"2025-12-16"}=Utiliser
+{s:"Analyze Game",t:"2026-09-08"}=Analyser la partie
 {s:"Copy PGN",t:"2025-12-15"}=Copier PGN
 {s:"Copy FEN",t:"2025-12-15"}=Copier FEN
 {s:"Select",t:"2026-07-25"}=Sélectionner

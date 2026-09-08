@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Analyse a whole game on the board**: "Analyze Game" in the board's More menu recomputes the game on the board, from its last move back to its first, and writes what the engine finds into every move -- evaluation, principal variation, depth, nodes and time. The engines that played the moves stay with them. Walking backwards is what makes the evaluations worth having: the engine keeps what it learned about the later positions and meets each earlier one already knowing how the game continued from it. It runs on the board's own engines, so the engine window, the clock, the move list and the evaluation bars follow the search while it happens; the moves lose their old evaluations when it starts, so what has already been recomputed can be seen at a glance. The first selected engine analyses, a fixed limit per move has to be set, and the entry stays marked -- as does the More button -- until the run is over or stopped.
+
 ### Fixed
 - **Linux binary starts without an LLVM runtime installed**: The Linux build now uses `libstdc++`, the runtime every distribution ships, and links it into the binary. It no longer needs `libc++` -- neither to build, where a machine carrying only a 32-bit copy failed the link, nor to start, where the released 0.6.0 binary asked for a `libc++.so.1` that was not there.
 - **EPD runs no longer end in a crash**: Two unrelated types shared the name `EpdTest`, so the wrong destructor ran on every EPD result and the application aborted on shutdown with `free(): invalid size`.

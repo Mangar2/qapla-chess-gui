@@ -454,6 +454,52 @@ void InteractiveBoardWindow::analyze()
 	}
 }
 
+bool InteractiveBoardWindow::mayAnalyzeGame()
+{
+	if (computeTask_->getEngineCount() == 0) {
+		SnackbarManager::instance().showError(
+			"No engine configured.\nSelect an engine before analysing the game.");
+		return false;
+	}
+	// An analysis gives every position the same limit, so a game clock has nothing to apply to.
+	if (!timeControl_.moveTimeMs() && !timeControl_.depth() && !timeControl_.nodes()) {
+		SnackbarManager::instance().showError(
+			"No fixed time per move configured.\n"
+			"Set 'Time per move' (or a fixed depth or node count) under Time.");
+		return false;
+	}
+	bool hasMoves = false;
+	computeTask_->getGameContext().withGameRecord([&hasMoves](const GameRecord& record) {
+		hasMoves = !record.history().empty();
+	});
+	if (!hasMoves) {
+		SnackbarManager::instance().showError(
+			"No game to analyse.\nPlay or paste a game with at least one move first.");
+		return false;
+	}
+	return true;
+}
+
+void InteractiveBoardWindow::analyzeGame()
+{
+	if (computeTask_->getStatus() == "Analyze Game") {
+		stop();
+		SnackbarManager::instance().showNote(
+			"Game analysis stopped.\nThe moves analysed so far keep their evaluation.");
+		return;
+	}
+	if (!mayAnalyzeGame()) {
+		return;
+	}
+	try {
+		stop();
+		computeTask_->replayGame();
+	}
+	catch (const std::exception& e) {
+		SnackbarManager::instance().showError(std::string("Failed to analyse the game:\n") + e.what());
+	}
+}
+
 void InteractiveBoardWindow::autoPlay()
 {
 	try {
@@ -495,6 +541,9 @@ void InteractiveBoardWindow::execute(const std::string& command)
 	}
 	else if (command == "Analyze") {
 		analyze();
+	}
+	else if (command == "Analyze Game") {
+		analyzeGame();
 	}
 	else if (command == "Auto") {
 		autoPlay();
@@ -598,7 +647,10 @@ void InteractiveBoardWindow::pollData()
 		else {
 			imGuiClock_->setStopped(false);
 		}
-		imGuiClock_->setAnalyze(computeTask_->getStatus() == "Analyze");
+		// A recomputed game is searched under a per-move limit, not against a game clock: the
+		// clock shows the search time, the same as during an analysis of a single position.
+		const auto status = computeTask_->getStatus();
+		imGuiClock_->setAnalyze(status == "Analyze" || status == "Analyze Game");
 		computeTask_->getGameContext().withGameRecord([&](const GameRecord &gameRecord) {
 			imGuiMoveList_->setFromGameRecord(gameRecord);
 			imGuiClock_->setFromGameRecord(gameRecord);

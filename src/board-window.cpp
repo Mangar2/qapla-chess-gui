@@ -171,6 +171,12 @@ namespace QaplaWindows
         
         // More menu commands with tutorial highlights
         std::vector<QaplaButton::PopupCommand> moreCommands = {
+            // Highlighted while it runs, which is what the More button reads to show that
+            // something is going on behind it - the command has no button of its own.
+            { .name = "Analyze Game",
+              .state = status == "Analyze Game"
+                  ? QaplaButton::ButtonState::Highlighted
+                  : QaplaButton::ButtonState::Normal },
             { .name = "Copy PGN"},
             { .name = "Copy FEN"}
         };

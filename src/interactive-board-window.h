@@ -340,6 +340,22 @@ namespace QaplaWindows
 		 * @brief Notifies task processor to analyze the current position.
 		 */
 		void analyze();
+
+		/**
+		 * @brief Recomputes the game on the board, from its last move to its first.
+		 *
+		 * Runs on the board's own engines, like Play and Auto, so the engine window, the clock
+		 * and the move list follow the search while it happens. Called again while it runs, it
+		 * stops it.
+		 */
+		void analyzeGame();
+
+		/**
+		 * @brief Checks what a game analysis needs, reporting the first thing that is missing.
+		 * @return True if the analysis may be started.
+		 */
+		bool mayAnalyzeGame();
+
 		/**
 		 * @brief Notifies task processor to autoplay the game (both sides).
 		 */
