@@ -19,6 +19,7 @@
 
 #include "imgui-epd-configuration.h"
 #include "imgui-controls.h"
+#include "os-dialogs.h"
 #include "epd-data.h"
 
 #include <imgui.h>
@@ -83,7 +84,9 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
 
     if (options.showFilePath) {
         ImGui::Spacing();
-        changed |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath, inputWidth * 2.0F);
+        changed |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath,
+            []() { const auto files = OsDialogs::openEpdFile(); return files.empty() ? std::string{} : files.front(); },
+            inputWidth * 2.0F);
         ImGuiControls::hooverTooltip("Path to EPD or RAW position file to analyze");
         
         // Show tutorial annotation if present

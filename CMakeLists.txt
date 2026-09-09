@@ -229,6 +229,9 @@ if(QAPLA_BUILD_UNIT_TESTS)
       # fake clock and without a window -- see src/clock-model.h.
       src/clock-model.cpp
       src/config-group-loader.cpp
+      # Extensions in, pattern and label out -- the one thing the three platform file dialogs
+      # have to agree on, kept free of all three so it can be checked without a window.
+      src/os-dialogs-file-types.cpp
       # The option table behind --help and the parser. Pure argv in, struct out, no GUI.
       src/command-line.cpp
       src/tournament-config-sections.cpp

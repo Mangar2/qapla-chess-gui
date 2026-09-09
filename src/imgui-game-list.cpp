@@ -52,6 +52,9 @@ ImGuiGameList::ImGuiGameList()
         ImVec2(550, 700)  // Increased height for better fit
     )
 {
+    // The one Pgn view; see instance(). Assigned rather than asserted unique, because the tests
+    // build a second one now and then and the last one built is the one on screen.
+    instance_ = this;
     init();
 
     // Lets the AI-chatbot's open_pgn_file tool load a specific path into this tab (e.g. the
@@ -75,6 +78,9 @@ void ImGuiGameList::init() {
 }
 
 ImGuiGameList::~ImGuiGameList() {
+    if (instance_ == this) {
+        instance_ = nullptr;
+    }
     // Cancel any ongoing operation before joining
     OperationState currentState = operationState_.load();
     if (currentState == OperationState::Loading) {
@@ -87,6 +93,10 @@ ImGuiGameList::~ImGuiGameList() {
 }
 
 void ImGuiGameList::draw() {
+    if (filterRequested_) {
+        filterRequested_ = false;
+        openFilterDialog();
+    }
     drawButtons();
     drawLoadingStatus();
     
@@ -257,6 +267,11 @@ static std::vector<std::string> createTableRow(const QaplaTester::GameRecord& ga
 void ImGuiGameList::createTable() {
     const auto& games = gameRecordManager_.getGames();
     if (games.empty()) {
+        // A file with nothing in it leaves no rows behind: the count of the file before must not
+        // stand for it.
+        std::scoped_lock lock(gameTableMutex_);
+        filteredToOriginalIndex_.clear();
+        filteredCount_ = 0;
         return;
     }
 
@@ -304,6 +319,7 @@ void ImGuiGameList::createTable() {
 
     // Clear index mapping
     filteredToOriginalIndex_.clear();
+    filteredCount_ = 0;
 
     // Fill table with game data (applying filter)
     size_t filteredCount = 0;
@@ -322,6 +338,7 @@ void ImGuiGameList::createTable() {
         gameTable_.push(rowData);
     }
     gameTable_.setAutoScroll(true);
+    filteredCount_ = filteredToOriginalIndex_.size();
     
     // Show filter status in snackbar if filter is active
     const auto& filterData = filterPopup_.content().getFilterData();
@@ -333,7 +350,7 @@ void ImGuiGameList::createTable() {
 }
 
 void ImGuiGameList::openFile() {
-    auto selectedFiles = OsDialogs::openFileDialog(false);
+    auto selectedFiles = OsDialogs::openPgnFile();
     if (!selectedFiles.empty()) {
         loadFileInBackground(selectedFiles[0]);
     }
@@ -430,6 +447,36 @@ void ImGuiGameList::drawGameTable() {
     }
 }
 
+size_t ImGuiGameList::getFilteredGameCount() const {
+    if (isLoading()) {
+        return 0;
+    }
+    // Counted when the table was built, which is where the filter was applied: asking the filter
+    // again for every game would mean walking the whole file on every frame that draws this.
+    return filteredCount_.load();
+}
+
+std::vector<GameRecord> ImGuiGameList::getFilteredGames() const {
+    if (isLoading()) {
+        return {};
+    }
+    std::scoped_lock lock(gameTableMutex_);
+    const auto& games = gameRecordManager_.getGames();
+    std::vector<GameRecord> filtered;
+    filtered.reserve(filteredToOriginalIndex_.size());
+    for (const auto index : filteredToOriginalIndex_) {
+        if (index < games.size()) {
+            filtered.push_back(games[index]);
+        }
+    }
+    return filtered;
+}
+
+void ImGuiGameList::openFilterDialog() {
+    updateFilterOptions();
+    filterPopup_.open();
+}
+
 void ImGuiGameList::updateFilterConfiguration() {
     filterPopup_.content().updateConfiguration("gamelist");
 }
@@ -446,12 +493,7 @@ void ImGuiGameList::saveAsFile() {
         return;
     }
 
-    // Open save dialog
-    std::vector<std::pair<std::string, std::string>> filters = {
-        {"PGN Files", "pgn"},
-        {"All Files", "*"}
-    };
-    std::string selectedFile = OsDialogs::saveFileDialog(filters);
+    std::string selectedFile = OsDialogs::savePgnFile();
     
     if (selectedFile.empty()) {
         return; // User cancelled

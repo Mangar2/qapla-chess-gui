@@ -19,43 +19,33 @@
 
 #pragma once
 
-#include "chatbot-step.h"
+#include "../chatbot-step.h"
 #include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Step to ask the user what they want to do with the tournament.
- * 
- * Options: New tournament, Save tournament, Load tournament
- * Supports both standard tournaments and SPRT tournaments.
+ * @brief Step that sets the concurrency, starts the analysis, and watches it run.
+ *
+ * The games are taken from the Pgn view here and not before: from this moment the analysis has
+ * its own copy of them and the view is free again, so the file the analysis is writing can be
+ * loaded into it and looked at while the run goes on.
  */
-class ChatbotStepTournamentMenu : public ChatbotStep {
+class ChatbotStepAnalysisStart : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentMenu(EngineSelectContext type = EngineSelectContext::Standard);
+    ChatbotStepAnalysisStart() = default;
+    ~ChatbotStepAnalysisStart() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    EngineSelectContext type_;
-    bool saved_ = false;
+    /** @brief Draws the concurrency and the start button. */
+    [[nodiscard]] std::string drawBeforeStart();
 
-    /**
-     * @brief Clears the tournament data.
-     */
-    void clearTournament();
+    /** @brief Draws how far the run has come, and how to stop it. */
+    void drawWhileRunning();
 
-    /**
-     * @brief Saves the tournament to a file.
-     * @param path The file path to save to.
-     */
-    void saveTournament(const std::string& path);
-
-    /**
-     * @brief Gets the tournament name for display.
-     * @return The tournament name string.
-     */
-    [[nodiscard]] const char* getTournamentName() const;
+    bool started_ = false;
 };
 
 } // namespace QaplaWindows::ChatBot

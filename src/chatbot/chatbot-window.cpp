@@ -25,6 +25,7 @@
 #include "chatbot-messages.h"
 #include "sprt/chatbot-sprt.h"
 #include "epd/chatbot-epd.h"
+#include "analysis/chatbot-analysis.h"
 #include "board/chatbot-board.h"
 #include "add-engines/chatbot-add-engines.h"
 #include "i18n.h"
@@ -52,6 +53,7 @@ void ChatbotWindow::initializeThreads() {
     registeredThreads_.push_back(std::make_unique<ChatbotTournament>());
     registeredThreads_.push_back(std::make_unique<ChatbotSprt>());
     registeredThreads_.push_back(std::make_unique<ChatbotEpd>());
+    registeredThreads_.push_back(std::make_unique<ChatbotAnalysis>());
     registeredThreads_.push_back(std::make_unique<ChatbotBoard>());
     registeredThreads_.push_back(std::make_unique<ChatbotAddEngines>());
     registeredThreads_.push_back(std::make_unique<ChatbotTutorial>());

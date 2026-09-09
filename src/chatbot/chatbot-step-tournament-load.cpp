@@ -34,14 +34,9 @@ std::string ChatbotStepTournamentLoad::draw() {
         return "Tournament loaded successfully.";
     }
 
-    std::vector<std::pair<std::string, std::string>> filters;
-    if (type_ == EngineSelectContext::SPRT) {
-        filters = { {"Qapla SPRT Tournament Files", "*.qsprt"}, {"All Files", "*.*"} };
-    } else {
-        filters = { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} };
-    }
-
-    auto selectedPath = OsDialogs::openFileDialog(false, filters);
+    auto selectedPath = type_ == EngineSelectContext::SPRT
+        ? OsDialogs::openSprtFile()
+        : OsDialogs::openTournamentFile();
     if (!selectedPath.empty() && !selectedPath[0].empty()) {
         if (type_ == EngineSelectContext::SPRT) {
             SprtTournamentData::instance().loadTournament(selectedPath[0]);

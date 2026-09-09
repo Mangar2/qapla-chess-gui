@@ -175,7 +175,7 @@ namespace {
 
     void pickEpdFile(EpdData& data, ConfigureOutcome& outcome) {
         outcome.dialogShown = true;
-        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        auto paths = QaplaWindows::OsDialogs::openEpdFile();
         if (paths.empty()) {
             outcome.applied.push_back("EPD file (dialog cancelled, unchanged)");
             return;

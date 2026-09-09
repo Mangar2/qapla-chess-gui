@@ -333,6 +333,7 @@ id=Snackbar
 
 [Translation]
 id=Tooltip
+{s:"Select option: Backward Analysis",t:"2026-09-08"}=Option auswählen: Rückwärtsanalyse
 {s:"Add new engine from executable file",t:"2025-12-23"}=Neue Engine aus Executable-Datei hinzufügen
 {s:"Allow engines to think during opponent's time",t:"2026-07-25"}=Engines erlauben, während der Gegnerzeit zu denken
 {s:"Path to opening file (.epd, .pgn, or raw FEN text)",t:"2026-07-25"}=Pfad zur Eröffnungsdatei (.epd, .pgn oder roher FEN-Text)
@@ -792,6 +793,7 @@ id=Text
 
 [Translation]
 id=TextButton
+{s:"Backward Analysis",t:"2026-09-08"}=Rückwärtsanalyse
 {s:"Tournament",t:"2026-08-26"}=Turnier
 {s:"SPRT Tournament",t:"2026-08-26"}=SPRT Turnier
 {s:"EPD Analysis",t:"2026-08-26"}=EPD Analyse

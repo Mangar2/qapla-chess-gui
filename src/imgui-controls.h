@@ -35,6 +35,16 @@
 namespace QaplaWindows::ImGuiControls {
 
     /**
+     * @brief Opens a file dialog for one kind of file and hands back what was chosen.
+     *
+     * The kind is named, not spelled out: which extensions a PGN or a tournament file has is
+     * OsDialogs' business, and the controls here must not have an opinion of their own about it.
+     * A dialog function that returns an empty path means the user cancelled.
+     */
+    using FileDialog = std::function<std::string()>;
+
+
+    /**
      * @brief Creates a translated label with a unique identifier.
      * 
      * If the label does not contain "###", it appends it to ensure uniqueness.
@@ -205,11 +215,13 @@ namespace QaplaWindows::ImGuiControls {
      * @brief File input control for selecting and displaying file paths.
      * @param label Label to display next to the input box.
      * @param filePath Reference to the file path string to modify.
+     * @param dialog Opens the dialog for the kind of file being asked for.
      * @param inputWidth Width of the input box.
      * @param buttonLabel Label for the file selection button.
      * @return True if the file path was modified, false otherwise.
      */
-    bool existingFileInput(const std::string& label, std::string& filePath, 
+    bool existingFileInput(const std::string& label, std::string& filePath,
+        const FileDialog& dialog,
         float inputWidth = 200.0F, const char* buttonLabel = "Browse");
 
     /**
@@ -227,14 +239,33 @@ namespace QaplaWindows::ImGuiControls {
      * @brief File input control for specifying a new or existing file path (e.g. for saving).
      * @param label Label to display next to the input box.
      * @param filePath Reference to the file path string to modify.
-     * @param filters File extension filters to apply in the save dialog.
+     * @param dialog Opens the dialog for the kind of file being asked for.
      * @param inputWidth Width of the input box.
      * @param buttonLabel Label for the file selection button.
      * @return True if the file path was modified, false otherwise.
      */
     bool newFileInput(const std::string& label, std::string& filePath,
-        const std::vector<std::pair<std::string, std::string>>& filters = {},
+        const FileDialog& dialog,
         float inputWidth = 200.0F, const char* buttonLabel = "Browse");
+
+    /**
+     * @brief File input that also offers the files last used for the same purpose.
+     *
+     * Three ways to the same value, because a file is named in three different situations: a file
+     * dialog for one that has to be found, a text field for one whose path is known or pasted,
+     * and a list of the last few for the usual case of working on the same file again.
+     *
+     * @param label Label to display above the input row.
+     * @param filePath Reference to the file path string to modify.
+     * @param recentFiles The files last used, newest first; an empty list hides the dropdown.
+     * @param dialog Opens the dialog for the kind of file being asked for.
+     * @param inputWidth Width of the input box.
+     * @param buttonLabel Label for the file selection button.
+     * @return True if the file path was modified, false otherwise.
+     */
+    bool recentFileInput(const std::string& label, std::string& filePath,
+        const std::vector<std::string>& recentFiles, const FileDialog& dialog,
+        float inputWidth = 400.0F, const char* buttonLabel = "Browse");
 
 
     /**

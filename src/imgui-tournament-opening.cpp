@@ -19,6 +19,7 @@
 
 #include "imgui-tournament-opening.h"
 #include "imgui-controls.h"
+#include "os-dialogs.h"
 #include "configuration.h"
 #include "config-group-loader.h"
 #include "tournament-config-sections.h"
@@ -82,7 +83,9 @@ bool ImGuiTournamentOpening::draw(const DrawParams& params,
 
 bool ImGuiTournamentOpening::drawOpeningFile(float fileInputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    bool changed = ImGuiControls::existingFileInput("Opening file", openings_.file, fileInputWidth);
+    bool changed = ImGuiControls::existingFileInput("Opening file", openings_.file,
+        []() { const auto files = OsDialogs::openOpeningsFile(); return files.empty() ? std::string{} : files.front(); },
+        fileInputWidth);
     ImGuiControls::hooverTooltip("Path to opening file (.epd, .pgn, or raw FEN text)");
     
     auto it = tutorialContext.annotations.find("Opening file");

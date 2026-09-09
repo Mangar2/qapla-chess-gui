@@ -19,43 +19,23 @@
 
 #pragma once
 
-#include "chatbot-step.h"
+#include "../chatbot-step.h"
 #include <string>
 
 namespace QaplaWindows::ChatBot {
 
 /**
- * @brief Step to ask the user what they want to do with the tournament.
- * 
- * Options: New tournament, Save tournament, Load tournament
- * Supports both standard tournaments and SPRT tournaments.
+ * @brief Step that offers to stop a backward analysis that is still running.
  */
-class ChatbotStepTournamentMenu : public ChatbotStep {
+class ChatbotStepAnalysisStopRunning : public ChatbotStep {
 public:
-    explicit ChatbotStepTournamentMenu(EngineSelectContext type = EngineSelectContext::Standard);
+    ChatbotStepAnalysisStopRunning() = default;
+    ~ChatbotStepAnalysisStopRunning() override = default;
 
     [[nodiscard]] std::string draw() override;
 
 private:
-    EngineSelectContext type_;
-    bool saved_ = false;
-
-    /**
-     * @brief Clears the tournament data.
-     */
-    void clearTournament();
-
-    /**
-     * @brief Saves the tournament to a file.
-     * @param path The file path to save to.
-     */
-    void saveTournament(const std::string& path);
-
-    /**
-     * @brief Gets the tournament name for display.
-     * @return The tournament name string.
-     */
-    [[nodiscard]] const char* getTournamentName() const;
+    std::string finishedMessage_;
 };
 
 } // namespace QaplaWindows::ChatBot

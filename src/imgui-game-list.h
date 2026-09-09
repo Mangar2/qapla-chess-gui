@@ -72,6 +72,61 @@ public:
         return selectedGame_;
     }
 
+    /**
+     * @brief The one Pgn view of the application, or nullptr before it exists.
+     *
+     * There is exactly one, created as a tab at startup and never copied. Anything that wants to
+     * put a file in front of the user, or read what is in front of them, goes through here --
+     * the backward analysis loads its input file into this view and takes the games it analyses
+     * from it, so that what is analysed is what the user can see.
+     */
+    [[nodiscard]] static ImGuiGameList* instance() { return instance_; }
+
+    /**
+     * @brief Loads a PGN file into this view, in the background as the Open button does.
+     * @param fileName Path of the file to load.
+     */
+    void loadPgnFile(const std::string& fileName) { loadFileInBackground(fileName); }
+
+    /** @brief Whether a file is being read right now. */
+    [[nodiscard]] bool isLoading() const {
+        const auto state = operationState_.load();
+        return state == OperationState::Loading || state == OperationState::Cancelling;
+    }
+
+    /** @brief The file the loaded games came from. */
+    [[nodiscard]] const std::string& getLoadedFileName() const {
+        return gameRecordManager_.getCurrentFileName();
+    }
+
+    /** @brief The number of games loaded, before filtering. */
+    [[nodiscard]] size_t getLoadedGameCount() const {
+        return isLoading() ? 0 : gameRecordManager_.getGames().size();
+    }
+
+    /** @brief The number of games the filter lets through. */
+    [[nodiscard]] size_t getFilteredGameCount() const;
+
+    /**
+     * @brief The games the filter lets through, as copies.
+     *
+     * Copies rather than a view: the caller keeps them and works on them while this view goes on
+     * to hold something else entirely. Empty while a file is being read.
+     */
+    [[nodiscard]] std::vector<QaplaTester::GameRecord> getFilteredGames() const;
+
+    /**
+     * @brief Asks for the filter dialog of this view, the same one its Filter button opens.
+     *
+     * Opened on the next frame by this view itself, not here: an ImGui popup belongs to the
+     * window that opens it, and one opened from the chat panel would be a popup of the chat
+     * panel -- drawn nowhere, since it is this view that draws it.
+     */
+    void requestFilterDialog() { filterRequested_ = true; }
+
+    /** @brief Whether the filter dialog is open or about to be. */
+    [[nodiscard]] bool isFilterDialogOpen() const { return filterRequested_ || filterPopup_.isOpen(); }
+
 private:
     /**
      * @brief Draws the buttons for the game list.
@@ -112,6 +167,11 @@ private:
      * @brief Extracts unique values from loaded games for filter options.
      */
     void updateFilterOptions();
+
+    /**
+     * @brief Opens the filter dialog, from this view's own drawing.
+     */
+    void openFilterDialog();
 
     /**
      * @brief Starts loading a file in background thread with validation.
@@ -171,7 +231,7 @@ private:
     /**
      * @brief Mutex for synchronizing access to the game table.
      */
-    std::mutex gameTableMutex_;
+    mutable std::mutex gameTableMutex_;
 
     /**
      * @brief Popup window for filter configuration.
@@ -185,6 +245,21 @@ private:
     std::vector<size_t> filteredToOriginalIndex_;
 
     inline static std::optional<QaplaTester::GameRecord> selectedGame_;
+
+    /** @brief The one instance; see instance(). */
+    inline static ImGuiGameList* instance_ = nullptr;
+
+    /** @brief Set by requestFilterDialog(), acted on in draw(). */
+    bool filterRequested_ = false;
+
+    /**
+     * @brief How many games the filter lets through, as of the last time the table was built.
+     *
+     * Kept beside filteredToOriginalIndex_ rather than read from it: the table is built on the
+     * loading thread, and a caller drawing a frame must be able to ask this without waiting for
+     * that thread and without reading a vector while it grows.
+     */
+    std::atomic<size_t> filteredCount_{0};
 
     std::pair<QaplaButton::ButtonState, std::string> computeButtonState(const std::string& button, bool isLoading) const;
     void executeCommand(const std::string& button, bool isLoading);

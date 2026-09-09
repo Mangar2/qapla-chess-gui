@@ -147,8 +147,8 @@ namespace QaplaWindows::ImGuiControls {
         return modified;
     }
 
-    bool existingFileInput(const std::string& label, std::string& filePath, 
-        float inputWidth, const char* buttonLabel) {
+    bool existingFileInput(const std::string& label, std::string& filePath,
+        const FileDialog& dialog, float inputWidth, const char* buttonLabel) {
         bool modified = false;
 		ImGui::PushID(label.c_str()); 
         // Display label
@@ -157,9 +157,9 @@ namespace QaplaWindows::ImGuiControls {
         // File selection button
         if (textButton(buttonLabel)) {
             try {
-                auto selectedFiles = OsDialogs::openFileDialog();
-                if (!selectedFiles.empty()) {
-                    filePath = selectedFiles[0]; // Use the first selected file
+                auto selected = dialog ? dialog() : std::string{};
+                if (!selected.empty()) {
+                    filePath = selected;
                     modified = true;
                 }
             }
@@ -207,9 +207,8 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool newFileInput(const std::string& label, std::string& filePath,
-        const std::vector<std::pair<std::string, std::string>>& filters,
-        float inputWidth, const char* buttonLabel) {
-        
+        const FileDialog& dialog, float inputWidth, const char* buttonLabel) {
+
         bool modified = false;
         ImGui::PushID(label.c_str());
 
@@ -217,9 +216,9 @@ namespace QaplaWindows::ImGuiControls {
 
         if (ImGuiControls::textButton(buttonLabel)) {
             try {
-                auto selectedPath = OsDialogs::saveFileDialog(filters, filePath);
-                if (!selectedPath.empty()) {
-                    filePath = selectedPath;
+                auto selected = dialog ? dialog() : std::string{};
+                if (!selected.empty()) {
+                    filePath = selected;
                     modified = true;
                 }
             }
@@ -231,6 +230,53 @@ namespace QaplaWindows::ImGuiControls {
         ImGui::SetNextItemWidth(inputWidth);
         ImGui::SameLine();
         modified |= inputText("##filePath", filePath);
+
+        ImGui::PopID();
+        return modified;
+    }
+
+    bool recentFileInput(const std::string& label, std::string& filePath,
+        const std::vector<std::string>& recentFiles, const FileDialog& dialog,
+        float inputWidth, const char* buttonLabel) {
+
+        bool modified = false;
+        ImGui::PushID(label.c_str());
+
+        ImGui::TextUnformatted(label.c_str());
+
+        if (ImGuiControls::textButton(buttonLabel)) {
+            try {
+                auto selected = dialog ? dialog() : std::string{};
+                if (!selected.empty()) {
+                    filePath = selected;
+                    modified = true;
+                }
+            }
+            catch (const std::exception& e) {
+                SnackbarManager::instance().showError(e.what());
+            }
+        }
+
+        ImGui::SetNextItemWidth(inputWidth);
+        ImGui::SameLine();
+        modified |= inputText("##filePath", filePath);
+
+        if (!recentFiles.empty()) {
+            ImGui::SameLine();
+            // Only the arrow: the chosen file is already shown in the field beside it, and
+            // repeating it here would make the row twice as wide for nothing.
+            ImGui::SetNextItemWidth(ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.x * 2.0F);
+            if (ImGui::BeginCombo("##recent", "", ImGuiComboFlags_NoPreview)) {
+                for (const auto& recent : recentFiles) {
+                    if (ImGui::Selectable(recent.c_str(), recent == filePath)) {
+                        filePath = recent;
+                        modified = true;
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            hooverTooltip("Choose one of the files last used here");
+        }
 
         ImGui::PopID();
         return modified;
@@ -349,7 +395,11 @@ namespace QaplaWindows::ImGuiControls {
         switch (option.type) {
         case QaplaTester::EngineOption::Type::File: {
             // File input
-            modified = existingFileInput(option.name.c_str(), value, fileInputWidth);
+            // An engine's own file option: the application does not know what kind of file the
+            // engine means, so the dialog does not pretend to either.
+            modified = existingFileInput(option.name.c_str(), value,
+                []() { const auto files = OsDialogs::openAnyFile(); return files.empty() ? std::string{} : files.front(); },
+                fileInputWidth);
             break;
         }
         case QaplaTester::EngineOption::Type::Check: {

@@ -270,7 +270,7 @@ void ImGuiEngineSelect::setEngineConfigurations(const std::vector<EngineConfigur
 }
 
 std::vector<std::string> ImGuiEngineSelect::addEngines(bool select) {
-    auto commands = OsDialogs::openFileDialog(true);
+    auto commands = OsDialogs::openEngineFile(true);
     if (commands.empty()) {
         return {};
     }

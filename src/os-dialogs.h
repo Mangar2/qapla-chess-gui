@@ -40,35 +40,89 @@ public:
     // Type aliases for callbacks
     // ========================================================================
     
-    using OpenFileCallback = std::function<void(const std::vector<std::string>& files)>;
-    using SaveFileCallback = std::function<void(const std::string& file)>;
     using SelectFolderCallback = std::function<void(const std::string& folder)>;
 
     // ========================================================================
-    // Synchronous API (blocking) - existing interface
+    // The file kinds this application knows
     // ========================================================================
-    /**
-     * Opens a native file dialog for selecting files.
-     *
-     * @param multiple If true, allows selecting multiple files.
-     * @param filters List of file type filters as pairs of (description, pattern).
-     *                Example: { {"PGN Files", "*.pgn"}, {"All Files", "*.*"} }
-     *                If empty, no file type filtering is applied.
-     * @return Vector of selected file paths, empty if cancelled.
-     */
-    static std::vector<std::string> openFileDialog(bool multiple = false,
-        const std::vector<std::pair<std::string, std::string>>& filters = {});
+    //
+    // One function per kind, and nothing else: a dialog that is spelled out at the call site is
+    // spelled out differently at the next call site, and then "open a PGN" means two different
+    // things in the same application. It happened -- one place asked for the pattern "pgn"
+    // instead of "*.pgn" and its dialog showed no files at all. So the extensions live here,
+    // once, and the generic dialogs below are private.
+    //
+    // Every filter can be switched off in the dialog: it offers "All files" beside the kind it
+    // was opened for. A dialog that only ever shows one extension is a cage, not a filter.
+
+    /** @brief Asks for a PGN file to read. @param multiple Allow more than one file. */
+    [[nodiscard]] static std::vector<std::string> openPgnFile(bool multiple = false);
+
+    /** @brief Asks where to write a PGN file. @param defaultPath What to offer first. */
+    [[nodiscard]] static std::string savePgnFile(const std::string& defaultPath = {});
+
+    /** @brief Asks for a file of test positions (EPD, or plain FEN lines). */
+    [[nodiscard]] static std::vector<std::string> openEpdFile();
+
+    /** @brief Asks for a file of opening positions, which is a PGN or a position file. */
+    [[nodiscard]] static std::vector<std::string> openOpeningsFile();
+
+    /** @brief Asks where to write the results of an EPD run. */
+    [[nodiscard]] static std::string saveEpdResultFile(const std::string& defaultPath = {});
+
+    /** @brief Asks for a stored EPD result to read back. */
+    [[nodiscard]] static std::vector<std::string> openEpdResultFile();
+
+    /** @brief Asks for a stored tournament to read back. */
+    [[nodiscard]] static std::vector<std::string> openTournamentFile();
+
+    /** @brief Asks where to write a tournament. */
+    [[nodiscard]] static std::string saveTournamentFile(const std::string& defaultPath = {});
+
+    /** @brief Asks for a stored SPRT test to read back. */
+    [[nodiscard]] static std::vector<std::string> openSprtFile();
+
+    /** @brief Asks where to write an SPRT test. */
+    [[nodiscard]] static std::string saveSprtFile(const std::string& defaultPath = {});
 
     /**
-     * Opens a native file dialog for saving a file.
+     * @brief Asks for engine programs to add.
      *
-     * @param filters List of file type filters as pairs of (description, pattern).
-     *                Example: { {"Text Files", "*.txt"}, {"All Files", "*.*"} }
-     * @param defaultPath The default file path to show in the dialog.
-     * @return The selected file path, or an empty string if cancelled.
+     * Without an extension filter: an engine is an executable, which carries an extension on
+     * Windows and none anywhere else.
+     *
+     * @param multiple Allow more than one file.
      */
-    static std::string saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath = {});
+    [[nodiscard]] static std::vector<std::string> openEngineFile(bool multiple = true);
+
+    /**
+     * @brief Asks for a file of no particular kind.
+     *
+     * For a path a user names for something the application does not classify -- an engine's own
+     * option of type "file", say. Everything the application does classify has a function of its
+     * own above.
+     */
+    [[nodiscard]] static std::vector<std::string> openAnyFile(bool multiple = false);
+
+    /** @brief Asks where to write a file of no particular kind. */
+    [[nodiscard]] static std::string saveAnyFile(const std::string& defaultPath = {});
+
+    /**
+     * @brief The extensions of a kind, and the label a dialog shows for it.
+     *
+     * Exposed only so that the derivation can be tested without opening a dialog; the dialogs
+     * themselves are the only callers.
+     *
+     * @param extensions Extensions without a dot, e.g. {"epd", "raw"}.
+     * @return A label such as "EPD, RAW files (*.epd, *.raw)", or "All files (*.*)" when empty.
+     */
+    [[nodiscard]] static std::string describeFileTypes(const std::vector<std::string>& extensions);
+
+    /**
+     * @brief The glob pattern of one extension, e.g. "pgn" becomes "*.pgn".
+     * @param extension An extension without a dot; empty gives the pattern for any file.
+     */
+    [[nodiscard]] static std::string fileTypePattern(const std::string& extension);
 
     /**
      * Opens a native folder selection dialog.
@@ -81,31 +135,6 @@ public:
     // ========================================================================
     // Asynchronous API (non-blocking) - new interface
     // ========================================================================
-
-    /**
-     * Opens a native file dialog for selecting files (async version).
-     * Returns immediately, calls callback when dialog is closed.
-     * The ImGui render loop continues while the dialog is open.
-     *
-     * @param callback Called with selected files (empty vector if cancelled).
-     * @param multiple If true, allows selecting multiple files.
-     * @param filters List of file type filters as pairs of (description, pattern).
-     */
-    static void openFileDialogAsync(OpenFileCallback callback,
-        bool multiple = false,
-        const std::vector<std::pair<std::string, std::string>>& filters = {});
-
-    /**
-     * Opens a native file dialog for saving a file (async version).
-     * Returns immediately, calls callback when dialog is closed.
-     *
-     * @param callback Called with selected file path (empty string if cancelled).
-     * @param filters List of file type filters as pairs of (description, pattern).
-     * @param defaultPath The default file path to show in the dialog.
-     */
-    static void saveFileDialogAsync(SaveFileCallback callback,
-        const std::vector<std::pair<std::string, std::string>>& filters,
-        const std::string& defaultPath = {});
 
     /**
      * Opens a native folder selection dialog (async version).
@@ -127,6 +156,38 @@ public:
      *         QaplaHelpers::OsHelpers::getConfigDirectory() and returns its fallback path.
      */
     static std::string getConfigDirectory();
+
+private:
+    /**
+     * @brief Opens a native dialog for choosing files to read.
+     *
+     * Private on purpose: see the file kinds above. The extensions carry no dot and no star --
+     * the pattern is built here, so that no caller can spell it differently.
+     *
+     * @param extensions Extensions to offer, without a dot. Empty offers every file.
+     * @param multiple If true, allows selecting more than one file.
+     * @param allowNoFilter If true, "All files" is offered beside the extensions, so the user can
+     *        reach a file whose name does not end the expected way.
+     * @return The chosen paths, empty if the dialog was cancelled.
+     */
+    [[nodiscard]] static std::vector<std::string> openFileDialog(
+        const std::vector<std::string>& extensions = {},
+        bool multiple = false,
+        bool allowNoFilter = true);
+
+    /**
+     * @brief Opens a native dialog for choosing where to write a file.
+     *
+     * @param extensions Extensions to offer, without a dot. The first one is appended to a name
+     *        that was typed without one.
+     * @param defaultPath The path to offer first.
+     * @param allowNoFilter If true, "All files" is offered beside the extensions.
+     * @return The chosen path, empty if the dialog was cancelled.
+     */
+    [[nodiscard]] static std::string saveFileDialog(
+        const std::vector<std::string>& extensions = {},
+        const std::string& defaultPath = {},
+        bool allowNoFilter = true);
 };
 
 } // namespace QaplaWindows

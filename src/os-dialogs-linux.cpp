@@ -49,8 +49,42 @@
 
 namespace QaplaWindows {
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) {
+namespace {
+
+/**
+ * @brief Adds one filter to a GTK chooser, built from extensions rather than from a pattern.
+ * @param chooser The dialog to add it to.
+ * @param extensions Extensions without a dot; empty adds the "All files" entry.
+ */
+void addFilter(GtkFileChooser* chooser, const std::vector<std::string>& extensions) {
+    GtkFileFilter* filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter, OsDialogs::describeFileTypes(extensions).c_str());
+    if (extensions.empty()) {
+        gtk_file_filter_add_pattern(filter, OsDialogs::fileTypePattern("").c_str());
+    }
+    for (const auto& extension : extensions) {
+        gtk_file_filter_add_pattern(filter, OsDialogs::fileTypePattern(extension).c_str());
+    }
+    gtk_file_chooser_add_filter(chooser, filter);
+}
+
+/**
+ * @brief Gives the dialog the filter it was opened for and, unless refused, "All files" beside it.
+ */
+void addFilters(GtkFileChooser* chooser, const std::vector<std::string>& extensions,
+                bool allowNoFilter) {
+    if (!extensions.empty()) {
+        addFilter(chooser, extensions);
+    }
+    if (allowNoFilter || extensions.empty()) {
+        addFilter(chooser, {});
+    }
+}
+
+} // namespace
+
+std::vector<std::string> OsDialogs::openFileDialog(const std::vector<std::string>& extensions,
+    bool multiple, bool allowNoFilter) {
     std::vector<std::string> results;
 
     gtk_init(nullptr, nullptr);
@@ -61,14 +95,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
         nullptr);
 
     gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), multiple);
-
-    // Set file type filters if provided
-    for (const auto& filter : filters) {
-        GtkFileFilter* gtkFilter = gtk_file_filter_new();
-        gtk_file_filter_set_name(gtkFilter, filter.first.c_str());
-        gtk_file_filter_add_pattern(gtkFilter, filter.second.c_str());
-        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), gtkFilter);
-    }
+    addFilters(GTK_FILE_CHOOSER(dialog), extensions, allowNoFilter);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         GSList* files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
@@ -85,23 +112,18 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
 }
 
 /**
- * Adds the appropriate extension to the file path if missing based on the selected filter.
- * @param path The original file path.
- * @param filters The list of filters as pairs of (description, pattern).
- * @param selectedIndex The index of the selected filter.
- * @return The file path with the appropriate extension added if it was missing.
+ * Adds the first offered extension to a name that was typed without one.
+ * @param path The path the user chose.
+ * @param extensions The extensions the dialog offered; empty leaves the path alone.
+ * @return The path, with an extension if it had none.
  */
 static std::string addExtensionIfMissing(const std::string& path,
-                                         const std::vector<std::pair<std::string, std::string>>& filters,
-                                         size_t selectedIndex) {
-    if (filters.empty() || selectedIndex >= filters.size()) {
+                                         const std::vector<std::string>& extensions) {
+    if (extensions.empty() || extensions.front().empty()
+        || std::filesystem::path(path).has_extension()) {
         return path;
     }
-    const std::string& ext = filters[selectedIndex].second;
-    if (ext.empty() || ext == "*" || std::filesystem::path(path).has_extension()) {
-        return path;
-    }
-    return path + "." + ext;
+    return path + "." + extensions.front();
 }
 
 #include <gtk/gtk.h>
@@ -109,8 +131,8 @@ static std::string addExtensionIfMissing(const std::string& path,
 #include <pwd.h>
 #include <unistd.h>
 
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath) 
+std::string OsDialogs::saveFileDialog(const std::vector<std::string>& extensions,
+        const std::string& defaultPath, bool allowNoFilter)
 {
     gtk_init(nullptr, nullptr);
     GtkWidget* dialog = gtk_file_chooser_dialog_new("Save File", nullptr,
@@ -124,35 +146,22 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     }
 
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
-
-    for (const auto& [desc, ext] : filters) {
-        GtkFileFilter* filter = gtk_file_filter_new();
-        gtk_file_filter_set_name(filter, desc.c_str());
-        std::string pattern = "*." + ext;
-        gtk_file_filter_add_pattern(filter, pattern.c_str());
-        gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
-    }
+    addFilters(GTK_FILE_CHOOSER(dialog), extensions, allowNoFilter);
 
     std::string result;
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         if (filename) {
             result = filename;
-            if (filters.size() == 1 && filters[0].second != "*") {
-                result = addExtensionIfMissing(result, filters, 0);
-            }
             g_free(filename);
+            result = addExtensionIfMissing(result, extensions);
         }
     }
-
     gtk_widget_destroy(dialog);
     while (gtk_events_pending()) gtk_main_iteration();
+
     return result;
 }
-
-// ============================================================================
-// FOLDER SELECTION DIALOG
-// ============================================================================
 
 std::string OsDialogs::selectFolderDialog(const std::string& defaultPath) {
     gtk_init(nullptr, nullptr);
@@ -237,26 +246,6 @@ std::string OsDialogs::getConfigDirectory() {
 // ASYNC DIALOG IMPLEMENTATIONS
 // ============================================================================
 // Simply call the synchronous version and pass result to callback.
-
-void OsDialogs::openFileDialogAsync(OpenFileCallback callback,
-    bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) 
-{
-    auto result = openFileDialog(multiple, filters);
-    if (callback) {
-        callback(result);
-    }
-}
-
-void OsDialogs::saveFileDialogAsync(SaveFileCallback callback,
-    const std::vector<std::pair<std::string, std::string>>& filters,
-    const std::string& defaultPath) 
-{
-    auto result = saveFileDialog(filters, defaultPath);
-    if (callback) {
-        callback(result);
-    }
-}
 
 void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
     const std::string& defaultPath) 

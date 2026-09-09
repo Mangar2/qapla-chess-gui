@@ -63,8 +63,8 @@ using NSUInteger = unsigned int;
 
 namespace QaplaWindows {
 
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) {
+std::vector<std::string> OsDialogs::openFileDialog(const std::vector<std::string>& extensions,
+    bool multiple, bool allowNoFilter) {
     std::vector<std::string> results;
 
     // pool = [[NSAutoreleasePool alloc] init];
@@ -78,23 +78,21 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
     ((void(*)(id, SEL, BOOL))objc_msgSend)(
         panel, sel_registerName("setAllowsMultipleSelection:"), multiple ? (BOOL)1 : (BOOL)0);
 
-    // Set file type filters (NSOpenPanel only supports extensions, not descriptions)
-    if (!filters.empty()) {
+    // NSOpenPanel restricts, it does not offer a choice: setAllowedFileTypes greys everything
+    // else out and there is no selector to switch it off. So when the caller wants the filter to
+    // be escapable -- which is the default -- nothing is set here at all, and the panel shows
+    // every file. Only a caller that insists on the kind gets the restriction.
+    if (!extensions.empty() && !allowNoFilter) {
         Class NSMutableArray = (Class)objc_getClass("NSMutableArray");
         id allowedTypes = ((id(*)(Class, SEL))objc_msgSend)(NSMutableArray, sel_registerName("array"));
-        
-        for (const auto& filter : filters) {
-            // Extract file extensions from pattern (e.g., "*.pgn" -> "pgn")
-            std::string pattern = filter.second;
-            if (pattern.find("*.") == 0 && pattern.length() > 2) {
-                std::string ext = pattern.substr(2);
-                Class NSString = (Class)objc_getClass("NSString");
-                id extStr = ((id(*)(Class, SEL, const char*))objc_msgSend)(
-                    NSString, sel_registerName("stringWithUTF8String:"), ext.c_str());
-                ((void(*)(id, SEL, id))objc_msgSend)(allowedTypes, sel_registerName("addObject:"), extStr);
-            }
+
+        for (const auto& extension : extensions) {
+            Class NSString = (Class)objc_getClass("NSString");
+            id extStr = ((id(*)(Class, SEL, const char*))objc_msgSend)(
+                NSString, sel_registerName("stringWithUTF8String:"), extension.c_str());
+            ((void(*)(id, SEL, id))objc_msgSend)(allowedTypes, sel_registerName("addObject:"), extStr);
         }
-        
+
         if (((NSUInteger(*)(id, SEL))objc_msgSend)(allowedTypes, sel_registerName("count")) > 0) {
             ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setAllowedFileTypes:"), allowedTypes);
         }
@@ -119,28 +117,22 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
 }
 
 /**
- * Adds the appropriate extension to the file path if missing based on the selected filter.
- * @param path The original file path.
- * @param filters The list of filters as pairs of (description, pattern).
- * @param selectedIndex The index of the selected filter.
- * @return The file path with the appropriate extension added if it was missing.
+ * Adds the first offered extension to a name that was typed without one.
+ * @param path The path the user chose.
+ * @param extensions The extensions the dialog offered; empty leaves the path alone.
+ * @return The path, with an extension if it had none.
  */
 static std::string addExtensionIfMissing(const std::string& path,
-                                         const std::vector<std::pair<std::string, std::string>>& filters,
-                                         size_t selectedIndex) {
-    if (filters.empty() || selectedIndex >= filters.size()) {
+                                         const std::vector<std::string>& extensions) {
+    if (extensions.empty() || extensions.front().empty()
+        || std::filesystem::path(path).has_extension()) {
         return path;
     }
-    const std::string& ext = filters[selectedIndex].second;
-    if (ext.empty() || ext == "*" || std::filesystem::path(path).has_extension()) {
-        return path;
-    }
-    return path + "." + ext;
+    return path + "." + extensions.front();
 }
 
-
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath) 
+std::string OsDialogs::saveFileDialog(const std::vector<std::string>& extensions,
+        const std::string& defaultPath, bool allowNoFilter)
 {
     std::string result;
 
@@ -151,14 +143,18 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     Class panelClass = (Class)objc_getClass("NSSavePanel");
     id panel = ((id(*)(Class, SEL))objc_msgSend)(panelClass, sel_registerName("savePanel"));
 
-    if (!filters.empty()) {
+    if (!extensions.empty()) {
         id filterArray = ((id(*)(Class, SEL))objc_msgSend)((Class)objc_getClass("NSMutableArray"), sel_registerName("array"));
-        for (const auto& [desc, ext] : filters) {
+        for (const auto& extension : extensions) {
             id nsExt = ((id(*)(Class, SEL, const char*))objc_msgSend)(
-                (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), ext.c_str());
+                (Class)objc_getClass("NSString"), sel_registerName("stringWithUTF8String:"), extension.c_str());
             ((void(*)(id, SEL, id))objc_msgSend)(filterArray, sel_registerName("addObject:"), nsExt);
         }
         ((void(*)(id, SEL, id))objc_msgSend)(panel, sel_registerName("setAllowedFileTypes:"), filterArray);
+        // A save panel, unlike the open panel, can be told to accept another ending anyway --
+        // that is what makes its filter a suggestion rather than a cage.
+        ((void(*)(id, SEL, BOOL))objc_msgSend)(
+            panel, sel_registerName("setAllowsOtherFileTypes:"), allowNoFilter ? (BOOL)1 : (BOOL)0);
     }
 
     if (!defaultPath.empty()) {
@@ -184,9 +180,7 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
         const char* cstr = ((const char*(*)(id, SEL))objc_msgSend)(path, sel_registerName("UTF8String"));
         if (cstr) {
             result = cstr;
-            if (filters.size() == 1 && filters[0].second != "*") {
-                result = addExtensionIfMissing(result, filters, 0);
-            }
+            result = addExtensionIfMissing(result, extensions);
         }
     }
 
@@ -245,26 +239,6 @@ std::string OsDialogs::getConfigDirectory() {
 // ============================================================================
 // For Windows and Linux: Simply call the synchronous version and pass result to callback.
 // For macOS: Could be implemented with native async sheets in the future.
-
-void OsDialogs::openFileDialogAsync(OpenFileCallback callback,
-    bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) 
-{
-    auto result = openFileDialog(multiple, filters);
-    if (callback) {
-        callback(result);
-    }
-}
-
-void OsDialogs::saveFileDialogAsync(SaveFileCallback callback,
-    const std::vector<std::pair<std::string, std::string>>& filters,
-    const std::string& defaultPath) 
-{
-    auto result = saveFileDialog(filters, defaultPath);
-    if (callback) {
-        callback(result);
-    }
-}
 
 void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
     const std::string& defaultPath) 

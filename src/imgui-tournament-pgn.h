@@ -42,6 +42,8 @@ namespace QaplaWindows {
             float indent = 10.0F;               ///< Indentation for controls
             bool drawDetails = true;            ///< Whether to draw detailed options
             bool showCollapsingHeader = true;   ///< Whether to show collapsing header
+            /// Files last written here, newest first; nullptr or empty hides the dropdown.
+            const std::vector<std::string>* recentFiles = nullptr;
         };
 
         /**

@@ -195,8 +195,7 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
                     SnackbarManager::instance().showWarning("Cannot load tournament while running");
                     return;
                 }
-                auto selectedPath = OsDialogs::openFileDialog(false, 
-                    { {"Qapla Tournament Files", "*.qtour"}, {"All Files", "*.*"} });
+                auto selectedPath = OsDialogs::openTournamentFile();
                 if (!selectedPath.empty() && !selectedPath[0].empty())
                 {
                     TournamentData::instance().loadTournament(selectedPath[0]);
@@ -208,7 +207,7 @@ void QaplaWindows::TournamentWindow::executeCommand(const std::string &button)
                     SnackbarManager::instance().showWarning("Cannot save tournament while running");
                     return;
                 }
-                auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla Tournament Files", "qtour"} });
+                auto selectedPath = OsDialogs::saveTournamentFile();
                 if (!selectedPath.empty())
                 {
                     TournamentData::saveTournament(selectedPath);

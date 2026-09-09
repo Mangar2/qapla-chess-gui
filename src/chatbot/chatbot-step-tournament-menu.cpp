@@ -45,13 +45,6 @@ void ChatbotStepTournamentMenu::saveTournament(const std::string& path) {
     }
 }
 
-std::pair<std::string, std::string> ChatbotStepTournamentMenu::getFileFilter() const {
-    if (type_ == EngineSelectContext::SPRT) {
-        return {"Qapla SPRT Files", "qsprt"};
-    }
-    return {"Qapla Tournament Files", "qtour"};
-}
-
 const char* ChatbotStepTournamentMenu::getTournamentName() const {
     return (type_ == EngineSelectContext::SPRT) ? "SPRT tournament" : "tournament";
 }
@@ -85,8 +78,9 @@ std::string ChatbotStepTournamentMenu::draw() {
 
     std::string saveButtonLabel = std::string("Save ") + getTournamentName();
     if (QaplaWindows::ImGuiControls::textButton(saveButtonLabel.c_str())) {
-        auto filter = getFileFilter();
-        auto path = OsDialogs::saveFileDialog({{filter.first, filter.second}});
+        auto path = type_ == EngineSelectContext::SPRT
+            ? OsDialogs::saveSprtFile()
+            : OsDialogs::saveTournamentFile();
         if (!path.empty()) {
             saveTournament(path);
             saved_ = true;

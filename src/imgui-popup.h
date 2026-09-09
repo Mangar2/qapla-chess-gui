@@ -117,6 +117,13 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Tells whether the popup is currently on screen.
+         */
+        [[nodiscard]] bool isOpen() const {
+            return isOpen_;
+        }
+
+        /**
 		 * @brief Returns the content window of this popup.
          */
         const T& content() const {

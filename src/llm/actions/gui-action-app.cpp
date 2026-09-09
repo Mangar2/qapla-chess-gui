@@ -58,7 +58,7 @@ ActionResult openPgnFile(PgnSource source) {
         }
     } else {
         dialogShown = true;
-        auto paths = QaplaWindows::OsDialogs::openFileDialog(false, {{"PGN files (*.pgn)", "pgn"}});
+        auto paths = QaplaWindows::OsDialogs::openPgnFile();
         if (paths.empty()) {
             return ActionResult{.ok = true,
                 .text = "The user cancelled the dialog; no PGN file was opened.",

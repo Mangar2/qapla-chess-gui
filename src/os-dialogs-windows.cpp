@@ -76,23 +76,47 @@ namespace {
         }
     }
 
+    /**
+     * @brief Gives the dialog the kind it was opened for and, unless refused, "All files".
+     * @param pFileOpen The dialog.
+     * @param extensions Extensions without a dot; empty means no kind, only "All files".
+     * @param allowNoFilter Whether "All files" is offered beside the kind.
+     */
     void setFileFilters(IFileOpenDialog* pFileOpen,
-                        const std::vector<std::pair<std::string, std::string>>& filters) {
-        if (filters.empty()) return;
-
+                        const std::vector<std::string>& extensions,
+                        bool allowNoFilter) {
         std::vector<std::wstring> nameStrings;
         std::vector<std::wstring> specStrings;
         std::vector<COMDLG_FILTERSPEC> fileTypes;
 
-        nameStrings.reserve(filters.size());
-        specStrings.reserve(filters.size());
-        fileTypes.reserve(filters.size());
-
-        for (const auto& [desc, pattern] : filters) {
-            nameStrings.push_back(ascii_to_wstring(desc));
-            specStrings.push_back(ascii_to_wstring(pattern));
-            // COMDLG_FILTERSPEC stores only pointers, not strings. nameStrings/specStrings keep the actual data alive.
+        auto addFilter = [&](const std::vector<std::string>& kind) {
+            std::string patterns;
+            for (const auto& extension : kind) {
+                if (!patterns.empty()) {
+                    patterns += ";";
+                }
+                patterns += OsDialogs::fileTypePattern(extension);
+            }
+            if (patterns.empty()) {
+                // "*.*" and not "*": the Windows dialog reads the first as "everything".
+                patterns = "*.*";
+            }
+            nameStrings.push_back(ascii_to_wstring(OsDialogs::describeFileTypes(kind)));
+            specStrings.push_back(ascii_to_wstring(patterns));
+            // COMDLG_FILTERSPEC stores only pointers, not strings. nameStrings/specStrings keep
+            // the actual data alive.
             fileTypes.push_back({nameStrings.back().c_str(), specStrings.back().c_str()});
+        };
+
+        nameStrings.reserve(2);
+        specStrings.reserve(2);
+        fileTypes.reserve(2);
+
+        if (!extensions.empty()) {
+            addFilter(extensions);
+        }
+        if (allowNoFilter || extensions.empty()) {
+            addFilter({});
         }
 
         pFileOpen->SetFileTypes(static_cast<UINT>(fileTypes.size()), fileTypes.data());
@@ -135,8 +159,8 @@ namespace {
 }
 
 namespace QaplaWindows {
-std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) {
+std::vector<std::string> OsDialogs::openFileDialog(const std::vector<std::string>& extensions,
+    bool multiple, bool allowNoFilter) {
     std::vector<std::string> results;
 
     HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -148,7 +172,7 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
 
     if (SUCCEEDED(hr)) {
         setDialogOptions(pFileOpen, multiple);
-        setFileFilters(pFileOpen, filters);
+        setFileFilters(pFileOpen, extensions, allowNoFilter);
 
         hr = pFileOpen->Show(getNativeWindowHandle());
         if (SUCCEEDED(hr)) {
@@ -170,37 +194,47 @@ std::vector<std::string> OsDialogs::openFileDialog(bool multiple,
 }
 
 /**
- * Adds the appropriate extension to the file path if missing based on the selected filter.
- * @param path The original file path.
- * @param filters The list of filters as pairs of (description, pattern).
- * @param selectedIndex The index of the selected filter.
- * @return The file path with the appropriate extension added if it was missing.
+ * Adds the first offered extension to a name that was typed without one.
+ * @param path The path the user chose.
+ * @param extensions The extensions the dialog offered; empty leaves the path alone.
+ * @return The path, with an extension if it had none.
  */
 static std::string addExtensionIfMissing(const std::string& path,
-                                         const std::vector<std::pair<std::string, std::string>>& filters,
-                                         size_t selectedIndex) {
-    if (filters.empty() || selectedIndex >= filters.size()) {
+                                         const std::vector<std::string>& extensions) {
+    if (extensions.empty() || extensions.front().empty()
+        || std::filesystem::path(path).has_extension()) {
         return path;
     }
-    const std::string& ext = filters[selectedIndex].second;
-    if (ext.empty() || ext == "*" || std::filesystem::path(path).has_extension()) {
-        return path;
-    }
-    return path + "." + ext;
+    return path + "." + extensions.front();
 }
 
-std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, std::string>>& filters, 
-        const std::string& defaultPath) 
+std::string OsDialogs::saveFileDialog(const std::vector<std::string>& extensions,
+        const std::string& defaultPath, bool allowNoFilter)
 {
     char filename[MAX_PATH] = { 0 };
 
+    // The dialog reads this as pairs of zero-terminated strings, ended by a further zero.
     std::string filterStr;
-    for (const auto& [desc, ext] : filters) {
-        filterStr += desc + '\0' + "*." + ext + '\0';
+    auto addFilter = [&filterStr](const std::vector<std::string>& kind) {
+        std::string patterns;
+        for (const auto& extension : kind) {
+            if (!patterns.empty()) {
+                patterns += ";";
+            }
+            patterns += OsDialogs::fileTypePattern(extension);
+        }
+        if (patterns.empty()) {
+            patterns = "*.*";
+        }
+        filterStr += OsDialogs::describeFileTypes(kind) + '\0' + patterns + '\0';
+    };
+    if (!extensions.empty()) {
+        addFilter(extensions);
     }
-    if (filterStr.empty()) {
-        filterStr = "All Files\0*.*\0";
+    if (allowNoFilter || extensions.empty()) {
+        addFilter({});
     }
+
     if (!defaultPath.empty()) {
         std::snprintf(filename, sizeof(filename), "%s", defaultPath.c_str());
     }
@@ -215,9 +249,10 @@ std::string OsDialogs::saveFileDialog(const std::vector<std::pair<std::string, s
     ofn.Flags = OFN_OVERWRITEPROMPT;
 
     if (GetSaveFileNameA(&ofn)) {
-        std::string result = filename;
-        result = addExtensionIfMissing(result, filters, ofn.nFilterIndex - 1);
-        return result;
+        // Only the kind's own filter names an extension; picking "All files" leaves the name as
+        // it was typed.
+        const bool kindSelected = !extensions.empty() && ofn.nFilterIndex == 1;
+        return addExtensionIfMissing(filename, kindSelected ? extensions : std::vector<std::string>{});
     }
     return {};
 }
@@ -338,26 +373,6 @@ std::string OsDialogs::getConfigDirectory() {
 // ASYNC DIALOG IMPLEMENTATIONS
 // ============================================================================
 // Simply call the synchronous version and pass result to callback.
-
-void OsDialogs::openFileDialogAsync(OpenFileCallback callback,
-    bool multiple,
-    const std::vector<std::pair<std::string, std::string>>& filters) 
-{
-    auto result = openFileDialog(multiple, filters);
-    if (callback) {
-        callback(result);
-    }
-}
-
-void OsDialogs::saveFileDialogAsync(SaveFileCallback callback,
-    const std::vector<std::pair<std::string, std::string>>& filters,
-    const std::string& defaultPath) 
-{
-    auto result = saveFileDialog(filters, defaultPath);
-    if (callback) {
-        callback(result);
-    }
-}
 
 void OsDialogs::selectFolderDialogAsync(SelectFolderCallback callback,
     const std::string& defaultPath) 

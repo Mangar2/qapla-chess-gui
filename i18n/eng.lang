@@ -374,6 +374,7 @@ id=Table
 
 [Translation]
 id=Tooltip
+{s:"Select option: Backward Analysis",t:"2026-09-08"}=Select option: Backward Analysis
 {s:"Add this engine to tournament selection",t:"2026-08-26"}=Add this engine to tournament selection
 {s:"Clear all tournament data and results",t:"2025-12-23"}=Clear all tournament data and results
 {s:"Number of games running in parallel",t:"2026-08-16"}=Number of games running in parallel
@@ -812,6 +813,7 @@ id=Text
 
 [Translation]
 id=TextButton
+{s:"Backward Analysis",t:"2026-09-08"}=Backward Analysis
 {s:"Tournament",t:"2026-08-26"}=Tournament
 {s:"SPRT Tournament",t:"2026-08-26"}=SPRT Tournament
 {s:"EPD Analysis",t:"2026-08-26"}=EPD Analysis

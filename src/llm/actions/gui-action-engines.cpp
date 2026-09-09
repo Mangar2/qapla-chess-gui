@@ -130,7 +130,7 @@ ActionResult listInstalledEngines() {
 }
 
 ActionResult addEnginesViaDialog() {
-    auto paths = QaplaWindows::OsDialogs::openFileDialog(true);
+    auto paths = QaplaWindows::OsDialogs::openEngineFile(true);
     if (paths.empty()) {
         return ActionResult{.ok = true,
             .text = "The user cancelled the dialog; no engine was added.",

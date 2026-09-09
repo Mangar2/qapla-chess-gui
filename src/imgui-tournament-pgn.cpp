@@ -19,6 +19,7 @@
 
 #include "imgui-tournament-pgn.h"
 #include "imgui-controls.h"
+#include "os-dialogs.h"
 #include "configuration.h"
 #include "config-group-loader.h"
 #include "tournament-config-sections.h"
@@ -41,8 +42,14 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
         auto inputWidth = options.inputWidth;
 
         ImGui::SetNextItemWidth(inputWidth);
-        changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file, 
-            {{"PGN files (*.pgn)", "pgn"}}, options.fileInputWidth);
+        auto savePgn = [&file = pgnOptions_.file]() { return OsDialogs::savePgnFile(file); };
+        if (options.recentFiles != nullptr && !options.recentFiles->empty()) {
+            changed |= ImGuiControls::recentFileInput("Pgn file", pgnOptions_.file,
+                *options.recentFiles, savePgn, options.fileInputWidth);
+        } else {
+            changed |= ImGuiControls::newFileInput("Pgn file", pgnOptions_.file,
+                savePgn, options.fileInputWidth);
+        }
         ImGuiControls::hooverTooltip(
             "Path to the PGN file where all games will be saved.\n"
             "The file will be created if it doesn't exist"

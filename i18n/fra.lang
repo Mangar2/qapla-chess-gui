@@ -409,6 +409,7 @@ id=Table
 
 [Translation]
 id=Tooltip
+{s:"Select option: Backward Analysis",t:"2026-09-08"}=Sélectionner l'option : Analyse rétrograde
 {s:"Add new engine from executable file",t:"2025-12-23"}=Ajouter un nouveau moteur à partir du fichier exécutable
 {s:"Allow engines to think during opponent's time",t:"2026-07-25"}=Permettre aux moteurs de réfléchir pendant le temps de l'adversaire
 {s:"Path to opening file (.epd, .pgn, or raw FEN text)",t:"2026-07-25"}=Chemin vers le fichier d'ouverture (.epd, .pgn ou texte FEN brut)
@@ -847,6 +848,7 @@ id=Text
 
 [Translation]
 id=TextButton
+{s:"Backward Analysis",t:"2026-09-08"}=Analyse rétrograde
 {s:"Tournament",t:"2026-08-26"}=Tournoi
 {s:"SPRT Tournament",t:"2026-08-26"}=Tournoi SPRT
 {s:"EPD Analysis",t:"2026-08-26"}=Analyse EPD

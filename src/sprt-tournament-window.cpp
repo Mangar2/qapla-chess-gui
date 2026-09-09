@@ -197,8 +197,7 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
                 SnackbarManager::instance().showWarning("Cannot load tournament while running");
                 return;
             }
-            auto selectedPath = OsDialogs::openFileDialog(false, 
-                { {"Qapla SPRT Files", "*.qsprt"}, {"All Files", "*.*"} });
+            auto selectedPath = OsDialogs::openSprtFile();
             if (!selectedPath.empty() && !selectedPath[0].empty()) {
                 SprtTournamentData::instance().loadTournament(selectedPath[0]);
             }
@@ -207,7 +206,7 @@ void SprtTournamentWindow::executeCommand(const std::string &button) {
                 SnackbarManager::instance().showWarning("Cannot save tournament while running");
                 return;
             }
-            auto selectedPath = OsDialogs::saveFileDialog({ {"Qapla SPRT Files", "qsprt"} });
+            auto selectedPath = OsDialogs::saveSprtFile();
             if (!selectedPath.empty()) {
                 SprtTournamentData::saveTournament(selectedPath);
             }

@@ -34,7 +34,10 @@ std::string ChatbotStepOptionList::draw() {
     ImGui::Spacing();
 
     size_t num_options = options_.size();
-    const int max_per_row = 4;
+    // Five, not four: the first row holds the runs the application is there for -- tournament,
+    // SPRT, EPD, backward analysis and the board -- and splitting that group over two rows made
+    // the last of them look like an afterthought.
+    const int max_per_row = 5;
     size_t rows = (num_options + max_per_row - 1) / max_per_row;
     std::vector<ImGuiTextButton> buttons;
 

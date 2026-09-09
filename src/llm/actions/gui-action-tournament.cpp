@@ -248,7 +248,7 @@ namespace {
 
     void pickOpeningsFile(TournamentData& data, ConfigureOutcome& outcome) {
         outcome.dialogShown = true;
-        auto paths = QaplaWindows::OsDialogs::openFileDialog(false);
+        auto paths = QaplaWindows::OsDialogs::openOpeningsFile();
         if (paths.empty()) {
             outcome.applied.push_back("openings file (dialog cancelled, unchanged)");
             return;
@@ -259,8 +259,7 @@ namespace {
 
     void pickPgnFile(TournamentData& data, ConfigureOutcome& outcome) {
         outcome.dialogShown = true;
-        auto chosenPath = QaplaWindows::OsDialogs::saveFileDialog(
-            {{"PGN files (*.pgn)", "pgn"}}, data.pgnConfig().file);
+        auto chosenPath = QaplaWindows::OsDialogs::savePgnFile(data.pgnConfig().file);
         if (chosenPath.empty()) {
             outcome.applied.push_back("PGN output file (dialog cancelled, unchanged)");
             return;
