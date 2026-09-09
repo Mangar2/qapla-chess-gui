@@ -168,19 +168,36 @@ void ClockModel::setFromMoveRecord(const MoveRecord& moveRecord, uint32_t player
 
     uint64_t cur = moveRecord.timeMs;
 
+    // Who is playing comes from the game; a search info may say so as well, and then it is the
+    // better answer -- but only when it says anything. A game read from a PGN and recomputed
+    // move by move names no engine on its moves, and taking that empty name left the side that
+    // was actually thinking as the only one without a name under its clock. Same rule as in
+    // setFromHistoryMove(), for the same reason.
+    const std::string* name = nullptr;
+    static const std::string analyzeName = "Analyze";
+    if (analyze_) {
+        name = &analyzeName;
+    } else if (!moveRecord.engineName_.empty()) {
+        name = &moveRecord.engineName_;
+    }
+
     if (whiteToMove_) {
         if (cur > whiteTimeCurMoveMs_) {
             whiteStopwatch_.start(now_());
         }
         whiteTimeCurMoveMs_ = cur;
-        whiteEngineName_ = analyze_ ? "Analyze" : moveRecord.engineName_;
+        if (name != nullptr) {
+            whiteEngineName_ = *name;
+        }
     }
     else {
         if (cur > blackTimeCurMoveMs_) {
             blackStopwatch_.start(now_());
         }
         blackTimeCurMoveMs_ = cur;
-        blackEngineName_ = analyze_ ? "Analyze" : moveRecord.engineName_;
+        if (name != nullptr) {
+            blackEngineName_ = *name;
+        }
     }
 }
 

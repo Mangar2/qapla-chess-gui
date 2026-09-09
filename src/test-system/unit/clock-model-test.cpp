@@ -114,6 +114,53 @@ TEST_CASE_METHOD(ClockFixture, "A fresh game shows both base times with white to
     CHECK(view.whiteMove == "00:00");
 }
 
+TEST_CASE_METHOD(ClockFixture, "A search info that names its engine puts that name under the clock",
+    "[gui][clock]") {
+    sync();
+    info(0, 500, 1, "Searching Engine");
+
+    const ClockView view = model.view();
+    CHECK(view.whiteEngineName == "Searching Engine");
+    CHECK(view.blackEngineName == "Black Engine");
+}
+
+TEST_CASE_METHOD(ClockFixture, "A search info that names no engine leaves the game's players alone",
+    "[gui][clock]") {
+    // What a recomputed game looks like: the moves come from a PGN and name no engine, and the
+    // engine doing the recomputing is not one of the two players. The side that is thinking used
+    // to end up as the only one without a name under its clock.
+    sync();
+    info(0, 500, 1, "");
+
+    const ClockView view = model.view();
+    CHECK(view.whiteEngineName == "White Engine");
+    CHECK(view.blackEngineName == "Black Engine");
+}
+
+TEST_CASE_METHOD(ClockFixture, "Both players keep their names while a recomputed game is walked",
+    "[gui][clock]") {
+    // Move by move, as a backward analysis does it: every position is searched, no move names an
+    // engine, and both clocks have to stay labelled the whole way.
+    playMove(1000, "");
+    playMove(1200, "");
+    record.setNextMoveIndex(2);
+    sync();
+    info(1, 400, 1, "");
+
+    const ClockView view = model.view();
+    CHECK(view.whiteEngineName == "White Engine");
+    CHECK(view.blackEngineName == "Black Engine");
+}
+
+TEST_CASE_METHOD(ClockFixture, "An analysis says so instead of naming a player", "[gui][clock]") {
+    sync();
+    model.setAnalyze(true);
+    info(0, 500, 1, "Searching Engine");
+
+    const ClockView view = model.view();
+    CHECK(view.whiteEngineName == "Analyze");
+}
+
 TEST_CASE_METHOD(ClockFixture, "Nothing runs before the first search info arrives", "[gui][clock]") {
     sync();
     advance(5000);
