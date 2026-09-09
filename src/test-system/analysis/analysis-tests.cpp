@@ -32,6 +32,7 @@
 #include <opening/pgn-io.h>
 
 #include <filesystem>
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 
@@ -92,11 +93,25 @@ void registerAnalysisTests(ImGuiTestEngine* engine) {
         IM_CHECK(data.isBusy());
         IM_CHECK(data.getTotalCount() == 2);
 
-        // A board per game being recomputed, the way the tournament and the EPD run show theirs.
-        const bool boardsShown = QaplaTest::Common::waitForCondition(ctx, [&data]() {
-            return data.hasRunningBoards();
+        // A board per game being recomputed, the way the tournament and the EPD run show theirs,
+        // and it names the game by its players and how it ended -- not by the engine that is
+        // recomputing it, and not by a round the game never belonged to.
+        auto namesAPlayer = [](const std::vector<std::string>& labels) {
+            return std::ranges::any_of(labels, [](const std::string& label) {
+                return (label.find("White Player") != std::string::npos
+                        && label.find("Black Player") != std::string::npos
+                        && label.find("1-0") != std::string::npos)
+                    || (label.find("Other White") != std::string::npos
+                        && label.find("Other Black") != std::string::npos
+                        && label.find("0-1") != std::string::npos);
+            });
+        };
+        const bool boardsShown = QaplaTest::Common::waitForCondition(ctx, [&data, &namesAPlayer]() {
+            return data.hasRunningBoards() && namesAPlayer(data.runningBoardLabels());
         }, 20.0F);
-        ctx->LogInfo("boards running: %d", boardsShown ? 1 : 0);
+        for (const auto& label : data.runningBoardLabels()) {
+            ctx->LogInfo("board: %s", label.c_str());
+        }
         IM_CHECK(boardsShown);
 
         const bool done = QaplaTest::Common::waitForCondition(ctx, [&data]() {

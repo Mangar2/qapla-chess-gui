@@ -116,6 +116,10 @@ namespace QaplaWindows
         
         uint32_t round_ = 0;
         uint32_t gameInRound_ = 0;
+        /// Number of a game that comes from a file rather than from a round; 0 when it does not.
+        uint32_t fileGameNo_ = 0;
+        /// The tab's own name, for a game that is not a round of a tournament.
+        std::string tabName_;
         std::string positionName_;
         std::string tooltipText_;
         std::string windowId_;

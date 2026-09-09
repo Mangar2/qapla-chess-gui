@@ -142,6 +142,16 @@ namespace QaplaWindows {
         imguiConcurrency_->setNiceStop(nice);
     }
 
+    std::vector<std::string> AnalysisData::runningBoardLabels() const {
+        std::vector<std::string> labels;
+        for (const auto& window : viewerBoardWindows_.getWindows()) {
+            if (window.isRunning()) {
+                labels.push_back(window.getTooltip());
+            }
+        }
+        return labels;
+    }
+
     size_t AnalysisData::getFinishedCount() const {
         size_t finished = 0;
         for (const auto& manager : managers_) {

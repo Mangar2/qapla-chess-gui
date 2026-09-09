@@ -93,23 +93,52 @@ namespace QaplaWindows
         return *movesChartWindow;
     }
 
+    /**
+     * @brief Shortens an engine name so that several tabs fit beside each other.
+     *
+     * Cut rather than abbreviated: the beginning of an engine's name is what tells it from the
+     * next one, and the whole name is in the tab's tooltip.
+     *
+     * @param name The engine name.
+     * @param maxLength The most characters to keep.
+     */
+    std::string shortenName(const std::string& name, size_t maxLength = 12) {
+        if (name.size() <= maxLength) {
+            return name;
+        }
+        return name.substr(0, maxLength - 1) + ".";
+    }
+
     void ViewerBoardWindow::setFromGameRecord(const GameRecord& gameRecord)
     {
         round_ = gameRecord.getRound();
         gameInRound_ = gameRecord.getGameInRound();
         positionName_ = gameRecord.getPositionName();
+        fileGameNo_ = 0;
+        tabName_.clear();
         auto whiteEngineName = gameRecord.getWhiteEngineName();
         auto blackEngineName = gameRecord.getBlackEngineName();
-        if (positionName_.empty()) {
+        if (!positionName_.empty()) {
+            // Epd-Analysis, one engine computes a position
+            tooltipText_ = std::format("{}\n{}", positionName_, whiteEngineName);
+            windowId_ = std::format("{}:{}", positionName_, whiteEngineName);
+        } else if (round_ == 0 && gameInRound_ == 0) {
+            // A game that was read rather than played: it belongs to no round, and "Round 0,
+            // Game 0" says nothing about it. What tells one such game from another is who played
+            // it and how it ended -- the engine recomputing it is the same for all of them.
+            fileGameNo_ = gameRecord.getTotalGameNo();
+            const auto result = to_string(std::get<1>(gameRecord.getGameResult()));
+            tabName_ = std::format("{} {}-{} {}", fileGameNo_,
+                shortenName(whiteEngineName), shortenName(blackEngineName), result);
+            tooltipText_ = std::format("Game {}\n{} vs {}\nResult {}",
+                fileGameNo_, whiteEngineName, blackEngineName, result);
+            windowId_ = std::format("{}:{}-{}", fileGameNo_, whiteEngineName, blackEngineName);
+        } else {
             // Tournament game with round, game number and two engines
             tooltipText_ = std::format("Round {}, Game {}\n{} vs {}", 
                 round_, gameInRound_, whiteEngineName, blackEngineName);
             windowId_ = std::format("{}.{}:{}-{}", 
                 round_, gameInRound_, whiteEngineName, blackEngineName);
-        } else {
-            // Epd-Analysis, one engine computes a position
-            tooltipText_ = std::format("{}\n{}", positionName_, whiteEngineName);
-            windowId_ = std::format("{}:{}", positionName_, whiteEngineName);
         }
 
         if (!active_) {
@@ -220,10 +249,13 @@ namespace QaplaWindows
 
 
     std::string ViewerBoardWindow::id() const {
-        if (positionName_.empty()) {
-            return "Game " + std::to_string(round_) + "." + std::to_string(gameInRound_);
+        if (!positionName_.empty()) {
+            return formatTabTitle(positionName_, 10);
         }
-        return formatTabTitle(positionName_, 10);
+        if (!tabName_.empty()) {
+            return tabName_;
+        }
+        return "Game " + std::to_string(round_) + "." + std::to_string(gameInRound_);
     }
 
 }

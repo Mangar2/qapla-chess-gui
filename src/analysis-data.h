@@ -146,6 +146,15 @@ namespace QaplaWindows {
         /** @brief Whether a board is showing a game that is being recomputed right now. */
         [[nodiscard]] bool hasRunningBoards() const { return viewerBoardWindows_.isAnyRunning(); }
 
+        /**
+         * @brief What the boards of the running games say they are showing.
+         *
+         * The same text their tabs carry as a tooltip -- the game's number, its two players and
+         * how it ended. For a caller that cannot see the screen: a test, or an answer to someone
+         * asking what the run is working on.
+         */
+        [[nodiscard]] std::vector<std::string> runningBoardLabels() const;
+
         [[nodiscard]] uint32_t getExternalConcurrency() const;
         void setExternalConcurrency(uint32_t count);
 
