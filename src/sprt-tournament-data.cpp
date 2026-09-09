@@ -351,7 +351,12 @@ void SprtTournamentData::startTournament() {
 
     state_ = State::Starting;
 
-    poolAccess_->clearAll();
+    {
+        // The user interface may block here, and that is not a fault of its own: it is
+        // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+        UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":sprt-clear-a");
+        poolAccess_->clearAll();
+    }
     state_ = State::Starting;
     
     sprtManager_->schedule(sprtManager_, imguiConcurrency_->getExternalConcurrency(), *poolAccess_);
@@ -459,7 +464,12 @@ void SprtTournamentData::clear() {
     // early "nothing to clear" return used to leave a test that had just been stopped abruptly
     // parked in a pending-stop state until some later frame's pollData() cleared it. clearAll()
     // waits for the games to really be gone, so Stopped is only claimed once it is true.
-    poolAccess_->clearAll();
+    {
+        // The user interface may block here, and that is not a fault of its own: it is
+        // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+        UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":sprt-clear-b");
+        poolAccess_->clearAll();
+    }
     state_ = State::Stopped;
     if (!hadResults) {
         SnackbarManager::instance().showNote("Nothing to clear.", false, "sprt-tournament");
@@ -476,7 +486,12 @@ void SprtTournamentData::stopPoolAbruptlyAndWait() {
     stopPool(false);
     // Drains the pool instead of waiting for pollData() to notice on some later frame -- that
     // never happens while this call is holding the UI thread anyway.
-    poolAccess_->waitForTask();
+    {
+        // The user interface may block here, and that is not a fault of its own: it is
+        // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+        UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":sprt-wait");
+        poolAccess_->waitForTask();
+    }
     state_ = State::Stopped;
 }
 

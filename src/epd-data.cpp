@@ -147,7 +147,12 @@ namespace QaplaWindows {
         stopPool(false);
         // Drains the pool instead of waiting for a later frame to notice -- that never happens
         // while this call is holding the UI thread anyway.
-        poolAccess_->waitForTask();
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":epd-wait");
+            poolAccess_->waitForTask();
+        }
         state = State::Stopped;
     }
 
@@ -396,7 +401,12 @@ namespace QaplaWindows {
     }
 
     void EpdData::clear() {
-        poolAccess_->clearAll();
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":epd-clear");
+            poolAccess_->clearAll();
+        }
         epdManager_->clear();
         epdResults_->clear();
         scheduledEngines_ = 0;

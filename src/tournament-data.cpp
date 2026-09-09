@@ -358,7 +358,12 @@ namespace QaplaWindows {
 
         state_ = State::Starting;
 
-        poolAccess_->clearAll();
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":tournament-clear-a");
+            poolAccess_->clearAll();
+        }
         tournament_->scheduleAll(0, false, *poolAccess_);
         eloTable_.clear();
         populateEloTable();
@@ -760,7 +765,12 @@ namespace QaplaWindows {
             return;
         }
         imguiConcurrency_->setActive(false);
-        poolAccess_->clearAll();
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":tournament-clear-b");
+            poolAccess_->clearAll();
+        }
         tournament_ = std::make_unique<Tournament>();
         result_ = std::make_unique<TournamentResultIncremental>();
         updateResultEngineFilter();
@@ -791,11 +801,21 @@ namespace QaplaWindows {
         // Every stop this just sent has left its manager's queue before we go on. Without it,
         // "the pool has no work" was answered by a manager that was already idle while our stop
         // was still queued for it.
-        QaplaTester::GameManagerPool::waitForStops(pendingStopTickets_);
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":tournament-stops");
+            QaplaTester::GameManagerPool::waitForStops(pendingStopTickets_);
+        }
         pendingStopTickets_.clear();
         // Drains the pool instead of waiting for populateRunningTable() to notice on some later
         // frame -- that never happens while this call is holding the UI thread anyway.
-        poolAccess_->waitForTask();
+        {
+            // The user interface may block here, and that is not a fault of its own: it is
+            // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+            UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":tournament-wait");
+            poolAccess_->waitForTask();
+        }
         state_ = State::Stopped;
     }
 

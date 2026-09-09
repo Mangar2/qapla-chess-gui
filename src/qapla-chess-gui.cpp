@@ -354,6 +354,28 @@ namespace {
             }
             testManager.queueAllTests();
         }
+        if (autoRunTests) {
+            // Printed the moment it happens, not summed up at the end: what a test run writes
+            // around it says which test was on screen, and that is half the answer.
+            QaplaWindows::UiThreadWatch::instance().setStallCallback(
+                [](const QaplaWindows::UiThreadWatch::Stall& stall) {
+                    std::cout << "QAPLA_STALL frame=" << stall.frame
+                        << " elapsed=" << stall.elapsedMs
+                        << " work=" << stall.frameMs
+                        << " waited=" << stall.waitedMs
+                        << " unnamed=" << stall.unnamedMs
+                        << " residual=" << stall.residualMs
+                        << " section=" << stall.section;
+                    // Own time first, then the time including whatever ran nested inside: the
+                    // first says who spent it, the second where it sat.
+                    for (const auto& section : stall.sections) {
+                        std::cout << " " << section.name << "=" << section.time.selfMs
+                            << "/" << section.time.totalMs;
+                    }
+                    std::cout << std::endl; // NOLINT(performance-avoid-endl) -- flushed on purpose
+                });
+        }
+
         int autoRunFrameCount = 0;
 
         // What runApp() returns when the tests were run: only an all-green run is a zero, so a
@@ -430,14 +452,21 @@ namespace {
             }
 
             {
-                // Timed apart from the drawing above, and not counted as a stall: this is where
-                // the window system decides when the frame is over. See UiThreadWatch::SWAP_SECTION.
-                QaplaWindows::UiThreadWatch::Section section(
+                // Timed apart from the drawing above, and taken out of the frame: this is where
+                // the window system decides when the frame is over. See UiThreadWatch::Waiting.
+                QaplaWindows::UiThreadWatch::Waiting waiting(
                     QaplaWindows::UiThreadWatch::SWAP_SECTION);
                 glfwSwapBuffers(window);
             }
             
-            testManager.onPostSwap();
+            {
+                // Named like everything else in the frame: this is where the ImGui test engine
+                // does its own work, and it can hold the thread for a while. It used to run
+                // outside every section, so its time landed in the frame with no name on it --
+                // and the frame was then reported against the longest section that did have one.
+                QaplaWindows::UiThreadWatch::Section section("test-engine");
+                testManager.onPostSwap();
+            }
 
             // Asked for over POST /shutdown, carried out here: the request arrives on a server
             // thread, and ending the application is the UI thread's job -- same flag, same
@@ -461,9 +490,25 @@ namespace {
                     const auto frames = QaplaWindows::UiThreadWatch::instance().report();
                     std::cout << "QAPLA_FRAME_REPORT frames=" << frames.frames
                         << " stalls=" << frames.stalls
+                        << " elapsedMs=" << frames.elapsedMs
+                        << " workMs=" << frames.workMs
+                        << " waitedMs=" << frames.waitedMs
                         << " worstFrameMs=" << frames.worstFrameMs
+                        << " worstFrameWaitedMs=" << frames.worstFrameWaitedMs
+                        << " worstFrameUnnamedMs=" << frames.worstFrameUnnamedMs
+                        << " worstFrameResidualMs=" << frames.worstFrameResidualMs
                         << " worstSection=" << (frames.worstSection.empty() ? "-" : frames.worstSection)
                         << "\n";
+                    // The worst frame broken down: one name is an address, the breakdown is the
+                    // proof -- and it shows how much of the frame no section claimed at all.
+                    if (!frames.worstFrameSections.empty()) {
+                        std::cout << "QAPLA_FRAME_SECTIONS";
+                        for (const auto& section : frames.worstFrameSections) {
+                            std::cout << " " << section.name << "=" << section.time.selfMs
+                                << "/" << section.time.totalMs;
+                        }
+                        std::cout << "\n";
+                    }
                     // Nothing tested is not a pass, it is a run that never happened -- a suite
                     // that registers no test at all has to be as loud as a failing one.
                     autoRunExitCode = (tested > 0 && success == tested) ? 0 : 1;
@@ -496,7 +541,12 @@ namespace {
         glfwDestroyWindow(window);
         glfwTerminate();
         GameManagerPool::getInstance().stopAll();
-        GameManagerPool::getInstance().waitForTask();
+        {
+            // On the way out, and still the user interface's thread: waiting for the games to
+            // end is not work of its own -- see UiThreadWatch::Waiting.
+            QaplaWindows::UiThreadWatch::Waiting waiting(std::string(QaplaWindows::UiThreadWatch::POOL_SECTION) + ":shutdown");
+            GameManagerPool::getInstance().waitForTask();
+        }
         // And then the managers themselves, which is what takes the engines with them: stopAll()
         // ends the games, but every engine keeps a worker thread that sends "quit" and writes
         // that down. Left to finish on their own, those threads were still logging while static

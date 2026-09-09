@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <mutex>
 #include <string>
 
@@ -76,7 +77,7 @@ public:
     [[nodiscard]] static std::chrono::milliseconds stallThreshold();
 
     /**
-     * @brief The section a frame may spend any amount of time in without counting as a stall.
+     * @brief The name under which the buffer swap is waited for; see Waiting.
      *
      * The buffer swap is where the window system parks the process on purpose: a fraction of a
      * frame for vsync, and minutes at a time when the window is occluded or the display has gone
@@ -85,6 +86,9 @@ public:
      * Drawing itself is timed separately and still counts.
      */
     static constexpr const char* SWAP_SECTION = "swap";
+
+    /** @brief The name under which the game manager pool is waited for; see Waiting. */
+    static constexpr const char* POOL_SECTION = "wait:pool";
 
     [[nodiscard]] static UiThreadWatch& instance();
 
@@ -122,6 +126,113 @@ public:
         int depth_ = 0;
     };
 
+    /**
+     * @brief Marks a stretch in which the thread is waiting rather than working.
+     *
+     * Its time is taken out of the frame before the frame is judged. Two things are waited for
+     * on purpose and neither is a fault of this thread's: the window system taking the finished
+     * picture, and the game manager pool letting go -- stopping engines and waiting for the
+     * games in flight is exactly the sort of thing the user interface is allowed to block on,
+     * because there is nothing to draw until it is done.
+     *
+     * Taken out rather than excused: a frame that waited a second for the pool *and* spent
+     * another second on something it should not have been doing is still a stall, and still
+     * names the second thing. Excusing the whole frame -- what was done for the buffer swap
+     * before -- would have hidden it.
+     *
+     * Nesting is allowed; only the outermost one counts, so a wait inside a wait is not
+     * subtracted twice. The time is still recorded under the section's name, so the breakdown of
+     * a long frame says how much of it was spent waiting for what.
+     */
+    class Waiting {
+    public:
+        explicit Waiting(std::string name);
+        ~Waiting();
+
+        Waiting(const Waiting&) = delete;
+        Waiting& operator=(const Waiting&) = delete;
+
+    private:
+        Section section_;
+        std::chrono::steady_clock::time_point started_;
+        bool outermost_ = false;
+    };
+
+    /**
+     * @brief How long one section of a frame took, on its own and with what it encloses.
+     */
+    struct SectionTime {
+        /**
+         * @brief The time of this section alone, without what ran nested inside it.
+         *
+         * The number that can be added up: every millisecond of a frame belongs to exactly one
+         * section this way, or to none. See Report::residualMs for the check that it does.
+         */
+        double selfMs = 0.0;
+
+        /** @brief The time from entering to leaving, nested sections included. */
+        double totalMs = 0.0;
+    };
+
+    /** @brief One named section of a frame with its two times. */
+    struct NamedSection {
+        std::string name;
+        SectionTime time;
+    };
+
+    /**
+     * @brief One frame that took too long, with everything known about it.
+     *
+     * Handed to whoever asked to hear about them, the moment it is recorded -- so that it lands
+     * in the output between the lines of whatever else is writing there, and the surrounding
+     * lines say what was going on. A summary at the end cannot do that.
+     */
+    struct Stall {
+        /** @brief Which frame of the run it was. */
+        std::uint64_t frame = 0;
+
+        /** @brief What the thread spent on work of its own, in milliseconds -- the judged time. */
+        double frameMs = 0.0;
+
+        /** @brief The whole frame, waiting included: frameMs + waitedMs. */
+        double elapsedMs = 0.0;
+
+        /** @brief How much of it went on waiting -- see Waiting; not part of frameMs. */
+        double waitedMs = 0.0;
+
+        /**
+         * @brief How much of the frame no section claimed at all.
+         *
+         * The hole to look for first. Time nobody named still lands in the frame, and the frame
+         * is then reported against the longest section that does have a name -- which can be a
+         * short one that had nothing to do with it.
+         */
+        double unnamedMs = 0.0;
+
+        /**
+         * @brief What is left of the frame once every section and the unnamed time is taken off.
+         *
+         * The proof that the breakdown is complete. Anything but a rounding error here means the
+         * bookkeeping is wrong, and then no name in it can be trusted.
+         */
+        double residualMs = 0.0;
+
+        /** @brief The longest named section of the frame. */
+        std::string section;
+
+        /** @brief Every section of the frame with its times, by own time, longest first. */
+        std::vector<NamedSection> sections;
+    };
+
+    /** @brief Told about every stall as it is recorded. */
+    using StallCallback = std::function<void(const Stall&)>;
+
+    /**
+     * @brief Asks to be told about every stall from now on.
+     * @param callback What to call; an empty one stops the reporting.
+     */
+    void setStallCallback(StallCallback callback);
+
     /** @brief What the watch has seen. Safe to read from another thread. */
     struct Report {
         std::uint64_t frames = 0;
@@ -129,8 +240,21 @@ public:
         /** @brief How many frames took longer than STALL_THRESHOLD. */
         std::uint64_t stalls = 0;
 
-        /** @brief The longest frame so far, in milliseconds. */
+        /**
+         * @brief The longest frame so far, in milliseconds, waiting not counted.
+         *
+         * What the thread spent on work of its own. See Waiting for what is taken out.
+         */
         double worstFrameMs = 0.0;
+
+        /** @brief How long that frame additionally spent waiting -- see Waiting. */
+        double worstFrameWaitedMs = 0.0;
+
+        /** @brief How long every frame together has spent waiting, in milliseconds. */
+        double waitedMs = 0.0;
+
+        /** @brief How much of the worst frame no section claimed; see Stall::unnamedMs. */
+        double worstFrameUnnamedMs = 0.0;
 
         /** @brief The longest section inside that frame -- who to talk to about it. */
         std::string worstSection;
@@ -143,7 +267,16 @@ public:
          * have nothing in common except the number. Nested sections are each counted in full,
          * so an enclosing one includes what it encloses; the names say which is which.
          */
-        std::vector<std::pair<std::string, double>> worstFrameSections;
+        std::vector<NamedSection> worstFrameSections;
+
+        /** @brief What was left of the worst frame after everything was accounted for. */
+        double worstFrameResidualMs = 0.0;
+
+        /** @brief Every frame of the run together, waiting included. */
+        double elapsedMs = 0.0;
+
+        /** @brief Of that, what was spent on work: elapsedMs - waitedMs, the judged time. */
+        double workMs = 0.0;
 
         /** @brief How long the current frame has been running, for a caller watching live. */
         double currentFrameMs = 0.0;
@@ -161,16 +294,35 @@ private:
     UiThreadWatch() = default;
 
     friend class Section;
+    friend class Waiting;
 
     mutable std::mutex mutex_;
 
     std::uint64_t frames_ = 0;
     std::uint64_t stalls_ = 0;
     double worstFrameMs_ = 0.0;
+    double worstFrameWaitedMs_ = 0.0;
+    double worstFrameUnnamedMs_ = 0.0;
+    double worstFrameResidualMs_ = 0.0;
+    double waitedMs_ = 0.0;
+    double elapsedMs_ = 0.0;
+    StallCallback stallCallback_;
     std::string worstSection_;
 
     std::chrono::steady_clock::time_point frameStarted_{};
     bool inFrame_ = false;
+
+    /** @brief How much of the frame being timed right now went on waiting; see Waiting. */
+    double waitedMsThisFrame_ = 0.0;
+
+    /** @brief How many Waiting scopes are open right now; only the outermost is counted. */
+    int waitDepth_ = 0;
+
+    /** @brief How much of the frame being timed right now went by with no section open. */
+    double unnamedMsThisFrame_ = 0.0;
+
+    /** @brief When the thread last had no section open; the start of a stretch nobody claims. */
+    std::chrono::steady_clock::time_point unnamedSince_{};
 
     /** @brief The longest section seen inside the frame being timed right now, and how deep. */
     double worstSectionMsThisFrame_ = 0.0;
@@ -178,10 +330,18 @@ private:
     int worstSectionDepthThisFrame_ = 0;
 
     /** @brief Every section of the frame being timed right now, by name, totalled. */
-    std::map<std::string, double> sectionsThisFrame_;
+    std::map<std::string, SectionTime> sectionsThisFrame_;
 
     /** @brief The same, kept from the worst frame so far. */
-    std::vector<std::pair<std::string, double>> worstFrameSections_;
+    std::vector<NamedSection> worstFrameSections_;
+
+    /**
+     * @brief One entry per open section: how much of it has gone on sections nested inside it.
+     *
+     * What makes a section's own time computable, and with it the check that every millisecond
+     * of a frame is accounted for exactly once.
+     */
+    std::vector<double> childMsStack_;
 
     /** @brief How many sections are open right now. */
     int depth_ = 0;

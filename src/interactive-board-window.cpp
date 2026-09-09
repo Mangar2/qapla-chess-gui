@@ -35,6 +35,7 @@
 #include "game-parser.h"
 #include "epd-data.h"
 #include "callback-manager.h"
+#include "ui-thread-watch.h"
 
 #include <base-elements/string-helper.h>
 #include <qapla-engine/move.h>
@@ -594,6 +595,7 @@ void InteractiveBoardWindow::stopPool()
 
 void InteractiveBoardWindow::clearPool()
 {
+	UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":board-clear");
 	GameManagerPool::getInstance().clearAll();
 }
 

@@ -187,7 +187,12 @@ void ClopData::clear() {
     if (isRunning()) {
         stop();
     }
-    poolAccess_->clearAll();
+    {
+        // The user interface may block here, and that is not a fault of its own: it is
+        // waiting for engines to stop. Taken out of the frame -- see UiThreadWatch::Waiting.
+        UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":clop-clear");
+        poolAccess_->clearAll();
+    }
     optimizer_.reset();
     resultTable_.clear();
     state_ = State::Idle;

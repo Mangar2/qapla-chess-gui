@@ -66,49 +66,106 @@ void UiThreadWatch::frameBegin() {
     worstSectionMsThisFrame_ = 0.0;
     worstSectionThisFrame_.clear();
     worstSectionDepthThisFrame_ = 0;
+    waitedMsThisFrame_ = 0.0;
+    unnamedMsThisFrame_ = 0.0;
+    unnamedSince_ = frameStarted_;
     sectionsThisFrame_.clear();
+    childMsStack_.clear();
+}
+
+void UiThreadWatch::setStallCallback(StallCallback callback) {
+    std::scoped_lock lock(mutex_);
+    stallCallback_ = std::move(callback);
 }
 
 void UiThreadWatch::frameEnd() {
+    Stall stall;
+    StallCallback callback;
+    {
     std::scoped_lock lock(mutex_);
     if (!inFrame_) {
         return;
     }
-    const double frameMs = millisecondsSince(frameStarted_);
+    const double elapsedMs = millisecondsSince(frameStarted_);
     inFrame_ = false;
     ++frames_;
+
+    if (depth_ == 0) {
+        // The tail of the frame, after the last section closed: nobody named it either.
+        unnamedMsThisFrame_ += millisecondsSince(unnamedSince_);
+    }
+
+    // What the thread spent on its own work: waiting for the window system or for the pool is
+    // taken out rather than excusing the whole frame -- see Waiting.
+    const double waitedMs = std::min(waitedMsThisFrame_, elapsedMs);
+    const double frameMs = elapsedMs - waitedMs;
+    waitedMs_ += waitedMs;
+    elapsedMs_ += elapsedMs;
+
+    // Every millisecond of the frame belongs to exactly one section or to none of them, so the
+    // two must add up to the frame. What is left over says the bookkeeping is wrong -- and then
+    // no name in the breakdown is worth anything.
+    double accountedMs = unnamedMsThisFrame_;
+    for (const auto& [name, time] : sectionsThisFrame_) {
+        accountedMs += time.selfMs;
+    }
+    const double residualMs = elapsedMs - accountedMs;
 
     const double thresholdMs =
         std::chrono::duration<double, std::milli>(stallThreshold()).count();
     if (frameMs <= thresholdMs) {
         return;
     }
-    if (worstSectionThisFrame_ == SWAP_SECTION) {
-        // Waiting for the window system, not blocked by us -- see SWAP_SECTION.
-        return;
-    }
 
     ++stalls_;
+
+    stall.frame = frames_;
+    stall.frameMs = frameMs;
+    stall.elapsedMs = elapsedMs;
+    stall.waitedMs = waitedMs;
+    stall.unnamedMs = unnamedMsThisFrame_;
+    stall.residualMs = residualMs;
+    // The longest section inside it, or the frame itself when nothing was named -- which is
+    // an answer too: it means the time went on drawing rather than on anything identifiable.
+    stall.section = worstSectionThisFrame_.empty() ? "frame" : worstSectionThisFrame_;
+    // And the whole frame broken down, because one name explains a frame that one thing
+    // blocked, and explains nothing about a frame in which six things were each too slow.
+    stall.sections.reserve(sectionsThisFrame_.size());
+    for (const auto& [name, time] : sectionsThisFrame_) {
+        stall.sections.push_back(NamedSection{ .name = name, .time = time });
+    }
+    // By own time: that is the one that says who spent it, rather than who was around it.
+    std::ranges::sort(stall.sections, [](const auto& left, const auto& right) {
+        return left.time.selfMs > right.time.selfMs;
+    });
+
     if (frameMs > worstFrameMs_) {
         worstFrameMs_ = frameMs;
-        // The longest section inside it, or the frame itself when nothing was named -- which is
-        // an answer too: it means the time went on drawing rather than on anything identifiable.
-        worstSection_ = worstSectionThisFrame_.empty() ? "frame" : worstSectionThisFrame_;
-
-        // And the whole frame broken down, because one name explains a frame that one thing
-        // blocked, and explains nothing about a frame in which six things were each too slow.
-        worstFrameSections_.assign(sectionsThisFrame_.begin(), sectionsThisFrame_.end());
-        std::ranges::sort(worstFrameSections_,
-            [](const auto& left, const auto& right) { return left.second > right.second; });
+        worstFrameWaitedMs_ = waitedMs;
+        worstFrameUnnamedMs_ = unnamedMsThisFrame_;
+        worstFrameResidualMs_ = residualMs;
+        worstSection_ = stall.section;
+        worstFrameSections_ = stall.sections;
+    }
+    callback = stallCallback_;
+    }
+    // Outside the lock: whoever is told about this may well ask the watch something in return.
+    if (callback) {
+        callback(stall);
     }
 }
 
 UiThreadWatch::Section::Section(std::string name) : started_(std::chrono::steady_clock::now()) {
     auto& watch = UiThreadWatch::instance();
     std::scoped_lock lock(watch.mutex_);
+    if (watch.depth_ == 0 && watch.inFrame_) {
+        // The stretch since the last section closed belonged to nobody; it ends here.
+        watch.unnamedMsThisFrame_ += millisecondsSince(watch.unnamedSince_);
+    }
     previousName_ = watch.currentName_;
     watch.currentName_ = std::move(name);
     depth_ = ++watch.depth_;
+    watch.childMsStack_.push_back(0.0);
 }
 
 UiThreadWatch::Section::~Section() {
@@ -125,7 +182,20 @@ UiThreadWatch::Section::~Section() {
     const bool clearlyLonger = elapsedMs > watch.worstSectionMsThisFrame_ * CLEARLY_LONGER;
     const bool deeperAndComparable = depth_ > watch.worstSectionDepthThisFrame_
         && elapsedMs >= watch.worstSectionMsThisFrame_;
-    watch.sectionsThisFrame_[watch.currentName_] += elapsedMs;
+
+    // What this section spent on itself: its own time less everything that ran nested in it.
+    // The enclosing section, if there is one, takes the whole of this one as its child time.
+    double childMs = 0.0;
+    if (!watch.childMsStack_.empty()) {
+        childMs = watch.childMsStack_.back();
+        watch.childMsStack_.pop_back();
+    }
+    if (!watch.childMsStack_.empty()) {
+        watch.childMsStack_.back() += elapsedMs;
+    }
+    auto& time = watch.sectionsThisFrame_[watch.currentName_];
+    time.selfMs += std::max(0.0, elapsedMs - childMs);
+    time.totalMs += elapsedMs;
     if (clearlyLonger || deeperAndComparable) {
         watch.worstSectionMsThisFrame_ = elapsedMs;
         watch.worstSectionThisFrame_ = watch.currentName_;
@@ -134,6 +204,33 @@ UiThreadWatch::Section::~Section() {
 
     watch.currentName_ = std::move(previousName_);
     --watch.depth_;
+    if (watch.depth_ == 0) {
+        watch.unnamedSince_ = std::chrono::steady_clock::now();
+    }
+}
+
+UiThreadWatch::Waiting::Waiting(std::string name)
+    : section_(std::move(name)), started_(std::chrono::steady_clock::now()) {
+    auto& watch = UiThreadWatch::instance();
+    std::scoped_lock lock(watch.mutex_);
+    // Only the outermost wait is measured: a wait inside a wait is the same time, and counting
+    // it twice could take more out of the frame than the frame lasted.
+    outermost_ = watch.waitDepth_ == 0;
+    ++watch.waitDepth_;
+}
+
+UiThreadWatch::Waiting::~Waiting() {
+    const double elapsedMs = millisecondsSince(started_);
+    {
+        auto& watch = UiThreadWatch::instance();
+        std::scoped_lock lock(watch.mutex_);
+        --watch.waitDepth_;
+        if (outermost_) {
+            watch.waitedMsThisFrame_ += elapsedMs;
+        }
+    }
+    // section_ is destroyed after this body, and records the same stretch under its name -- so
+    // the breakdown of a long frame still says how much of it went on waiting for what.
 }
 
 UiThreadWatch::Report UiThreadWatch::report() const {
@@ -142,6 +239,12 @@ UiThreadWatch::Report UiThreadWatch::report() const {
     report.frames = frames_;
     report.stalls = stalls_;
     report.worstFrameMs = worstFrameMs_;
+    report.worstFrameWaitedMs = worstFrameWaitedMs_;
+    report.worstFrameUnnamedMs = worstFrameUnnamedMs_;
+    report.worstFrameResidualMs = worstFrameResidualMs_;
+    report.waitedMs = waitedMs_;
+    report.elapsedMs = elapsedMs_;
+    report.workMs = elapsedMs_ - waitedMs_;
     report.worstSection = worstSection_;
     report.worstFrameSections = worstFrameSections_;
     report.currentSection = currentName_;
@@ -156,6 +259,11 @@ void UiThreadWatch::reset() {
     frames_ = 0;
     stalls_ = 0;
     worstFrameMs_ = 0.0;
+    worstFrameWaitedMs_ = 0.0;
+    worstFrameUnnamedMs_ = 0.0;
+    worstFrameResidualMs_ = 0.0;
+    waitedMs_ = 0.0;
+    elapsedMs_ = 0.0;
     worstFrameSections_.clear();
     worstSection_.clear();
 }

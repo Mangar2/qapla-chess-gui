@@ -234,14 +234,27 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         frames["stall_threshold_ms"] = static_cast<double>(
             QaplaWindows::UiThreadWatch::stallThreshold().count());
         frames["worst_frame_ms"] = watch.worstFrameMs;
+        // What the thread waited for on purpose is not in worst_frame_ms; reported beside it so
+        // that a long frame can still be told from a long wait. See UiThreadWatch::Waiting.
+        frames["worst_frame_waited_ms"] = watch.worstFrameWaitedMs;
+        frames["waited_ms"] = watch.waitedMs;
         frames["worst_section"] = watch.worstSection;
         // The worst frame in full, so a caller that fails a test on a stall can say where the
         // time went instead of only how much of it there was.
         auto sections = QaplaTester::Json::JsonValue::object();
-        for (const auto& [name, milliseconds] : watch.worstFrameSections) {
-            sections[name] = milliseconds;
+        for (const auto& section : watch.worstFrameSections) {
+            auto times = QaplaTester::Json::JsonValue::object();
+            times["self_ms"] = section.time.selfMs;
+            times["total_ms"] = section.time.totalMs;
+            sections[section.name] = times;
         }
         frames["worst_frame_sections"] = sections;
+        // Every millisecond of the frame belongs to one section or to none; what is left over
+        // says the breakdown does not add up. See UiThreadWatch::Stall::residualMs.
+        frames["worst_frame_unnamed_ms"] = watch.worstFrameUnnamedMs;
+        frames["worst_frame_residual_ms"] = watch.worstFrameResidualMs;
+        frames["elapsed_ms"] = watch.elapsedMs;
+        frames["work_ms"] = watch.workMs;
         frames["current_frame_ms"] = watch.currentFrameMs;
         frames["current_section"] = watch.currentSection;
         object["frames"] = frames;

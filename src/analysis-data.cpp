@@ -223,7 +223,10 @@ namespace QaplaWindows {
             pgnSave_.setOptions(outputPgn_->pgnOptions());
             pgnSave_.initialize("Analysis");
 
-            poolAccess_->clearAll();
+            {
+                UiThreadWatch::Waiting waiting(std::string(UiThreadWatch::POOL_SECTION) + ":analysis-clear");
+                poolAccess_->clearAll();
+            }
             managers_.clear();
             totalCount_ = 0;
             for (const auto& engine : engines) {
