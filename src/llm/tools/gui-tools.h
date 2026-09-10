@@ -75,6 +75,9 @@ void registerEpdTools(GuiToolRegistry& registry);
 /** @brief Registers the CLOP tuning tool. Remote-only -- see GuiToolDefinition::remoteOnly. */
 void registerClopTools(GuiToolRegistry& registry);
 
+/** @brief Registers the backward analysis tool: configure_backward_analysis (engines included). */
+void registerAnalysisTools(GuiToolRegistry& registry);
+
 /**
  * @brief Registers the cross-feature tools: start, stop, get_status, clear_result.
  *

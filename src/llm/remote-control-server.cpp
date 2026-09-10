@@ -86,6 +86,9 @@ namespace {
         if (name == "clop") {
             return Actions::Activity::Clop;
         }
+        if (name == "analysis") {
+            return Actions::Activity::Analysis;
+        }
         return std::nullopt;
     }
 
@@ -305,7 +308,8 @@ bool RemoteControlServer::start(const RemoteControlOptions& options) {
         if (!activity) {
             response.status = 400;
             response.set_content(
-                jsonError("Pass type=tournament, type=sprt, type=epd or type=clop."),
+                jsonError("Pass type=tournament, type=sprt, type=epd, type=clop or "
+                    "type=analysis."),
                 "application/json");
             return;
         }

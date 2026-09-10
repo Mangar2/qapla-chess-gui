@@ -115,6 +115,18 @@ namespace QaplaWindows {
         [[nodiscard]] size_t getGameCount() const { return games_.size(); }
 
         /**
+         * @brief Reads the games to analyse from the configured input file.
+         *
+         * The other way in is setGames(), which is what the chatbot uses: there the games come
+         * from the Pgn view, where the user has just seen and filtered them. A caller without a
+         * screen has no such view, and the file is all it has -- so it reads the file, whole.
+         *
+         * @param error Filled with what went wrong when nothing was read.
+         * @return The number of games read; zero when the file could not be used.
+         */
+        size_t loadGamesFromInputFile(std::string& error);
+
+        /**
          * @brief Checks what a run needs, reporting the first thing that is missing.
          * @param sendMessage If true, says through the snackbar what is missing.
          * @return True if the analysis may be started.

@@ -33,6 +33,9 @@ namespace QaplaWindows::ChatBot {
  *
  * The steps follow the order the run needs them in: the games first, because everything after
  * that is about them -- which of them, by which engine, for how long, and where the result goes.
+ *
+ * Unless one is already running, in which case none of those questions can be answered any more
+ * and the thread opens on what that run is doing, with the button that stops it.
  */
 class ChatbotAnalysis : public ChatbotThread {
 public:

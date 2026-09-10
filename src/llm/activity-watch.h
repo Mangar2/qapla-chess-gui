@@ -136,7 +136,7 @@ public:
 private:
     /** @brief How many Activity values there are. Update alongside Actions::Activity. */
     static constexpr std::size_t ACTIVITY_COUNT =
-        static_cast<std::size_t>(Actions::Activity::Clop) + 1;
+        static_cast<std::size_t>(Actions::Activity::Analysis) + 1;
 
     ActivityWatch() = default;
 

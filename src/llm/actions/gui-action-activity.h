@@ -39,7 +39,7 @@ namespace QaplaLlm::Actions {
  * why it joins this enum rather than getting a lifecycle of its own: start, stop, status, wait
  * and clear then cover it without another line of external API.
  */
-enum class Activity { Tournament, Sprt, Epd, Clop };
+enum class Activity { Tournament, Sprt, Epd, Clop, Analysis };
 
 /** @brief Starts the given activity. See startTournament() / startSprt() / startEpd(). */
 [[nodiscard]] ActionResult startActivity(Activity activity);

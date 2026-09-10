@@ -33,7 +33,12 @@ namespace QaplaWindows::ChatBot {
  */
 class ChatbotStepAnalysisStart : public ChatbotStep {
 public:
-    ChatbotStepAnalysisStart() = default;
+    /**
+     * @param alreadyRunning True when the step is entered on a run that is already going: it
+     *        then shows what that run is doing and how to stop it, and asks nothing.
+     */
+    explicit ChatbotStepAnalysisStart(bool alreadyRunning = false)
+        : started_(alreadyRunning) {}
     ~ChatbotStepAnalysisStart() override = default;
 
     [[nodiscard]] std::string draw() override;

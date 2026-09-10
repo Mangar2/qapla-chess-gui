@@ -24,6 +24,7 @@
 #include "ui-thread-watch.h"
 
 #include <analysis/analysis-manager.h>
+#include <opening/pgn-io.h>
 #include <base-elements/string-helper.h>
 #include <game-manager/game-manager-pool.h>
 
@@ -124,6 +125,40 @@ namespace QaplaWindows {
 
     void AnalysisData::setGames(std::vector<GameRecord> games) {
         games_ = std::move(games);
+    }
+
+    size_t AnalysisData::loadGamesFromInputFile(std::string& error) {
+        error.clear();
+        if (config_.inputFile.empty()) {
+            error = "No PGN file configured to read the games from.";
+            return 0;
+        }
+        if (!std::filesystem::exists(config_.inputFile)) {
+            error = std::format("The PGN file does not exist: {}", config_.inputFile);
+            return 0;
+        }
+        try {
+            QaplaTester::PgnIO reader;
+            QaplaTester::PgnIO::LoadParams params;
+            params.filePath = config_.inputFile;
+            params.loadComments = true;
+            params.skipEmptyGames = true;
+            auto result = reader.loadGamesWithResult(params);
+            if (!result.fileOpened) {
+                error = std::format("The PGN file could not be opened: {}", config_.inputFile);
+                return 0;
+            }
+            games_ = std::move(result.games);
+            if (games_.empty()) {
+                error = std::format("No game with moves in {}", config_.inputFile);
+            }
+            return games_.size();
+        }
+        catch (const std::exception& e) {
+            error = std::format("The PGN file could not be read:\n{}", e.what());
+            games_.clear();
+            return 0;
+        }
     }
 
     uint32_t AnalysisData::getExternalConcurrency() const {

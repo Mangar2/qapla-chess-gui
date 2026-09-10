@@ -253,6 +253,10 @@ void registerGuiTools(GuiToolRegistry& registry) {
     registerClopTools(registry);
     registerAppTools(registry);
     registerEngineTools(registry);
+    // Appended rather than slotted in beside the other configure_* tools: the order is the stable
+    // head of every request's prompt, and moving an existing entry invalidates the cached prefix
+    // of every conversation that has one.
+    registerAnalysisTools(registry);
 }
 
 } // namespace QaplaLlm

@@ -18,7 +18,6 @@
  */
 
 #include "chatbot-analysis.h"
-#include "chatbot-step-analysis-stop-running.h"
 #include "chatbot-step-analysis-input.h"
 #include "chatbot-step-analysis-filter.h"
 #include "chatbot-step-analysis-time.h"
@@ -39,7 +38,14 @@ void ChatbotAnalysis::start() {
 
     snackbarCapture_.install();
 
-    steps_.push_back(std::make_unique<ChatbotStepAnalysisStopRunning>());
+    if (AnalysisData::instance().isBusy()) {
+        // A run is already going. Asking the way through the setup again would be asking which
+        // games to analyse while they are being analysed -- so this shows what it is doing and
+        // how to stop it, and nothing else.
+        steps_.push_back(std::make_unique<ChatbotStepAnalysisStart>(true));
+        return;
+    }
+    addSetupSteps();
 }
 
 void ChatbotAnalysis::addSetupSteps() {
@@ -74,9 +80,6 @@ bool ChatbotAnalysis::draw() {
         if (result == "stop") {
             stopped_ = true;
             return false;
-        }
-        if (result == "continue") {
-            addSetupSteps();
         }
 
         if (steps_.size() > currentStepIndex_ && steps_[currentStepIndex_]->isFinished()) {

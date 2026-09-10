@@ -19,6 +19,7 @@
 
 #include "gui-action-activity.h"
 #include "gui-action-clop.h"
+#include "gui-action-analysis.h"
 #include "gui-action-epd.h"
 #include "gui-action-sprt.h"
 #include "gui-action-tournament.h"
@@ -51,6 +52,7 @@ ActionResult startActivity(Activity activity) {
             case Activity::Sprt: return startSprt();
             case Activity::Clop: return startClop();
             case Activity::Epd: return startEpd();
+            case Activity::Analysis: return startAnalysis();
             case Activity::Tournament:
             default: return startTournament();
         }
@@ -65,6 +67,7 @@ ActionResult stopActivity(Activity activity, StopMode mode) {
             case Activity::Sprt: return stopSprt(mode);
             case Activity::Clop: return stopClop(mode);
             case Activity::Epd: return stopEpd(mode);
+            case Activity::Analysis: return stopAnalysis(mode);
             case Activity::Tournament:
             default: return stopTournament(mode);
         }
@@ -78,6 +81,7 @@ ActionResult activityStatus(Activity activity) {
         case Activity::Sprt: return sprtStatus();
         case Activity::Clop: return clopStatus();
         case Activity::Epd: return epdStatus();
+        case Activity::Analysis: return analysisStatus();
         case Activity::Tournament:
         default: return tournamentStatus();
     }
@@ -88,6 +92,7 @@ ActivityProgress activityProgress(Activity activity) {
         case Activity::Sprt: return sprtProgress();
         case Activity::Clop: return clopProgress();
         case Activity::Epd: return epdProgress();
+        case Activity::Analysis: return analysisProgress();
         case Activity::Tournament:
         default: return tournamentProgress();
     }
@@ -98,6 +103,8 @@ std::optional<ResultTable> activityResultTable(Activity activity) {
         case Activity::Sprt: return sprtResultTable();
         case Activity::Clop: return clopResultTable();
         case Activity::Epd: return epdResultTable();
+        // A backward analysis writes its result to a PGN file; there is no table of it here.
+        case Activity::Analysis: return std::nullopt;
         case Activity::Tournament:
         default: return tournamentResultTable();
     }
@@ -108,6 +115,7 @@ bool activityIsReadyToStart(Activity activity) {
         case Activity::Sprt: return sprtIsReadyToStart();
         case Activity::Clop: return clopIsReadyToStart();
         case Activity::Epd: return epdIsReadyToStart();
+        case Activity::Analysis: return analysisIsReadyToStart();
         case Activity::Tournament:
         default: return tournamentIsReadyToStart();
     }
@@ -119,6 +127,7 @@ ActionResult clearActivityResult(Activity activity) {
             case Activity::Sprt: return clearSprtResult();
             case Activity::Clop: return clearClopResult();
             case Activity::Epd: return clearEpdResult();
+            case Activity::Analysis: return clearAnalysisResult();
             case Activity::Tournament:
             default: return clearTournamentResult();
         }
@@ -132,6 +141,8 @@ ActionResult showActivityResult(Activity activity) {
         case Activity::Sprt: return showSprtResult();
         case Activity::Clop: return showClopResult();
         case Activity::Epd: return showEpdResult();
+        // Nothing to show: the analysed games are in the output file, not in a table here.
+        case Activity::Analysis: return analysisStatus();
         case Activity::Tournament:
         default: return showTournamentResult();
     }
@@ -147,6 +158,21 @@ namespace {
      * both directions pass through -- and the refusal names what CAN be kept, because a caller
      * that asked to save a tuning run wants its numbers, not a lesson about file formats.
      */
+    /**
+     * @brief What a caller is told when it asks for a backward analysis file.
+     *
+     * The run has no state worth saving: its settings are in the application's own ini, and its
+     * result is the PGN file it writes as it goes. Refused here rather than handed to an action
+     * that would invent a format, and the refusal says where the games actually are.
+     */
+    ActionResult analysisHasNoFile(FileAccess access) {
+        return failed(std::string(access == FileAccess::Save ? "A backward analysis cannot be saved"
+                                                            : "A backward analysis cannot be loaded")
+            + " to a file of its own: its settings are kept with the application's, and its result "
+              "is the PGN file it writes while it runs. Read that file to see the analysed games, "
+              "and get_status (type=\"analysis\") to see where it is being written.");
+    }
+
     ActionResult clopHasNoFile(FileAccess access) {
         return failed(std::string(access == FileAccess::Save ? "A CLOP run cannot be saved"
                                                              : "A CLOP run cannot be loaded")
@@ -162,6 +188,7 @@ ActionResult saveActivityToFile(Activity activity, const std::string& file) {
         case Activity::Sprt: return saveSprtToFile(file);
         case Activity::Clop: return clopHasNoFile(FileAccess::Save);
         case Activity::Epd: return saveEpdToFile(file);
+        case Activity::Analysis: return analysisHasNoFile(FileAccess::Save);
         case Activity::Tournament:
         default: return saveTournamentToFile(file);
     }
@@ -173,6 +200,7 @@ ActionResult loadActivityFromFile(Activity activity, const std::string& file) {
             case Activity::Sprt: return loadSprtFromFile(file);
             case Activity::Clop: return clopHasNoFile(FileAccess::Load);
             case Activity::Epd: return loadEpdFromFile(file);
+            case Activity::Analysis: return analysisHasNoFile(FileAccess::Load);
             case Activity::Tournament:
             default: return loadTournamentFromFile(file);
         }

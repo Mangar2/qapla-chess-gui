@@ -134,7 +134,7 @@ void initializeLlmChat() {
         GuiToolRegistry::instance().processQueue();
     });
 
-    // Samples the three activities every frame so a caller can wait on one of them (see
+    // Samples every activity each frame so a caller can wait on one of them (see
     // ActivityWatch). Hooked here rather than inside each activity's own code because it must
     // notice a run ending by any route at all -- finished on its own, stopped through a tool,
     // stopped by the user clicking the button. Watching from outside catches all three; asking
@@ -142,7 +142,8 @@ void initializeLlmChat() {
     static auto activityWatchPollHandle = QaplaWindows::StaticCallbacks::poll().registerCallback(
         []() {
             for (auto activity : {Actions::Activity::Tournament, Actions::Activity::Sprt,
-                     Actions::Activity::Epd, Actions::Activity::Clop}) {
+                     Actions::Activity::Epd, Actions::Activity::Clop,
+                     Actions::Activity::Analysis}) {
                 ActivityWatch::instance().update(activity, Actions::activityProgress(activity));
             }
         });

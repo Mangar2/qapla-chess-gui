@@ -100,6 +100,33 @@ def _info(message: str) -> None:
 #: a book whose content is right here in the source is easier to reason about than one that has
 #: to be found and opened. Four lines is enough: a tournament of two engines over two games needs
 #: openings to start from, not variety.
+#: Two finished games, for the tests that need games to read rather than games to play.
+#:
+#: Short and decided on purpose: the backward analysis walks every position of every game, so a
+#: game of forty moves would make the run's length a property of the engine's speed rather than
+#: of the test. These two are seven and four half moves, and both end in mate -- which also gives
+#: the analysis a terminal position to start its walk from.
+PLAYED_PGN = """[Event "Integration games"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "1"]
+[White "White Player"]
+[Black "Black Player"]
+[Result "1-0"]
+
+1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7# 1-0
+
+[Event "Integration games"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "2"]
+[White "Other White"]
+[Black "Other Black"]
+[Result "0-1"]
+
+1. f3 e5 2. g4 Qh4# 0-1
+"""
+
 OPENINGS_PGN = """[Event "Integration openings"]
 [Site "?"]
 [Date "????.??.??"]
@@ -202,10 +229,13 @@ def _prepare_fixtures(sandbox: Path, catalog: engine_catalog.EngineCatalog) -> D
     openings.write_text(OPENINGS_PGN, encoding="utf-8")
     positions = sandbox / "positions.epd"
     positions.write_text(POSITIONS_EPD, encoding="utf-8")
+    played = sandbox / "played.pgn"
+    played.write_text(PLAYED_PGN, encoding="utf-8")
     fixtures = {
         "sandbox": str(sandbox),
         "openings": str(openings),
         "epd": str(positions),
+        "played": str(played),
         "pgn": str(sandbox / "games.pgn"),
         "results": str(sandbox / "results.qtour"),
         "sprt_results": str(sandbox / "results.qsprt"),
@@ -250,13 +280,15 @@ DEFAULT_CONCURRENCY = 10
 
 
 def set_concurrency(session: GuiSession, concurrency: int) -> None:
-    """Sets the same concurrency on all four run types, before the test configures anything.
+    """Sets the same concurrency on every run type, before the test configures anything.
 
     Applied first so that a later configure call in the test keeps it -- an unpassed field keeps
     its prior value -- while a test that names its own concurrency still wins.
     """
-    for activity in ("tournament", "sprt", "epd", "clop"):
-        answer = session.call(f"configure_{activity}", {"concurrency": concurrency})
+    for activity, tool in (("tournament", "configure_tournament"), ("sprt", "configure_sprt"),
+                          ("epd", "configure_epd"), ("clop", "configure_clop"),
+                          ("analysis", "configure_backward_analysis")):
+        answer = session.call(tool, {"concurrency": concurrency})
         if not answer.get("ok"):
             raise RemoteControlError(
                 f"could not set the {activity} concurrency: {answer.get('content')}")
@@ -609,8 +641,10 @@ def invoke_test(test: Dict[str, Any], catalog: engine_catalog.EngineCatalog,
             if session.stalls_seen:
                 # The breakdown, not just the name: a frame blocked by one thing and a frame in
                 # which six things were each too slow read the same without it.
-                breakdown = ", ".join(f"{name} {milliseconds:.0f}ms"
-                                      for name, milliseconds in session.worst_frame_sections[:6])
+                breakdown = ", ".join(
+                    f"{name} {own:.0f}ms"
+                    + (f" ({total:.0f}ms with nested)" if total - own >= 1.0 else "")
+                    for name, own, total in session.worst_frame_sections[:6])
                 message = (f"the UI thread stalled {session.stalls_seen}x, worst "
                            f"{session.worst_frame_ms:.0f} ms in {session.worst_section or '?'}"
                            + (f" -- {breakdown}" if breakdown else ""))

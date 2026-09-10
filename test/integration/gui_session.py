@@ -82,7 +82,7 @@ class GuiSession:
         self.stalls_seen = 0
         self.worst_frame_ms = 0.0
         self.worst_section = ""
-        #: Every section of the worst frame, longest first -- what the stall was made of.
+        #: Every section of the worst frame, longest first: (name, own ms, ms with nested).
         self.worst_frame_sections: list = []
 
         #: How the process ended, kept after it is gone.
@@ -238,8 +238,13 @@ class GuiSession:
             self.worst_frame_ms = float(report["worst_frame_ms"])
             self.worst_section = str(report.get("worst_section", ""))
             sections = report.get("worst_frame_sections") or {}
+            # Two times per section: what it spent on itself and what it spent including
+            # everything nested inside it. Sorted and reported by the first -- the one that adds
+            # up to the frame, so a name that only encloses a slow thing does not outrank it.
             self.worst_frame_sections = sorted(
-                ((str(name), float(value)) for name, value in sections.items()),
+                ((str(name), float(times.get("self_ms", 0.0)),
+                  float(times.get("total_ms", 0.0)))
+                 for name, times in sections.items()),
                 key=lambda entry: entry[1], reverse=True)
 
     def restart(self) -> None:

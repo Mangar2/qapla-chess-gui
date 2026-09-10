@@ -51,7 +51,9 @@ namespace {
             "Which of the independent activities to act on. \"tournament\": classic "
             "multi-engine round robin. \"sprt\": champion-vs-challenger SPRT test. \"epd\": "
             "move-finding analysis vs a fixed position set. \"clop\": CLOP parameter tuning of "
-            "one engine against opponents. If unclear which the user means, "
+            "one engine against opponents. \"analysis\": backward analysis -- recomputes the "
+            "games of a PGN file, each from its last move back to its first, and writes them out "
+            "again with the evaluations found. If unclear which the user means, "
             "ask, don't guess -- wrong guess silently acts on the wrong one.";
         if (!extraSentence.empty()) {
             description += " " + extraSentence;
@@ -59,7 +61,8 @@ namespace {
         return Api::enumParam<ActivityRequest>("type", &ActivityRequest::type,
             std::move(description),
             {{"tournament", Activity::Tournament}, {"sprt", Activity::Sprt},
-                {"epd", Activity::Epd}, {"clop", Activity::Clop}},
+                {"epd", Activity::Epd}, {"clop", Activity::Clop},
+                {"analysis", Activity::Analysis}},
             required);
     }
 
@@ -154,9 +157,10 @@ void registerActivityTools(GuiToolRegistry& registry) {
     Api::defineTool<ActivityRequest>(registry,
         {.name = "start",
             .description =
-                "Starts a tournament, SPRT test, or EPD analysis (pick via \"type\") "
-                "using whatever engines/settings were configured via "
-                "configure_tournament, configure_sprt or configure_epd respectively. "
+                "Starts a tournament, SPRT test, EPD analysis or backward analysis (pick via "
+                "\"type\") using whatever engines/settings were configured via "
+                "configure_tournament, configure_sprt, configure_epd or "
+                "configure_backward_analysis respectively. "
                 "Requires that type's own preconditions already met (engines selected, "
                 "openings/EPD file configured) -- and they usually already are, carried "
                 "over from an earlier session, so \"start it\" normally needs no setup at "
@@ -180,8 +184,8 @@ void registerActivityTools(GuiToolRegistry& registry) {
     Api::defineTool<ActivityRequest>(registry,
         {.name = "stop",
             .description =
-                "Stops a running tournament, SPRT test, or EPD analysis (pick via "
-                "\"type\"). Optional \"mode\": graceful (default) or abrupt. Fails if "
+                "Stops a running tournament, SPRT test, EPD analysis or backward analysis "
+                "(pick via \"type\"). Optional \"mode\": graceful (default) or abrupt. Fails if "
                 "that type isn't currently running. For EPD, progress is kept (not "
                 "cleared) -- starting again resumes from here. An abrupt stop only "
                 "returns once the run is really gone, so you may act immediately "
@@ -308,6 +312,7 @@ void registerActivityTools(GuiToolRegistry& registry) {
                 activities["sprt"] = activityStateJson(Actions::Activity::Sprt);
                 activities["epd"] = activityStateJson(Actions::Activity::Epd);
                 activities["clop"] = activityStateJson(Actions::Activity::Clop);
+                activities["analysis"] = activityStateJson(Actions::Activity::Analysis);
 
                 auto object = QaplaTester::Json::JsonValue::object();
                 object["activities"] = activities;

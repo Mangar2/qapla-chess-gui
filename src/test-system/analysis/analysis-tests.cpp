@@ -75,7 +75,9 @@ void registerAnalysisTests(ImGuiTestEngine* engine) {
         const auto outputPath =
             (std::filesystem::temp_directory_path() / "qapla-analysis-gui-test-out.pgn").string();
         std::filesystem::remove(outputPath);
-        data.config().moveTimeMs = 50;
+        // Long enough that the boards of the run are there to be looked at for more than the
+        // frame in which they appear.
+        data.config().moveTimeMs = 500;
         data.outputPgn().pgnOptions().file = outputPath;
         data.outputPgn().pgnOptions().append = false;
         data.outputPgn().pgnOptions().onlyFinishedGames = false;
@@ -197,6 +199,55 @@ void registerAnalysisTests(ImGuiTestEngine* engine) {
         }, 60.0F);
         ctx->LogInfo("finished %zu of %zu", data.getFinishedCount(), data.getTotalCount());
         IM_CHECK(ran);
+    };
+
+    tst = IM_REGISTER_TEST(engine, "Analysis", "ChatbotShowsARunningAnalysis");
+    tst->TestFunc = [](ImGuiTestContext* ctx) {
+        prepareTestEnvironment(ctx);
+
+        auto& data = QaplaWindows::AnalysisData::instance();
+        std::vector<QaplaTester::EngineConfig> engines;
+        for (auto config : QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs()) {
+            config.setSelected(true);
+            engines.push_back(config);
+            break;
+        }
+        IM_CHECK(!engines.empty());
+        data.getEngineSelect().setEngineConfigurations(engines);
+
+        const auto outputPath =
+            (std::filesystem::temp_directory_path() / "qapla-analysis-running-out.pgn").string();
+        std::filesystem::remove(outputPath);
+        // Long enough that the run cannot be over by the time the thread has been opened on it:
+        // walking two short games backwards is otherwise a matter of seconds.
+        data.config().moveTimeMs = 10000;
+        data.outputPgn().pgnOptions().file = outputPath;
+        data.outputPgn().pgnOptions().append = false;
+        data.outputPgn().pgnOptions().onlyFinishedGames = false;
+
+        QaplaTester::PgnIO reader;
+        data.setGames(reader.loadGames(writeTestPgn(), true));
+        data.setExternalConcurrency(1);
+        data.analyse();
+        ctx->Yield(2);
+        IM_CHECK(data.isBusy());
+
+        QaplaWindows::ChatBot::ChatbotWindow::instance()->reset();
+        ctx->Yield(2);
+        TutorialTestCommon::navigateToChatbot(ctx);
+        ctx->ItemClick("**/###Backward Analysis");
+        ctx->Yield(3);
+
+        // A run that is going leaves nothing to set up: the thread opens on it, with the button
+        // that stops it and none of the ones that would start another.
+        IM_CHECK(ctx->ItemExists("**/###Stop"));
+        IM_CHECK(!ctx->ItemExists("**/###Load Games"));
+        IM_CHECK(!ctx->ItemExists("**/###Start Analysis"));
+
+        ctx->ItemClick("**/###Stop");
+        IM_CHECK(QaplaTest::Common::waitForCondition(ctx, [&data]() { return !data.isBusy(); },
+            30.0F));
+        ctx->LogInfo("stopped, finished %zu of %zu", data.getFinishedCount(), data.getTotalCount());
     };
 }
 
