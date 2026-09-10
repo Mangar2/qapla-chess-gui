@@ -67,6 +67,22 @@ public:
     static constexpr std::chrono::milliseconds DEFAULT_STALL_THRESHOLD{100};
 
     /**
+     * @brief What counts as a stall while the remote control is open.
+     *
+     * Higher on purpose, and only there. A caller over HTTP gets its answer to `start` after the
+     * run has really started, because the earlier arrangement -- answer at once, start in the
+     * background -- had the caller ask "is it running?" and be told no, and then act on that.
+     * Waiting is the fix, and the waiting happens on this thread: starting a run reads and parses
+     * the openings file and brings the pool up, measured at 21 to 66 ms, and it lands in the same
+     * frame as a drawing pass that costs 45 to 70 ms on a machine rendering in software. That is
+     * a frame of over 100 ms which is doing exactly what it was asked to do.
+     *
+     * The number is not a licence: what this watch is for -- a thread held by something that has
+     * no business on it -- is orders of magnitude larger still.
+     */
+    static constexpr std::chrono::milliseconds REMOTE_CONTROL_STALL_THRESHOLD{300};
+
+    /**
      * @brief What counts as a stall in this session, in milliseconds.
      *
      * A property of the build, not of the application: the same work takes measurably longer in
@@ -75,6 +91,14 @@ public:
      * gives the debug build a number that fits it, and nothing else changes.
      */
     [[nodiscard]] static std::chrono::milliseconds stallThreshold();
+
+    /**
+     * @brief Sets what counts as a stall from now on; QAPLA_STALL_THRESHOLD_MS still wins.
+     *
+     * For the one caller that knows something the watch cannot: see
+     * REMOTE_CONTROL_STALL_THRESHOLD. Called before the first frame; a zero is ignored.
+     */
+    static void setStallThreshold(std::chrono::milliseconds threshold);
 
     /**
      * @brief The name under which the buffer swap is waited for; see Waiting.

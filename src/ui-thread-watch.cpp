@@ -24,6 +24,7 @@
 #include <base-elements/string-helper.h>
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace QaplaWindows {
@@ -37,21 +38,44 @@ namespace {
 
 } // namespace
 
+namespace {
+
+/** @brief What setStallThreshold() was given, in milliseconds; zero when nobody set one. */
+std::atomic<std::int64_t> configuredThresholdMs{0};
+
+} // namespace
+
 std::chrono::milliseconds UiThreadWatch::stallThreshold() {
-    // Read once: it belongs to the run, and reading the environment per frame would itself cost
-    // more than the thing being measured.
-    static const std::chrono::milliseconds threshold = [] {
+    // The environment is read once: it belongs to the run, and reading it per frame would itself
+    // cost more than the thing being measured. It also wins over everything else, so that a test
+    // runner can pin a number no part of the application then argues with.
+    static const std::optional<std::chrono::milliseconds> fromEnvironment = []
+        -> std::optional<std::chrono::milliseconds> {
         const auto configured = QaplaHelpers::OsHelpers::getEnv("QAPLA_STALL_THRESHOLD_MS");
         if (!configured) {
-            return DEFAULT_STALL_THRESHOLD;
+            return std::nullopt;
         }
         const auto milliseconds = QaplaHelpers::to_uint32(*configured);
         if (!milliseconds || *milliseconds == 0) {
-            return DEFAULT_STALL_THRESHOLD;
+            return std::nullopt;
         }
         return std::chrono::milliseconds{*milliseconds};
     }();
-    return threshold;
+    if (fromEnvironment) {
+        return *fromEnvironment;
+    }
+    const auto configured = configuredThresholdMs.load(std::memory_order_relaxed);
+    if (configured > 0) {
+        return std::chrono::milliseconds{configured};
+    }
+    return DEFAULT_STALL_THRESHOLD;
+}
+
+void UiThreadWatch::setStallThreshold(std::chrono::milliseconds threshold) {
+    if (threshold.count() <= 0) {
+        return;
+    }
+    configuredThresholdMs.store(threshold.count(), std::memory_order_relaxed);
 }
 
 UiThreadWatch& UiThreadWatch::instance() {

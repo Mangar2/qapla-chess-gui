@@ -300,6 +300,10 @@ namespace {
         const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
 
         if (remoteControl.enabled) {
+            // A caller over HTTP is answered once the run has really started, and that waiting
+            // sits on this thread -- see UiThreadWatch::REMOTE_CONTROL_STALL_THRESHOLD.
+            QaplaWindows::UiThreadWatch::setStallThreshold(
+                QaplaWindows::UiThreadWatch::REMOTE_CONTROL_STALL_THRESHOLD);
             if (QaplaLlm::startRemoteControl(remoteControl, !autoRunTests)) {
                 // For a person reading a log. A program that has to know the port reads
                 // remote-control.port in the configuration directory instead, which does not
