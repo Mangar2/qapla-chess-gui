@@ -440,3 +440,92 @@ TEST_CASE("Tournament result stability", "[engine-tester][tournament]") {
         REQUIRE(!(*pair2)->isFinished());
     }
 }
+
+TEST_CASE("Tournament results survive switching round-robin to gauntlet", "[engine-tester][tournament]") {
+    // A round-robin pairs in selection order (First vs Second); a gauntlet puts the gauntlet
+    // engine first (Second vs First). It is the same encounter, and its games must not be
+    // dropped because the pairing was built the other way round.
+    auto engines = createEngines(std::vector<TestEngineParams>{
+        {.name = "First"},
+        {.name = "Second"}
+    });
+
+    TournamentConfig config{
+        .event = "Type Switch",
+        .type = "round-robin",
+        .tournamentFilename = "",
+        .games = 10,
+        .rounds = 1,
+        .repeat = 2,
+        .openings = Openings{
+            .file = "src/test-system/unit/test-openings.pgn",
+            .plies = 1
+        }
+    };
+
+    auto requireFirstScore = [](const Tournament& tournament) {
+        REQUIRE(tournament.pairTournamentCount() == 1);
+        auto pair = tournament.getPairTournament(0);
+        REQUIRE(pair.has_value());
+        // The stored orientation is kept, so colors and openings continue where they were.
+        CHECK((*pair)->getEngineA().getName() == "First");
+        CHECK((*pair)->getEngineB().getName() == "Second");
+        CHECK_FALSE((*pair)->isFinished());
+
+        auto first = tournament.getResult().forEngine("First");
+        REQUIRE(first.has_value());
+        auto agg = first->aggregate("First");
+        CHECK(agg.total() == 5);
+        CHECK(agg.winsEngineA == 2);
+        CHECK(agg.winsEngineB == 2);
+        CHECK(agg.draws == 1);
+    };
+
+    SECTION("Continuing after the switch keeps the games") {
+        TournamentBuilder builder(engines, config);
+        builder.playGames(0, {
+            GameResult::WhiteWins,  // First (white) wins
+            GameResult::WhiteWins,  // Second (white) wins
+            GameResult::Draw,
+            GameResult::BlackWins,  // First (black) wins
+            GameResult::BlackWins   // Second (black) wins
+        });
+        requireFirstScore(builder.tournament);
+
+        auto gauntletEngines = engines;
+        gauntletEngines[1].setGauntlet(true);
+        config.type = "gauntlet";
+        builder.tournament.createTournament(gauntletEngines, config);
+        requireFirstScore(builder.tournament);
+
+        // The next game is the sixth: First has black in the second game of each opening pair.
+        auto pair = builder.tournament.getPairTournament(0);
+        REQUIRE(pair.has_value());
+        auto task = const_cast<PairTournament*>(*pair)->nextTask();
+        REQUIRE(task.has_value());
+        CHECK(task->gameRecord.getWhiteEngineName() == "Second");
+
+        // And switching back does not lose them either.
+        config.type = "round-robin";
+        builder.tournament.createTournament(engines, config);
+        requireFirstScore(builder.tournament);
+    }
+
+    SECTION("Loading stored round-robin results into a gauntlet keeps the games") {
+        auto gauntletEngines = engines;
+        gauntletEngines[1].setGauntlet(true);
+        config.type = "gauntlet";
+        Tournament tournament;
+        tournament.createTournament(gauntletEngines, config);
+
+        // As written by the round-robin: games in First's view (1 = First won).
+        QaplaHelpers::IniFile::Section section{ .name = "round" };
+        section.addEntry("round", "1");
+        section.addEntry("engineA", "First");
+        section.addEntry("engineB", "Second");
+        section.addEntry("games", "10=10");
+        tournament.load(section);
+
+        requireFirstScore(tournament);
+    }
+}
