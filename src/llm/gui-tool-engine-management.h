@@ -115,9 +115,12 @@ struct AddNamedEnginesOutcome {
  *
  * @param capabilities Passed in rather than reached for, so this stays free of the GUI singleton
  *        and can be unit-tested with a hand-built capability set.
+ * @param where Which copy of the engine this is, e.g. "the engine catalog" or "the tournament".
+ *        Named in the first line: the catalog and every run hold their own copy with their own
+ *        values, and a report that does not say which one it shows gets read as the other.
  */
 [[nodiscard]] std::string engineDetailsText(const QaplaTester::EngineConfig& config,
-    const QaplaConfiguration::EngineCapabilities& capabilities);
+    const QaplaConfiguration::EngineCapabilities& capabilities, std::string_view where);
 
 /** @brief One requested UCI option value, as the caller named it. */
 struct EngineAssignment {

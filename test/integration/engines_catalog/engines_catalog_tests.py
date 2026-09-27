@@ -36,7 +36,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "description": "Details name the executable and the protocol that was detected",
             "engines": [ec.DIAG],
             "steps": [
-                {"call": "manage_engines", "args": {"command": "details", "engine": ec.DIAG},
+                {"call": "manage_engines", "args": {"command": "details", "engine": ec.DIAG, "target": "catalog"},
                  "id": "details"},
             ],
             "validators": [
@@ -85,11 +85,81 @@ def get_tests() -> List[Dict[str, Any]]:
             "description": "Asking about an engine that was never installed is an error, not empty",
             "steps": [
                 {"call": "manage_engines",
-                 "args": {"command": "details", "engine": "Nothing Like This"},
+                 "args": {"command": "details", "engine": "Nothing Like This",
+                          "target": "catalog"},
                  "expect_ok": False, "id": "details"},
             ],
             "validators": [
                 {"type": "failed", "step": "details"},
+            ],
+        },
+        {
+            "name": "engines-details-needs-target",
+            "description": "details without a target is refused -- there is no default copy",
+            "engines": [ec.DIAG],
+            "steps": [
+                {"call": "manage_engines", "args": {"command": "details", "engine": ec.DIAG},
+                 "expect_ok": False, "id": "details"},
+            ],
+            "validators": [
+                {"type": "failed", "step": "details"},
+                {"type": "content", "step": "details", "pattern": "target"},
+            ],
+        },
+        {
+            "name": "engines-details-shows-catalog-gauntlet",
+            "description": "details of the catalog shows the gauntlet flag that is stored, and says "
+                           "it is the catalog",
+            "engines": [ec.DIAG],
+            "steps": [
+                {"call": "manage_engines",
+                 "args": {"command": "update", "engine": ec.DIAG, "set": {"gauntlet": "true"}},
+                 "id": "set"},
+                {"call": "manage_engines",
+                 "args": {"command": "details", "engine": ec.DIAG, "target": "catalog"},
+                 "id": "on"},
+                {"call": "manage_engines",
+                 "args": {"command": "update", "engine": ec.DIAG, "set": {"gauntlet": "false"}},
+                 "id": "reset"},
+                {"call": "manage_engines",
+                 "args": {"command": "details", "engine": ec.DIAG, "target": "catalog"},
+                 "id": "off"},
+            ],
+            "validators": [
+                {"type": "content", "step": "on", "pattern": "in the engine catalog:"},
+                {"type": "content", "step": "on", "pattern": "Gauntlet: true"},
+                {"type": "content", "step": "off", "pattern": "Gauntlet: false"},
+            ],
+        },
+        {
+            "name": "engines-details-shows-run-copy",
+            "description": "details of the tournament shows that run's own copy, separate from "
+                           "the catalog, and refuses an engine the run did not select",
+            "engines": [ec.DIAG, ec.DIAG_B],
+            "steps": [
+                {"call": "configure_tournament", "args": {"engines": [ec.DIAG, ec.DIAG_B]}},
+                {"call": "manage_engines",
+                 "args": {"command": "update", "engine": ec.DIAG_B, "target": "tournament",
+                          "set": {"gauntlet": "true"}},
+                 "id": "set"},
+                {"call": "manage_engines",
+                 "args": {"command": "details", "engine": ec.DIAG_B, "target": "tournament"},
+                 "id": "tournament"},
+                {"call": "manage_engines",
+                 "args": {"command": "details", "engine": ec.DIAG_B, "target": "catalog"},
+                 "id": "catalog"},
+                {"call": "manage_engines",
+                 "args": {"command": "details", "engine": ec.DIAG_B, "target": "sprt"},
+                 "expect_ok": False, "id": "sprt"},
+            ],
+            "validators": [
+                {"type": "ok", "step": "set"},
+                {"type": "content", "step": "tournament", "pattern": "in the tournament:"},
+                {"type": "content", "step": "tournament", "pattern": "Gauntlet: true"},
+                {"type": "content", "step": "catalog", "pattern": "in the engine catalog:"},
+                {"type": "content", "step": "catalog", "pattern": "Gauntlet: false"},
+                {"type": "failed", "step": "sprt"},
+                {"type": "content", "step": "sprt", "pattern": "the SPRT test"},
             ],
         },
         {
@@ -98,7 +168,7 @@ def get_tests() -> List[Dict[str, Any]]:
             "engines": [ec.QAPLA, ec.SPIKE],
             "steps": [
                 {"call": "manage_engines", "args": {"command": "list"}, "id": "list"},
-                {"call": "manage_engines", "args": {"command": "details", "engine": ec.QAPLA},
+                {"call": "manage_engines", "args": {"command": "details", "engine": ec.QAPLA, "target": "catalog"},
                  "id": "qapla"},
             ],
             "validators": [

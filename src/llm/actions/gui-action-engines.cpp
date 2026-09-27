@@ -271,20 +271,6 @@ ActionResult installEngines(const std::vector<NamedEnginePath>& engines) {
     return pending;
 }
 
-ActionResult engineDetails(const std::string& name) {
-    auto outcome = resolveEngines({name});
-    if (!outcome.ambiguous.empty()) {
-        return failed(
-            formatAmbiguousEngineNames(outcome.ambiguous) + " Ask the user which one they mean.");
-    }
-    if (outcome.resolved.empty()) {
-        return failed(std::format("\"{}\" is not in the engine catalog. List the installed engines "
-                                  "to see what is there.", name));
-    }
-    return succeeded(engineDetailsText(outcome.resolved.front(),
-        QaplaConfiguration::Configuration::instance().getEngineCapabilities()));
-}
-
 namespace {
 
     /**
@@ -369,6 +355,43 @@ namespace {
     }
 
 } // namespace
+
+ActionResult engineDetails(EngineTarget target, const std::string& name) {
+    const auto traits = traitsOf(target);
+    const auto& capabilities = QaplaConfiguration::Configuration::instance().getEngineCapabilities();
+
+    auto resolution = resolveEngines({name});
+    if (!resolution.ambiguous.empty()) {
+        return failed(formatAmbiguousEngineNames(resolution.ambiguous) +
+            " Ask the user which one they mean.");
+    }
+    if (resolution.resolved.empty()) {
+        return failed(std::format("\"{}\" is not in the engine catalog. List the installed engines "
+                                  "to see what is there.", name));
+    }
+    // Only the name is taken from the resolution: resolveEngines() prepares an engine for being
+    // selected into a run, marking it selected and not a gauntlet, and reporting that copy showed
+    // those two values for every engine whatever was stored.
+    const auto canonicalName = resolution.resolved.front().getName();
+
+    if (target == EngineTarget::Catalog) {
+        const auto* config =
+            QaplaTester::EngineWorkerFactory::getConfigManager().getConfig(canonicalName);
+        if (config == nullptr) {
+            return failed(std::format("\"{}\" is not in the engine catalog.", canonicalName));
+        }
+        return succeeded(engineDetailsText(*config, capabilities, traits.label));
+    }
+
+    const auto configs = selectionOf(target)->getEngineConfigurations();
+    const auto match = std::ranges::find_if(
+        configs, [&](const auto& config) { return config.getName() == canonicalName; });
+    if (match == configs.end()) {
+        return failed(std::format("{} is not among the engines of {}, so there is no copy of it "
+                                  "there to report.", canonicalName, traits.label));
+    }
+    return succeeded(engineDetailsText(*match, capabilities, traits.label));
+}
 
 ActionResult setEngineOptions(EngineTarget target, const std::string& engineName,
     const std::vector<EngineAssignment>& options, const std::vector<std::string>& unset) {

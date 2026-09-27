@@ -73,13 +73,14 @@ enum class EngineTarget { Catalog, Tournament, Sprt, Epd };
 [[nodiscard]] ActionResult installEngines(const std::vector<NamedEnginePath>& engines);
 
 /**
- * @brief Reports one catalog engine's configuration and the options its program supports.
+ * @brief Reports one engine's configuration in the given set and the options its program supports.
  *
  * The report itself is built by engineDetailsText() (gui-tool-engine-management.h); this resolves
  * the name against the catalog first, with the same tolerance for a partial name that engine
- * selection has.
+ * selection has, and then reports the copy held by \p target exactly as stored -- the catalog
+ * entry, or the copy a run selected, with its own gauntlet flag, selection and option values.
  */
-[[nodiscard]] ActionResult engineDetails(const std::string& name);
+[[nodiscard]] ActionResult engineDetails(EngineTarget target, const std::string& name);
 
 /**
  * @brief Sets UCI option values on one engine configuration in the given set.

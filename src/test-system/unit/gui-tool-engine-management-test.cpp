@@ -292,7 +292,7 @@ TEST_CASE("engineDetailsText reports the domain, not just the option names",
     const auto& capabilities = engine.capabilities;
     config.setOptionValue("Hash", "256");
 
-    const auto text = engineDetailsText(config, capabilities);
+    const auto text = engineDetailsText(config, capabilities, "the engine catalog");
 
     REQUIRE(text.find("Hash = 256") != std::string::npos);       // what is set
     REQUIRE(text.find("1..65536") != std::string::npos);         // what may be set
@@ -306,9 +306,21 @@ TEST_CASE("engineDetailsText says so when the engine never reported anything",
     auto config = makeConfig();
     const QaplaConfiguration::EngineCapabilities empty;
 
-    const auto text = engineDetailsText(config, empty);
+    const auto text = engineDetailsText(config, empty, "the engine catalog");
 
     REQUIRE(text.find("unknown") != std::string::npos);
+}
+
+TEST_CASE("engineDetailsText names the copy it reports and its real gauntlet flag",
+    "[llm][gui-tool-engine-management]") {
+    auto config = makeConfig();
+    config.setGauntlet(true);
+    const QaplaConfiguration::EngineCapabilities empty;
+
+    const auto text = engineDetailsText(config, empty, "the tournament");
+
+    REQUIRE(text.find("\" in the tournament:") != std::string::npos);
+    REQUIRE(text.find("Gauntlet: true") != std::string::npos);
 }
 
 TEST_CASE("unsetEngineOptions puts an option back to the engine default",

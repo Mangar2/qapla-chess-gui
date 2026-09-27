@@ -129,16 +129,17 @@ void registerEngineTools(GuiToolRegistry& registry) {
                 "(SPRT, tournament, EPD) holds its own copies of the engines selected for it. "
                 "Selecting an engine copies it out of the catalog, so change a run's copy AFTER "
                 "selecting, and know that changing the catalog does not reach a run that already "
-                "selected it. Commands: \"list\" every catalog engine; \"details\" one engine "
-                "with the UCI options its program supports; \"install\" a program from a path; "
-                "\"copy\" a catalog entry under a new name; \"delete\" one; \"update\" generic "
+                "selected it. Commands: \"list\" every catalog engine; \"details\" one engine as "
+                "the copy named in \"target\" holds it, with the UCI options its program "
+                "supports; \"install\" a program from a path; \"copy\" a catalog entry under a new name; \"delete\" one; \"update\" generic "
                 "properties; \"set_options\" UCI option values.",
             .params = {
                 Api::enumParam<ManageEnginesRequest>("command", &ManageEnginesRequest::command,
                     "What to do. \"list\": all catalog engines with their protocol -- needs "
-                    "nothing else. \"details\": everything about \"engine\", including which UCI "
-                    "options its program supports, with types and ranges; read this before "
-                    "setting any option. \"install\": adds the program at \"path\" as "
+                    "nothing else. \"details\": everything about \"engine\" as \"target\" holds "
+                    "it, including which UCI options its program supports, with types and "
+                    "ranges; read this before setting any option. \"target\" MUST be given for "
+                    "details, there is no default. \"install\": adds the program at \"path\" as "
                     "\"new_name\" and starts it to find out what it supports. \"copy\": duplicates "
                     "\"engine\" as \"new_name\", carrying its values over; pass \"options\"/"
                     "\"set\" in the same call to make the copy differ. \"delete\": removes "
@@ -165,10 +166,13 @@ void registerEngineTools(GuiToolRegistry& registry) {
                     "how one build is tested against itself under different UCI options, since "
                     "the options belong to the catalog entry and not to the file."),
                 Api::enumParam<ManageEnginesRequest>("target", &ManageEnginesRequest::target,
-                    "Which copy of the engine update and set_options change. \"catalog\" "
-                    "(default): the installed engine, which is what future selections start from "
-                    "-- it does NOT change a run that already selected it. \"sprt\", "
-                    "\"tournament\", \"epd\": the copy that run uses, affecting that run only.",
+                    "Which copy of the engine details shows, and update and set_options change. "
+                    "\"catalog\": the installed engine, which is what future selections start "
+                    "from -- changing it does NOT change a run that already selected it. "
+                    "\"sprt\", \"tournament\", \"epd\": the copy that run uses, with values of "
+                    "its own. For details it MUST be given, with no default: the copies can "
+                    "differ, so say which one is meant; the answer names the copy it shows. For "
+                    "update and set_options it defaults to \"catalog\".",
                     {{"catalog", EngineTarget::Catalog}, {"sprt", EngineTarget::Sprt},
                         {"tournament", EngineTarget::Tournament}, {"epd", EngineTarget::Epd}}),
                 Api::stringMapParam<ManageEnginesRequest>("options",
@@ -195,7 +199,16 @@ void registerEngineTools(GuiToolRegistry& registry) {
                 const auto engine = request.engine.value_or("");
                 switch (request.command.value_or(EngineCommand::List)) {
                     case EngineCommand::Details:
-                        return Actions::engineDetails(engine);
+                        // No default here, unlike update: the catalog and each run hold copies
+                        // with values of their own, and a report of whichever copy a default
+                        // picked would be read as the one the caller had in mind.
+                        if (!request.target) {
+                            return Actions::failed("details needs \"target\": \"catalog\" for the "
+                                "installed engine, or \"tournament\", \"sprt\" or \"epd\" for the "
+                                "copy that run uses. Their values can differ, so say which one. "
+                                "Nothing was reported.");
+                        }
+                        return Actions::engineDetails(*request.target, engine);
                     case EngineCommand::Install:
                         return Actions::installEngines({{.name = request.new_name.value_or(""),
                             .path = request.path.value_or("")}});

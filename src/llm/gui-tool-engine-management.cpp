@@ -315,9 +315,9 @@ bool deleteCatalogEngine(const std::string& name) {
 }
 
 std::string engineDetailsText(const QaplaTester::EngineConfig& config,
-    const QaplaConfiguration::EngineCapabilities& capabilities) {
+    const QaplaConfiguration::EngineCapabilities& capabilities, std::string_view where) {
     std::ostringstream out;
-    out << std::format("Engine \"{}\":\n", config.getName());
+    out << std::format("Engine \"{}\" in {}:\n", config.getName(), where);
 
     config.visitProperties([&out](const std::string& key, const std::string& value) {
         if (value.empty()) {
