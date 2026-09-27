@@ -42,7 +42,7 @@ it; the sentences are written for a language model and are free to be reworded.
 | state-answers-in-english-with-a-german-gui | The remote control does not follow the GUI's language setting |
 | state-is-not-a-published-tool | `get_state` serves the endpoint; it is not offered to a model |
 
-## engines_catalog (6 tests)
+## engines_catalog (9 tests)
 
 | Name | Description |
 |---|---|
@@ -51,6 +51,9 @@ it; the sentences are written for a language model and are free to be reworded.
 | engines-copy-and-delete | An engine can be copied under a new name and deleted again |
 | engines-install-nonexistent-path | Installing something that is not there is refused, and nothing is added |
 | engines-details-of-unknown-engine | Asking about an engine that was never installed is an error, not an empty answer |
+| engines-details-needs-target | `details` without a target is refused -- there is no default copy |
+| engines-details-shows-catalog-gauntlet | The catalog's details show the gauntlet flag as stored, and say it is the catalog |
+| engines-details-shows-run-copy | The tournament's details show that run's own copy; a run that did not select the engine is refused |
 | engines-real-engines-install | Qapla and Spike install and are detected as UCI |
 
 ## tournament (9 tests)
