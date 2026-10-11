@@ -78,6 +78,8 @@ TEST_CASE("Openings config round-trips through Settings::Manager", "[config-pers
         openings.policy = "round";
 
         auto section = toOpeningsSection(openings, "test-id");
+        // The file holds the number of plies itself, as a user writes it on the command line.
+        REQUIRE(section.getValue("plies") == "6");
         auto& manager = loadGroupIntoManager("openings", {section});
         auto roundtripped = QaplaTester::OpeningConfig::fromManager(manager, "openings");
 

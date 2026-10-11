@@ -186,7 +186,7 @@ QaplaHelpers::IniFile::Section toOpeningsSection(
     section.addEntry("id", id);
     section.addEntry("file", openings.file);
     section.addEntry("order", openings.order);
-    section.addEntry("plies", openings.plies ? std::to_string(*openings.plies + 1) : "all");
+    section.addEntry("plies", openings.plies ? std::to_string(*openings.plies) : "all");
     section.addEntry("start", std::to_string(openings.start + 1));
     section.addEntry("srand", std::to_string(openings.seed));
     section.addEntry("policy", openings.policy);
