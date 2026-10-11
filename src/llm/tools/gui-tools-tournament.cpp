@@ -66,7 +66,7 @@ namespace {
         params.push_back(Api::stringParam<Request>("event", &TournamentSettings::event,
             "Tournament/event name."));
         params.push_back(Tools::openingsFileParam<Request>(
-            "Path to EPD/PGN opening book file."));
+            "Path to EPD/PGN/BOK opening book file."));
         params.push_back(Tools::openingsFileDialogParam<Request>());
         params.push_back(Tools::pgnFileParam<Request>());
         params.push_back(Tools::pgnFileDialogParam<Request>());

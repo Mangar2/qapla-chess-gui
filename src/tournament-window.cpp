@@ -633,7 +633,8 @@ static auto tournamentWindowTutorialInit = []() {
               "standard chess position, leading to repetitive games.\n\n"
               "In the 'Opening' section:\n"
               "• Click on 'Opening file' and select a file with opening positions\n"
-              "• Supported formats: .epd (EPD positions), .pgn (game moves), or raw FEN strings\n"
+              "• Supported formats: .epd (EPD positions), .pgn (game moves), .bok (a book of Qapla), "
+              "or raw FEN strings\n"
               "The format is auto-detected based on file extension and file content.\n\n"
               "Opening books ensure variety and test engines across different positions.",
               .success = "Opening file configured!",

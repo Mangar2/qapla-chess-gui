@@ -64,7 +64,7 @@ public:
     /** @brief Asks for a file of test positions (EPD, or plain FEN lines). */
     [[nodiscard]] static std::vector<std::string> openEpdFile();
 
-    /** @brief Asks for a file of opening positions, which is a PGN or a position file. */
+    /** @brief Asks for a file of opening positions: a PGN, a 9 bit book of Qapla or a position file. */
     [[nodiscard]] static std::vector<std::string> openOpeningsFile();
 
     /** @brief Asks where to write the results of an EPD run. */
@@ -117,6 +117,16 @@ public:
      * @return A label such as "EPD, RAW files (*.epd, *.raw)", or "All files (*.*)" when empty.
      */
     [[nodiscard]] static std::string describeFileTypes(const std::vector<std::string>& extensions);
+
+    /** @brief The extensions of the position files a tournament or an EPD run reads. */
+    [[nodiscard]] static const std::vector<std::string>& positionFileExtensions();
+
+    /**
+     * @brief The extensions the dialog for opening files offers: a PGN, a 9 bit book of Qapla
+     * (.bok) and the position files. The engine tester finds the format by the content, so the
+     * list only decides what the dialog shows first.
+     */
+    [[nodiscard]] static const std::vector<std::string>& openingsFileExtensions();
 
     /**
      * @brief The glob pattern of one extension, e.g. "pgn" becomes "*.pgn".

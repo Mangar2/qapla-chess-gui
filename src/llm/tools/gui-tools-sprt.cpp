@@ -75,7 +75,7 @@ namespace {
             "True: pentanomial (paired-game) stats instead of trinomial -- more power, needs "
             "games in same-opening pairs. Default false."));
         params.push_back(Tools::openingsFileParam<Request>(
-            "Path to existing EPD/PGN opening book file on disk."));
+            "Path to existing EPD/PGN/BOK opening book file on disk."));
         params.push_back(Tools::openingsFileDialogParam<Request>());
         params.push_back(Tools::pgnFileParam<Request>());
         params.push_back(Tools::pgnFileDialogParam<Request>());

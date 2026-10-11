@@ -45,6 +45,15 @@ TEST_CASE("A file kind is spelled out with its patterns", "[os-dialogs]") {
         == "EPD, FEN, RAW files (*.epd, *.fen, *.raw)");
 }
 
+TEST_CASE("The opening dialog offers every format the engine tester reads", "[os-dialogs]") {
+    // A book of Qapla is an opening file like a PGN; the dialog has to show it without a detour
+    // through "All files".
+    CHECK(OsDialogs::openingsFileExtensions()
+        == std::vector<std::string>{ "pgn", "bok", "epd", "fen", "raw" });
+    CHECK(OsDialogs::describeFileTypes(OsDialogs::openingsFileExtensions())
+        == "PGN, BOK, EPD, FEN, RAW files (*.pgn, *.bok, *.epd, *.fen, *.raw)");
+}
+
 TEST_CASE("The escape from a filter is named for what it does", "[os-dialogs]") {
     CHECK(OsDialogs::describeFileTypes({}) == "All files");
 }

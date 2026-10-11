@@ -86,7 +86,7 @@ bool ImGuiTournamentOpening::drawOpeningFile(float fileInputWidth,
     bool changed = ImGuiControls::existingFileInput("Opening file", openings_.file,
         []() { const auto files = OsDialogs::openOpeningsFile(); return files.empty() ? std::string{} : files.front(); },
         fileInputWidth);
-    ImGuiControls::hooverTooltip("Path to opening file (.epd, .pgn, or raw FEN text)");
+    ImGuiControls::hooverTooltip("Path to opening file (.pgn, .bok book of Qapla, .epd, or raw FEN text)");
     
     auto it = tutorialContext.annotations.find("Opening file");
     if (it != tutorialContext.annotations.end()) {
@@ -127,10 +127,10 @@ bool ImGuiTournamentOpening::drawPlies(float inputWidth,
         }
     );
     ImGuiControls::hooverTooltip(
-        "Maximum plies to play from PGN opening before engines take over.\n"
-        "Only applicable for PGN input.\n"
-        "  all - Play full PGN sequence\n"
-        "  0 - Engines start from PGN start position\n"
+        "Maximum plies to play from a PGN or book opening before engines take over.\n"
+        "Only applicable for PGN and book input.\n"
+        "  all - Play full opening line\n"
+        "  0 - Engines start from the start position\n"
         "  N - Play N plies, then engines continue"
     );
 

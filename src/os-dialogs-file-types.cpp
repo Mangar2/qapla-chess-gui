@@ -40,6 +40,21 @@ namespace {
     }
 }
 
+const std::vector<std::string>& OsDialogs::positionFileExtensions() {
+    static const std::vector<std::string> extensions{ "epd", "fen", "raw" };
+    return extensions;
+}
+
+const std::vector<std::string>& OsDialogs::openingsFileExtensions() {
+    // bok: the 9 bit books of Qapla, which the engine tester reads as openings.
+    static const std::vector<std::string> extensions = [] {
+        std::vector<std::string> list{ "pgn", "bok" };
+        list.insert(list.end(), positionFileExtensions().begin(), positionFileExtensions().end());
+        return list;
+    }();
+    return extensions;
+}
+
 std::string OsDialogs::fileTypePattern(const std::string& extension) {
     // "*" rather than "*.*" for the unrestricted case: a file without a dot in its name -- an
     // engine binary on Linux and macOS -- does not match "*.*".

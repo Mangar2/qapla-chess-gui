@@ -28,14 +28,6 @@
 
 namespace QaplaWindows {
 
-namespace {
-    /** @brief The extensions of the position files a tournament or an EPD run reads. */
-    const std::vector<std::string>& positionFileExtensions() {
-        static const std::vector<std::string> extensions{ "epd", "fen", "raw" };
-        return extensions;
-    }
-}
-
 std::vector<std::string> OsDialogs::openPgnFile(bool multiple) {
     return openFileDialog({ "pgn" }, multiple);
 }
@@ -49,10 +41,7 @@ std::vector<std::string> OsDialogs::openEpdFile() {
 }
 
 std::vector<std::string> OsDialogs::openOpeningsFile() {
-    std::vector<std::string> extensions{ "pgn" };
-    extensions.insert(extensions.end(),
-        positionFileExtensions().begin(), positionFileExtensions().end());
-    return openFileDialog(extensions);
+    return openFileDialog(openingsFileExtensions());
 }
 
 std::string OsDialogs::saveEpdResultFile(const std::string& defaultPath) {

@@ -130,7 +130,7 @@ void registerClopTools(GuiToolRegistry& registry) {
                     "move. Required: CLOP has no clock of its own, it plays at whatever the "
                     "engines carry, and a run without one cannot start."),
                 Api::stringParam<Request>("openings_file", &Request::openingsFile,
-                    "Path to an existing EPD/PGN opening book file on disk."),
+                    "Path to an existing EPD/PGN/BOK opening book file on disk."),
                 Api::integerParam<Request>("samples", &Request::samples,
                     "How many parameter vectors to sample in total. The run ends when it reaches "
                     "this."),

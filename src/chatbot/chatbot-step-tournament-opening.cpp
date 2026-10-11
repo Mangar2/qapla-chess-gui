@@ -52,7 +52,7 @@ std::string ChatbotStepTournamentOpening::draw() {
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped(
             "Configure the opening book settings for the tournament. "
-            "You must specify an opening file (EPD, PGN, or raw FEN).");
+            "You must specify an opening file (EPD, PGN, a book of Qapla, or raw FEN).");
         ImGui::Spacing();
     }
 
@@ -112,7 +112,7 @@ void ChatbotStepTournamentOpening::drawStatusMessage() {
     if (openings.file.empty()) {
         ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
-            "An opening file is required. Please select a valid EPD, PGN, or FEN file.");
+            "An opening file is required. Please select a valid EPD, PGN, book, or FEN file.");
         ImGui::PopStyleColor();
     } else if (!doesOpeningFileExist()) {
         ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
@@ -142,7 +142,7 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
         std::string errorMessage;
         if (parseResult_->games.empty()) {
             errorMessage = "Failed to parse opening file. No valid positions found.\n"
-                           "Please check the file format (EPD, PGN, or FEN) and ensure "
+                           "Please check the file format (EPD, PGN, book, or FEN) and ensure "
                            "it contains valid positions.";
         } else {
             errorMessage = "Failed to parse opening file. Please check the file format and try again.";
