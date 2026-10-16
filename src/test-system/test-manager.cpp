@@ -29,6 +29,7 @@
 #include "test-system/llm-chat-tests.h"
 #include "test-system/llm-app-tool-tests.h"
 #include "test-system/analysis/analysis-tests.h"
+#include "test-system/bookeval/bookeval-tests.h"
 #include "os-helpers.h"
 
 #include <filesystem>
@@ -107,6 +108,7 @@ namespace QaplaTest {
         // report the same result twice running. What is left here is what only a window can be
         // asked: the chat itself, and the tools that need a person in front of it.
         registerAnalysisTests(engine_);
+        registerBookEvalTests(engine_);
         registerLlmAppToolTests(engine_);
 #endif
     }

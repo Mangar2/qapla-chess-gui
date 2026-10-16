@@ -64,6 +64,12 @@ public:
     /** @brief Asks for a file of test positions (EPD, or plain FEN lines). */
     [[nodiscard]] static std::vector<std::string> openEpdFile();
 
+    /** @brief Asks for a 9 bit book of Qapla to read. */
+    [[nodiscard]] static std::vector<std::string> openBookFile();
+
+    /** @brief Asks where to write a 9 bit book. @param defaultPath What to offer first. */
+    [[nodiscard]] static std::string saveBookFile(const std::string& defaultPath = {});
+
     /** @brief Asks for a file of opening positions: a PGN, a 9 bit book of Qapla or a position file. */
     [[nodiscard]] static std::vector<std::string> openOpeningsFile();
 

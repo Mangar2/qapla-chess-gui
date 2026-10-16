@@ -19,9 +19,10 @@ A modern chess GUI with engine support, written in C++ using OpenGL and ImGui.
 
 #### Position Analysis
 - **Multi-threaded EPD Analysis** - Analyze positions from EPD files using multiple engines in parallel
+- **Book Evaluation** - Search every position of a 9 bit book of Qapla once with an engine and write the scores into a new book, the opening values of the NNUE training data; a stopped run continues where it ended (chat thread *Book Evaluation*)
 - **UCI Engine Testing** - Comprehensive engine compliance and behavior validation
 - **Extensive Logging** - Detailed protocol communication and engine behavior tracking
-- **Auto-detect Opening Formats** - Automatic detection of opening file formats (PGN, EPD, FEN)
+- **Auto-detect Opening Formats** - Automatic detection of opening file formats (PGN, EPD, FEN, 9 bit books)
 
 #### Game Management
 - **PGN Support** - Load, filter, and analyze PGN game databases with proper time control handling

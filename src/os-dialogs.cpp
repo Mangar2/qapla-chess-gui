@@ -40,6 +40,14 @@ std::vector<std::string> OsDialogs::openEpdFile() {
     return openFileDialog(positionFileExtensions());
 }
 
+std::vector<std::string> OsDialogs::openBookFile() {
+    return openFileDialog({ "bok" });
+}
+
+std::string OsDialogs::saveBookFile(const std::string& defaultPath) {
+    return saveFileDialog({ "bok" }, defaultPath);
+}
+
 std::vector<std::string> OsDialogs::openOpeningsFile() {
     return openFileDialog(openingsFileExtensions());
 }
