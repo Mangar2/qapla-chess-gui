@@ -41,9 +41,10 @@ namespace {
 
 /**
  * Three lines: e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 e1g1, e2e4 c7c5 and d2d4 d7d5 c2c4 - eleven moves,
- * played from nine positions.
+ * after which come eleven positions, and the start position: twelve to search for the book of
+ * version 2 the evaluation writes.
  */
-constexpr size_t POSITIONS = 9;
+constexpr size_t POSITIONS = 12;
 
 std::string writeTestBook(const std::string& name) {
     const auto path = (std::filesystem::temp_directory_path() / name).string();
@@ -88,7 +89,7 @@ size_t scoredPositions(const std::string& path) {
     const auto tree = QaplaTester::BookTree::read(path);
     size_t scored = 0;
     for (uint32_t position = 0; position < tree.positionCount(); ++position) {
-        if (tree.isPlayedFrom(position) && tree.score(position) != QaplaTester::BookScore::NONE) {
+        if (tree.isScored(position, 2) && tree.score(position) != QaplaTester::BookScore::NONE) {
             ++scored;
         }
     }

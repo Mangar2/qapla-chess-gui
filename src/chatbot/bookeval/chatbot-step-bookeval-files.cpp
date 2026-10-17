@@ -40,7 +40,8 @@ std::string ChatbotStepBookEvalFiles::draw() {
 
     ImGuiControls::textWrapped(
         "Select the 9 bit book whose positions are evaluated, and the file the evaluated book is "
-        "written to. Every position a move of the book is played from is searched once; the scores "
+        "written to. Every position of the book is searched once - the start position and the one after "
+        "every move - and every move gets the score of the position it leads to; the scores "
         "go into the new book.");
     ImGui::Spacing();
 

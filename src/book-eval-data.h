@@ -42,8 +42,9 @@ namespace QaplaWindows {
     /**
      * @brief The evaluation of the positions of a 9 bit book: what it runs on, and how far it has come.
      *
-     * The run is the one of qapla-engine-tester --bookeval: every position a move of the book is
-     * played from is searched once, cold, and the scores go into a new book, which is also the state
+     * The run is the one of qapla-engine-tester --bookeval, of version 2: every position of the book -
+     * the start position and the one after every move - is searched once, cold, every move gets the
+     * score of the position it leads to, and the scores go into a new book, which is also the state
      * the next run continues from. A run that is stopped keeps what it has; starting it again with
      * the same books and engine goes on from there.
      */
