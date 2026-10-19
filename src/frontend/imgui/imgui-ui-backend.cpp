@@ -598,6 +598,35 @@ namespace QaplaUi {
         return clicked;
     }
 
+    float splitter(std::string_view id, Vec2 size, bool dragsVertically, bool interactive) {
+        const auto label = "###" + str(id);
+        if (!interactive) {
+            // A non-interactive splitter with different styling
+            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(80, 80, 80, 255));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(80, 80, 80, 255));
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(80, 80, 80, 255));
+            ImGui::Button(label.c_str(), toIm(size));
+            ImGui::PopStyleColor(3);
+            return 0.0F;
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
+
+        ImGui::Button(label.c_str(), toIm(size));
+        float delta = 0.0F;
+        if (ImGui::IsItemActive()) {
+            delta = dragsVertically ? ImGui::GetIO().MouseDelta.y : ImGui::GetIO().MouseDelta.x;
+        }
+        if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+            ImGui::SetMouseCursor(dragsVertically ? ImGuiMouseCursor_ResizeNS : ImGuiMouseCursor_ResizeEW);
+        }
+
+        ImGui::PopStyleColor(3);
+        return delta;
+    }
+
     // Items
 
     bool isItemHovered() { return ImGui::IsItemHovered(); }

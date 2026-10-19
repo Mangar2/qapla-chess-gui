@@ -3,10 +3,14 @@ project(QaplaChess)
 
 if(APPLE)
   set(CMAKE_OBJC_COMPILER /usr/bin/clang)
+  # The native macOS frontend (src/frontend/macos) is Objective-C++.
+  enable_language(OBJCXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_OBJCXX_STANDARD 20)
+set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)  # Generate compile_commands.json for IntelliSense
 
 # Statisches Linken der C/C++ Runtime auf Windows für portable exe
@@ -37,6 +41,21 @@ elseif(NOT WIN32)
   # demands glibc 2.35, locking out RHEL 9. The library itself is everywhere.
   add_link_options(-static-libstdc++)
 endif()
+
+# --------------------------------
+# Frontends
+# --------------------------------
+# The application is written against the toolkit-neutral QaplaUi (src/ui/qapla-ui.h) and built
+# once, as the library qapla-app. Each frontend is an executable that implements QaplaUi on a
+# GUI toolkit and links that library -- see docs/code-doku/GUI_FRONTENDS.md.
+option(QAPLA_FRONTEND_IMGUI "Build the Dear ImGui frontend (qapla)" ON)
+if(APPLE)
+  option(QAPLA_FRONTEND_MACOS "Build the native macOS frontend (QaplaChess.app)" ON)
+else()
+  set(QAPLA_FRONTEND_MACOS OFF)
+endif()
+
+if(QAPLA_FRONTEND_IMGUI)
 
 # --------------------------------
 # GLFW
@@ -93,6 +112,8 @@ if(QAPLA_WITH_TEST_ENGINE)
 endif()
 
 target_compile_options(imgui PRIVATE -Wno-all)
+
+endif()
 
 # --------------------------------
 # cpp-httplib (header-only HTTP client/server)
@@ -151,6 +172,53 @@ file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS
 # Unit-Test-Dateien ausschließen (nur für unit-tests Target)
 list(FILTER PROJECT_SOURCES EXCLUDE REGEX ".*/test-system/unit/.*")
 
+# The frontends and the ImGui test engine suites are not part of the application library.
+set(APP_SOURCES ${PROJECT_SOURCES})
+list(FILTER APP_SOURCES EXCLUDE REGEX ".*/src/frontend/.*")
+list(FILTER APP_SOURCES EXCLUDE REGEX ".*/src/test-system/.*")
+
+set(IMGUI_FRONTEND_SOURCES ${PROJECT_SOURCES})
+list(FILTER IMGUI_FRONTEND_SOURCES INCLUDE REGEX ".*/src/(frontend/imgui|test-system)/.*")
+
+# --------------------------------
+# qapla-app: the application without a GUI toolkit
+# --------------------------------
+# Deliberately without the ImGui and GLFW include directories: a file of the application that
+# reaches for a toolkit does not compile, rather than quietly tying the frontends together.
+#
+# An object library, not a static one: from an archive the linker takes only the objects
+# something refers to, and several do their work in static constructors nothing refers to --
+# the move generator's bitboard masks among them. Left out, the engine tester computes with
+# empty masks, and nothing fails loudly.
+add_library(qapla-app OBJECT ${APP_SOURCES} ${QAPLA_TESTER_SOURCES_FOR_GUI})
+
+target_include_directories(qapla-app PUBLIC
+  extern/qapla-engine-tester/src
+  src
+  i18n
+)
+
+target_link_libraries(qapla-app PUBLIC httplib)
+
+if(WIN32)
+  if(MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set_property(TARGET qapla-app PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+elseif(APPLE)
+  # The file dialogs (os-dialogs-apple.cpp) talk to AppKit through the Objective-C runtime.
+  target_link_libraries(qapla-app PUBLIC "-framework Cocoa" "-framework IOKit")
+elseif(UNIX)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+  target_include_directories(qapla-app PUBLIC ${GTK3_INCLUDE_DIRS})
+  target_link_libraries(qapla-app PUBLIC ${GTK3_LIBRARIES} dl pthread)
+endif()
+
+# --------------------------------
+# qapla: the Dear ImGui frontend
+# --------------------------------
+if(QAPLA_FRONTEND_IMGUI)
+
 # --------------------------------
 # Windows Icon Resource
 # --------------------------------
@@ -158,22 +226,13 @@ if(WIN32)
     set(RESOURCE_FILES resources.rc)
 endif()
 
-# --------------------------------
-# Executable
-# --------------------------------
-add_executable(qapla WIN32 ${PROJECT_SOURCES} ${QAPLA_TESTER_SOURCES_FOR_GUI} ${RESOURCE_FILES})
+add_executable(qapla WIN32 ${IMGUI_FRONTEND_SOURCES} ${RESOURCE_FILES})
 
-# --------------------------------
-# Includes & Libs
-# --------------------------------
 target_include_directories(qapla PRIVATE
   extern/glad/include
-  extern/qapla-engine-tester/src
-  src
-  i18n
 )
 
-target_link_libraries(qapla PRIVATE glfw imgui httplib)
+target_link_libraries(qapla PRIVATE qapla-app glfw imgui)
 
 # --------------------------------
 # Plattformabhängige Links
@@ -202,10 +261,32 @@ elseif(APPLE)
   )
 elseif(UNIX)
   find_package(OpenGL REQUIRED)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-  target_include_directories(qapla PRIVATE ${GTK3_INCLUDE_DIRS})
-  target_link_libraries(qapla PRIVATE ${OPENGL_LIBRARIES} ${GTK3_LIBRARIES} dl pthread)
+  target_link_libraries(qapla PRIVATE ${OPENGL_LIBRARIES})
+endif()
+
+endif() # QAPLA_FRONTEND_IMGUI
+
+# --------------------------------
+# QaplaChess.app: the native macOS frontend
+# --------------------------------
+if(QAPLA_FRONTEND_MACOS)
+  file(GLOB_RECURSE MACOS_FRONTEND_SOURCES CONFIGURE_DEPENDS
+    src/frontend/macos/*.mm
+    src/frontend/macos/*.cpp
+  )
+  add_executable(QaplaChess MACOSX_BUNDLE ${MACOS_FRONTEND_SOURCES})
+  set_target_properties(QaplaChess PROPERTIES
+    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/frontend/macos/Info.plist.in
+    MACOSX_BUNDLE_BUNDLE_NAME "Qapla Chess"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "de.qapla.chess-gui"
+  )
+  target_compile_options(QaplaChess PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
+  target_link_libraries(QaplaChess PRIVATE qapla-app
+    "-framework Cocoa"
+    "-framework CoreText"
+    "-framework QuartzCore"
+    "-framework UniformTypeIdentifiers"
+  )
 endif()
 
 # --------------------------------

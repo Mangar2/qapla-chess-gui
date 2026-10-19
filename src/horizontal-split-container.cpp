@@ -175,32 +175,7 @@ namespace QaplaWindows {
         // If either panel is fixed, disable splitter interaction
         bool isFixed = leftFixed_ || rightFixed_;
         
-        if (isFixed) {
-            // Draw a non-interactive splitter with different styling
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(80, 80, 80, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(80, 80, 80, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(80, 80, 80, 255));
-            
-            QaplaUi::button(("###" + id).c_str(), vec);
-            
-            QaplaUi::popStyleColor(3);
-        } else {
-            // Draw interactive splitter
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(100, 100, 100, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(150, 150, 150, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(180, 180, 180, 255));
-
-            QaplaUi::button(("###" + id).c_str(), vec);
-            if (QaplaUi::isItemActive()) {
-                leftWidth_ += QaplaUi::getMouseDelta().x;
-            }
-
-            if (QaplaUi::isItemHovered() || QaplaUi::isItemActive()) {
-                QaplaUi::setMouseCursor(QaplaUi::MouseCursor::ResizeEW); 
-            }
-
-            QaplaUi::popStyleColor(3);
-        }
+        leftWidth_ += QaplaUi::splitter(id, vec, false, !isFixed);
     }
 
 } // namespace QaplaWindows

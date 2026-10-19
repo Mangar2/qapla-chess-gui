@@ -478,6 +478,15 @@ namespace QaplaUi {
     bool iconButton(std::string_view id, std::string_view label, Vec2 size, int state,
         const IconPainter& painter);
 
+    /**
+     * @brief The handle between two panes, dragged to share the space between them.
+     *
+     * @param dragsVertically True for a handle between a top and a bottom pane.
+     * @param interactive False shows the handle without letting it be dragged.
+     * @return How far it was dragged since the last frame, in pixels along its axis.
+     */
+    float splitter(std::string_view id, Vec2 size, bool dragsVertically, bool interactive = true);
+
     // ------------------------------------------------------------------------------------------
     // About the item just described
     // ------------------------------------------------------------------------------------------

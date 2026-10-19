@@ -179,6 +179,7 @@ namespace QaplaWindows {
             if (!rows_.empty()) {
                 rows_.erase(rows_.begin());
                 needsSort_ = true;
+                ++version_;
             }
         }
 
@@ -230,6 +231,9 @@ namespace QaplaWindows {
          */
         void setField(size_t row, size_t column, const std::string& value) {
             if (row < rows_.size() && column < columns_.size()) {
+                if (rows_[row][column] == value) {
+                    return;
+                }
                 rows_[row][column] = value;
                 updated();
             }
@@ -259,6 +263,7 @@ namespace QaplaWindows {
             if (col < columns_.size()) {
                 columns_[col] = column;
 			}
+            ++version_;
 		}
 
         /**
@@ -267,6 +272,7 @@ namespace QaplaWindows {
          */
         void resizeColumns(size_t newSize) {
             columns_.resize(newSize);
+            ++version_;
         }
 
         /**
@@ -389,6 +395,13 @@ namespace QaplaWindows {
         /** @brief The width a column is laid out with: its own, or the computed one if wider. */
         [[nodiscard]] float layoutWidth(size_t column) const;
 
+        /**
+         * @brief Counts every change of the rows, their order and their filtering.
+         *
+         * A frontend that keeps its own copy of what it shows compares this rather than the rows.
+         */
+        [[nodiscard]] std::uint64_t version() const { return version_; }
+
         /** @brief Whether the rows changed since they were last sorted. */
         [[nodiscard]] bool needsSort() const { return needsSort_; }
 
@@ -443,6 +456,7 @@ namespace QaplaWindows {
         int fontIndex_ = FontManager::interVariableIndex; // Default to Inter Variable font
         std::optional<size_t> scrollToRow_;
         int lastInputFrame_ = -1;
+        std::uint64_t version_ = 0;
         std::string tableId_;
         QaplaUi::TableFlags tableFlags_ = QaplaUi::TableFlags::None;
         std::vector<ColumnDef> columns_;

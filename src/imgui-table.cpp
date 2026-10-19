@@ -170,6 +170,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTable::updated(std::optional<size_t> addedRow) {
+        ++version_;
         needsSort_ = true;
         needsFilter_ = true;
         indexManager_.updateSize(rows_.size(), addedRow);
@@ -275,6 +276,7 @@ namespace QaplaWindows {
         }
         needsFilter_ = false;
         needsSort_ = true;
+        ++version_;
         indexManager_.filter([&](size_t rowIndex) {
             const auto& row = rows_[rowIndex];
             return filter_.matches(row);
@@ -283,6 +285,7 @@ namespace QaplaWindows {
     
     void ImGuiTable::sortBy(std::optional<size_t> column, bool ascending) {
         needsSort_ = false;
+        ++version_;
         if (!column) {
             return;
         }
@@ -301,6 +304,7 @@ namespace QaplaWindows {
     }
 
     std::optional<size_t> ImGuiTable::navigate(Navigation navigation, size_t pageRows) {
+        ++version_;
         switch (navigation) {
         case Navigation::Up: indexManager_.navigateUp(); break;
         case Navigation::Down: indexManager_.navigateDown(); break;

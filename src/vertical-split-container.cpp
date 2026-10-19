@@ -174,35 +174,8 @@ namespace QaplaWindows {
         QaplaUi::pushStyleVar(QaplaUi::StyleVar::FramePadding, QaplaUi::Vec2(0, 0));
         QaplaUi::pushStyleVar(QaplaUi::StyleVar::ItemSpacing, QaplaUi::Vec2(0, 0));
 
-        if (isFixed) {
-            // Draw a non-interactive splitter with different styling
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(80, 80, 80, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(80, 80, 80, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(80, 80, 80, 255));
-            
-            QaplaUi::setCursorPosY(QaplaUi::getCursorPosY() - 4.0F);
-            QaplaUi::button(("###" + id).c_str(), size);
-            
-            QaplaUi::popStyleColor(3);
-        } else {
-            // Draw interactive splitter
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(100, 100, 100, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(150, 150, 150, 255));
-            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(180, 180, 180, 255));
-
-            QaplaUi::setCursorPosY(QaplaUi::getCursorPosY() - 4.0F);
-            QaplaUi::button(("###" + id).c_str(), size);
-
-            if (QaplaUi::isItemActive()) {
-                topHeight_ += QaplaUi::getMouseDelta().y;
-            }
-
-            if (QaplaUi::isItemHovered() || QaplaUi::isItemActive()) {
-                QaplaUi::setMouseCursor(QaplaUi::MouseCursor::ResizeNS);
-            }
-
-            QaplaUi::popStyleColor(3);
-        }
+        QaplaUi::setCursorPosY(QaplaUi::getCursorPosY() - 4.0F);
+        topHeight_ += QaplaUi::splitter(id, size, true, !isFixed);
 
         QaplaUi::popStyleVar(2);
     }
