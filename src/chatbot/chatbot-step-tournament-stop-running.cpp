@@ -22,7 +22,7 @@
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -59,8 +59,8 @@ std::string ChatbotStepTournamentStopRunning::draw() {
     std::string message = std::string("A ") + tournamentName + " is currently running. Would you like to end it?";
     QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Yes, end tournament")) {
         stopPool(false);
@@ -71,7 +71,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("End the currently running tournament and stop all games. Progress will be saved to the PGN if configured.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Show Results")) {
         finished_ = true;
@@ -79,7 +79,7 @@ std::string ChatbotStepTournamentStopRunning::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("View detailed tournament results.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = std::string(tournamentName) + " continues.";

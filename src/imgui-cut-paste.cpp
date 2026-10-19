@@ -19,21 +19,21 @@
 
 #include "imgui-cut-paste.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ImGuiCutPaste {
 
 std::optional<std::string> getClipboardString() {
-    const char* text = ImGui::GetClipboardText();
-    if (text == nullptr || text[0] == '\0') {
+    auto text = QaplaUi::getClipboardText();
+    if (text.empty()) {
         return std::nullopt;
     }
 
-    return std::string(text);
+    return text;
 }
 
 bool setClipboardString(const std::string& text) {
-    ImGui::SetClipboardText(text.c_str());
+    QaplaUi::setClipboardText(text.c_str());
     return true;
 }
 
@@ -41,23 +41,23 @@ bool checkForCopy() {
 
     // Check for platform-specific copy shortcuts
     // Windows/Linux: Ctrl+C, macOS: Cmd+C (Super key)
-    bool ctrlOrCmd = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || 
-                     ImGui::IsKeyDown(ImGuiKey_RightCtrl) ||
-                     ImGui::IsKeyDown(ImGuiKey_LeftSuper) || 
-                     ImGui::IsKeyDown(ImGuiKey_RightSuper);
+    bool ctrlOrCmd = QaplaUi::isKeyDown(QaplaUi::Key::LeftCtrl) || 
+                     QaplaUi::isKeyDown(QaplaUi::Key::RightCtrl) ||
+                     QaplaUi::isKeyDown(QaplaUi::Key::LeftSuper) || 
+                     QaplaUi::isKeyDown(QaplaUi::Key::RightSuper);
 
-    return ctrlOrCmd && ImGui::IsKeyPressed(ImGuiKey_C);
+    return ctrlOrCmd && QaplaUi::isKeyPressed(QaplaUi::Key::C);
 }
 
 std::optional<std::string> checkForPaste() {
     // Check for platform-specific paste shortcuts
     // Windows/Linux: Ctrl+V, macOS: Cmd+V (Super key)
-    bool ctrlOrCmd = ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || 
-                     ImGui::IsKeyDown(ImGuiKey_RightCtrl) ||
-                     ImGui::IsKeyDown(ImGuiKey_LeftSuper) || 
-                     ImGui::IsKeyDown(ImGuiKey_RightSuper);
+    bool ctrlOrCmd = QaplaUi::isKeyDown(QaplaUi::Key::LeftCtrl) || 
+                     QaplaUi::isKeyDown(QaplaUi::Key::RightCtrl) ||
+                     QaplaUi::isKeyDown(QaplaUi::Key::LeftSuper) || 
+                     QaplaUi::isKeyDown(QaplaUi::Key::RightSuper);
 
-    if (ctrlOrCmd && ImGui::IsKeyPressed(ImGuiKey_V)) {
+    if (ctrlOrCmd && QaplaUi::isKeyPressed(QaplaUi::Key::V)) {
         return getClipboardString();
     }
 

@@ -24,7 +24,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows {
 
@@ -42,8 +42,8 @@ namespace QaplaWindows {
          */
         HorizontalSplitContainer(
             const std::string& name,
-            ImGuiWindowFlags left = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
-            ImGuiWindowFlags right = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            QaplaUi::WindowFlags left = QaplaUi::WindowFlags::NoScrollbar | QaplaUi::WindowFlags::NoScrollWithMouse, 
+            QaplaUi::WindowFlags right = QaplaUi::WindowFlags::NoScrollbar | QaplaUi::WindowFlags::NoScrollWithMouse);
 
         /**
          * @brief Sets the embedded window for the left panel
@@ -99,14 +99,14 @@ namespace QaplaWindows {
          * @param avail Available space vector (width and height)
          * @return The computed width for the left panel
          */
-        float computeLeftWidth(ImVec2 avail);
+        float computeLeftWidth(QaplaUi::Vec2 avail);
 
         /**
          * @brief Renders the draggable splitter between the left and right panels
          * @param id Unique identifier for the splitter widget
          * @param vec Size vector for the splitter (width and height)
          */
-        void drawSplitter(const std::string& id, const ImVec2& vec);
+        void drawSplitter(const std::string& id, const QaplaUi::Vec2& vec);
         
         /** @brief Width of the splitter in pixels */
         const float splitterWidth_ = 5.0F;
@@ -127,10 +127,10 @@ namespace QaplaWindows {
         std::function<void()> rightCallback_;
         
         /** @brief ImGui window flags for the left child window */
-        ImGuiWindowFlags leftFlags_ = ImGuiWindowFlags_None;
+        QaplaUi::WindowFlags leftFlags_ = QaplaUi::WindowFlags::None;
         
         /** @brief ImGui window flags for the right child window */
-        ImGuiWindowFlags rightFlags_ = ImGuiWindowFlags_None;
+        QaplaUi::WindowFlags rightFlags_ = QaplaUi::WindowFlags::None;
 
         /** @brief Unique identifier for this split container */
         std::string name_;

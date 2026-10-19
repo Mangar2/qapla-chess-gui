@@ -27,7 +27,7 @@
 
 #include <config/pgn-config.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 using namespace QaplaWindows;
 
@@ -35,13 +35,13 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
     bool changed = false;
 
     if (!options.showCollapsingHeader ||
-        ImGuiControls::CollapsingHeaderWithDot("Pgn", ImGuiTreeNodeFlags_Selected, tutorialContext.highlight)) {
-        ImGui::PushID("pgn");
-        ImGui::Indent(options.indent);
+        ImGuiControls::CollapsingHeaderWithDot("Pgn", QaplaUi::TreeNodeFlags::Selected, tutorialContext.highlight)) {
+        QaplaUi::pushId("pgn");
+        QaplaUi::indent(options.indent);
 
         auto inputWidth = options.inputWidth;
 
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         auto savePgn = [&file = pgnOptions_.file]() { return OsDialogs::savePgnFile(file); };
         if (options.recentFiles != nullptr && !options.recentFiles->empty()) {
             changed |= ImGuiControls::recentFileInput("Pgn file", pgnOptions_.file,
@@ -61,7 +61,7 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
             ImGuiControls::annotate(it->second);
         }
 
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         std::string append = pgnOptions_.append ? "Append" : "Overwrite";
         changed |= ImGuiControls::selectionBox("Append mode", append, { "Append", "Overwrite" });
         pgnOptions_.append = (append == "Append");
@@ -70,14 +70,14 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
             "If disabled, the file is overwritten at the start of each run"
         );
 
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Save only finished games", pgnOptions_.onlyFinishedGames);
         ImGuiControls::hooverTooltip(
             "Save only games that were finished (i.e. not crashed or aborted).\n"
             "If disabled, all games are written regardless of status"
         );
 
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Minimal tags", pgnOptions_.minimalTags);
         ImGuiControls::hooverTooltip(
             "If enabled, saves a minimal PGN with only essential headers and moves —\n"
@@ -86,39 +86,39 @@ bool ImGuiTournamentPgn::draw(const DrawOptions& options, const Tutorial::Tutori
 
         /*
         Not yet supported in PGN IO
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("Save after each move", pgnOptions_.saveAfterMove);
         */
 
         if (options.drawDetails) {
-            ImGui::SetNextItemWidth(inputWidth);
+            QaplaUi::setNextItemWidth(inputWidth);
             changed |= ImGuiControls::booleanInput("Include clock", pgnOptions_.includeClock);
             ImGuiControls::hooverTooltip(
                 "Include time spend for the move\n"
                 "(if available from engine output)"
             );
 
-            ImGui::SetNextItemWidth(inputWidth);
+            QaplaUi::setNextItemWidth(inputWidth);
             changed |= ImGuiControls::booleanInput("Include eval", pgnOptions_.includeEval);
             ImGuiControls::hooverTooltip(
                 "Include the engine's evaluation score in PGN comments for each move"
             );
 
-            ImGui::SetNextItemWidth(inputWidth);
+            QaplaUi::setNextItemWidth(inputWidth);
             changed |= ImGuiControls::booleanInput("Include PV", pgnOptions_.includePv);
             ImGuiControls::hooverTooltip(
                 "Include the full principal variation (PV) in PGN comments.\n"
                 "Useful for debugging or engine analysis"
             );
 
-            ImGui::SetNextItemWidth(inputWidth);
+            QaplaUi::setNextItemWidth(inputWidth);
             changed |= ImGuiControls::booleanInput("Include depth", pgnOptions_.includeDepth);
             ImGuiControls::hooverTooltip(
                 "Include the search depth reached when the move was selected"
             );
         }
-        ImGui::Unindent(options.indent);
-        ImGui::PopID();
+        QaplaUi::unindent(options.indent);
+        QaplaUi::popId();
     }
 
     if (changed) {

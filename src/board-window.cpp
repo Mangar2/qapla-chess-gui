@@ -31,7 +31,7 @@
 #include "tutorial.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -62,12 +62,12 @@ namespace QaplaWindows
 
     static bool drawBoardButton(
         const std::string& button, const std::string& label,
-        const ImVec2& buttonSize,
+        const QaplaUi::Vec2& buttonSize,
         QaplaButton::ButtonState state)
     {
         return QaplaButton::drawIconButton(
             button, label, buttonSize, state,
-            [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            [state, &button](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)
             {
                 if (button == "Stop")
                 {
@@ -202,8 +202,8 @@ namespace QaplaWindows
 
     std::string BoardWindow::drawVisibleButtons(
         const std::vector<std::string>& visibleButtons,
-        ImVec2 startPos, // NOLINT(bugprone-easily-swappable-parameters)
-        ImVec2 buttonSize,
+        QaplaUi::Vec2 startPos, // NOLINT(bugprone-easily-swappable-parameters)
+        QaplaUi::Vec2 buttonSize,
         float buttonWidth,
         const std::string& status)
     {
@@ -211,7 +211,7 @@ namespace QaplaWindows
         std::string clickedButton;
         
         for (const auto& button : visibleButtons) {
-            ImGui::SetCursorScreenPos(pos);
+            QaplaUi::setCursorScreenPos(pos);
             auto state = getBoardButtonState(button, status);
             if (drawBoardButton(button, button, buttonSize, state)) {
                 clickedButton = button;
@@ -236,9 +236,9 @@ namespace QaplaWindows
         constexpr float topOffset = 5.0F;
         constexpr float bottomOffset = 8.0F;
         constexpr float leftOffset = 20.0F;
-        constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+        constexpr QaplaUi::Vec2 buttonSize = {25.0F, 25.0F};
         
-        ImVec2 boardPos = ImGui::GetCursorScreenPos();
+        QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
         
         std::vector<std::string> allButtons = {
             "New", "Now", "Stop", "Play", "Analyze", "Auto", "Invert", "Time", "Setup", "Paste"
@@ -246,27 +246,27 @@ namespace QaplaWindows
 
         const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
         
-        float availableWidth = ImGui::GetContentRegionAvail().x - leftOffset;
+        float availableWidth = QaplaUi::getContentRegionAvail().x - leftOffset;
         float buttonWidth = totalSize.x + space;
         
         auto [visibleButtons, moreCommands] = splitButtonsForResponsiveLayout(
             allButtons, availableWidth, buttonWidth, status);
         
-        auto startPos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        auto startPos = QaplaUi::Vec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton = drawVisibleButtons(
             visibleButtons, startPos, buttonSize, buttonWidth, status);
         
-        auto moreButtonPos = ImVec2(
+        auto moreButtonPos = QaplaUi::Vec2(
             startPos.x + static_cast<float>(visibleButtons.size()) * (totalSize.x + space),
             startPos.y);
-        ImGui::SetCursorScreenPos(moreButtonPos);
+        QaplaUi::setCursorScreenPos(moreButtonPos);
         
         auto moreButtonState = hasHighlightedCommand(moreCommands)
             ? QaplaButton::ButtonState::Highlighted 
             : QaplaButton::ButtonState::Normal;
         
         if (drawBoardButton("More", "More", buttonSize, moreButtonState)) {
-            ImGui::OpenPopup("MoreCommandsPopup");
+            QaplaUi::openPopup("MoreCommandsPopup");
         }
 
         auto popupCommand = QaplaButton::showCommandPopup("MoreCommandsPopup", moreCommands);
@@ -274,7 +274,7 @@ namespace QaplaWindows
             clickedButton = popupCommand;
         }
 
-        ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+        QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
         
         if (!clickedButton.empty()) {
             showNextBoardTutorialStep(clickedButton);
@@ -336,12 +336,12 @@ namespace QaplaWindows
 
     bool BoardWindow::drawSetupButton(
         const std::string& button, const std::string& label,
-        const ImVec2& buttonSize) const
+        const QaplaUi::Vec2& buttonSize) const
     {
         auto state = getSetupButtonState(button);
         return QaplaButton::drawIconButton(
             button, label, buttonSize, state,
-            [state, &button](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            [state, &button](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)
             {
                 if (button == "Ok") {
                     QaplaButton::drawSetup(drawList, topLeft, size, state);
@@ -371,21 +371,21 @@ namespace QaplaWindows
         constexpr float topOffset = 5.0F;
         constexpr float bottomOffset = 8.0F;
         constexpr float leftOffset = 20.0F;
-        ImVec2 boardPos = ImGui::GetCursorScreenPos();
+        QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-        constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+        constexpr QaplaUi::Vec2 buttonSize = {25.0F, 25.0F};
 
         std::vector<std::string> allButtons = {
             "Ok", "New", "Clear", "Copy", "Paste", "Cancel"
         };
 
         const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
-        auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+        auto pos = QaplaUi::Vec2(boardPos.x + leftOffset, boardPos.y + topOffset);
         std::string clickedButton;
 
         for (const std::string& button : allButtons)
         {
-            ImGui::SetCursorScreenPos(pos);
+            QaplaUi::setCursorScreenPos(pos);
             if (drawSetupButton(button, button, buttonSize))
             {
                clickedButton = button;
@@ -396,7 +396,7 @@ namespace QaplaWindows
         if (!clickedButton.empty()) {
             showNextCutPasteTutorialStep(clickedButton);
         }
-        ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+        QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 
         // Setup here means we deactivated the setup mode and thus we inform the caller to update its fen
         return clickedButton == "Ok" ? "Position: " + getFen() : "";
@@ -407,13 +407,13 @@ namespace QaplaWindows
         showNextCutPasteTutorialStep("");
         showNextBoardTutorialStep("");
         std::string result;
-        ImGui::PushID("Board");
+        QaplaUi::pushId("Board");
         if (setupMode_) {
             result = drawSetupButtons();
         } else {
             result = drawBoardButtons(status);
         }
-        ImGui::PopID();
+        QaplaUi::popId();
         return result;
     }
 

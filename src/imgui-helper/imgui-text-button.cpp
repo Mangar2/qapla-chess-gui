@@ -20,18 +20,21 @@
 #include "imgui-text-button.h"
 #include "imgui-controls.h"
 #include "i18n.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <iostream>
 
 namespace QaplaWindows {
 
-    [[nodiscard]] ImVec2 ImGuiTextButton::calcSize() const {
-        const ImVec2 textSize = ImGui::CalcTextSize(translated.c_str(), NULL, true);
-        const ImGuiStyle& style = ImGui::GetStyle();    
+    [[nodiscard]] QaplaUi::Vec2 ImGuiTextButton::calcSize() const {
+        // Measured without what follows "##": that is the identifier, never shown.
+        const auto hashPos = translated.find("##");
+        const QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(
+            std::string_view(translated).substr(0, hashPos));
+        const QaplaUi::Style& style = QaplaUi::getStyle();    
         constexpr float BORDER = 5.0F;
-        return ImVec2(
-            textSize.x + 2.0f * style.FramePadding.x + BORDER,
-            textSize.y + 2.0f * style.FramePadding.y + BORDER
+        return QaplaUi::Vec2(
+            textSize.x + 2.0f * style.framePadding.x + BORDER,
+            textSize.y + 2.0f * style.framePadding.y + BORDER
         );
     }
 

@@ -50,7 +50,6 @@
 
 #include <algorithm>
 
-#include <GLFW/glfw3.h>
 
 using namespace QaplaTester;
 
@@ -67,7 +66,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 			.okButton = true,
 			.cancelButton = false
 		},
-		ImVec2(600, 600))
+		QaplaUi::Vec2(600, 600))
 		),
 	  timeControlWindow_(std::make_unique<ImGuiPopup<TimeControlWindow>>(
 		ImGuiPopup<TimeControlWindow>::Config{
@@ -75,7 +74,7 @@ InteractiveBoardWindow::InteractiveBoardWindow(uint32_t id)
 			.okButton = true,
 			.cancelButton = true
 		},
-		ImVec2(500, 500))
+		QaplaUi::Vec2(500, 500))
 		),
 	  imGuiClock_(std::make_unique<ImGuiClock>()),
 	  imGuiMoveList_(std::make_unique<ImGuiMoveList>()),
@@ -275,14 +274,11 @@ void InteractiveBoardWindow::draw() {
 	pollData();
 
 	// Handle paste only for the active tab
-	GLFWwindow* window = glfwGetCurrentContext();
-	if (window != nullptr) {
-		auto pasted = ImGuiCutPaste::checkForPaste();
-		if (pasted) {
-			auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
-			if (gameRecord) {
-				setPosition(*gameRecord);
-			}
+	auto pasted = ImGuiCutPaste::checkForPaste();
+	if (pasted) {
+		auto gameRecord = QaplaUtils::GameParser().parse(*pasted);
+		if (gameRecord) {
+			setPosition(*gameRecord);
 		}
 	}
 }
@@ -382,11 +378,8 @@ void InteractiveBoardWindow::copyPv(const std::string& pv) {
 	std::string pvString = computePgn(*halfmove);
 	pvString += std::string(pvPart);
 
-	GLFWwindow* window = glfwGetCurrentContext();
-	if (window != nullptr) {
-		ImGuiCutPaste::setClipboardString(pvString);
-		SnackbarManager::instance().showNote("Copied PV to clipboard:\n" + pvString);
-	}
+	ImGuiCutPaste::setClipboardString(pvString);
+	SnackbarManager::instance().showNote("Copied PV to clipboard:\n" + pvString);
 }
 
 void InteractiveBoardWindow::swapEngines() {

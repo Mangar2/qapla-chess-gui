@@ -30,7 +30,7 @@
 
 #include <sprt/sprt-manager.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -603,11 +603,11 @@ ActionResult showSprtResult() {
             + sprtData.resultsAsText(),
         .widget = []() {
             auto& data = SprtTournamentData::instance();
-            ImGui::Text("SPRT Test Result:");
-            data.drawSprtTable(ImVec2(0.0F, 100.0F));
-            ImGui::Spacing();
-            ImGui::Text("Duel Result:");
-            data.drawResultTable(ImVec2(0.0F, 100.0F));
+            QaplaUi::text("SPRT Test Result:");
+            data.drawSprtTable(QaplaUi::Vec2(0.0F, 100.0F));
+            QaplaUi::spacing();
+            QaplaUi::text("Duel Result:");
+            data.drawResultTable(QaplaUi::Vec2(0.0F, 100.0F));
         }};
 }
 

@@ -20,7 +20,7 @@
 #include "time-control-window.h"
 #include "configuration.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <base-elements/time-control.h>
 #include <base-elements/string-helper.h>
@@ -146,12 +146,12 @@ std::string TimeControlWindow::computeActiveButtonId() const {
 }
 
 void TimeControlWindow::draw(const DrawOptions& options) {
-    ImGui::Spacing();
+    QaplaUi::spacing();
     constexpr float rightBorder = 5.0F;
-    ImGui::Indent(10.0F);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("TimeControlWindow", ImVec2(size.x - rightBorder, 0), 
-        ImGuiChildFlags_AutoResizeY);
+    QaplaUi::indent(10.0F);
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("TimeControlWindow", QaplaUi::Vec2(size.x - rightBorder, 0), 
+        QaplaUi::ChildFlags::AutoResizeY);
     
     if (options.showOnlyBlitz) {
         // Simplified view: only draw Blitz time control without selection
@@ -162,19 +162,19 @@ void TimeControlWindow::draw(const DrawOptions& options) {
         drawTimeControlSettings(options);
     }
     
-    ImGui::EndChild();
-    ImGui::Unindent(baseIndent);
+    QaplaUi::endChild();
+    QaplaUi::unindent(baseIndent);
 }
 
 void TimeControlWindow::drawTimeControlSelection() {
     std::string activeButtonId = computeActiveButtonId();
     
     auto handleRadioButton = [&](const char* radioButtonId, const char* label, SelectedTimeControl selection) {
-        if (ImGui::RadioButton(radioButtonId, activeButtonId == radioButtonId)) {
+        if (QaplaUi::radioButton(radioButtonId, activeButtonId == radioButtonId)) {
             timeControlSettings_.selected = selection;
         }
-        ImGui::SameLine();
-        ImGui::TextUnformatted(label);
+        QaplaUi::sameLine();
+        QaplaUi::text(label);
     };
     
     handleRadioButton("##blitz", "Blitz Time", SelectedTimeControl::Blitz);
@@ -183,14 +183,14 @@ void TimeControlWindow::drawTimeControlSelection() {
     handleRadioButton("##fixedDepth", "Fixed Depth", SelectedTimeControl::FixedDepth);
     handleRadioButton("##nodesPerMove", "Nodes per Move", SelectedTimeControl::NodesPerMove);
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 }
 
 void TimeControlWindow::drawTimeControlSettings(const DrawOptions& options) {
 
-    ImGui::PushItemWidth(inputWidth);
+    QaplaUi::pushItemWidth(inputWidth);
 
     if (options.showOnlyBlitz) {
         // Simplified view: only Blitz
@@ -215,7 +215,7 @@ void TimeControlWindow::drawTimeControlSettings(const DrawOptions& options) {
                 break;
         }
     }
-    ImGui::PopItemWidth();
+    QaplaUi::popItemWidth();
 
 }
 
@@ -264,20 +264,20 @@ static TimeSegment selectPredefinedValues(
     }
 
     // Display the combo box for predefined values
-    if (ImGui::BeginCombo("Predefined Times", selectedPredefinedIndex >= 0 ? 
+    if (QaplaUi::beginCombo("Predefined Times", selectedPredefinedIndex >= 0 ? 
         predefinedLabels[selectedPredefinedIndex].c_str() : "Custom")) {
         for (size_t i = 0; i < predefinedLabels.size(); ++i) {
             bool isSelected = std::cmp_equal(selectedPredefinedIndex, i);
-            if (ImGui::Selectable(predefinedLabels[i].c_str(), isSelected)) {
+            if (QaplaUi::selectable(predefinedLabels[i].c_str(), isSelected)) {
                 selectedPredefinedIndex = static_cast<int>(i);
                 minutes = predefinedMinutes[i];
                 seconds = 0;
             }
             if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+                QaplaUi::setItemDefaultFocus();
             }
         }
-        ImGui::EndCombo();
+        QaplaUi::endCombo();
     }
 
     // Recalculate the base time in milliseconds
@@ -323,7 +323,7 @@ TimeControl TimeControlWindow::drawTournamentTime(const TimeControl& currentTime
 
     // Iterate over the segments and allow editing
     for (size_t i = 0; i < segments.size(); ++i) {
-        ImGui::PushID(static_cast<int>(i)); // Ensure unique IDs for ImGui widgets
+        QaplaUi::pushId(static_cast<int>(i)); // Ensure unique IDs for ImGui widgets
 
         // Edit the current segment
         segments[i] = editTimeSegment(segments[i], false);
@@ -336,8 +336,8 @@ TimeControl TimeControlWindow::drawTournamentTime(const TimeControl& currentTime
             segments.push_back(TimeSegment{});
         }
 
-        ImGui::Separator(); // Visual separator between segments
-        ImGui::PopID();
+        QaplaUi::separator(); // Visual separator between segments
+        QaplaUi::popId();
         if (segments[i].movesToPlay == 0) { break; }
     }
 
@@ -373,7 +373,7 @@ TimeControl TimeControlWindow::drawFixedDepth(const TimeControl& currentTimeCont
 
     int depth = static_cast<int>(currentTimeControl.depth().value_or(0));
 
-    if (ImGui::InputInt("Search Depth", &depth, 1, fastStep)) {
+    if (QaplaUi::inputInt("Search Depth", depth, 1, fastStep)) {
         depth = std::clamp(depth, 0, maxDepth);
         updatedTimeControl.setDepth(static_cast<uint32_t>(depth));
     }
@@ -386,7 +386,7 @@ TimeControl TimeControlWindow::drawNodesPerMove(const TimeControl& currentTimeCo
 
     uint32_t nodes = currentTimeControl.nodes().value_or(0);
 
-    if (ImGui::InputScalar("Nodes per Move", ImGuiDataType_U32, &nodes, nullptr, nullptr)) {
+    if (QaplaUi::inputU32("Nodes per Move", nodes)) {
         updatedTimeControl.setNodes(nodes);
     }
 

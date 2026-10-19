@@ -21,7 +21,7 @@
 #include "tournament-data.h"
 #include "imgui-controls.h"
 #include <tournament/tournament.h>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -36,9 +36,9 @@ std::string ChatbotStepTournamentConfiguration::draw() {
         drawGauntletSelection();
     }
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -52,7 +52,7 @@ std::string ChatbotStepTournamentConfiguration::draw() {
         finished_ = true;
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -60,7 +60,7 @@ std::string ChatbotStepTournamentConfiguration::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced tournament options such as same opening, no color swap and average ELO.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
@@ -75,7 +75,7 @@ void ChatbotStepTournamentConfiguration::drawConfiguration() {
         QaplaWindows::ImGuiControls::textWrapped(
             "Configure the tournament settings. Choose the tournament type, "
             "number of rounds, and games per pairing.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto& tournamentConfig = TournamentData::instance().tournamentConfiguration();
@@ -96,14 +96,14 @@ void ChatbotStepTournamentConfiguration::drawConfiguration() {
 }
 
 void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped(
             "Select the gauntlet engine (the engine that will play against all others):");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto selectedEngines = TournamentData::instance().getEngineSelect().getSelectedEngines();
@@ -127,20 +127,20 @@ void ChatbotStepTournamentConfiguration::drawGauntletSelection() {
         ? engineNames[currentGauntletIndex].c_str()
         : "-- First engine will be used --";
 
-    ImGui::SetNextItemWidth(300.0F);
-    if (ImGui::BeginCombo("Gauntlet Engine", previewText)) {
+    QaplaUi::setNextItemWidth(300.0F);
+    if (QaplaUi::beginCombo("Gauntlet Engine", previewText)) {
         for (int i = 0; i < static_cast<int>(engineNames.size()); ++i) {
             bool isSelected = (currentGauntletIndex == i);
-            if (ImGui::Selectable(engineNames[i].c_str(), isSelected)) {
+            if (QaplaUi::selectable(engineNames[i].c_str(), isSelected)) {
                 if (i != currentGauntletIndex) {
                     applyGauntletSelection(i);
                 }
             }
             if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+                QaplaUi::setItemDefaultFocus();
             }
         }
-        ImGui::EndCombo();
+        QaplaUi::endCombo();
     }
 
     if (!hasValidGauntletSelection() && !finished_) {

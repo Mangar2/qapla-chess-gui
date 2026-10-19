@@ -21,7 +21,7 @@
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -60,8 +60,8 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
         " that can be continued. Would you like to continue it?";
     QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
 
     std::string yesLabel = std::string("Yes, continue ") + getTournamentName();
     if (QaplaWindows::ImGuiControls::textButton(yesLabel.c_str())) {
@@ -73,7 +73,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Resume the existing tournament and continue scheduled tasks.");
     
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("Show Results")) {
         finishedMessage_ = "";
         finished_ = true;
@@ -81,7 +81,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("View the current tournament results without continuing.");
     
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("No")) {
         finishedMessage_ = "";
         finished_ = true;
@@ -89,7 +89,7 @@ std::string ChatbotStepTournamentContinueExisting::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Do not continue the existing tournament; return to the menu.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = "";
         finished_ = true;

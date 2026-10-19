@@ -34,7 +34,7 @@ ChatbotStepSnackbarMessage::ChatbotStepSnackbarMessage(SnackbarManager::Snackbar
 
 std::string ChatbotStepSnackbarMessage::draw() {
     // Choose color based on snackbar type
-    ImVec4 color;
+    QaplaUi::Vec4 color;
     switch (entry_.type) {
         case SnackbarManager::SnackbarType::Error:
             color = StepColors::ERROR_COLOR;
@@ -47,15 +47,15 @@ std::string ChatbotStepSnackbarMessage::draw() {
             break;
         case SnackbarManager::SnackbarType::Note:
         default:
-            color = ImVec4(0.8F, 0.8F, 0.8F, 1.0F);  // Light gray for notes
+            color = QaplaUi::Vec4(0.8F, 0.8F, 0.8F, 1.0F);  // Light gray for notes
             break;
     }
 
-    ImGui::PushStyleColor(ImGuiCol_Text, color);
+    QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, color);
     ImGuiControls::textWrapped(entry_.message);
-    ImGui::PopStyleColor();
+    QaplaUi::popStyleColor();
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     return "";  // Normal continuation
 }

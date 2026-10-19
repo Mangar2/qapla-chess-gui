@@ -23,7 +23,7 @@
 #include "../os-helpers.h"
 #include "../imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <filesystem>
 #include <fstream>
 #include <format>
@@ -49,22 +49,22 @@ std::string ChatbotStepStandardTournamentResult::draw() {
     uint32_t totalGames = tournamentData.getTotalGames();
     uint32_t playedGames = tournamentData.getPlayedGames();
     
-    ImGui::Text("Tournament Progress: %u / %u games completed", playedGames, totalGames);
-    ImGui::Spacing();
+    QaplaUi::text(std::format("Tournament Progress: {} / {} games completed", playedGames, totalGames));
+    QaplaUi::spacing();
     
     // Display the ELO rating table (same as in tournament window)
     
-    ImVec2 tableSize(0.0F, 3000.0F);
+    QaplaUi::Vec2 tableSize(0.0F, 3000.0F);
     tournamentData.drawEloTable(tableSize);
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     // Display the results matrix table
     tournamentData.drawMatrixTable(tableSize);
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     // Button to view detailed HTML results
     if (QaplaWindows::ImGuiControls::textButton("View Detailed Results (HTML)")) {
@@ -76,7 +76,7 @@ std::string ChatbotStepStandardTournamentResult::draw() {
     QaplaWindows::ImGuiControls::hooverTooltip(
         "Open a detailed HTML report with full tournament results table in your default browser.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         finished_ = true;

@@ -227,17 +227,15 @@ private:
             if (!window.isRunning() && index != selectedIndex_) {
                 continue;
             }
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None;
+            QaplaUi::TabItemFlags flags = QaplaUi::TabItemFlags::None;
             // If this window is not active but matches the activeWindowId_ there was a request to activate it
             if (!activeWindowId_.empty() && window.getWindowId().starts_with(activeWindowId_)) {
-                flags |= ImGuiTabItemFlags_SetSelected;
+                flags |= QaplaUi::TabItemFlags::SetSelected;
                 activeWindowId_.clear();
             }
 
-            bool open = ImGui::BeginTabItem((tabName + tabId).c_str(), nullptr, flags);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", window.getTooltip().c_str());
-            }
+            bool open = QaplaUi::beginTabItem(tabName + tabId, nullptr, flags, false,
+                window.getTooltip());
             if (open) {
                 // We may not show the window directly after activating because it needs one
                 // frame to populate data
@@ -249,7 +247,7 @@ private:
                 }
                 window.setActive(true);
                 newIndex = index;
-                ImGui::EndTabItem();
+                QaplaUi::endTabItem();
             } else {
                 window.setActive(false);
             }

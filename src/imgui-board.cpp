@@ -28,7 +28,7 @@
 #include <qapla-engine/types.h>
 #include <qapla-engine/move.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -101,11 +101,11 @@ namespace QaplaWindows
     };
     */
 
-    constexpr auto POPUP_CENTER_COLOR = IM_COL32(255, 255, 128, 255);
-    constexpr auto POPUP_PIECE_BACKGROUND = IM_COL32(240, 217, 181, 255);
-    constexpr auto POPUP_SWITCH_BACKGROUND = IM_COL32(200, 200, 200, 255);
-    constexpr auto WHITE_COLOR = IM_COL32(255, 255, 255, 255);
-    constexpr auto BLACK_COLOR = IM_COL32(0, 0, 0, 255);
+    constexpr auto POPUP_CENTER_COLOR = QaplaUi::col32(255, 255, 128, 255);
+    constexpr auto POPUP_PIECE_BACKGROUND = QaplaUi::col32(240, 217, 181, 255);
+    constexpr auto POPUP_SWITCH_BACKGROUND = QaplaUi::col32(200, 200, 200, 255);
+    constexpr auto WHITE_COLOR = QaplaUi::col32(255, 255, 255, 255);
+    constexpr auto BLACK_COLOR = QaplaUi::col32(0, 0, 0, 255);
 
     ImGuiBoard::ImGuiBoard()
         : gameState_(std::make_unique<QaplaTester::GameState>())
@@ -134,7 +134,7 @@ namespace QaplaWindows
         return gameState_->position().isValidPosition();
     }
 
-    std::pair<ImVec2, ImVec2> ImGuiBoard::computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
+    std::pair<QaplaUi::Vec2, QaplaUi::Vec2> ImGuiBoard::computeCellCoordinates(const QaplaUi::Vec2 &boardPos, float cellSize,
         File file, Rank rank) const
     {
         float cellX;
@@ -150,10 +150,10 @@ namespace QaplaWindows
             cellY = static_cast<float>(Rank::R8 - rank) * cellSize;
         }
 
-        const ImVec2 cellMin = {
+        const QaplaUi::Vec2 cellMin = {
             boardPos.x + cellX,
             boardPos.y + cellY};
-        const ImVec2 cellMax = {cellMin.x + cellSize, cellMin.y + cellSize};
+        const QaplaUi::Vec2 cellMax = {cellMin.x + cellSize, cellMin.y + cellSize};
         return {cellMin, cellMax};
     }
 
@@ -174,47 +174,47 @@ namespace QaplaWindows
             whiteToMove ? Piece::WHITE_KNIGHT : Piece::BLACK_KNIGHT};
 
         cellSize = std::max(30.0F, cellSize * SHRINK_CELL_SIZE);
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        ImFont *font = ImGui::GetFont();
-        ImGui::PushFont(FontManager::chessFont);
+        QaplaUi::DrawList*drawList = &QaplaUi::windowDrawList();
+        QaplaUi::Font font = QaplaUi::getFont();
+        QaplaUi::pushFont(FontManager::chessFont);
 
-        const ImVec2 startPos = ImGui::GetCursorScreenPos();
+        const QaplaUi::Vec2 startPos = QaplaUi::getCursorScreenPos();
 
         for (int i = 0; i < 4; ++i)
         {
-            const ImVec2 cellMin = {
+            const QaplaUi::Vec2 cellMin = {
                 startPos.x + i * cellSize,
                 startPos.y};
-            const ImVec2 cellMax = {
+            const QaplaUi::Vec2 cellMax = {
                 cellMin.x + cellSize,
                 cellMin.y + cellSize};
 
-            ImGui::SetCursorScreenPos(cellMin);
-            ImGui::InvisibleButton(("promo_" + std::to_string(i)).c_str(), ImVec2(cellSize, cellSize));
+            QaplaUi::setCursorScreenPos(cellMin);
+            QaplaUi::invisibleButton(("promo_" + std::to_string(i)).c_str(), QaplaUi::Vec2(cellSize, cellSize));
 
-            if (ImGui::IsItemClicked())
+            if (QaplaUi::isItemClicked())
             {
                 moveInput_.promotion = pieces[i];
-                ImGui::CloseCurrentPopup();
+                QaplaUi::closeCurrentPopup();
             }
 
-            const ImU32 bgColor = IM_COL32(240, 217, 181, 255);
-            drawList->AddRectFilled(cellMin, cellMax, bgColor);
+            const QaplaUi::Color32 bgColor = QaplaUi::col32(240, 217, 181, 255);
+            drawList->addRectFilled(cellMin, cellMax, bgColor);
             FontManager::drawPiece(drawList, pieces[i], cellMin, cellSize, font);
         }
 
-        ImGui::PopFont();
+        QaplaUi::popFont();
     }
 
-    static ImU32 getSquareColor(bool isSelected, bool isWhite)
+    static QaplaUi::Color32 getSquareColor(bool isSelected, bool isWhite)
     {
         if (isSelected) {
-            return IM_COL32(100, 149, 237, 255);
+            return QaplaUi::col32(100, 149, 237, 255);
         }
-        return isWhite ? IM_COL32(240, 217, 181, 255) : IM_COL32(181, 136, 99, 255);
+        return isWhite ? QaplaUi::col32(240, 217, 181, 255) : QaplaUi::col32(181, 136, 99, 255);
     }
 
-    void ImGuiBoard::drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos,
+    void ImGuiBoard::drawBoardSquare(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos,
                                      float cellSize, File file, Rank rank, bool isWhite, bool popupIsHovered)
     {
         const auto &position = gameState_->position();
@@ -225,14 +225,14 @@ namespace QaplaWindows
         const auto [cellMin, cellMax] = computeCellCoordinates(boardPos, cellSize, file, rank);
 
         const bool isSelected = (moveInput_.from && *moveInput_.from == square) || (moveInput_.to && *moveInput_.to == square);
-        const ImU32 bgColor = getSquareColor(isSelected, isWhite);
+        const QaplaUi::Color32 bgColor = getSquareColor(isSelected, isWhite);
 
-        drawList->AddRectFilled(cellMin, cellMax, bgColor);
+        drawList->addRectFilled(cellMin, cellMax, bgColor);
 
-        ImGui::SetCursorScreenPos(cellMin);
-        ImGui::InvisibleButton(("cell_" + std::to_string(square)).c_str(), ImVec2(cellSize, cellSize));
+        QaplaUi::setCursorScreenPos(cellMin);
+        QaplaUi::invisibleButton(("cell_" + std::to_string(square)).c_str(), QaplaUi::Vec2(cellSize, cellSize));
 
-        if (setupMode_ && ImGui::IsItemHovered() && !popupIsHovered)
+        if (setupMode_ && QaplaUi::isItemHovered() && !popupIsHovered)
         {
             // Store hovered square for later rendering (after board pieces)
             hoveredSquareForPopup_ = square;
@@ -240,7 +240,7 @@ namespace QaplaWindows
             hoveredSquareCellMax_ = cellMax;
             hoveredSquareCellSize_ = cellSize;
         }
-        else if (ImGui::IsItemClicked() && allowMoveInput_ && !gameOver_)
+        else if (QaplaUi::isItemClicked() && allowMoveInput_ && !gameOver_)
         {
             bool wtm = position.isWhiteToMove();
             if (piece != Piece::NO_PIECE && getPieceColor(piece) == (wtm ? Piece::WHITE : Piece::BLACK))
@@ -254,12 +254,12 @@ namespace QaplaWindows
 
             if (promotionPending_)
             {
-                ImGui::OpenPopup("Promotion");
+                QaplaUi::openPopup("Promotion");
             }
         }
     }
 
-    void ImGuiBoard::drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, bool popupIsHovered) 
+    void ImGuiBoard::drawBoardSquares(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize, bool popupIsHovered) 
     {
         for (Rank rank = Rank::R1; rank <= Rank::R8; ++rank)
         {
@@ -274,7 +274,7 @@ namespace QaplaWindows
         }
     }
 
-    void ImGuiBoard::drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font) {
+    void ImGuiBoard::drawBoardPieces(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize, QaplaUi::Font font) {
         const auto &position = gameState_->position();
         
         // Draw EP indicator outside the piece loop
@@ -301,8 +301,8 @@ namespace QaplaWindows
         drawEPIndicator(drawList, boardPos, cellSize, font);
     }
 
-    void ImGuiBoard::drawBoardCoordinates(ImDrawList *drawList,
-        const ImVec2 &boardPos, float cellSize, float boardSize, ImFont *font, float maxSize) const
+    void ImGuiBoard::drawBoardCoordinates(QaplaUi::DrawList*drawList,
+        const QaplaUi::Vec2 &boardPos, float cellSize, float boardSize, QaplaUi::Font font, float maxSize) const
     {
         const int gridSize = 8;
 
@@ -313,10 +313,10 @@ namespace QaplaWindows
             // When normal: visual col 0 should show 'a', visual col 7 should show 'h'
             char fileChar = boardInverted_ ? ('h' - col) : ('a' + col);
             std::string label(1, fileChar);
-            ImVec2 pos = {
-                boardPos.x + col * cellSize + cellSize * 0.5F - ImGui::CalcTextSize(label.c_str()).x * 0.5F,
+            QaplaUi::Vec2 pos = {
+                boardPos.x + col * cellSize + cellSize * 0.5F - QaplaUi::calcTextSize(label.c_str()).x * 0.5F,
                 boardPos.y + boardSize};
-            drawList->AddText(font, std::min(cellSize * 0.5F, maxSize), pos, IM_COL32_WHITE, label.c_str());
+            drawList->addText(font, std::min(cellSize * 0.5F, maxSize), pos, QaplaUi::COL32_WHITE, label.c_str());
         }
 
         // Draw rank labels (1-8)
@@ -326,15 +326,15 @@ namespace QaplaWindows
             // When normal: visual row 0 should show '8', visual row 7 should show '1'
             int rankNumber = boardInverted_ ? (row + 1) : (8 - row);
             std::string label = std::to_string(rankNumber);
-            ImVec2 pos = {
+            QaplaUi::Vec2 pos = {
                 boardPos.x + boardSize,
                 boardPos.y + row * cellSize + cellSize * 0.3F};
-            drawList->AddText(font, std::min(cellSize * 0.5F, maxSize), pos, IM_COL32_WHITE, label.c_str());
+            drawList->addText(font, std::min(cellSize * 0.5F, maxSize), pos, QaplaUi::COL32_WHITE, label.c_str());
         }
     }
 
-    void ImGuiBoard::drawIndicatorIcon(ImDrawList *drawList, const ImVec2 &cellMin, 
-        float cellSize, bool left, Piece piece, ImU32 bgColor, ImFont *font)
+    void ImGuiBoard::drawIndicatorIcon(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &cellMin, 
+        float cellSize, bool left, Piece piece, QaplaUi::Color32 bgColor, QaplaUi::Font font)
     {
         constexpr float INDICATOR_SIZE = 0.30F;
         constexpr float INDICATOR_PADDING = 0.25F;
@@ -345,23 +345,23 @@ namespace QaplaWindows
         if (!left) {
             posX = cellSize - posX - indicatorSize;
         }
-        const ImVec2 indicatorMin = { 
+        const QaplaUi::Vec2 indicatorMin = { 
             cellMin.x + posX, 
             cellMin.y + indicatorSize * INDICATOR_PADDING 
         };
-        const ImVec2 center = { 
+        const QaplaUi::Vec2 center = { 
             indicatorMin.x + indicatorSize * 0.5F, 
             indicatorMin.y + indicatorSize * 0.5F 
         };
         
-        drawList->AddCircleFilled(center, radius, bgColor);
+        drawList->addCircleFilled(center, radius, bgColor);
         
         // Draw piece icon
         FontManager::drawPiece(drawList, piece, indicatorMin, indicatorSize, font);
     }
 
-    void ImGuiBoard::drawEPIndicator(ImDrawList *drawList, const ImVec2 &boardPos, 
-        float cellSize, ImFont *font)
+    void ImGuiBoard::drawEPIndicator(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, 
+        float cellSize, QaplaUi::Font font)
     {
         const auto &position = gameState_->position();
         const auto epSquare = position.getSetupEpSquare();
@@ -382,8 +382,8 @@ namespace QaplaWindows
         drawIndicatorIcon(drawList, cellMin, cellSize, false, epPawn, bgColor, font);
     }
 
-    void ImGuiBoard::drawWhiteKingCastlingIndicators(ImDrawList *drawList, 
-        const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
+    void ImGuiBoard::drawWhiteKingCastlingIndicators(QaplaUi::DrawList*drawList, 
+        const QaplaUi::Vec2 &cellMin, float cellSize, bool isWhite, QaplaUi::Font font)
     {
         if (!setupMode_) {
             return;
@@ -400,8 +400,8 @@ namespace QaplaWindows
         }
     }
 
-    void ImGuiBoard::drawBlackKingCastlingIndicators(ImDrawList *drawList, 
-        const ImVec2 &cellMin, float cellSize, bool isWhite, ImFont *font)
+    void ImGuiBoard::drawBlackKingCastlingIndicators(QaplaUi::DrawList*drawList, 
+        const QaplaUi::Vec2 &cellMin, float cellSize, bool isWhite, QaplaUi::Font font)
     {
         if (!setupMode_) {
             return;
@@ -466,14 +466,14 @@ namespace QaplaWindows
         const float gridCellSize = hoveredSquareCellSize_ * GRID_CELL_SIZE_RATIO;
         const float popupWidth = gridCellSize * COL_COUNT;
         const float popupHeight = gridCellSize * COL_COUNT;
-        const ImVec2 popupMin = {
+        const QaplaUi::Vec2 popupMin = {
             hoveredSquareCellMin_.x + (hoveredSquareCellSize_ - popupWidth) * 0.5F,
             hoveredSquareCellMin_.y + (hoveredSquareCellSize_ - popupHeight) * 0.5F
         };
-        const ImVec2 popupMax = {popupMin.x + popupWidth, popupMin.y + popupHeight};
+        const QaplaUi::Vec2 popupMax = {popupMin.x + popupWidth, popupMin.y + popupHeight};
         
         // Check if mouse is over popup area (manual check, not using ImGui button)
-        const ImVec2 mousePos = ImGui::GetMousePos();
+        const QaplaUi::Vec2 mousePos = QaplaUi::getMousePos();
         const bool isMouseOverPopup = 
             mousePos.x >= popupMin.x && mousePos.x <= popupMax.x &&
             mousePos.y >= popupMin.y && mousePos.y <= popupMax.y;
@@ -486,8 +486,8 @@ namespace QaplaWindows
         constexpr float maxBorderTextSize = 30.0F;
         constexpr int gridSize = 8;
 
-        const auto screenPos = ImGui::GetCursorScreenPos();
-        const auto region = ImGui::GetContentRegionAvail();
+        const auto screenPos = QaplaUi::getCursorScreenPos();
+        const auto region = QaplaUi::getContentRegionAvail();
         const auto boardHeight = std::max(50.0F, region.y - 10.0F);
         const auto boardWidth = std::max(50.0F, region.x - 10.0F);
 
@@ -496,30 +496,30 @@ namespace QaplaWindows
             return {};
         }
 
-        ImGui::PushFont(FontManager::chessFont);
+        QaplaUi::pushFont(FontManager::chessFont);
 
         const float cellSize = std::floor(std::min(boardWidth, boardHeight) / gridSize) * 0.95F;
 
         if (promotionPending_)
         {
-            ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(1.0F, 1.0F, 1.0F, 0.3F));
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(1, 1));
-            if (ImGui::BeginPopup("Promotion"))
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::PopupBg, QaplaUi::Vec4(1.0F, 1.0F, 1.0F, 0.3F));
+            QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowPadding, QaplaUi::Vec2(1, 1));
+            if (QaplaUi::beginPopup("Promotion"))
             {
                 drawPromotionPopup(cellSize);
-                ImGui::EndPopup();
+                QaplaUi::endPopup();
             }
-            ImGui::PopStyleVar(1);
-            ImGui::PopStyleColor(1);
+            QaplaUi::popStyleVar(1);
+            QaplaUi::popStyleColor(1);
         }
 
         const float boardSize = cellSize * gridSize;
 
-        auto topLeft = ImVec2(screenPos.x + 3, screenPos.y + 3);
+        auto topLeft = QaplaUi::Vec2(screenPos.x + 3, screenPos.y + 3);
 
-        const ImVec2 boardEnd = {screenPos.x + boardSize, screenPos.y + boardSize};
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        ImFont *font = ImGui::GetFont();
+        const QaplaUi::Vec2 boardEnd = {screenPos.x + boardSize, screenPos.y + boardSize};
+        QaplaUi::DrawList*drawList = &QaplaUi::windowDrawList();
+        QaplaUi::Font font = QaplaUi::getFont();
         
         // Check if popup is hovered BEFORE drawing board squares
         bool popupIsHovered = handlePieceSelectionPopup();
@@ -550,9 +550,9 @@ namespace QaplaWindows
         }
 
         const float coordTextHeight = std::min(cellSize * 0.5F, maxBorderTextSize);
-        ImGui::Dummy(ImVec2(boardSize, boardSize + coordTextHeight));
+        QaplaUi::dummy(QaplaUi::Vec2(boardSize, boardSize + coordTextHeight));
 
-        ImGui::PopFont();
+        QaplaUi::popFont();
 
         drawSetupControls(screenPos, boardSize);
 
@@ -560,7 +560,7 @@ namespace QaplaWindows
         return moveRecord;
     }
 
-    void ImGuiBoard::drawSetupControls(const ImVec2 &screenPos, const float boardSize)
+    void ImGuiBoard::drawSetupControls(const QaplaUi::Vec2 &screenPos, const float boardSize)
     {
         // Draw setup controls to the right of the board if in setup mode
         if (setupMode_)
@@ -581,10 +581,10 @@ namespace QaplaWindows
             const float setupPanelX = screenPos.x + boardSize + spacing;
             const float setupPanelY = screenPos.y;
 
-            ImGui::SetCursorScreenPos(ImVec2(setupPanelX, setupPanelY));
+            QaplaUi::setCursorScreenPos(QaplaUi::Vec2(setupPanelX, setupPanelY));
 
-            ImGui::BeginGroup();
-            ImGui::PushItemWidth(200.0F);
+            QaplaUi::beginGroup();
+            QaplaUi::pushItemWidth(200.0F);
 
             bool modified = ImGuiBoardSetup::draw(setupData);
             if (modified) {
@@ -599,13 +599,13 @@ namespace QaplaWindows
                 gameState_->setSetupHalfmoveClock(setupData.halfmoveClock);
             }
 
-            ImGui::PopItemWidth();
-            ImGui::EndGroup();
+            QaplaUi::popItemWidth();
+            QaplaUi::endGroup();
         }
     }
 
-    std::pair<ImVec2, ImVec2> ImGuiBoard::getPopupCellBounds(
-        const ImVec2& popupMin, float cellSize, int col, int row)
+    std::pair<QaplaUi::Vec2, QaplaUi::Vec2> ImGuiBoard::getPopupCellBounds(
+        const QaplaUi::Vec2& popupMin, float cellSize, int col, int row)
     {
         // Grid is 4x4 with all cells having the same size
         // Simple calculation: position = popupMin + (col/row * cellSize)
@@ -615,45 +615,45 @@ namespace QaplaWindows
         return {{x, y}, {x + cellSize, y + cellSize}};
     }
 
-    void ImGuiBoard::drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor)
+    void ImGuiBoard::drawPopupRect(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& min, const QaplaUi::Vec2& max, QaplaUi::Color32 bgColor)
     {
         if (ROUND_POPUP_FIELD) {
             const float rounding = (max.x - min.x) * 0.5F; // Fully round
-            drawList->AddRectFilled(min, max, bgColor, rounding);
-            drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255), rounding);
+            drawList->addRectFilled(min, max, bgColor, rounding);
+            drawList->addRect(min, max, QaplaUi::col32(0, 0, 0, 255), rounding);
         } else {
-            drawList->AddRectFilled(min, max, bgColor);
-            drawList->AddRect(min, max, IM_COL32(0, 0, 0, 255));
+            drawList->addRectFilled(min, max, bgColor);
+            drawList->addRect(min, max, QaplaUi::col32(0, 0, 0, 255));
         }
     }
 
-    bool ImGuiBoard::isRectClicked(const ImVec2& min, const ImVec2& max)
+    bool ImGuiBoard::isRectClicked(const QaplaUi::Vec2& min, const QaplaUi::Vec2& max)
     {
-        if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        if (!QaplaUi::isMouseClicked(QaplaUi::MouseButton::Left)) {
             return false;
         }
-        const ImVec2 mousePos = ImGui::GetMousePos();
+        const QaplaUi::Vec2 mousePos = QaplaUi::getMousePos();
         return mousePos.x >= min.x && mousePos.x <= max.x && 
                mousePos.y >= min.y && mousePos.y <= max.y;
     }
 
     // Helper function to adjust satellite position for round popup
-    static std::pair<ImVec2, ImVec2> adjustSatellitePosition(
-        const ImVec2& originalMin, const ImVec2& originalMax, 
-        const ImVec2& popupMin, float gridCellSize)
+    static std::pair<QaplaUi::Vec2, QaplaUi::Vec2> adjustSatellitePosition(
+        const QaplaUi::Vec2& originalMin, const QaplaUi::Vec2& originalMax, 
+        const QaplaUi::Vec2& popupMin, float gridCellSize)
     {
         if (!ROUND_POPUP_FIELD) {
             return {originalMin, originalMax};
         }
         
         // Calculate center of popup (grid center)
-        const ImVec2 popupCenter = {
+        const QaplaUi::Vec2 popupCenter = {
             popupMin.x + (GRID_COL_COUNT * gridCellSize) * 0.5F,
             popupMin.y + (GRID_ROW_COUNT * gridCellSize) * 0.5F
         };
         
         // Original cell center
-        const ImVec2 originalCenter = {
+        const QaplaUi::Vec2 originalCenter = {
             (originalMin.x + originalMax.x) * 0.5F, 
             (originalMin.y + originalMax.y) * 0.5F
         };
@@ -672,7 +672,7 @@ namespace QaplaWindows
         const float circularRadius = enlargedCenterRadius + satelliteRadius;
         
         // New center position on circle
-        const ImVec2 newCenter = {
+        const QaplaUi::Vec2 newCenter = {
             popupCenter.x + std::cos(angle) * circularRadius,
             popupCenter.y + std::sin(angle) * circularRadius
         };
@@ -697,15 +697,15 @@ namespace QaplaWindows
         FontManager::drawPiece(params.drawList, piece, min, size, params.font);
     }
 
-    static void drawClearIcon(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, float paddingRatio)
+    static void drawClearIcon(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& min, const QaplaUi::Vec2& max, float paddingRatio)
     {
         const float padding = (max.x - min.x) * paddingRatio;
-        drawList->AddLine({min.x + padding, min.y + padding}, 
+        drawList->addLine({min.x + padding, min.y + padding}, 
                        {max.x - padding, max.y - padding}, 
-                       IM_COL32(255, 0, 0, 255), 2.0F);
-        drawList->AddLine({min.x + padding, max.y - padding}, 
+                       QaplaUi::col32(255, 0, 0, 255), 2.0F);
+        drawList->addLine({min.x + padding, max.y - padding}, 
                        {max.x - padding, min.y + padding}, 
-                       IM_COL32(255, 0, 0, 255), 2.0F);
+                       QaplaUi::col32(255, 0, 0, 255), 2.0F);
     }
 
     void ImGuiBoard::drawSwitchColorIcon(const SatelliteDrawParams& params) const
@@ -719,10 +719,10 @@ namespace QaplaWindows
         const float cellSize = max.x - min.x;
         
         drawPopupRect(params.drawList, min, max, POPUP_SWITCH_BACKGROUND);
-        const ImVec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
+        const QaplaUi::Vec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
         const float radius = cellSize * 0.3F;
-        ImU32 circleColor = (pieceColor_ == Piece::WHITE) ? BLACK_COLOR : WHITE_COLOR;
-        params.drawList->AddCircleFilled(center, radius, circleColor);
+        QaplaUi::Color32 circleColor = (pieceColor_ == Piece::WHITE) ? BLACK_COLOR : WHITE_COLOR;
+        params.drawList->addCircleFilled(center, radius, circleColor);
     }
 
     void ImGuiBoard::drawClearField(const SatelliteDrawParams& params)
@@ -737,16 +737,16 @@ namespace QaplaWindows
         drawClearIcon(params.drawList, min, max, 0.2F);
     }
 
-    void ImGuiBoard::drawPopupCenter(ImDrawList* drawList, ImFont* font, 
-        const ImVec2& popupMin, float gridCellSize, Piece currentPieceOnSquare) const
+    void ImGuiBoard::drawPopupCenter(QaplaUi::DrawList* drawList, QaplaUi::Font font, 
+        const QaplaUi::Vec2& popupMin, float gridCellSize, Piece currentPieceOnSquare) const
     {
-        ImVec2 min = {popupMin.x + gridCellSize, popupMin.y + gridCellSize};
-        ImVec2 max = {min.x + CENTER_EXTENT * gridCellSize, min.y + CENTER_EXTENT * gridCellSize};
+        QaplaUi::Vec2 min = {popupMin.x + gridCellSize, popupMin.y + gridCellSize};
+        QaplaUi::Vec2 max = {min.x + CENTER_EXTENT * gridCellSize, min.y + CENTER_EXTENT * gridCellSize};
         float size = max.x - min.x;
         
         if (ROUND_POPUP_FIELD) {
             // Enlarge center
-            const ImVec2 originalCenter = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
+            const QaplaUi::Vec2 originalCenter = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
             size *= ENLARGE_CENTER;
             min = {originalCenter.x - size * 0.5F, originalCenter.y - size * 0.5F};
             max = {originalCenter.x + size * 0.5F, originalCenter.y + size * 0.5F};
@@ -754,17 +754,17 @@ namespace QaplaWindows
         
         // Check if the piece on the square is already the selected piece
         const bool isAlreadyThere = (currentPieceOnSquare == lastSelectedPiece_);
-        const ImU32 centerColor = isAlreadyThere ? IM_COL32(150, 150, 150, 255) : POPUP_CENTER_COLOR;
+        const QaplaUi::Color32 centerColor = isAlreadyThere ? QaplaUi::col32(150, 150, 150, 255) : POPUP_CENTER_COLOR;
         
         if (ROUND_POPUP_FIELD) {
             // Draw as circle
-            const ImVec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
+            const QaplaUi::Vec2 center = {(min.x + max.x) * 0.5F, (min.y + max.y) * 0.5F};
             const float radius = size * 0.5F;
-            drawList->AddCircleFilled(center, radius, centerColor);
-            drawList->AddCircle(center, radius, BLACK_COLOR, 0, 2.0F);
+            drawList->addCircleFilled(center, radius, centerColor);
+            drawList->addCircle(center, radius, BLACK_COLOR, 0, 2.0F);
         } else {
-            drawList->AddRectFilled(min, max, centerColor);
-            drawList->AddRect(min, max, BLACK_COLOR, 0.0F, 0, 2.0F);
+            drawList->addRectFilled(min, max, centerColor);
+            drawList->addRect(min, max, BLACK_COLOR, 0.0F, 2.0F);
         }
         
         if (lastSelectedPiece_ == Piece::NO_PIECE) {
@@ -775,25 +775,25 @@ namespace QaplaWindows
     }
 
     std::optional<Piece> ImGuiBoard::drawPieceSelectionPopup(
-        const ImVec2& cellMin, float cellSize, Piece currentPieceOnSquare)
+        const QaplaUi::Vec2& cellMin, float cellSize, Piece currentPieceOnSquare)
     {
         const float gridCellSize = cellSize * GRID_CELL_SIZE_RATIO;
         const float popupWidth = gridCellSize * GRID_COL_COUNT;
         const float popupHeight = gridCellSize * GRID_ROW_COUNT;
         
-        const ImVec2 popupMin = {
+        const QaplaUi::Vec2 popupMin = {
             cellMin.x + (cellSize - popupWidth) * 0.5F,
             cellMin.y + (cellSize - popupHeight) * 0.5F
         };
         
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        ImFont* font = ImGui::GetFont();
-        ImGui::PushFont(FontManager::chessFont);
+        QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+        QaplaUi::Font font = QaplaUi::getFont();
+        QaplaUi::pushFont(FontManager::chessFont);
         
         // Background
-        const ImVec2 popupMax = {popupMin.x + popupWidth, popupMin.y + popupHeight};
-        //drawList->AddRectFilled(popupMin, popupMax, IM_COL32(50, 50, 50, 50));
-        //drawList->AddRect(popupMin, popupMax, IM_COL32(255, 255, 255, 255), 0.0F, 0, 2.0F);
+        const QaplaUi::Vec2 popupMax = {popupMin.x + popupWidth, popupMin.y + popupHeight};
+        //drawList->addRectFilled(popupMin, popupMax, QaplaUi::col32(50, 50, 50, 50));
+        //drawList->addRect(popupMin, popupMax, QaplaUi::col32(255, 255, 255, 255), 0.0F, 2.0F);
         
         drawPopupCenter(drawList, font, popupMin, gridCellSize, currentPieceOnSquare);
         
@@ -822,15 +822,15 @@ namespace QaplaWindows
             }
         }
         
-        ImGui::PopFont();
+        QaplaUi::popFont();
         
         return handlePieceSelectionClick(popupMin, gridCellSize);
     }
 
     std::optional<Piece> ImGuiBoard::handlePieceSelectionClick(
-        const ImVec2& popupMin, float gridCellSize)
+        const QaplaUi::Vec2& popupMin, float gridCellSize)
     {
-        if (!ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        if (!QaplaUi::isMouseClicked(QaplaUi::MouseButton::Left)) {
             return std::nullopt;
         }
         

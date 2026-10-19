@@ -123,7 +123,7 @@ namespace QaplaWindows
          * @param size Size of the table area
          * @return Optional row index if a row was clicked
          */
-        std::optional<size_t> drawTable(const ImVec2& size);
+        std::optional<size_t> drawTable(const QaplaUi::Vec2& size);
         
         /**
          * @brief Update configuration to INI file

@@ -21,7 +21,6 @@
 #include "font.h"
 #include "i18n.h"
 
-#include <imgui.h>
 #include <iostream>
 #include <algorithm>
 #include <cctype>
@@ -153,7 +152,7 @@ namespace QaplaWindows {
     }
 
     ImGuiTable::ImGuiTable(std::string tableId,
-        ImGuiTableFlags tableFlags,
+        QaplaUi::TableFlags tableFlags,
         std::vector<ColumnDef> columns)
         : tableId_(std::move(tableId)),
         tableFlags_(tableFlags),
@@ -167,46 +166,7 @@ namespace QaplaWindows {
 
 
     float ImGuiTable::calculateTextWidth(const std::string& text, float padding) const {
-        ImFont* font = nullptr;
-        if (fontIndex_ >= 0 && fontIndex_ < ImGui::GetIO().Fonts->Fonts.Size) {
-            font = ImGui::GetIO().Fonts->Fonts[fontIndex_];
-        }
-        
-        if (font != nullptr) {
-            float fontSize = ImGui::GetFontSize();
-            return font->CalcTextSizeA(fontSize, FLT_MAX, 0.0F, text.c_str()).x + padding;
-        }
-        return ImGui::CalcTextSize(text.c_str()).x + padding;
-    }
-
-    static void alignRight(const std::string& content) {
-        constexpr float RIGHT_PADDING = 10.0F;
-        const float colWidth = ImGui::GetColumnWidth();
-        const float textWidth = ImGui::CalcTextSize(content.c_str()).x;
-        // Never to the left of the cell: text wider than its column used to be pushed out on the
-        // left, where the cell's clip rectangle cut it off -- so "-280.00" in a column with room
-        // for six characters showed as "280.00", a tablebase loss read as a winning score. Too
-        // wide now starts at the left edge and loses its last characters instead of its first.
-        const float offset = std::max(0.0F, colWidth - textWidth - RIGHT_PADDING);
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
-	}
-
-    static void textAligned(const std::string& content, bool right) {
-        if (right) {
-            // ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
-			alignRight(content);
-            ImGui::TextUnformatted(content.c_str());
-            // ImGui::PopFont();
-        } else {
-            ImGui::TextUnformatted(content.c_str());
-        }
-    }
-
-    static void headerAligned(const std::string& content, bool right) {
-        if (right) {
-            alignRight(content);
-        }
-        ImGui::TableHeader(content.c_str());
+        return QaplaUi::calcTextSize(font(), QaplaUi::getFontSize(), text).x + padding;
     }
 
     void ImGuiTable::updated(std::optional<size_t> addedRow) {
@@ -237,131 +197,45 @@ namespace QaplaWindows {
         }
     }
 
-    void ImGuiTable::setupTable() const {
-        ImGui::TableSetupScrollFreeze(0, 1);
-        for (size_t i = 0; i < columns_.size(); ++i) {
-            float colWidth = columns_[i].width;
-            if (columns_[i].compute) {
-                float computed = computeColumnWidth(i);
-                if (computed > colWidth) {
-                    colWidth = computed;
-                }
-            }
-            ImGui::TableSetupColumn(columns_[i].name.c_str(), columns_[i].flags, colWidth, static_cast<int>(i));
+    std::string ImGuiTable::cellText(size_t row, size_t column, bool& alignRight) const {
+        alignRight = column < columns_.size() && columns_[column].alignRight;
+        if (row >= rows_.size() || column >= columns_.size() || column >= rows_[row].size()) {
+            return {};
         }
+        std::string content = rows_[row][column];
+        if (columns_[column].customRender) {
+            columns_[column].customRender(content, alignRight);
+        }
+        return content;
     }
 
-    void ImGuiTable::tableHeadersRow() const {
-        ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-
-        for (size_t columnN = 0; columnN < columns_.size(); columnN++) {
-            if (!ImGui::TableSetColumnIndex(static_cast<int>(columnN))) {
-                continue;
-            }
-            std::string translatedName = Translator::instance().translate("Table", columns_[columnN].name);
-            ImGui::PushID(static_cast<int>(columnN));
-            headerAligned(translatedName, columns_[columnN].alignRight);
-            ImGui::PopID();
+    float ImGuiTable::layoutWidth(size_t column) const {
+        if (column >= columns_.size()) {
+            return 0.0F;
         }
+        float colWidth = columns_[column].width;
+        if (columns_[column].compute) {
+            colWidth = std::max(colWidth, computeColumnWidth(column));
+        }
+        return colWidth;
     }
 
-    static std::optional<float> calculateOptimalScrollPosition(size_t rowIndex) {
-        float scrollY = ImGui::GetScrollY();
-        float windowHeight = ImGui::GetWindowHeight();
-        if (ImGui::GetScrollMaxX() > 0) {
-            windowHeight -= ImGui::GetStyle().ScrollbarSize;
-        }
-        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-        
-        float rowTop = static_cast<float>(rowIndex + 1) * rowHeight; // +1 for header row
-        float rowBottom = rowTop + rowHeight;
-        float visibleTop = scrollY + rowHeight; 
-        float visibleBottom = scrollY + windowHeight;
-        
-        // Row visible, no scroll needed
-        if (rowTop >= visibleTop && rowBottom <= visibleBottom) {
-            return std::nullopt;  
-        }
-
-        // Row far away → scroll to center
-        if (rowBottom + windowHeight < visibleTop || rowTop - windowHeight > visibleBottom) {
-            return rowTop - (windowHeight * 0.5F) + (rowHeight * 0.5F);
-        }
-        
-        // Row too far up (but close) → scroll to top
-        if (rowBottom < visibleBottom) {
-            return rowTop - rowHeight;
-        }
-
-        // Row too far down → scroll to bottom
-        return rowBottom - windowHeight;
-    }
-
-    bool ImGuiTable::isRowClicked(size_t index) const {
-        if (!clickable_) {
-            return false;
-        }
-        std::string id = "row" + std::to_string(index);
-        ImGui::PushID(id.c_str());
-        bool clicked = ImGui::Selectable("##row", false,
-            ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowItemOverlap);
-        ImGui::PopID();
-        ImGui::SameLine(0.0F, 0.0F);
-        return clicked;
-    }
-
-    void ImGuiTable::accentuateCurrentRow(size_t rowIndex) const {
-        auto current = indexManager_.getCurrentRow();
-        if (!current || *current != rowIndex) {
-            return;
-        }
-        auto baseColor = ImGui::GetStyleColorVec4(ImGuiCol_TabDimmedSelected);
-        auto baseColor32 = ImGui::ColorConvertFloat4ToU32(baseColor);
-        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg1, baseColor32);
-    }
-
-    void ImGuiTable::drawRow(size_t rowIndex) const {
-        const auto& row = rows_[rowIndex];
-        for (size_t col = 0; col < columns_.size() && col < row.size(); ++col) {
-            ImGui::TableSetColumnIndex(static_cast<int>(col));
-            if (columns_[col].customRender) {
-                bool alignRight = columns_[col].alignRight;
-                std::string content = row[col];
-                columns_[col].customRender(content, alignRight);
-                textAligned(content, alignRight);
-            } else {
-                textAligned(row[col], columns_[col].alignRight);
-            }
-        }
-    }
-
-    ImFont* ImGuiTable::getSelectedFont() const {
-        if (fontIndex_ == FontManager::interVariableIndex && FontManager::interVariable != nullptr) {
-            return FontManager::interVariable;
-        }
-        if (fontIndex_ == FontManager::ibmPlexMonoIndex && FontManager::ibmPlexMono != nullptr) {
-            return FontManager::ibmPlexMono;
-        }
-        return nullptr;
-    }
-
-    std::optional<size_t> ImGuiTable::draw(const ImVec2& size, bool shrink) {
+    std::optional<size_t> ImGuiTable::draw(const QaplaUi::Vec2& size, bool shrink) {
         constexpr float HORIZONTAL_SCROLLBAR_HEIGHT = 20.0F;
-        std::optional<size_t> clickedRow;
-        ImVec2 tableSize = size;
+        QaplaUi::Vec2 tableSize = size;
 
-        ImFont* selectedFont = getSelectedFont();
-        if (selectedFont != nullptr) {
-            ImGui::PushFont(selectedFont);
+        // Only the two text fonts are ever pushed; any other index keeps the current font.
+        const bool pushFont = font() == QaplaUi::Font::Inter || font() == QaplaUi::Font::Mono;
+        if (pushFont) {
+            QaplaUi::pushFont(font());
         }
 
-        float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+        float rowHeight = QaplaUi::getTextLineHeightWithSpacing();
 
-        std::optional<size_t> keyboardRow;
         if (filterable_) {
-            float cursorYBefore = ImGui::GetCursorPosY();
+            float cursorYBefore = QaplaUi::getCursorPosY();
             needsFilter_ |= filter_.draw();
-            float cursorYAfter = ImGui::GetCursorPosY();
+            float cursorYAfter = QaplaUi::getCursorPosY();
             float filterHeight = cursorYAfter - cursorYBefore;
             tableSize.y = std::max(0.0F, tableSize.y - filterHeight);
             handleFiltering();
@@ -375,25 +249,12 @@ namespace QaplaWindows {
             );
         }
 
-        auto visibleRows = static_cast<size_t>(tableSize.y / rowHeight);
-        if (visibleRows == 0) {
-            visibleRows = 1; // Fallback
+        auto selected = QaplaUi::table(*this, tableSize);
+
+        if (pushFont) {
+            QaplaUi::popFont();
         }
 
-        if (ImGui::BeginTable(tableId_.c_str(), static_cast<int>(columns_.size()), tableFlags_, tableSize)) {
-            setupTable();
-            handleSorting();
-            tableHeadersRow();
-            handleScrolling();
-            handleClipping(clickedRow);
-            keyboardRow = checkKeyboard(visibleRows);
-            ImGui::EndTable();
-        }
-
-        if (selectedFont != nullptr) {
-            ImGui::PopFont();
-        }
-        
         // Maintain the hight of the table without filtering by adding a dummy element
         // This prevents the UI from jumping when filtering is applied/removed
         if (keepSize_) {
@@ -401,50 +262,11 @@ namespace QaplaWindows {
             size_t filteredRows = indexManager_.size();
             if (filteredRows < totalRows) {
                 float diffHeight = static_cast<float>(totalRows - filteredRows) * rowHeight;
-                ImGui::Dummy(ImVec2(0.0F, diffHeight));
+                QaplaUi::dummy(QaplaUi::Vec2(0.0F, diffHeight));
             }
         }
 
-        return (keyboardRow) ? *keyboardRow : clickedRow;
-    }
-
-    void ImGuiTable::handleClipping(std::optional<size_t> &clickedRow)
-    {
-        ImGuiListClipper clipper;
-        clipper.Begin(static_cast<int>(indexManager_.size()));
-        while (clipper.Step())
-        {
-            for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i)
-            {
-                size_t actualRow = indexManager_.getRowNumber(i);
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                if (isRowClicked(actualRow))
-                {
-                    clickedRow = actualRow;
-                }
-                accentuateCurrentRow(actualRow);
-                drawRow(actualRow);
-            }
-        }
-    }
-
-    void ImGuiTable::handleScrolling()
-    {
-        if (scrollToRow_)
-        {
-            // Find the sorted index for the row to scroll to
-            auto sortedIndex = indexManager_.getRowIndex(*scrollToRow_);
-            if (sortedIndex)
-            {
-                auto scrollPos = calculateOptimalScrollPosition(*sortedIndex);
-                if (scrollPos)
-                {
-                    ImGui::SetScrollY(*scrollPos);
-                }
-            }
-            scrollToRow_.reset();
-        }
+        return selected;
     }
 
     void ImGuiTable::handleFiltering() {
@@ -459,63 +281,34 @@ namespace QaplaWindows {
         });
     }
     
-    void ImGuiTable::handleSorting() {
-        ImGuiTableSortSpecs* specs = ImGui::TableGetSortSpecs();
-        if (specs == nullptr) {
+    void ImGuiTable::sortBy(std::optional<size_t> column, bool ascending) {
+        needsSort_ = false;
+        if (!column) {
             return;
         }
-        if (needsSort_ || (specs != nullptr && specs->SpecsDirty)) {
-            needsSort_ = false;
-            if (specs->SpecsCount > 0) {
-                auto spec = specs->Specs[0];
-                auto column = static_cast<int>(spec.ColumnUserID);
-                bool ascending = spec.SortDirection == ImGuiSortDirection_Ascending;
-                indexManager_.sort([&](size_t a, size_t b) {
-                    auto columnSize = static_cast<int>(columns_.size());
-                    if (column >= columnSize) {
-                        return false;
-                    }
-                    auto rowASizeInt = static_cast<int>(rows_[a].size());
-                    auto rowBSizeInt = static_cast<int>(rows_[b].size());
-                    std::string valA = (column < rowASizeInt) ? rows_[a][static_cast<size_t>(column)] : "";
-                    std::string valB = (column < rowBSizeInt) ? rows_[b][static_cast<size_t>(column)] : "";
-                    if (ascending) {
-                        return naturalCompare(valA, valB);
-                    }
-                    return naturalCompare(valB, valA);
-                });
+        auto sortColumn = *column;
+        indexManager_.sort([&](size_t a, size_t b) {
+            if (sortColumn >= columns_.size()) {
+                return false;
             }
-            specs->SpecsDirty = false;
-        }
+            std::string valA = (sortColumn < rows_[a].size()) ? rows_[a][sortColumn] : "";
+            std::string valB = (sortColumn < rows_[b].size()) ? rows_[b][sortColumn] : "";
+            if (ascending) {
+                return naturalCompare(valA, valB);
+            }
+            return naturalCompare(valB, valA);
+        });
     }
 
-    std::optional<size_t> ImGuiTable::checkKeyboard(size_t visibleRows) {
-        if (!clickable_ || !ImGui::IsWindowFocused(ImGuiFocusedFlags_None)) {
-            return std::nullopt;
+    std::optional<size_t> ImGuiTable::navigate(Navigation navigation, size_t pageRows) {
+        switch (navigation) {
+        case Navigation::Up: indexManager_.navigateUp(); break;
+        case Navigation::Down: indexManager_.navigateDown(); break;
+        case Navigation::PageUp: indexManager_.navigateUp(pageRows); break;
+        case Navigation::PageDown: indexManager_.navigateDown(pageRows); break;
+        case Navigation::Home: indexManager_.navigateHome(); break;
+        case Navigation::End: indexManager_.navigateEnd(); break;
         }
-        
-        int currentFrame = ImGui::GetFrameCount();
-        if (currentFrame == lastInputFrame_) {
-            return std::nullopt;
-        }
-        lastInputFrame_ = currentFrame;
-
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow, true)) {
-            indexManager_.navigateUp();
-        } else if (ImGui::IsKeyPressed(ImGuiKey_DownArrow, true)) {
-            indexManager_.navigateDown();
-        } else if (ImGui::IsKeyPressed(ImGuiKey_PageUp, true)) {
-            indexManager_.navigateUp(visibleRows);
-        } else if (ImGui::IsKeyPressed(ImGuiKey_PageDown, true)) {
-            indexManager_.navigateDown(visibleRows);
-        } else if (ImGui::IsKeyPressed(ImGuiKey_Home, true)) {
-            indexManager_.navigateHome();
-        } else if (ImGui::IsKeyPressed(ImGuiKey_End, true)) {
-            indexManager_.navigateEnd();
-        } else {
-            return std::nullopt;
-        }
-        
         return indexManager_.getCurrentRow();
     }
 

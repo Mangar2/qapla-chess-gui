@@ -24,8 +24,8 @@ namespace QaplaWindows {
 
     HorizontalSplitContainer::HorizontalSplitContainer(
         const std::string& name,
-        ImGuiWindowFlags left,
-        ImGuiWindowFlags right) {
+        QaplaUi::WindowFlags left,
+        QaplaUi::WindowFlags right) {
         leftFlags_ = left;
         rightFlags_ = right;
         name_ = name;
@@ -86,7 +86,7 @@ namespace QaplaWindows {
         }
     }
 
-    float HorizontalSplitContainer::computeLeftWidth(ImVec2 avail) {
+    float HorizontalSplitContainer::computeLeftWidth(QaplaUi::Vec2 avail) {
         constexpr float imguiPadding = 13.0F; 
         float availableWidth = std::max(avail.x - splitterWidth_ - imguiPadding, 2 * minSize_);
         float leftWidth = leftWidth_;
@@ -125,13 +125,13 @@ namespace QaplaWindows {
     }
 
     void HorizontalSplitContainer::draw() {
-        ImVec2 avail = ImGui::GetContentRegionAvail();
+        QaplaUi::Vec2 avail = QaplaUi::getContentRegionAvail();
         float height = avail.y;
 
         leftWidth_ = computeLeftWidth(avail);
 
-        if (ImGui::BeginChild(("hsplit." + name_ + ".left").c_str(), ImVec2(leftWidth_, height),
-            ImGuiChildFlags_None, leftFlags_)) {
+        if (QaplaUi::beginChild(("hsplit." + name_ + ".left").c_str(), QaplaUi::Vec2(leftWidth_, height),
+            QaplaUi::ChildFlags::None, leftFlags_)) {
             try {
                 if (leftCallback_) leftCallback_();
             }
@@ -145,16 +145,16 @@ namespace QaplaWindows {
         }
         // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
         // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
-        ImGui::EndChild();
+        QaplaUi::endChild();
         
-        ImGui::SameLine(0, 0);
-        drawSplitter("hsplit." + name_ + ".splitter", ImVec2(splitterWidth_, height));
-        ImGui::SameLine(0, 0);
+        QaplaUi::sameLine(0, 0);
+        drawSplitter("hsplit." + name_ + ".splitter", QaplaUi::Vec2(splitterWidth_, height));
+        QaplaUi::sameLine(0, 0);
 
-        rightWidth_ = std::max(avail.x - ImGui::GetCursorPosX(), minSize_);
+        rightWidth_ = std::max(avail.x - QaplaUi::getCursorPosX(), minSize_);
 
-        if (ImGui::BeginChild(("hsplit." + name_ + ".right").c_str(), ImVec2(rightWidth_, height),
-            ImGuiChildFlags_None, rightFlags_)) {
+        if (QaplaUi::beginChild(("hsplit." + name_ + ".right").c_str(), QaplaUi::Vec2(rightWidth_, height),
+            QaplaUi::ChildFlags::None, rightFlags_)) {
             try {
                 if (rightCallback_) rightCallback_();
             }
@@ -168,38 +168,38 @@ namespace QaplaWindows {
         }
         // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
         // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
-        ImGui::EndChild();
+        QaplaUi::endChild();
     }
 
-    void HorizontalSplitContainer::drawSplitter(const std::string& id, const ImVec2& vec) {
+    void HorizontalSplitContainer::drawSplitter(const std::string& id, const QaplaUi::Vec2& vec) {
         // If either panel is fixed, disable splitter interaction
         bool isFixed = leftFixed_ || rightFixed_;
         
         if (isFixed) {
             // Draw a non-interactive splitter with different styling
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(80, 80, 80, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(80, 80, 80, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(80, 80, 80, 255));
             
-            ImGui::Button(("###" + id).c_str(), vec);
+            QaplaUi::button(("###" + id).c_str(), vec);
             
-            ImGui::PopStyleColor(3);
+            QaplaUi::popStyleColor(3);
         } else {
             // Draw interactive splitter
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(100, 100, 100, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(150, 150, 150, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(180, 180, 180, 255));
 
-            ImGui::Button(("###" + id).c_str(), vec);
-            if (ImGui::IsItemActive()) {
-                leftWidth_ += ImGui::GetIO().MouseDelta.x;
+            QaplaUi::button(("###" + id).c_str(), vec);
+            if (QaplaUi::isItemActive()) {
+                leftWidth_ += QaplaUi::getMouseDelta().x;
             }
 
-            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW); 
+            if (QaplaUi::isItemHovered() || QaplaUi::isItemActive()) {
+                QaplaUi::setMouseCursor(QaplaUi::MouseCursor::ResizeEW); 
             }
 
-            ImGui::PopStyleColor(3);
+            QaplaUi::popStyleColor(3);
         }
     }
 

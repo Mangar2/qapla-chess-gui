@@ -28,7 +28,7 @@
 #include <chess-game/game-record.h>
 #include <game-manager/engine-record.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <memory>
 #include <vector>
 #include <format>

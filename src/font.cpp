@@ -18,10 +18,7 @@
  */
 
 #include "font.h"
-#include "data/chess-font.h"
-#include "data/inter-variable.h"
-#include "data/ibm-plex-mono-font.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <stdexcept>
 #include <filesystem>
 
@@ -72,23 +69,23 @@ namespace FontManager {
         return u8" ";
     }
 
-    void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, ImFont* font)
+    void drawPiece(QaplaUi::DrawList* drawList, QaplaBasics::Piece piece, QaplaUi::Font font)
     {
         if (piece == QaplaBasics::Piece::NO_PIECE) {
             return;
         }
 
-        const float fontSize = ImGui::GetFontSize();
+        const float fontSize = QaplaUi::getFontSize();
         const char* text = reinterpret_cast<const char*>(FontManager::pieceSymbol(piece));
         const char* background = reinterpret_cast<const char*>(FontManager::pieceBackground(piece));
-        const ImVec2 textPos = ImGui::GetCursorScreenPos();
+        const QaplaUi::Vec2 textPos = QaplaUi::getCursorScreenPos();
 
-        drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
-        drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
+        drawList->addText(font, fontSize, textPos, QaplaUi::COL32_WHITE, background);
+        drawList->addText(font, fontSize, textPos, QaplaUi::COL32_BLACK, text);
     }
 
-    void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
-        const ImVec2& cellMin, float cellSize, ImFont* font)
+    void drawPiece(QaplaUi::DrawList* drawList, QaplaBasics::Piece piece,
+        const QaplaUi::Vec2& cellMin, float cellSize, QaplaUi::Font font)
     {
         if (piece == QaplaBasics::Piece::NO_PIECE) {
             return;
@@ -97,51 +94,14 @@ namespace FontManager {
         const float fontSize = cellSize * 0.9F;
         const char* text = reinterpret_cast<const char*>(FontManager::pieceSymbol(piece));
         const char* background = reinterpret_cast<const char*>(FontManager::pieceBackground(piece));
-        const ImVec2 textSize = font->CalcTextSizeA(fontSize, cellSize, -1.0F, text);
-        const ImVec2 textPos = {
+        const QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(font, fontSize, text);
+        const QaplaUi::Vec2 textPos = {
             cellMin.x + (cellSize - textSize.x) * 0.5F,
             cellMin.y + (cellSize - textSize.y) * 0.5F
         };
 
-        drawList->AddText(font, fontSize, textPos, IM_COL32_WHITE, background);
-        drawList->AddText(font, fontSize, textPos, IM_COL32_BLACK, text);
-    }
-
-    void loadFonts() {
-        auto& imguiIO = ImGui::GetIO();
-
-        imguiIO.Fonts->AddFontDefault(); // Default UI font
-        //chessFont = io.Fonts->AddFontFromFileTTF(path.c_str(), size);
-        ImFontConfig fontCfg;
-        fontCfg.FontDataOwnedByAtlas = false;
-
-        static constexpr float internalSizeInPixel = 32.0F;
-        chessFont = imguiIO.Fonts->AddFontFromMemoryTTF(
-            reinterpret_cast<void*>(const_cast<uint32_t*>(chessFontData)),
-            static_cast<int>(chessFontSize),
-            internalSizeInPixel,
-            &fontCfg
-        );
-
-        static constexpr float interVariableSizeInPixel = 16.0F;
-        interVariable = imguiIO.Fonts->AddFontFromMemoryTTF(
-            reinterpret_cast<void*>(const_cast<uint32_t*>(interVariableData)),
-            static_cast<int>(interVariableSize),
-            interVariableSizeInPixel,
-            &fontCfg
-        );
-
-        static constexpr float ibmPlexMonoSizeInPixel = 17.0F;
-        ibmPlexMono = imguiIO.Fonts->AddFontFromMemoryTTF(
-            reinterpret_cast<void*>(const_cast<uint32_t*>(ibmPlexMonoFontData)),
-            static_cast<int>(ibmPlexMonoFontSize),
-            ibmPlexMonoSizeInPixel,
-            &fontCfg
-        );
-
-
-        imguiIO.FontDefault = imguiIO.Fonts->Fonts[interVariableIndex]; 
+        drawList->addText(font, fontSize, textPos, QaplaUi::COL32_WHITE, background);
+        drawList->addText(font, fontSize, textPos, QaplaUi::COL32_BLACK, text);
     }
 
 }
-

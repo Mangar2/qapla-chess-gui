@@ -26,7 +26,7 @@
 #include <base-elements/logger.h>
 #include "configuration.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <vector>
 #include <string>
 #include <array>
@@ -292,9 +292,9 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
     if (options.empty()) return false;
     
     bool changed = false;
-    ImGui::Separator();
-    ImGui::Text("Engine Options:");
-    ImGui::PushID("EngineOptions");
+    QaplaUi::separator();
+    QaplaUi::text("Engine Options:");
+    QaplaUi::pushId("EngineOptions");
     auto optionMap = config.getOptionValues();
     for (const auto& option : options) {
         auto it = optionMap.find(option.name);
@@ -304,7 +304,7 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
             config.setOptionValue(option.name, value);
         }
     }
-    ImGui::PopID();
+    QaplaUi::popId();
     
     return changed;
 }
@@ -315,16 +315,16 @@ inline bool drawEngineOptions(QaplaTester::EngineConfig& config, bool enabled) {
  * @param full Whether to show full details (directory and author)
  */
 inline void drawEngineReadOnlyInfo(const QaplaTester::EngineConfig& config, bool full = false, bool protocol = true) {
-    ImGui::Text(full ? "Command: %s" : "%s", config.getCmd().c_str());
+    QaplaUi::text(full ? "Command: " + config.getCmd() : config.getCmd());
     if (full) {
-        ImGui::Text("Directory: %s", config.getDir().c_str());
+        QaplaUi::text("Directory: " + config.getDir());
     }
     if (protocol) {
-        ImGui::Text("Protocol: %s", 
+        QaplaUi::text(std::string("Protocol: ") +
             (config.getProtocol() == QaplaTester::EngineProtocol::Uci ? "UCI" : "XBoard"));
     }
     if (full) {
-        ImGui::Text("Author: %s", config.getAuthor().c_str());
+        QaplaUi::text("Author: " + config.getAuthor());
     }
 }
 

@@ -34,7 +34,7 @@ using QaplaTester::RestartOption;
 using QaplaTester::TraceLevel;
 using QaplaTester::EngineConfigManager;
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 #include <filesystem>
 
@@ -69,24 +69,24 @@ bool ImGuiEngineSelect::draw(bool highlight) {
     
     // In directEditMode, skip the "Engines" collapsing header
     if (!options_.directEditMode) {
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Selected;
+        QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::Selected;
         if (options_.enginesDefaultOpen) {
-            flags |= ImGuiTreeNodeFlags_DefaultOpen;
+            flags |= QaplaUi::TreeNodeFlags::DefaultOpen;
         }
         if (!ImGuiControls::CollapsingHeaderWithDot("Engines", flags, highlight)) {
             return false;
         }
     }
 
-    ImGui::PushID("engineSettings");
-    ImGui::Indent(10.0F);
+    QaplaUi::pushId("engineSettings");
+    QaplaUi::indent(10.0F);
 
     modified |= cleanupNonAvailableEngines();
 
     if (options_.allowMultipleSelection) {
         // Multiple selection mode: show selected engines first, then all available engines
         modified |= drawSelectedEngines();
-        ImGui::Separator();
+        QaplaUi::separator();
         modified |= drawAvailableEngines();
     } else {
         modified |= drawAllEngines();
@@ -97,8 +97,8 @@ bool ImGuiEngineSelect::draw(bool highlight) {
         notifyConfigurationChanged();
     }
     
-    ImGui::Unindent(10.0F);
-    ImGui::PopID();
+    QaplaUi::unindent(10.0F);
+    QaplaUi::popId();
     
     return modified;
 }
@@ -177,14 +177,14 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
     name += "###" + std::to_string(index);
     bool modified = false;
 
-    ImGui::PushID(index);
+    QaplaUi::pushId(index);
 
     // Lambda for drawing the engine controls
     auto drawEngineControls = [this, &config]() -> bool {
         bool configModified = false;
 
         ImGuiEngineControls::drawEngineReadOnlyInfo(config, false, !options_.allowProtocolEdit);
-        ImGui::Separator();
+        QaplaUi::separator();
 
         configModified |= ImGuiEngineControls::drawEngineName(config, options_.allowNameEdit);
         configModified |= ImGuiEngineControls::drawEngineProtocol(config, options_.allowProtocolEdit);
@@ -203,13 +203,13 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         return configModified;
     };
 
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None;
+    QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::None;
     if (config.isSelected()) {
-        flags |= ImGuiTreeNodeFlags_Selected;
+        flags |= QaplaUi::TreeNodeFlags::Selected;
     }
     if (!options_.allowEngineConfiguration || !(options_.directEditMode || config.isSelected())) {
         // In directEditMode, allow expanding even when not selected (don't use Leaf flag)
-        flags |= ImGuiTreeNodeFlags_Leaf;
+        flags |= QaplaUi::TreeNodeFlags::Leaf;
     }
 
     if (options_.allowMultipleSelection) {
@@ -219,14 +219,14 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
             modified = true;
         }
         ImGuiControls::hooverTooltip("Remove this engine from selection");
-        ImGui::SameLine(0.0F, 4.0F);
+        QaplaUi::sameLine(0.0F, 4.0F);
         // Engine names are not translated
         if (ImGuiControls::CollapsingHeaderWithDot((name + "selected").c_str(), flags, false, false)) {
-            ImGui::Indent(10.0F);
-            if ((flags & ImGuiTreeNodeFlags_Leaf) == 0) {
+            QaplaUi::indent(10.0F);
+            if (!QaplaUi::hasFlag(flags, QaplaUi::TreeNodeFlags::Leaf)) {
                 modified |= drawEngineControls();
             }
-            ImGui::Unindent(10.0F);
+            QaplaUi::unindent(10.0F);
         }
     } else {
         // Single selection mode: use checkbox
@@ -237,7 +237,7 @@ bool ImGuiEngineSelect::drawEngineConfiguration(EngineConfiguration& config, int
         config.setSelected(selected);
     }
 
-    ImGui::PopID();
+    QaplaUi::popId();
 
     return modified;
 }
@@ -357,10 +357,10 @@ ImGuiEngineSelect::findDeselectedEngineConfiguration(const EngineConfig& engineC
 
 bool ImGuiEngineSelect::drawSelectedEngines() {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
-        (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
+    QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::DefaultOpen | 
+        (alwaysShowEngines_ ? QaplaUi::TreeNodeFlags::Leaf : QaplaUi::TreeNodeFlags::None);
     if (ImGuiControls::CollapsingHeaderWithDot("Selected Engines", flags, false, false)) {
-        ImGui::Indent(10.0F);
+        QaplaUi::indent(10.0F);
         
         // Draw all selected engines with checkboxes
         int index = 0;
@@ -373,7 +373,7 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
             index++;
         }
         
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
     return modified;
@@ -381,10 +381,10 @@ bool ImGuiEngineSelect::drawSelectedEngines() {
 
 bool ImGuiEngineSelect::drawAvailableEngines() {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | 
-        (alwaysShowEngines_ ? ImGuiTreeNodeFlags_Leaf : 0);
+    QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::DefaultOpen | 
+        (alwaysShowEngines_ ? QaplaUi::TreeNodeFlags::Leaf : QaplaUi::TreeNodeFlags::None);
     if (ImGuiControls::CollapsingHeaderWithDot("Available Engines", flags, false, false)) {
-        ImGui::Indent(10.0F);
+        QaplaUi::indent(10.0F);
         
         auto& configManager = EngineWorkerFactory::getConfigManagerMutable();
         auto configs = configManager.getAllConfigs();
@@ -397,9 +397,9 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             if (config.getName().empty()) {
                 continue;
             }
-            ImGui::PushID(("available_" + std::to_string(index)).c_str());
+            QaplaUi::pushId(("available_" + std::to_string(index)).c_str());
 
-            if (ImGui::Button("+###addEngine")) {
+            if (QaplaUi::button("+###addEngine")) {
                 // Find if there's a deselected instance of this engine
                 auto it = findDeselectedEngineConfiguration(config);
                 if (it != engineConfigurations_.end()) {
@@ -417,15 +417,15 @@ bool ImGuiEngineSelect::drawAvailableEngines() {
             }
             ImGuiControls::hooverTooltip("Add this engine to tournament selection");
             
-            ImGui::SameLine();
+            QaplaUi::sameLine();
             // Engine name, no translation needed
-            ImGui::CollapsingHeader(config.getName().c_str(), ImGuiTreeNodeFlags_Leaf);
+            QaplaUi::collapsingHeader(config.getName().c_str(), QaplaUi::TreeNodeFlags::Leaf);
             
-            ImGui::PopID();
+            QaplaUi::popId();
             index++;
         }
         
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
     return modified;

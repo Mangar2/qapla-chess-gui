@@ -22,7 +22,7 @@
 #include "imgui-controls.h"
 #include <qapla-engine/types.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <cmath>
 #include <string>
@@ -40,34 +40,34 @@ namespace {
 /**
  * @brief Calculates the text size at a given font size.
  */
-ImVec2 textSizeAt(ImFont* font, float size, const std::string& str) {
-    return font->CalcTextSizeA(size, FLT_MAX, 0.0F, str.c_str(), str.c_str() + str.size());
+QaplaUi::Vec2 textSizeAt(QaplaUi::Font font, float size, const std::string& str) {
+    return QaplaUi::calcTextSize(font, size, str);
 }
 
 /**
  * @brief Calculates the text width at a given font size.
  */
-float textWidthAt(ImFont* font, float size, const std::string& str) {
+float textWidthAt(QaplaUi::Font font, float size, const std::string& str) {
     return textSizeAt(font, size, str).x;
 }
 
 /**
  * @brief Draws the king icon if it's the side to move.
  */
-void drawKingIcon(ImDrawList* drawList, const ImVec2& topLeft, bool white, bool wtm) {
+void drawKingIcon(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& topLeft, bool white, bool wtm) {
     if (wtm == white) {
         FontManager::drawPiece(drawList, white ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING,
-            ImVec2(topLeft.x + 5, topLeft.y + 5), 30);
+            QaplaUi::Vec2(topLeft.x + 5, topLeft.y + 5), 30);
     }
 }
 
 /**
  * @brief Draws centered time text with colon alignment.
  */
-void drawCenteredTimeText(ImDrawList* drawList, ImFont* font, float size, 
+void drawCenteredTimeText(QaplaUi::DrawList* drawList, QaplaUi::Font font, float size, 
                           const std::string& text, float xCenter, float& y, 
-                          const ImGuiStyle& style) {
-    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
+                          const QaplaUi::Style& style) {
+    const QaplaUi::Color32 textCol = QaplaUi::getColorU32(QaplaUi::StyleColor::Text);
     const size_t colonIdx = text.find_last_of(':');
     float x;
     
@@ -82,10 +82,10 @@ void drawCenteredTimeText(ImDrawList* drawList, ImFont* font, float size,
         x = xCenter - (leftWidth + colonWidth * 0.5F);
     }
     
-    const ImVec2 ext = textSizeAt(font, size, text);
-    drawList->AddText(font, size, ImVec2(x, y), textCol,
-        text.c_str(), text.c_str() + text.size());
-    y += ext.y + style.ItemSpacing.y * 0.5F;
+    const QaplaUi::Vec2 ext = textSizeAt(font, size, text);
+    drawList->addText(font, size, QaplaUi::Vec2(x, y), textCol,
+        text);
+    y += ext.y + style.itemSpacing.y * 0.5F;
 }
 
 /**
@@ -103,10 +103,10 @@ void drawCenteredTimeText(ImDrawList* drawList, ImFont* font, float size,
  * @param y Vertical position
  * @param availableWidth Available width for the text
  */
-void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font, 
+void drawEngineNameWithFit(QaplaUi::DrawList* drawList, QaplaUi::Font font, 
                           std::string_view engineName, float initialSize,
                           float xCenter, float y, float availableWidth) {
-    const ImU32 textCol = ImGui::GetColorU32(ImGuiCol_Text);
+    const QaplaUi::Color32 textCol = QaplaUi::getColorU32(QaplaUi::StyleColor::Text);
     constexpr float minFontSize = MIN_ENGINE_NAME_FONT_SIZE;
     
     std::string nameStr(engineName);
@@ -118,8 +118,8 @@ void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font,
         if (textWidth <= availableWidth) {
             // Fits! Draw it centered
             const float nameX = xCenter - textWidth * 0.5F;
-            drawList->AddText(font, fontSize, ImVec2(nameX, y), textCol,
-                nameStr.c_str(), nameStr.c_str() + nameStr.size());
+            drawList->addText(font, fontSize, QaplaUi::Vec2(nameX, y), textCol,
+                nameStr);
             return;
         }
         fontSize -= 1.0F;
@@ -155,8 +155,8 @@ void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font,
     
     // Draw the (possibly truncated) text
     const float nameX = xCenter - textWidth * 0.5F;
-    drawList->AddText(font, fontSize, ImVec2(nameX, y), textCol,
-        nameStr.c_str(), nameStr.c_str() + nameStr.size());
+    drawList->addText(font, fontSize, QaplaUi::Vec2(nameX, y), textCol,
+        nameStr);
 }
 
 /**
@@ -171,15 +171,15 @@ void drawEngineNameWithFit(ImDrawList* drawList, ImFont* font,
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
  */
-void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
+void drawClock(const QaplaUi::Vec2& topLeft, const QaplaUi::Vec2& bottomRight, 
     const std::string& totalStr, const std::string& moveStr,
     std::string_view engineName, bool white, bool wtm)
 {
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImFont* font = ImGui::GetFont();
-    const ImGuiStyle& style = ImGui::GetStyle();
+    QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+    QaplaUi::Font font = QaplaUi::getFont();
+    const QaplaUi::Style& style = QaplaUi::getStyle();
 
-    const float baseSize = ImGui::GetFontSize();
+    const float baseSize = QaplaUi::getFontSize();
     const float nameSize = baseSize * 1.3F;
     const float totalSize = baseSize * 1.6F;
     const float moveSize = baseSize * 1.0F;
@@ -211,14 +211,14 @@ void drawClock(const ImVec2& topLeft, const ImVec2& bottomRight,
  * @param white     True if this is the white clock, false for black.
  * @param wtm       True if it is white's turn to move, false for black.
  */
-void drawSmallClock(const ImVec2& topLeft, const ImVec2& bottomRight, 
+void drawSmallClock(const QaplaUi::Vec2& topLeft, const QaplaUi::Vec2& bottomRight, 
     const std::string& totalStr, const std::string& moveStr, bool white, bool wtm)
 {
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImFont* font = ImGui::GetFont();
-    const ImGuiStyle& style = ImGui::GetStyle();
+    QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+    QaplaUi::Font font = QaplaUi::getFont();
+    const QaplaUi::Style& style = QaplaUi::getStyle();
 
-    const float baseSize = ImGui::GetFontSize();
+    const float baseSize = QaplaUi::getFontSize();
     const float totalSize = baseSize * 1.6F;
     const float moveSize = baseSize * 1.0F;
 
@@ -239,11 +239,11 @@ void ImGuiClock::draw() const {
 
     const ClockView view = model_.view();
 
-    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 topLeft = QaplaUi::getCursorScreenPos();
 	constexpr float clockWidth = 180.0F;
 
-    const float totalWidth = ImGui::GetContentRegionAvail().x;
-	const float totalHeight = ImGui::GetContentRegionAvail().y;
+    const float totalWidth = QaplaUi::getContentRegionAvail().x;
+	const float totalHeight = QaplaUi::getContentRegionAvail().y;
 
     bool smallClock = totalWidth < 370.0F;
     const float clockHeight = smallClock ? 40.0F : 85.0F;
@@ -253,9 +253,9 @@ void ImGuiClock::draw() const {
 	const float topSpace = smallClock ? 0 : std::round((totalHeight - clockHeight) * 0.5F);
 
     // White Clock
-    auto whiteMin = ImVec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5F),
+    auto whiteMin = QaplaUi::Vec2(std::round(topLeft.x + (totalWidth - totalContentWidth) * 0.5F),
         std::round(topLeft.y + topSpace));
-    auto whiteMax = ImVec2(std::round(whiteMin.x + clockWidth), 
+    auto whiteMax = QaplaUi::Vec2(std::round(whiteMin.x + clockWidth), 
         std::round(whiteMin.y + clockHeight));
 
     if (smallClock) {
@@ -268,10 +268,10 @@ void ImGuiClock::draw() const {
     }
 
     // Black Clock
-    ImVec2 blackMin = smallClock ?
-        ImVec2(whiteMin.x, whiteMax.y + 10.0F) :
-        ImVec2(whiteMax.x + spacing, whiteMin.y);
-    auto blackMax = ImVec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
+    QaplaUi::Vec2 blackMin = smallClock ?
+        QaplaUi::Vec2(whiteMin.x, whiteMax.y + 10.0F) :
+        QaplaUi::Vec2(whiteMax.x + spacing, whiteMin.y);
+    auto blackMax = QaplaUi::Vec2(blackMin.x + clockWidth, blackMin.y + clockHeight);
 
     if (smallClock) {
         drawSmallClock(blackMin, blackMax, view.blackTotal, view.blackMove,
@@ -282,5 +282,5 @@ void ImGuiClock::draw() const {
             view.blackEngineName, false, view.whiteToMove);
     }
 
-    ImGui::Dummy(ImVec2(0.0F, 0.0F));
+    QaplaUi::dummy(QaplaUi::Vec2(0.0F, 0.0F));
 }

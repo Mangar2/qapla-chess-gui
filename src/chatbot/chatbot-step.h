@@ -20,15 +20,15 @@
 #pragma once
 
 #include <string>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
 // Color constants for status messages in chatbot steps
 namespace StepColors {
-    inline constexpr ImVec4 ERROR_COLOR   = ImVec4(1.0F, 0.4F, 0.4F, 1.0F);   // Red
-    inline constexpr ImVec4 WARNING_COLOR = ImVec4(1.0F, 0.8F, 0.2F, 1.0F);   // Orange/Yellow
-    inline constexpr ImVec4 SUCCESS_COLOR = ImVec4(0.4F, 1.0F, 0.4F, 1.0F);   // Green
+    inline constexpr QaplaUi::Vec4 ERROR_COLOR   = QaplaUi::Vec4(1.0F, 0.4F, 0.4F, 1.0F);   // Red
+    inline constexpr QaplaUi::Vec4 WARNING_COLOR = QaplaUi::Vec4(1.0F, 0.8F, 0.2F, 1.0F);   // Orange/Yellow
+    inline constexpr QaplaUi::Vec4 SUCCESS_COLOR = QaplaUi::Vec4(0.4F, 1.0F, 0.4F, 1.0F);   // Green
 }
 
 /**

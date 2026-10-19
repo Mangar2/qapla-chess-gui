@@ -23,7 +23,7 @@
 #include <base-elements/change-tracker.h>
 #include <base-elements/logger.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -143,17 +143,17 @@ namespace QaplaWindows {
 		 * @param size Size of the engine space.
          * @return String representing any action to perform (e.g., "stop", "restart") or empty if no action.
 		 */
-        std::string drawEngineSpace(size_t index, const ImVec2 size);
+        std::string drawEngineSpace(size_t index, const QaplaUi::Vec2 size);
 
 
-        std::string drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
-            const ImVec2 &max, float cEngineInfoWidth, size_t index, bool isSmall);
+        std::string drawEngineArea(const QaplaUi::Vec2 &topLeft, QaplaUi::DrawList*drawList, 
+            const QaplaUi::Vec2 &max, float cEngineInfoWidth, size_t index, bool isSmall);
 
-        std::string drawEngineTable(const ImVec2 &topLeft, float cEngineInfoWidth, 
-            float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);
+        std::string drawEngineTable(const QaplaUi::Vec2 &topLeft, float cEngineInfoWidth, 
+            float cSectionSpacing, size_t index, const QaplaUi::Vec2 &max, const QaplaUi::Vec2 &size);
 
-        void drawLog(const ImVec2 &topLeft, float cEngineInfoWidth, 
-            float cSectionSpacing, size_t index, const ImVec2 &max, const ImVec2 &size);            
+        void drawLog(const QaplaUi::Vec2 &topLeft, float cEngineInfoWidth, 
+            float cSectionSpacing, size_t index, const QaplaUi::Vec2 &max, const QaplaUi::Vec2 &size);            
 
         void setInfoTable(size_t index, const QaplaTester::MoveRecord& moveRecord);
 

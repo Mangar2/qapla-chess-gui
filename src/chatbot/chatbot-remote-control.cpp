@@ -25,7 +25,7 @@
 #include "imgui-controls.h"
 #include "snackbar.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 #include <utility>
@@ -33,8 +33,8 @@
 namespace QaplaWindows::ChatBot {
 
 namespace {
-    const ImVec4 CALL_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
-    const ImVec4 RESULT_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
+    const QaplaUi::Vec4 CALL_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
+    const QaplaUi::Vec4 RESULT_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
 } // namespace
 
 ChatbotStepRemoteCall::ChatbotStepRemoteCall(RemoteCallEntry entry) : entry_(std::move(entry)) {
@@ -47,11 +47,11 @@ std::string ChatbotStepRemoteCall::draw() {
     // both because an end user does not know what "configure_sprt" is. Here that is precisely
     // what the user is watching for: this window exists to make an outside caller's actions
     // followable, and a paraphrase would defeat it.
-    ImGui::TextColored(CALL_COLOR, "%s  %s", entry_.time.c_str(), entry_.toolName.c_str());
+    QaplaUi::textColored(CALL_COLOR, entry_.time + "  " + entry_.toolName);
     if (!entry_.arguments.empty() && entry_.arguments != "{}") {
-        ImGui::PushStyleColor(ImGuiCol_Text, CALL_COLOR);
-        ImGui::TextWrapped("%s", entry_.arguments.c_str());
-        ImGui::PopStyleColor();
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, CALL_COLOR);
+        QaplaUi::textWrapped(entry_.arguments);
+        QaplaUi::popStyleColor();
     }
 
     if (entry_.renderWidget) {
@@ -61,10 +61,10 @@ std::string ChatbotStepRemoteCall::draw() {
         return {};
     }
 
-    ImGui::PushStyleColor(
-        ImGuiCol_Text, entry_.success ? RESULT_COLOR : StepColors::ERROR_COLOR);
-    ImGui::TextWrapped("%s", entry_.content.c_str());
-    ImGui::PopStyleColor();
+    QaplaUi::pushStyleColor(
+        QaplaUi::StyleColor::Text, entry_.success ? RESULT_COLOR : StepColors::ERROR_COLOR);
+    QaplaUi::textWrapped(entry_.content);
+    QaplaUi::popStyleColor();
     return {};
 }
 
@@ -108,16 +108,14 @@ bool ChatbotRemoteControl::draw() {
     if (ended_) {
         ImGuiControls::textDisabled("Remote control has ended. The application is yours again.");
     } else {
-        ImGui::TextColored(StepColors::SUCCESS_COLOR, "%s",
-            std::format("Remote control is listening on 127.0.0.1:{}.", port_).c_str());
+        QaplaUi::textColored(StepColors::SUCCESS_COLOR, std::format("Remote control is listening on 127.0.0.1:{}.", port_));
     }
-    ImGui::TextWrapped("%s",
-        "Everything an outside caller does appears below, and in the rest of the application as "
+    QaplaUi::textWrapped("Everything an outside caller does appears below, and in the rest of the application as "
         "it happens -- games on the boards, results in the tournament and SPRT views. You can "
         "keep using all of it yourself while this runs.");
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (steps_.empty()) {
         ImGuiControls::textDisabled("Nothing has been called yet.");
@@ -126,7 +124,7 @@ bool ChatbotRemoteControl::draw() {
         // A step may ask to stop the thread; these never do -- they are a record of something
         // that already happened. Said out loud so the discarded value is a decision, not a slip.
         static_cast<void>(step->draw());
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     // The one activity with nothing of its own to look at: CLOP has no tab, so its live numbers
@@ -137,10 +135,10 @@ bool ChatbotRemoteControl::draw() {
     // turns into when the reader is a person watching a window.
     auto& clop = QaplaWindows::ClopData::instance();
     if (clop.hasTables()) {
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-        ImGui::TextColored(StepColors::SUCCESS_COLOR, "%s", "CLOP tuning");
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
+        QaplaUi::textColored(StepColors::SUCCESS_COLOR, "CLOP tuning");
         clop.drawTables();
     }
 
@@ -148,9 +146,9 @@ bool ChatbotRemoteControl::draw() {
         return true;
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     if (ImGuiControls::textButton("End remote control")) {
         // Announced, not called: this window has no idea what is listening out there, and does
         // not need one. Whoever opened the channel closes it -- and closes nothing else, a run

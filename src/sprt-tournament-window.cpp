@@ -36,7 +36,7 @@
 #include <tournament/tournament.h>
 #include <sprt/sprt-manager.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <sstream>
 #include <string>
@@ -47,7 +47,7 @@
 using namespace QaplaWindows;
 
 static void drawSingleButton(
-    ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
+    QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
 {
     if (button == "RGC")
@@ -142,15 +142,15 @@ void SprtTournamentWindow::drawButtons() {
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
+    constexpr QaplaUi::Vec2 buttonSize = { 25.0F, 25.0F };
     
     std::vector<std::string> allButtons = { "RGC", "Stop", "Clear", "Test", "Load", "Save As" };
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, allButtons);
-    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    auto pos = QaplaUi::Vec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     for (const std::string& button : allButtons) {
-        ImGui::SetCursorScreenPos(pos);
+        QaplaUi::setCursorScreenPos(pos);
         bool running = SprtTournamentData::instance().isRunning();
         auto label = button;
         
@@ -164,7 +164,7 @@ void SprtTournamentWindow::drawButtons() {
         auto state = getButtonState(button);
 
         if (QaplaButton::drawIconButton(button, label, buttonSize, state,
-                [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
+                [&button, running, state](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)->void {
                     drawSingleButton(drawList, topLeft, size, button, running, state);
                 }))
         {
@@ -173,7 +173,7 @@ void SprtTournamentWindow::drawButtons() {
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
 
@@ -223,7 +223,7 @@ bool SprtTournamentWindow::drawInput() {
     constexpr int maxConcurrency = 32;
     auto& tournamentData = SprtTournamentData::instance();
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     auto concurrency = tournamentData.getExternalConcurrency();
     ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, maxConcurrency);
     ImGuiControls::hooverTooltip("Number of games running in parallel");
@@ -231,16 +231,16 @@ bool SprtTournamentWindow::drawInput() {
     tournamentData.setPoolConcurrency(concurrency, true);
     drawProgress();
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (tournamentData.isAnyRunning()) {
-        ImGui::Indent(10.0F);
+        QaplaUi::indent(10.0F);
         if (tournamentData.isRunning()) {
-            ImGui::Text("SPRT tournament is running");
+            QaplaUi::text("SPRT tournament is running");
         }
         if (tournamentData.isMonteCarloTestRunning()) {
-            ImGui::Text("Monte Carlo test is running");
+            QaplaUi::text("Monte Carlo test is running");
         }
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
         return false;
     }
 
@@ -260,7 +260,7 @@ bool SprtTournamentWindow::drawInput() {
         { .inputWidth = inputWidth, .fileInputWidth = fileInputWidth });
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     return changed;
 }
@@ -278,13 +278,13 @@ void SprtTournamentWindow::draw() {
     auto& tournamentData = SprtTournamentData::instance();
     drawButtons();
 
-    ImGui::Indent(10.0F);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    QaplaUi::indent(10.0F);
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("InputArea", QaplaUi::Vec2(size.x - rightBorder, 0), QaplaUi::ChildFlags::None);
     drawInput();
 
-    tournamentData.drawMonteCarloTable(ImVec2(size.x, 400.0F));
-    tournamentData.drawResultTable(ImVec2(size.x, 100.0F));
+    tournamentData.drawMonteCarloTable(QaplaUi::Vec2(size.x, 400.0F));
+    tournamentData.drawResultTable(QaplaUi::Vec2(size.x, 100.0F));
     
     bool showAllModels = tournamentData.showAllSprtModels();
     if (tournamentData.hasResults()) {
@@ -296,9 +296,9 @@ void SprtTournamentWindow::draw() {
         "Display all SPRT calculation variants (normalized, logistic, bayesian with trinomial/pentanomial).\n"
         "When disabled, only the configured model is shown.");
     
-    tournamentData.drawSprtTable(ImVec2(size.x, 150.0F));
-    tournamentData.drawCauseTable(ImVec2(size.x, windowMaxHeight));
+    tournamentData.drawSprtTable(QaplaUi::Vec2(size.x, 150.0F));
+    tournamentData.drawCauseTable(QaplaUi::Vec2(size.x, windowMaxHeight));
 
-    ImGui::EndChild();
-    ImGui::Unindent(10.0F);
+    QaplaUi::endChild();
+    QaplaUi::unindent(10.0F);
 }

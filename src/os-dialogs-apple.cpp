@@ -45,10 +45,6 @@
 #include <string>
 #include <ranges>
 
-// GLFW for getting native window handle
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #include <objc/objc.h>
 #include <objc/message.h>
 #include <objc/runtime.h>

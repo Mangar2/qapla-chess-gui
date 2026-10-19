@@ -173,6 +173,17 @@ public:
      */
     static std::string getConfigDirectory();
 
+    /**
+     * @brief Names the window the dialogs belong to, as the platform's own handle.
+     *
+     * A dialog with an owner stays in front of it and blocks only it; one without floats free.
+     * The window is the frontend's, so the frontend installs the provider -- an HWND on Windows,
+     * an NSWindow* on macOS -- and the dialogs ask it each time they open.
+     */
+    using NativeWindowProvider = std::function<void*()>;
+    static void setNativeWindowProvider(NativeWindowProvider provider);
+    [[nodiscard]] static void* nativeWindow();
+
 private:
     /**
      * @brief Opens a native dialog for choosing files to read.

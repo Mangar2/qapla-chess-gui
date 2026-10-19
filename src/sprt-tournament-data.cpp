@@ -49,34 +49,34 @@ SprtTournamentData::SprtTournamentData() :
     boardWindowList_("SPRT Tournament"),
     resultTable_(
             "TournamentResult",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
-                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
-                { .name = "Rating", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+                { .name = "Engine in Test", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Engine to Compare", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Rating", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Games", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true }
             }
         ),
     sprtTable_(
             "SprtResult",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Type", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .compute = true },
-                { .name = "Status", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 70.0F, .compute = true },
-                { .name = "Engine in Test", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
-                { .name = "Engine to Compare", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F, .compute = true },
-                { .name = "Result", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F, .compute = true }
+                { .name = "Type", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 100.0F, .compute = true },
+                { .name = "Status", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 70.0F, .compute = true },
+                { .name = "Engine in Test", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Engine to Compare", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F, .compute = true },
+                { .name = "Result", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 200.0F, .compute = true }
             }
         ),
     montecarloTable_(
             "MonteCarloResult",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Elo Diff", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
-                { .name = "No Decision %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
-                { .name = "H0 Accepted %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
-                { .name = "H1 Accepted %", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F, .alignRight = true },
-                { .name = "Avg Games", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true }
+                { .name = "Elo Diff", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "No Decision %", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "H0 Accepted %", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "H1 Accepted %", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F, .alignRight = true },
+                { .name = "Avg Games", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 100.0F, .alignRight = true }
             }
         ),
     engineSelect_(std::make_unique<ImGuiEngineSelect>()),
@@ -591,7 +591,7 @@ TableContents SprtTournamentData::resultsAsTable() {
     return sprtContents.rows.empty() ? resultTable_.contents() : sprtContents;
 }
 
-void SprtTournamentData::drawResultTable(const ImVec2& size) {
+void SprtTournamentData::drawResultTable(const QaplaUi::Vec2& size) {
     auto duelResult = sprtManager_->getDuelResult();
     if (duelResult.total() == 0) {
         return;
@@ -688,7 +688,7 @@ void SprtTournamentData::populateSprtTable() {
     }
 }
 
-void SprtTournamentData::drawSprtTable(const ImVec2& size) {
+void SprtTournamentData::drawSprtTable(const QaplaUi::Vec2& size) {
     auto duelResult = sprtManager_->getDuelResult();
     if (duelResult.total() == 0) {
         return;
@@ -733,14 +733,14 @@ void SprtTournamentData::populateMonteCarloTable() {
     });
 }
 
-void SprtTournamentData::drawCauseTable(const ImVec2& size) {
+void SprtTournamentData::drawCauseTable(const QaplaUi::Vec2& size) {
     if (causesTable_.size() == 0) {
         return;
     }
     causesTable_.draw(size);
 }
 
-void SprtTournamentData::drawMonteCarloTable(const ImVec2& size) {
+void SprtTournamentData::drawMonteCarloTable(const QaplaUi::Vec2& size) {
     if (montecarloTable_.size() == 0) {
         return;
     }

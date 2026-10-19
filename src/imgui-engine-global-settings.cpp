@@ -28,7 +28,7 @@
 #include <engine-handling/engine-config.h>
 #include <engine-handling/engine-option.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 using namespace QaplaWindows;
 
@@ -70,10 +70,10 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls,
     const Options& options,
     const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = options.alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    QaplaUi::TreeNodeFlags flags = options.alwaysOpen ? QaplaUi::TreeNodeFlags::Leaf : QaplaUi::TreeNodeFlags::None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Global Engine Settings", flags, tutorialContext.highlight)) {
-        ImGui::Indent(controls.controlIndent);
+        QaplaUi::indent(controls.controlIndent);
         
         if (options.showHash) {
             modified |= drawHashControl(controls.controlWidth, options.showUseCheckboxes, tutorialContext);
@@ -91,7 +91,7 @@ bool ImGuiEngineGlobalSettings::drawGlobalSettings(DrawControlOptions controls,
             modified |= drawSyzygyControls(controls, tutorialContext);
         }
         
-        ImGui::Unindent(controls.controlIndent);
+        QaplaUi::unindent(controls.controlIndent);
     }
     
     if (modified) {
@@ -107,17 +107,17 @@ bool ImGuiEngineGlobalSettings::drawHashControl(float controlWidth, bool showUse
     constexpr uint32_t maxHashMB = 64000;
     
     if (showUseCheckboxes) {
-        modified |= ImGui::Checkbox("##useHash", &globalSettings_.useGlobalHash);
+        modified |= QaplaUi::checkbox("##useHash", globalSettings_.useGlobalHash);
         ImGuiControls::hooverTooltip("Enable global hash size setting for all engines");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     } else {
         globalSettings_.useGlobalHash = true;
     }
-    ImGui::SetNextItemWidth(controlWidth);
-    ImGui::BeginDisabled(!globalSettings_.useGlobalHash);
+    QaplaUi::setNextItemWidth(controlWidth);
+    QaplaUi::beginDisabled(!globalSettings_.useGlobalHash);
     modified |= ImGuiControls::inputInt<uint32_t>("Hash (MB)", globalSettings_.hashSizeMB, 1, maxHashMB);
     ImGuiControls::hooverTooltip("Hash table size in megabytes for engine memory");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
     
     auto it = tutorialContext.annotations.find("Hash (MB)");
     if (it != tutorialContext.annotations.end()) {
@@ -131,19 +131,19 @@ bool ImGuiEngineGlobalSettings::drawRestartControl(float controlWidth, bool show
     bool modified = false;
     
     if (showUseCheckboxes) {
-        modified |= ImGui::Checkbox("##useRestart", &globalSettings_.useGlobalRestart);
+        modified |= QaplaUi::checkbox("##useRestart", globalSettings_.useGlobalRestart);
         ImGuiControls::hooverTooltip("Enable global restart policy for all engines");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     } else {
         globalSettings_.useGlobalRestart = true;
     }
-    ImGui::SetNextItemWidth(controlWidth);
-    ImGui::BeginDisabled(!globalSettings_.useGlobalRestart);
+    QaplaUi::setNextItemWidth(controlWidth);
+    QaplaUi::beginDisabled(!globalSettings_.useGlobalRestart);
     globalSettings_.restart = toRestartLabel(globalSettings_.restart);
     modified |= ImGuiControls::selectionBox("Restart", globalSettings_.restart,
         {restartLabels[0], restartLabels[1], restartLabels[2]});
     ImGuiControls::hooverTooltip("Whether to restart engine process between games");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
     
     auto it = tutorialContext.annotations.find("Restart");
     if (it != tutorialContext.annotations.end()) {
@@ -157,18 +157,18 @@ bool ImGuiEngineGlobalSettings::drawTraceControl(float controlWidth, bool showUs
     bool modified = false;
     
     if (showUseCheckboxes) {
-        modified |= ImGui::Checkbox("##useTrace", &globalSettings_.useGlobalTrace);
+        modified |= QaplaUi::checkbox("##useTrace", globalSettings_.useGlobalTrace);
         ImGuiControls::hooverTooltip("Enable global trace level for all engines");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     } else {
         globalSettings_.useGlobalTrace = true;
     }
-    ImGui::SetNextItemWidth(controlWidth);
-    ImGui::BeginDisabled(!globalSettings_.useGlobalTrace);
+    QaplaUi::setNextItemWidth(controlWidth);
+    QaplaUi::beginDisabled(!globalSettings_.useGlobalTrace);
     modified |= ImGuiControls::selectionBox("Trace", globalSettings_.traceLevel,
         {"None", "All", "Command"});
     ImGuiControls::hooverTooltip("Engine communication logging level (None/All/Command only)");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
     
     auto it = tutorialContext.annotations.find("Trace");
     if (it != tutorialContext.annotations.end()) {
@@ -182,17 +182,17 @@ bool ImGuiEngineGlobalSettings::drawPonderControl(float controlWidth, bool showU
     bool modified = false;
     
     if (showUseCheckboxes) {
-        modified |= ImGui::Checkbox("##usePonder", &globalSettings_.useGlobalPonder);
+        modified |= QaplaUi::checkbox("##usePonder", globalSettings_.useGlobalPonder);
         ImGuiControls::hooverTooltip("Enable global pondering setting for all engines");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     } else {
         globalSettings_.useGlobalPonder = true;
     }
-    ImGui::SetNextItemWidth(controlWidth);
-    ImGui::BeginDisabled(!globalSettings_.useGlobalPonder);
-    modified |= ImGui::Checkbox("Ponder", &globalSettings_.ponder);
+    QaplaUi::setNextItemWidth(controlWidth);
+    QaplaUi::beginDisabled(!globalSettings_.useGlobalPonder);
+    modified |= QaplaUi::checkbox("Ponder", globalSettings_.ponder);
     ImGuiControls::hooverTooltip("Allow engines to think during opponent's time");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
     
     auto it = tutorialContext.annotations.find("Ponder");
     if (it != tutorialContext.annotations.end()) {
@@ -214,14 +214,14 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
         "Configure the tablebase settings for all engines at once.\n"
         "Switched off, every engine keeps the tablebase settings of its own.");
 
-    ImGui::BeginDisabled(!globalSettings_.useGlobalSyzygy);
+    QaplaUi::beginDisabled(!globalSettings_.useGlobalSyzygy);
 
     // Indented to where the settings above start, not by a round number: each of those is a
     // checkbox followed by its control on the same line, so their controls begin one checkbox and
     // one gap in from the margin. These sit under one switch of their own and would otherwise
     // stand to the left of everything they belong with.
-    const float toTheirControls = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.x;
-    ImGui::Indent(toTheirControls);
+    const float toTheirControls = QaplaUi::getFrameHeight() + QaplaUi::getStyle().itemSpacing.x;
+    QaplaUi::indent(toTheirControls);
 
     // Translated here rather than by the control: existingDirectoryInput() shows its label as
     // given, because the engine option editor uses it with option names, which are never
@@ -233,7 +233,7 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
         "The folder holding the .rtbw and .rtbz files (UCI option 'SyzygyPath').\n"
         "Several folders are separated the way the engine expects it.");
 
-    ImGui::SetNextItemWidth(controls.controlWidth);
+    QaplaUi::setNextItemWidth(controls.controlWidth);
     modified |= ImGuiControls::inputInt<uint32_t>("Probe Depth", globalSettings_.syzygyProbeDepth,
         1, maxProbeDepth);
     ImGuiControls::hooverTooltip(
@@ -241,7 +241,7 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
         "'SyzygyProbeDepth').\n"
         "Higher values probe less often and cost less time.");
 
-    ImGui::SetNextItemWidth(controls.controlWidth);
+    QaplaUi::setNextItemWidth(controls.controlWidth);
     modified |= ImGuiControls::inputInt<uint32_t>("Probe Limit", globalSettings_.syzygyProbeLimit,
         0, maxProbeLimit);
     ImGuiControls::hooverTooltip(
@@ -253,8 +253,8 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
         "Whether a tablebase result counts the fifty-move rule (UCI option 'Syzygy50MoveRule').\n"
         "Switched off, mates that need more than fifty moves count as wins rather than draws.");
 
-    ImGui::Unindent(toTheirControls);
-    ImGui::EndDisabled();
+    QaplaUi::unindent(toTheirControls);
+    QaplaUi::endDisabled();
 
     auto it = tutorialContext.annotations.find("Syzygy tablebases");
     if (it != tutorialContext.annotations.end()) {
@@ -266,10 +266,10 @@ bool ImGuiEngineGlobalSettings::drawSyzygyControls(DrawControlOptions controls,
 bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls, 
     bool blitz, bool alwaysOpen, const Tutorial::TutorialContext& tutorialContext) {
     bool modified = false;
-    ImGuiTreeNodeFlags flags = alwaysOpen ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_None;
+    QaplaUi::TreeNodeFlags flags = alwaysOpen ? QaplaUi::TreeNodeFlags::Leaf : QaplaUi::TreeNodeFlags::None;
     
     if (ImGuiControls::CollapsingHeaderWithDot("Time Control", flags, tutorialContext.highlight)) {
-        ImGui::Indent(controls.controlIndent);
+        QaplaUi::indent(controls.controlIndent);
         
         // Both controls work with the SAME variable (timeControlSettings_.timeControl)
         // This ensures automatic synchronization: selecting "50.0+0.10" in the dropdown
@@ -278,7 +278,7 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls,
             controls.controlWidth);
         ImGuiControls::hooverTooltip("Time control format: seconds+increment (e.g., '60.0+0.5' for 60s + 0.5s/move)");
         
-        ImGui::SetNextItemWidth(controls.controlWidth);
+        QaplaUi::setNextItemWidth(controls.controlWidth);
         modified |= ImGuiControls::selectionBox("Predefined time control", timeControlSettings_.timeControl, 
                                         timeControlSettings_.predefinedOptions);
         ImGuiControls::hooverTooltip(
@@ -293,7 +293,7 @@ bool ImGuiEngineGlobalSettings::drawTimeControl(DrawControlOptions controls,
             ImGuiControls::annotate(it->second);
         }
         
-        ImGui::Unindent(controls.controlIndent);
+        QaplaUi::unindent(controls.controlIndent);
     }
     
     if (modified) {

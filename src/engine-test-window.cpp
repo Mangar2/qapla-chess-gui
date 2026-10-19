@@ -23,7 +23,7 @@
 #include "snackbar.h"
 #include "configuration.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <string>
 #include <format>
@@ -107,7 +107,7 @@ static QaplaButton::ButtonState getButtonState(const std::string& button, Engine
 }
 
 static void drawButtonIcon(const std::string& button, EngineTests::State testState, 
-    QaplaButton::ButtonState buttonState, ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+    QaplaButton::ButtonState buttonState, QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
     if (button == "RunStop") {
         if (testState == EngineTests::State::Running) {
             QaplaButton::drawStop(drawList, topLeft, size, buttonState);
@@ -150,25 +150,25 @@ void EngineTestWindow::drawButtons()
     constexpr float paddingTop = 5.0F;
     constexpr float paddingBottom = 8.0F;
     constexpr float paddingLeft = 20.0F;
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+    constexpr QaplaUi::Vec2 buttonSize = {25.0F, 25.0F};
     // We use "Analyze" to calculate the width of the button to keep the layout consistent
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
-    auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
+    auto pos = QaplaUi::Vec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
     auto testState = EngineTests::instance().getState();
     auto selectedEngines = getSelectedEngineConfigurations();
     
     for (const std::string button : {"RunStop", "Clear"})
     {
-        ImGui::SetCursorScreenPos(pos);
+        QaplaUi::setCursorScreenPos(pos);
         
         auto buttonText = getButtonText(button, testState);
         auto buttonState = getButtonState(button, testState);
        
         if (QaplaButton::drawIconButton(button, buttonText, buttonSize, buttonState, 
-            [&button, buttonState, testState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            [&button, buttonState, testState](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)
             {
                 drawButtonIcon(button, testState, buttonState, drawList, topLeft, size);
             }
@@ -179,7 +179,7 @@ void EngineTestWindow::drawButtons()
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
 }
 
 static void drawCheckbox(const char* label, bool& value, const char* tooltip) {
@@ -195,8 +195,8 @@ static void drawTests()
     constexpr uint32_t maxGames = 10000;
     constexpr uint32_t maxConcurrency = 32;
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Tests", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(standardIndent);
+    if (ImGuiControls::CollapsingHeaderWithDot("Tests", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(standardIndent);
         
         bool modified = false;
         auto& testSelection = EngineTests::instance().getTestSelection();
@@ -217,7 +217,7 @@ static void drawTests()
         
         // Show options for Multiple Games Test if enabled
         if (testSelection.testMultipleGames) {
-            ImGui::Indent(standardIndent);
+            QaplaUi::indent(standardIndent);
 
             modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Number of Games", testSelection.numGames, 1, maxGames);
             ImGuiControls::hooverTooltip("Total number of games to play");
@@ -225,14 +225,14 @@ static void drawTests()
             modified |= QaplaWindows::ImGuiControls::inputInt<uint32_t>("Concurrency", testSelection.concurrency, 1, maxConcurrency);
             ImGuiControls::hooverTooltip("Number of games to play in parallel");
             
-            ImGui::Unindent(standardIndent);
+            QaplaUi::unindent(standardIndent);
         }
         
         if (modified) {
             EngineTests::instance().updateConfiguration();
         }
         
-        ImGui::Unindent(standardIndent);
+        QaplaUi::unindent(standardIndent);
     }
 }
 
@@ -246,9 +246,9 @@ void EngineTestWindow::drawReportTables()
         return;
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     
     // Draw a collapsing header for each selected engine
     for (const auto& engineConfig : selectedEngines) {
@@ -260,10 +260,10 @@ void EngineTestWindow::drawReportTables()
             auto reportTable = EngineTests::createReportTable(engineConfig.getName());
             
             if (reportTable) {
-                ImVec2 tableSize = ImGui::GetContentRegionAvail();
-                reportTable->draw(ImVec2(tableSize.x, TableHeight), true);
+                QaplaUi::Vec2 tableSize = QaplaUi::getContentRegionAvail();
+                reportTable->draw(QaplaUi::Vec2(tableSize.x, TableHeight), true);
             } else {
-                ImGui::TextDisabled("No report data available");
+                QaplaUi::textDisabled("No report data available");
             }
             
         }
@@ -276,23 +276,23 @@ void EngineTestWindow::draw()
     constexpr float minTableSpace = 50.0F;
     drawButtons();
 
-    ImGui::Indent(standardIndent);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    QaplaUi::indent(standardIndent);
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("InputArea", QaplaUi::Vec2(size.x - rightBorder, 0), QaplaUi::ChildFlags::None);
 
     engineSelect_->draw();
     drawTests();
     drawReportTables();
     
     // Draw results table
-    ImVec2 tableSize = ImGui::GetContentRegionAvail();
+    QaplaUi::Vec2 tableSize = QaplaUi::getContentRegionAvail();
     if (tableSize.y > minTableSpace) {  // Only draw if there's enough space
-        ImGui::Spacing();
-        ImGui::Text("Test Results:");
-        ImGui::Spacing();
-        EngineTests::instance().drawTable(ImVec2(tableSize.x, 0.0F));
+        QaplaUi::spacing();
+        QaplaUi::text("Test Results:");
+        QaplaUi::spacing();
+        EngineTests::instance().drawTable(QaplaUi::Vec2(tableSize.x, 0.0F));
     }
     
-    ImGui::EndChild();
-    ImGui::Unindent(standardIndent);
+    QaplaUi::endChild();
+    QaplaUi::unindent(standardIndent);
 }

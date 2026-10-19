@@ -22,7 +22,7 @@
 #include "imgui-controls.h"
 #include "imgui-game-list.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -47,7 +47,7 @@ std::string ChatbotStepAnalysisFilter::draw() {
     ImGuiControls::textWrapped(
         "Choose which of the loaded games to analyse. The filter is the one of the Pgn view; "
         "leave it alone to analyse all of them.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     if (filtered == loaded) {
         ImGuiControls::textWrapped(std::format("All {} games will be analysed.", loaded));
@@ -56,9 +56,9 @@ std::string ChatbotStepAnalysisFilter::draw() {
             std::format("{} of {} games pass the filter.", filtered, loaded));
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (ImGuiControls::textButton("Filter Games")) {
         gameList->requestFilterDialog();
@@ -66,17 +66,17 @@ std::string ChatbotStepAnalysisFilter::draw() {
     }
     ImGuiControls::hooverTooltip("Open the filter dialog of the Pgn view.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
-    ImGui::BeginDisabled(filtered == 0 || gameList->isFilterDialogOpen());
+    QaplaUi::beginDisabled(filtered == 0 || gameList->isFilterDialogOpen());
     if (ImGuiControls::textButton("Continue")) {
         finished_ = true;
         summary_ = std::format("{} of {} games will be analysed.", filtered, loaded);
     }
     ImGuiControls::hooverTooltip("Continue with the games the filter lets through.");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;

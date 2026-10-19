@@ -21,16 +21,16 @@
 #include "sprt-tournament-data.h"
 #include "imgui-sprt-configuration.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
 std::string ChatbotStepSprtConfiguration::draw() {
     drawConfiguration();
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -38,13 +38,13 @@ std::string ChatbotStepSprtConfiguration::draw() {
 
     bool canContinue = isConfigurationValid();
 
-    ImGui::BeginDisabled(!canContinue);
+    QaplaUi::beginDisabled(!canContinue);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -52,7 +52,7 @@ std::string ChatbotStepSprtConfiguration::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced SPRT configuration options (Alpha, Beta, etc.).");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
@@ -68,7 +68,7 @@ void ChatbotStepSprtConfiguration::drawConfiguration() {
             "Configure the SPRT (Sequential Probability Ratio Test) parameters. "
             "These settings define when the test concludes that the engine under test "
             "is stronger, weaker, or inconclusive compared to the reference engine.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto& sprtConfiguration = SprtTournamentData::instance().sprtConfiguration();

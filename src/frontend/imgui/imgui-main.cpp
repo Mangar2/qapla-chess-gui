@@ -17,61 +17,41 @@
  * @copyright Copyright (c) 2025 Volker Böhm
  */
 
-#include "interactive-board-window.h"
-#include <base-elements/logger.h>
-#include <game-manager/game-manager-pool.h>
-
+#include "app/app-runtime.h"
 #include "configuration.h"
-#include "config-group-loader.h"
-#include "configuration-window.h"
-#include "time-control-window.h"
-#include "epd-window.h"
-#include "epd-data.h"
-#include "viewer-board-window-list.h"
-#include "engine-test-window.h"
-#include "imgui-board-tab-bar.h"
-#include "tournament-window.h"
-#include "sprt-tournament-window.h"
-#include "imgui-tab-bar.h"
-#include "imgui-game-list.h"
-#include "horizontal-split-container.h"
-#include "vertical-split-container.h"
-#include "board-workspace.h"
-#include "engine-setup-window.h"
-#include "snackbar.h"
-#include <engine-handling/engine-capabilities.h>
-#include "tutorial.h"
-#include "callback-manager.h"
 #include "data/dark-wood-background.h"
-#include "font.h"
 #include "background-renderer.h"
 #include "test-system/test-manager.h"
-#include "chatbot/chatbot-window.h"
-#include "llm/remote-control-integration.h"
-#include "llm/llm-chat-integration.h"
-#include "llm/remote-control-server.h"
 #include "data/logo-data.h"
 #include "imgui-frame-rate-limiter.h"
+#include "imgui-ui-backend.h"
+#include "os-dialogs.h"
 #include "os-helpers.h"
 #include "command-line.h"
 #include "version.h"
 #include "ui-thread-watch.h"
-#include "ui-update-queue.h"
 
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 #include <system_error>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#ifdef _WIN32
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
 #include "../extern/stb/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../extern/stb/stb_image_write.h"
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
 #include "imgui_te_engine.h"
@@ -85,9 +65,6 @@
 #include <cstdlib>
 #endif
 
-using QaplaTester::Logger;
-using QaplaTester::TraceLevel;
-using QaplaTester::GameManagerPool;
 using QaplaWindows::ImGuiFrameRateLimiter;
 
 namespace {
@@ -220,126 +197,70 @@ namespace {
         ImGui_ImplOpenGL3_Init("#version 330");
     }
 
+    /**
+     * @brief Writes the frame just rendered to a PNG file, once, if QAPLA_SCREENSHOT asks for it.
+     *
+     * For a developer checking what a frontend draws on a machine where nothing may take
+     * pictures of the screen: QAPLA_SCREENSHOT names the file, QAPLA_SCREENSHOT_FRAME the frame
+     * (default 60), and QAPLA_SCREENSHOT_QUIT=1 ends the application afterwards.
+     *
+     * @return true if the application is to end now.
+     */
+    bool saveScreenshotIfRequested(GLFWwindow* window, int frame) {
+        static const auto path = QaplaHelpers::OsHelpers::getEnv("QAPLA_SCREENSHOT");
+        if (!path) {
+            return false;
+        }
+        static const int wantedFrame = [] {
+            auto value = QaplaHelpers::OsHelpers::getEnv("QAPLA_SCREENSHOT_FRAME");
+            return value ? std::stoi(*value) : 60;
+        }();
+        if (frame != wantedFrame) {
+            return false;
+        }
+        int width{};
+        int height{};
+        glfwGetFramebufferSize(window, &width, &height);
+        std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
+        glReadBuffer(GL_BACK);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+        stbi_flip_vertically_on_write(1);
+        stbi_write_png(path->c_str(), width, height, 4, pixels.data(), width * 4);
+        std::cout << "QAPLA_SCREENSHOT " << *path << "\n" << std::flush;
+        return QaplaHelpers::OsHelpers::getEnv("QAPLA_SCREENSHOT_QUIT").has_value();
+    }
+
     void shutdownImGui() {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
 
-    QaplaWindows::BoardWorkspace initWindows() {
-
-        QaplaWindows::BoardWorkspace workspace;
-        workspace.maximize(true);
-
-        auto boardTabBar = std::make_unique<QaplaWindows::ImGuiBoardTabBar>();
-
-		auto taskTabBar = std::make_unique<QaplaWindows::ImGuiTabBar>();
-        taskTabBar->addTab("Engines", std::make_unique<QaplaWindows::EngineSetupWindow>(false));
-        taskTabBar->addTab("Tournament", std::make_unique<QaplaWindows::TournamentWindow>());
-        taskTabBar->addTab("SPRT", std::make_unique<QaplaWindows::SprtTournamentWindow>());
-        taskTabBar->addTab("Pgn", std::make_unique<QaplaWindows::ImGuiGameList>());
-        taskTabBar->addTab("Epd", std::make_unique<QaplaWindows::EpdWindow>());
-        taskTabBar->addTab("Test", std::make_unique<QaplaWindows::EngineTestWindow>());
-        taskTabBar->addTab("Settings", std::make_unique<QaplaWindows::ConfigurationWindow>());
-
-        auto mainContainer = std::make_unique<QaplaWindows::HorizontalSplitContainer>(
-            "main", ImGuiWindowFlags_None);
-		mainContainer->setRight(std::move(boardTabBar));
-		mainContainer->setLeft(std::move(taskTabBar));
-        mainContainer->setPresetWidth(400.0F, true);
-
-        workspace.setRootWindow(std::move(mainContainer));
-        return workspace;
-    }
-
     int runApp(const QaplaLlm::RemoteControlOptions& remoteControl) {
 
-        // Installed before the first load so a stored section that no longer matches the
-        // schema is reported rather than silently replaced by defaults -- registered here,
-        // alongside the other GUI callbacks, because config-group-loader.cpp itself must
-        // stay free of GUI dependencies (see setConfigLoadErrorReporter).
-        QaplaConfiguration::setConfigLoadErrorReporter(
-            [](const std::string& sectionName, const std::string& message) {
-                QaplaWindows::SnackbarManager::instance().showWarning(
-                    "Could not load the \"" + sectionName + "\" settings, using defaults: " + message,
-                    false, "configuration");
-            });
-
-        QaplaConfiguration::Configuration::instance().loadFile();
-        QaplaConfiguration::Configuration::loadLoggerConfiguration();
-        QaplaWindows::EpdData::instance().loadFile();
-        QaplaWindows::Tutorial::instance().loadConfiguration();
-        QaplaWindows::SnackbarManager::instance().loadConfiguration();
-
-        QaplaConfiguration::EngineCapabilities::setNotificationCallback(
-            [](const std::string& message, const std::string& type) {
-                auto& snackbar = QaplaWindows::SnackbarManager::instance();
-                if (type == "warning") {
-                    snackbar.showWarning(message, false, "engine");
-                } else if (type == "success") {
-                    snackbar.showSuccess(message, false, "engine");
-                } else {
-                    snackbar.showNote(message, false, "engine");
-                }
-            });
-
-        auto workspace = initWindows();
-        // Detection runs on a thread of its own; its results are data, and data is written in
-        // the frame loop. Installed before anything can start detecting.
-        QaplaConfiguration::EngineCapabilities::setApplyChangeCallback(
-            [](std::function<void()> change) {
-                QaplaWindows::UiUpdateQueue::instance().post(std::move(change));
-            });
-
-        QaplaLlm::initializeLlmChat();
-
-        // After initializeLlmChat(), which is what registers the tools and hooks the tool queue
-        // into the frame loop -- the remote control serves exactly those and nothing of its own.
-        // Read here because the remote control below needs to know: during an automated test run
-        // the chatbot window belongs to the tests, so the channel is opened without its panel.
+        // Read here because the runtime needs to know: during an automated test run the chatbot
+        // window belongs to the tests, so the remote control is opened without its panel.
         const bool autoRunTests = QaplaHelpers::OsHelpers::getEnv("QAPLA_AUTO_RUN_TESTS").has_value();
 
-        if (remoteControl.enabled) {
-            // A caller over HTTP is answered once the run has really started, and that waiting
-            // sits on this thread -- see UiThreadWatch::REMOTE_CONTROL_STALL_THRESHOLD.
-            QaplaWindows::UiThreadWatch::setStallThreshold(
-                QaplaWindows::UiThreadWatch::REMOTE_CONTROL_STALL_THRESHOLD);
-            if (QaplaLlm::startRemoteControl(remoteControl, !autoRunTests)) {
-                // For a person reading a log. A program that has to know the port reads
-                // remote-control.port in the configuration directory instead, which does not
-                // depend on there being a console to write to -- see RemoteControlServer.
-                std::cout << "QAPLA_REMOTE_CONTROL port="
-                          << QaplaLlm::RemoteControlServer::instance().port() << "\n"
-                          << std::flush;
-            }
-        }
+        QaplaApp::AppRuntime runtime(remoteControl, autoRunTests);
 
         auto* window = initGlfwContext();
         initGlad();
         setWindowIcon(window);
         initImGui(window);
+#ifdef _WIN32
+        // The file dialogs belong to this window: they stay in front of it and block only it.
+        QaplaWindows::OsDialogs::setNativeWindowProvider(
+            [window]() -> void* { return glfwGetWin32Window(window); });
+#endif
 
-        // Lets the AI-chatbot's close_application tool (see src/llm/actions/gui-action-app.cpp) quit
-        // the app the same way the OS window-close button does -- setting this flag makes the
-        // main loop below exit normally on its next check, running the exact same shutdown
-        // sequence (including the final StaticCallbacks::save().invokeAll() flush) rather than
-        // an abrupt process exit. `window` has no other accessor outside this function, so the
-        // subscription is registered here, where it's in scope, and kept alive for the whole
-        // loop below.
-        auto quitCallbackHandle = QaplaWindows::StaticCallbacks::message().registerCallback(
-            [window](const std::string& msg) {
-                if (msg == "quit_application") {
-                    glfwSetWindowShouldClose(window, 1);
-                }
-            }
-        );
         try {
             // Load embedded background image
             initBackgroundImageFromMemory(darkwood, darkwoodSize);
         } catch (const std::exception& e) {
             std::cerr << "Warning: Failed to load background image: " << e.what() << "\n";
         }
-        FontManager::loadFonts();
+        QaplaImGui::loadFonts();
         
         QaplaTest::TestManager testManager;
         testManager.init();
@@ -381,6 +302,7 @@ namespace {
         }
 
         int autoRunFrameCount = 0;
+        int frameCount = 0;
 
         // What runApp() returns when the tests were run: only an all-green run is a zero, so a
         // release script can gate on the exit code instead of reading stdout.
@@ -392,7 +314,7 @@ namespace {
         std::cout << (remoteDesktopMode ? "Remote Desktop mode - " : "Normal mode - ")
                   << frameRateLimiter.getModeDescription() << "\n";
         
-        while (glfwWindowShouldClose(window) == 0) {
+        while (glfwWindowShouldClose(window) == 0 && !runtime.quitRequested()) {
             if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) == GLFW_TRUE) {
                 glfwWaitEvents(); 
                 continue;
@@ -424,28 +346,11 @@ namespace {
             // so it can access ImGuiIO for activity detection
             frameRateLimiter.waitForNextFrame();
 
-            // From here to the end of the loop body is work. The waiting above is deliberate --
-            // it keeps the GUI from spinning -- and counting it would hide the thing being
-            // looked for: a frame that takes long because something on this thread would not let
-            // go. See QaplaWindows::UiThreadWatch.
-            QaplaWindows::UiThreadWatch::instance().frameBegin();
-
-            {
-                // Data first: whatever another thread worked out since the last frame is written
-                // into the GUI's data here, before anything reads it to draw. See UiUpdateQueue.
-                QaplaWindows::UiThreadWatch::Section section("apply");
-                QaplaWindows::UiUpdateQueue::instance().applyAll();
-            }
-
-            {
-                QaplaWindows::UiThreadWatch::Section section("poll");
-                QaplaWindows::StaticCallbacks::poll().invokeAll();
-            }
+            runtime.beginFrame();
 
             {
                 QaplaWindows::UiThreadWatch::Section section("draw");
-                workspace.draw();
-                QaplaWindows::SnackbarManager::instance().draw();
+                runtime.draw();
                 testManager.drawDebugWindows();
             }
 
@@ -453,6 +358,10 @@ namespace {
                 QaplaWindows::UiThreadWatch::Section section("render");
                 ImGui::Render();
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            }
+
+            if (saveScreenshotIfRequested(window, ++frameCount)) {
+                runtime.requestQuit();
             }
 
             {
@@ -470,13 +379,6 @@ namespace {
                 // and the frame was then reported against the longest section that did have one.
                 QaplaWindows::UiThreadWatch::Section section("test-engine");
                 testManager.onPostSwap();
-            }
-
-            // Asked for over POST /shutdown, carried out here: the request arrives on a server
-            // thread, and ending the application is the UI thread's job -- same flag, same
-            // effect and same shutdown sequence as the window's close button.
-            if (QaplaLlm::RemoteControlServer::instance().isShutdownRequested()) {
-                glfwSetWindowShouldClose(window, 1);
             }
 
             if (autoRunTests) {
@@ -516,103 +418,22 @@ namespace {
                     // Nothing tested is not a pass, it is a run that never happened -- a suite
                     // that registers no test at all has to be as loud as a failing one.
                     autoRunExitCode = (tested > 0 && success == tested) ? 0 : 1;
-                    glfwSetWindowShouldClose(window, 1);
+                    runtime.requestQuit();
                 }
             }
 
-            {
-                QaplaWindows::UiThreadWatch::Section section("autosave");
-                QaplaWindows::StaticCallbacks::autosave().invokeAll();
-            }
-
-            QaplaWindows::UiThreadWatch::instance().frameEnd();
+            runtime.endFrame();
         }
 
-        // Before the windows go: a handler still waiting on the tool queue would be waiting on a
-        // UI thread that is no longer running one.
-        QaplaLlm::RemoteControlServer::instance().stop();
-
-        // And before anything static goes: whatever the chatbot window is holding has to let go
-        // of its callback registrations here, while the callback managers are still alive. A
-        // subscription released during static destruction reaches a manager whose mutex has
-        // already been destroyed -- which does not fail quietly, it aborts the process on the
-        // way out. Torn down deliberately at a known point instead.
-        QaplaWindows::ChatBot::ChatbotWindow::instance()->releaseThreads();
+        runtime.shutdownBeforeWindowCloses();
 
         testManager.stop();
         shutdownImGui();
         testManager.destroy();
         glfwDestroyWindow(window);
         glfwTerminate();
-        GameManagerPool::getInstance().stopAll();
-        {
-            // On the way out, and still the user interface's thread: waiting for the games to
-            // end is not work of its own -- see UiThreadWatch::Waiting.
-            QaplaWindows::UiThreadWatch::Waiting waiting(std::string(QaplaWindows::UiThreadWatch::POOL_SECTION) + ":shutdown");
-            GameManagerPool::getInstance().waitForTask();
-        }
-        // And then the managers themselves, which is what takes the engines with them: stopAll()
-        // ends the games, but every engine keeps a worker thread that sends "quit" and writes
-        // that down. Left to finish on their own, those threads were still logging while static
-        // destruction had begun -- the process aborted on the way out with "Pure virtual function
-        // called", reproducibly on Linux. shutdown() destroys the managers here, and destroying a
-        // worker joins its threads.
-        GameManagerPool::getInstance().shutdown();
-        QaplaWindows::StaticCallbacks::save().invokeAll();
+        runtime.shutdownAfterWindowClosed();
         return autoRunExitCode;
-    }
-
-    /**
-     * @brief Says what the command line got wrong, before anything is opened.
-     *
-     * None of it stops the start: an option nobody recognised is worth a line on stderr, not a
-     * refusal to run an application that is driven by hand anyway.
-     */
-    void reportCommandLineMessages(const QaplaApp::CommandLineOptions& options) {
-        for (const auto& message : options.messages) {
-            std::cerr << message << '\n';
-        }
-    }
-
-    /**
-     * @brief Sends everything this session stores to the directory --config-dir named, if it did.
-     *
-     * Called before runApp(), because the first setting is read the moment a window is built and
-     * the answer has to be final by then.
-     *
-     * Unlike every other option, a bad value stops the start instead of being reported and
-     * ignored. The others are settings, and a wrong setting still leaves a usable GUI; this one is
-     * a promise that this session will not touch the configuration the user works with. Falling
-     * back on that configuration is precisely the outcome the caller was ruling out.
-     *
-     * @return false when the directory could not be used, and the GUI must not start.
-     */
-    /** @brief Applies the options that only hold for this session, before anything is drawn. */
-    void applySessionOptions(const QaplaApp::CommandLineOptions& options) {
-        if (options.remoteDesktop) {
-            QaplaConfiguration::Configuration::setRemoteDesktopOverride();
-        }
-    }
-
-    bool applyConfigDirectory(const QaplaApp::CommandLineOptions& options) {
-        if (options.configDirectory.empty()) {
-            return true;
-        }
-
-        std::error_code error;
-        std::filesystem::create_directories(options.configDirectory, error);
-        if (error) {
-            std::cerr << "Cannot use \"" << options.configDirectory
-                      << "\" as the configuration directory: " << error.message() << '\n';
-            return false;
-        }
-
-        // Stored as an absolute path so it stays the same directory no matter what the engines and
-        // dialogs started from here do with the working directory.
-        auto absolutePath = std::filesystem::absolute(options.configDirectory, error);
-        QaplaHelpers::OsHelpers::setConfigDirectoryOverride(
-            error ? options.configDirectory : absolutePath.string());
-        return true;
     }
 
 } // namespace
@@ -696,7 +517,7 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
         // WinMain hands the command line over as one unsplit string; __argc/__argv are the same
         // arguments already tokenized by the CRT, which is what the parser wants.
         auto options = QaplaApp::parseCommandLine(__argc, __argv);
-        reportCommandLineMessages(options);
+        QaplaApp::reportCommandLineMessages(options);
 
         if (options.helpRequested) {
             // Anywhere the output can be read -- a console, or a pipe the caller set up -- the
@@ -716,13 +537,13 @@ int APIENTRY WinMain([[maybe_unused]] HINSTANCE hInstance,
             return 0;
         }
 
-        if (!applyConfigDirectory(options)) {
+        if (!QaplaApp::applyConfigDirectory(options)) {
             if (hasConsole) {
                 FreeConsole();
             }
             return 1;
         }
-        applySessionOptions(options);
+        QaplaApp::applySessionOptions(options);
 
         auto code = runApp(options.remoteControl);
         if (hasConsole) {
@@ -748,17 +569,17 @@ int main(int argc, char** argv) {
 
     try {
         auto options = QaplaApp::parseCommandLine(argc, argv);
-        reportCommandLineMessages(options);
+        QaplaApp::reportCommandLineMessages(options);
 
         if (options.helpRequested) {
             std::cout << QaplaApp::helpText() << std::flush;
             return 0;
         }
 
-        if (!applyConfigDirectory(options)) {
+        if (!QaplaApp::applyConfigDirectory(options)) {
             return 1;
         }
-        applySessionOptions(options);
+        QaplaApp::applySessionOptions(options);
 
         auto code = runApp(options.remoteControl);
         return code;

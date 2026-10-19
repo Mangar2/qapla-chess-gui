@@ -18,7 +18,9 @@
  */
 
 #include "game-filter-window.h"
-#include <imgui.h>
+
+#include <format>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 
 namespace QaplaWindows {
@@ -31,41 +33,41 @@ void GameFilterWindow::init(const std::string& configId) {
 
 void GameFilterWindow::draw() {
     // Get available window size
-    ImVec2 availableSize = ImGui::GetContentRegionAvail();
+    QaplaUi::Vec2 availableSize = QaplaUi::getContentRegionAvail();
     
     // Calculate child window size with 10px margins on left and right
     const float horizontalMargin = 10.0f;
-    ImVec2 childSize(availableSize.x - 2 * horizontalMargin, availableSize.y);
+    QaplaUi::Vec2 childSize(availableSize.x - 2 * horizontalMargin, availableSize.y);
     
     // Position cursor with left margin
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + horizontalMargin);
+    QaplaUi::setCursorPosX(QaplaUi::getCursorPosX() + horizontalMargin);
     
     // Create scrollable child window
-    ImGui::BeginChild("FilterContent", childSize, false, ImGuiWindowFlags_None);
+    QaplaUi::beginChild("FilterContent", childSize, QaplaUi::ChildFlags::None, QaplaUi::WindowFlags::None);
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     bool modified = false;
     modified |= drawActiveToggle();
-    ImGui::Separator();
+    QaplaUi::separator();
 
     // Only show filter controls if active
     if (filterData_.isActive()) {
         modified |= drawPlayerSelection();
-        ImGui::Separator();
+        QaplaUi::separator();
         
         modified |= drawOpponentSelection();
-        ImGui::Separator();
+        QaplaUi::separator();
         
         modified |= drawTopicSelection("results", "Filter by Game Result:", "Select game results");
-        ImGui::Separator();
+        QaplaUi::separator();
         
         modified |= drawTopicSelection("causes", "Filter by Game Cause:", "Select game termination causes");
-        ImGui::Separator();
+        QaplaUi::separator();
         
         modified |= drawTopicSelection("terminations", "Filter by Termination:", "Select termination types from PGN Termination tag");
     }
     
-    ImGui::EndChild();
+    QaplaUi::endChild();
     
     // Central onFilterChanged callback
     if (modified && onFilterChanged_) {
@@ -77,30 +79,28 @@ bool GameFilterWindow::drawSectionHeader(const std::string& title, size_t select
     bool cleared = false;
     
     // Show title
-    ImGui::Text("%s", title.c_str());
+    QaplaUi::text(title);
     
     // Show selected count
     if (selectedCount > 0) {
-        ImGui::SameLine();
-        ImGui::TextDisabled("(%zu selected)", selectedCount);
+        QaplaUi::sameLine();
+        QaplaUi::textDisabled(std::format("({} selected)", selectedCount));
     }
     
     // Show clear button only if items are selected
     if (selectedCount > 0) {
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         std::string buttonLabel = "Clear##" + title;
-        if (ImGui::SmallButton(buttonLabel.c_str())) {
+        if (QaplaUi::smallButton(buttonLabel.c_str())) {
             cleared = true;
         }
     }
     
     // Show tooltip if provided
     if (!tooltip.empty()) {
-        ImGui::SameLine();
-        ImGui::TextDisabled("(?)");
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", tooltip.c_str());
-        }
+        QaplaUi::sameLine();
+        QaplaUi::textDisabled("(?)");
+        QaplaUi::itemTooltip(tooltip);
     }
     
     return cleared;
@@ -108,20 +108,18 @@ bool GameFilterWindow::drawSectionHeader(const std::string& title, size_t select
 
 bool GameFilterWindow::drawActiveToggle() {
     bool active = filterData_.isActive();
-    if (ImGui::Checkbox("Enable Filter", &active)) {
+    if (QaplaUi::checkbox("Enable Filter", active)) {
         filterData_.setActive(active);
         return true;
     }
-    ImGui::SameLine();
-    ImGui::TextDisabled("(?)");
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Enable or disable the filter without losing your selections");
-    }
+    QaplaUi::sameLine();
+    QaplaUi::textDisabled("(?)");
+    QaplaUi::itemTooltip("Enable or disable the filter without losing your selections");
     return false;
 }
 
 bool GameFilterWindow::drawPlayerSelection() {
-    ImGui::PushID("Players");
+    QaplaUi::pushId("Players");
     
     size_t selectedCount = filterData_.getSelectedPlayers().size();
     bool modified = drawSectionHeader("Filter by Player:", selectedCount, "Select players (any color)");
@@ -136,12 +134,12 @@ bool GameFilterWindow::drawPlayerSelection() {
         [this](const std::string& name) { filterData_.togglePlayer(name); }
     );
     
-    ImGui::PopID();
+    QaplaUi::popId();
     return modified;
 }
 
 bool GameFilterWindow::drawOpponentSelection() {
-    ImGui::PushID("Opponents");
+    QaplaUi::pushId("Opponents");
     
     size_t selectedCount = filterData_.getSelectedOpponents().size();
     bool modified = drawSectionHeader("Filter by Opponent:", selectedCount, "Select opponents (any color)");
@@ -156,7 +154,7 @@ bool GameFilterWindow::drawOpponentSelection() {
         [this](const std::string& name) { filterData_.toggleOpponent(name); }
     );
     
-    ImGui::PopID();
+    QaplaUi::popId();
     return modified;
 }
 
@@ -167,7 +165,7 @@ bool GameFilterWindow::drawNameSelection(const std::vector<std::string>& availab
     
     for (const auto& name : availableNames) {
         bool selected = isSelected(name);
-        if (ImGui::Selectable(name.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
+        if (QaplaUi::selectable(name.c_str(), selected, QaplaUi::SelectableFlags::DontClosePopups)) {
             onToggle(name);
             modified = true;
         }
@@ -183,7 +181,7 @@ bool GameFilterWindow::drawTopicSelection(const std::string& topic, const std::s
         return false;
     }
     
-    ImGui::PushID(topic.c_str());
+    QaplaUi::pushId(topic.c_str());
     
     size_t selectedCount = filterData_.getSelectedOptions(topic).size();
     bool modified = drawSectionHeader(title, selectedCount, tooltip);
@@ -195,13 +193,13 @@ bool GameFilterWindow::drawTopicSelection(const std::string& topic, const std::s
     for (const auto& option : availableOptions) {
         bool selected = filterData_.isOptionSelected(topic, option);
         
-        if (ImGui::Selectable(option.c_str(), selected, ImGuiSelectableFlags_DontClosePopups)) {
+        if (QaplaUi::selectable(option.c_str(), selected, QaplaUi::SelectableFlags::DontClosePopups)) {
             filterData_.toggleOption(topic, option);
             modified = true;
         }
     }
     
-    ImGui::PopID();
+    QaplaUi::popId();
     return modified;
 }
 

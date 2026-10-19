@@ -107,7 +107,7 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
-        std::optional<size_t> drawTable(const ImVec2& size);
+        std::optional<size_t> drawTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief The same per-position results as plain text, for a caller that cannot see the

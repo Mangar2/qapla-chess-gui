@@ -22,7 +22,7 @@
 #include "embedded-window.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <memory>
 #include <functional>
@@ -50,7 +50,7 @@ namespace QaplaWindows {
          * @brief Creates a popup window.
          * @param config configuration
          */
-        ImGuiPopup(Config config, auto size = ImVec2(400, 300))
+        ImGuiPopup(Config config, auto size = QaplaUi::Vec2(400, 300))
             : content_(), config_(config), size_(size) {
         }
 
@@ -59,29 +59,28 @@ namespace QaplaWindows {
          */
         void draw(const std::string& ok = "OK", const std::string& cancel = "Cancel") {
             if (!isOpen_) return;
-            ImGui::SetNextWindowSize(size_, ImGuiCond_Once);
-            if (!ImGui::BeginPopupModal(config_.title.c_str(), nullptr, ImGuiWindowFlags_None))
+            if (!QaplaUi::beginPopupModal(config_.title, nullptr, size_))
                 return;
 
-            ImGui::BeginChild("popup_content", ImVec2(0, -50), false);
+            QaplaUi::beginChild("popup_content", QaplaUi::Vec2(0, -50), QaplaUi::ChildFlags::None);
             content_.draw();
-            ImGui::EndChild();
+            QaplaUi::endChild();
 
-            ImGui::Separator();
-            const auto buttonSize = ImVec2(80.0F, 25.0F);
+            QaplaUi::separator();
+            const auto buttonSize = QaplaUi::Vec2(80.0F, 25.0F);
 			const float buttonSpacing = 30.0F;
 
-			ImGui::SetCursorPosX(buttonSpacing);
-            ImGui::SetCursorPosY(ImGui::GetWindowHeight() - buttonSize.y - 8.0F);
+			QaplaUi::setCursorPosX(buttonSpacing);
+            QaplaUi::setCursorPosY(QaplaUi::getWindowHeight() - buttonSize.y - 8.0F);
             if (config_.okButton) {
                 if (ImGuiControls::textButton(ok.c_str(), buttonSize)) {
                     confirmed_ = true;
                     close();
                 }
-                ImGui::SameLine();
+                QaplaUi::sameLine();
             }
 
-			ImGui::SetCursorPosX(ImGui::GetWindowWidth() - buttonSize.x - buttonSpacing);
+			QaplaUi::setCursorPosX(QaplaUi::getWindowWidth() - buttonSize.x - buttonSpacing);
             if (config_.cancelButton) {
                 if (ImGuiControls::textButton(cancel.c_str(), buttonSize)) {
                     confirmed_ = false;
@@ -89,7 +88,7 @@ namespace QaplaWindows {
                 }
             }
 
-            ImGui::EndPopup();
+            QaplaUi::endPopup();
         }
 
         /**
@@ -113,7 +112,7 @@ namespace QaplaWindows {
         void open() {
             isOpen_ = true;
             confirmed_ = std::nullopt;
-            ImGui::OpenPopup(config_.title.c_str());
+            QaplaUi::openPopup(config_.title.c_str());
         }
 
         /**
@@ -138,12 +137,12 @@ namespace QaplaWindows {
 
         void close() {
             isOpen_ = false;
-            ImGui::CloseCurrentPopup();
+            QaplaUi::closeCurrentPopup();
 		}
 
         T content_;
         Config config_;
-        ImVec2 size_;
+        QaplaUi::Vec2 size_;
         std::optional<bool> confirmed_ = std::nullopt;
 		bool isOpen_ = false;
     };

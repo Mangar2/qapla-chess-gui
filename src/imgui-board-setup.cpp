@@ -21,7 +21,7 @@
 #include "imgui-controls.h"
 #include <qapla-engine/types.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 #include <cctype>
 
@@ -72,34 +72,28 @@ namespace QaplaWindows
         }
 
         /**
-         * Input callback for en passant square validation.
+         * Character filter for en passant square validation.
          */
-        int enPassantInputCallback(ImGuiInputTextCallbackData* data)
+        bool enPassantCharFilter(unsigned int character)
         {
-            if (data->EventFlag == ImGuiInputTextFlags_CallbackCharFilter) {
-                const char c = static_cast<char>(data->EventChar);
-                // Allow only a-h, A-H, 3, 6, and '-'
-                if ((c >= 'a' && c <= 'h') || (c >= 'A' && c <= 'H') || 
-                    c == '3' || c == '6' || c == '-') {
-                    return 0; // Accept character
-                }
-                return 1; // Reject character
-            }
-            return 0;
+            const char c = static_cast<char>(character);
+            // Allow only a-h, A-H, 3, 6, and '-'
+            return (c >= 'a' && c <= 'h') || (c >= 'A' && c <= 'H') || 
+                c == '3' || c == '6' || c == '-';
         }
 
         bool drawSideToMove(BoardSetupData& data)
         {
-            ImGui::Text("Side to Move");
+            QaplaUi::text("Side to Move");
             
             bool modified = false;
             bool whiteToMove = data.whiteToMove;
-            if (ImGui::RadioButton("White", whiteToMove)) {
+            if (QaplaUi::radioButton("White", whiteToMove)) {
                 data.whiteToMove = true;
                 modified = true;
             }
             
-            if (ImGui::RadioButton("Black", !whiteToMove)) {
+            if (QaplaUi::radioButton("Black", !whiteToMove)) {
                 data.whiteToMove = false;
                 modified = true;
             }
@@ -109,30 +103,30 @@ namespace QaplaWindows
 
         void drawSeparator()
         {
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
+            QaplaUi::spacing();
+            QaplaUi::separator();
+            QaplaUi::spacing();
         }
 
         bool drawCastlingRights(BoardSetupData& data)
         {
-            ImGui::Text("Castling Rights");
+            QaplaUi::text("Castling Rights");
             
             bool modified = false;
             
-            if (ImGui::Checkbox("White Kingside", &data.whiteKingsideCastle)) {
+            if (QaplaUi::checkbox("White Kingside", data.whiteKingsideCastle)) {
                 modified = true;
             }
             
-            if (ImGui::Checkbox("White Queenside", &data.whiteQueensideCastle)) {
+            if (QaplaUi::checkbox("White Queenside", data.whiteQueensideCastle)) {
                 modified = true;
             }
             
-            if (ImGui::Checkbox("Black Kingside", &data.blackKingsideCastle)) {
+            if (QaplaUi::checkbox("Black Kingside", data.blackKingsideCastle)) {
                 modified = true;
             }
             
-            if (ImGui::Checkbox("Black Queenside", &data.blackQueensideCastle)) {
+            if (QaplaUi::checkbox("Black Queenside", data.blackQueensideCastle)) {
                 modified = true;
             }
             
@@ -141,16 +135,16 @@ namespace QaplaWindows
 
         bool drawEnPassantSquare(BoardSetupData& data)
         {
-            ImGui::Text("En Passant Square");
+            QaplaUi::text("En Passant Square");
             
             bool modified = false;
             std::string tempSquare = data.enPassantSquare;
-            ImGui::SetNextItemWidth(ITEM_WIDTH);
+            QaplaUi::setNextItemWidth(ITEM_WIDTH);
             if (ImGuiControls::inputText(
                 "##enpassant", 
                 tempSquare, 
-                ImGuiInputTextFlags_CallbackCharFilter,
-                enPassantInputCallback
+                QaplaUi::InputTextFlags::None,
+                enPassantCharFilter
             )) {
                 std::string normalized = normalizeEnPassantSquare(tempSquare);
                 if (normalized != data.enPassantSquare) {
@@ -159,28 +153,28 @@ namespace QaplaWindows
                 }
             }
             
-            ImGui::SameLine();
-            ImGui::TextDisabled("(e.g., e3, -)");
+            QaplaUi::sameLine();
+            QaplaUi::textDisabled("(e.g., e3, -)");
             
             return modified;
         }
 
         bool drawFullmoveNumber(BoardSetupData& data)
         {
-            ImGui::Text("Fullmove Number");
-            ImGui::SetNextItemWidth(ITEM_WIDTH);
+            QaplaUi::text("Fullmove Number");
+            QaplaUi::setNextItemWidth(ITEM_WIDTH);
             return ImGuiControls::inputInt<uint32_t>("##fullmove", data.fullmoveNumber, 1, 9999);
         }
 
         bool drawHalfmoveClock(BoardSetupData& data)
         {
-            ImGui::Text("Halfmove Clock");
+            QaplaUi::text("Halfmove Clock");
             
-            ImGui::SetNextItemWidth(ITEM_WIDTH);
+            QaplaUi::setNextItemWidth(ITEM_WIDTH);
             bool modified = ImGuiControls::inputInt<uint32_t>("##halfmove", data.halfmoveClock, 0, 100);
             
-            ImGui::SameLine();
-            ImGui::TextDisabled("(50-move rule)");
+            QaplaUi::sameLine();
+            QaplaUi::textDisabled("(50-move rule)");
             
             return modified;
         }

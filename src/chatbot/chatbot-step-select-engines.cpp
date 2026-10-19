@@ -22,7 +22,7 @@
 #include "imgui-controls.h"
 #include "i18n.h"
 #include <engine-handling/engine-worker-factory.h>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 using QaplaTester::EngineWorkerFactory;
 
@@ -66,7 +66,7 @@ std::string ChatbotStepSelectEngines::draw() {
         QaplaWindows::ImGuiControls::textWrapped(
             std::format("Selected engines for the {}:", contextName_).c_str());
     }
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     auto options = engineSelect->getOptions();
 
@@ -83,14 +83,14 @@ std::string ChatbotStepSelectEngines::draw() {
         mutableOptions.allowEngineConfiguration = true;
         mutableOptions.allowMultipleSelection = true;
     }
-    ImGui::PushID("tutorial");
+    QaplaUi::pushId("tutorial");
     engineSelect->draw();
-    ImGui::PopID();
+    QaplaUi::popId();
     engineSelect->setOptions(options); // Restore options
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -101,14 +101,14 @@ std::string ChatbotStepSelectEngines::draw() {
         return "";
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
         showMoreOptions_ = !showMoreOptions_;
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

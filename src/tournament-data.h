@@ -136,7 +136,7 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
 		 */
-        std::optional<size_t> drawEloTable(const ImVec2& size);
+        std::optional<size_t> drawEloTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief The same standings as plain text, for a caller that cannot see the screen.
@@ -156,26 +156,26 @@ namespace QaplaWindows {
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
          */
-        std::optional<size_t> drawMatrixTable(const ImVec2& size);
+        std::optional<size_t> drawMatrixTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Draws the table displaying the running tournament pairings.
          * @param size Size of the table to draw.
          * @return The index of the selected row, or std::nullopt if no row was selected.
          */
-        std::optional<size_t> drawRunningTable(const ImVec2& size);
+        std::optional<size_t> drawRunningTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Draws the table displaying the causes for game termination.
          * @param size Size of the table to draw.
          */
-        void drawCauseTable(const ImVec2& size);
+        void drawCauseTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Draws the table displaying adjudication test results.
          * @param size Size of the table to draw.
          */
-        void drawAdjudicationTable(const ImVec2& size);
+        void drawAdjudicationTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Returns a reference to the tournament configuration.

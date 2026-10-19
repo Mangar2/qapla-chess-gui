@@ -21,7 +21,7 @@
 #include "book-eval-data.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 #include <vector>
@@ -40,30 +40,30 @@ std::string ChatbotStepBookEvalLimit::draw() {
     ImGuiControls::textWrapped(
         "How far may the engine search each position? Every position gets the same limit; a fixed "
         "depth gives the same scores on every machine.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     static const std::vector<std::string> limits = {
         BookEvalData::LIMIT_DEPTH, BookEvalData::LIMIT_NODES, BookEvalData::LIMIT_MOVETIME };
-    ImGui::SetNextItemWidth(150.0F);
+    QaplaUi::setNextItemWidth(150.0F);
     if (ImGuiControls::selectionBox("Limit", config.limit, limits)) {
         data.updateConfiguration();
     }
-    ImGui::SetNextItemWidth(150.0F);
+    QaplaUi::setNextItemWidth(150.0F);
     const char* label = config.limit == BookEvalData::LIMIT_NODES ? "Nodes"
         : config.limit == BookEvalData::LIMIT_MOVETIME ? "Time per position (ms)" : "Depth";
     if (ImGuiControls::inputInt<uint64_t>(label, config.limitValue, 1, 1000000000, 1, 10)) {
         data.updateConfiguration();
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (ImGuiControls::textButton("Continue")) {
         finished_ = true;
         summary_ = std::format("Every position is searched with {}.", data.timeControl());
     }
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         summary_ = "The evaluation was not started.";

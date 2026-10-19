@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <string>
 #include <chrono>
@@ -262,11 +262,11 @@ private:
     uint32_t tutorialProgress_ = 0;
     void showNextTutorialStep(bool endSticky = false) const;
 
-    static constexpr std::array<ImVec4, static_cast<size_t>(SnackbarType::Count)> colors = {
-        ImVec4(0.8f, 0.8f, 0.8f, 1.0F), // Note: Light Gray
-        ImVec4(0.7f, 0.8f, 0.7f, 1.0F), // Success: Light Green
-        ImVec4(0.8f, 0.8f, 0.7f, 1.0F), // Warning: Light Yellow
-        ImVec4(0.8f, 0.7f, 0.7f, 1.0F)  // Error: Light Red
+    static constexpr std::array<QaplaUi::Vec4, static_cast<size_t>(SnackbarType::Count)> colors = {
+        QaplaUi::Vec4(0.8f, 0.8f, 0.8f, 1.0F), // Note: Light Gray
+        QaplaUi::Vec4(0.7f, 0.8f, 0.7f, 1.0F), // Success: Light Green
+        QaplaUi::Vec4(0.8f, 0.8f, 0.7f, 1.0F), // Warning: Light Yellow
+        QaplaUi::Vec4(0.8f, 0.7f, 0.7f, 1.0F)  // Error: Light Red
     };
 
     static constexpr std::array<const char*, static_cast<size_t>(SnackbarType::Count)> typeNames = {

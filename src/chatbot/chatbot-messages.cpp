@@ -21,7 +21,7 @@
 #include "imgui-controls.h"
 #include "snackbar.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <format>
 
 namespace QaplaWindows::ChatBot {
@@ -87,7 +87,7 @@ std::string ChatbotStepMessages::draw() {
     
     if (history.empty()) {
         ImGuiControls::textWrapped("No messages in history.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
         
         if (ImGuiControls::textButton("Close")) {
             finished_ = true;
@@ -102,8 +102,8 @@ std::string ChatbotStepMessages::draw() {
     
     ImGuiControls::textWrapped(
         std::format("Showing {} of {} messages:", showCount, totalMessages));
-    ImGui::Spacing();
-    ImGui::Separator();
+    QaplaUi::spacing();
+    QaplaUi::separator();
     
     // Display messages from newest to oldest
     for (size_t i = 0; i < showCount; ++i) {
@@ -111,7 +111,7 @@ std::string ChatbotStepMessages::draw() {
         const auto& entry = history[index];
         
         // Determine color based on type
-        ImVec4 typeColor;
+        QaplaUi::Vec4 typeColor;
         const char* typeName;
         switch (entry.type) {
             case SnackbarManager::SnackbarType::Error:
@@ -128,29 +128,29 @@ std::string ChatbotStepMessages::draw() {
                 break;
             case SnackbarManager::SnackbarType::Note:
             default:
-                typeColor = ImVec4(0.7F, 0.7F, 0.7F, 1.0F);
+                typeColor = QaplaUi::Vec4(0.7F, 0.7F, 0.7F, 1.0F);
                 typeName = "Note";
                 break;
         }
         
-        ImGui::Spacing();
+        QaplaUi::spacing();
         
         // Type label with color
-        ImGui::TextColored(typeColor, "[%s]", typeName);
+        QaplaUi::textColored(typeColor, std::string("[") + typeName + "]");
         
         // Topic if present
         if (!entry.topic.empty()) {
-            ImGui::SameLine();
-            ImGui::TextDisabled("(%s)", entry.topic.c_str());
+            QaplaUi::sameLine();
+            QaplaUi::textDisabled("(" + entry.topic + ")");
         }
         
         // Message content
         ImGuiControls::textWrapped(entry.message);
         
-        ImGui::Separator();
+        QaplaUi::separator();
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     // "More" button - only show if there are more messages to display
     if (showCount < totalMessages) {
@@ -158,7 +158,7 @@ std::string ChatbotStepMessages::draw() {
             displayCount_ *= 2;  // Double the display count
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Load older messages from history (double the display count).");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     }
     
     // Close button

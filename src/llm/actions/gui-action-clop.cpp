@@ -22,7 +22,7 @@
 #include "../gui-tool-tournament.h"
 #include "../../clop-data.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>

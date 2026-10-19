@@ -26,7 +26,7 @@
 #include <functional>
 #include <string>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows {
 
@@ -44,8 +44,8 @@ namespace QaplaWindows {
          */
         VerticalSplitContainer(
             const std::string& name,
-            ImGuiWindowFlags top = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse, 
-            ImGuiWindowFlags bottom = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            QaplaUi::WindowFlags top = QaplaUi::WindowFlags::NoScrollbar | QaplaUi::WindowFlags::NoScrollWithMouse, 
+            QaplaUi::WindowFlags bottom = QaplaUi::WindowFlags::NoScrollbar | QaplaUi::WindowFlags::NoScrollWithMouse);
 
         /**
          * @brief Sets the embedded window for the top panel
@@ -109,14 +109,14 @@ namespace QaplaWindows {
          * @param avail Available space vector (width and height)
          * @return The computed height for the top panel
          */
-        float computeTopHeight(ImVec2 avail);
+        float computeTopHeight(QaplaUi::Vec2 avail);
 
         /**
          * @brief Renders the draggable splitter between the top and bottom panels
          * @param id Unique identifier for the splitter widget
          * @param size Size vector for the splitter (width and height)
          */
-        void drawSplitter(const std::string& id, const ImVec2& size);
+        void drawSplitter(const std::string& id, const QaplaUi::Vec2& size);
 
         /** @brief Embedded window displayed in the top panel */
         std::unique_ptr<EmbeddedWindow> topWindow_;
@@ -131,10 +131,10 @@ namespace QaplaWindows {
         std::function<void()> bottomCallback_;
 
         /** @brief ImGui window flags for the top child window */
-        ImGuiWindowFlags topFlags_ = ImGuiWindowFlags_None;
+        QaplaUi::WindowFlags topFlags_ = QaplaUi::WindowFlags::None;
         
         /** @brief ImGui window flags for the bottom child window */
-        ImGuiWindowFlags bottomFlags_ = ImGuiWindowFlags_None;
+        QaplaUi::WindowFlags bottomFlags_ = QaplaUi::WindowFlags::None;
 
         /** @brief Unique identifier for this split container */
         std::string name_;

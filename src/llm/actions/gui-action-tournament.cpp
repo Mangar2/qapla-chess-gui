@@ -30,7 +30,7 @@
 
 #include <tournament/tournament.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -561,10 +561,10 @@ ActionResult showTournamentResult() {
             + tournamentData.resultsAsText(),
         .widget = []() {
             auto& data = TournamentData::instance();
-            ImGui::Text("Tournament Progress: %u / %u games completed",
-                data.getPlayedGames(), data.getTotalGames());
-            ImGui::Spacing();
-            data.drawEloTable(ImVec2(0.0F, 3000.0F));
+            QaplaUi::text(std::format("Tournament Progress: {} / {} games completed",
+                data.getPlayedGames(), data.getTotalGames()));
+            QaplaUi::spacing();
+            data.drawEloTable(QaplaUi::Vec2(0.0F, 3000.0F));
         }};
 }
 

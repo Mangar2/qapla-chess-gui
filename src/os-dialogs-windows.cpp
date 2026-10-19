@@ -39,12 +39,6 @@
 #include <string>
 #include <ranges>
 
-// GLFW for getting native window handle
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 #include <windows.h>
 #include <shobjidl.h> 
 #include <comdef.h>
@@ -54,15 +48,11 @@ namespace {
     using namespace QaplaHelpers;
 
     /**
-     * Gets the native Win32 window handle from the current GLFW context.
-     * @return HWND of the current window, or nullptr if no context.
+     * Gets the native Win32 window handle the frontend named for the dialogs.
+     * @return HWND of the application's window, or nullptr if there is none.
      */
     HWND getNativeWindowHandle() {
-        GLFWwindow* window = glfwGetCurrentContext();
-        if (window == nullptr) {
-            return nullptr;
-        }
-        return glfwGetWin32Window(window);
+        return static_cast<HWND>(QaplaWindows::OsDialogs::nativeWindow());
     }
 
     void setDialogOptions(IFileOpenDialog* pFileOpen, bool multiple) {

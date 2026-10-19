@@ -339,13 +339,13 @@ namespace QaplaWindows {
          * @brief Draws the table displaying the current SPRT duel result.
          * @param size Size of the table to draw.
          */
-        void drawResultTable(const ImVec2& size);
+        void drawResultTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Draws the table displaying the SPRT test result.
          * @param size Size of the table to draw.
          */
-        void drawSprtTable(const ImVec2& size);
+        void drawSprtTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Both result tables as plain text, for a caller that cannot see the screen.
@@ -365,13 +365,13 @@ namespace QaplaWindows {
          * @brief Draws the table displaying the causes for game termination.
          * @param size Size of the table to draw.
          */
-        void drawCauseTable(const ImVec2& size);
+        void drawCauseTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Draws the table displaying the Monte Carlo test results.
          * @param size Size of the table to draw.
          */
-        void drawMonteCarloTable(const ImVec2& size);
+        void drawMonteCarloTable(const QaplaUi::Vec2& size);
 
         /**
          * @brief Saves all SPRT tournament data including configuration and results to a file.

@@ -27,7 +27,7 @@
 
 #include <engine-handling/engine-worker-factory.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <sstream>
 #include <string>
@@ -45,18 +45,18 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
     constexpr float borderY = 8.0F;
     constexpr float spacingY = 30.0F;
 
-    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
-    auto topLeft = ImGui::GetCursorScreenPos();
+    constexpr QaplaUi::Vec2 buttonSize = { 25.0F, 25.0F };
+    auto topLeft = QaplaUi::getCursorScreenPos();
 
     std::string command;
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x + borderX, topLeft.y + borderY));
     auto state = QaplaButton::ButtonState::Normal;
     if ((noEnginesSelected || highlightedButton_ == "Config") && enginesAvailable) {
         state = QaplaButton::ButtonState::Highlighted;
     }
     if (QaplaButton::drawIconButton("Config", "Config", buttonSize, state,
-        [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+        [state](QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
             QaplaButton::drawConfig(drawList, topLeft, size, state);
         }))
     {
@@ -64,10 +64,10 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
     }
     ImGuiControls::hooverTooltip("Open engine configuration to select and manage engines");
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + borderX, topLeft.y + borderY + buttonSize.y + spacingY));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x + borderX, topLeft.y + borderY + buttonSize.y + spacingY));
     if (QaplaButton::drawIconButton("SwapButton", "Swap", buttonSize, 
         noEnginesSelected ? QaplaButton::ButtonState::Disabled : QaplaButton::ButtonState::Normal,
-        [state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+        [state](QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
             QaplaButton::drawSwapEngines(drawList, topLeft, size, state);
         }))
     {
@@ -75,7 +75,7 @@ std::string EngineWindow::drawConfigButtonArea(bool noEnginesSelected, bool engi
     }
     ImGuiControls::hooverTooltip("Swap White and Black engines");
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + areaWidth, topLeft.y));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x + areaWidth, topLeft.y));
     ImGuiSeparator::Vertical();
     return command;
 }
@@ -85,9 +85,9 @@ std::pair<std::string, std::string> EngineWindow::draw() {
     const auto engineRecords = getEngineRecords();
     const auto engineAvailable = !QaplaTester::EngineWorkerFactory::getConfigManager().getAllConfigs().empty();
     auto command = drawConfigButtonArea(engineRecords.empty(), engineAvailable);
-    ImGui::Indent(areaWidth);
+    QaplaUi::indent(areaWidth);
     auto [id2, command2] = ImGuiEngineList::draw();
-    ImGui::Unindent(areaWidth);
+    QaplaUi::unindent(areaWidth);
     
     // Create a list of active engines from the engine records
     std::vector<QaplaTester::EngineConfig> activeEngines;

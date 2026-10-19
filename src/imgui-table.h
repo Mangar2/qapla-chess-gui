@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <mutex>
 #include <algorithm>
 #include <cstddef>
@@ -35,7 +35,11 @@
 namespace QaplaWindows {
 
     /**
-     * @brief Encapsulates an ImGui table with static configuration and dynamic row content.
+     * @brief A table with static configuration and dynamic row content.
+     *
+     * Holds the rows and what the user did to them -- sorting, filtering, the current row. Laying
+     * it out is the frontend's job, QaplaUi::table(); the name is from the time there was only the
+     * Dear ImGui frontend.
      */
     /**
      * @brief A table's contents as plain strings: the header row, then the body rows.
@@ -54,7 +58,7 @@ namespace QaplaWindows {
     public:
         struct ColumnDef {
             std::string name;
-            ImGuiTableColumnFlags flags = ImGuiTableColumnFlags_None;
+            QaplaUi::TableColumnFlags flags = QaplaUi::TableColumnFlags::None;
             float width = 0.0F;
             bool alignRight = false;
             bool compute = false; ///< If true, compute width from content
@@ -76,12 +80,12 @@ namespace QaplaWindows {
 
         /**
          * @brief Constructs an ImGuiTable with static table configuration.
-         * @param tableId Unique table identifier used in ImGui::BeginTable.
-         * @param tableFlags ImGui table flags.
+         * @param tableId Unique table identifier.
+         * @param tableFlags Table flags.
 		 * @param columns Column definitions including names, flags, and widths.
          */
         ImGuiTable(std::string tableId,
-            ImGuiTableFlags tableFlags,
+            QaplaUi::TableFlags tableFlags,
             std::vector<ColumnDef> columns);
 
         /**
@@ -98,9 +102,9 @@ namespace QaplaWindows {
          */
         void setSortable(bool sortable) {
             if (sortable) {
-                tableFlags_ |= ImGuiTableFlags_Sortable;
+                tableFlags_ |= QaplaUi::TableFlags::Sortable;
             } else {
-                tableFlags_ &= ~ImGuiTableFlags_Sortable;
+                tableFlags_ &= ~QaplaUi::TableFlags::Sortable;
             }
         }
 
@@ -180,11 +184,11 @@ namespace QaplaWindows {
 
         /**
          * @brief Renders the table with dynamic content.
-         * @param size Size of the table in ImGui units.
+         * @param size Size of the table in pixels.
          * @param shrink If true, the table shrinks dynamically in height.
          * @return Number of row clicked, if any
          */
-        std::optional<size_t> draw(const ImVec2 &size, bool shrink = false);
+        std::optional<size_t> draw(const QaplaUi::Vec2 &size, bool shrink = false);
 
         /**
          * @brief Number of columns the table currently has.
@@ -298,7 +302,7 @@ namespace QaplaWindows {
         /**
          * @brief Renders the table as aligned plain text: header, rule, rows.
          *
-         * For the callers that have to send a table somewhere ImGui cannot follow -- the text of
+         * For the callers that have to send a table somewhere a GUI cannot follow -- the text of
          * a tool result, which reaches an LLM or an HTTP client rather than a screen (see
          * docs/grobplan-clop-cli-http.md, F.6). Reading it back out of the very table the GUI
          * draws is the point: the two cannot disagree about a number, because there is only one
@@ -347,36 +351,89 @@ namespace QaplaWindows {
          */
         float calculateTextWidth(const std::string& text, float padding = 10.0F) const;
 
-    private:
-        void accentuateCurrentRow(size_t rowIndex) const;
-        void drawRow(size_t rowIndex) const;
-        ImFont* getSelectedFont() const;
+    public:
+        // --------------------------------------------------------------------------------------
+        // For a frontend's QaplaUi::table(), which lays the table out
+        // --------------------------------------------------------------------------------------
 
+        [[nodiscard]] const std::string& tableId() const { return tableId_; }
+        [[nodiscard]] QaplaUi::TableFlags tableFlags() const { return tableFlags_; }
+        [[nodiscard]] const std::vector<ColumnDef>& columns() const { return columns_; }
+        [[nodiscard]] bool isClickable() const { return clickable_; }
+        [[nodiscard]] QaplaUi::Font font() const { return static_cast<QaplaUi::Font>(fontIndex_); }
+
+        /** @brief Number of rows shown, after filtering. */
+        [[nodiscard]] size_t visibleRowCount() const { return indexManager_.size(); }
+
+        /** @brief The row shown at a position, after sorting and filtering. */
+        [[nodiscard]] size_t rowAt(size_t position) const { return indexManager_.getRowNumber(position); }
+
+        /** @brief The position a row is shown at, if it is shown. */
+        [[nodiscard]] std::optional<size_t> positionOf(size_t row) const {
+            return indexManager_.getRowIndex(row);
+        }
+
+        /** @brief Number of cells a row has; a row may be shorter than the header. */
+        [[nodiscard]] size_t cellCount(size_t row) const {
+            return row < rows_.size() ? rows_[row].size() : 0;
+        }
+
+        /** @brief The current (selected) row, by its index in the rows. */
+        [[nodiscard]] std::optional<size_t> currentRow() const { return indexManager_.getCurrentRow(); }
+
+        /**
+         * @brief The text of a cell as shown, with its alignment; empty past the row's end.
+         */
+        [[nodiscard]] std::string cellText(size_t row, size_t column, bool& alignRight) const;
+
+        /** @brief The width a column is laid out with: its own, or the computed one if wider. */
+        [[nodiscard]] float layoutWidth(size_t column) const;
+
+        /** @brief Whether the rows changed since they were last sorted. */
+        [[nodiscard]] bool needsSort() const { return needsSort_; }
+
+        /**
+         * @brief Sorts the rows by a column, or confirms the order as it is if column is empty.
+         */
+        void sortBy(std::optional<size_t> column, bool ascending);
+
+        /** @brief The row the table was asked to scroll to, once. */
+        std::optional<size_t> takeScrollToRow() {
+            auto row = scrollToRow_;
+            scrollToRow_.reset();
+            return row;
+        }
+
+        enum class Navigation { Up, Down, PageUp, PageDown, Home, End };
+
+        /**
+         * @brief Moves the current row from the keyboard.
+         * @param pageRows Rows a page holds.
+         * @return The new current row.
+         */
+        std::optional<size_t> navigate(Navigation navigation, size_t pageRows);
+
+        /**
+         * @brief Whether keyboard input was already taken in this frame; marks it taken.
+         *
+         * A table drawn twice in one frame must not move its current row twice.
+         */
+        bool claimInputFrame(int frame) {
+            if (frame == lastInputFrame_) {
+                return false;
+            }
+            lastInputFrame_ = frame;
+            return true;
+        }
+
+    private:
         /** 
          * @brief Performs any necessary updates after external changes.
          * @param addedRow Optional row index that was just added.
          */
         void updated(std::optional<size_t> addedRow = std::nullopt);
 
-        /**
-         * @brief Checks for keyboard input and returns the index of the row to focus.
-         * 
-         * Note it is important that this function returns std::nullopt if no key was pressed.
-         * Returning an index causes the selection of a table row, and thus maybe loading a
-         * new Game.
-         * 
-         * @param visibleRows 
-         * @return std::optional<size_t> index to focus IF a key was pressed
-         */
-        std::optional<size_t> checkKeyboard(size_t visibleRows);
-        void setupTable() const;
-        
-        void handleSorting();
         void handleFiltering();
-        void handleClipping(std::optional<size_t> &clickedRow);
-        void handleScrolling();
-        void tableHeadersRow() const;
-        size_t getCurrentSortedIndex() const;
 
         bool clickable_ = false;
         bool autoScroll_ = false;
@@ -386,14 +443,12 @@ namespace QaplaWindows {
         int fontIndex_ = FontManager::interVariableIndex; // Default to Inter Variable font
         std::optional<size_t> scrollToRow_;
         int lastInputFrame_ = -1;
-        bool isRowClicked(size_t index) const;
         std::string tableId_;
-        ImGuiTableFlags tableFlags_;
+        QaplaUi::TableFlags tableFlags_ = QaplaUi::TableFlags::None;
         std::vector<ColumnDef> columns_;
         std::vector<std::vector<std::string>> rows_;
         bool needsSort_ = true;
         bool needsFilter_ = true;
-        ImGuiTableSortSpecs* sortSpecs_ = nullptr;
         TableIndex indexManager_;
         MetaFilter filter_;
     };

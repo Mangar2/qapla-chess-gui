@@ -21,7 +21,7 @@
 #include "analysis-data.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -43,9 +43,9 @@ std::string ChatbotStepAnalysisTime::draw() {
     ImGuiControls::textWrapped(
         "How long may the engine think about each position? Every position of every game is given "
         "the same time, which is what makes their evaluations comparable.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
-    ImGui::SetNextItemWidth(150.0F);
+    QaplaUi::setNextItemWidth(150.0F);
     auto moveTimeMs = analysisData.config().moveTimeMs;
     if (ImGuiControls::inputInt<uint64_t>("Time per move (ms)", moveTimeMs,
             MIN_MOVE_TIME_MS, MAX_MOVE_TIME_MS, 100, 1000)) {
@@ -55,16 +55,16 @@ std::string ChatbotStepAnalysisTime::draw() {
     ImGuiControls::hooverTooltip(
         "The search time for a single position. A game of 80 half moves takes 80 times this.");
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (ImGuiControls::textButton("Continue")) {
         finished_ = true;
         summary_ = std::format("Every position gets {} ms.", analysisData.config().moveTimeMs);
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;

@@ -20,7 +20,7 @@
 #include "imgui-causes-table.h"
 #include <game-manager/tournament-result.h>
 #include <chess-game/game-result.h>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 using namespace QaplaTester;
 
@@ -29,12 +29,12 @@ namespace QaplaWindows {
     ImGuiCausesTable::ImGuiCausesTable()
         : table_(
             "Causes",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "WDL", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
-                { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 200.0F }
+                { .name = "Name", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F },
+                { .name = "WDL", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F },
+                { .name = "Count", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Cause", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 200.0F }
             }
         ) 
     {
@@ -63,7 +63,7 @@ namespace QaplaWindows {
         }
     }
 
-    std::optional<size_t> ImGuiCausesTable::draw(const ImVec2& size) {
+    std::optional<size_t> ImGuiCausesTable::draw(const QaplaUi::Vec2& size) {
         if (table_.size() == 0) {
             return std::nullopt;
         }

@@ -21,7 +21,7 @@
 #include "imgui-controls.h"
 #include "imgui-helper/imgui-text-button.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -31,7 +31,7 @@ ChatbotStepOptionList::ChatbotStepOptionList(std::string prompt, std::vector<Opt
 
 std::string ChatbotStepOptionList::draw() {
     ImGuiControls::textWrapped(prompt_);
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     size_t num_options = options_.size();
     // Five, not four: the first row holds the runs the application is there for -- tournament,
@@ -45,19 +45,19 @@ std::string ChatbotStepOptionList::draw() {
     float max_button_width = 0.0F;
     for (const auto& option : options_) {
         ImGuiTextButton button { .label = option.text };
-        ImVec2 size = button.calcSize();
+        QaplaUi::Vec2 size = button.calcSize();
         max_button_width = std::max(max_button_width, size.x);
         buttons.push_back(button);
     }
 
-    ImGui::PushID("Chatbot");
+    QaplaUi::pushId("Chatbot");
     for (size_t row = 0; row < rows; ++row) {
         size_t start = row * max_per_row;
         size_t end = std::min(start + max_per_row, num_options);
 
         for (size_t i = start; i < end; ++i) {
             auto& button = buttons[i];
-            if (button.draw(ImVec2(max_button_width, 0))) {
+            if (button.draw(QaplaUi::Vec2(max_button_width, 0))) {
                 if (options_[i].onSelected) {
                     options_[i].onSelected();
                 }
@@ -67,11 +67,11 @@ std::string ChatbotStepOptionList::draw() {
                 QaplaWindows::ImGuiControls::hooverTooltip(std::string("Select option: ") + options_[i].text);
             }
             if (i < end - 1) {
-                ImGui::SameLine();
+                QaplaUi::sameLine();
             }
         }
     }
-    ImGui::PopID();
+    QaplaUi::popId();
     return "";
 }
 

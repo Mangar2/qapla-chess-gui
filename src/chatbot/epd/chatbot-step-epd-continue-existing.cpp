@@ -20,7 +20,7 @@
 #include "chatbot-step-epd-continue-existing.h"
 #include "epd-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -57,8 +57,8 @@ std::string ChatbotStepEpdContinueExisting::draw() {
         "Would you like to continue it?";
     QaplaWindows::ImGuiControls::textWrapped(message.c_str());
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Yes, continue analysis")) {
         finishedMessage_ = "Continuing existing EPD analysis.";
@@ -67,7 +67,7 @@ std::string ChatbotStepEpdContinueExisting::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Resume the incomplete EPD analysis and continue the remaining tests.");
     
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("No")) {
         finishedMessage_ = "";
         finished_ = true;
@@ -75,7 +75,7 @@ std::string ChatbotStepEpdContinueExisting::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Do not continue the existing analysis; return to the menu.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = "";
         finished_ = true;

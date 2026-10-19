@@ -33,7 +33,7 @@
 #include <engine-handling/engine-config.h>
 #include <engine-handling/engine-worker-factory.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <cmath>
 #include <string>
@@ -153,21 +153,21 @@ void EngineSetupWindow::drawButtons() {
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
     
-    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 topLeft = QaplaUi::getCursorScreenPos();
     topLeft.x = std::round(topLeft.x);
     topLeft.y = std::round(topLeft.y);
-    auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
+    auto curPos = QaplaUi::Vec2(topLeft.x + leftOffset, topLeft.y + topOffset);
     
     std::vector<std::string> buttons{ "Add", "Remove", "Detect" };
-    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
+    constexpr QaplaUi::Vec2 buttonSize = { 25.0F, 25.0F };
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
 
     for (const auto& button : buttons) {
         auto state = getButtonState(button);
         
-        ImGui::SetCursorScreenPos(curPos);
+        QaplaUi::setCursorScreenPos(curPos);
         if (QaplaButton::drawIconButton(button, button, buttonSize, state,
-            [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            [&button, state](QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
                 if (button == "Add") {
                     QaplaButton::drawAdd(drawList, topLeft, size);
                     ImGuiControls::hooverTooltip("Add new engine from executable file");
@@ -187,7 +187,7 @@ void EngineSetupWindow::drawButtons() {
         curPos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
 }
 
 bool EngineSetupWindow::drawGlobalSettings() {
@@ -241,16 +241,16 @@ void EngineSetupWindow::draw() {
     auto configs = configManager.getAllConfigs();
 
 	drawButtons();
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("EngineList", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None, ImGuiWindowFlags_None);
-    ImGui::Indent(controlIndent_);
-    ImGui::Spacing();
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("EngineList", QaplaUi::Vec2(size.x - rightBorder, 0), QaplaUi::ChildFlags::None, QaplaUi::WindowFlags::None);
+    QaplaUi::indent(controlIndent_);
+    QaplaUi::spacing();
     drawGlobalSettings();
-    ImGui::Spacing();
-    ImGui::Separator();
+    QaplaUi::spacing();
+    QaplaUi::separator();
     engineSelect_.draw();
-    ImGui::Unindent(controlIndent_);
-    ImGui::EndChild();
+    QaplaUi::unindent(controlIndent_);
+    QaplaUi::endChild();
     
     // Check tutorial progression
     showNextTutorialStep();

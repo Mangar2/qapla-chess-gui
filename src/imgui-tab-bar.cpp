@@ -35,7 +35,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window, 
-        ImGuiTabItemFlags flags) {
+        QaplaUi::TabItemFlags flags) {
         // Create a callback that calls the embedded window's draw method
         // The shared_ptr ensures the window stays alive as long as the callback exists
         auto windowPtr = std::shared_ptr<EmbeddedWindow>(window.release());
@@ -47,7 +47,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::addTab(const std::string& name, EmbeddedWindow* window, 
-        ImGuiTabItemFlags flags) {
+        QaplaUi::TabItemFlags flags) {
         // Non-owning: caller manages lifetime
         // Capture raw pointer - safe as long as caller ensures lifetime
         auto callback = window ? std::function<void()>(
@@ -58,7 +58,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::addTab(const std::string& name, std::function<void()> callback, 
-        ImGuiTabItemFlags flags) {
+        QaplaUi::TabItemFlags flags) {
         tabs_.emplace_back(Tab{ name, nullptr, nullptr, std::move(callback), flags });
     }
 
@@ -77,7 +77,7 @@ namespace QaplaWindows {
     }
 
     void ImGuiTabBar::draw() {
-        if (ImGui::BeginTabBar("QaplaTabBar", ImGuiTabBarFlags_Reorderable)) {
+        if (QaplaUi::beginTabBar("QaplaTabBar", QaplaUi::TabBarFlags::Reorderable)) {
             // Draw all tabs
 
             auto maxIndex = tabs_.size();
@@ -87,16 +87,16 @@ namespace QaplaWindows {
                 bool open = true;
                 
                 // Set flags based on whether tab is closable
-                ImGuiTabItemFlags flags = tab.defaultTabFlags;
-                tab.defaultTabFlags &= ~ImGuiTabItemFlags_SetSelected;
-                bool closable = flags & ImGuiTabItemFlags_NoAssumedClosure;
+                QaplaUi::TabItemFlags flags = tab.defaultTabFlags;
+                tab.defaultTabFlags &= ~QaplaUi::TabItemFlags::SetSelected;
+                bool closable = QaplaUi::hasFlag(flags, QaplaUi::TabItemFlags::Closable);
 
                 // Check if window is highlighted
                 auto* window = tab.getWindow();
                 bool isHighlighted = window && window->highlighted();
                 auto translatedName = Translator::instance().translate("Tab", tab.name);
                 auto tabItemText = std::format("{}###{}", translatedName, tab.name);
-                bool tabIsActive = ImGui::BeginTabItem(tabItemText.c_str(), closable ? &open : nullptr, flags);
+                bool tabIsActive = QaplaUi::beginTabItem(tabItemText.c_str(), closable ? &open : nullptr, flags);
                 
                 // Draw dot if window is highlighted (after BeginTabItem, independent of whether tab is active)
                 if (isHighlighted) {
@@ -110,7 +110,7 @@ namespace QaplaWindows {
                     if (tab.callback) {
                         tab.callback();
                     }
-                    ImGui::EndTabItem();
+                    QaplaUi::endTabItem();
                 }
                 
                 // Mark tab for deletion if closed
@@ -126,7 +126,7 @@ namespace QaplaWindows {
             
             // Add + button if callback is set
             if (addTabCallback_) {
-                if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) {
+                if (QaplaUi::tabItemButton("+", QaplaUi::TabItemFlags::Trailing | QaplaUi::TabItemFlags::NoTooltip)) {
                     addTabCallback_(*this);
                 }
             }
@@ -136,7 +136,7 @@ namespace QaplaWindows {
                 dynamicTabsCallback_();
             }
             
-            ImGui::EndTabBar();
+            QaplaUi::endTabBar();
         }
     }
 
@@ -181,8 +181,8 @@ namespace QaplaWindows {
             if (message == cmd) {
                 for (auto& tab : tabs_) {
                     if (tab.name == tabName) {
-                        tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
-                            tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                        tab.defaultTabFlags = static_cast<QaplaUi::TabItemFlags>(
+                            tab.defaultTabFlags | QaplaUi::TabItemFlags::SetSelected);
                     }
                 }
             }
@@ -196,8 +196,8 @@ namespace QaplaWindows {
                 std::string boardName = "Board " + std::to_string(boardId);
                 for (auto& tab : tabs_) {
                     if (tab.name == boardName) {
-                        tab.defaultTabFlags = static_cast<ImGuiTabItemFlags>(
-                            tab.defaultTabFlags | ImGuiTabItemFlags_SetSelected);
+                        tab.defaultTabFlags = static_cast<QaplaUi::TabItemFlags>(
+                            tab.defaultTabFlags | QaplaUi::TabItemFlags::SetSelected);
                         break;
                     }
                 }

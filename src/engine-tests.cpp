@@ -34,15 +34,15 @@ EngineTests::EngineTests()
 {
     // Initialize results table with 4 columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        { .name = "Engine", .flags = ImGuiTableColumnFlags_None, .width = 150.0F },
-        { .name = "Status", .flags = ImGuiTableColumnFlags_None, .width = 80.0F },
-        { .name = "Test", .flags = ImGuiTableColumnFlags_None, .width = 200.0F },
-        { .name = "Result", .flags = ImGuiTableColumnFlags_None }
+        { .name = "Engine", .flags = QaplaUi::TableColumnFlags::None, .width = 150.0F },
+        { .name = "Status", .flags = QaplaUi::TableColumnFlags::None, .width = 80.0F },
+        { .name = "Test", .flags = QaplaUi::TableColumnFlags::None, .width = 200.0F },
+        { .name = "Result", .flags = QaplaUi::TableColumnFlags::None }
     };
     
     resultsTable_ = std::make_unique<ImGuiTable>(
         "EngineTestResults",
-        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX,
+        QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX,
         columns
     );
     resultsTable_->setClickable(false);
@@ -384,7 +384,7 @@ bool EngineTests::mayClear(bool sendMessage) const
     return true;
 }
 
-std::optional<size_t> EngineTests::drawTable(const ImVec2& size)
+std::optional<size_t> EngineTests::drawTable(const QaplaUi::Vec2& size)
 {
     std::scoped_lock lock(tableMutex_);
     return resultsTable_->draw(size, true);
@@ -402,16 +402,16 @@ std::unique_ptr<ImGuiTable> EngineTests::createReportTable(const std::string& en
 
     // Define the table columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        { .name = "Section", .flags = ImGuiTableColumnFlags_None, .width = 120.0F},
-        { .name = "Status", .flags = ImGuiTableColumnFlags_None, .width = 60.0F},
-        { .name = "Topic", .flags = ImGuiTableColumnFlags_None},  
-        { .name = "Details", .flags = ImGuiTableColumnFlags_None, .width = 100.0F}
+        { .name = "Section", .flags = QaplaUi::TableColumnFlags::None, .width = 120.0F},
+        { .name = "Status", .flags = QaplaUi::TableColumnFlags::None, .width = 60.0F},
+        { .name = "Topic", .flags = QaplaUi::TableColumnFlags::None},  
+        { .name = "Details", .flags = QaplaUi::TableColumnFlags::None, .width = 100.0F}
     };
 
     // Create the table
     auto table = std::make_unique<ImGuiTable>(
         "EngineReport_" + engineName,
-        ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX,
+        QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX,
         columns
     );
     

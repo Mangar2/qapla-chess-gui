@@ -19,7 +19,7 @@
 
 #include "chatbot-step-add-engines-welcome.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -30,22 +30,22 @@ std::string ChatbotStepAddEnginesWelcome::draw() {
         "Welcome to the Add Engines wizard! This will help you add new chess engines "
         "to your global engine list.");
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     
     QaplaWindows::ImGuiControls::textWrapped(
         "Important: Each engine can only be added once. The file path must be unique. "
         "However, you can use the same engine multiple times with different configurations "
         "in tournaments, EPD analysis, and interactive boards.");
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     QaplaWindows::ImGuiControls::textWrapped(
         "After adding engines, they will be available in all features that require engines.");
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
     
     if (!finished_) {
         if (QaplaWindows::ImGuiControls::textButton("Continue")) {
@@ -53,7 +53,7 @@ std::string ChatbotStepAddEnginesWelcome::draw() {
             return "";
         }
         
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;

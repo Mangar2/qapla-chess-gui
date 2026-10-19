@@ -21,7 +21,7 @@
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <filesystem>
 #include <format>
 #include <sstream>
@@ -53,7 +53,7 @@ std::string ChatbotStepTournamentOpening::draw() {
         QaplaWindows::ImGuiControls::textWrapped(
             "Configure the opening book settings for the tournament. "
             "You must specify an opening file (EPD, PGN, a book of Qapla, or raw FEN).");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto& tournamentOpening = getTournamentOpening();
@@ -73,7 +73,7 @@ std::string ChatbotStepTournamentOpening::draw() {
     
     tournamentOpening.draw(drawParams);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     // Check if file changed and reset validation state if needed
     const auto& openings = getTournamentOpening().openings();
@@ -95,9 +95,9 @@ std::string ChatbotStepTournamentOpening::draw() {
         drawValidationResult();
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -110,15 +110,15 @@ void ChatbotStepTournamentOpening::drawStatusMessage() {
     const auto& openings = getTournamentOpening().openings();
     
     if (openings.file.empty()) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "An opening file is required. Please select a valid EPD, PGN, book, or FEN file.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     } else if (!doesOpeningFileExist()) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "The specified opening file does not exist. Please select a valid file.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 }
 
@@ -128,7 +128,7 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
     }
 
     if (parseResult_->success()) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::SUCCESS_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::SUCCESS_COLOR);
         std::string message = std::format(
             "Successfully parsed opening file using {} parser.\n"
             "Found {} opening position(s).",
@@ -136,9 +136,9 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
             parseResult_->games.size()
         );
         QaplaWindows::ImGuiControls::textWrapped(message.c_str());
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     } else {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         std::string errorMessage;
         if (parseResult_->games.empty()) {
             errorMessage = "Failed to parse opening file. No valid positions found.\n"
@@ -148,28 +148,28 @@ void ChatbotStepTournamentOpening::drawValidationResult() {
             errorMessage = "Failed to parse opening file. Please check the file format and try again.";
         }
         QaplaWindows::ImGuiControls::textWrapped(errorMessage.c_str());
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 
     if (showTrace_) {
-        ImGui::Spacing();
+        QaplaUi::spacing();
         std::string traceText = formatTrace();
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7F, 0.7F, 0.7F, 1.0F));
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, QaplaUi::Vec4(0.7F, 0.7F, 0.7F, 1.0F));
         QaplaWindows::ImGuiControls::textWrapped(traceText.c_str());
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 }
 
 std::string ChatbotStepTournamentOpening::drawButtons() {
     // Continue button - only enabled after successful validation with valid positions
     const bool canContinue = isValidated_ && parseResult_ && parseResult_->success();
-    ImGui::BeginDisabled(!canContinue);
+    QaplaUi::beginDisabled(!canContinue);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -179,7 +179,7 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
 
     // Show trace button only if validation was performed
     if (isValidated_ && parseResult_) {
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         const char* traceLabel = showTrace_ ? "Hide Trace" : "Show Trace";
         if (QaplaWindows::ImGuiControls::textButton(traceLabel)) {
             showTrace_ = !showTrace_;
@@ -187,7 +187,7 @@ std::string ChatbotStepTournamentOpening::drawButtons() {
         QaplaWindows::ImGuiControls::hooverTooltip("Toggle the parser trace output to help diagnose issues when parsing opening files.");
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

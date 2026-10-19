@@ -20,7 +20,7 @@
 #include "chatbot-step-global-settings.h"
 #include "imgui-engine-global-settings.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -37,7 +37,7 @@ std::string ChatbotStepGlobalSettings::draw() {
         QaplaWindows::ImGuiControls::textWrapped(
             "You can configure global engine settings such as hash size and time control here. "
             "These settings will apply to all engines participating in the tournament.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto* globalSettings = getGlobalSettings();
@@ -62,16 +62,16 @@ std::string ChatbotStepGlobalSettings::draw() {
     globalSettings->drawGlobalSettings({}, options);
 
     if (showTimeControl_) {
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
 
         globalSettings->drawTimeControl({ .controlWidth = 150.0F, .controlIndent = 10.0F }, true, true);
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -82,7 +82,7 @@ std::string ChatbotStepGlobalSettings::draw() {
         finished_ = true;
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -90,7 +90,7 @@ std::string ChatbotStepGlobalSettings::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Show or hide advanced global engine settings, such as traces and restart behavior.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

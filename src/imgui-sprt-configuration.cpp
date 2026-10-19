@@ -28,7 +28,7 @@
 
 #include <base-elements/string-helper.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 #include <algorithm>
 
@@ -42,11 +42,11 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
     bool changed = false;
 
     bool shouldDraw = !options.showCollapsingHeader ||
-        ImGuiControls::CollapsingHeaderWithDot("SPRT Configuration", ImGuiTreeNodeFlags_Selected);
+        ImGuiControls::CollapsingHeaderWithDot("SPRT Configuration", QaplaUi::TreeNodeFlags::Selected);
 
     if (shouldDraw) {
-        ImGui::PushID("sprtConfig");
-        ImGui::Indent(options.indent);
+        QaplaUi::pushId("sprtConfig");
+        QaplaUi::indent(options.indent);
 
         if (options.showEloLower) {
             changed |= drawEloLower(options.inputWidth);
@@ -58,12 +58,12 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
 
         // Validation hint for Elo bounds
         if (config_->eloH0 >= config_->eloH1) {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.4F, 0.4F, 1.0F));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, QaplaUi::Vec4(1.0F, 0.4F, 0.4F, 1.0F));
             ImGuiControls::textWrapped("Elo Lower must be less than Elo Upper.");
-            ImGui::PopStyleColor();
+            QaplaUi::popStyleColor();
         }
 
-        ImGui::Spacing();
+        QaplaUi::spacing();
 
         if (options.showAlpha) {
             changed |= drawAlpha(options.inputWidth);
@@ -73,7 +73,7 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
             changed |= drawBeta(options.inputWidth);
         }
 
-        ImGui::Spacing();
+        QaplaUi::spacing();
 
         if (options.showModel) {
             changed |= drawModel(options.inputWidth);
@@ -83,14 +83,14 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
             changed |= drawPentanomial();
         }
 
-        ImGui::Spacing();
+        QaplaUi::spacing();
 
         if (options.showMaxGames) {
             changed |= drawMaxGames(options.inputWidth);
         }
 
-        ImGui::Unindent(options.indent);
-        ImGui::PopID();
+        QaplaUi::unindent(options.indent);
+        QaplaUi::popId();
     }
 
     if (changed) {
@@ -101,7 +101,7 @@ bool ImGuiSprtConfiguration::draw(const DrawOptions& options) {
 }
 
 bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputFloat("Elo Lower (H0)", config_->eloH0, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Lower Elo bound (H0): null hypothesis threshold for SPRT test.\n"
@@ -111,7 +111,7 @@ bool ImGuiSprtConfiguration::drawEloLower(float inputWidth) {
 }
 
 bool ImGuiSprtConfiguration::drawEloUpper(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputFloat("Elo Upper (H1)", config_->eloH1, -1000.0F, 1000.0F);
     ImGuiControls::hooverTooltip(
         "Upper Elo bound (H1): alternative hypothesis threshold for SPRT test.\n"
@@ -121,29 +121,29 @@ bool ImGuiSprtConfiguration::drawEloUpper(float inputWidth) {
 }
 
 bool ImGuiSprtConfiguration::drawAlpha(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputPromille("Alpha (\xe2\x80\xb0)", config_->alpha, 0.001, 0.5, 0.001);
     ImGuiControls::hooverTooltip(
         "Type I error rate (false positive): probability of rejecting H0 when it's true.\n"
         "Lower values mean more confidence but require more games.");
-    ImGui::SameLine();
-    ImGui::Text("(%.3f)", config_->alpha);
+    QaplaUi::sameLine();
+    QaplaUi::text(std::format("({:.3f})", config_->alpha));
     return changed;
 }
 
 bool ImGuiSprtConfiguration::drawBeta(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputPromille("Beta (\xe2\x80\xb0)", config_->beta, 0.001, 0.5, 0.001);
     ImGuiControls::hooverTooltip(
         "Type II error rate (false negative): probability of accepting H0 when H1 is true.\n"
         "Lower values mean more confidence but require more games.");
-    ImGui::SameLine();
-    ImGui::Text("(%.3f)", config_->beta);
+    QaplaUi::sameLine();
+    QaplaUi::text(std::format("({:.3f})", config_->beta));
     return changed;
 }
 
 bool ImGuiSprtConfiguration::drawMaxGames(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputInt<uint32_t>("Max Games", config_->maxGames, 1, 1000000);
     ImGuiControls::hooverTooltip(
         "Maximum number of games before test terminates inconclusively.\n"
@@ -152,7 +152,7 @@ bool ImGuiSprtConfiguration::drawMaxGames(float inputWidth) {
 }
 
 bool ImGuiSprtConfiguration::drawModel(float inputWidth) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     static const std::vector<std::string> modelOptions = {"normalized", "logistic", "bayesian"};
     bool changed = ImGuiControls::selectionBox("SPRT Model", config_->model, modelOptions);
     ImGuiControls::hooverTooltip(
@@ -173,7 +173,7 @@ bool ImGuiSprtConfiguration::drawPentanomial() {
     // Gray out checkbox if bayesian is selected
     bool isBayesian = (config_->model == "bayesian");
     if (isBayesian) {
-        ImGui::BeginDisabled();
+        QaplaUi::beginDisabled();
     }
     
     bool changed = ImGuiControls::checkbox("Use Pentanomial", config_->pentanomial);
@@ -183,12 +183,12 @@ bool ImGuiSprtConfiguration::drawPentanomial() {
         "Note: Not available with bayesian model.");
     
     if (isBayesian) {
-        ImGui::EndDisabled();
+        QaplaUi::endDisabled();
     }
     
     // Show warning if pentanomial is selected with bayesian
     if (config_->pentanomial && isBayesian) {
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         ImGuiControls::annotate("Not available with bayesian model");
     }
     

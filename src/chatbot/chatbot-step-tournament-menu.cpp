@@ -22,7 +22,7 @@
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -56,15 +56,15 @@ std::string ChatbotStepTournamentMenu::draw() {
 
     QaplaWindows::ImGuiControls::textWrapped("What would you like to do?\n");
     if (!saved_) {
-        ImGui::Spacing();
+        QaplaUi::spacing();
         std::string warningText = std::string("Starting a new ") + getTournamentName() + 
             " will delete the existing one.\n"
             "Save the current " + getTournamentName() + " to a file if you want to keep it.";
         QaplaWindows::ImGuiControls::textWrapped(warningText.c_str());
     }
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
 
     std::string newButtonLabel = std::string("New ") + getTournamentName();
     if (QaplaWindows::ImGuiControls::textButton(newButtonLabel.c_str())) {
@@ -74,7 +74,7 @@ std::string ChatbotStepTournamentMenu::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Create a new tournament. The currently loaded tournament will be discarded unless you save it first.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     std::string saveButtonLabel = std::string("Save ") + getTournamentName();
     if (QaplaWindows::ImGuiControls::textButton(saveButtonLabel.c_str())) {
@@ -88,7 +88,7 @@ std::string ChatbotStepTournamentMenu::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Save the current tournament to a file so you can load it later.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     std::string loadButtonLabel = std::string("Load ") + getTournamentName();
     if (QaplaWindows::ImGuiControls::textButton(loadButtonLabel.c_str())) {
         finished_ = true;
@@ -96,7 +96,7 @@ std::string ChatbotStepTournamentMenu::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Load a previously saved tournament from disk and replace the current tournament.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         return "stop";

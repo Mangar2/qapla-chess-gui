@@ -80,36 +80,36 @@ int32_t adjustStepSizeForSmallWindow(int32_t stepSize, float chartHeight, int32_
  * @brief Draws a horizontal grid line with tick mark and label on the Y-axis.
  */
 void drawYAxisGridLine(
-    ImDrawList* drawList,
+    QaplaUi::DrawList* drawList,
     float y,
     float chartMinX,
     float chartMaxX,
     int32_t value,
-    ImU32 gridColor,
-    ImU32 axisColor,
-    ImU32 textColor
+    QaplaUi::Color32 gridColor,
+    QaplaUi::Color32 axisColor,
+    QaplaUi::Color32 textColor
 ) {
     // Grid line
-    drawList->AddLine(
-        ImVec2(chartMinX, y),
-        ImVec2(chartMaxX, y),
+    drawList->addLine(
+        QaplaUi::Vec2(chartMinX, y),
+        QaplaUi::Vec2(chartMaxX, y),
         gridColor,
         1.0F
     );
     
     // Tick mark
-    drawList->AddLine(
-        ImVec2(chartMinX - 3, y),
-        ImVec2(chartMinX + 3, y),
+    drawList->addLine(
+        QaplaUi::Vec2(chartMinX - 3, y),
+        QaplaUi::Vec2(chartMinX + 3, y),
         axisColor,
         1.0F
     );
     
     // Label
     std::string label = std::to_string(value / 100);
-    ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-    drawList->AddText(
-        ImVec2(chartMinX - textSize.x - 8, y - textSize.y * 0.5F),
+    QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(label.c_str());
+    drawList->addText(
+        QaplaUi::Vec2(chartMinX - textSize.x - 8, y - textSize.y * 0.5F),
         textColor,
         label.c_str()
     );
@@ -177,7 +177,7 @@ void ImGuiBarChart::calculateScale(int32_t& minValue, int32_t& maxValue, int32_t
     scale = niceScale * 2;
 }
 
-ImVec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
+QaplaUi::Vec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const {
     float x = chartMin.x + moveIndex * (config_.barWidth + config_.barSpacing);
     
     float yNormalized = static_cast<float>(value - minValue) / static_cast<float>(scale);
@@ -186,12 +186,12 @@ ImVec2 ImGuiBarChart::valueToPixel(float moveIndex, int32_t value, const ImVec2&
     return {x, y};
 }
 
-void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
+void ImGuiBarChart::drawXAxis(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const {
     float zeroY = chartMax.y - (static_cast<float>(0 - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
     
-    drawList->AddLine(
-        ImVec2(chartMin.x - 5, zeroY),
-        ImVec2(chartMax.x + 10, zeroY),
+    drawList->addLine(
+        QaplaUi::Vec2(chartMin.x - 5, zeroY),
+        QaplaUi::Vec2(chartMax.x + 10, zeroY),
         config_.axisColor,
         2.0F
     );
@@ -201,7 +201,7 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     }
     
     float availableWidth = chartMax.x - chartMin.x;
-    float avgLabelWidth = ImGui::CalcTextSize("100").x;
+    float avgLabelWidth = QaplaUi::calcTextSize("100").x;
     float minLabelSpacing = avgLabelWidth * 1.5F;
     
     int maxLabels = static_cast<int>(availableWidth / minLabelSpacing);
@@ -229,17 +229,17 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         
         float x = chartMin.x + arrayIndex * (config_.barWidth + config_.barSpacing) + config_.barWidth * 0.5F;
         
-        drawList->AddLine(
-            ImVec2(x, zeroY - 3),
-            ImVec2(x, zeroY + 3),
+        drawList->addLine(
+            QaplaUi::Vec2(x, zeroY - 3),
+            QaplaUi::Vec2(x, zeroY + 3),
             config_.axisColor,
             1.0F
         );
         
         std::string label = std::to_string(moveNumber / 2);
-        ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-        drawList->AddText(
-            ImVec2(x - textSize.x * 0.5F, zeroY + 8),
+        QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(label.c_str());
+        drawList->addText(
+            QaplaUi::Vec2(x - textSize.x * 0.5F, zeroY + 8),
             config_.textColor,
             label.c_str()
         );
@@ -247,16 +247,16 @@ void ImGuiBarChart::drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
 }
 
 
-void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t maxValue, int32_t scale) const {
-    drawList->AddLine(
-        ImVec2(chartMin.x, chartMin.y - 10),
-        ImVec2(chartMin.x, chartMax.y + 10),
+void ImGuiBarChart::drawYAxis(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t maxValue, int32_t scale) const {
+    drawList->addLine(
+        QaplaUi::Vec2(chartMin.x, chartMin.y - 10),
+        QaplaUi::Vec2(chartMin.x, chartMax.y + 10),
         config_.axisColor,
         2.0F
     );
     
     float chartHeight = chartMax.y - chartMin.y;
-    float textHeight = ImGui::GetTextLineHeight();
+    float textHeight = QaplaUi::getTextLineHeight();
     float minLabelSpacing = textHeight * 1.5F;
     
     int maxLabels = static_cast<int>(chartHeight / minLabelSpacing);
@@ -275,17 +275,17 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
         int32_t value = 0;
         float y = chartMax.y - (static_cast<float>(value - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
         
-        drawList->AddLine(
-            ImVec2(chartMin.x - 3, y),
-            ImVec2(chartMin.x + 3, y),
+        drawList->addLine(
+            QaplaUi::Vec2(chartMin.x - 3, y),
+            QaplaUi::Vec2(chartMin.x + 3, y),
             config_.axisColor,
             1.0F
         );
         
         std::string label = "0";
-        ImVec2 textSize = ImGui::CalcTextSize(label.c_str());
-        drawList->AddText(
-            ImVec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5F),
+        QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(label.c_str());
+        drawList->addText(
+            QaplaUi::Vec2(chartMin.x - textSize.x - 8, y - textSize.y * 0.5F),
             config_.textColor,
             label.c_str()
         );
@@ -313,27 +313,27 @@ void ImGuiBarChart::drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, cons
     }
 }
 
-void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const {
+void ImGuiBarChart::drawBars(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const {
     float zeroY = chartMax.y - (static_cast<float>(0 - minValue) / static_cast<float>(scale)) * (chartMax.y - chartMin.y);
     
     for (size_t i = 0; i < values_.size(); ++i) {
         int32_t value = values_[i];
         
         bool isWhiteMove = (i % 2 == 0);
-        ImU32 fillColor = isWhiteMove ? config_.whiteBarFill : config_.blackBarFill;
-        ImU32 borderColor = isWhiteMove ? config_.whiteBarBorder : config_.blackBarBorder;
+        QaplaUi::Color32 fillColor = isWhiteMove ? config_.whiteBarFill : config_.blackBarFill;
+        QaplaUi::Color32 borderColor = isWhiteMove ? config_.whiteBarBorder : config_.blackBarBorder;
         
         float barX = chartMin.x + i * (config_.barWidth + config_.barSpacing);
-        ImVec2 valuePixel = valueToPixel(static_cast<float>(i), value, chartMin, chartMax, minValue, scale);
+        QaplaUi::Vec2 valuePixel = valueToPixel(static_cast<float>(i), value, chartMin, chartMax, minValue, scale);
         
-        ImVec2 barMin;
-        ImVec2 barMax;
+        QaplaUi::Vec2 barMin;
+        QaplaUi::Vec2 barMax;
         if (value >= 0) {
-            barMin = ImVec2(barX, std::min(valuePixel.y, zeroY));
-            barMax = ImVec2(barX + config_.barWidth, std::max(valuePixel.y, zeroY));
+            barMin = QaplaUi::Vec2(barX, std::min(valuePixel.y, zeroY));
+            barMax = QaplaUi::Vec2(barX + config_.barWidth, std::max(valuePixel.y, zeroY));
         } else {
-            barMin = ImVec2(barX, std::min(zeroY, valuePixel.y));
-            barMax = ImVec2(barX + config_.barWidth, std::max(zeroY, valuePixel.y));
+            barMin = QaplaUi::Vec2(barX, std::min(zeroY, valuePixel.y));
+            barMax = QaplaUi::Vec2(barX + config_.barWidth, std::max(zeroY, valuePixel.y));
         }
         
         // Ensure minimum bar height for visibility
@@ -345,8 +345,8 @@ void ImGuiBarChart::drawBars(ImDrawList* drawList, const ImVec2& chartMin, const
             }
         }
         
-        drawList->AddRectFilled(barMin, barMax, fillColor);
-        drawList->AddRect(barMin, barMax, borderColor, 0.0F, 0, 1.0F);
+        drawList->addRectFilled(barMin, barMax, fillColor);
+        drawList->addRect(barMin, barMax, borderColor, 0.0F, 1.0F);
     }
 }
 
@@ -357,11 +357,11 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
     int32_t scale;
     calculateScale(minValue, maxValue, scale);
     
-    ImVec2 canvasPos = ImGui::GetCursorScreenPos();
-    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+    QaplaUi::Vec2 canvasPos = QaplaUi::getCursorScreenPos();
+    QaplaUi::Vec2 canvasSize = QaplaUi::getContentRegionAvail();
 
-    auto chartMin = ImVec2(canvasPos.x + config_.leftMargin, canvasPos.y + config_.verticalMargin);
-    auto chartMax = ImVec2(canvasPos.x + canvasSize.x - config_.rightMargin, 
+    auto chartMin = QaplaUi::Vec2(canvasPos.x + config_.leftMargin, canvasPos.y + config_.verticalMargin);
+    auto chartMax = QaplaUi::Vec2(canvasPos.x + canvasSize.x - config_.rightMargin, 
         canvasPos.y + canvasSize.y - config_.verticalMargin);
 
     float availableWidth = chartMax.x - chartMin.x;
@@ -380,12 +380,12 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
     BarChartConfig originalConfig = config_;
     const_cast<ImGuiBarChart*>(this)->config_ = tempConfig;
     
-    bool clicked = ImGui::InvisibleButton("chart", canvasSize);
+    bool clicked = QaplaUi::invisibleButton("chart", canvasSize);
     std::optional<uint32_t> clickedHalfMove = std::nullopt;
     
     // Check for click detection
     if (clicked && !values_.empty()) {
-        ImVec2 mousePos = ImGui::GetMousePos();
+        QaplaUi::Vec2 mousePos = QaplaUi::getMousePos();
         // Check if click is within chart area
         if (mousePos.x >= chartMin.x && mousePos.x <= chartMax.x &&
             mousePos.y >= chartMin.y && mousePos.y <= chartMax.y) {
@@ -405,7 +405,7 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
         }
     }
     
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
     
     drawYAxis(drawList, chartMin, chartMax, minValue, maxValue, scale);
     drawBars(drawList, chartMin, chartMax, minValue, scale);
@@ -414,9 +414,9 @@ std::optional<uint32_t> ImGuiBarChart::draw() {
     const_cast<ImGuiBarChart*>(this)->config_ = originalConfig;
     
     std::string title = config_.title;
-    ImVec2 titleSize = ImGui::CalcTextSize(title.c_str());
-    drawList->AddText(
-        ImVec2(canvasPos.x + (canvasSize.x - titleSize.x) * 0.5F, canvasPos.y + 5),
+    QaplaUi::Vec2 titleSize = QaplaUi::calcTextSize(title.c_str());
+    drawList->addText(
+        QaplaUi::Vec2(canvasPos.x + (canvasSize.x - titleSize.x) * 0.5F, canvasPos.y + 5),
         config_.textColor,
         title.c_str()
     );

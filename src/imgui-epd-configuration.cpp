@@ -22,7 +22,7 @@
 #include "os-dialogs.h"
 #include "epd-data.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows {
 
@@ -30,24 +30,24 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
     const Tutorial::TutorialContext& tutorialContext) {
     
     bool changed = false;
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Selected;
+    QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::Selected;
     if (options.alwaysOpen) {
-        flags |= ImGuiTreeNodeFlags_Leaf;
+        flags |= QaplaUi::TreeNodeFlags::Leaf;
     }
 
     if (!ImGuiControls::CollapsingHeaderWithDot("Configuration", flags, tutorialContext.highlight)) {
         return false;
     }
 
-    ImGui::PushID("epd-config");
-    ImGui::Indent(indent);
+    QaplaUi::pushId("epd-config");
+    QaplaUi::indent(indent);
 
     auto& config = EpdData::instance().config();
     constexpr int maxSeenPlies = 32;
     constexpr uint64_t maxTimeInS = 3600ULL * 24ULL * 365ULL;
 
     if (options.showSeenPlies) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Seen plies", config.seenPlies, 1, maxSeenPlies);
         ImGuiControls::hooverTooltip("Number of plies to play from position before starting engine analysis");
         
@@ -59,7 +59,7 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
     }
 
     if (options.showMaxTime) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint64_t>("Max time (s)", config.maxTimeInS, 1, maxTimeInS, 1, 100);
         ImGuiControls::hooverTooltip("Maximum analysis time per position in seconds");
         
@@ -71,7 +71,7 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
     }
 
     if (options.showMinTime) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint64_t>("Min time (s)", config.minTimeInS, 1, maxTimeInS, 1, 100);
         ImGuiControls::hooverTooltip("Minimum analysis time per position in seconds");
         
@@ -83,7 +83,7 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
     }
 
     if (options.showFilePath) {
-        ImGui::Spacing();
+        QaplaUi::spacing();
         changed |= ImGuiControls::existingFileInput("Epd or RAW position file:", config.filepath,
             []() { const auto files = OsDialogs::openEpdFile(); return files.empty() ? std::string{} : files.front(); },
             inputWidth * 2.0F);
@@ -96,8 +96,8 @@ bool ImGuiEpdConfiguration::draw(const DrawOptions& options, float inputWidth, f
         }
     }
 
-    ImGui::Unindent(indent);
-    ImGui::PopID();
+    QaplaUi::unindent(indent);
+    QaplaUi::popId();
 
     if (changed) {
         updateConfiguration();

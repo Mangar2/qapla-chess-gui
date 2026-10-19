@@ -22,7 +22,7 @@
 #include "callback-manager.h"
 #include "tutorial.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <format>
 
 namespace QaplaWindows::ChatBot {
@@ -265,9 +265,9 @@ std::string ChatbotStepTutorialRunner::draw() {
     const auto& entry = Tutorial::instance().getEntry(tutorialName_);
 
     // Display header
-    ImGui::TextColored(StepColors::SUCCESS_COLOR, "Tutorial: %s", entry.displayName.c_str());
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::textColored(StepColors::SUCCESS_COLOR, "Tutorial: " + entry.displayName);
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     // Display all captured messages
     if (capturedMessages_.empty()) {
@@ -286,22 +286,22 @@ std::string ChatbotStepTutorialRunner::draw() {
 
             // Separator between messages
             if (i < capturedMessages_.size() - 1) {
-                ImGui::Separator();
+                QaplaUi::separator();
             }
         }
     }
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     // Check if waiting for user acknowledgement
     if (Tutorial::instance().doWaitForUserInput()) {
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
         if (ImGuiControls::textButton("Continue")) {
             // Acknowledge and advance to next step
             Tutorial::instance().requestNextTutorialStep(tutorialName_, false);
         }
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (ImGuiControls::textButton("Stop Tutorial")) {
             removeFilter();
             Tutorial::instance().finishTutorial(tutorialName_);
@@ -314,8 +314,8 @@ std::string ChatbotStepTutorialRunner::draw() {
 
     // Check if tutorial is completed
     if (!entry.running()) {
-        ImGui::TextColored(StepColors::SUCCESS_COLOR, "Tutorial completed!");
-        ImGui::Spacing();
+        QaplaUi::textColored(StepColors::SUCCESS_COLOR, "Tutorial completed!");
+        QaplaUi::spacing();
         
         if (ImGuiControls::textButton("Close")) {
             removeFilter();
@@ -325,7 +325,7 @@ std::string ChatbotStepTutorialRunner::draw() {
     } else {
         // Show progress
         ImGuiControls::textDisabled(std::format("Progress: {} / {}", entry.counter, entry.messages.size()));
-        ImGui::Spacing();
+        QaplaUi::spacing();
 
         // Cancel button
         if (ImGuiControls::textButton("Stop Tutorial")) {
@@ -358,21 +358,21 @@ std::string ChatbotStepTutorialSnackbarInfo::draw() {
     const auto& entry = Tutorial::instance().getEntry(tutorialName_);
 
     // Display header
-    ImGui::TextColored(StepColors::SUCCESS_COLOR, "Tutorial: %s", entry.displayName.c_str());
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::textColored(StepColors::SUCCESS_COLOR, "Tutorial: " + entry.displayName);
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     // Explain that this tutorial runs via snackbar
     ImGuiControls::textWrapped(
         "This tutorial runs via notification messages while the board stays in the foreground.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
     ImGuiControls::textWrapped(
         "The tutorial messages will appear as notifications on screen. "
         "You can also view all messages in the chatbot under 'Messages'.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     // Switch to board & finish button
     if (ImGuiControls::textButton("Switch to Board & Start")) {
@@ -388,7 +388,7 @@ std::string ChatbotStepTutorialSnackbarInfo::draw() {
     QaplaWindows::ImGuiControls::hooverTooltip(
         "Switch to the board view and start the tutorial. Messages will appear as notifications.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     // Cancel button
     if (ImGuiControls::textButton("Cancel")) {

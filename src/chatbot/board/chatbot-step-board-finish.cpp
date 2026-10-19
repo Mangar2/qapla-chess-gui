@@ -4,7 +4,7 @@
 #include "../../callback-manager.h"
 #include "../../interactive-board-window.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <format>
 
 namespace QaplaWindows::ChatBot {
@@ -36,15 +36,15 @@ std::string ChatbotStepBoardFinish::draw() {
     }
 
     QaplaWindows::ImGuiControls::textWrapped("Board setup complete! You can now:");
-    ImGui::Spacing();
+    QaplaUi::spacing();
     QaplaWindows::ImGuiControls::textWrapped(
         "• Switch to the board view to start playing or analyzing");
     QaplaWindows::ImGuiControls::textWrapped(
         "• Return to the main menu to configure something else");
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     
     if (QaplaWindows::ImGuiControls::textButton("Switch to Board View")) {
         // Activate engines only once when button is clicked
@@ -59,7 +59,7 @@ std::string ChatbotStepBoardFinish::draw() {
     QaplaWindows::ImGuiControls::hooverTooltip(
         "Open the board view to start playing or analyzing positions.");
     
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         // Activate engines only once when button is clicked

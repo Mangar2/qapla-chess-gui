@@ -3,28 +3,28 @@
 #include "imgui-controls.h"
 #include "i18n.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
 std::string ChatbotStepBoardSelect::draw() {
     if (!finished_) {
         QaplaWindows::ImGuiControls::textWrapped("Select the board you want to use.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
         
         if (QaplaWindows::ImGuiControls::textButton("Use Board 1")) {
             finished_ = true;
             return "board:1";
         }
 
-        ImGui::SameLine();
+        QaplaUi::sameLine();
 
         if (QaplaWindows::ImGuiControls::textButton("Create new board")) {
             finished_ = true;
             return "board:new";
         }
 
-        ImGui::Spacing();
+        QaplaUi::spacing();
     } else {
         QaplaWindows::ImGuiControls::textWrapped("Board selection completed.");
     }

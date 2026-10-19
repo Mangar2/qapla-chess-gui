@@ -22,7 +22,7 @@
 #include <chess-game/game-record.h>
 #include <base-elements/change-tracker.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 #include <vector>
 #include <string>
@@ -46,16 +46,16 @@ namespace QaplaWindows {
         float rightMargin = 20.0F;
         
         // Colors for alternating bars (white/black moves)
-        ImU32 whiteBarFill = IM_COL32(220, 220, 255, 180);    // Light fill for white
-        ImU32 whiteBarBorder = IM_COL32(100, 100, 150, 255);  // Border for white
+        QaplaUi::Color32 whiteBarFill = QaplaUi::col32(220, 220, 255, 180);    // Light fill for white
+        QaplaUi::Color32 whiteBarBorder = QaplaUi::col32(100, 100, 150, 255);  // Border for white
         
-        ImU32 blackBarFill = IM_COL32(140, 140, 160, 180);    // Darker fill for black
-        ImU32 blackBarBorder = IM_COL32(60, 60, 80, 255);     // Border for black
+        QaplaUi::Color32 blackBarFill = QaplaUi::col32(140, 140, 160, 180);    // Darker fill for black
+        QaplaUi::Color32 blackBarBorder = QaplaUi::col32(60, 60, 80, 255);     // Border for black
         
         // Axis colors
-        ImU32 axisColor = IM_COL32(150, 150, 150, 255);
-        ImU32 textColor = IM_COL32(200, 200, 200, 255);
-        ImU32 gridColor = IM_COL32(100, 100, 100, 100);
+        QaplaUi::Color32 axisColor = QaplaUi::col32(150, 150, 150, 255);
+        QaplaUi::Color32 textColor = QaplaUi::col32(200, 200, 200, 255);
+        QaplaUi::Color32 gridColor = QaplaUi::col32(100, 100, 100, 100);
 
         // Title of the chart
         std::string title = "Evaluation";
@@ -133,7 +133,7 @@ namespace QaplaWindows {
          * @param minValue Minimum scale value for zero line calculation
          * @param scale Total scale range for zero line calculation
          */
-        void drawXAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const;
+        void drawXAxis(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const;
 
         /**
          * Draws the Y-axis with centipawn value labels and grid lines
@@ -145,7 +145,7 @@ namespace QaplaWindows {
          * @param maxValue Maximum scale value
          * @param scale Total scale range
          */
-        void drawYAxis(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t maxValue, int32_t scale) const;
+        void drawYAxis(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t maxValue, int32_t scale) const;
 
         /**
          * Draws individual bars representing centipawn values for each move
@@ -156,7 +156,7 @@ namespace QaplaWindows {
          * @param minValue Minimum scale value for positioning
          * @param scale Total scale range for positioning
          */
-        void drawBars(ImDrawList* drawList, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const;
+        void drawBars(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const;
 
         /**
          * Converts a data point to pixel coordinates within the chart area
@@ -168,7 +168,7 @@ namespace QaplaWindows {
          * @param scale Total scale range
          * @return Pixel coordinates for the data point
          */
-        ImVec2 valueToPixel(float moveIndex, int32_t value, const ImVec2& chartMin, const ImVec2& chartMax, int32_t minValue, int32_t scale) const;
+        QaplaUi::Vec2 valueToPixel(float moveIndex, int32_t value, const QaplaUi::Vec2& chartMin, const QaplaUi::Vec2& chartMax, int32_t minValue, int32_t scale) const;
     };
 
 } // namespace QaplaWindows

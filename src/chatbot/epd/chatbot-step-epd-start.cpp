@@ -21,7 +21,7 @@
 #include "epd-data.h"
 #include "imgui-controls.h"
 #include "callback-manager.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -42,23 +42,23 @@ std::string ChatbotStepEpdStart::draw() {
 
     if (!epdData.isRunning()) {
         QaplaWindows::ImGuiControls::textWrapped("Configure EPD analysis concurrency and start:");
-        ImGui::Spacing();
+        QaplaUi::spacing();
         
         auto concurrency = epdData.getExternalConcurrency();
         ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, 16);
         epdData.setExternalConcurrency(concurrency);
         QaplaWindows::ImGuiControls::hooverTooltip("Number of positions to analyze in parallel");
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
 
         if (QaplaWindows::ImGuiControls::textButton("Start Analysis")) {
             epdData.analyse();
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Begin analyzing the selected EPD/RAW positions using configured engines and concurrency.");
 
-        ImGui::SameLine();
+        QaplaUi::sameLine();
 
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
@@ -66,21 +66,21 @@ std::string ChatbotStepEpdStart::draw() {
         }
     } else {
         QaplaWindows::ImGuiControls::textWrapped("The EPD analysis started successfully!");
-        ImGui::Spacing();
+        QaplaUi::spacing();
         QaplaWindows::ImGuiControls::textWrapped(
             "You can switch between the running analyses and the chatbot using the tabs at the top of the window. "
             "Each position has its own tab, so you can easily navigate between them.");
         
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
         
         if (QaplaWindows::ImGuiControls::textButton("Switch to EPD View")) {
             StaticCallbacks::message().invokeAll("switch_to_epd_view");
             finished_ = true;
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Open the EPD view to monitor running analyses and navigate positions.");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;
         }

@@ -21,7 +21,7 @@
 #include "analysis-data.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -37,7 +37,7 @@ std::string ChatbotStepAnalysisOutput::draw() {
     ImGuiControls::textWrapped(
         "Where should the analysed games be written? Each game is written again with the "
         "evaluations the engine found, once per analysing engine.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     auto& analysisData = AnalysisData::instance();
     auto& outputPgn = analysisData.outputPgn();
@@ -54,24 +54,24 @@ std::string ChatbotStepAnalysisOutput::draw() {
     const auto& pgnOptions = outputPgn.pgnOptions();
     const auto validation = validate(pgnOptions.file, pgnOptions.append);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     drawStatusMessage(validation);
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     const char* continueLabel = validation.willOverwrite ? "Overwrite & Continue" : "Continue";
 
-    ImGui::BeginDisabled(!validation.isValidPath || validation.isInputFile);
+    QaplaUi::beginDisabled(!validation.isValidPath || validation.isInputFile);
     if (ImGuiControls::textButton(continueLabel)) {
         finished_ = true;
         summary_ = std::format("The analysed games go to {} ({}).", pgnOptions.file,
             pgnOptions.append ? "append" : "overwrite");
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (ImGuiControls::textButton(optionsLabel)) {
@@ -79,7 +79,7 @@ std::string ChatbotStepAnalysisOutput::draw() {
     }
     ImGuiControls::hooverTooltip("Show or hide what is written into the move comments.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;
@@ -122,31 +122,31 @@ ChatbotStepAnalysisOutput::ValidationResult ChatbotStepAnalysisOutput::validate(
 
 void ChatbotStepAnalysisOutput::drawStatusMessage(const ValidationResult& validation) {
     if (!validation.isValidPath) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         ImGuiControls::textWrapped("Please enter a valid file path. The directory must exist.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
         return;
     }
     if (validation.isInputFile) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         ImGuiControls::textWrapped(
             "This is the file the games are read from. Choose another one, so that the games "
             "being analysed stay as they are.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
         return;
     }
     if (validation.willOverwrite) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::WARNING_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::WARNING_COLOR);
         ImGuiControls::textWrapped(
             "Warning: the file exists and overwrite mode is on. Its content is replaced when the "
             "analysis starts.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
         return;
     }
     if (validation.fileExists) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::SUCCESS_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::SUCCESS_COLOR);
         ImGuiControls::textWrapped("The file exists. The analysed games are appended to it.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 }
 

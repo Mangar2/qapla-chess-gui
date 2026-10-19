@@ -5,7 +5,7 @@
 #include "imgui-controls.h"
 #include "callback-manager.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -82,7 +82,7 @@ std::string ChatbotStepTournamentStart::draw() {
     if (!isRunning()) {
         std::string configMessage = std::string("Configure ") + getTournamentName() + " concurrency and start:";
         QaplaWindows::ImGuiControls::textWrapped(configMessage.c_str());
-        ImGui::Spacing();
+        QaplaUi::spacing();
         auto concurrency = getExternalConcurrency();
         ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, 16);
 
@@ -90,9 +90,9 @@ std::string ChatbotStepTournamentStart::draw() {
 
         QaplaWindows::ImGuiControls::hooverTooltip("Number of games to run in parallel");
 
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
 
         std::string startLabel = std::string("Start ") + getTournamentName();
         startLabel[6] = static_cast<char>(std::toupper(startLabel[6])); // Capitalize first letter after "Start "
@@ -102,7 +102,7 @@ std::string ChatbotStepTournamentStart::draw() {
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Start the tournament now with the specified concurrency and engine settings.");
 
-        ImGui::SameLine();
+        QaplaUi::sameLine();
 
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
@@ -112,13 +112,13 @@ std::string ChatbotStepTournamentStart::draw() {
         std::string successMessage = std::string("The ") + getTournamentName() + " started successfully!";
         successMessage[4] = static_cast<char>(std::toupper(successMessage[4])); // Capitalize tournament name
         QaplaWindows::ImGuiControls::textWrapped(successMessage.c_str());
-        ImGui::Spacing();
+        QaplaUi::spacing();
         QaplaWindows::ImGuiControls::textWrapped("You can switch between all running games and the chatbot using the tabs at the top of the window. "
             "Each game has its own tab, so you can easily navigate between them.");
         
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        QaplaUi::spacing();
+        QaplaUi::separator();
+        QaplaUi::spacing();
         
         std::string switchLabel = std::string("Switch to ") + getTournamentName() + " View";
         switchLabel[10] = static_cast<char>(std::toupper(switchLabel[10])); // Capitalize first letter
@@ -128,14 +128,14 @@ std::string ChatbotStepTournamentStart::draw() {
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Switch to the tournament view to inspect running games and progress.");
         
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Show Results")) {
             finished_ = true;
             return "show-result";
         }
         QaplaWindows::ImGuiControls::hooverTooltip("View the current tournament results.");
         
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Stay in Chatbot")) {
             finished_ = true;
         }

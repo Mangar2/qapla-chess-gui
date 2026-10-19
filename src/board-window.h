@@ -28,7 +28,7 @@
 #include <unordered_set>
 #include <utility>
 #include <string>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows
 {
@@ -92,7 +92,7 @@ namespace QaplaWindows
          */
         bool drawSetupButton(
             const std::string& button, const std::string& label,
-            const ImVec2& buttonSize) const;
+            const QaplaUi::Vec2& buttonSize) const;
 
         /**
          * @brief Determines the button state (normal, highlighted, disabled) based on the current setup mode and button type.
@@ -154,8 +154,8 @@ namespace QaplaWindows
          */
         std::string drawVisibleButtons(
             const std::vector<std::string>& visibleButtons,
-            ImVec2 startPos,
-            ImVec2 buttonSize,
+            QaplaUi::Vec2 startPos,
+            QaplaUi::Vec2 buttonSize,
             float buttonWidth,
             const std::string& status);
 

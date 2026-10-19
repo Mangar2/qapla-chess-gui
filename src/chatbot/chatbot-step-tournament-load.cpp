@@ -22,7 +22,7 @@
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
 #include "os-dialogs.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 

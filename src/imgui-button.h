@@ -20,7 +20,7 @@
 #pragma once
 
 #include <functional>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 #include <vector>
 
@@ -42,61 +42,61 @@ namespace QaplaButton {
         ButtonState state = ButtonState::Normal;
     };
 
-    using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
+    using IconDrawCallback = std::function<void(QaplaUi::DrawList*, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)>;
 
-    void drawNew(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawNew(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawNow(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawNow(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawStop(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawClear(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawCancel(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawCancel(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawGrace(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawRestart(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawRestart(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawConfig(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size);
+    void drawText(const std::string& text, QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size);
 
-    void drawPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawAnalyze(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawAutoPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawManualPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAdd(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawAdd(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawRemove(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawRemove(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawAutoDetect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawAutoDetect(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawSwapEngines(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawSwapEngines(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawSetup(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawSetup(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawSave(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawSave(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawOpen(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawOpen(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawTest(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawTest(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawFilter(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawCopy(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawCopy(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawPaste(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawPaste(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawMore(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawMore(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawTimeClock(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawTimeClock(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
-    void drawLog(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state = ButtonState::Normal);
+    void drawLog(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state = ButtonState::Normal);
 
     /**
      * @brief Shows a popup menu with selectable commands.
@@ -119,7 +119,7 @@ namespace QaplaButton {
      * @param disabled    Whether the button is disabled.
      * @return true if the button was clicked.
      */
-    bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
+    bool drawIconButton(const std::string& id, const std::string& label, QaplaUi::Vec2 size, ButtonState state,
         const IconDrawCallback& iconDraw = nullptr);
 
     /**
@@ -129,7 +129,7 @@ namespace QaplaButton {
      * @param label  The label text shown below the button.
      * @return Total size including label.
      */
-    ImVec2 calcIconButtonTotalSize(ImVec2 size, const char* label);
+    QaplaUi::Vec2 calcIconButtonTotalSize(QaplaUi::Vec2 size, const char* label);
 
     /**
      * @brief Calculates the total size required to render multiple icon buttons, including their labels.
@@ -144,6 +144,6 @@ namespace QaplaButton {
      * @return The total size (width and height) required to render all buttons, considering the largest
      *         dimensions among them.
      */
-    ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels);
+    QaplaUi::Vec2 calcIconButtonsTotalSize(QaplaUi::Vec2 buttonSize, const std::vector<std::string>& labels);
     
 } // namespace QaplaButton

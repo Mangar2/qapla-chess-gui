@@ -22,7 +22,7 @@
 
 #include <game-manager/game-manager-pool.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -236,7 +236,7 @@ void ClopData::fill(ImGuiTable& target, const QaplaTester::TableData& source) {
         // sizing policy that can honour it, and a computed width is still a width.
         target.setColumnHead(column,
             ImGuiTable::ColumnDef{.name = source.headers[column],
-                .flags = ImGuiTableColumnFlags_WidthFixed, .compute = true});
+                .flags = QaplaUi::TableColumnFlags::WidthFixed, .compute = true});
     }
 
     for (const auto& row : source.body) {
@@ -283,9 +283,9 @@ void ClopData::drawTables() {
     populateIndicatorTable();
     populateResultTable();
 
-    indicatorTable_.draw(ImVec2(0.0F, 0.0F), false);
-    ImGui::Spacing();
-    resultTable_.draw(ImVec2(0.0F, 0.0F), false);
+    indicatorTable_.draw(QaplaUi::Vec2(0.0F, 0.0F), false);
+    QaplaUi::spacing();
+    resultTable_.draw(QaplaUi::Vec2(0.0F, 0.0F), false);
 }
 
 void ClopData::pollData() {

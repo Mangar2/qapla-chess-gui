@@ -30,7 +30,7 @@
 #include <chess-game/engine-event.h>
 #include <qapla-engine/types.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <cmath>
 #include <sstream>
 #include <string>
@@ -55,43 +55,43 @@ static void renderReadonlyTextBoxes(const std::vector<std::string>& lines, size_
     constexpr float boxPaddingX = 4.0F;
     constexpr float boxPaddingY = 2.0F;
     constexpr float boxRounding = 2.0F;
-    constexpr ImU32 boxBgColor = IM_COL32(50, 52, 60, 255);
-    constexpr ImU32 boxBorderColor = IM_COL32(90, 90, 100, 255);
+    constexpr QaplaUi::Color32 boxBgColor = QaplaUi::col32(50, 52, 60, 255);
+    constexpr QaplaUi::Color32 boxBorderColor = QaplaUi::col32(90, 90, 100, 255);
 
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    float width = ImGui::CalcItemWidth();
-    float boxHeight = ImGui::GetFrameHeight();
-    float spacingY = ImGui::GetStyle().ItemSpacing.y;
+    QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+    float width = QaplaUi::calcItemWidth();
+    float boxHeight = QaplaUi::getFrameHeight();
+    float spacingY = QaplaUi::getStyle().itemSpacing.y;
 
     for (size_t i = 0; i < lines.size(); ++i) {
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        auto size = ImVec2(width, boxHeight);
+        QaplaUi::Vec2 pos = QaplaUi::getCursorScreenPos();
+        auto size = QaplaUi::Vec2(width, boxHeight);
 
-        drawList->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
-        drawList->AddRect(pos, ImVec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
-		drawList->PushClipRect(pos, ImVec2(pos.x + size.x - 4.0F, pos.y + size.y), true);
-        auto textTopLeft = ImVec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
-        ImGui::SetCursorScreenPos(textTopLeft);
+        drawList->addRectFilled(pos, QaplaUi::Vec2(pos.x + size.x, pos.y + size.y), boxBgColor, boxRounding);
+        drawList->addRect(pos, QaplaUi::Vec2(pos.x + size.x, pos.y + size.y), boxBorderColor, boxRounding);
+		drawList->pushClipRect(pos, QaplaUi::Vec2(pos.x + size.x - 4.0F, pos.y + size.y), true);
+        auto textTopLeft = QaplaUi::Vec2(pos.x + boxPaddingX, pos.y + boxPaddingY);
+        QaplaUi::setCursorScreenPos(textTopLeft);
         if (i == 0 && index <= 1) {
             FontManager::drawPiece(drawList, index == 0 ? QaplaBasics::WHITE_KING : QaplaBasics::BLACK_KING);
-            ImGui::SetCursorScreenPos(ImVec2(textTopLeft.x + 20, textTopLeft.y));
+            QaplaUi::setCursorScreenPos(QaplaUi::Vec2(textTopLeft.x + 20, textTopLeft.y));
         }
-        ImGui::TextUnformatted(lines[i].c_str());
-		drawList->PopClipRect();
-        ImGui::SetCursorScreenPos(ImVec2(pos.x, pos.y + size.y + spacingY));
+        QaplaUi::text(lines[i].c_str());
+		drawList->popClipRect();
+        QaplaUi::setCursorScreenPos(QaplaUi::Vec2(pos.x, pos.y + size.y + spacingY));
     }
 }
 
 static void drawEngineInfo(const EngineRecord& record, size_t index) {
-    ImGui::Indent(5.0F);
-    ImGui::PushID("EngineInfo");
+    QaplaUi::indent(5.0F);
+    QaplaUi::pushId("EngineInfo");
     std::string name = record.config.getName();
 	std::string status = EngineRecord::to_string(record.status);
 	std::string memory = record.memoryUsageB ? 
         ", " + std::to_string(*record.memoryUsageB / (1024 * 1024)) + " MB" : "";
 	renderReadonlyTextBoxes({ name, status + memory }, index);
-    ImGui::PopID();
-    ImGui::Unindent(5.0F);
+    QaplaUi::popId();
+    QaplaUi::unindent(5.0F);
 }
 
 
@@ -254,21 +254,21 @@ void ImGuiEngineList::addTables(size_t size) {
 		infoCnt_.push_back(0);
         infoTables_.emplace_back(
             std::make_unique<ImGuiTable>(std::format("EngineTable{}", i),
-                ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
+                QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit,
                 std::vector<ImGuiTable::ColumnDef>{
-                    { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                    { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                    { .name = "Nodes", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 90.0F, .alignRight = true },
-                    { .name = "NPS", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
-                    { .name = "Tb hits", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
-                    { .name = "Value", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 65.0F, .alignRight = true },
-                    { .name = "Primary variant", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 1660.0F }
+                    { .name = "Depth", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Time", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                    { .name = "Nodes", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 90.0F, .alignRight = true },
+                    { .name = "NPS", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 60.0F, .alignRight = true },
+                    { .name = "Tb hits", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true },
+                    { .name = "Value", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 65.0F, .alignRight = true },
+                    { .name = "Primary variant", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 1660.0F }
             }),
             std::make_unique<ImGuiTable>(std::format("EngineLogTable{}", i),
-                ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit,
+                QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit,
                 std::vector<ImGuiTable::ColumnDef>{
-                    { .name = "Count", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
-                    { .name = "Log Entry", .flags = ImGuiTableColumnFlags_WidthStretch, .width = 1800.0F }
+                    { .name = "Count", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 60.0F, .alignRight = true },
+                    { .name = "Log Entry", .flags = QaplaUi::TableColumnFlags::WidthStretch, .width = 1800.0F }
             })
         );
         infoTables_[i].infoTable_->setClickable(true);
@@ -348,24 +348,24 @@ static std::string drawButtons(bool showLog) {
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
     std::vector<std::string> buttons{ "Restart", "Stop", "Log" };
-    ImVec2 topLeft = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 topLeft = QaplaUi::getCursorScreenPos();
 	topLeft.x = std::round(topLeft.x);
 	topLeft.y = std::round(topLeft.y);
-    auto curPos = ImVec2(topLeft.x + leftOffset, topLeft.y + topOffset);
+    auto curPos = QaplaUi::Vec2(topLeft.x + leftOffset, topLeft.y + topOffset);
 
-    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
+    constexpr QaplaUi::Vec2 buttonSize = { 25.0F, 25.0F };
 
     auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
     
     std::string command;
     for (const auto& button : buttons) {
-        ImGui::SetCursorScreenPos(curPos);
+        QaplaUi::setCursorScreenPos(curPos);
         QaplaButton::ButtonState state = QaplaButton::ButtonState::Normal;
         if (button == "Log" && showLog) {
             state = QaplaButton::ButtonState::Active;
         }
         if (QaplaButton::drawIconButton(button, button, buttonSize, state,
-            [&button, &state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+            [&button, &state](QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
                 if (button == "Restart") {
                     QaplaButton::drawRestart(drawList, topLeft, size, state);
                     ImGuiControls::hooverTooltip("Restart the engine process");
@@ -385,31 +385,31 @@ static std::string drawButtons(bool showLog) {
         curPos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x, topLeft.y + totalSize.y + topOffset + bottomOffset));
     return command;
 }
 
-std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
+std::string ImGuiEngineList::drawEngineSpace(size_t index, QaplaUi::Vec2 size) {
 
     constexpr float cEngineInfoWidth = 160.0F;
     constexpr float cSectionSpacing = 4.0F;
     
     const bool isSmall = size.y < 100.0F;
     
-    const ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_TableRowBg);
+    const QaplaUi::Color32 bgColor = QaplaUi::getColorU32(QaplaUi::StyleColor::TableRowBg);
 
-    ImVec2 topLeft = ImGui::GetCursorScreenPos();
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    QaplaUi::Vec2 topLeft = QaplaUi::getCursorScreenPos();
+    QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
 
-    ImGui::PushID(std::to_string(index).c_str());
-    auto max = ImVec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
+    QaplaUi::pushId(std::to_string(index).c_str());
+    auto max = QaplaUi::Vec2(topLeft.x + cEngineInfoWidth + size.x + cSectionSpacing, topLeft.y + size.y);
 
-    drawList->AddRectFilled(topLeft, max, bgColor);
+    drawList->addRectFilled(topLeft, max, bgColor);
     ImGuiSeparator::Horizontal();
 
     std::string command = drawEngineArea(topLeft, drawList, max, cEngineInfoWidth, index, isSmall);
 
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x + cEngineInfoWidth, topLeft.y));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x + cEngineInfoWidth, topLeft.y));
     ImGuiSeparator::Vertical();
 
     std::string pv;
@@ -420,20 +420,20 @@ std::string ImGuiEngineList::drawEngineSpace(size_t index, ImVec2 size) {
         pv = drawEngineTable(topLeft, cEngineInfoWidth, cSectionSpacing, index, max, size);
     }
     
-    ImGui::SetCursorScreenPos(topLeft);
-    ImGui::Dummy(ImVec2(size.x, size.y - 3.0F));
-    ImGui::PopID();
+    QaplaUi::setCursorScreenPos(topLeft);
+    QaplaUi::dummy(QaplaUi::Vec2(size.x, size.y - 3.0F));
+    QaplaUi::popId();
     return command.empty() ? pv : command;
 }
 
-std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft, ImDrawList *drawList, 
-    const ImVec2 &max, float cEngineInfoWidth, size_t index, bool isSmall)
+std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const QaplaUi::Vec2 &topLeft, QaplaUi::DrawList*drawList, 
+    const QaplaUi::Vec2 &max, float cEngineInfoWidth, size_t index, bool isSmall)
 {
     std::string command;
-    ImGui::SetCursorScreenPos(topLeft);
-    drawList->PushClipRect(topLeft, max);
-    ImGui::SetCursorScreenPos(ImVec2(topLeft.x, topLeft.y + 5.0F));
-    ImGui::PushItemWidth(cEngineInfoWidth - 10.0F);
+    QaplaUi::setCursorScreenPos(topLeft);
+    drawList->pushClipRect(topLeft, max);
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(topLeft.x, topLeft.y + 5.0F));
+    QaplaUi::pushItemWidth(cEngineInfoWidth - 10.0F);
     bool hasEngine = (index < engineRecords_.size());
     auto& infoTable = infoTables_[index];
     if (allowInput_ && (!isSmall || !hasEngine)) { 
@@ -445,8 +445,8 @@ std::string QaplaWindows::ImGuiEngineList::drawEngineArea(const ImVec2 &topLeft,
     if (hasEngine) {
         drawEngineInfo(engineRecords_[index], index);
     }
-    ImGui::PopItemWidth();
-    drawList->PopClipRect();
+    QaplaUi::popItemWidth();
+    drawList->popClipRect();
     return command;
 }
 
@@ -457,45 +457,45 @@ static std::string encodePV(uint32_t halfmoveNo, const std::string& pv) {
 }
 
  std::string QaplaWindows::ImGuiEngineList::drawEngineTable(
-    const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
-    size_t index, const ImVec2 &max, const ImVec2 &size)
+    const QaplaUi::Vec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
+    size_t index, const QaplaUi::Vec2 &max, const QaplaUi::Vec2 &size)
 {
-    auto tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
-    ImGui::SetCursorScreenPos(tableMin);
+    auto tableMin = QaplaUi::Vec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    QaplaUi::setCursorScreenPos(tableMin);
     std::string pv;
     if (index < infoTables_.size())
     {
-        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+        auto tableSize = QaplaUi::Vec2(max.x - tableMin.x, size.y);
         auto& infoTable = infoTables_[index].infoTable_;
-        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
-            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
+        if (QaplaUi::beginChild("TableScroll", tableSize, QaplaUi::ChildFlags::AutoResizeX,
+            QaplaUi::WindowFlags::AlwaysHorizontalScrollbar | QaplaUi::WindowFlags::AlwaysVerticalScrollbar))
         {
-            auto clicked = infoTable->draw(ImVec2(2000.0F, tableSize.y));
+            auto clicked = infoTable->draw(QaplaUi::Vec2(2000.0F, tableSize.y));
             if (clicked) {
                 pv = encodePV(displayedMoveNo_[index], infoTable->getField(*clicked, 6));
             }
         }
-        ImGui::EndChild();
+        QaplaUi::endChild();
     }
     return pv;
 }
 
  void QaplaWindows::ImGuiEngineList::drawLog(
-    const ImVec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
-    size_t index, const ImVec2 &max, const ImVec2 &size)
+    const QaplaUi::Vec2 &topLeft, float cEngineInfoWidth, float cSectionSpacing, 
+    size_t index, const QaplaUi::Vec2 &max, const QaplaUi::Vec2 &size)
 {
-    auto tableMin = ImVec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
-    ImGui::SetCursorScreenPos(tableMin);
+    auto tableMin = QaplaUi::Vec2(topLeft.x + cEngineInfoWidth + cSectionSpacing, topLeft.y);
+    QaplaUi::setCursorScreenPos(tableMin);
     if (index < infoTables_.size())
     {
-        auto tableSize = ImVec2(max.x - tableMin.x, size.y);
+        auto tableSize = QaplaUi::Vec2(max.x - tableMin.x, size.y);
         auto& logTable = infoTables_[index].logTable_;
-        if (ImGui::BeginChild("TableScroll", tableSize, ImGuiChildFlags_AutoResizeX,
-            ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar))
+        if (QaplaUi::beginChild("TableScroll", tableSize, QaplaUi::ChildFlags::AutoResizeX,
+            QaplaUi::WindowFlags::AlwaysHorizontalScrollbar | QaplaUi::WindowFlags::AlwaysVerticalScrollbar))
         {
-            logTable->draw(ImVec2(2000.0F, tableSize.y));
+            logTable->draw(QaplaUi::Vec2(2000.0F, tableSize.y));
         }
-        ImGui::EndChild();
+        QaplaUi::endChild();
     }
 }
 
@@ -508,14 +508,14 @@ std::pair<std::string, std::string> ImGuiEngineList::draw() {
 	const auto records = engineRecords_.size();
     addTables(records);
 
-    ImVec2 avail = ImGui::GetContentRegionAvail();
+    QaplaUi::Vec2 avail = QaplaUi::getContentRegionAvail();
     const float tableMinWidth = std::max(cMinTableWidth, avail.x - cEngineInfoWidth - cSectionSpacing);
     const uint32_t rowHeight = static_cast<uint32_t>(
         std::max(cMinRowHeight, avail.y / static_cast<float>(records)));
     std::string id;
     std::string command;
     for (size_t i = 0; i < records; ++i) {
-		auto c = drawEngineSpace(i, ImVec2(tableMinWidth, static_cast<float>(rowHeight)));
+		auto c = drawEngineSpace(i, QaplaUi::Vec2(tableMinWidth, static_cast<float>(rowHeight)));
         if (!c.empty()) {
             id = engineRecords_[i].identifier;
             command = std::move(c); 

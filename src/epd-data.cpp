@@ -30,7 +30,7 @@
 #include "epd/epd-manager.h"
 #include <game-manager/game-manager-pool.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <optional>
 #include <thread>
@@ -51,10 +51,10 @@ namespace QaplaWindows {
         imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         table_(
             "EpdResult",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 160.0F },
-                { .name = "Best move", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F }
+                { .name = "Name", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 160.0F },
+                { .name = "Best move", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 100.0F }
             }
         ),
         viewerBoardWindows_("EPD")
@@ -210,7 +210,7 @@ namespace QaplaWindows {
                 }
                 table_.setColumnHead(col + 2, {
                     .name = engineName,
-                    .flags = ImGuiTableColumnFlags_WidthFixed,
+                    .flags = QaplaUi::TableColumnFlags::WidthFixed,
                     .width = 100.0F,
                     .alignRight = true
 					});
@@ -423,7 +423,7 @@ namespace QaplaWindows {
         scheduledEngines_ = 0;
     }
 
-    std::optional<size_t> EpdData::drawTable(const ImVec2& size) {
+    std::optional<size_t> EpdData::drawTable(const QaplaUi::Vec2& size) {
         return table_.draw(size);
     }
 

@@ -23,7 +23,7 @@
 
 #include <base-elements/change-tracker.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <memory>
 #include <optional>

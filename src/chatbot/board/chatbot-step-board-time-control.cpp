@@ -20,7 +20,7 @@
 #include "chatbot-step-board-time-control.h"
 #include "../../time-control-window.h"
 #include "../../imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -38,7 +38,7 @@ std::string ChatbotStepBoardTimeControl::draw() {
             "Configure the time control for your board game. "
             "By default, you can choose a Blitz time setting. "
             "Click 'More Options' to access all time control modes.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto* timeControlWindow = getTimeControlWindow();
@@ -60,15 +60,15 @@ std::string ChatbotStepBoardTimeControl::draw() {
         return "";
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -78,7 +78,7 @@ std::string ChatbotStepBoardTimeControl::draw() {
         "Show or hide advanced time control options, such as Tournament, "
         "Time per Move, Fixed Depth, and Nodes per Move.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

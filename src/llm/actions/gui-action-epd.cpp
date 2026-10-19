@@ -27,7 +27,7 @@
 #include "../../os-dialogs.h"
 #include "../../callback-manager.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -421,10 +421,10 @@ ActionResult showEpdResult() {
             + epdData.resultsAsText(),
         .widget = []() {
             auto& data = EpdData::instance();
-            ImGui::Text("EPD Analysis Progress: %zu / %zu positions remaining",
-                data.remainingTests, data.totalTests);
-            ImGui::Spacing();
-            data.drawTable(ImVec2(0.0F, 3000.0F));
+            QaplaUi::text(std::format("EPD Analysis Progress: {} / {} positions remaining",
+                data.remainingTests, data.totalTests));
+            QaplaUi::spacing();
+            data.drawTable(QaplaUi::Vec2(0.0F, 3000.0F));
         }};
 }
 

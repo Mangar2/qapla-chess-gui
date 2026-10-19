@@ -89,7 +89,7 @@ private:
     std::unique_ptr<QaplaLlm::LlmChatController> controller_;
     /** @brief host/port controller_ was built with, so draw() can notice a Settings change. */
     QaplaLlm::LmStudioConnection activeConnection_;
-    std::array<char, 4096> inputBuffer_{};
+    std::string inputBuffer_;
 };
 
 } // namespace QaplaWindows::ChatBot

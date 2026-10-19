@@ -20,7 +20,7 @@
 #include "chatbot-step-epd-stop-running.h"
 #include "epd-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -40,8 +40,8 @@ std::string ChatbotStepEpdStopRunning::draw() {
     QaplaWindows::ImGuiControls::textWrapped(
         "An EPD analysis is currently running. Would you like to stop it?");
     
-    ImGui::Spacing();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Yes, stop analysis")) {
         epdData.stopPool(false);
@@ -51,7 +51,7 @@ std::string ChatbotStepEpdStopRunning::draw() {
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Stop the running EPD analysis and cancel remaining positions. Use gracefully if you need to preserve partial results.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finishedMessage_ = "EPD analysis continues.";

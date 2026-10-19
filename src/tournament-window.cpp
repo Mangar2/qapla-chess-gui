@@ -35,7 +35,7 @@
 #include <chess-game/engine-event.h>
 #include <tournament/tournament.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <sstream>
 #include <string>
@@ -46,7 +46,7 @@
 using namespace QaplaWindows;
 
 static void drawSingleButton(
-    ImDrawList *drawList, ImVec2 topLeft, ImVec2 size,
+    QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size,
     const std::string &button, bool running, QaplaButton::ButtonState state)
 {
     if (button == "RunGraceContinue")
@@ -129,18 +129,18 @@ std::string TournamentWindow::drawButtons() {
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = { 25.0F, 25.0F };
+    constexpr QaplaUi::Vec2 buttonSize = { 25.0F, 25.0F };
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, 
         { "Continue", "Stop", "Clear", "Load", "Save As" });
         
-    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    auto pos = QaplaUi::Vec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
     std::string clickedButton;
     
     for (const std::string button : { "RunGraceContinue", "Stop", "Clear", "Load", "Save As" }) {
-        ImGui::SetCursorScreenPos(pos);
+        QaplaUi::setCursorScreenPos(pos);
         bool running = TournamentData::instance().isRunning();
         auto label = button;
         
@@ -154,7 +154,7 @@ std::string TournamentWindow::drawButtons() {
         auto state = getButtonState(button);
 
         if (QaplaButton::drawIconButton(button, label, buttonSize, state,
-                [&button, running, state](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)->void {
+                [&button, running, state](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)->void {
                     drawSingleButton(drawList, topLeft, size, button, running, state);
                 }))
         {
@@ -163,7 +163,7 @@ std::string TournamentWindow::drawButtons() {
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
     return clickedButton;
 }
 
@@ -229,7 +229,7 @@ bool TournamentWindow::drawInput() {
     constexpr int maxConcurrency = 32;
 	auto& tournamentData = TournamentData::instance();
     
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     auto concurrency = tournamentData.getExternalConcurrency();
     ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, 1, maxConcurrency);
     ImGuiControls::hooverTooltip("Number of games running in parallel");
@@ -237,11 +237,11 @@ bool TournamentWindow::drawInput() {
     tournamentData.setPoolConcurrency(concurrency, true);
     drawProgress();
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (tournamentData.isRunning()) {
-        ImGui::Indent(10.0F);
-        ImGui::Text("Tournament is running");
-        ImGui::Unindent(10.0F);
+        QaplaUi::indent(10.0F);
+        QaplaUi::text("Tournament is running");
+        QaplaUi::unindent(10.0F);
         return false;
     }
 
@@ -272,7 +272,7 @@ bool TournamentWindow::drawInput() {
     
     changed |= tournamentData.tournamentAdjudication().draw(inputWidth, 10.0F);
 	
-    ImGui::Spacing();    return changed;
+    QaplaUi::spacing();    return changed;
 }
 
 void TournamentWindow::drawProgress()
@@ -286,7 +286,7 @@ void TournamentWindow::drawProgress()
     }
     
     float progress = static_cast<float>(playedGames) / static_cast<float>(totalGames);
-    ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0F), 
+    QaplaUi::progressBar(progress, QaplaUi::Vec2(QaplaUi::getContentRegionAvail().x, 0.0F), 
         std::to_string(playedGames).c_str());
     ImGuiControls::hooverTooltip("Tournament progress: games played / total games");
 }
@@ -304,19 +304,19 @@ void TournamentWindow::draw() {
         executeCommand(clickedButton);
     }
 
-    ImGui::Indent(10.0F);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    QaplaUi::indent(10.0F);
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("InputArea", QaplaUi::Vec2(size.x - rightBorder, 0), QaplaUi::ChildFlags::None);
     drawInput();
-    tournamentData.drawRunningTable(ImVec2(size.x, 800.0F));
-    tournamentData.drawEloTable(ImVec2(size.x, 800.0F));
-    tournamentData.drawCauseTable(ImVec2(size.x, 10000.0F));
+    tournamentData.drawRunningTable(QaplaUi::Vec2(size.x, 800.0F));
+    tournamentData.drawEloTable(QaplaUi::Vec2(size.x, 800.0F));
+    tournamentData.drawCauseTable(QaplaUi::Vec2(size.x, 10000.0F));
     if (tournamentData.drawConfig().testOnly || tournamentData.resignConfig().testOnly) {
-        tournamentData.drawAdjudicationTable(ImVec2(size.x, 200.0F));
+        tournamentData.drawAdjudicationTable(QaplaUi::Vec2(size.x, 200.0F));
     }
 
-    ImGui::EndChild();
-    ImGui::Unindent(10.0F);
+    QaplaUi::endChild();
+    QaplaUi::unindent(10.0F);
     
     showNextTournamentTutorialStep(clickedButton);
 }

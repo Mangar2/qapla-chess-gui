@@ -21,7 +21,7 @@
 #include "book-eval-data.h"
 #include "imgui-controls.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -48,7 +48,7 @@ std::string ChatbotStepBookEvalStart::draw() {
                 data.getPositionCount(), data.config().outFile)
             : std::format("The book evaluation stopped with {} of {} positions evaluated. Start it "
                 "again with the same books to continue.", data.getEvaluatedCount(), data.getPositionCount()));
-        ImGui::Spacing();
+        QaplaUi::spacing();
         if (ImGuiControls::textButton("Close")) {
             finished_ = true;
         }
@@ -63,7 +63,7 @@ std::string ChatbotStepBookEvalStart::drawBeforeStart() {
     ImGuiControls::textWrapped(
         "Set how many engines search at the same time and start the run. You can change the number "
         "while it runs.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
     auto concurrency = data.getExternalConcurrency();
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, MIN_CONCURRENCY, MAX_CONCURRENCY)) {
         data.setExternalConcurrency(concurrency);
@@ -71,19 +71,19 @@ std::string ChatbotStepBookEvalStart::drawBeforeStart() {
     }
     ImGuiControls::hooverTooltip("Number of positions searched in parallel, each by an engine of its own.");
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
-    ImGui::BeginDisabled(!data.mayEvaluate());
+    QaplaUi::beginDisabled(!data.mayEvaluate());
     if (ImGuiControls::textButton("Start Evaluation")) {
         data.evaluate();
         started_ = true;
     }
     ImGuiControls::hooverTooltip("Search every position of the book that has no score yet.");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         return "stop";
@@ -99,11 +99,11 @@ void ChatbotStepBookEvalStart::drawWhileRunning() {
     ImGuiControls::textWrapped(std::format(
         "The book evaluation is running: {} of {} positions evaluated, {:.1f} positions per second.",
         evaluated, total, data.getPositionsPerSecond()));
-    ImGui::Spacing();
-    ImGui::ProgressBar(total == 0 ? 0.0F : static_cast<float>(evaluated) / static_cast<float>(total),
-        ImVec2(-10.0F, 20.0F));
+    QaplaUi::spacing();
+    QaplaUi::progressBar(total == 0 ? 0.0F : static_cast<float>(evaluated) / static_cast<float>(total),
+        QaplaUi::Vec2(-10.0F, 20.0F));
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     auto concurrency = data.getExternalConcurrency();
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, MIN_CONCURRENCY, MAX_CONCURRENCY)) {
         data.setExternalConcurrency(concurrency);
@@ -112,9 +112,9 @@ void ChatbotStepBookEvalStart::drawWhileRunning() {
     }
     ImGuiControls::hooverTooltip("Changes how many positions are searched at the same time, right away.");
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
     if (ImGuiControls::textButton("Stop")) {
         data.stop(false);
     }

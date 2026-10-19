@@ -33,7 +33,7 @@
 #include "imgui-controls.h"
 #include "snackbar.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -131,20 +131,20 @@ void ChatbotWindow::reset() {
 void ChatbotWindow::draw() {
     
     // Outer child window: provides vertical scrollbar
-    ImGui::BeginChild("ChatbotWindowOuter", ImVec2(0, 0), false, 
-        ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    QaplaUi::beginChild("ChatbotWindowOuter", QaplaUi::Vec2(0, 0), QaplaUi::ChildFlags::None, 
+        QaplaUi::WindowFlags::HorizontalScrollbar | QaplaUi::WindowFlags::AlwaysVerticalScrollbar);
     
     // Inner child window: provides margins, auto-resizes to content height so outer window scrolls
-    ImGui::Indent(LEFT_MARGIN);
-    ImVec2 innerSize = ImGui::GetContentRegionAvail();
+    QaplaUi::indent(LEFT_MARGIN);
+    QaplaUi::Vec2 innerSize = QaplaUi::getContentRegionAvail();
     innerSize.x -= RIGHT_MARGIN;
     innerSize.y = 0;  // Auto-size height to content
-    ImGui::BeginChild("ChatbotWindowInner", innerSize, 
-        ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AutoResizeX, 
-        ImGuiWindowFlags_NoScrollbar);
+    QaplaUi::beginChild("ChatbotWindowInner", innerSize, 
+        QaplaUi::ChildFlags::AutoResizeY | QaplaUi::ChildFlags::AutoResizeX, 
+        QaplaUi::WindowFlags::NoScrollbar);
     
     try {
-        ImGui::Spacing();
+        QaplaUi::spacing();
         // Draw history
         if (!completedThreads_.empty()) {
             if (ImGuiControls::CollapsingHeaderWithDot("History")) {
@@ -152,7 +152,7 @@ void ChatbotWindow::draw() {
                     QaplaWindows::ImGuiControls::textDisabled(thread->getTitle());
                 }
             }
-            ImGui::Separator();
+            QaplaUi::separator();
         }
         
         if (activeThread_) {
@@ -178,24 +178,24 @@ void ChatbotWindow::draw() {
         }
         
         // Add dummy space at the bottom to ensure current chat stays visible
-        ImGui::Dummy(ImVec2(0.0F, BOTTOM_PADDING));
+        QaplaUi::dummy(QaplaUi::Vec2(0.0F, BOTTOM_PADDING));
         
     } catch (const std::exception& e) {
         SnackbarManager::instance().showError(
             std::format("An error occurred in the Chatbot window:\n{}", e.what()));
     }
-    ImGui::EndChild();
-    ImGui::Unindent(LEFT_MARGIN);
+    QaplaUi::endChild();
+    QaplaUi::unindent(LEFT_MARGIN);
     
     // Auto-scroll to bottom when content grows
     // Use GetCursorPos() instead of GetCursorScreenPos() to get scroll-independent position
-    float currentCursorY = ImGui::GetCursorPos().y;
+    float currentCursorY = QaplaUi::getCursorPos().y;
     if (currentCursorY > lastCursorY_) {
-        ImGui::SetScrollHereY(1.0F);
+        QaplaUi::setScrollHereY(1.0F);
     }
     lastCursorY_ = currentCursorY;
     
-    ImGui::EndChild();
+    QaplaUi::endChild();
 }
 
 } // namespace QaplaWindows::ChatBot

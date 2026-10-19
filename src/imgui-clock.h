@@ -22,7 +22,7 @@
 
 #include "clock-model.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <cstdint>
 

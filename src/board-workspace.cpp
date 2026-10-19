@@ -19,7 +19,7 @@
 #include "board-workspace.h"
 #include "snackbar.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -31,42 +31,28 @@ namespace QaplaWindows {
 
     void BoardWorkspace::drawMaximized()
     {
-        if (!maximized_) return;
-        ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos);
-        ImGui::SetNextWindowSize(viewport->WorkSize);
-        /*
-        ImGui::SetNextWindowSizeConstraints(ImVec2(150, 150), ImVec2(1000, 1000));
-        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos);
-        ImGui::SetNextWindowSize(ImGui::GetMainViewport()->WorkSize);
-        ImGui::Begin(id_.c_str(), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-        draw();
-        ImGui::End();
-        */
     }
 
     void BoardWorkspace::draw() {
         try {
-            ImVec2 pos = ImGui::GetMainViewport()->Pos;
-            ImVec2 size = ImGui::GetMainViewport()->Size;
+            QaplaUi::Vec2 pos = QaplaUi::getViewportPos();
+            QaplaUi::Vec2 size = QaplaUi::getViewportSize();
 
-            ImGui::SetNextWindowPos(pos);
-            ImGui::SetNextWindowSize(size);
-            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0));
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::WindowBg, QaplaUi::Vec4(0, 0, 0, 0));
+            QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowRounding, 0.0F);
+            QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowBorderSize, 0.0F);
+            QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowPadding, QaplaUi::Vec2(0, 0));
 
-            ImGui::Begin("RootOverlay", nullptr,
-                ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoCollapse |
-                ImGuiWindowFlags_NoBringToFrontOnFocus |
-                ImGuiWindowFlags_NoNavFocus);
+            QaplaUi::beginOverlay("RootOverlay", pos, size,
+                QaplaUi::WindowFlags::NoTitleBar |
+                QaplaUi::WindowFlags::NoResize |
+                QaplaUi::WindowFlags::NoMove |
+                QaplaUi::WindowFlags::NoCollapse |
+                QaplaUi::WindowFlags::NoBringToFrontOnFocus |
+                QaplaUi::WindowFlags::NoNavFocus);
 
             if (rootWindow) {
-                if (ImGui::BeginChild("root")) {
+                if (QaplaUi::beginChild("root")) {
                     try {
                         rootWindow->draw();
                     }
@@ -78,15 +64,15 @@ namespace QaplaWindows {
                         SnackbarManager::instance().showError("Unknown error in root window");
                     }
                 }
-                ImGui::EndChild();
+                QaplaUi::endChild();
             }
 
-            ImGui::End();
-            ImGui::PopStyleVar(3);
-            ImGui::PopStyleColor(1);
+            QaplaUi::endOverlay();
+            QaplaUi::popStyleVar(3);
+            QaplaUi::popStyleColor(1);
         }
         catch (...) {
-            ImGui::TextUnformatted("Error rendering Board Workspace");
+            QaplaUi::text("Error rendering Board Workspace");
         }
     }
 

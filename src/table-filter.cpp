@@ -21,7 +21,7 @@
 #include "imgui-controls.h"
 #include "configuration.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <algorithm>
 
 using namespace QaplaWindows;
@@ -47,11 +47,11 @@ bool FullTextFilter::matches(const Row& row) const {
 bool FullTextFilter::draw() {
     filterChanged_ = false;
     
-    ImGui::PushID("FullTextFilter");
+    QaplaUi::pushId("FullTextFilter");
     if (ImGuiControls::inputText("Search", searchText_)) {
         filterChanged_ = true;
     }
-    ImGui::PopID();
+    QaplaUi::popId();
     
     return filterChanged_;
 }

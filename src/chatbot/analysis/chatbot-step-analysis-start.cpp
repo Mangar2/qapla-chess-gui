@@ -23,7 +23,7 @@
 #include "imgui-controls.h"
 #include "imgui-game-list.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -51,7 +51,7 @@ std::string ChatbotStepAnalysisStart::draw() {
         ImGuiControls::textWrapped(std::format(
             "The backward analysis is finished: {} of {} games analysed.",
             analysisData.getFinishedCount(), analysisData.getTotalCount()));
-        ImGui::Spacing();
+        QaplaUi::spacing();
         if (ImGuiControls::textButton("Close")) {
             finished_ = true;
         }
@@ -68,7 +68,7 @@ std::string ChatbotStepAnalysisStart::drawBeforeStart() {
     ImGuiControls::textWrapped(
         "Set how many games are analysed at the same time and start the run. You can change the "
         "number while it runs.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     auto concurrency = analysisData.getExternalConcurrency();
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, MIN_CONCURRENCY, MAX_CONCURRENCY)) {
@@ -77,15 +77,15 @@ std::string ChatbotStepAnalysisStart::drawBeforeStart() {
     }
     ImGuiControls::hooverTooltip("Number of games analysed in parallel, each on an engine of its own.");
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     ImGuiControls::textWrapped(std::format("{} game{} will be analysed, backwards, from the last "
         "move of each game to its first.", gameCount, gameCount == 1 ? "" : "s"));
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
-    ImGui::BeginDisabled(gameCount == 0);
+    QaplaUi::beginDisabled(gameCount == 0);
     if (ImGuiControls::textButton("Start Analysis")) {
         // Handed over now: from here the analysis works on its own copy and the Pgn view can be
         // used for anything else -- including the file this run is writing.
@@ -95,9 +95,9 @@ std::string ChatbotStepAnalysisStart::drawBeforeStart() {
     }
     ImGuiControls::hooverTooltip(
         "Start the backward analysis with the selected engines, games and time per move.");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;
@@ -115,11 +115,11 @@ void ChatbotStepAnalysisStart::drawWhileRunning() {
 
     ImGuiControls::textWrapped(std::format("The backward analysis is running: {} of {} games done.",
         finished, total));
-    ImGui::Spacing();
-    ImGui::ProgressBar(total == 0 ? 0.0F : static_cast<float>(finished) / static_cast<float>(total),
-        ImVec2(-10.0F, 20.0F));
+    QaplaUi::spacing();
+    QaplaUi::progressBar(total == 0 ? 0.0F : static_cast<float>(finished) / static_cast<float>(total),
+        QaplaUi::Vec2(-10.0F, 20.0F));
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     auto concurrency = analysisData.getExternalConcurrency();
     if (ImGuiControls::sliderInt<uint32_t>("Concurrency", concurrency, MIN_CONCURRENCY, MAX_CONCURRENCY)) {
         analysisData.setExternalConcurrency(concurrency);
@@ -131,21 +131,21 @@ void ChatbotStepAnalysisStart::drawWhileRunning() {
     }
     ImGuiControls::hooverTooltip("Changes how many games are analysed at the same time, right away.");
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     ImGuiControls::textWrapped(
         "The Pgn view is free again: load the output file there with Open or Recent to look at "
         "the games that are already done, while the rest are still being analysed.");
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (ImGuiControls::textButton("Stop")) {
         analysisData.stop(false);
     }
     ImGuiControls::hooverTooltip("Stop the analysis. The games already written stay in the output file.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Switch to Pgn View")) {
         StaticCallbacks::message().invokeAll("switch_to_pgn_view");

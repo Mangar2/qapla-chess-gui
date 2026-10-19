@@ -26,7 +26,7 @@
 #include <base-elements/time-control.h>
 #include <engine-handling/engine-option.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 #include <optional>
 #include <functional>
@@ -84,7 +84,7 @@ namespace QaplaWindows::ImGuiControls {
      * @param size Optional size for the button.
      * @return True if the button was clicked, false otherwise.
      */
-    bool textButton(const char* label, ImVec2 size = ImVec2(0, 0));
+    bool textButton(const char* label, QaplaUi::Vec2 size = QaplaUi::Vec2(0, 0));
 
     /**
      * @brief Wrapper around ImGui::TextWrapped with automatic text translation.
@@ -109,21 +109,18 @@ namespace QaplaWindows::ImGuiControls {
      * @brief Wrapper around ImGui::InputText for std::string input.
      * @param label Label to display next to the input box.
      * @param value Initial value as const string.
-     * @param flags Optional ImGuiInputTextFlags.
-     * @param callback Optional ImGuiInputTextCallback.
-     * @param userData Optional user data pointer for callback.
+     * @param flags Optional QaplaUi::InputTextFlags.
+     * @param filter Optional filter that accepts or rejects each typed character.
      * @return optional std::string value after user input.
      */
     std::optional<std::string> inputText(const char* label,
         const std::string& value,
-        ImGuiInputTextFlags flags = 0,
-        ImGuiInputTextCallback callback = nullptr,
-        void* userData = nullptr);
+        QaplaUi::InputTextFlags flags = QaplaUi::InputTextFlags::None,
+        const QaplaUi::CharFilter& filter = nullptr);
 
     bool inputText(const char* label, std::string& value,
-        ImGuiInputTextFlags flags = 0,
-        ImGuiInputTextCallback callback = nullptr,
-        void* userData = nullptr);
+        QaplaUi::InputTextFlags flags = QaplaUi::InputTextFlags::None,
+        const QaplaUi::CharFilter& filter = nullptr);
 
     /**
      * @brief Template for InputInt with min/max validation for various integer types.
@@ -132,12 +129,12 @@ namespace QaplaWindows::ImGuiControls {
      * @param value Reference to the integer value to modify.
      * @param min Minimum allowed value.
      * @param max Maximum allowed value.
-     * @param flags Optional ImGuiInputTextFlags.
+     * @param flags Optional QaplaUi::InputTextFlags.
      * @return True if the value was modified, false otherwise.
      */
     template <typename T>
     bool inputInt(const char* label, T& value, T min, T max, int step = 1, int stepFast = 10, 
-        ImGuiInputTextFlags flags = 0) 
+        [[maybe_unused]] QaplaUi::InputTextFlags flags = QaplaUi::InputTextFlags::None) 
     {
         static_assert(std::is_integral_v<T>, "inputInt only supports integral types");
 		assert(min < max && "Min must be less than max");
@@ -145,7 +142,7 @@ namespace QaplaWindows::ImGuiControls {
         int tempValue = static_cast<int>(value);
         
         auto modLabel = createLabel("Input", label);
-        bool modified = ImGui::InputInt(modLabel.c_str(), &tempValue, step, stepFast, flags);
+        bool modified = QaplaUi::inputInt(modLabel, tempValue, step, stepFast);
 
         if (tempValue < static_cast<int>(min)) tempValue = static_cast<int>(min);
         if (tempValue > static_cast<int>(max)) tempValue = static_cast<int>(max);
@@ -165,11 +162,11 @@ namespace QaplaWindows::ImGuiControls {
      * @param max Maximum allowed value.
      * @param step Step size for increment/decrement (default: 0.1F).
      * @param stepFast Step size for fast increment/decrement (default: 1.0F).
-     * @param flags Optional ImGuiInputTextFlags.
+     * @param flags Optional QaplaUi::InputTextFlags.
      * @return True if the value was modified, false otherwise.
      */
     bool inputFloat(const char* label, float& value, float min, float max, 
-        float step = 0.1F, float stepFast = 1.0F, ImGuiInputTextFlags flags = 0);
+        float step = 0.1F, float stepFast = 1.0F, QaplaUi::InputTextFlags flags = QaplaUi::InputTextFlags::None);
 
     /**
      * @brief Template for SliderInt with min/max validation for various integer types.
@@ -189,7 +186,7 @@ namespace QaplaWindows::ImGuiControls {
         // Convert value to int for ImGui::SliderInt
         int tempValue = static_cast<int>(value);
         auto modLabel = createLabel("Input", label);
-        bool modified = ImGui::SliderInt(modLabel.c_str(), &tempValue, static_cast<int>(min), static_cast<int>(max), format);
+        bool modified = QaplaUi::sliderInt(modLabel, tempValue, static_cast<int>(min), static_cast<int>(max), format);
 
         // Update the original value if it was modified
         if (modified) {
@@ -332,11 +329,11 @@ namespace QaplaWindows::ImGuiControls {
      * 
      * @param label Label to display next to the checkbox and header.
      * @param selected Reference to the boolean value indicating selection state.
-     * @param flags Optional ImGuiTreeNodeFlags for the collapsing header.
+     * @param flags Optional QaplaUi::TreeNodeFlags for the collapsing header.
      * @param contentCallback Optional callback function to render content when expanded.
      * @return True if the selection state or content was modified, false otherwise.
      */
-    bool collapsingSelection(std::string label, bool& selected, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None,
+    bool collapsingSelection(std::string label, bool& selected, QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::None,
         const std::function<bool()>& contentCallback = nullptr);
 
     /**
@@ -365,7 +362,7 @@ namespace QaplaWindows::ImGuiControls {
         bool modified = false;
 
         bool hasValue = value.has_value();
-        if (ImGui::Checkbox(label, &hasValue)) {
+        if (QaplaUi::checkbox(label, hasValue)) {
             if (hasValue) {
                 value = T{}; 
             }
@@ -376,7 +373,7 @@ namespace QaplaWindows::ImGuiControls {
         }
 
         if (hasValue && value.has_value()) {
-            ImGui::SameLine();
+            QaplaUi::sameLine();
             T tempValue = *value;
             if (inputCallback(tempValue)) {
                 value = tempValue;
@@ -394,29 +391,29 @@ namespace QaplaWindows::ImGuiControls {
 	 */
     bool timeControlInput(std::string& timeControl, bool blitz = false, float inputWidth = 0.0);
 
-    void drawBoxWithShadow(ImVec2 topLeft, ImVec2 bottomRight);
+    void drawBoxWithShadow(QaplaUi::Vec2 topLeft, QaplaUi::Vec2 bottomRight);
 
     void drawDot(float offsetX = 3.0F, float offsetY = 3.0F);
 
     /**
      * @brief Custom CollapsingHeader that can display a red dot in the upper right corner.
      * @param label Label of the collapsing header.
-     * @param flags Optional ImGuiTreeNodeFlags.
+     * @param flags Optional QaplaUi::TreeNodeFlags.
      * @param showDot If true, a red dot is displayed in the upper right corner.
      * @param translate If true, the label is translated.
      * @return True if the header is open, false otherwise.
      */
-    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags = 0, bool showDot = false, bool translate = true);
+    bool CollapsingHeaderWithDot(const char* label, QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::None, bool showDot = false, bool translate = true);
 
     /**
      * @brief Custom TabItem that can display a red dot in the upper right corner.
      * @param label Label of the tab item.
      * @param p_open Optional pointer to a boolean that indicates if the tab is open.
-     * @param flags Optional ImGuiTabItemFlags.
+     * @param flags Optional QaplaUi::TabItemFlags.
      * @param showDot If true, a red dot is displayed in the upper right corner of the tab.
      * @return True if the tab is selected, false otherwise.
      */
-    bool TabItemWithDot(const char* label, bool* p_open = nullptr, ImGuiTabItemFlags flags = 0,  bool showDot = false);
+    bool TabItemWithDot(const char* label, bool* p_open = nullptr, QaplaUi::TabItemFlags flags = QaplaUi::TabItemFlags::None,  bool showDot = false);
 
     /**
      * @brief Displays a list of options as buttons for selection.

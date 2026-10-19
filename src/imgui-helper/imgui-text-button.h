@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 #include "imgui-controls.h"
 
@@ -28,9 +28,9 @@ namespace QaplaWindows {
 struct ImGuiTextButton {
     std::string label;
     std::string translated = ImGuiControls::createLabel("TextButton", label);
-    [[nodiscard]] ImVec2 calcSize() const;
-    [[nodiscard]] bool draw(ImVec2 size = ImVec2(0, 0)) const {
-        return ImGui::Button(translated.c_str(), size);
+    [[nodiscard]] QaplaUi::Vec2 calcSize() const;
+    [[nodiscard]] bool draw(QaplaUi::Vec2 size = QaplaUi::Vec2(0, 0)) const {
+        return QaplaUi::button(translated.c_str(), size);
     }
 };
 

@@ -62,47 +62,47 @@ namespace QaplaWindows {
         imguiConcurrency_(std::make_unique<ImGuiConcurrency>()),
         eloTable_(
             "TournamentResult",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Name", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Elo", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Error", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true },
-                { .name = "%", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+                { .name = "Name", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F },
+                { .name = "Elo", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Error", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Score", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 100.0F, .alignRight = true },
+                { .name = "%", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Total", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true }
             }
         ),
         runningTable_(
             "Running",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "White", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Black", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Round", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
-                { .name = "Game", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F },
-                { .name = "Opening", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F }
+                { .name = "White", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F },
+                { .name = "Black", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F },
+                { .name = "Round", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F },
+                { .name = "Game", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F },
+                { .name = "Opening", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F }
             }
 		),
         adjudicationTable_(
             "Adjudication Tests",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Adjudicate", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F },
-                { .name = "Total", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Correct", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 60.0F, .alignRight = true },
-                { .name = "Incorrect", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 70.0F, .alignRight = true },
-                { .name = "Saveable", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
-                { .name = "Total Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true }
+                { .name = "Adjudicate", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F },
+                { .name = "Total", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Correct", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 60.0F, .alignRight = true },
+                { .name = "Incorrect", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 70.0F, .alignRight = true },
+                { .name = "Saveable", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true },
+                { .name = "Total Time", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true }
             }
         ),
         matrixTable_(
             "Results Matrix",
-            ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Borders,
+            QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY | QaplaUi::TableFlags::Borders,
             std::vector<ImGuiTable::ColumnDef>{
-                { .name = "Rank", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-                { .name = "Engine", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 150.0F },
-                { .name = "Score", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 100.0F, .alignRight = true },
-                { .name = "%", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true }
+                { .name = "Rank", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+                { .name = "Engine", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 150.0F },
+                { .name = "Score", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 100.0F, .alignRight = true },
+                { .name = "%", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true }
             }
         )
     { 
@@ -427,13 +427,13 @@ namespace QaplaWindows {
             std::string abbrev = TournamentResultView::abbreviateEngineName(scored.engineName);
             matrixTable_.setColumnHead(colIndex++, { 
                 .name = abbrev, 
-                .flags = ImGuiTableColumnFlags_WidthFixed, 
+                .flags = QaplaUi::TableColumnFlags::WidthFixed, 
                 .width = pairwiseColumnWidth, 
                 .alignRight = true 
             });
         }
         
-        matrixTable_.setColumnHead(colIndex, { .name = "S-B", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true });
+        matrixTable_.setColumnHead(colIndex, { .name = "S-B", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true });
     }
 
     std::string TournamentData::buildMatrixTableRows(
@@ -648,7 +648,7 @@ namespace QaplaWindows {
         return TournamentResultIncremental::countPlayedGames(*tournament_, getSelectedEngineNames());
     }
 
-    std::optional<size_t> TournamentData::drawEloTable(const ImVec2& size) {
+    std::optional<size_t> TournamentData::drawEloTable(const QaplaUi::Vec2& size) {
         if (eloTable_.size() == 0) {
             return std::nullopt;
         }
@@ -669,7 +669,7 @@ namespace QaplaWindows {
         return eloTable_.contents();
     }
 
-    std::optional<size_t> TournamentData::drawMatrixTable(const ImVec2& size) {
+    std::optional<size_t> TournamentData::drawMatrixTable(const QaplaUi::Vec2& size) {
         if (matrixTable_.size() == 0) {
             return std::nullopt;
         }
@@ -690,7 +690,7 @@ namespace QaplaWindows {
         boardWindowList_.setActiveWindowId(rowId);
     }
 
-    std::optional<size_t> TournamentData::drawRunningTable(const ImVec2& size) {
+    std::optional<size_t> TournamentData::drawRunningTable(const QaplaUi::Vec2& size) {
         if (runningTable_.size() == 0) {
             return std::nullopt;
         }
@@ -701,14 +701,14 @@ namespace QaplaWindows {
         return clickedLine;
 	}
 
-    void TournamentData::drawCauseTable(const ImVec2& size) {
+    void TournamentData::drawCauseTable(const QaplaUi::Vec2& size) {
         if (causesTable_.size() == 0) {
             return;
         }
         causesTable_.draw(size);
     }
 
-    void TournamentData::drawAdjudicationTable(const ImVec2& size) {
+    void TournamentData::drawAdjudicationTable(const QaplaUi::Vec2& size) {
         if (adjudicationTable_.size() == 0) {
             return;
         }

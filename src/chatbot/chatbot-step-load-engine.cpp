@@ -26,7 +26,7 @@
 
 #include <engine-handling/engine-worker-factory.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <format>
 #include <cmath>
 
@@ -93,12 +93,12 @@ void ChatbotStepLoadEngine::drawInput() {
             QaplaWindows::ImGuiControls::textWrapped(
                 "No engines added. You can add engines now if you like.");
         }
-        ImGui::Spacing();
+        QaplaUi::spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Open a file dialog to add one or more engine binaries to the engine list.");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
             result_ = "stop";
@@ -109,12 +109,12 @@ void ChatbotStepLoadEngine::drawInput() {
                 numSelected, numSelected == 1 ? "" : "s",
                 minEngines_, contextName_,
                 minEngines_ - numSelected, (minEngines_ - numSelected) == 1 ? "" : "s").c_str());
-        ImGui::Spacing();
+        QaplaUi::spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
         QaplaWindows::ImGuiControls::hooverTooltip("Open a file dialog to add one or more engine binaries to the engine list.");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
             result_ = "stop";
@@ -122,7 +122,7 @@ void ChatbotStepLoadEngine::drawInput() {
     } else { // numSelected >= minEngines_
         QaplaWindows::ImGuiControls::textWrapped(
             std::format("Do you want to load additional engines for the {}?", contextName_).c_str());
-        ImGui::Spacing();
+        QaplaUi::spacing();
         if (QaplaWindows::ImGuiControls::textButton("Add Engines")) {
             addEngines();
         }
@@ -131,7 +131,7 @@ void ChatbotStepLoadEngine::drawInput() {
         bool needsDetection = !ImGuiEngineSelect::areAllEnginesDetected();
         
         if (needsDetection) {
-            ImGui::SameLine();
+            QaplaUi::sameLine();
             if (QaplaWindows::ImGuiControls::textButton("Detect & Continue")) {
                 startDetection();
                 state_ = State::Detecting;
@@ -139,14 +139,14 @@ void ChatbotStepLoadEngine::drawInput() {
             QaplaWindows::ImGuiControls::hooverTooltip("Automatically detect engine capabilities (options) now and continue.");
         }
         
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton(needsDetection ? "Skip Detection" : "Continue")) {
             finished_ = true;
         }
         if (needsDetection) {
             QaplaWindows::ImGuiControls::hooverTooltip("Skip automatic engine detection and continue without detected capabilities. Use this only if detection fails.");
         }
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
             finished_ = true;
             result_ = "stop";
@@ -159,12 +159,12 @@ void ChatbotStepLoadEngine::showAddedEngines()
     if (addedEnginePaths_.empty()) {
         return;
     }
-    ImGui::Spacing();
+    QaplaUi::spacing();
     QaplaWindows::ImGuiControls::textWrapped("Added Engines:");
     for (const auto &path : addedEnginePaths_)
     {
-        ImGui::Bullet();
-        ImGui::SameLine();
+        QaplaUi::bullet();
+        QaplaUi::sameLine();
         QaplaWindows::ImGuiControls::textWrapped(path);
     }
 }
@@ -198,8 +198,8 @@ void ChatbotStepLoadEngine::drawDetecting() {
     
     if (detecting) {
         // Indeterminate progress bar
-        float progress = (float)std::sin(ImGui::GetTime() * 3.0f) * 0.5f + 0.5f;
-        ImGui::ProgressBar(progress, ImVec2(-1.0f, 0.0f), "Detecting...");
+        float progress = (float)std::sin(QaplaUi::getTime() * 3.0f) * 0.5f + 0.5f;
+        QaplaUi::progressBar(progress, QaplaUi::Vec2(-1.0f, 0.0f), "Detecting...");
     } else {
         state_ = State::Summary;
         finished_ = true;

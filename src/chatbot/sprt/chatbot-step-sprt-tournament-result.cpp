@@ -25,7 +25,7 @@
 
 #include <sprt/sprt-manager.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <filesystem>
 #include <fstream>
 #include <format>
@@ -53,7 +53,7 @@ std::string ChatbotStepSprtTournamentResult::draw() {
         "if one is significantly stronger. The test continues until a decision is reached "
         "or the maximum number of games is played.");
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     // Explanation of the SPRT bounds display (e.g., "-2.94 < -0.03 < 2.94")
     auto eloLower = sprtData.sprtConfig().eloH0;
@@ -73,23 +73,23 @@ std::string ChatbotStepSprtTournamentResult::draw() {
         "The test continues as long as LLR stays between the bounds and the maximum number of games ({}) is not reached.",
         eloLower, eloUpper, maxGames));
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
         
     // Display SPRT test result table
-    ImGui::Text("SPRT Test Result:");
-    ImVec2 sprtTableSize(0.0F, 100.0F);
+    QaplaUi::text("SPRT Test Result:");
+    QaplaUi::Vec2 sprtTableSize(0.0F, 100.0F);
     sprtData.drawSprtTable(sprtTableSize);
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     // Display duel result table
-    ImGui::Text("Duel Result:");
-    ImVec2 resultTableSize(0.0F, 100.0F);
+    QaplaUi::text("Duel Result:");
+    QaplaUi::Vec2 resultTableSize(0.0F, 100.0F);
     sprtData.drawResultTable(resultTableSize);
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     // Button to view detailed HTML results
     if (QaplaWindows::ImGuiControls::textButton("View Detailed Results (HTML)")) {
@@ -101,7 +101,7 @@ std::string ChatbotStepSprtTournamentResult::draw() {
     QaplaWindows::ImGuiControls::hooverTooltip(
         "Open a detailed HTML report with full SPRT tournament results in your default browser.");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         finished_ = true;

@@ -24,7 +24,7 @@
 #include <game-manager/game-manager-pool.h>
 #include "imgui-table.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows {
 

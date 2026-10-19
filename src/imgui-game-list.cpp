@@ -49,7 +49,7 @@ ImGuiGameList::ImGuiGameList()
             .okButton = true,
             .cancelButton = true
         },
-        ImVec2(550, 700)  // Increased height for better fit
+        QaplaUi::Vec2(550, 700)  // Increased height for better fit
     )
 {
     // The one Pgn view; see instance(). Assigned rather than asserted unique, because the tests
@@ -114,9 +114,9 @@ void ImGuiGameList::draw() {
         filterPopup_.resetConfirmation();
     }
     
-    ImGui::Indent(10.0F);
+    QaplaUi::indent(10.0F);
     drawGameTable();
-    ImGui::Unindent(10.0F);
+    QaplaUi::unindent(10.0F);
 }
 
 void ImGuiGameList::drawButtons() {
@@ -124,22 +124,22 @@ void ImGuiGameList::drawButtons() {
     constexpr float topOffset = 5.0F;
     constexpr float bottomOffset = 8.0F;
     constexpr float leftOffset = 20.0F;
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+    constexpr QaplaUi::Vec2 buttonSize = {25.0F, 25.0F};
 
     const std::vector<std::string> buttons = {"Open", "Recent", "Save As", "Filter"};
     const auto totalSize = QaplaButton::calcIconButtonsTotalSize(buttonSize, buttons);
-    auto pos = ImVec2(boardPos.x + leftOffset, boardPos.y + topOffset);
+    auto pos = QaplaUi::Vec2(boardPos.x + leftOffset, boardPos.y + topOffset);
     
     for (const std::string& button : buttons) {
         bool isLoading = operationState_.load() == OperationState::Loading;
         auto [state, text] = computeButtonState(button, isLoading);
-        ImGui::SetCursorScreenPos(pos);
+        QaplaUi::setCursorScreenPos(pos);
         
         if (QaplaButton::drawIconButton(
                 button, text, buttonSize, state,
-                [&button, state](ImDrawList* drawList, ImVec2 topLeft, ImVec2 size) {
+                [&button, state](QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size) {
             if (button == "Open") {
                 QaplaButton::drawOpen(drawList, topLeft, size, state);
                 ImGuiControls::hooverTooltip(state == QaplaButton::ButtonState::Active 
@@ -161,7 +161,7 @@ void ImGuiGameList::drawButtons() {
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + topOffset + bottomOffset));
 }
 
 std::pair<QaplaButton::ButtonState, std::string> ImGuiGameList::computeButtonState(const std::string& button, bool isLoading) const {
@@ -215,23 +215,23 @@ void ImGuiGameList::drawLoadingStatus() {
         return;
     }
     
-    ImGui::Indent(10.0F);
+    QaplaUi::indent(10.0F);
     if (state == OperationState::Cancelling) {
         if (!savingFileName_.empty()) {
-            ImGui::Text("Cancelling saving to %s...", savingFileName_.c_str());
+            QaplaUi::text("Cancelling saving to " + savingFileName_ + "...");
         } else {
-            ImGui::Text("Cancelling loading from %s...", loadingFileName_.c_str());
+            QaplaUi::text("Cancelling loading from " + loadingFileName_ + "...");
         }
     } else if (state == OperationState::Saving) {
-        ImGui::Text("Saving games to %s...", savingFileName_.c_str());
+        QaplaUi::text("Saving games to " + savingFileName_ + "...");
     } else {
-        ImGui::Text("Loading games from %s...", loadingFileName_.c_str());
+        QaplaUi::text("Loading games from " + loadingFileName_ + "...");
     }
     float progress = loadingProgress_.load();
-    ImGui::ProgressBar(progress, ImVec2(-10.0F, 20.0F), 
+    QaplaUi::progressBar(progress, QaplaUi::Vec2(-10.0F, 20.0F), 
         std::to_string(gamesLoaded_.load()).c_str());
         //std::string(std::to_string(static_cast<int>(progress * 100.0F)) + "%").c_str());
-    ImGui::Unindent(10.0F);
+    QaplaUi::unindent(10.0F);
 }
 
 static std::vector<std::string> createTableRow(const QaplaTester::GameRecord& game,
@@ -286,11 +286,11 @@ void ImGuiGameList::createTable() {
 
     // Define fixed columns
     std::vector<ImGuiTable::ColumnDef> columns = {
-        { .name = "White", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
-        { .name = "Black", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
-        { .name = "Result", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F },
-        { .name = "Cause", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 120.0F },
-        { .name = "PlyCount", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 65.0F, .alignRight = true }
+        { .name = "White", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F },
+        { .name = "Black", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F },
+        { .name = "Result", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F },
+        { .name = "Cause", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 120.0F },
+        { .name = "PlyCount", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 65.0F, .alignRight = true }
     };
 
     auto knownTags = std::set<std::string>{};
@@ -301,16 +301,16 @@ void ImGuiGameList::createTable() {
     // Add common tag columns
     for (const auto& tag : commonTags) {
         if (!knownTags.contains(tag)) {
-            columns.push_back({.name=tag, .flags=ImGuiTableColumnFlags_WidthFixed, .width=100.0F});
+            columns.push_back({.name=tag, .flags=QaplaUi::TableColumnFlags::WidthFixed, .width=100.0F});
         }
     }
 
     // Initialize table with columns
     gameTable_ = ImGuiTable("GameListTable",
-        ImGuiTableFlags_Borders | 
-        ImGuiTableFlags_RowBg | 
-        ImGuiTableFlags_ScrollY | 
-        ImGuiTableFlags_ScrollX,
+        QaplaUi::TableFlags::Borders | 
+        QaplaUi::TableFlags::RowBg | 
+        QaplaUi::TableFlags::ScrollY | 
+        QaplaUi::TableFlags::ScrollX,
         columns);
 
     gameTable_.setClickable(true);
@@ -425,13 +425,13 @@ void ImGuiGameList::drawGameTable() {
     }
 
     // Use a child window to ensure proper scrolling
-    auto availSize = ImGui::GetContentRegionAvail();
+    auto availSize = QaplaUi::getContentRegionAvail();
     
     // Only draw if we can acquire the lock without blocking
     if (gameTableMutex_.try_lock()) {
         std::lock_guard lock(gameTableMutex_, std::adopt_lock); // NOLINT(modernize-use-scoped-lock)
         
-        auto clickedIndex = gameTable_.draw(ImVec2(0, availSize.y)); 
+        auto clickedIndex = gameTable_.draw(QaplaUi::Vec2(0, availSize.y)); 
         if (clickedIndex) {
             gameTable_.setCurrentRow(*clickedIndex);
             // Map filtered index to original game index

@@ -23,7 +23,7 @@
 #include <base-elements/change-tracker.h>
 #include "imgui-board-setup.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <optional>
 #include <memory>
@@ -152,25 +152,25 @@ namespace QaplaWindows
          */
         std::optional<QaplaTester::MoveRecord> checkMove();
 
-        std::pair<ImVec2, ImVec2> computeCellCoordinates(const ImVec2 &boardPos, float cellSize,
+        std::pair<QaplaUi::Vec2, QaplaUi::Vec2> computeCellCoordinates(const QaplaUi::Vec2 &boardPos, float cellSize,
             QaplaBasics::File file, QaplaBasics::Rank rank) const;
 
-        void drawBoardSquare(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize,
+        void drawBoardSquare(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize,
                              QaplaBasics::File file, QaplaBasics::Rank rank, bool isWhite, bool popupIsHovered);
-        void drawBoardSquares(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, bool popupIsHovered);
+        void drawBoardSquares(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize, bool popupIsHovered);
 
-        void drawBoardPieces(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
+        void drawBoardPieces(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize, QaplaUi::Font font);
 
-        void drawBoardCoordinates(ImDrawList *drawList, const ImVec2 &boardPos, 
-            float cellSize, float boardSize, ImFont *font, float maxSize) const;
+        void drawBoardCoordinates(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, 
+            float cellSize, float boardSize, QaplaUi::Font font, float maxSize) const;
 
-        static void drawIndicatorIcon(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, bool left,
-            QaplaBasics::Piece piece, ImU32 bgColor, ImFont *font);
-        void drawEPIndicator(ImDrawList *drawList, const ImVec2 &boardPos, float cellSize, ImFont *font);
-        void drawWhiteKingCastlingIndicators(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, 
-            bool isWhite, ImFont *font);
-        void drawBlackKingCastlingIndicators(ImDrawList *drawList, const ImVec2 &cellMin, float cellSize, 
-            bool isWhite, ImFont *font);
+        static void drawIndicatorIcon(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &cellMin, float cellSize, bool left,
+            QaplaBasics::Piece piece, QaplaUi::Color32 bgColor, QaplaUi::Font font);
+        void drawEPIndicator(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &boardPos, float cellSize, QaplaUi::Font font);
+        void drawWhiteKingCastlingIndicators(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &cellMin, float cellSize, 
+            bool isWhite, QaplaUi::Font font);
+        void drawBlackKingCastlingIndicators(QaplaUi::DrawList*drawList, const QaplaUi::Vec2 &cellMin, float cellSize, 
+            bool isWhite, QaplaUi::Font font);
 
         // Popup configuration and helpers
         enum class PopupCellType { EMPTY, PIECE, COLOR_SWITCH, CLEAR, CENTER };
@@ -183,36 +183,36 @@ namespace QaplaWindows
         };
 
         struct SatelliteDrawParams {
-            ImDrawList* drawList;
-            ImFont* font;
-            ImVec2 popupMin;
+            QaplaUi::DrawList* drawList;
+            QaplaUi::Font font;
+            QaplaUi::Vec2 popupMin;
             float gridCellSize;
             int col;
             int row;
         };
 
-        static std::pair<ImVec2, ImVec2> getPopupCellBounds(const ImVec2& popupMin, float cellSize, 
+        static std::pair<QaplaUi::Vec2, QaplaUi::Vec2> getPopupCellBounds(const QaplaUi::Vec2& popupMin, float cellSize, 
             int col, int row);
-        static void drawPopupRect(ImDrawList* drawList, const ImVec2& min, const ImVec2& max, ImU32 bgColor);
+        static void drawPopupRect(QaplaUi::DrawList* drawList, const QaplaUi::Vec2& min, const QaplaUi::Vec2& max, QaplaUi::Color32 bgColor);
         static void drawPopupPiece(const SatelliteDrawParams& params, QaplaBasics::Piece piece);
         void drawSwitchColorIcon(const SatelliteDrawParams& params) const;
         static void drawClearField(const SatelliteDrawParams& params);
-        void drawPopupCenter(ImDrawList* drawList, ImFont* font, 
-            const ImVec2& popupMin, float gridCellSize, QaplaBasics::Piece currentPieceOnSquare) const;
-        static bool isRectClicked(const ImVec2& min, const ImVec2& max);
+        void drawPopupCenter(QaplaUi::DrawList* drawList, QaplaUi::Font font, 
+            const QaplaUi::Vec2& popupMin, float gridCellSize, QaplaBasics::Piece currentPieceOnSquare) const;
+        static bool isRectClicked(const QaplaUi::Vec2& min, const QaplaUi::Vec2& max);
         
         // Returns selected piece when center is clicked
         // std::nullopt: no action (just cursor change)
         // NO_PIECE: remove piece from square
         // other piece: place that piece on square
-        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const ImVec2& cellMin, float cellSize, QaplaBasics::Piece currentPieceOnSquare);
-        std::optional<QaplaBasics::Piece> handlePieceSelectionClick(const ImVec2& popupMin, float gridCellSize);
+        std::optional<QaplaBasics::Piece> drawPieceSelectionPopup(const QaplaUi::Vec2& cellMin, float cellSize, QaplaBasics::Piece currentPieceOnSquare);
+        std::optional<QaplaBasics::Piece> handlePieceSelectionClick(const QaplaUi::Vec2& popupMin, float gridCellSize);
         
         // Handles piece selection popup logic - returns true if mouse is over popup
         bool handlePieceSelectionPopup();
 
         // Draws setup controls like side to move, castling rights, en passant, ...
-        void drawSetupControls(const ImVec2 &screenPos, const float boardSize);
+        void drawSetupControls(const QaplaUi::Vec2 &screenPos, const float boardSize);
 
         bool boardInverted_ = false;
         bool allowMoveInput_ = false;
@@ -224,8 +224,8 @@ namespace QaplaWindows
         
         // For rendering piece selection popup after board (to avoid z-order issues)
         std::optional<QaplaBasics::Square> hoveredSquareForPopup_;
-        ImVec2 hoveredSquareCellMin_;
-        ImVec2 hoveredSquareCellMax_;
+        QaplaUi::Vec2 hoveredSquareCellMin_;
+        QaplaUi::Vec2 hoveredSquareCellMax_;
         float hoveredSquareCellSize_;
 
         MoveInput moveInput_;

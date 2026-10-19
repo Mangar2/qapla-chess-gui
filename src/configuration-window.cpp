@@ -28,7 +28,7 @@
 
 #include <base-elements/logger.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <map>
 #include <vector>
 
@@ -43,15 +43,15 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
 
     bool applied = false;
 
-    ImGui::PushID(label);
+    QaplaUi::pushId(label);
 
     // Input field
-    ImGui::SetNextItemWidth(width);
+    QaplaUi::setNextItemWidth(width);
     ImGuiControls::inputText(label, currentValue_);
     // Commit as soon as the field loses focus after an edit (Enter, Tab, clicking
     // elsewhere) -- not only on an explicit Apply click, so a typed change can never be
     // silently lost just because the separate Apply button wasn't clicked.
-    if (ImGui::IsItemDeactivatedAfterEdit()) {
+    if (QaplaUi::isItemDeactivatedAfterEdit()) {
         sourceValue = currentValue_;
         originalValue_ = currentValue_;
         applied = true;
@@ -59,10 +59,10 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
     ImGuiControls::hooverTooltip("Edit value and press Enter/click elsewhere, or click Apply, to save changes");
 
     // Apply button (for committing without leaving the field, e.g. before adjusting another setting)
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     const bool hasChanges = (currentValue_ != originalValue_);
     if (!hasChanges) {
-        ImGui::BeginDisabled();
+        QaplaUi::beginDisabled();
     }
     if (ImGuiControls::textButton("Apply")) {
         sourceValue = currentValue_;
@@ -71,10 +71,10 @@ bool BufferedTextInput::draw(const char* label, std::string& sourceValue, float 
     }
     ImGuiControls::hooverTooltip("Apply pending changes to configuration");
     if (!hasChanges) {
-        ImGui::EndDisabled();
+        QaplaUi::endDisabled();
     }
 
-    ImGui::PopID();
+    QaplaUi::popId();
 
     return applied;
 }
@@ -124,56 +124,56 @@ static void drawLanguageConfig() {
 
 void ConfigurationWindow::draw()
 {
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Snackbar Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("Snackbar Settings", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawSnackbarConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     /*
     // Disabled for now, tutorials are started in the chatbot now
-    if (ImGuiControls::CollapsingHeaderWithDot("Tutorial Progress", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("Tutorial Progress", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawTutorialConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     */
-    if (ImGuiControls::CollapsingHeaderWithDot("Logger Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("Logger Settings", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawLoggerConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
-    if (ImGuiControls::CollapsingHeaderWithDot("Language Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("Language Settings", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawLanguageConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
-    if (ImGuiControls::CollapsingHeaderWithDot("Performance Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("Performance Settings", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawPerformanceConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
-    if (ImGuiControls::CollapsingHeaderWithDot("LM Studio / AI Chat Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Indent(10.0F);
+    if (ImGuiControls::CollapsingHeaderWithDot("LM Studio / AI Chat Settings", QaplaUi::TreeNodeFlags::DefaultOpen)) {
+        QaplaUi::indent(10.0F);
         drawLlmChatConfig();
-        ImGui::Unindent(10.0F);
+        QaplaUi::unindent(10.0F);
     }
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 }
 
 void ConfigurationWindow::drawSnackbarConfig()
@@ -185,31 +185,31 @@ void ConfigurationWindow::drawSnackbarConfig()
 
     auto& config = SnackbarManager::instance().getConfig();
 
-    ImGui::Text("Message Display Durations (in seconds):");
-    ImGui::Spacing();
+    QaplaUi::text("Message Display Durations (in seconds):");
+    QaplaUi::spacing();
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Note Duration", config.noteDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
     ImGuiControls::hooverTooltip("Display duration for informational messages in seconds");
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Success Duration", config.successDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
     ImGuiControls::hooverTooltip("Display duration for success messages in seconds");
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Warning Duration", config.warningDurationInS, minDuration, maxDuration))
     {
         modified = true;
     }
     ImGuiControls::hooverTooltip("Display duration for warning messages in seconds");
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<uint32_t>("Error Duration", config.errorDurationInS, minDuration, maxDuration))
     {
         modified = true;
@@ -223,8 +223,8 @@ void ConfigurationWindow::drawSnackbarConfig()
 
 void ConfigurationWindow::drawTutorialConfig()
 {
-    ImGui::Text("Tutorial Topics:");
-    ImGui::Spacing();
+    QaplaUi::text("Tutorial Topics:");
+    QaplaUi::spacing();
 
     // Loop in TutorialName enum Reihenfolge (garantiert sortiert)
     for (size_t i = 0; i < static_cast<size_t>(Tutorial::TutorialName::Count); ++i) {
@@ -232,7 +232,7 @@ void ConfigurationWindow::drawTutorialConfig()
         auto& entry = Tutorial::instance().getEntry(tutorialName);
         
         bool completed = !entry.running();
-        if (ImGui::Checkbox(entry.displayName.c_str(), &completed)) {
+        if (QaplaUi::checkbox(entry.displayName.c_str(), completed)) {
             if (completed) {
                 Tutorial::instance().finishTutorial(tutorialName);
             } else {
@@ -240,13 +240,13 @@ void ConfigurationWindow::drawTutorialConfig()
             }
         }
         ImGuiControls::hooverTooltip(completed ? "Tutorial completed - uncheck to restart" : "Tutorial not completed - check to mark as complete");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         auto messageCount = entry.messages.size();
         auto progress = std::min<uint32_t>(entry.getProgressCounter(), messageCount);
-        ImGui::TextDisabled("(Progress: %u/%zu)", progress, messageCount);
+        QaplaUi::textDisabled(std::format("(Progress: {}/{})", progress, messageCount));
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (ImGuiControls::textButton("Reset All Tutorials")) {
         Tutorial::instance().resetAll();
     }
@@ -255,10 +255,10 @@ void ConfigurationWindow::drawTutorialConfig()
 
 void ConfigurationWindow::drawPerformanceConfig()
 {
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     bool remoteDesktopMode = QaplaConfiguration::Configuration::isRemoteDesktopMode();
-    if (ImGui::Checkbox("Remote Desktop Mode", &remoteDesktopMode)) {
+    if (QaplaUi::checkbox("Remote Desktop Mode", remoteDesktopMode)) {
         QaplaConfiguration::Configuration::setRemoteDesktopMode(remoteDesktopMode);
         SnackbarManager::instance().showNote(
             "Please restart the application for this change to take effect",
@@ -282,7 +282,7 @@ void ConfigurationWindow::drawLlmChatConfig()
     bool modified = false;
 
     bool enabled = config.enabled;
-    if (ImGui::Checkbox("Offer AI Chat when LM Studio is detected", &enabled)) {
+    if (QaplaUi::checkbox("Offer AI Chat when LM Studio is detected", enabled)) {
         config.enabled = enabled;
         modified = true;
     }
@@ -290,14 +290,14 @@ void ConfigurationWindow::drawLlmChatConfig()
         "If enabled, the app automatically checks for LM Studio at startup and adds an "
         "\"AI Chat\" entry to the chatbot menu when found.");
 
-    ImGui::Spacing();
-    ImGui::Text("LM Studio Server:");
+    QaplaUi::spacing();
+    QaplaUi::text("LM Studio Server:");
 
     bool hostChanged = false;
 
     if (!config.hostHistory.empty()) {
         std::string selectedHost = config.host;
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         if (ImGuiControls::selectionBox("Recent Hosts", selectedHost, config.hostHistory)) {
             config.host = selectedHost;
             modified = true;
@@ -317,13 +317,13 @@ void ConfigurationWindow::drawLlmChatConfig()
         "remote server, enable \"Serve on Local Network\" on LM Studio's Developer tab so "
         "it accepts connections from other machines.");
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<int>("Port", config.port, 1, 65535)) {
         modified = true;
     }
     ImGuiControls::hooverTooltip("LM Studio's server port, shown on its Developer tab (default 1234).");
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     if (ImGuiControls::inputInt<int>("Response Timeout (s)", config.responseTimeoutSeconds, 5, 3600)) {
         modified = true;
     }
@@ -331,9 +331,9 @@ void ConfigurationWindow::drawLlmChatConfig()
         "How long to wait for the model to answer one message before giving up as timed out. "
         "Raise this for slower/larger models or long tool-heavy turns.");
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     bool logTraffic = config.logTraffic;
-    if (ImGui::Checkbox("Log AI chat traffic to file", &logTraffic)) {
+    if (QaplaUi::checkbox("Log AI chat traffic to file", logTraffic)) {
         config.logTraffic = logTraffic;
         modified = true;
     }
@@ -358,7 +358,7 @@ void ConfigurationWindow::drawLoggerConfig()
     bool modified = false;
 
     // Log Path - only via dialog, no manual typing
-    ImGui::Text("Log Directory:");
+    QaplaUi::text("Log Directory:");
     if (ImGuiControls::textButton("Browse###LogPath")) {
         try {
             auto selectedPath = OsDialogs::selectFolderDialog(config.logPath);
@@ -372,9 +372,9 @@ void ConfigurationWindow::drawLoggerConfig()
         }
     }
     ImGuiControls::hooverTooltip("Select directory for log files");
-    ImGui::SameLine();
-    ImGui::TextDisabled("%s", config.logPath.c_str());
-    ImGui::Spacing();
+    QaplaUi::sameLine();
+    QaplaUi::textDisabled(config.logPath);
+    QaplaUi::spacing();
 
     if (reportBaseNameInput_.draw("Report Log - Base Name", config.reportLogBaseName, inputWidth)) {
         modified = true;
@@ -384,7 +384,7 @@ void ConfigurationWindow::drawLoggerConfig()
         modified = true;
     }
 
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     int currentStrategy = static_cast<int>(config.engineLogStrategy);
     const std::vector<std::string> strategyItems = { 
         "Global (single file for all engines)", "Per Engine (one file per engine instance)" };

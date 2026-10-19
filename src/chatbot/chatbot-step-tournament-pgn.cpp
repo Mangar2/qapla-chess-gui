@@ -22,7 +22,7 @@
 #include "tournament-data.h"
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <filesystem>
 
 namespace QaplaWindows::ChatBot {
@@ -43,7 +43,7 @@ std::string ChatbotStepTournamentPgn::draw() {
         QaplaWindows::ImGuiControls::textWrapped(
             "Select the PGN file where tournament results will be saved. "
             "All games played during the tournament will be recorded in this file.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto& tournamentPgn = getTournamentPgn();
@@ -58,12 +58,12 @@ std::string ChatbotStepTournamentPgn::draw() {
     const auto& pgnOptions = tournamentPgn.pgnOptions();
     auto validation = validateFilePath(pgnOptions.file, pgnOptions.append);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     drawStatusMessage(validation);
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -97,37 +97,37 @@ ChatbotStepTournamentPgn::ValidationResult ChatbotStepTournamentPgn::validateFil
 
 void ChatbotStepTournamentPgn::drawStatusMessage(const ValidationResult& validation) {
     if (!validation.isValidPath) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "Please enter a valid file path. The directory must exist.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     } else if (validation.willOverwrite) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::WARNING_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::WARNING_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "Warning: The file already exists and overwrite mode is enabled. "
             "The existing content will be replaced when the tournament starts.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     } else if (validation.fileExists) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::SUCCESS_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::SUCCESS_COLOR);
         QaplaWindows::ImGuiControls::textWrapped(
             "The file exists. New games will be appended to the existing content.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 }
 
 std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& validation) {
     const char* continueLabel = validation.willOverwrite ? "Overwrite & Continue" : "Continue";
     
-    ImGui::BeginDisabled(!validation.isValidPath);
+    QaplaUi::beginDisabled(!validation.isValidPath);
     if (QaplaWindows::ImGuiControls::textButton(continueLabel)) {
         finished_ = true;
     }
     if (std::string(continueLabel) == "Overwrite & Continue") {
         QaplaWindows::ImGuiControls::hooverTooltip("This will overwrite the specified PGN file with new results. Make sure this is what you want before continuing.");
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     const char* optionsLabel = showMoreOptions_ ? "Less Options" : "More Options";
     if (QaplaWindows::ImGuiControls::textButton(optionsLabel)) {
@@ -135,7 +135,7 @@ std::string ChatbotStepTournamentPgn::drawButtons(const ValidationResult& valida
     }
     QaplaWindows::ImGuiControls::hooverTooltip("Show or hide additional PGN options (append mode, headers, etc.).");
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

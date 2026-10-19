@@ -25,7 +25,7 @@
 
 #include <base-elements/timer.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <format>
 
@@ -39,10 +39,10 @@ namespace {
     // it with requests every frame.
     constexpr uint64_t REFRESH_INTERVAL_MS = 30000;
 
-    const ImVec4 USER_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
-    const ImVec4 TOOL_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
-    const ImVec4 ASSISTANT_COLOR{0.7F, 1.0F, 0.7F, 1.0F};
-    const ImVec4 DEBUG_COLOR{0.55F, 0.55F, 0.55F, 1.0F};
+    const QaplaUi::Vec4 USER_COLOR{0.6F, 0.8F, 1.0F, 1.0F};
+    const QaplaUi::Vec4 TOOL_COLOR{0.85F, 0.75F, 0.4F, 1.0F};
+    const QaplaUi::Vec4 ASSISTANT_COLOR{0.7F, 1.0F, 0.7F, 1.0F};
+    const QaplaUi::Vec4 DEBUG_COLOR{0.55F, 0.55F, 0.55F, 1.0F};
 }
 
 ChatbotLlmChat::ChatbotLlmChat(LmStudioStatus status)
@@ -55,7 +55,7 @@ void ChatbotLlmChat::start() {
     lastProbeCompletedMs_ = 0;
     controller_.reset();
     activeConnection_ = {};
-    inputBuffer_.fill('\0');
+    inputBuffer_.clear();
 }
 
 void ChatbotLlmChat::refreshStatus() {
@@ -262,17 +262,17 @@ bool ChatbotLlmChat::draw() {
     if (controller_) {
         controller_->update();
         drawChatUi();
-        ImGui::SameLine();
-        ImGui::BeginDisabled(controller_->isBusy());
+        QaplaUi::sameLine();
+        QaplaUi::beginDisabled(controller_->isBusy());
         if (ImGuiControls::textButton("Delete Chat")) {
             controller_->clearHistory();
         }
-        ImGui::EndDisabled();
+        QaplaUi::endDisabled();
         ImGuiControls::hooverTooltip("Clears the chat transcript. Disabled while a message is in flight -- stop it first.");
-        ImGui::SameLine();
+        QaplaUi::sameLine();
     } else {
         drawStatusOnly();
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     if (ImGuiControls::textButton("Close")) {
@@ -317,26 +317,26 @@ void ChatbotLlmChat::drawChatUi() {
     // Model dropdown
     const auto& models = controller_->availableModels();
     std::string preview = controller_->model().empty() ? "(no model)" : controller_->model();
-    ImGui::SetNextItemWidth(300.0F);
-    if (ImGui::BeginCombo("##LlmModelSelect", preview.c_str())) {
+    QaplaUi::setNextItemWidth(300.0F);
+    if (QaplaUi::beginCombo("##LlmModelSelect", preview.c_str())) {
         for (const auto& modelId : models) {
             bool isSelected = (modelId == controller_->model());
-            if (ImGui::Selectable(modelId.c_str(), isSelected)) {
+            if (QaplaUi::selectable(modelId.c_str(), isSelected)) {
                 controller_->setModel(modelId);
             }
             if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+                QaplaUi::setItemDefaultFocus();
             }
         }
-        ImGui::EndCombo();
+        QaplaUi::endCombo();
     }
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (ImGuiControls::textButton("Refresh Models")) {
         controller_->refreshModels();
     }
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     bool enableThinking = controller_->enableThinking();
-    if (ImGui::Checkbox("Enable Thinking", &enableThinking)) {
+    if (QaplaUi::checkbox("Enable Thinking", enableThinking)) {
         controller_->setEnableThinking(enableThinking);
     }
     ImGuiControls::hooverTooltip(
@@ -344,11 +344,11 @@ void ChatbotLlmChat::drawChatUi() {
         "has an effect on chat templates that support it, e.g. Qwen3). Applies to every "
         "message sent from now on.");
     if (controller_->isRefreshingModels()) {
-        ImGui::SameLine();
-        ImGui::TextDisabled("(refreshing...)");
+        QaplaUi::sameLine();
+        QaplaUi::textDisabled("(refreshing...)");
     } else if (!controller_->modelsError().empty()) {
-        ImGui::SameLine();
-        ImGui::TextColored(StepColors::ERROR_COLOR, "(%s)", controller_->modelsError().c_str());
+        QaplaUi::sameLine();
+        QaplaUi::textColored(StepColors::ERROR_COLOR, "(" + controller_->modelsError() + ")");
     }
 
     // Reachability of the selected model itself (distinct from the server being up at all --
@@ -357,18 +357,18 @@ void ChatbotLlmChat::drawChatUi() {
     using PingStatus = QaplaLlm::LlmChatController::PingStatus;
     switch (controller_->pingStatus()) {
         case PingStatus::Pinging:
-            ImGui::TextDisabled("Connecting to %s...", controller_->model().c_str());
+            QaplaUi::textDisabled("Connecting to " + controller_->model() + "...");
             break;
         case PingStatus::Failed:
-            ImGui::TextColored(StepColors::ERROR_COLOR, "%s did not respond: %s",
-                controller_->model().c_str(), controller_->pingError().c_str());
+            QaplaUi::textColored(StepColors::ERROR_COLOR,
+                controller_->model() + " did not respond: " + controller_->pingError());
             break;
         case PingStatus::NotStarted:
         case PingStatus::Reachable:
             break;
     }
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     // History -- drawn straight into the flow, no nested BeginChild: the ChatbotWindow that
     // hosts every chatbot thread (see chatbot-window.cpp) already provides the one real,
@@ -390,15 +390,15 @@ void ChatbotLlmChat::drawChatUi() {
         // label -- just the friendly text, in a distinguishing color.
         switch (entry.role) {
             case QaplaLlm::ChatRole::User:
-                ImGui::TextColored(USER_COLOR, "You:");
+                QaplaUi::textColored(USER_COLOR, "You:");
                 break;
             case QaplaLlm::ChatRole::Assistant:
-                ImGui::TextColored(ASSISTANT_COLOR, "Assistant:");
+                QaplaUi::textColored(ASSISTANT_COLOR, "Assistant:");
                 break;
             case QaplaLlm::ChatRole::Tool:
                 break;
             case QaplaLlm::ChatRole::Error:
-                ImGui::TextColored(StepColors::ERROR_COLOR, "Error:");
+                QaplaUi::textColored(StepColors::ERROR_COLOR, "Error:");
                 break;
             case QaplaLlm::ChatRole::Debug:
                 break;
@@ -412,37 +412,37 @@ void ChatbotLlmChat::drawChatUi() {
             // rather than a text dump -- see GuiToolResult::renderWidget.
             entry.renderWidget();
         } else if (entry.role == QaplaLlm::ChatRole::Tool) {
-            ImGui::PushStyleColor(ImGuiCol_Text, TOOL_COLOR);
-            ImGui::TextWrapped("%s", entry.text.c_str());
-            ImGui::PopStyleColor();
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, TOOL_COLOR);
+            QaplaUi::textWrapped(entry.text);
+            QaplaUi::popStyleColor();
         } else if (entry.role == QaplaLlm::ChatRole::Debug) {
-            ImGui::PushStyleColor(ImGuiCol_Text, DEBUG_COLOR);
-            ImGui::TextWrapped("%s", entry.text.c_str());
-            ImGui::PopStyleColor();
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, DEBUG_COLOR);
+            QaplaUi::textWrapped(entry.text);
+            QaplaUi::popStyleColor();
         } else {
-            ImGui::TextWrapped("%s", entry.text.c_str());
+            QaplaUi::textWrapped(entry.text);
         }
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
     if (controller_->isBusy()) {
-        ImGui::TextDisabled("Thinking...");
+        QaplaUi::textDisabled("Thinking...");
     }
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     // Input
     const bool busy = controller_->isBusy();
-    ImGui::BeginDisabled(busy);
-    constexpr ImGuiInputTextFlags inputFlags =
-        ImGuiInputTextFlags_CtrlEnterForNewLine | ImGuiInputTextFlags_EnterReturnsTrue;
-    bool submitted = ImGui::InputTextMultiline(
-        "##LlmChatInput", inputBuffer_.data(), inputBuffer_.size(), ImVec2(-1, 80), inputFlags);
-    ImGui::EndDisabled();
+    QaplaUi::beginDisabled(busy);
+    constexpr QaplaUi::InputTextFlags inputFlags =
+        QaplaUi::InputTextFlags::CtrlEnterForNewLine | QaplaUi::InputTextFlags::EnterReturnsTrue;
+    bool submitted = QaplaUi::inputTextMultiline(
+        "##LlmChatInput", inputBuffer_, QaplaUi::Vec2(-1, 80), inputFlags);
+    QaplaUi::endDisabled();
 
     // Grey hint between the input box and the Send/Stop button, not a hover tooltip -- a
     // tooltip that pops up at the mouse cursor while typing (i.e. right where the cursor
     // usually is, over the text being typed) was distracting.
-    ImGui::TextDisabled("Enter sends, Ctrl+Enter inserts a newline.");
+    QaplaUi::textDisabled("Enter sends, Ctrl+Enter inserts a newline.");
 
     if (submitted) {
         trySend();
@@ -464,7 +464,7 @@ void ChatbotLlmChat::trySend() {
         return;
     }
 
-    std::string text(inputBuffer_.data());
+    std::string text(inputBuffer_);
     while (!text.empty() && (text.back() == '\n' || text.back() == '\r' || text.back() == ' ')) {
         text.pop_back();
     }
@@ -473,7 +473,7 @@ void ChatbotLlmChat::trySend() {
     }
 
     controller_->sendMessage(text);
-    inputBuffer_.fill('\0');
+    inputBuffer_.clear();
 }
 
 bool ChatbotLlmChat::isFinished() const {

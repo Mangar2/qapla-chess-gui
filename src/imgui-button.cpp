@@ -22,7 +22,7 @@
 
 #include <functional>
 #include <string>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <cmath>
 #include <numbers>
@@ -33,30 +33,9 @@ namespace QaplaButton {
 
     constexpr float BORDER = 4.0F;
 
-    using IconDrawCallback = std::function<void(ImDrawList*, ImVec2 topLeft, ImVec2 size)>;
+    using IconDrawCallback = std::function<void(QaplaUi::DrawList*, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)>;
 
-    static auto getBgColor(ButtonState state) {
-        if (state == ButtonState::Disabled) {
-            return ImGui::GetColorU32(ImVec4(0.3F, 0.3F, 0.3F, 0.5F));
-        }
-		if (ImGui::IsItemActive() || state == ButtonState::Active) {
-            return ImGui::GetColorU32(ImGuiCol_ButtonActive);
-        }
-
-		if (ImGui::IsItemHovered()) {
-            return ImGui::GetColorU32(ImGuiCol_ButtonHovered);
-        }
-		return ImGui::GetColorU32(ImGuiCol_Button);
-    }
-
-    static auto getTextColor(ButtonState state) {
-        if (state == ButtonState::Disabled) {
-            return ImGui::GetColorU32(ImGuiCol_TextDisabled);
-        }
-		return ImGui::GetColorU32(ImGuiCol_Text);
-    }
-
-    static ImVec4 lerpVec4(const ImVec4& a, const ImVec4& b, float t) {
+    static QaplaUi::Vec4 lerpVec4(const QaplaUi::Vec4& a, const QaplaUi::Vec4& b, float t) {
         return {
             std::lerp(a.x, b.x, t),
             std::lerp(a.y, b.y, t),
@@ -67,22 +46,22 @@ namespace QaplaButton {
 
     static auto getFgColor(ButtonState state) {
         if (state == ButtonState::Disabled) {
-            return ImGui::GetColorU32(ImGuiCol_TextDisabled);
+            return QaplaUi::getColorU32(QaplaUi::StyleColor::TextDisabled);
         }
-        bool hovered = ImGui::IsItemHovered();
-        bool active = ImGui::IsItemActive() || state == ButtonState::Active;
+        bool hovered = QaplaUi::isItemHovered();
+        bool active = QaplaUi::isItemActive() || state == ButtonState::Active;
 
         if (active || hovered) {
-            return ImGui::GetColorU32(ImGuiCol_Text);
+            return QaplaUi::getColorU32(QaplaUi::StyleColor::Text);
         }
 
-        const ImVec4 a = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-        const ImVec4 b = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
-        const ImVec4 m = lerpVec4(a, b, 0.8F);
-        return ImGui::GetColorU32(m);
+        const QaplaUi::Vec4 a = QaplaUi::getStyleColorVec4(QaplaUi::StyleColor::Text);
+        const QaplaUi::Vec4 b = QaplaUi::getStyleColorVec4(QaplaUi::StyleColor::TextDisabled);
+        const QaplaUi::Vec4 m = lerpVec4(a, b, 0.8F);
+        return QaplaUi::getColorU32(m);
     }
 
-    void drawNew(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
+    void drawNew(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, [[maybe_unused]] QaplaUi::Vec2 size, ButtonState state) {
         constexpr float FIELD_SIZE = 3;
         auto xPos = topLeft.x + BORDER;
         auto yPos = topLeft.y + BORDER;
@@ -92,68 +71,67 @@ namespace QaplaButton {
                 if ((x + y) % 2 == 1) {
 					continue; // Skip every second square to create a checkerboard pattern
 				}
-                list->AddRectFilled(
-                    ImVec2(xPos + x * FIELD_SIZE, yPos + y * FIELD_SIZE), 
-                    ImVec2(xPos + (x + 1) * FIELD_SIZE, yPos + (y + 1) * FIELD_SIZE),
+                list->addRectFilled(
+                    QaplaUi::Vec2(xPos + x * FIELD_SIZE, yPos + y * FIELD_SIZE), 
+                    QaplaUi::Vec2(xPos + (x + 1) * FIELD_SIZE, yPos + (y + 1) * FIELD_SIZE),
                     color);
             }
         }
     }
 
-    void drawNow(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
+    void drawNow(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, [[maybe_unused]] QaplaUi::Vec2 size, ButtonState state) {
         auto yReduce = BORDER + 5.0F;
         auto thickness = 7.0F;
         auto arrowInset = 4.0F;
         auto xPos = topLeft.x + BORDER - 1.0F;
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + 3.0F, yPos + thickness), color);
+        list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + 3.0F, yPos + thickness), color);
         xPos += 3.0F;
         for (int i = 0; i < 8; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i),
-                ImVec2(xPos + i, yPos + thickness + arrowInset - i),
+            list->addLine(QaplaUi::Vec2(xPos + i, yPos - arrowInset + i),
+                QaplaUi::Vec2(xPos + i, yPos + thickness + arrowInset - i),
                 color);
         }
 		xPos += 9.0F;
         for (int i = 0; i <= 3; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos + 3.0F - i),
-                ImVec2(xPos + i, yPos + 5.0F + i), color);
-            list->AddLine(ImVec2(xPos + 7.0F - i, yPos + 3.0F - i),
-                ImVec2(xPos + 7.0F - i, yPos + 5.0F + i), color);
+            list->addLine(QaplaUi::Vec2(xPos + i, yPos + 3.0F - i),
+                QaplaUi::Vec2(xPos + i, yPos + 5.0F + i), color);
+            list->addLine(QaplaUi::Vec2(xPos + 7.0F - i, yPos + 3.0F - i),
+                QaplaUi::Vec2(xPos + 7.0F - i, yPos + 5.0F + i), color);
         }
     }
 
-    void drawStop(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawStop(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         for (int i = 1; i <= 2; i++) {
             auto reduce = BORDER + static_cast<float>(i);
             auto color = getFgColor(state);
-            list->AddRect(
-                ImVec2(topLeft.x + reduce, topLeft.y + reduce),
-                ImVec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
+            list->addRect(
+                QaplaUi::Vec2(topLeft.x + reduce, topLeft.y + reduce),
+                QaplaUi::Vec2(topLeft.x + size.x - reduce, topLeft.y + size.y - reduce),
                 color,
                 0.0F,
-                ImDrawFlags_None,
                 1.0F);
         }
     }
 
-    void drawRect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawRect(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         for (int i = 0; i <= 1; i++) {
-            list->AddRect(
-                ImVec2(topLeft.x + i, topLeft.y + i),
-                ImVec2(topLeft.x + size.x - i, topLeft.y + size.y - i),
+            list->addRect(
+                QaplaUi::Vec2(topLeft.x + i, topLeft.y + i),
+                QaplaUi::Vec2(topLeft.x + size.x - i, topLeft.y + size.y - i),
                 color);
         }
     }
 
-    void drawGrace(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawGrace(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         constexpr float reduce = 4.0F;
-        auto rectSize = ImVec2(size.x - BORDER * 2 - reduce, size.y - BORDER * 2 - reduce);
+        auto rectSize = QaplaUi::Vec2(size.x - BORDER * 2 - reduce, size.y - BORDER * 2 - reduce);
         int centeredX = static_cast<int>((size.x - rectSize.x) / 2);
         auto rectPosX = topLeft.x + static_cast<float>(centeredX);
-        drawRect(list, ImVec2(rectPosX, topLeft.y + BORDER), rectSize, state);
+        drawRect(list, QaplaUi::Vec2(rectPosX, topLeft.y + BORDER), rectSize, state);
 
         // Parameter
         const float dotSize = 2.0F;   // 2x2 Pixel
@@ -166,14 +144,14 @@ namespace QaplaButton {
 
         for (int i = 0; i < count; ++i) {
             float x0 = startX + i*(dotSize + gap);
-            list->AddRectFilled(
-                ImVec2(x0, startY),
-                ImVec2(x0 + dotSize, startY + dotSize),
+            list->addRectFilled(
+                QaplaUi::Vec2(x0, startY),
+                QaplaUi::Vec2(x0 + dotSize, startY + dotSize),
                 color);
         }    
     }
 
-    void drawAdd(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawAdd(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         constexpr int thickness = 3;
         constexpr int lengthPercentage = 60;
@@ -198,22 +176,22 @@ namespace QaplaButton {
         int verticalStartX = static_cast<int>(topLeft.x) + (width - thickness) / 2;
         int verticalStartY = static_cast<int>(topLeft.y) + (height - verticalLength) / 2;
 
-        list->AddRectFilled(
-            ImVec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
-            ImVec2(static_cast<float>(horizontalStartX + horizontalLength),
+        list->addRectFilled(
+            QaplaUi::Vec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
+            QaplaUi::Vec2(static_cast<float>(horizontalStartX + horizontalLength),
                 static_cast<float>(horizontalStartY + thickness)),
             color
         );
 
-        list->AddRectFilled(
-            ImVec2(static_cast<float>(verticalStartX), static_cast<float>(verticalStartY)),
-            ImVec2(static_cast<float>(verticalStartX + thickness), 
+        list->addRectFilled(
+            QaplaUi::Vec2(static_cast<float>(verticalStartX), static_cast<float>(verticalStartY)),
+            QaplaUi::Vec2(static_cast<float>(verticalStartX + thickness), 
                 static_cast<float>(verticalStartY + verticalLength)),
             color
         );
     }
 
-    void drawRemove(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawRemove(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         constexpr int thickness = 3;
         constexpr int lengthPercentage = 60;
@@ -235,17 +213,17 @@ namespace QaplaButton {
         int horizontalStartX = static_cast<int>(topLeft.x) + (width - horizontalLength) / 2;
         int horizontalStartY = static_cast<int>(topLeft.y) + (height - thickness) / 2;
 
-        list->AddRectFilled(
-            ImVec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
-            ImVec2(static_cast<float>(horizontalStartX + horizontalLength), 
+        list->addRectFilled(
+            QaplaUi::Vec2(static_cast<float>(horizontalStartX), static_cast<float>(horizontalStartY)),
+            QaplaUi::Vec2(static_cast<float>(horizontalStartX + horizontalLength), 
                 static_cast<float>(horizontalStartY + thickness)),
             color
         );
 
     }
 
-    void drawRestart (ImDrawList* drawList, ImVec2 topLeft, ImVec2 size, ButtonState state) {
-        ImVec2 center = topLeft;
+    void drawRestart (QaplaUi::DrawList* drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
+        QaplaUi::Vec2 center = topLeft;
         center.x += size.x / 2;
         center.y += size.y / 2;
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
@@ -256,51 +234,51 @@ namespace QaplaButton {
 
         float startAngle = 1.5F * pi;   // 270° = 3/2 Pi
         float endAngle = startAngle + 1.5F * pi;  // 270° → 45° 
-        drawList->PathArcTo(center, radius, startAngle, endAngle, 20);
-        drawList->PathStroke(color, ImDrawFlags_None, 1.5F);
+        drawList->pathArcTo(center, radius, startAngle, endAngle, 20);
+        drawList->pathStroke(color, false, 1.5F);
 
         // Pfeilspitze
-        auto arrowTip = ImVec2(center.x + cosf(pi) * radius,
+        auto arrowTip = QaplaUi::Vec2(center.x + cosf(pi) * radius,
             center.y + sinf(pi) * radius);
 
         for (int i = 0; i < 3; ++i) {
             float width = std::max(5.0F - 2.0F * static_cast<float>(i), 1.0F);
             float yOffset = -2.0F * i;
-            auto p1 = ImVec2(arrowTip.x - width / 2.0F, arrowTip.y + yOffset);
-            auto p2 = ImVec2(arrowTip.x + width / 2.0F, arrowTip.y + yOffset);
-            drawList->AddLine(p1, p2, color, 2.0F);
+            auto p1 = QaplaUi::Vec2(arrowTip.x - width / 2.0F, arrowTip.y + yOffset);
+            auto p2 = QaplaUi::Vec2(arrowTip.x + width / 2.0F, arrowTip.y + yOffset);
+            drawList->addLine(p1, p2, color, 2.0F);
         }
     }
 
-    void drawConfig(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawConfig(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
-        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = QaplaUi::Vec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER - 1;
         constexpr float pi = std::numbers::pi_v<float>;
         
         float innerRadius = radius - 0.5F;
-        list->AddCircle(center, innerRadius, color, 0, 2.0F);
+        list->addCircle(center, innerRadius, color, 0, 2.0F);
         // Draw the gear shape
         for (int i = 0; i < 8; ++i) {
             float angle = i * (pi / 4.0F); // 45 degrees
             float x = center.x + cos(angle) * radius;
             float y = center.y + sin(angle) * radius;
-            list->AddCircleFilled(ImVec2(x, y), 2.0F, color);
+            list->addCircleFilled(QaplaUi::Vec2(x, y), 2.0F, color);
         }
 	}
 
-    void drawText(const std::string& text, ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawText(const std::string& text, QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
-        ImVec2 textSize = ImGui::CalcTextSize(text.c_str());
-        auto textPos = ImVec2(
+        QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(text.c_str());
+        auto textPos = QaplaUi::Vec2(
             topLeft.x + std::round((size.x - textSize.x) * 0.5F) - 2.0F,
             topLeft.y - 2.0F
         );
         float fontSize = size.y * 1.0F;
-        list->AddText(ImGui::GetFont(), fontSize, textPos, color, text.c_str());
+        list->addText(QaplaUi::getFont(), fontSize, textPos, color, text.c_str());
 	}
 
-    void drawPlay(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
+    void drawPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, [[maybe_unused]] QaplaUi::Vec2 size, ButtonState state) {
 		auto yReduce = BORDER + 5.0F;
         auto thickness = 7.0F;
         auto arrowInset = 4.0F;
@@ -308,17 +286,17 @@ namespace QaplaButton {
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
         for (auto add : { 3.0F, 4.0F, 5.0F }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
             xPos += add;
         }
         for (int i = 0; i < 8; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i), 
-                ImVec2(xPos + i, yPos + thickness + arrowInset - i),
+            list->addLine(QaplaUi::Vec2(xPos + i, yPos - arrowInset + i), 
+                QaplaUi::Vec2(xPos + i, yPos + thickness + arrowInset - i),
 				color);
         }
     }
 
-    void drawAnalyze(ImDrawList* list, ImVec2 topLeft, [[maybe_unused]] ImVec2 size, ButtonState state) {
+    void drawAnalyze(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, [[maybe_unused]] QaplaUi::Vec2 size, ButtonState state) {
         auto yReduce = BORDER + 4.0F;
         auto thickness = 5.0F;
         auto arrowInset = 3.0F;
@@ -326,23 +304,23 @@ namespace QaplaButton {
         auto yPos = topLeft.y + yReduce;
         auto color = getFgColor(state);
         for (auto add : { 3.0F, 4.0F, 5.0F }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
             xPos += add;
         }
         for (int i = 0; i < 6; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i), 
-                ImVec2(xPos + i, yPos + thickness + arrowInset - i),
+            list->addLine(QaplaUi::Vec2(xPos + i, yPos - arrowInset + i), 
+                QaplaUi::Vec2(xPos + i, yPos + thickness + arrowInset - i),
                 color);
         }
         xPos = topLeft.x + BORDER;
         for (int i = 0; i < 3; i++) {
-            list->AddRectFilled(ImVec2(xPos + i * 4, yPos + thickness + 5),
-                ImVec2(xPos + 2 + i * 4, yPos + thickness + 7),
+            list->addRectFilled(QaplaUi::Vec2(xPos + i * 4, yPos + thickness + 5),
+                QaplaUi::Vec2(xPos + 2 + i * 4, yPos + thickness + 7),
 				color);
         }
     }
 
-    void drawAutoPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawAutoPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto yReduce = BORDER + 2.0F;
         auto thickness = 5.0F;
         auto arrowInset = 3.0F;
@@ -352,22 +330,22 @@ namespace QaplaButton {
 		auto y2Pos = topLeft.y + yReduce + thickness + 3.0F;
         auto color = getFgColor(state);
         for (auto add : { 3.0F, 4.0F, 5.0F }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F) , yPos + thickness), color);
-            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F) , yPos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(x2Pos, y2Pos), QaplaUi::Vec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
             xPos += add;
 			x2Pos -= add;
 		}
         for (int i = 0; i < 6; i++) {
-            list->AddLine(ImVec2(xPos + i, yPos - arrowInset + i),
-                ImVec2(xPos + i, yPos + thickness + arrowInset - i),
+            list->addLine(QaplaUi::Vec2(xPos + i, yPos - arrowInset + i),
+                QaplaUi::Vec2(xPos + i, yPos + thickness + arrowInset - i),
                 color);
-			list->AddLine(ImVec2(x2Pos - i, y2Pos - arrowInset + i),
-                ImVec2(x2Pos - i, y2Pos + thickness + arrowInset - i),
+			list->addLine(QaplaUi::Vec2(x2Pos - i, y2Pos - arrowInset + i),
+                QaplaUi::Vec2(x2Pos - i, y2Pos + thickness + arrowInset - i),
 				color);
         }
     }
 
-    void drawManualPlay(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawManualPlay(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto yReduce = BORDER + 2.0F;
         auto thickness = 5.0F;
         auto xPos = topLeft.x + BORDER + 3.0F;
@@ -376,36 +354,36 @@ namespace QaplaButton {
         auto y2Pos = topLeft.y + yReduce + thickness + 3.0F;
         auto color = getFgColor(state);
         for (auto add : { 3.0F, 4.0F, 5.0F }) {
-            list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
-            list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + add - (add == 5.0F ? 0.0F : 1.0F), yPos + thickness), color);
+            list->addRectFilled(QaplaUi::Vec2(x2Pos, y2Pos), QaplaUi::Vec2(x2Pos - add + (add == 5.0F ? 0.0F : 1.0F), y2Pos + thickness), color);
             xPos += add;
             x2Pos -= add;
         }
     }
 
-    void drawAutoDetect(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawAutoDetect(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = QaplaButton::getFgColor(state);
-        auto center = ImVec2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
+        auto center = QaplaUi::Vec2(topLeft.x + size.x / 2, topLeft.y + size.y / 2);
         float radius = std::min(size.x, size.y) / 2 - BORDER; // Leave some padding
 
         // Draw outer circle
-        list->AddCircle(center, radius, color, 32, 1.5F);
+        list->addCircle(center, radius, color, 32, 1.5F);
 
         // Draw inner circle
-        list->AddCircle(center, radius * 0.6F, color, 32, 1.5F);
+        list->addCircle(center, radius * 0.6F, color, 32, 1.5F);
 
         // Draw scanning line
         if (state == ButtonState::Animated) {
-            float angle = static_cast<float>(ImGui::GetTime()) * 2.0F;
-            auto endPoint = ImVec2(
+            float angle = static_cast<float>(QaplaUi::getTime()) * 2.0F;
+            auto endPoint = QaplaUi::Vec2(
                 center.x + cos(angle) * (radius + 2),
                 center.y + sin(angle) * (radius + 2)
             );
-            list->AddLine(center, endPoint, color, 2.0F);
+            list->addLine(center, endPoint, color, 2.0F);
         }
     }
 
-    void drawSwapEngines(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawSwapEngines(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto xReduce = BORDER + 2.0F;
         auto thickness = 5.0F;
         auto arrowInset = 3.0F;
@@ -416,43 +394,43 @@ namespace QaplaButton {
         
         // Colors: white for up arrow, black for down arrow
         auto whiteColor = getFgColor(state);
-        auto blackColor = IM_COL32(0, 0, 0, 255);
+        auto blackColor = QaplaUi::col32(0, 0, 0, 255);
         
         auto add = 11.0F;
 
         // Draw white arrow pointing up 
-        list->AddRectFilled(ImVec2(xPos, yPos), ImVec2(xPos + thickness, yPos + add), whiteColor);
+        list->addRectFilled(QaplaUi::Vec2(xPos, yPos), QaplaUi::Vec2(xPos + thickness, yPos + add), whiteColor);
         yPos += add;
         for (int i = 0; i < 6; i++) {
-            list->AddLine(ImVec2(xPos - arrowInset + i, yPos + i),
-                ImVec2(xPos + thickness + arrowInset - i, yPos + i),
+            list->addLine(QaplaUi::Vec2(xPos - arrowInset + i, yPos + i),
+                QaplaUi::Vec2(xPos + thickness + arrowInset - i, yPos + i),
                 whiteColor);
         }
         
         // Draw black arrow pointing down (right side)
-        list->AddRectFilled(ImVec2(x2Pos, y2Pos), ImVec2(x2Pos + thickness, y2Pos - add), blackColor);
+        list->addRectFilled(QaplaUi::Vec2(x2Pos, y2Pos), QaplaUi::Vec2(x2Pos + thickness, y2Pos - add), blackColor);
         y2Pos -= add;
         for (int i = 0; i < 6; i++) {
-            list->AddLine(ImVec2(x2Pos - arrowInset + i, y2Pos - i),
-                ImVec2(x2Pos + thickness + arrowInset - i, y2Pos - i),
+            list->addLine(QaplaUi::Vec2(x2Pos - arrowInset + i, y2Pos - i),
+                QaplaUi::Vec2(x2Pos + thickness + arrowInset - i, y2Pos - i),
                 blackColor);
         }
     }
 
-    void drawSetup(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawSetup(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
         // Left bottom: Square (7x7)
         float squareSize = 7.0F;
         float squareX = topLeft.x + 4.0F;
         float squareY = topLeft.y + size.y - 11.0F;
-        list->AddRectFilled(ImVec2(squareX, squareY), ImVec2(squareX + squareSize, squareY + squareSize), fgColor);
+        list->addRectFilled(QaplaUi::Vec2(squareX, squareY), QaplaUi::Vec2(squareX + squareSize, squareY + squareSize), fgColor);
         
         // Right bottom: Circle (Radius 4)
         float circleCenterX = topLeft.x + size.x - 7.0F;
         float circleCenterY = topLeft.y + size.y - 8.0F;
         float circleRadius = 4.0F;
-        list->AddCircleFilled(ImVec2(circleCenterX, circleCenterY), circleRadius, fgColor);
+        list->addCircleFilled(QaplaUi::Vec2(circleCenterX, circleCenterY), circleRadius, fgColor);
         
         // Top middle: Triangle (Height 6, Base 10)
         float triangleBaseX = topLeft.x + size.x / 2.0F - 5.0F;
@@ -466,7 +444,7 @@ namespace QaplaButton {
             float width = triangleBaseWidth * (1.0F - static_cast<float>(i) / triangleHeight);
             float leftX = triangleBaseX + (triangleBaseWidth - width) / 2.0F;
             float rightX = leftX + width;
-            list->AddLine(ImVec2(leftX, y), ImVec2(rightX, y), fgColor, 1.0F);
+            list->addLine(QaplaUi::Vec2(leftX, y), QaplaUi::Vec2(rightX, y), fgColor, 1.0F);
         }
     }
 
@@ -480,7 +458,7 @@ namespace QaplaButton {
      * @param lineThickness  Thickness of the cross lines
      * @param border         Border/padding around the cross
      */
-    static void drawCross(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ImU32 color, 
+    static void drawCross(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, QaplaUi::Color32 color, 
                          float lineThickness = 2.0F, float border = 6.0F) {
         int lineSize = static_cast<int>(std::min(size.x, size.y)) + 
                       (static_cast<int>(lineThickness) % 2 == 0 ? 1 : 0) - 
@@ -491,59 +469,59 @@ namespace QaplaButton {
         float endX1 = startX1 + static_cast<float>(lineSize);
         float endY1 = startY1 + static_cast<float>(lineSize);
 
-        list->AddLine(ImVec2(startX1 - 0.5F, startY1 - 0.5F), ImVec2(endX1 + 1.0F, endY1 + 1.0F), color, lineThickness);
-        list->AddLine(ImVec2(startX1 - 0.5F, endY1 + 0.5F), ImVec2(endX1 + 1.0F, startY1 - 1.0F), color, lineThickness);
+        list->addLine(QaplaUi::Vec2(startX1 - 0.5F, startY1 - 0.5F), QaplaUi::Vec2(endX1 + 1.0F, endY1 + 1.0F), color, lineThickness);
+        list->addLine(QaplaUi::Vec2(startX1 - 0.5F, endY1 + 0.5F), QaplaUi::Vec2(endX1 + 1.0F, startY1 - 1.0F), color, lineThickness);
     }
 
-    void drawClear(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawClear(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         constexpr int LINE_THICKNESS = 2; 
         constexpr float CROSS_BORDER = 6.0F;
         auto color = getFgColor(state);
         drawCross(list, topLeft, size, color, LINE_THICKNESS, CROSS_BORDER);
     }
 
-    void drawCancel(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawCancel(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         
         // Draw circle
-        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = QaplaUi::Vec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
-        list->AddCircle(center, radius, color, 0, 2.0F);
+        list->addCircle(center, radius, color, 0, 2.0F);
         
         // Draw small cross inside the circle
         constexpr float CROSS_LINE_THICKNESS = 2.0F;
         float crossSize = radius - 3.0F;
-        auto crossTopLeft = ImVec2(center.x - crossSize / 2.0F - 1.0F, center.y - crossSize / 2.0F - 1.0F);
-        auto crossSizeVec = ImVec2(crossSize, crossSize);
+        auto crossTopLeft = QaplaUi::Vec2(center.x - crossSize / 2.0F - 1.0F, center.y - crossSize / 2.0F - 1.0F);
+        auto crossSizeVec = QaplaUi::Vec2(crossSize, crossSize);
         drawCross(list, crossTopLeft, crossSizeVec, color, CROSS_LINE_THICKNESS, 0.0F);
     }
 
-    void drawSave(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawSave(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
         constexpr float borderThickness = 2.0F;
         constexpr float rounding = 1.0F;
-        auto outerRectTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER);
-        auto outerRectBottomRight = ImVec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
+        auto outerRectTopLeft = QaplaUi::Vec2(topLeft.x + BORDER, topLeft.y + BORDER);
+        auto outerRectBottomRight = QaplaUi::Vec2(topLeft.x + size.x - BORDER, topLeft.y + size.y - BORDER);
         
         // Draw outer rounded rectangle
-        list->AddRect(outerRectTopLeft, outerRectBottomRight, fgColor, rounding, ImDrawFlags_None, borderThickness);
+        list->addRect(outerRectTopLeft, outerRectBottomRight, fgColor, rounding, borderThickness);
         
         // In the rectangle: A smaller filled rectangle
         constexpr float innerRectWidth = 6.0F;
         constexpr float innerRectHeight = 3.0F;
-        auto innerRectTopLeft = ImVec2(outerRectTopLeft.x + 4.0F, outerRectTopLeft.y + 4.0F);
-        auto innerRectBottomRight = ImVec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
-        list->AddRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
+        auto innerRectTopLeft = QaplaUi::Vec2(outerRectTopLeft.x + 4.0F, outerRectTopLeft.y + 4.0F);
+        auto innerRectBottomRight = QaplaUi::Vec2(innerRectTopLeft.x + innerRectWidth, innerRectTopLeft.y + innerRectHeight);
+        list->addRectFilled(innerRectTopLeft, innerRectBottomRight, fgColor);
         
         // In the rectangle: A small filled circle at the bottom center
         constexpr float circleRadius = 2.5F;
-        auto circleCenter = ImVec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
+        auto circleCenter = QaplaUi::Vec2(outerRectTopLeft.x + (outerRectBottomRight.x - outerRectTopLeft.x) / 2.0F,
                                      outerRectBottomRight.y - 5.0F);
-        list->AddCircleFilled(circleCenter, circleRadius, fgColor);
+        list->addCircleFilled(circleCenter, circleRadius, fgColor);
     }
 
-    void drawOpen(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawOpen(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
         // Document rectangle with 2px thick border
@@ -551,41 +529,41 @@ namespace QaplaButton {
         constexpr float rectReduce = 2.0F;
         constexpr float fold = 7.0F;
 
-        auto docTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
-        auto docBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
+        auto docTopLeft = QaplaUi::Vec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER);
+        auto docBottomRight = QaplaUi::Vec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER);
 
         // Top side
-        list->AddLine(ImVec2(docTopLeft.x, docTopLeft.y), ImVec2(docBottomRight.x  - fold + 1, docTopLeft.y), fgColor, borderThickness);
+        list->addLine(QaplaUi::Vec2(docTopLeft.x, docTopLeft.y), QaplaUi::Vec2(docBottomRight.x  - fold + 1, docTopLeft.y), fgColor, borderThickness);
         // Left side
-        list->AddLine(ImVec2(docTopLeft.x, docTopLeft.y), ImVec2(docTopLeft.x, docBottomRight.y), fgColor, borderThickness);
+        list->addLine(QaplaUi::Vec2(docTopLeft.x, docTopLeft.y), QaplaUi::Vec2(docTopLeft.x, docBottomRight.y), fgColor, borderThickness);
         // Bottom side  
-        list->AddLine(ImVec2(docTopLeft.x, docBottomRight.y), ImVec2(docBottomRight.x, docBottomRight.y), fgColor, borderThickness);
+        list->addLine(QaplaUi::Vec2(docTopLeft.x, docBottomRight.y), QaplaUi::Vec2(docBottomRight.x, docBottomRight.y), fgColor, borderThickness);
         // Right side (stop before the fold area)
-        list->AddLine(ImVec2(docBottomRight.x, docBottomRight.y), ImVec2(docBottomRight.x, docTopLeft.y + fold), fgColor, borderThickness);
+        list->addLine(QaplaUi::Vec2(docBottomRight.x, docBottomRight.y), QaplaUi::Vec2(docBottomRight.x, docTopLeft.y + fold), fgColor, borderThickness);
         
         // Triangle sides
         for (int i = 0; i <= static_cast<int>(fold); i++) {
-            list->AddLine(
-                ImVec2(docBottomRight.x - fold + 1, docTopLeft.y + i - 1), 
-                ImVec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0F);
+            list->addLine(
+                QaplaUi::Vec2(docBottomRight.x - fold + 1, docTopLeft.y + i - 1), 
+                QaplaUi::Vec2(docBottomRight.x - fold + i + 1, docTopLeft.y + i - 1), fgColor, 1.0F);
         }
     }
 
-    void drawTest(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawTest(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         
         // Non-filled rectangle with 2px thick border
         constexpr float borderThickness = 2.0F;
         constexpr float rectReduce = 0.0F;
 
-        auto rectTopLeft = ImVec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER + rectReduce);
-        auto rectBottomRight = ImVec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER - rectReduce);
+        auto rectTopLeft = QaplaUi::Vec2(topLeft.x + BORDER + rectReduce, topLeft.y + BORDER + rectReduce);
+        auto rectBottomRight = QaplaUi::Vec2(topLeft.x + size.x - BORDER - rectReduce, topLeft.y + size.y - BORDER - rectReduce);
 
         // Draw rectangle outline
-        list->AddRect(rectTopLeft, rectBottomRight, fgColor, 0.0F, 0, borderThickness);
+        list->addRect(rectTopLeft, rectBottomRight, fgColor, 0.0F, borderThickness);
 
         // Draw question mark in the middle
-        auto center = ImVec2((rectTopLeft.x + rectBottomRight.x) / 2.0F, (rectTopLeft.y + rectBottomRight.y) / 2.0F);
+        auto center = QaplaUi::Vec2((rectTopLeft.x + rectBottomRight.x) / 2.0F, (rectTopLeft.y + rectBottomRight.y) / 2.0F);
         
         // Question mark parameters
         constexpr float questionMarkHeight = 10.0F;
@@ -594,21 +572,21 @@ namespace QaplaButton {
         constexpr float dotOffset = 3.0F;
         
         // Top arc of question mark
-        auto arcCenter = ImVec2(center.x, center.y - questionMarkHeight / 2.0F + questionMarkWidth / 2.0F);
+        auto arcCenter = QaplaUi::Vec2(center.x, center.y - questionMarkHeight / 2.0F + questionMarkWidth / 2.0F);
         constexpr float arcRadius = questionMarkWidth / 2.0F;
-        list->AddCircle(arcCenter, arcRadius, fgColor, 12, borderThickness - 0.5F);
+        list->addCircle(arcCenter, arcRadius, fgColor, 12, borderThickness - 0.5F);
         
         // Vertical line of question mark
-        auto lineStart = ImVec2(center.x, arcCenter.y);
-        auto lineEnd = ImVec2(center.x, center.y + questionMarkHeight / 2.0F - dotOffset);
-        list->AddLine(lineStart, lineEnd, fgColor, borderThickness - 0.5F);
+        auto lineStart = QaplaUi::Vec2(center.x, arcCenter.y);
+        auto lineEnd = QaplaUi::Vec2(center.x, center.y + questionMarkHeight / 2.0F - dotOffset);
+        list->addLine(lineStart, lineEnd, fgColor, borderThickness - 0.5F);
         
         // Dot at the bottom
-        auto dotCenter = ImVec2(center.x, center.y + questionMarkHeight / 2.0F);
-        list->AddCircleFilled(dotCenter, dotRadius, fgColor);
+        auto dotCenter = QaplaUi::Vec2(center.x, center.y + questionMarkHeight / 2.0F);
+        list->addCircleFilled(dotCenter, dotRadius, fgColor);
     }
 
-    void drawFilter(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawFilter(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         constexpr float borderThickness = 2.0F;
         constexpr float triangleHeight = 10.0F;
@@ -616,24 +594,24 @@ namespace QaplaButton {
         constexpr float spoutThickness = 4.0F;
         
         // Draw funnel shape
-        auto triangleTopLeft = ImVec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0F);
-        auto triangleTopRight = ImVec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
-        auto triangleMiddle = ImVec2(
+        auto triangleTopLeft = QaplaUi::Vec2(topLeft.x + BORDER, topLeft.y + BORDER + 1.0F);
+        auto triangleTopRight = QaplaUi::Vec2(topLeft.x + triangleBaseWidth, triangleTopLeft.y);
+        auto triangleMiddle = QaplaUi::Vec2(
             (triangleTopLeft.x + triangleTopRight.x) / 2.0F, 
             triangleTopLeft.y + triangleHeight);
 
-        list->AddLine(triangleTopLeft, triangleTopRight, fgColor, borderThickness);
-        list->AddLine(triangleTopLeft, triangleMiddle, fgColor, borderThickness);
-        list->AddLine(triangleTopRight, triangleMiddle, fgColor, borderThickness);
+        list->addLine(triangleTopLeft, triangleTopRight, fgColor, borderThickness);
+        list->addLine(triangleTopLeft, triangleMiddle, fgColor, borderThickness);
+        list->addLine(triangleTopRight, triangleMiddle, fgColor, borderThickness);
         float rectLeft = std::trunc(triangleMiddle.x - spoutThickness / 2) + 1.0F;
-        list->AddRectFilled(
-            ImVec2(rectLeft, triangleMiddle.y), 
-            ImVec2(rectLeft + spoutThickness, topLeft.y + size.y - BORDER), 
+        list->addRectFilled(
+            QaplaUi::Vec2(rectLeft, triangleMiddle.y), 
+            QaplaUi::Vec2(rectLeft + spoutThickness, topLeft.y + size.y - BORDER), 
             fgColor);
 
     }
 
-    void drawCopy(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawCopy(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         constexpr float borderThickness = 2.0F;
         constexpr float gap = 3.0F;  // Gap between the two rectangles
@@ -648,15 +626,15 @@ namespace QaplaButton {
         float backRectTop = topLeft.y + BORDER + gap;
         
         // Draw left vertical line of L-shape
-        list->AddLine(
-            ImVec2(backRectLeft, backRectTop),
-            ImVec2(backRectLeft, topLeft.y + size.y - BORDER),
+        list->addLine(
+            QaplaUi::Vec2(backRectLeft, backRectTop),
+            QaplaUi::Vec2(backRectLeft, topLeft.y + size.y - BORDER),
             fgColor, borderThickness);
         
         // Draw bottom horizontal line of L-shape  
-        list->AddLine(
-            ImVec2(backRectLeft, topLeft.y + size.y - BORDER),
-            ImVec2(backRectLeft + rectWidth, topLeft.y + size.y - BORDER),
+        list->addLine(
+            QaplaUi::Vec2(backRectLeft, topLeft.y + size.y - BORDER),
+            QaplaUi::Vec2(backRectLeft + rectWidth, topLeft.y + size.y - BORDER),
             fgColor, borderThickness);
         
         // Front rectangle (complete rectangle, top and right)
@@ -666,13 +644,13 @@ namespace QaplaButton {
         float frontRectBottom = frontRectTop + rectHeight - gap;
         
         // Draw complete rectangle
-        list->AddRect(
-            ImVec2(frontRectLeft, frontRectTop),
-            ImVec2(frontRectRight, frontRectBottom),
-            fgColor, 0.0F, ImDrawFlags_None, borderThickness);
+        list->addRect(
+            QaplaUi::Vec2(frontRectLeft, frontRectTop),
+            QaplaUi::Vec2(frontRectRight, frontRectBottom),
+            fgColor, 0.0F, borderThickness);
     }
 
-    void drawPaste(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawPaste(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         constexpr float borderThickness = 2.0F;
         constexpr float widthReduce = 1.0F;
@@ -688,10 +666,10 @@ namespace QaplaButton {
         float clipboardBottom = clipboardTop + clipboardHeight - 3.0F;
         
         // Draw main clipboard rectangle
-        list->AddRect(
-            ImVec2(clipboardLeft, clipboardTop),
-            ImVec2(clipboardRight, clipboardBottom),
-            fgColor, 0.0F, ImDrawFlags_None, borderThickness);
+        list->addRect(
+            QaplaUi::Vec2(clipboardLeft, clipboardTop),
+            QaplaUi::Vec2(clipboardRight, clipboardBottom),
+            fgColor, 0.0F, borderThickness);
         
         // Draw clip at the top (small rectangle centered)
         float clipWidth = clipboardWidth * 0.35F;
@@ -700,13 +678,13 @@ namespace QaplaButton {
         float clipTop = topLeft.y + BORDER;
         
         // Draw clip as filled rectangle with rounded corners
-        list->AddRectFilled(
-            ImVec2(clipLeft, clipTop),
-            ImVec2(clipLeft + clipWidth, clipTop + clipHeight),
+        list->addRectFilled(
+            QaplaUi::Vec2(clipLeft, clipTop),
+            QaplaUi::Vec2(clipLeft + clipWidth, clipTop + clipHeight),
             fgColor, 1.0F);
     }
 
-    void drawMore(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawMore(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto fgColor = getFgColor(state);
         constexpr float dotRadius = 2.0F;
         constexpr float dotSpacing = 4.5F;
@@ -716,88 +694,39 @@ namespace QaplaButton {
         float centerY = topLeft.y + size.y * 0.5F;
         
         // Draw three horizontal dots
-        list->AddCircleFilled(ImVec2(centerX - dotSpacing, centerY), dotRadius, fgColor);
-        list->AddCircleFilled(ImVec2(centerX, centerY), dotRadius, fgColor);
-        list->AddCircleFilled(ImVec2(centerX + dotSpacing, centerY), dotRadius, fgColor);
+        list->addCircleFilled(QaplaUi::Vec2(centerX - dotSpacing, centerY), dotRadius, fgColor);
+        list->addCircleFilled(QaplaUi::Vec2(centerX, centerY), dotRadius, fgColor);
+        list->addCircleFilled(QaplaUi::Vec2(centerX + dotSpacing, centerY), dotRadius, fgColor);
     }
 
     std::string showCommandPopup(const std::string& popupId, const std::vector<PopupCommand>& commands) {
-        constexpr float POPUP_WINDOW_PADDING_Y = 4.0F;
-        constexpr float POPUP_ITEM_SPACING_Y = 1.0F;
-        constexpr float POPUP_ITEM_PADDING_X = 16.0F;
-        constexpr float POPUP_ITEM_PADDING_Y = 8.0F;
-        constexpr float POPUP_MIN_WIDTH = 180.0F;
-        constexpr float HIGHLIGHT_DOT_RADIUS = 4.0F;
-        constexpr float HIGHLIGHT_DOT_OFFSET = 6.0F;
-        
-        std::string selectedCommand;
-        
-        if (ImGui::BeginPopup(popupId.c_str())) {
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0F, POPUP_WINDOW_PADDING_Y));
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0F, POPUP_ITEM_SPACING_Y));
-            
-            for (const auto& command : commands) {
-                // Get the position for this item
-                ImVec2 itemStartPos = ImGui::GetCursorScreenPos();
-                
-                // Calculate item dimensions
-                ImVec2 textSize = ImGui::CalcTextSize(command.name.c_str());
-                float itemWidth = POPUP_MIN_WIDTH;
-                float itemHeight = textSize.y + (POPUP_ITEM_PADDING_Y * 2.0F);
-                
-                // Draw invisible button for the full clickable area
-                ImGui::PushID(command.name.c_str());
-                bool isHovered = false;
-                bool isClicked = ImGui::InvisibleButton("##item", ImVec2(itemWidth, itemHeight));
-                isHovered = ImGui::IsItemHovered();
-                ImGui::PopID();
-                
-                // Draw background highlight if hovered
-                if (isHovered) {
-                    ImDrawList* drawList = ImGui::GetWindowDrawList();
-                    ImU32 bgColor = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
-                    drawList->AddRectFilled(itemStartPos, 
-                        ImVec2(itemStartPos.x + itemWidth, itemStartPos.y + itemHeight), 
-                        bgColor);
-                }
-                
-                // Draw text with padding
-                ImDrawList* drawList = ImGui::GetWindowDrawList();
-                auto textPos = ImVec2(itemStartPos.x + POPUP_ITEM_PADDING_X, 
-                                       itemStartPos.y + POPUP_ITEM_PADDING_Y);
-                ImU32 textColor = ImGui::GetColorU32(ImGuiCol_Text);
-                auto translatedName = Translator::instance().translate("Button", command.name);
-                drawList->AddText(textPos, textColor, translatedName.c_str());
-                
-                // Draw red highlight dot if command is highlighted
-                if (command.state == ButtonState::Highlighted) {
-                    auto dotPos = ImVec2(itemStartPos.x + HIGHLIGHT_DOT_OFFSET, 
-                                          itemStartPos.y + itemHeight * 0.5F);
-                    drawList->AddCircleFilled(dotPos, HIGHLIGHT_DOT_RADIUS, IM_COL32(192, 0, 0, 192));
-                }
-                
-                if (isClicked) {
-                    selectedCommand = command.name;
-                    ImGui::CloseCurrentPopup();
-                }
-            }
-            
-            ImGui::PopStyleVar(2);
-            ImGui::EndPopup();
+        std::vector<QaplaUi::MenuItem> items;
+        items.reserve(commands.size());
+        for (const auto& command : commands) {
+            items.push_back({
+                .label = Translator::instance().translate("Button", command.name),
+                // Every command stays clickable, as it always was here: whether a disabled one
+                // should be is the board's question, not the menu's.
+                .highlighted = command.state == ButtonState::Highlighted,
+                .enabled = true
+            });
         }
-        
-        return selectedCommand;
+        auto selected = QaplaUi::popupMenu(popupId, items);
+        if (!selected) {
+            return {};
+        }
+        return commands[*selected].name;
     }
 
-    void drawTimeClock(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawTimeClock(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         
         // Clock circle center and radius
-        auto center = ImVec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
+        auto center = QaplaUi::Vec2(topLeft.x + size.x / 2.0F, topLeft.y + size.y / 2.0F);
         float radius = std::min(size.x, size.y) / 2.0F - BORDER + 1.0F;
         
         // Draw clock circle
-        list->AddCircle(center, radius, color, 32, 1.5F);
+        list->addCircle(center, radius, color, 32, 1.5F);
         
         // Clock showing 10 to 12 (11:50)
         // Hour hand pointing at 11:50 (between 11 and 12)
@@ -807,92 +736,72 @@ namespace QaplaButton {
         // 11:50 = 11.833 hours, angle = (11.833/12) * 360 - 90 = 264.65 degrees
         float hourAngle = (11.833F / 12.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
         float hourLength = radius * 0.5F;
-        auto hourEnd = ImVec2(
+        auto hourEnd = QaplaUi::Vec2(
             center.x + cos(hourAngle) * hourLength,
             center.y + sin(hourAngle) * hourLength
         );
-        list->AddLine(center, hourEnd, color, 2.0F);
+        list->addLine(center, hourEnd, color, 2.0F);
         
         // Minute hand (longer, thinner) - pointing to 10 (50 minutes)
         // 50 minutes = (50/60) * 360 - 90 = 210 degrees
         float minuteAngle = (50.0F / 60.0F) * 2.0F * std::numbers::pi_v<float> - std::numbers::pi_v<float> / 2.0F;
         float minuteLength = radius * 0.7F;
-        auto minuteEnd = ImVec2(
+        auto minuteEnd = QaplaUi::Vec2(
             center.x + cos(minuteAngle) * minuteLength,
             center.y + sin(minuteAngle) * minuteLength
         );
-        list->AddLine(center, minuteEnd, color, 1.5F);
+        list->addLine(center, minuteEnd, color, 1.5F);
         
         // Center dot
-        list->AddCircleFilled(center, 1.5F, color);
+        list->addCircleFilled(center, 1.5F, color);
     }
 
-    void drawLog(ImDrawList* list, ImVec2 topLeft, ImVec2 size, ButtonState state) {
+    void drawLog(QaplaUi::DrawList* list, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size, ButtonState state) {
         auto color = getFgColor(state);
         
         // Calculate rectangle with slight padding
         float padding = BORDER;
-        auto rectMin = ImVec2(topLeft.x + padding, topLeft.y + padding);
-        auto rectMax = ImVec2(topLeft.x + size.x - padding, topLeft.y + size.y - padding);
+        auto rectMin = QaplaUi::Vec2(topLeft.x + padding, topLeft.y + padding);
+        auto rectMax = QaplaUi::Vec2(topLeft.x + size.x - padding, topLeft.y + size.y - padding);
         float rounding = 2.0F;
         
         // Draw rounded rectangle (paper/document)
-        list->AddRect(rectMin, rectMax, color, rounding, 0, 1.5F);
+        list->addRect(rectMin, rectMax, color, rounding, 1.5F);
         
         // Draw three horizontal lines (text lines) inside the rectangle
         float lineMargin = (rectMax.x - rectMin.x) * 0.15F;  // 15% margin on each side
         float lineSpacing = (rectMax.y - rectMin.y) / 4.5F;
         for (int index = 0; index < 3; index++) {
             float lineY = rectMin.y + lineSpacing * (index + 1);
-            list->AddLine(
-                ImVec2(rectMin.x + lineMargin, lineY),
-                ImVec2(rectMax.x - lineMargin - 1.0F, lineY),
+            list->addLine(
+                QaplaUi::Vec2(rectMin.x + lineMargin, lineY),
+                QaplaUi::Vec2(rectMax.x - lineMargin - 1.0F, lineY),
                 color, 1.5F
             );
         }
         
     }
 
-    bool drawIconButton(const std::string& id, const std::string& label, ImVec2 size, ButtonState state,
+    bool drawIconButton(const std::string& id, const std::string& label, QaplaUi::Vec2 size, ButtonState state,
         const IconDrawCallback& iconDraw) {
-        ImVec2 topLeft = ImGui::GetCursorScreenPos();
-        bool clicked = ImGui::InvisibleButton(id.c_str(), size);
-
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-
-		ImU32 bgColor = getBgColor(state);
-
-        drawList->AddRectFilled(topLeft, ImVec2(topLeft.x + size.x, topLeft.y + size.y), bgColor, 3.0F);
-
-        if (iconDraw) {
-            iconDraw(drawList, topLeft, size);
-        }
-
-        if (state == ButtonState::Highlighted) {
-            // draw red dot on top right position
-            constexpr float dotRadius = 6.0F;
-            constexpr float dotLocation = 2.0F;
-            auto dotPos = ImVec2(topLeft.x + size.x - dotLocation, topLeft.y + dotLocation);
-            drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
-        }
-
         auto translatedLabel = Translator::instance().translate("Button", label);
-
-        ImVec2 labelSize = ImGui::CalcTextSize(translatedLabel.c_str());
-        auto labelPos = ImVec2(topLeft.x + size.x * 0.5F - labelSize.x * 0.5F, topLeft.y + size.y + 4.0F);
-        drawList->AddText(labelPos, getTextColor(state), translatedLabel.c_str());
-
-        return clicked;
+        QaplaUi::IconPainter painter;
+        if (iconDraw) {
+            painter = [&iconDraw](QaplaUi::DrawList& drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 iconSize) {
+                iconDraw(&drawList, topLeft, iconSize);
+            };
+        }
+        return QaplaUi::iconButton(id, translatedLabel, size, static_cast<int>(state), painter);
     }
 
-    ImVec2 calcIconButtonTotalSize(ImVec2 size, const char* label) {
-        ImVec2 labelSize = ImGui::CalcTextSize(label);
+    QaplaUi::Vec2 calcIconButtonTotalSize(QaplaUi::Vec2 size, const char* label) {
+        QaplaUi::Vec2 labelSize = QaplaUi::calcTextSize(label);
         float totalHeight = size.y + 4.0F + labelSize.y;
         float totalWidth = std::max(size.x, labelSize.x);
         return { totalWidth, totalHeight };
     }
 
-    ImVec2 calcIconButtonsTotalSize(ImVec2 buttonSize, const std::vector<std::string>& labels) {
+    QaplaUi::Vec2 calcIconButtonsTotalSize(QaplaUi::Vec2 buttonSize, const std::vector<std::string>& labels) {
         auto totalSize = buttonSize;
         for (const auto& label : labels) {
             auto translatedLabel = Translator::instance().translate("Button", label);

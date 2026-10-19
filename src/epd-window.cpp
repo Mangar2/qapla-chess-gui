@@ -35,7 +35,7 @@
 #include <chess-game/engine-event.h>
 #include <game-manager/game-manager-pool.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <sstream>
 #include <string>
@@ -103,23 +103,23 @@ std::string EpdWindow::drawButtons()
     constexpr float paddingTop = 5.0F;
     constexpr float paddingBottom = 8.0F;
     constexpr float paddingLeft = 20.0F;
-    ImVec2 boardPos = ImGui::GetCursorScreenPos();
+    QaplaUi::Vec2 boardPos = QaplaUi::getCursorScreenPos();
 
-    constexpr ImVec2 buttonSize = {25.0F, 25.0F};
+    constexpr QaplaUi::Vec2 buttonSize = {25.0F, 25.0F};
     const auto totalSize = QaplaButton::calcIconButtonTotalSize(buttonSize, "Analyze");
-    auto pos = ImVec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
+    auto pos = QaplaUi::Vec2(boardPos.x + paddingLeft, boardPos.y + paddingTop);
     
     std::string clickedButton;
     
     for (const std::string button : {"RunStop", "Grace", "Clear"})
     {
-        ImGui::SetCursorScreenPos(pos);
+        QaplaUi::setCursorScreenPos(pos);
         
         auto buttonText = getButtonText(button, EpdData::instance().state);
         auto buttonState = getButtonState(button, EpdData::instance().state);
        
         if (QaplaButton::drawIconButton(button, buttonText, buttonSize, buttonState, 
-            [&button, buttonState](ImDrawList *drawList, ImVec2 topLeft, ImVec2 size)
+            [&button, buttonState](QaplaUi::DrawList*drawList, QaplaUi::Vec2 topLeft, QaplaUi::Vec2 size)
             {
                 auto epdState = EpdData::instance().state;
                 if (button == "RunStop")
@@ -151,7 +151,7 @@ std::string EpdWindow::drawButtons()
         pos.x += totalSize.x + space;
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(boardPos.x, boardPos.y + totalSize.y + paddingTop + paddingBottom));
     return clickedButton;
 }
 
@@ -198,7 +198,7 @@ void EpdWindow::drawInput()
     epdData.setExternalConcurrency(concurrency);
     epdData.setPoolConcurrency(concurrency, true);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     const bool highlightEngineSelect = (highlightedSection_ == "EngineSelect");
     epdData.getEngineSelect().draw(highlightEngineSelect);
 
@@ -223,7 +223,7 @@ void EpdWindow::drawProgress()
     }
     size_t testFinished = total - remaining;
     float progress = static_cast<float>(testFinished) / static_cast<float>(total);
-    ImGui::ProgressBar(progress, ImVec2(ImGui::GetContentRegionAvail().x, 0.0F), 
+    QaplaUi::progressBar(progress, QaplaUi::Vec2(QaplaUi::getContentRegionAvail().x, 0.0F), 
         std::to_string(testFinished).c_str());
     ImGuiControls::hooverTooltip("EPD analysis progress: positions analyzed / total positions");
 }
@@ -241,17 +241,17 @@ void EpdWindow::draw()
         executeCommand(clickedButton);
     }
 
-    ImGui::Indent(10.0F);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("InputArea", ImVec2(size.x - rightBorder, 0), ImGuiChildFlags_None);
+    QaplaUi::indent(10.0F);
+    auto size = QaplaUi::getContentRegionAvail();
+    QaplaUi::beginChild("InputArea", QaplaUi::Vec2(size.x - rightBorder, 0), QaplaUi::ChildFlags::None);
 
     drawInput();
     drawProgress();
-    ImVec2 tableSize = ImGui::GetContentRegionAvail();
+    QaplaUi::Vec2 tableSize = QaplaUi::getContentRegionAvail();
     auto clickedRow = EpdData::instance().drawTable(tableSize);
     
-    ImGui::EndChild();
-    ImGui::Unindent(10.0F);
+    QaplaUi::endChild();
+    QaplaUi::unindent(10.0F);
 
     EpdData::instance().setSelectedIndex(clickedRow);
     

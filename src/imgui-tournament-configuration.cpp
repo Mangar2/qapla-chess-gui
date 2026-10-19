@@ -26,7 +26,7 @@
 #include <tournament/tournament.h>
 #include <tournament/tournament-config.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 
 using namespace QaplaWindows;
@@ -39,26 +39,26 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     bool changed = false;
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Selected;
+    QaplaUi::TreeNodeFlags flags = QaplaUi::TreeNodeFlags::Selected;
     if (options.alwaysOpen) {
-        flags |= ImGuiTreeNodeFlags_Leaf;
+        flags |= QaplaUi::TreeNodeFlags::Leaf;
     }
 
     if (!ImGuiControls::CollapsingHeaderWithDot("Tournament", flags, tutorialContext.highlight)) {
         return false;
     }
 
-    ImGui::PushID("tournament");
-    ImGui::Indent(indent);
+    QaplaUi::pushId("tournament");
+    QaplaUi::indent(indent);
 
     if (options.showEvent) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputText("Event", config_->event);
         ImGuiControls::hooverTooltip("Optional event name for PGN or logging");
     }
 
     if (options.showType) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::selectionBox("Type", config_->type, { "gauntlet", "round-robin" });
         //changed |= ImGuiControls::inputText("Type", config_->type);
         ImGuiControls::hooverTooltip(
@@ -75,7 +75,7 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     if (options.showRounds) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Rounds", config_->rounds, 1, 1000);
         ImGuiControls::hooverTooltip("Repeat all pairings this many times");
         
@@ -87,7 +87,7 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     if (options.showGamesPerPairing) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Games per pairing", config_->games, 1, 1000);
         ImGuiControls::hooverTooltip("Number of games per pairing.\nTotal games = games × rounds");
         
@@ -99,7 +99,7 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     if (options.showSameOpening) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<uint32_t>("Same opening", config_->repeat, 1, 1000);
         ImGuiControls::hooverTooltip(
             "Number of consecutive games played per opening.\n"
@@ -114,19 +114,19 @@ bool ImGuiTournamentConfiguration::draw(const DrawOptions& options, float inputW
     }
 
     if (options.showNoColorSwap) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::booleanInput("No color swap", config_->noSwap);
         ImGuiControls::hooverTooltip("Disable automatic color swap after each game");
     }
 
     if (options.showAverageElo) {
-        ImGui::SetNextItemWidth(inputWidth);
+        QaplaUi::setNextItemWidth(inputWidth);
         changed |= ImGuiControls::inputInt<int>("Average Elo", config_->averageElo, 1000, 5000);
         ImGuiControls::hooverTooltip("Average Elo level for scaling rating output");
     }
 
-    ImGui::Unindent(indent);
-    ImGui::PopID();
+    QaplaUi::unindent(indent);
+    QaplaUi::popId();
 
     if (changed) {
         updateConfiguration();

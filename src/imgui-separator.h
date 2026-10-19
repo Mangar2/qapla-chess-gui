@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace ImGuiSeparator {
 
@@ -27,7 +27,7 @@ namespace ImGuiSeparator {
      * @brief Draws a horizontal separator using ImGui's layout and style.
      */
     inline void Horizontal() {
-        ImGui::Separator(); // Uses ImGui's built-in horizontal separator
+        QaplaUi::separator(); // Uses ImGui's built-in horizontal separator
     }
 
     /**
@@ -36,11 +36,11 @@ namespace ImGuiSeparator {
      * This function mimics ImGui's layout behavior for horizontal separators.
      */
 	inline void Vertical(float thickness = 1.0F) {
-		ImVec2 topLeft = ImGui::GetCursorScreenPos();
-		ImVec2 avail = ImGui::GetContentRegionAvail();
-		ImGui::GetWindowDrawList()->AddRectFilled(
-			topLeft, ImVec2(topLeft.x + thickness, topLeft.y + avail.y),
-			ImGui::GetColorU32(ImGuiCol_Separator)
+		QaplaUi::Vec2 topLeft = QaplaUi::getCursorScreenPos();
+		QaplaUi::Vec2 avail = QaplaUi::getContentRegionAvail();
+		QaplaUi::windowDrawList().addRectFilled(
+			topLeft, QaplaUi::Vec2(topLeft.x + thickness, topLeft.y + avail.y),
+			QaplaUi::getColorU32(QaplaUi::StyleColor::Separator)
 		);
 	}
 

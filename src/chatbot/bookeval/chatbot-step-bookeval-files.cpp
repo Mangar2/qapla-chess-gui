@@ -22,7 +22,7 @@
 #include "imgui-controls.h"
 #include "os-dialogs.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -43,7 +43,7 @@ std::string ChatbotStepBookEvalFiles::draw() {
         "written to. Every position of the book is searched once - the start position and the one after "
         "every move - and every move gets the score of the position it leads to; the scores "
         "go into the new book.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     if (ImGuiControls::recentFileInput("Book", config.bookFile, data.recentBookFiles().get(),
             []() { const auto files = OsDialogs::openBookFile(); return files.empty() ? std::string{} : files.front(); },
@@ -53,7 +53,7 @@ std::string ChatbotStepBookEvalFiles::draw() {
         }
         data.updateConfiguration();
     }
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (ImGuiControls::recentFileInput("Evaluated book", config.outFile, data.recentOutFiles().get(),
             [&config]() { return OsDialogs::saveBookFile(BookEvalData::suggestedOutFile(config.bookFile)); },
             500.0F)) {
@@ -62,24 +62,24 @@ std::string ChatbotStepBookEvalFiles::draw() {
 
     const bool bookExists = !config.bookFile.empty() && std::filesystem::is_regular_file(config.bookFile);
     const bool outGiven = !config.outFile.empty();
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (!config.bookFile.empty() && !bookExists) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         ImGuiControls::textWrapped("This book does not exist. Choose one that does.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
     if (outGiven && std::filesystem::exists(config.outFile)) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::WARNING_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::WARNING_COLOR);
         ImGuiControls::textWrapped("The evaluated book exists: the run continues it, with the positions "
             "that have no score yet. That needs the same book, engine and limit as before.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
-    ImGui::BeginDisabled(!bookExists || !outGiven);
+    QaplaUi::beginDisabled(!bookExists || !outGiven);
     if (ImGuiControls::textButton("Continue")) {
         data.recentBookFiles().add(config.bookFile);
         data.recentOutFiles().add(config.outFile);
@@ -87,9 +87,9 @@ std::string ChatbotStepBookEvalFiles::draw() {
         finished_ = true;
         summary_ = std::format("Book {}, evaluated book {}.", config.bookFile, config.outFile);
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;
         summary_ = "No book selected, the evaluation was not started.";

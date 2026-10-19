@@ -28,6 +28,22 @@
 
 namespace QaplaWindows {
 
+namespace {
+    OsDialogs::NativeWindowProvider& nativeWindowProvider() {
+        static OsDialogs::NativeWindowProvider provider;
+        return provider;
+    }
+}
+
+void OsDialogs::setNativeWindowProvider(NativeWindowProvider provider) {
+    nativeWindowProvider() = std::move(provider);
+}
+
+void* OsDialogs::nativeWindow() {
+    const auto& provider = nativeWindowProvider();
+    return provider ? provider() : nullptr;
+}
+
 std::vector<std::string> OsDialogs::openPgnFile(bool multiple) {
     return openFileDialog({ "pgn" }, multiple);
 }

@@ -21,13 +21,13 @@
 
 #include <qapla-engine/types.h>
 #include <string>
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace FontManager {
 
-	inline ImFont* chessFont = nullptr;
-	inline ImFont* interVariable = nullptr;
-	inline ImFont* ibmPlexMono = nullptr;
+	inline constexpr QaplaUi::Font chessFont = QaplaUi::Font::Chess;
+	inline constexpr QaplaUi::Font interVariable = QaplaUi::Font::Inter;
+	inline constexpr QaplaUi::Font ibmPlexMono = QaplaUi::Font::Mono;
 
 	static constexpr int interVariableIndex = 2;
 	static constexpr int ibmPlexMonoIndex = 3;
@@ -47,12 +47,6 @@ namespace FontManager {
 		{ibmPlexMonoIndex, "IBM Plex Mono"}
 	};
 
-	/**
-	 * @brief Loads a TrueType chess font into the ImGui font system.
-	 * @param path Path to the .ttf font file.
-	 * @param size Font size in pixels.
-	 */
-	void loadFonts();
 
 	/**
 	 * Gets the piece symbol for the given piece type.
@@ -72,8 +66,8 @@ namespace FontManager {
 	 * @param cellSize Size of the cell in pixels.
 	 * @param font Optional font to use for drawing the piece symbol.
 	 */
-	void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece,
-		const ImVec2& cellMin, float cellSize, ImFont* font = chessFont);
-	void drawPiece(ImDrawList* drawList, QaplaBasics::Piece piece, ImFont* font = chessFont);
+	void drawPiece(QaplaUi::DrawList* drawList, QaplaBasics::Piece piece,
+		const QaplaUi::Vec2& cellMin, float cellSize, QaplaUi::Font font = chessFont);
+	void drawPiece(QaplaUi::DrawList* drawList, QaplaBasics::Piece piece, QaplaUi::Font font = chessFont);
 
 }

@@ -30,7 +30,7 @@ ImGuiBoardTabBar::ImGuiBoardTabBar() {
     for (size_t index = 0; index < instances.size(); ++index) {
         auto title = instances[index]->getTitle();
         addTab(title, std::move(instances[index]), 
-            index == 0 ? ImGuiTabItemFlags_None : ImGuiTabItemFlags_NoAssumedClosure);
+            index == 0 ? QaplaUi::TabItemFlags::None : QaplaUi::TabItemFlags::Closable);
     }
 
     // Set callback for the + button
@@ -40,8 +40,8 @@ ImGuiBoardTabBar::ImGuiBoardTabBar() {
         tabBar.addTab(
             title,
             std::move(instance),
-            static_cast<ImGuiTabItemFlags>(
-                ImGuiTabItemFlags_NoAssumedClosure | ImGuiTabItemFlags_SetSelected));
+            static_cast<QaplaUi::TabItemFlags>(
+                QaplaUi::TabItemFlags::Closable | QaplaUi::TabItemFlags::SetSelected));
     });
 
     // Set dynamic tabs for viewer boards
@@ -58,7 +58,7 @@ ImGuiBoardTabBar::ImGuiBoardTabBar() {
                 addTab(
                     title,
                     std::move(instance),
-                    ImGuiTabItemFlags_NoAssumedClosure);
+                    QaplaUi::TabItemFlags::Closable);
             } else if (message.rfind("switch_to_board_", 0) == 0) {
                 // Extract board ID from message and switch to board tab
                 processMessage(message);

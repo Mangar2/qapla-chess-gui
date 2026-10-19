@@ -19,7 +19,7 @@
 
 #include "chatbot-step-finish.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -29,7 +29,7 @@ ChatbotStepFinish::ChatbotStepFinish(std::string message)
 
 std::string ChatbotStepFinish::draw() {
     ImGuiControls::textWrapped(message_);
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     if (QaplaWindows::ImGuiControls::textButton("Finish")) {
         finished_ = true;

@@ -22,7 +22,7 @@
 #include <chess-game/game-record.h>
 #include <base-elements/string-helper.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <sstream>
 #include <format>
@@ -37,17 +37,17 @@ using namespace QaplaWindows;
 
 ImGuiMoveList::ImGuiMoveList() 
 : table_("MoveListTable",
-    ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+    QaplaUi::TableFlags::RowBg | QaplaUi::TableFlags::SizingFixedFit | QaplaUi::TableFlags::ScrollX | QaplaUi::TableFlags::ScrollY,
     std::vector<ImGuiTable::ColumnDef>{
-        { .name = "Move", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 90.0F, .alignRight = false, 
+        { .name = "Move", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 90.0F, .alignRight = false, 
             .customRender = [](std::string& content, bool& alignRight) {
                 alignRight = (!content.empty() && content[0] == '.');
             }
         },
-        { .name = "Depth", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-        { .name = "Time", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 80.0F, .alignRight = true },
-        { .name = "Eval", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 50.0F, .alignRight = true },
-        { .name = "PV", .flags = ImGuiTableColumnFlags_WidthFixed, .width = 0.0F, .alignRight = false }
+        { .name = "Depth", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+        { .name = "Time", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 80.0F, .alignRight = true },
+        { .name = "Eval", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 50.0F, .alignRight = true },
+        { .name = "PV", .flags = QaplaUi::TableColumnFlags::WidthFixed, .width = 0.0F, .alignRight = false }
 })
 {
     table_.setAutoScroll(true);  
@@ -122,7 +122,7 @@ void ImGuiMoveList::setFromGameRecord(const GameRecord& gameRecord) {
 }
 
 std::optional<size_t> ImGuiMoveList::draw() {
-    auto size = ImGui::GetContentRegionAvail();
+    auto size = QaplaUi::getContentRegionAvail();
     auto result = table_.draw(size);
     return result;
 }
@@ -141,7 +141,6 @@ std::vector<std::string> ImGuiMoveList::mkRow(const std::string& label, const Mo
     row.push_back(QaplaHelpers::formatMs(move.timeMs, move.timeMs < 60000 ? 1 : 0));
 
     // Eval
-    ImGui::TableSetColumnIndex(3);
     if (move.scoreMate) {
         row.push_back(std::format("{}M{}", *move.scoreMate < 0 ? "-" : "", std::abs(*move.scoreMate)));
     }

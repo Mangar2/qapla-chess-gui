@@ -22,7 +22,7 @@
 #include "embedded-window.h"
 #include "callback-manager.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -53,10 +53,10 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param window Unique pointer to the EmbeddedWindow to display (ownership transferred)
-         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
+         * @param flags Additional QaplaUi::TabItemFlags for the tab (default: QaplaUi::TabItemFlags::None)
          */
         void addTab(const std::string& name, std::unique_ptr<EmbeddedWindow> window,
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
+            QaplaUi::TabItemFlags flags = QaplaUi::TabItemFlags::None);
 
         /**
          * @brief Add a tab with an EmbeddedWindow (non-owning).
@@ -67,10 +67,10 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param window Raw pointer to the EmbeddedWindow (ownership NOT transferred)
-         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
+         * @param flags Additional QaplaUi::TabItemFlags for the tab (default: QaplaUi::TabItemFlags::None)
          */
         void addTab(const std::string& name, EmbeddedWindow* window,
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
+            QaplaUi::TabItemFlags flags = QaplaUi::TabItemFlags::None);
 
         /**
          * @brief Add a tab with a custom callback function.
@@ -80,10 +80,10 @@ namespace QaplaWindows {
          * 
          * @param name The display name of the tab
          * @param callback Function to call when drawing the tab content
-         * @param flags Additional ImGuiTabItemFlags for the tab (default: ImGuiTabItemFlags_None)
+         * @param flags Additional QaplaUi::TabItemFlags for the tab (default: QaplaUi::TabItemFlags::None)
          */
         void addTab(const std::string& name, std::function<void()> callback, 
-            ImGuiTabItemFlags flags = ImGuiTabItemFlags_None);
+            QaplaUi::TabItemFlags flags = QaplaUi::TabItemFlags::None);
 
         /**
          * @brief Remove a tab by name.
@@ -160,7 +160,7 @@ namespace QaplaWindows {
             // Non-owning window pointer (external lifetime)
             EmbeddedWindow* nonOwnedWindow = nullptr;
             std::function<void()> callback;
-            ImGuiTabItemFlags defaultTabFlags = ImGuiTabItemFlags_None;
+            QaplaUi::TabItemFlags defaultTabFlags = QaplaUi::TabItemFlags::None;
             
             // Helper to get the actual window pointer regardless of ownership
             EmbeddedWindow* getWindow() const {

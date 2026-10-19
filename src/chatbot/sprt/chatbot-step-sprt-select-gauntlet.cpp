@@ -20,16 +20,16 @@
 #include "chatbot-step-sprt-select-gauntlet.h"
 #include "sprt-tournament-data.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
 std::string ChatbotStepSprtSelectGauntlet::draw() {
     drawGauntletSelection();
     
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -38,18 +38,18 @@ std::string ChatbotStepSprtSelectGauntlet::draw() {
     // Check if we can continue - need exactly one gauntlet engine selected
     bool canContinue = hasValidGauntletSelection();
     
-    ImGui::BeginDisabled(!canContinue);
+    QaplaUi::beginDisabled(!canContinue);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
     
     if (!canContinue && !finished_) {
-        ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1.0F, 0.5F, 0.0F, 1.0F), "Please select the engine under test");
+        QaplaUi::sameLine();
+        QaplaUi::textColored(QaplaUi::Vec4(1.0F, 0.5F, 0.0F, 1.0F), "Please select the engine under test");
     }
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;
@@ -65,7 +65,7 @@ void ChatbotStepSprtSelectGauntlet::drawGauntletSelection() {
             "Select which engine should be tested (gauntlet engine). "
             "This is the engine whose performance will be measured. "
             "The other engine will be used as the comparison baseline.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     auto& engineSelect = SprtTournamentData::instance().getEngineSelect();
@@ -95,31 +95,31 @@ void ChatbotStepSprtSelectGauntlet::drawGauntletSelection() {
         ? engineNames[currentGauntletIndex].c_str()
         : "-- Select Engine Under Test --";
 
-    ImGui::Text("Engine Under Test:");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(300.0F);
-    if (ImGui::BeginCombo("##GauntletEngine", previewText)) {
+    QaplaUi::text("Engine Under Test:");
+    QaplaUi::sameLine();
+    QaplaUi::setNextItemWidth(300.0F);
+    if (QaplaUi::beginCombo("##GauntletEngine", previewText)) {
         for (int idx = 0; idx < 2; ++idx) {
             bool isSelected = (currentGauntletIndex == idx);
-            if (ImGui::Selectable(engineNames[idx].c_str(), isSelected)) {
+            if (QaplaUi::selectable(engineNames[idx].c_str(), isSelected)) {
                 if (idx != currentGauntletIndex) {
                     applyGauntletSelection(idx);
                 }
             }
             if (isSelected) {
-                ImGui::SetItemDefaultFocus();
+                QaplaUi::setItemDefaultFocus();
             }
         }
-        ImGui::EndCombo();
+        QaplaUi::endCombo();
     }
     
-    ImGui::Spacing();
+    QaplaUi::spacing();
     
     // Show which engine is the comparison baseline
     int comparisonIndex = (currentGauntletIndex == 0) ? 1 : 0;
     if (currentGauntletIndex >= 0 && currentGauntletIndex < 2) {
-        ImGui::TextColored(ImVec4(0.6F, 0.6F, 0.6F, 1.0F), 
-            "Comparison Engine: %s", engineNames[comparisonIndex].c_str());
+        QaplaUi::textColored(QaplaUi::Vec4(0.6F, 0.6F, 0.6F, 1.0F), 
+            "Comparison Engine: " + engineNames[comparisonIndex]);
     }
 }
 

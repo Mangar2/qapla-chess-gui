@@ -21,7 +21,7 @@
 #include "epd-data.h"
 #include "imgui-epd-configuration.h"
 #include "imgui-controls.h"
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows::ChatBot {
 
@@ -30,7 +30,7 @@ std::string ChatbotStepEpdConfiguration::draw() {
         QaplaWindows::ImGuiControls::textWrapped(
             "Configure the EPD analysis settings. Set the analysis time limits "
             "and select an EPD or RAW position file.");
-        ImGui::Spacing();
+        QaplaUi::spacing();
     }
 
     // Draw EPD configuration
@@ -44,9 +44,9 @@ std::string ChatbotStepEpdConfiguration::draw() {
     };
     epdConfig.draw(options, 150.0F, 10.0F);
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
     if (finished_) {
         return "";
@@ -55,13 +55,13 @@ std::string ChatbotStepEpdConfiguration::draw() {
     // Check if configuration is valid (file path must be set)
     bool hasValidConfig = !EpdData::instance().config().filepath.empty();
 
-    ImGui::BeginDisabled(!hasValidConfig);
+    QaplaUi::beginDisabled(!hasValidConfig);
     if (QaplaWindows::ImGuiControls::textButton("Continue")) {
         finished_ = true;
     }
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (QaplaWindows::ImGuiControls::textButton("Cancel")) {
         finished_ = true;

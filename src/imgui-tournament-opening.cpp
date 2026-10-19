@@ -28,7 +28,7 @@
 #include <config/opening-config.h>
 #include <base-elements/string-helper.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 
 using namespace QaplaWindows;
@@ -37,15 +37,15 @@ bool ImGuiTournamentOpening::draw(const DrawParams& params,
     const Tutorial::TutorialContext& tutorialContext) {
     bool changed = false;
 
-    ImGuiTreeNodeFlags headerFlags = params.alwaysOpen ? 
-        ImGuiTreeNodeFlags_Selected | ImGuiTreeNodeFlags_Leaf: ImGuiTreeNodeFlags_Selected;
+    QaplaUi::TreeNodeFlags headerFlags = params.alwaysOpen ? 
+        QaplaUi::TreeNodeFlags::Selected | QaplaUi::TreeNodeFlags::Leaf: QaplaUi::TreeNodeFlags::Selected;
         
     if (!ImGuiControls::CollapsingHeaderWithDot("Opening", headerFlags, tutorialContext.highlight)) {
         return false;
     }
     
-    ImGui::PushID("opening");
-    ImGui::Indent(params.indent);
+    QaplaUi::pushId("opening");
+    QaplaUi::indent(params.indent);
 
     if (params.showOpeningFile) {
         changed |= drawOpeningFile(params.fileInputWidth, tutorialContext);
@@ -71,8 +71,8 @@ bool ImGuiTournamentOpening::draw(const DrawParams& params,
         changed |= drawSwitchPolicy(params.inputWidth, tutorialContext);
     }
 
-    ImGui::Unindent(params.indent);
-    ImGui::PopID();
+    QaplaUi::unindent(params.indent);
+    QaplaUi::popId();
 
     if (changed) {
         updateConfiguration();
@@ -98,7 +98,7 @@ bool ImGuiTournamentOpening::drawOpeningFile(float fileInputWidth,
 
 bool ImGuiTournamentOpening::drawOrder(float inputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::selectionBox("Order", openings_.order, { "random", "sequential" });
     ImGuiControls::hooverTooltip(
         "How positions are picked from the file:\n"
@@ -116,13 +116,13 @@ bool ImGuiTournamentOpening::drawOrder(float inputWidth,
 
 bool ImGuiTournamentOpening::drawPlies(float inputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    auto xPos = ImGui::GetCursorPosX();
+    auto xPos = QaplaUi::getCursorPosX();
     bool changed = ImGuiControls::optionalInput<int>(
         "Set plies",
         openings_.plies,
         [&](int& plies) {
-            ImGui::SetCursorPosX(xPos + 100);
-            ImGui::SetNextItemWidth(inputWidth - 100);
+            QaplaUi::setCursorPosX(xPos + 100);
+            QaplaUi::setNextItemWidth(inputWidth - 100);
             return ImGuiControls::inputInt<int>("Plies", plies, 0, 1000);
         }
     );
@@ -144,7 +144,7 @@ bool ImGuiTournamentOpening::drawPlies(float inputWidth,
 
 bool ImGuiTournamentOpening::drawFirstOpening(float inputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputInt<uint32_t>("First opening", openings_.start, 0, 1000);
     ImGuiControls::hooverTooltip("Index of the first position to use (1-based).\nUseful for splitting test segments.");
 
@@ -158,7 +158,7 @@ bool ImGuiTournamentOpening::drawFirstOpening(float inputWidth,
 
 bool ImGuiTournamentOpening::drawRandomSeed(float inputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::inputInt<uint32_t>("Random seed", openings_.seed, 0, 1000);
     ImGuiControls::hooverTooltip("Seed for random number generator when order is 'random'");
 
@@ -172,7 +172,7 @@ bool ImGuiTournamentOpening::drawRandomSeed(float inputWidth,
 
 bool ImGuiTournamentOpening::drawSwitchPolicy(float inputWidth, 
     const Tutorial::TutorialContext& tutorialContext) {
-    ImGui::SetNextItemWidth(inputWidth);
+    QaplaUi::setNextItemWidth(inputWidth);
     bool changed = ImGuiControls::selectionBox("Switch policy", openings_.policy, { "default", "encounter", "round" });
     ImGuiControls::hooverTooltip(
         "When a new opening position is selected:\n"

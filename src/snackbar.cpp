@@ -24,7 +24,7 @@
 
 #include <base-elements/string-helper.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 namespace QaplaWindows {
 
@@ -91,29 +91,29 @@ bool SnackbarManager::isTutorialMessageVisible() const {
  * @param radius The radius of the button circle
  * @return true if the button was clicked, false otherwise
  */
-static bool drawCloseButton(const ImVec2& position, float radius) {
-    auto* drawList = ImGui::GetWindowDrawList();
+static bool drawCloseButton(const QaplaUi::Vec2& position, float radius) {
+    auto* drawList = &QaplaUi::windowDrawList();
 
     // Draw circle background
-    drawList->AddCircleFilled(position, radius, ImColor(1.0F, 1.0F, 1.0F, 0.9F));
-    drawList->AddCircle(position, radius, ImColor(0.0F, 0.0F, 0.0F, 0.9F), 16, 1.5F);
+    drawList->addCircleFilled(position, radius, QaplaUi::toColor32(QaplaUi::Vec4(1.0F, 1.0F, 1.0F, 0.9F)));
+    drawList->addCircle(position, radius, QaplaUi::toColor32(QaplaUi::Vec4(0.0F, 0.0F, 0.0F, 0.9F)), 16, 1.5F);
 
     // Draw "X" mark 
     float lineThickness = 2.0F;
     float crossSize = radius * 0.5F;
-    auto lineStart1 = ImVec2(position.x - crossSize, position.y - crossSize);
-    auto lineEnd1 = ImVec2(position.x + crossSize, position.y + crossSize);
-    auto lineStart2 = ImVec2(position.x - crossSize, position.y + crossSize);
-    auto lineEnd2 = ImVec2(position.x + crossSize, position.y - crossSize);
+    auto lineStart1 = QaplaUi::Vec2(position.x - crossSize, position.y - crossSize);
+    auto lineEnd1 = QaplaUi::Vec2(position.x + crossSize, position.y + crossSize);
+    auto lineStart2 = QaplaUi::Vec2(position.x - crossSize, position.y + crossSize);
+    auto lineEnd2 = QaplaUi::Vec2(position.x + crossSize, position.y - crossSize);
 
-    drawList->AddLine(lineStart1, lineEnd1, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
-    drawList->AddLine(lineStart2, lineEnd2, ImColor(0.0F, 0.0F, 0.0F, 0.9F), lineThickness);
+    drawList->addLine(lineStart1, lineEnd1, QaplaUi::toColor32(QaplaUi::Vec4(0.0F, 0.0F, 0.0F, 0.9F)), lineThickness);
+    drawList->addLine(lineStart2, lineEnd2, QaplaUi::toColor32(QaplaUi::Vec4(0.0F, 0.0F, 0.0F, 0.9F)), lineThickness);
 
     // Create invisible button for interaction
-    ImGui::SetCursorScreenPos(ImVec2(position.x - radius, position.y - radius));
-    ImGui::InvisibleButton("CloseButton", ImVec2(radius * 2, radius * 2));
+    QaplaUi::setCursorScreenPos(QaplaUi::Vec2(position.x - radius, position.y - radius));
+    QaplaUi::invisibleButton("CloseButton", QaplaUi::Vec2(radius * 2, radius * 2));
     
-    return ImGui::IsItemClicked();
+    return QaplaUi::isItemClicked();
 }
 
 void SnackbarManager::draw() {
@@ -139,63 +139,58 @@ void SnackbarManager::draw() {
             continue;
         }
 
-        ImVec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
-        ImVec4 borderColor = ImVec4(bgColor.x + 0.2F, bgColor.y + 0.2F, bgColor.z + 0.2F, 1.0F);
+        QaplaUi::Vec4 bgColor = colors[static_cast<int>(currentSnackbar.type)];
+        QaplaUi::Vec4 borderColor = QaplaUi::Vec4(bgColor.x + 0.2F, bgColor.y + 0.2F, bgColor.z + 0.2F, 1.0F);
 
         // Calculate required height for text
-        ImGui::PushFont(ImGui::GetFont());
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(padding, padding));
+        QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowPadding, QaplaUi::Vec2(padding, padding));
         
         float availableWidth = snackbarWidth - 2 * padding;
         
         // Calculate text size with wrapping
         std::string fullText = std::string(typeNames[static_cast<int>(currentSnackbar.type)]) + ":\n" + currentSnackbar.message;
-        ImVec2 textSize = ImGui::CalcTextSize(fullText.c_str(), nullptr, false, availableWidth);
+        QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(fullText, availableWidth);
         
         // Calculate required height (text + padding + close button space)
         float requiredHeight = textSize.y + 2 * padding + 20.0F;
         float snackbarHeight = std::max(minSnackbarHeight, std::min(requiredHeight, maxSnackbarHeight));
         
-        auto snackbarSize = ImVec2(snackbarWidth, snackbarHeight);
+        auto snackbarSize = QaplaUi::Vec2(snackbarWidth, snackbarHeight);
         
-        ImGui::PopStyleVar();
-        ImGui::PopFont();
+        QaplaUi::popStyleVar();
 
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, bgColor);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0F);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::WindowBg, bgColor);
+        QaplaUi::pushStyleVar(QaplaUi::StyleVar::WindowRounding, 10.0F);
 
-        ImVec2 windowPos = ImGui::GetMainViewport()->Pos;
-        ImVec2 windowSize = ImGui::GetMainViewport()->Size;
-        auto snackbarPos = ImVec2(windowPos.x + 20.0F, windowPos.y + windowSize.y - snackbarSize.y - 20.0F);
+        QaplaUi::Vec2 windowPos = QaplaUi::getViewportPos();
+        QaplaUi::Vec2 windowSize = QaplaUi::getViewportSize();
+        auto snackbarPos = QaplaUi::Vec2(windowPos.x + 20.0F, windowPos.y + windowSize.y - snackbarSize.y - 20.0F);
 
-        ImGui::SetNextWindowPos(snackbarPos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(snackbarSize, ImGuiCond_Always); 
-
-        ImGui::Begin("##Snackbar", nullptr, ImGuiWindowFlags_NoDecoration);
+        QaplaUi::beginOverlay("##Snackbar", snackbarPos, snackbarSize, QaplaUi::WindowFlags::NoDecoration);
 
         // Draw border
-        auto* drawList = ImGui::GetWindowDrawList();
-        auto p1 = ImVec2(snackbarPos.x, snackbarPos.y);
-        auto p2 = ImVec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
-        drawList->AddRect(p1, p2, ImColor(borderColor), 10.0F, 0, borderThickness);
+        auto* drawList = &QaplaUi::windowDrawList();
+        auto p1 = QaplaUi::Vec2(snackbarPos.x, snackbarPos.y);
+        auto p2 = QaplaUi::Vec2(snackbarPos.x + snackbarSize.x, snackbarPos.y + snackbarSize.y);
+        drawList->addRect(p1, p2, QaplaUi::toColor32(borderColor), 10.0F, borderThickness);
 
-        ImGui::PushTextWrapPos(ImGui::GetContentRegionAvail().x); 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0F, 0.0F, 0.0F, 1.0F));
-        ImGui::SetWindowFontScale(1.1F);
-        ImGui::SetCursorPos(ImVec2(0.0F, 20.0F));
-        ImGui::Indent(20.0F); 
+        QaplaUi::pushTextWrapPos(QaplaUi::getContentRegionAvail().x); 
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, QaplaUi::Vec4(0.0F, 0.0F, 0.0F, 1.0F));
+        QaplaUi::setWindowFontScale(1.1F);
+        QaplaUi::setCursorPos(QaplaUi::Vec2(0.0F, 20.0F));
+        QaplaUi::indent(20.0F); 
         auto translatedType = Translator::instance().translate("Snackbar",
             typeNames[static_cast<int>(currentSnackbar.type)]);
-        ImGui::Text("%s:", translatedType.c_str());
+        QaplaUi::text(translatedType + ":");
         auto translatedMessage = Translator::instance().translate("Snackbar",
             currentSnackbar.message);
-        ImGui::Text("%s", translatedMessage.c_str());
-        ImGui::Unindent(20.0F);
-        ImGui::SetWindowFontScale(1.0F);
-        ImGui::PopStyleColor();
-        ImGui::PopTextWrapPos(); 
+        QaplaUi::text(translatedMessage);
+        QaplaUi::unindent(20.0F);
+        QaplaUi::setWindowFontScale(1.0F);
+        QaplaUi::popStyleColor();
+        QaplaUi::popTextWrapPos(); 
 
-        auto closeButtonPos = ImVec2(
+        auto closeButtonPos = QaplaUi::Vec2(
             snackbarPos.x + snackbarSize.x - closeButtonRadius - 10.0F, 
             snackbarPos.y + closeButtonRadius + 10.0F                  
         );
@@ -210,9 +205,9 @@ void SnackbarManager::draw() {
             }
         }
 
-        ImGui::End();
-        ImGui::PopStyleVar();
-        ImGui::PopStyleColor();
+        QaplaUi::endOverlay();
+        QaplaUi::popStyleVar();
+        QaplaUi::popStyleColor();
 
         break; // Only show the most recent snackbar
     }

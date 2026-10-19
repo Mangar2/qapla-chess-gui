@@ -24,8 +24,8 @@ namespace QaplaWindows {
 
     VerticalSplitContainer::VerticalSplitContainer(
         const std::string& name,
-        ImGuiWindowFlags top,
-        ImGuiWindowFlags bottom) {
+        QaplaUi::WindowFlags top,
+        QaplaUi::WindowFlags bottom) {
         topFlags_ = top;
         bottomFlags_ = bottom;
         name_ = name;
@@ -94,7 +94,7 @@ namespace QaplaWindows {
         minBottomHeight_ = height;
     }
 
-    float VerticalSplitContainer::computeTopHeight(ImVec2 avail) {
+    float VerticalSplitContainer::computeTopHeight(QaplaUi::Vec2 avail) {
         // If top panel is fixed, return the fixed height
         if (topFixed_) {
             return std::max(std::min(topHeight_, avail.y - minBottomHeight_ - splitterHeight_), minTopHeight_);
@@ -122,15 +122,15 @@ namespace QaplaWindows {
     }
 
     void VerticalSplitContainer::draw() {
-        ImVec2 avail = ImGui::GetContentRegionAvail();
+        QaplaUi::Vec2 avail = QaplaUi::getContentRegionAvail();
         float width = avail.x;
 
         topHeight_ = computeTopHeight(avail);
         bottomHeight_ = std::max(avail.y - topHeight_ - splitterHeight_, minBottomHeight_);
 
         // Top window
-        if (ImGui::BeginChild(("vsplit." + name_ + ".top").c_str(), ImVec2(width, topHeight_),
-            ImGuiChildFlags_None, topFlags_)) {
+        if (QaplaUi::beginChild(("vsplit." + name_ + ".top").c_str(), QaplaUi::Vec2(width, topHeight_),
+            QaplaUi::ChildFlags::None, topFlags_)) {
             try {
                 if (topCallback_) topCallback_();
             }
@@ -144,13 +144,13 @@ namespace QaplaWindows {
         }
         // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
         // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
-        ImGui::EndChild();
+        QaplaUi::endChild();
 
-        drawSplitter("vsplit." + name_ + ".splitter", ImVec2(width, splitterHeight_));
+        drawSplitter("vsplit." + name_ + ".splitter", QaplaUi::Vec2(width, splitterHeight_));
 
         // Bottom window
-        if (ImGui::BeginChild(("vsplit." + name_ + ".bottom").c_str(), ImVec2(width, bottomHeight_), 
-            ImGuiChildFlags_None, bottomFlags_)) {
+        if (QaplaUi::beginChild(("vsplit." + name_ + ".bottom").c_str(), QaplaUi::Vec2(width, bottomHeight_), 
+            QaplaUi::ChildFlags::None, bottomFlags_)) {
             try {
                 if (bottomCallback_) bottomCallback_();
             }
@@ -164,47 +164,47 @@ namespace QaplaWindows {
         }
         // Always call EndChild() regardless of BeginChild() return value - see imgui.h line 444:
         // "Always call a matching EndChild() for each BeginChild() call, regardless of its return value"
-        ImGui::EndChild();
+        QaplaUi::endChild();
     }
 
-    void VerticalSplitContainer::drawSplitter(const std::string& id, const ImVec2& size) {
+    void VerticalSplitContainer::drawSplitter(const std::string& id, const QaplaUi::Vec2& size) {
         // If either panel is fixed, disable splitter interaction
         bool isFixed = topFixed_ || bottomFixed_;
         
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+        QaplaUi::pushStyleVar(QaplaUi::StyleVar::FramePadding, QaplaUi::Vec2(0, 0));
+        QaplaUi::pushStyleVar(QaplaUi::StyleVar::ItemSpacing, QaplaUi::Vec2(0, 0));
 
         if (isFixed) {
             // Draw a non-interactive splitter with different styling
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(80, 80, 80, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(80, 80, 80, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(80, 80, 80, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(80, 80, 80, 255));
             
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0F);
-            ImGui::Button(("###" + id).c_str(), size);
+            QaplaUi::setCursorPosY(QaplaUi::getCursorPosY() - 4.0F);
+            QaplaUi::button(("###" + id).c_str(), size);
             
-            ImGui::PopStyleColor(3);
+            QaplaUi::popStyleColor(3);
         } else {
             // Draw interactive splitter
-            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 100, 100, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(150, 150, 150, 255));
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(180, 180, 180, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::Button, QaplaUi::col32(100, 100, 100, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonHovered, QaplaUi::col32(150, 150, 150, 255));
+            QaplaUi::pushStyleColor(QaplaUi::StyleColor::ButtonActive, QaplaUi::col32(180, 180, 180, 255));
 
-            ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 4.0F);
-            ImGui::Button(("###" + id).c_str(), size);
+            QaplaUi::setCursorPosY(QaplaUi::getCursorPosY() - 4.0F);
+            QaplaUi::button(("###" + id).c_str(), size);
 
-            if (ImGui::IsItemActive()) {
-                topHeight_ += ImGui::GetIO().MouseDelta.y;
+            if (QaplaUi::isItemActive()) {
+                topHeight_ += QaplaUi::getMouseDelta().y;
             }
 
-            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
-                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+            if (QaplaUi::isItemHovered() || QaplaUi::isItemActive()) {
+                QaplaUi::setMouseCursor(QaplaUi::MouseCursor::ResizeNS);
             }
 
-            ImGui::PopStyleColor(3);
+            QaplaUi::popStyleColor(3);
         }
 
-        ImGui::PopStyleVar(2);
+        QaplaUi::popStyleVar(2);
     }
 
 } // namespace QaplaWindows

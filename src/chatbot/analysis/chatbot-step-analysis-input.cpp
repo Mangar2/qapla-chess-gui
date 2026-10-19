@@ -24,7 +24,7 @@
 #include "os-dialogs.h"
 #include "imgui-game-list.h"
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 
 #include <filesystem>
 #include <format>
@@ -48,7 +48,7 @@ std::string ChatbotStepAnalysisInput::drawChoosing() {
     ImGuiControls::textWrapped(
         "Select the PGN file with the games to analyse. The games are loaded into the Pgn view, "
         "so you can see and filter them before the analysis starts.");
-    ImGui::Spacing();
+    QaplaUi::spacing();
 
     auto& analysisData = AnalysisData::instance();
     auto& filePath = analysisData.config().inputFile;
@@ -63,25 +63,25 @@ std::string ChatbotStepAnalysisInput::drawChoosing() {
     const bool fileExists = !filePath.empty() && std::filesystem::exists(filePath)
         && std::filesystem::is_regular_file(filePath);
 
-    ImGui::Spacing();
+    QaplaUi::spacing();
     if (!filePath.empty() && !fileExists) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         ImGuiControls::textWrapped("This file does not exist. Choose one that does.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 
     auto* gameList = ImGuiGameList::instance();
     if (gameList == nullptr) {
-        ImGui::PushStyleColor(ImGuiCol_Text, StepColors::ERROR_COLOR);
+        QaplaUi::pushStyleColor(QaplaUi::StyleColor::Text, StepColors::ERROR_COLOR);
         ImGuiControls::textWrapped("The Pgn view is not available, the games cannot be loaded.");
-        ImGui::PopStyleColor();
+        QaplaUi::popStyleColor();
     }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+    QaplaUi::spacing();
+    QaplaUi::separator();
+    QaplaUi::spacing();
 
-    ImGui::BeginDisabled(!fileExists || gameList == nullptr);
+    QaplaUi::beginDisabled(!fileExists || gameList == nullptr);
     if (ImGuiControls::textButton("Load Games")) {
         // The Pgn tab comes to the front with the games: the next step filters what is shown
         // there, and a filter over a table nobody can see would be guesswork.
@@ -92,9 +92,9 @@ std::string ChatbotStepAnalysisInput::drawChoosing() {
         state_ = State::Loading;
     }
     ImGuiControls::hooverTooltip("Load the file into the Pgn view and continue.");
-    ImGui::EndDisabled();
+    QaplaUi::endDisabled();
 
-    ImGui::SameLine();
+    QaplaUi::sameLine();
 
     if (ImGuiControls::textButton("Cancel")) {
         finished_ = true;

@@ -27,7 +27,7 @@
 #include <base-elements/time-control.h>
 #include <engine-handling/engine-option.h>
 
-#include <imgui.h>
+#include "ui/qapla-ui.h"
 #include <string>
 #include <optional>
 #include <functional>
@@ -36,20 +36,20 @@
 namespace QaplaWindows::ImGuiControls {
 
     void hooverTooltip(const std::string& text) {
-        if (ImGui::IsItemHovered() && !text.empty()) {
+        if (QaplaUi::isItemHovered() && !text.empty()) {
             auto translatedText = Translator::instance().translate("Tooltip", text);
-            ImGui::SetTooltip("%s", translatedText.c_str());
+            QaplaUi::setTooltip(translatedText);
         }
     }
 
     bool checkbox(const char* label, bool& value) {
         auto modLabel = createLabel("Checkbox", label);
-        return ImGui::Checkbox(modLabel.c_str(), &value);
+        return QaplaUi::checkbox(modLabel.c_str(), value);
     }
 
-    bool textButton(const char* label, ImVec2 size) {
+    bool textButton(const char* label, QaplaUi::Vec2 size) {
         auto modLabel = createLabel("Button", label);
-        return ImGui::Button(modLabel.c_str(), size);
+        return QaplaUi::button(modLabel.c_str(), size);
     }
 
     void textWrapped(const std::string& text) {
@@ -57,7 +57,7 @@ namespace QaplaWindows::ImGuiControls {
             return;
         }
         auto translatedText = Translator::instance().translate("Text", text);
-        ImGui::TextWrapped("%s", translatedText.c_str());
+        QaplaUi::textWrapped(translatedText);
     }
 
     void textDisabled(const std::string& text) {
@@ -65,45 +65,39 @@ namespace QaplaWindows::ImGuiControls {
             return;
         }
         auto translatedText = Translator::instance().translate("Text", text);
-        ImGui::TextDisabled("%s", translatedText.c_str());
+        QaplaUi::textDisabled(translatedText);
     }
 
     void annotate(const std::string& text, bool red) {
         if (text.empty()) {
             return;
         }
-        ImGui::SameLine();
+        QaplaUi::sameLine();
         if (red) {
-            ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%s", text.c_str());
+            QaplaUi::textColored(QaplaUi::Vec4(1.0f, 0.3f, 0.3f, 1.0f), text);
         } else {
-            ImGui::TextDisabled("%s", text.c_str());
+            QaplaUi::textDisabled(text);
         }
     }
 
     std::optional<std::string> inputText(const char* label,
         const std::string& value,
-        ImGuiInputTextFlags flags,
-        ImGuiInputTextCallback callback,
-        void* userData) {
+        QaplaUi::InputTextFlags flags,
+        const QaplaUi::CharFilter& filter) {
         std::string buffer = value;
-        buffer.resize(1024);  // Fixed buffer size
-
         auto modLabel = createLabel("Input", label);
-        if (ImGui::InputText(modLabel.c_str(), buffer.data(), buffer.size(), flags, callback, userData)) {
-            size_t nullPos = buffer.find('\0');
-            return buffer.substr(0, nullPos);
+        if (QaplaUi::inputText(modLabel, buffer, flags, filter)) {
+            return buffer;
         }
-
         return std::nullopt;
     }
 
     bool inputText(const char* label, std::string& value,
-        ImGuiInputTextFlags flags,
-        ImGuiInputTextCallback callback,
-        void* userData) 
+        QaplaUi::InputTextFlags flags,
+        const QaplaUi::CharFilter& filter) 
     {
         const auto& newText = value;
-        auto result = inputText(label, newText, flags, callback, userData);
+        auto result = inputText(label, newText, flags, filter);
         if (result) {
             value = *result;
             return true;
@@ -112,11 +106,11 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool inputFloat(const char* label, float& value, float min, float max, 
-        float step, float stepFast, ImGuiInputTextFlags flags) {
+        float step, float stepFast, [[maybe_unused]] QaplaUi::InputTextFlags flags) {
         assert(min < max && "Min must be less than max");
 
         auto modLabel = createLabel("Input", label);
-        bool modified = ImGui::InputFloat(modLabel.c_str(), &value, step, stepFast, "%.1f", flags);
+        bool modified = QaplaUi::inputFloat(modLabel, value, step, stepFast, "%.1f");
 
         if (value < min) value = min;
         if (value > max) value = max;
@@ -135,7 +129,7 @@ namespace QaplaWindows::ImGuiControls {
         
         auto modLabel = createLabel("Input", label);
 
-        bool modified = ImGui::InputInt(modLabel.c_str(), &promilleValue, promilleStep, promilleStep * 10);
+        bool modified = QaplaUi::inputInt(modLabel.c_str(), promilleValue, promilleStep, promilleStep * 10);
 
         promilleValue = std::clamp(promilleValue, promilleMin, promilleMax);
 
@@ -150,9 +144,9 @@ namespace QaplaWindows::ImGuiControls {
     bool existingFileInput(const std::string& label, std::string& filePath,
         const FileDialog& dialog, float inputWidth, const char* buttonLabel) {
         bool modified = false;
-		ImGui::PushID(label.c_str()); 
+		QaplaUi::pushId(label.c_str()); 
         // Display label
-        ImGui::TextUnformatted(label.c_str());
+        QaplaUi::text(label.c_str());
 
         // File selection button
         if (textButton(buttonLabel)) {
@@ -169,20 +163,20 @@ namespace QaplaWindows::ImGuiControls {
         }
 
         // Input box for file path
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::SameLine();
+        QaplaUi::setNextItemWidth(inputWidth);
+        QaplaUi::sameLine();
         modified |= inputText("##filePath", filePath);
-		ImGui::PopID(); 
+		QaplaUi::popId(); 
         return modified;
     }
 
     bool existingDirectoryInput(const std::string& label, std::string& directoryPath, 
         float inputWidth, const char* buttonLabel) {
         bool modified = false;
-        ImGui::PushID(label.c_str()); 
+        QaplaUi::pushId(label.c_str()); 
         
         // Display label
-        ImGui::TextUnformatted(label.c_str());
+        QaplaUi::text(label.c_str());
 
         // Directory selection button
         if (ImGuiControls::textButton(buttonLabel)) {
@@ -199,10 +193,10 @@ namespace QaplaWindows::ImGuiControls {
         }
 
         // Input box for directory path
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::SameLine();
+        QaplaUi::setNextItemWidth(inputWidth);
+        QaplaUi::sameLine();
         modified |= inputText("##directoryPath", directoryPath);
-        ImGui::PopID(); 
+        QaplaUi::popId(); 
         return modified;
     }
 
@@ -210,9 +204,9 @@ namespace QaplaWindows::ImGuiControls {
         const FileDialog& dialog, float inputWidth, const char* buttonLabel) {
 
         bool modified = false;
-        ImGui::PushID(label.c_str());
+        QaplaUi::pushId(label.c_str());
 
-        ImGui::TextUnformatted(label.c_str());
+        QaplaUi::text(label.c_str());
 
         if (ImGuiControls::textButton(buttonLabel)) {
             try {
@@ -227,11 +221,11 @@ namespace QaplaWindows::ImGuiControls {
             }
         }
 
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::SameLine();
+        QaplaUi::setNextItemWidth(inputWidth);
+        QaplaUi::sameLine();
         modified |= inputText("##filePath", filePath);
 
-        ImGui::PopID();
+        QaplaUi::popId();
         return modified;
     }
 
@@ -240,9 +234,9 @@ namespace QaplaWindows::ImGuiControls {
         float inputWidth, const char* buttonLabel) {
 
         bool modified = false;
-        ImGui::PushID(label.c_str());
+        QaplaUi::pushId(label.c_str());
 
-        ImGui::TextUnformatted(label.c_str());
+        QaplaUi::text(label.c_str());
 
         if (ImGuiControls::textButton(buttonLabel)) {
             try {
@@ -257,28 +251,28 @@ namespace QaplaWindows::ImGuiControls {
             }
         }
 
-        ImGui::SetNextItemWidth(inputWidth);
-        ImGui::SameLine();
+        QaplaUi::setNextItemWidth(inputWidth);
+        QaplaUi::sameLine();
         modified |= inputText("##filePath", filePath);
 
         if (!recentFiles.empty()) {
-            ImGui::SameLine();
+            QaplaUi::sameLine();
             // Only the arrow: the chosen file is already shown in the field beside it, and
             // repeating it here would make the row twice as wide for nothing.
-            ImGui::SetNextItemWidth(ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.x * 2.0F);
-            if (ImGui::BeginCombo("##recent", "", ImGuiComboFlags_NoPreview)) {
+            QaplaUi::setNextItemWidth(QaplaUi::getFrameHeight() + QaplaUi::getStyle().framePadding.x * 2.0F);
+            if (QaplaUi::beginCombo("##recent", "", QaplaUi::ComboFlags::NoPreview)) {
                 for (const auto& recent : recentFiles) {
-                    if (ImGui::Selectable(recent.c_str(), recent == filePath)) {
+                    if (QaplaUi::selectable(recent.c_str(), recent == filePath)) {
                         filePath = recent;
                         modified = true;
                     }
                 }
-                ImGui::EndCombo();
+                QaplaUi::endCombo();
             }
             hooverTooltip("Choose one of the files last used here");
         }
 
-        ImGui::PopID();
+        QaplaUi::popId();
         return modified;
     }
 
@@ -287,19 +281,19 @@ namespace QaplaWindows::ImGuiControls {
         bool isIndex = currentItem >= 0 && currentItem < static_cast<int>(options.size());
         
         auto modLabel = createLabel("Input", label);
-        if (ImGui::BeginCombo(modLabel.c_str(), isIndex ? options[currentItem].c_str() : "Custom"
+        if (QaplaUi::beginCombo(modLabel.c_str(), isIndex ? options[currentItem].c_str() : "Custom"
         )) {
             for (size_t i = 0; i < options.size(); ++i) {
                 bool isSelected = (currentItem == static_cast<int>(i));
-                if (ImGui::Selectable(options[i].c_str(), isSelected)) {
+                if (QaplaUi::selectable(options[i].c_str(), isSelected)) {
                     currentItem = static_cast<int>(i);
 					modified = true;
                 }
                 if (isSelected) {
-                    ImGui::SetItemDefaultFocus();
+                    QaplaUi::setItemDefaultFocus();
                 }
             }
-            ImGui::EndCombo();
+            QaplaUi::endCombo();
         }
 
         return modified;
@@ -367,23 +361,23 @@ namespace QaplaWindows::ImGuiControls {
     }
 
     bool checkbox(std::string label, bool& value) {
-        return ImGui::Checkbox(label.c_str(), &value);
+        return QaplaUi::checkbox(label.c_str(), value);
     }
 
-    bool collapsingSelection(std::string label, bool& selected, ImGuiTreeNodeFlags flags,
+    bool collapsingSelection(std::string label, bool& selected, QaplaUi::TreeNodeFlags flags,
         const std::function<bool()>& contentCallback){
 
         bool modified = false;
-        modified = ImGui::Checkbox("##select", &selected);
-        ImGui::SameLine(0.0F, 4.0F);
+        modified = QaplaUi::checkbox("##select", selected);
+        QaplaUi::sameLine(0.0F, 4.0F);
         // Collapsing selection are used to select content items and are thus not translated.
-        if (ImGui::CollapsingHeader(label.c_str(), flags)) {
-            ImGui::Indent(10.0F);
+        if (QaplaUi::collapsingHeader(label.c_str(), flags)) {
+            QaplaUi::indent(10.0F);
             // call callback to draw content
-            if ((flags & ImGuiTreeNodeFlags_Leaf) == 0 && contentCallback) {
+            if (!QaplaUi::hasFlag(flags, QaplaUi::TreeNodeFlags::Leaf) && contentCallback) {
                 modified |= contentCallback();
             }
-            ImGui::Unindent(10.0F);
+            QaplaUi::unindent(10.0F);
         }
         return modified;
     }
@@ -457,7 +451,7 @@ namespace QaplaWindows::ImGuiControls {
             break;
         }
         default:
-            ImGui::Text("Unsupported option type: %s", QaplaTester::EngineOption::to_string(option.type).c_str());
+            QaplaUi::text("Unsupported option type: " + QaplaTester::EngineOption::to_string(option.type));
             break;
         }
 
@@ -493,48 +487,48 @@ namespace QaplaWindows::ImGuiControls {
         uint32_t incrementMilliseconds = static_cast<int>(incrementMs % 1000);
 
         // Input fields for base time
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
         if (!blitz) {
             inputInt<uint32_t>("Hours", hours, 0, 10000);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Hours of base time for the moves to play");
+            if (QaplaUi::isItemHovered()) {
+                QaplaUi::setTooltip("Hours of base time for the moves to play");
             }
         }
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
         inputInt<uint32_t>("Minutes", minutes, 0, 59);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Minutes of base time for the moves to play");
+        if (QaplaUi::isItemHovered()) {
+            QaplaUi::setTooltip("Minutes of base time for the moves to play");
         }
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Seconds", seconds, 0, 59);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Seconds of base time for the moves to play");
+        if (QaplaUi::isItemHovered()) {
+            QaplaUi::setTooltip("Seconds of base time for the moves to play");
         }
 
         // Input fields for increment
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
 		if (!blitz) {
             inputInt<uint32_t>("Increment Minutes", incrementMinutes, 0, 59);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Minutes added per move");
+            if (QaplaUi::isItemHovered()) {
+                QaplaUi::setTooltip("Minutes added per move");
             }
         }
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Increment Seconds", incrementSeconds, 0, 59);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Seconds added per move");
+        if (QaplaUi::isItemHovered()) {
+            QaplaUi::setTooltip("Seconds added per move");
         }
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
 		inputInt<uint32_t>("Increment Milliseconds", incrementMilliseconds, 0, 999, 10, 100);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Milliseconds added per move");
+        if (QaplaUi::isItemHovered()) {
+            QaplaUi::setTooltip("Milliseconds added per move");
         }
 
-        if (inputWidth > 0) ImGui::SetNextItemWidth(inputWidth);
+        if (inputWidth > 0) QaplaUi::setNextItemWidth(inputWidth);
 		if (!blitz) {
             inputInt<uint32_t>("Moves to Play", movesToPlay, 0, 1000);
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip(
+            if (QaplaUi::isItemHovered()) {
+                QaplaUi::setTooltip(
                     "Moves to play before time resets.\n"
                     "0 = no reset (entire game)\n"
                     "e.g., 40 = add base time after 40 moves"
@@ -556,39 +550,39 @@ namespace QaplaWindows::ImGuiControls {
 		return result;
 	}
 
-    void drawBoxWithShadow(ImVec2 topLeft, ImVec2 bottomRight)
+    void drawBoxWithShadow(QaplaUi::Vec2 topLeft, QaplaUi::Vec2 bottomRight)
     {
-        ImDrawList* drawList = ImGui::GetWindowDrawList();
-        const ImGuiStyle& style = ImGui::GetStyle();
+        QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+        const QaplaUi::Style& style = QaplaUi::getStyle();
 
-        ImU32 borderCol = ImGui::GetColorU32(ImGuiCol_Border);
-        ImU32 shadowCol = ImGui::GetColorU32(ImGuiCol_BorderShadow);
+        QaplaUi::Color32 borderCol = QaplaUi::getColorU32(QaplaUi::StyleColor::Border);
+        QaplaUi::Color32 shadowCol = QaplaUi::getColorU32(QaplaUi::StyleColor::BorderShadow);
 
         const float shadowSpread = 2.0F; 
-        auto shadowMin = ImVec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
-        auto shadowMax = ImVec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
-        drawList->AddRect(shadowMin, shadowMax, shadowCol, style.FrameRounding + shadowSpread);
+        auto shadowMin = QaplaUi::Vec2(topLeft.x + shadowSpread, topLeft.y + shadowSpread);
+        auto shadowMax = QaplaUi::Vec2(bottomRight.x + shadowSpread, bottomRight.y + shadowSpread);
+        drawList->addRect(shadowMin, shadowMax, shadowCol, style.frameRounding + shadowSpread);
 
-        drawList->AddRect(topLeft, bottomRight, borderCol, style.FrameRounding, 0, 2.0F);
+        drawList->addRect(topLeft, bottomRight, borderCol, style.frameRounding, 2.0F);
     }
 
     void drawDot(float offsetX, float offsetY) {
-        if (ImGui::IsItemVisible()) {
-            ImVec2 tabMin = ImGui::GetItemRectMin();
-            ImVec2 tabMax = ImGui::GetItemRectMax();
+        if (QaplaUi::isItemVisible()) {
+            QaplaUi::Vec2 tabMin = QaplaUi::getItemRectMin();
+            QaplaUi::Vec2 tabMax = QaplaUi::getItemRectMax();
 
             constexpr float dotRadius = 6.0F;
-            auto dotPos = ImVec2(tabMax.x - offsetX, tabMin.y + offsetY);
+            auto dotPos = QaplaUi::Vec2(tabMax.x - offsetX, tabMin.y + offsetY);
 
-            ImDrawList* drawList = ImGui::GetWindowDrawList();
-            drawList->AddCircleFilled(dotPos, dotRadius, IM_COL32(192, 0, 0, 192));
+            QaplaUi::DrawList* drawList = &QaplaUi::windowDrawList();
+            drawList->addCircleFilled(dotPos, dotRadius, QaplaUi::col32(192, 0, 0, 192));
         }   
     }
 
-    bool CollapsingHeaderWithDot(const char* label, ImGuiTreeNodeFlags flags, bool showDot, bool translate) {
+    bool CollapsingHeaderWithDot(const char* label, QaplaUi::TreeNodeFlags flags, bool showDot, bool translate) {
 
         auto modLabel = translate ? createLabel("Section", label) : std::string(label);
-        bool result = ImGui::CollapsingHeader(modLabel.c_str(), flags);
+        bool result = QaplaUi::collapsingHeader(modLabel.c_str(), flags);
         
         if (showDot) {
             constexpr float dotOffsetX = 20.0F;  // More offset for CollapsingHeader arrow
@@ -599,8 +593,8 @@ namespace QaplaWindows::ImGuiControls {
         return result;
     }
 
-    bool TabItemWithDot(const char* label, bool* p_open, ImGuiTabItemFlags flags, bool showDot) {
-        bool result = ImGui::BeginTabItem(label, p_open, flags);
+    bool TabItemWithDot(const char* label, bool* p_open, QaplaUi::TabItemFlags flags, bool showDot) {
+        bool result = QaplaUi::beginTabItem(label, p_open, flags);
         
         if (showDot) {
             drawDot();
