@@ -808,8 +808,10 @@ namespace QaplaMac {
             if (widget.shownTitle != title) {
                 widget.shownTitle = std::string(title);
                 button.title = toNS(title);
-                widget.naturalSize = { static_cast<float>(button.intrinsicContentSize.width),
-                                       static_cast<float>(button.intrinsicContentSize.height) };
+                // fittingSize, not intrinsicContentSize: a push button draws its bezel inside
+                // its frame, and only the fitting size leaves the title room within the bezel.
+                widget.naturalSize = { static_cast<float>(button.fittingSize.width),
+                                       static_cast<float>(button.fittingSize.height) };
             }
         }
 
@@ -1608,9 +1610,13 @@ namespace QaplaUi {
         float width = size.x > 0.0F ? std::max(size.x, widget.naturalSize.x)
                                     : (size.x < 0.0F ? std::max(1.0F, avail + size.x) : widget.naturalSize.x);
         float height = size.y > 0.0F ? size.y : frameHeight();
-        const NSBezelStyle bezel = height > 26.0F ? NSBezelStyleFlexiblePush : NSBezelStylePush;
+        const NSBezelStyle bezel = height > 30.0F ? NSBezelStyleFlexiblePush : NSBezelStylePush;
         if (button.bezelStyle != bezel) {
             button.bezelStyle = bezel;
+            // The room around the title depends on the bezel; measured again for the new one.
+            widget.naturalSize = { static_cast<float>(button.fittingSize.width),
+                                   static_cast<float>(button.fittingSize.height) };
+            width = size.x > 0.0F ? std::max(size.x, widget.naturalSize.x) : width;
         }
         const ItemRect rect = placeItem(container, { width, height }, true);
         placeView(container, widget, rect);
@@ -2503,6 +2509,13 @@ namespace QaplaUi {
         widget.tabs.clear();
         widget.hasAddButton = false;
         widget.tabOwner = &container;
+        // A tab chosen since the last frame -- clicked, or asked for with SetSelected -- is
+        // selected here, before any tab is described: ImGui does the same, and a tab bar that
+        // switched halfway would draw the old tab's content and then the new one's below it.
+        if (widget.clickedTab != 0) {
+            widget.selectedTab = widget.clickedTab;
+            widget.clickedTab = 0;
+        }
         state().tabBars.push_back(&widget);
         return true;
     }
@@ -2520,7 +2533,6 @@ namespace QaplaUi {
             widget.selectedTab = widget.tabs.front().key;
             scheduleFrame();
         }
-        widget.clickedTab = 0;
         widget.closedTab = 0;
         if (widget.tabs != widget.shownTabs || widget.selectedTab != widget.shownTabSelected ||
             widget.hasAddButton != widget.shownState) {
@@ -2548,12 +2560,8 @@ namespace QaplaUi {
             }
             scheduleFrame();
         }
-        if (widget.clickedTab == key) {
-            widget.clickedTab = 0;
-            widget.selectedTab = key;
-        }
         if (hasFlag(flags, TabItemFlags::SetSelected) && widget.selectedTab != key) {
-            widget.selectedTab = key;
+            widget.clickedTab = key;
             scheduleFrame();
         }
         if (widget.selectedTab == 0) {

@@ -201,6 +201,10 @@ namespace {
     return self;
 }
 
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    return YES;
+}
+
 - (BOOL)isFlipped {
     return YES;
 }
@@ -305,6 +309,10 @@ namespace {
     return self;
 }
 
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    return YES;
+}
+
 - (BOOL)isFlipped {
     return YES;
 }
@@ -396,6 +404,10 @@ namespace {
         [self addTrackingArea:tracking_];
     }
     return self;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    return YES;
 }
 
 - (BOOL)isFlipped {
@@ -594,6 +606,10 @@ namespace {
 
 @implementation QPSplitterView {
     NSPoint last_;
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)event {
+    return YES;
 }
 
 - (BOOL)isFlipped {

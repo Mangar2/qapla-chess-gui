@@ -150,6 +150,10 @@ namespace {
                     lines().push_back(trimmed.UTF8String);
                 }
             }
+            // A script clicks into a window that has to be the active one, as the user's
+            // clicks are; started from a terminal the application may not be.
+            [NSApp activateIgnoringOtherApps:YES];
+            [mainWindow makeKeyAndOrderFront:nil];
             next(1.0);
         }
 
