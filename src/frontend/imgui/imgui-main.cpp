@@ -35,6 +35,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <sstream>
+#include <fstream>
 #include <vector>
 #include <system_error>
 
@@ -206,6 +208,106 @@ namespace {
      *
      * @return true if the application is to end now.
      */
+    /** @brief Writes the frame just rendered to a PNG file. */
+    void writeScreenshot(GLFWwindow* window, const std::string& path) {
+        int width{};
+        int height{};
+        glfwGetFramebufferSize(window, &width, &height);
+        std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
+        glReadBuffer(GL_BACK);
+        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+        stbi_flip_vertically_on_write(1);
+        stbi_write_png(path.c_str(), width, height, 4, pixels.data(), width * 4);
+        std::cout << "QAPLA_SCREENSHOT " << path << "\n" << std::flush;
+    }
+
+    /**
+     * @brief Plays a script of clicks and screenshots, for a developer comparing frontends.
+     *
+     * The format the macOS frontend reads too (see macos-main.mm), so one script can be played
+     * against both: wait <s>, click <x> <y>, move <x> <y>, type <text>, shot <file>, quit.
+     * Coordinates in points from the top left of the window.
+     */
+    class UiScript {
+    public:
+        UiScript() {
+            auto path = QaplaHelpers::OsHelpers::getEnv("QAPLA_UI_SCRIPT");
+            if (!path) {
+                return;
+            }
+            std::ifstream input(*path);
+            std::string line;
+            while (std::getline(input, line)) {
+                auto first = line.find_first_not_of(" \t");
+                if (first == std::string::npos || line[first] == '#') {
+                    continue;
+                }
+                lines_.push_back(line.substr(first));
+            }
+            nextTime_ = glfwGetTime() + 1.0;
+        }
+
+        /** @brief Feeds the input of this frame; between ImGui_ImplGlfw_NewFrame and NewFrame. */
+        void injectInput() {
+            auto& io = ImGui::GetIO();
+            if (releasePending_) {
+                io.AddMousePosEvent(mouse_.x, mouse_.y);
+                io.AddMouseButtonEvent(0, false);
+                releasePending_ = false;
+                return;
+            }
+            if (index_ >= lines_.size() || glfwGetTime() < nextTime_ || !pendingShot_.empty()) {
+                return;
+            }
+            const std::string line = lines_[index_++];
+            std::cout << "QAPLA_UI_SCRIPT " << line << "\n" << std::flush;
+            std::istringstream input(line);
+            std::string command;
+            input >> command;
+            double delay = 0.15;
+            if (command == "wait") {
+                input >> delay;
+            } else if (command == "click" || command == "move") {
+                input >> mouse_.x >> mouse_.y;
+                io.AddMousePosEvent(mouse_.x, mouse_.y);
+                if (command == "click") {
+                    io.AddMouseButtonEvent(0, true);
+                    releasePending_ = true;
+                }
+            } else if (command == "type") {
+                std::string rest;
+                std::getline(input, rest);
+                if (!rest.empty() && rest.front() == ' ') {
+                    rest.erase(0, 1);
+                }
+                io.AddInputCharactersUTF8(rest.c_str());
+            } else if (command == "shot") {
+                input >> pendingShot_;
+            } else if (command == "quit") {
+                quit_ = true;
+            }
+            nextTime_ = glfwGetTime() + delay;
+        }
+
+        /** @brief Takes a pending screenshot of the frame just rendered. @return true to quit. */
+        bool afterRender(GLFWwindow* window) {
+            if (!pendingShot_.empty()) {
+                writeScreenshot(window, pendingShot_);
+                pendingShot_.clear();
+            }
+            return quit_;
+        }
+
+    private:
+        std::vector<std::string> lines_;
+        size_t index_ = 0;
+        double nextTime_ = 0.0;
+        ImVec2 mouse_;
+        bool releasePending_ = false;
+        std::string pendingShot_;
+        bool quit_ = false;
+    };
+
     bool saveScreenshotIfRequested(GLFWwindow* window, int frame) {
         static const auto path = QaplaHelpers::OsHelpers::getEnv("QAPLA_SCREENSHOT");
         if (!path) {
@@ -218,15 +320,7 @@ namespace {
         if (frame != wantedFrame) {
             return false;
         }
-        int width{};
-        int height{};
-        glfwGetFramebufferSize(window, &width, &height);
-        std::vector<unsigned char> pixels(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
-        glReadBuffer(GL_BACK);
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-        stbi_flip_vertically_on_write(1);
-        stbi_write_png(path->c_str(), width, height, 4, pixels.data(), width * 4);
-        std::cout << "QAPLA_SCREENSHOT " << *path << "\n" << std::flush;
+        writeScreenshot(window, *path);
         return QaplaHelpers::OsHelpers::getEnv("QAPLA_SCREENSHOT_QUIT").has_value();
     }
 
@@ -303,6 +397,7 @@ namespace {
 
         int autoRunFrameCount = 0;
         int frameCount = 0;
+        UiScript uiScript;
 
         // What runApp() returns when the tests were run: only an all-green run is a zero, so a
         // release script can gate on the exit code instead of reading stdout.
@@ -340,6 +435,7 @@ namespace {
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
+            uiScript.injectInput();
             ImGui::NewFrame();
             
             // Frame rate limiter needs to be called after ImGui::NewFrame()
@@ -360,7 +456,7 @@ namespace {
                 ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             }
 
-            if (saveScreenshotIfRequested(window, ++frameCount)) {
+            if (saveScreenshotIfRequested(window, ++frameCount) || uiScript.afterRender(window)) {
                 runtime.requestQuit();
             }
 
