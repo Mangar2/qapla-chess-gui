@@ -1433,6 +1433,27 @@ namespace QaplaUi {
 
     const Style& getStyle() { return state().style; }
 
+    Vec2 calcButtonSize(std::string_view label) {
+        // Measured on a button of the kind button() makes, and remembered: a row of buttons
+        // asks for the same titles every frame.
+        static NSButton* measure = nil;
+        static std::unordered_map<std::string, Vec2> cache;
+        const std::string shown(displayPart(label));
+        auto found = cache.find(shown);
+        if (found != cache.end()) {
+            return found->second;
+        }
+        if (measure == nil) {
+            measure = [NSButton buttonWithTitle:@"" target:nil action:nil];
+            measure.font = [NSFont systemFontOfSize:13];
+        }
+        measure.title = toNS(shown);
+        const NSSize fitting = measure.fittingSize;
+        const Vec2 size{ static_cast<float>(fitting.width), frameHeight() };
+        cache.emplace(shown, size);
+        return size;
+    }
+
     Vec2 getViewportSize() {
         NSRect bounds = state().root != nil ? state().root.bounds : NSZeroRect;
         return { static_cast<float>(bounds.size.width), static_cast<float>(bounds.size.height) };

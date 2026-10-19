@@ -377,6 +377,15 @@ namespace QaplaUi {
 
     const Style& getStyle();
 
+    /**
+     * @brief The size a button() needs to show its label, what follows "##" left out.
+     *
+     * Asked of the frontend rather than worked out from the text: a native button needs more
+     * room around its title than a text measurement and the frame padding say, and a row of
+     * buttons sized from too small a figure comes out uneven.
+     */
+    Vec2 calcButtonSize(std::string_view label);
+
     /** @brief Size of the application's window. */
     Vec2 getViewportSize();
     /** @brief Top left corner of the area the application may draw in, below any title or menu. */

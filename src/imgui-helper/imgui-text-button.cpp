@@ -26,16 +26,9 @@
 namespace QaplaWindows {
 
     [[nodiscard]] QaplaUi::Vec2 ImGuiTextButton::calcSize() const {
-        // Measured without what follows "##": that is the identifier, never shown.
-        const auto hashPos = translated.find("##");
-        const QaplaUi::Vec2 textSize = QaplaUi::calcTextSize(
-            std::string_view(translated).substr(0, hashPos));
-        const QaplaUi::Style& style = QaplaUi::getStyle();    
+        const QaplaUi::Vec2 buttonSize = QaplaUi::calcButtonSize(translated);
         constexpr float BORDER = 5.0F;
-        return QaplaUi::Vec2(
-            textSize.x + 2.0f * style.framePadding.x + BORDER,
-            textSize.y + 2.0f * style.framePadding.y + BORDER
-        );
+        return QaplaUi::Vec2(buttonSize.x + BORDER, buttonSize.y + BORDER);
     }
 
 

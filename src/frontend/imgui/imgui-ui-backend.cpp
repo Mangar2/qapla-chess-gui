@@ -353,6 +353,14 @@ namespace QaplaUi {
             text.data(), text.data() + text.size()));
     }
 
+    Vec2 calcButtonSize(std::string_view label) {
+        const auto hashPos = label.find("##");
+        const auto shown = label.substr(0, hashPos);
+        const ImVec2 textSize = ImGui::CalcTextSize(shown.data(), shown.data() + shown.size());
+        const ImGuiStyle& style = ImGui::GetStyle();
+        return { textSize.x + 2.0F * style.FramePadding.x, textSize.y + 2.0F * style.FramePadding.y };
+    }
+
     const Style& getStyle() {
         static Style style;
         const auto& imStyle = ImGui::GetStyle();
