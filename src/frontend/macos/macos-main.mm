@@ -127,6 +127,7 @@ namespace {
      * One command per line, coordinates in points from the top left of the window's content:
      *   wait <seconds>        click <x> <y>        rightclick <x> <y>      move <x> <y>
      *   sclick <x> <y>        (a click into the dialog shown as a sheet)
+     *   resize <width> <height>   (the window's content, in points)
      *   type <text>           key <enter|tab|escape|up|down|left|right|backspace>
      *   shot <file.png>       quit                 # a comment
      * The events go through AppKit like the user's own, so what a script clicks is what a mouse
@@ -264,6 +265,11 @@ namespace {
                     const unichar character = found->second.first;
                     postKey([NSString stringWithCharacters:&character length:1], found->second.second);
                 }
+            } else if (command == "resize") {
+                double width = 0;
+                double height = 0;
+                input >> width >> height;
+                [mainWindow setContentSize:NSMakeSize(width, height)];
             } else if (command == "shot") {
                 std::string file;
                 input >> file;

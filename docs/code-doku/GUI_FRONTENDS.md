@@ -153,7 +153,7 @@ to sit in the application.
   for following a session that a script drives over the remote control.
 * **Scripted clicks**: `QAPLA_UI_SCRIPT=<file>` plays one command per line — `wait <s>`,
   `click <x> <y>`, `sclick <x> <y>` (into a sheet), `rightclick`, `move`, `type <text>`,
-  `key <enter|tab|escape|up|down|left|right|backspace>`, `shot <file.png>`, `quit` — with
+  `key <enter|tab|escape|up|down|left|right|backspace>`, `resize <w> <h>` (macOS), `shot <file.png>`, `quit` — with
   coordinates in points from the top left of the window. In the macOS frontend the events go
   through AppKit like the user's own. The ImGui frontend reads the same file but takes only its
   screenshots and waits reliably: GLFW feeds the real cursor to ImGui as well, and an injected

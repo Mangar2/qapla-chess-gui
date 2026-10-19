@@ -370,6 +370,7 @@ namespace QaplaUi {
     // Identifiers and stacks
 
     void pushId(std::string_view id) { ImGui::PushID(id.data(), id.data() + id.size()); }
+    void pushId(const char* id) { ImGui::PushID(id); }
     void pushId(int id) { ImGui::PushID(id); }
     void pushId(const void* id) { ImGui::PushID(id); }
     void popId() { ImGui::PopID(); }

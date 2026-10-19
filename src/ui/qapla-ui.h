@@ -387,6 +387,15 @@ namespace QaplaUi {
     // ------------------------------------------------------------------------------------------
 
     void pushId(std::string_view id);
+    /**
+     * @brief The text of a C string, not its address.
+     *
+     * Without this overload a string literal would bind to pushId(const void*) -- a pointer
+     * conversion beats the conversion to std::string_view -- and the identifier would be the
+     * address: different from the one ImGui's PushID(const char*) makes, and for a c_str() not
+     * even the same from one frame to the next.
+     */
+    void pushId(const char* id);
     void pushId(int id);
     void pushId(const void* id);
     void popId();

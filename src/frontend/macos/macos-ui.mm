@@ -1444,6 +1444,9 @@ namespace QaplaUi {
     void pushId(std::string_view id) {
         state().idStack.push_back(hashBytes(seed(), id.data(), id.size()));
     }
+    void pushId(const char* id) {
+        pushId(std::string_view(id != nullptr ? id : ""));
+    }
     void pushId(int id) {
         state().idStack.push_back(hashBytes(seed(), &id, sizeof(id)));
     }
