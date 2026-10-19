@@ -33,3 +33,16 @@ einer mit Grafikkarte.
 `--remote-desktop` gehört auf jeden Lauf hier: es schaltet VSync ab und lässt das
 Holz-Hintergrundbild weg, das sonst in jedem Bild neu gezeichnet wird. Ohne das Flag: gemessen
 6 Stotterer, der schlimmste 1876 ms.
+
+## Zwei Frontends, ein Anwendungscode
+
+Die Fenster sind gegen `src/ui/qapla-ui.h` geschrieben, nicht gegen ImGui. `qapla` (ImGui) und
+`QaplaChess.app` (AppKit) bauen denselben Code; `qapla-app` sieht keine ImGui-Header, ein
+`#include <imgui.h>` außerhalb von `src/frontend` kompiliert nicht. Wer eine Ansicht ändert, baut
+beide und prüft die Mac-Version mit `QAPLA_IT_BINARY=build/default/QaplaChess.app/Contents/MacOS/QaplaChess`
+gegen die Integrationstests. Details, auch zu `QAPLA_SCREENSHOT` und `QAPLA_UI_SCRIPT`:
+`docs/code-doku/GUI_FRONTENDS.md`.
+
+`qapla-app` ist absichtlich eine OBJECT-Bibliothek. Als statische Bibliothek ließ der Linker die
+Objekte weg, die nur über statische Konstruktoren wirken — darunter die Bitboard-Masken des
+Zuggenerators. Die Folge war kein Absturz, sondern still falsche Ergebnisse (EPD, Analyse).

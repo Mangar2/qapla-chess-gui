@@ -265,6 +265,21 @@ cmake --preset default
 cmake --build --preset diagnostic
 ```
 
+### Frontends
+
+The GUI is written against a toolkit-neutral interface and comes in two frontends built from
+the same code (see [docs/code-doku/GUI_FRONTENDS.md](docs/code-doku/GUI_FRONTENDS.md)):
+
+- **`qapla`** — Dear ImGui on GLFW/OpenGL, on every platform. The builds above.
+- **`QaplaChess.app`** — native AppKit, macOS only:
+  ```bash
+  cmake --preset default
+  cmake --build --preset macos
+  open build/default/QaplaChess.app
+  ```
+
+`-DQAPLA_FRONTEND_IMGUI=OFF` or `-DQAPLA_FRONTEND_MACOS=OFF` leaves one of them out.
+
 ## Testing
 
 Three layers, cheapest first. All of them keep to a configuration directory of their own, so

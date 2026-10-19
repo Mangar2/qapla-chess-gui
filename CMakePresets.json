@@ -65,6 +65,28 @@
       "targets": ["qapla"]
     },
     {
+      "name": "macos",
+      "displayName": "Native macOS Frontend (QaplaChess.app)",
+      "configurePreset": "default",
+      "targets": ["QaplaChess"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-release",
+      "displayName": "Native macOS Frontend, Release",
+      "configurePreset": "release",
+      "targets": ["QaplaChess"],
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
       "name": "diagnostic",
       "displayName": "Build Diagnostic Engine Only",
       "configurePreset": "default",
