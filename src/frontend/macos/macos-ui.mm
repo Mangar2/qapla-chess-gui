@@ -206,7 +206,7 @@ namespace QaplaMac {
             switch (which) {
             case StyleColor::Text: return col32(235, 235, 235);
             case StyleColor::TextDisabled: return col32(128, 128, 128);
-            case StyleColor::WindowBg: return col32(30, 30, 30);
+            case StyleColor::WindowBg: return col32(50, 50, 50);
             case StyleColor::PopupBg: return col32(44, 44, 46, 250);
             case StyleColor::Border: return col32(255, 255, 255, 30);
             case StyleColor::BorderShadow: return col32(0, 0, 0, 90);
@@ -957,9 +957,10 @@ namespace QaplaMac {
                     }
                 }
             }
-            const bool editing = field.currentEditor != nil;
+            // Left alone while the user is typing in it -- not merely while it has the focus,
+            // which the first field of a dialog has from the start.
             const std::string shown = formatNumber(value, kind, format);
-            if (!editing) {
+            if (!widget.editing) {
                 setFieldText(widget, field, shown);
             }
             if (stepper.doubleValue != value) {
@@ -2410,6 +2411,7 @@ namespace QaplaUi {
         container.size = { static_cast<float>(contentSize.width), static_cast<float>(contentSize.height) };
         container.originInWindow = {};
         container.padding = s.style.windowPadding;
+        container.background = defaultColor(StyleColor::WindowBg);
         s.popupScopes.push_back({ key, true });
         s.idStack.push_back(key);
         pushContainer(container);

@@ -126,6 +126,7 @@ namespace {
      *
      * One command per line, coordinates in points from the top left of the window's content:
      *   wait <seconds>        click <x> <y>        rightclick <x> <y>      move <x> <y>
+     *   sclick <x> <y>        (a click into the dialog shown as a sheet)
      *   type <text>           key <enter|tab|escape|up|down|left|right|backspace>
      *   shot <file.png>       quit                 # a comment
      * The events go through AppKit like the user's own, so what a script clicks is what a mouse
@@ -173,15 +174,15 @@ namespace {
                 dispatch_get_main_queue(), ^{ step(); });
         }
 
-        static NSPoint toWindow(double x, double y) {
-            const NSRect content = mainWindow.contentView.bounds;
+        static NSPoint toWindow(NSWindow* window, double x, double y) {
+            const NSRect content = window.contentView.bounds;
             return NSMakePoint(x, content.size.height - y);
         }
 
-        static void postMouse(NSEventType type, NSPoint location, NSInteger clicks) {
+        static void postMouse(NSWindow* window, NSEventType type, NSPoint location, NSInteger clicks) {
             NSEvent* event = [NSEvent mouseEventWithType:type location:location
                 modifierFlags:0 timestamp:[NSProcessInfo processInfo].systemUptime
-                windowNumber:mainWindow.windowNumber context:nil eventNumber:0
+                windowNumber:window.windowNumber context:nil eventNumber:0
                 clickCount:clicks pressure:1.0];
             [NSApp postEvent:event atStart:NO];
         }
@@ -213,18 +214,32 @@ namespace {
             double delay = 0.15;
             if (command == "wait") {
                 input >> delay;
-            } else if (command == "click" || command == "rightclick" || command == "move") {
+            } else if (command == "click" || command == "rightclick" || command == "move" ||
+                       command == "sclick") {
                 double x = 0;
                 double y = 0;
                 input >> x >> y;
-                const NSPoint location = toWindow(x, y);
-                postMouse(NSEventTypeMouseMoved, location, 0);
-                if (command == "click") {
-                    postMouse(NSEventTypeLeftMouseDown, location, 1);
-                    postMouse(NSEventTypeLeftMouseUp, location, 1);
+                // sclick: into the dialog shown as a sheet of the window.
+                NSWindow* window = command == "sclick" && mainWindow.sheets.count > 0
+                    ? mainWindow.sheets.firstObject : mainWindow;
+                // A click into a window that is not the key one only makes it key, as with a
+                // mouse; the script means the click itself.
+                [window makeKeyWindow];
+                const NSPoint location = toWindow(window, x, y);
+                if (QaplaHelpers::OsHelpers::getEnv("QAPLA_UI_SCRIPT_DEBUG")) {
+                    NSView* hit = [window.contentView.superview hitTest:location];
+                    std::cout << "  window " << (window == mainWindow ? "main" : "sheet")
+                              << " at " << location.x << "," << location.y << " hits "
+                              << (hit != nil ? NSStringFromClass([hit class]).UTF8String : "nothing")
+                              << "\n";
+                }
+                postMouse(window, NSEventTypeMouseMoved, location, 0);
+                if (command == "click" || command == "sclick") {
+                    postMouse(window, NSEventTypeLeftMouseDown, location, 1);
+                    postMouse(window, NSEventTypeLeftMouseUp, location, 1);
                 } else if (command == "rightclick") {
-                    postMouse(NSEventTypeRightMouseDown, location, 1);
-                    postMouse(NSEventTypeRightMouseUp, location, 1);
+                    postMouse(window, NSEventTypeRightMouseDown, location, 1);
+                    postMouse(window, NSEventTypeRightMouseUp, location, 1);
                 }
             } else if (command == "type") {
                 std::string rest;
