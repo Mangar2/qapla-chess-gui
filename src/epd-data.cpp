@@ -397,8 +397,7 @@ namespace QaplaWindows {
         }
         if (configChanged()) {
             clear();
-            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
-            forgetSeenResults();
+            initializeManager();
             scheduledConfig_ = epdConfig_;
         }
 
@@ -531,9 +530,7 @@ namespace QaplaWindows {
             if (!in) {
                 return "the file could not be opened for reading";
             }
-            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS,
-                epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
-            forgetSeenResults();
+            initializeManager();
             if (!epdManager_->loadResults(in)) {
                 return "the file holds no results for the configured position set";
             }
@@ -551,6 +548,24 @@ namespace QaplaWindows {
         return {};
     }
 
+    void EpdData::initializeManager() {
+        epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS,
+            epdConfig_.seenPlies, 0, 0, MAX_EPD_POSITIONS);
+        forgetSeenResults();
+        if (auto note = cutOffNote(); !note.empty()) {
+            SnackbarManager::instance().showWarning(note, false, "epd");
+        }
+    }
+
+    std::string EpdData::cutOffNote() const {
+        if (!epdManager_ || !epdManager_->wasTruncated()) {
+            return {};
+        }
+        const auto limit = std::to_string(MAX_EPD_POSITIONS);
+        return "The EPD file holds more than " + limit + " positions. Only the first " + limit
+            + " were read, the rest is cut off.";
+    }
+
     void EpdData::saveData(std::ofstream& out) {
         if (epdManager_) {
             epdManager_->saveResults(out);
@@ -559,8 +574,7 @@ namespace QaplaWindows {
 
     void EpdData::loadData(std::ifstream& in) {
         if (epdManager_ && !epdConfig_.filepath.empty()) {
-            epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
-            forgetSeenResults();
+            initializeManager();
             bool dataLoaded = epdManager_->loadResults(in);
             state = dataLoaded ? State::Stopped : State::Cleared;
         }

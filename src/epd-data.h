@@ -283,6 +283,12 @@ namespace QaplaWindows {
         }
 
         /**
+         * @brief Says that only the first MAX_EPD_POSITIONS positions of the EPD file were read.
+         * @return The note, or an empty string if the whole file was read.
+         */
+        [[nodiscard]] std::string cutOffNote() const;
+
+        /**
          * @brief Checks if the EPD analysis is currently stopping.
          * @return true if the analysis is stopping, false otherwise.
          */
@@ -358,6 +364,21 @@ namespace QaplaWindows {
         void forgetSeenResults() {
             seenCounts_.clear();
         }
+
+        /**
+         * @brief At most this many positions of the EPD file are read for the analysis.
+         *
+         * Files with hundreds of thousands of positions held the GUI for seconds at every start and
+         * at every autosave; a set to analyse with several engines is far smaller anyway.
+         */
+        static constexpr size_t MAX_EPD_POSITIONS = 10000;
+
+        /**
+         * @brief Reads the configured EPD file into the manager, at most MAX_EPD_POSITIONS of it.
+         *
+         * Warns in the snackbar when the file holds more and the rest was left out.
+         */
+        void initializeManager();
 
         std::optional<size_t> selectedIndex_;
 

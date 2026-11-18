@@ -351,6 +351,10 @@ ActionResult startEpd() {
     }
 
     switchToEpdView();
+    // The snackbar that says the file was cut off is not seen by a caller over HTTP or in the chat.
+    if (auto note = epdData.cutOffNote(); !note.empty()) {
+        return succeeded("EPD analysis started. " + note);
+    }
     return succeeded("EPD analysis started.");
 }
 
