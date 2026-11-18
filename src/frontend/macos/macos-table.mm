@@ -103,6 +103,23 @@ namespace {
     }
 }
 
+/**
+ * A click on a row, sent when the button is released. The selection cannot tell of it: frames run
+ * while the button is down, and one that set the selection back to the application's current row
+ * left it unchanged by the time the button came up -- the click was lost. clickedRow is the row
+ * clicked whatever the selection did meanwhile, and a click on the row already selected counts too,
+ * as it does in the Dear ImGui frontend.
+ */
+- (void)rowClicked:(id)sender {
+    const NSInteger clicked = self.tableView.clickedRow;
+    if (!clickable_ || self.widget == nullptr || clicked < 0 ||
+        static_cast<size_t>(clicked) >= rowIndex_.size()) {
+        return;
+    }
+    self.widget->pickedRow = rowIndex_[static_cast<size_t>(clicked)];
+    QaplaMac::scheduleFrame();
+}
+
 - (void)tableView:(NSTableView*)tableView sortDescriptorsDidChange:(NSArray<NSSortDescriptor*>*)oldDescriptors {
     NSSortDescriptor* first = tableView.sortDescriptors.firstObject;
     if (first == nil) {
@@ -125,6 +142,8 @@ namespace QaplaMac {
         NSTableView* tableView = [[NSTableView alloc] initWithFrame:NSZeroRect];
         tableView.dataSource = source;
         tableView.delegate = source;
+        tableView.target = source;
+        tableView.action = @selector(rowClicked:);
         tableView.style = NSTableViewStylePlain;
         tableView.columnAutoresizingStyle = NSTableViewNoColumnAutoresizing;
         tableView.allowsColumnReordering = NO;
@@ -301,7 +320,12 @@ namespace QaplaMac {
             source->version_ = table.version();
         }
 
-        // The current row as the application has it, shown as the selection.
+        // The current row as the application has it, shown as the selection -- but not while the
+        // mouse button is down: the row being clicked would be set back to the old one under it.
+        // The click is reported when the button is released, see rowClicked:.
+        if (([NSEvent pressedMouseButtons] & 1U) != 0) {
+            return;
+        }
         source->updatingSelection_ = true;
         auto current = table.currentRow();
         auto position = current ? table.positionOf(*current) : std::nullopt;

@@ -127,6 +127,8 @@ namespace {
      * One command per line, coordinates in points from the top left of the window's content:
      *   wait <seconds>        click <x> <y>        rightclick <x> <y>      move <x> <y>
      *   sclick <x> <y>        (a click into the dialog shown as a sheet)
+     *   longclick <x> <y> [seconds]   (the button held as a hand holds it, default 0.15 s:
+     *                         frames run while it is down, which a click at once never shows)
      *   resize <width> <height>   (the window's content, in points)
      *   type <text>           key <enter|tab|escape|up|down|left|right|backspace>
      *   shot <file.png>       quit                 # a comment
@@ -216,10 +218,14 @@ namespace {
             if (command == "wait") {
                 input >> delay;
             } else if (command == "click" || command == "rightclick" || command == "move" ||
-                       command == "sclick") {
+                       command == "sclick" || command == "longclick") {
                 double x = 0;
                 double y = 0;
                 input >> x >> y;
+                double hold = 0.15;
+                if (command == "longclick") {
+                    input >> hold;
+                }
                 // sclick: into the dialog shown as a sheet of the window.
                 NSWindow* window = command == "sclick" && mainWindow.sheets.count > 0
                     ? mainWindow.sheets.firstObject : mainWindow;
@@ -238,6 +244,13 @@ namespace {
                 if (command == "click" || command == "sclick") {
                     postMouse(window, NSEventTypeLeftMouseDown, location, 1);
                     postMouse(window, NSEventTypeLeftMouseUp, location, 1);
+                } else if (command == "longclick") {
+                    postMouse(window, NSEventTypeLeftMouseDown, location, 1);
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(hold * NSEC_PER_SEC)),
+                        dispatch_get_main_queue(), ^{
+                            postMouse(window, NSEventTypeLeftMouseUp, location, 1);
+                        });
+                    delay = hold + 0.15;
                 } else if (command == "rightclick") {
                     postMouse(window, NSEventTypeRightMouseDown, location, 1);
                     postMouse(window, NSEventTypeRightMouseUp, location, 1);
