@@ -182,6 +182,27 @@ namespace QaplaWindows {
         return std::nullopt;
     }
 
+    namespace {
+        /** @brief What the table shows for one engine's result at a position. */
+        std::string resultCell(const QaplaTester::EpdTestCase& test) {
+            if (test.correct) {
+                return "d" + std::to_string(test.correctAtDepth) + ", "
+                    + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2);
+            }
+            if (!test.playedMove.empty()) {
+                return "- (" + test.playedMove + ")";
+            }
+            return "?";
+        }
+
+        /** @brief Whether the position still waits for this engine's result. */
+        bool isRemaining(const QaplaTester::EpdTestCase& test) {
+            return !test.correct && test.playedMove.empty();
+        }
+
+        constexpr size_t FIRST_ENGINE_COLUMN = 2; ///< Name and best move come first
+    }
+
     void EpdData::populateTable() {
         if (!epdResults_) {
             return;
@@ -208,26 +229,58 @@ namespace QaplaWindows {
                     row.push_back(bestMoves);
                     table_.push(row);
                 }
-                table_.setColumnHead(col + 2, {
+                table_.setColumnHead(col + FIRST_ENGINE_COLUMN, {
                     .name = engineName,
                     .flags = ImGuiTableColumnFlags_WidthFixed,
                     .width = 100.0F,
                     .alignRight = true
 					});
                 totalTests++;
-                if (test.correct) {
-                    table_.extend(rowIndex, "d" + std::to_string(test.correctAtDepth) + ", " + QaplaHelpers::formatMs(test.correctAtTimeInMs, 2));
-                }
-                else if (!test.playedMove.empty()) {
-                    table_.extend(rowIndex, "- (" + test.playedMove + ")");
-                }
-                else {
+                if (isRemaining(test)) {
                     remainingTests++;
-                    table_.extend(rowIndex, "?");
                 }
+                table_.extend(rowIndex, resultCell(test));
                 rowIndex++;
             }
             col++;
+        }
+    }
+
+    void EpdData::refreshResults() {
+        auto changes = epdManager_->getChangesSince(seenCounts_);
+        // Nothing taken yet -- the results were cleared or replaced -- is a rebuild as well, even
+        // with no engine left: the table and the counts still show what was there before.
+        bool rebuild = seenCounts_.empty() || changes.size() != epdResults_->size();
+        epdResults_->resize(changes.size());
+        seenCounts_.resize(changes.size());
+        for (size_t engine = 0; engine < changes.size(); ++engine) {
+            auto& change = changes[engine];
+            seenCounts_[engine] = change.updateCount;
+            auto& results = (*epdResults_)[engine].result;
+            if (change.complete) {
+                (*epdResults_)[engine] = std::move(change.all);
+                rebuild = true;
+                continue;
+            }
+            for (auto& [index, test] : change.changed) {
+                if (index >= results.size()) {
+                    rebuild = true;
+                    continue;
+                }
+                auto& stored = results[index];
+                if (isRemaining(stored) && !isRemaining(test) && remainingTests > 0) {
+                    remainingTests--;
+                } else if (!isRemaining(stored) && isRemaining(test)) {
+                    remainingTests++;
+                }
+                stored = std::move(test);
+                if (!rebuild) {
+                    table_.setField(index, FIRST_ENGINE_COLUMN + engine, resultCell(stored));
+                }
+            }
+        }
+        if (rebuild) {
+            populateTable();
         }
     }
 
@@ -237,10 +290,9 @@ namespace QaplaWindows {
         QaplaWindows::UiThreadWatch::Section section("poll:epd");
 
         if (updateCnt_ != epdManager_->getUpdateCount()) {
-			epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
             updateCnt_ = epdManager_->getUpdateCount();
             setModified(); // Notify autosave system about data changes
-            populateTable();
+            refreshResults();
 		}
         if (state == State::Starting && poolAccess_->runningGameCount() > 0) {
             state = State::Running;
@@ -346,6 +398,7 @@ namespace QaplaWindows {
         if (configChanged()) {
             clear();
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
+            forgetSeenResults();
             scheduledConfig_ = epdConfig_;
         }
 
@@ -409,6 +462,7 @@ namespace QaplaWindows {
         }
         epdManager_->clear();
         epdResults_->clear();
+        forgetSeenResults();
         scheduledEngines_ = 0;
         state = State::Cleared;
     }
@@ -428,15 +482,17 @@ namespace QaplaWindows {
     }
 
     std::string EpdData::resultsAsText() {
-        // Refilled first -- see SprtTournamentData::resultsAsText() for why reading the render
-        // cache alone answered "no results" for a finished run still on screen.
-        populateTable();
+        // Brought up to date first -- see SprtTournamentData::resultsAsText() for why reading the
+        // render cache alone answered "no results" for a finished run still on screen. Not
+        // refilled from scratch: with 600 000 positions that cost a rebuild of every row for
+        // every question, and refreshResults() rebuilds whenever the results were replaced.
+        refreshResults();
         return table_.toText();
     }
 
     TableContents EpdData::resultsAsTable() {
-        // Refilled first -- see resultsAsText() for why.
-        populateTable();
+        // Brought up to date first -- see resultsAsText() for why.
+        refreshResults();
         return table_.contents();
     }
 
@@ -477,6 +533,7 @@ namespace QaplaWindows {
             }
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS,
                 epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
+            forgetSeenResults();
             if (!epdManager_->loadResults(in)) {
                 return "the file holds no results for the configured position set";
             }
@@ -488,9 +545,8 @@ namespace QaplaWindows {
 
         // pollData() would pick this up on the next frame anyway, but a caller that asks for its
         // results in the very same turn must not be told the old figures -- see resultsAsText().
-        epdResults_ = std::make_unique<std::vector<EpdTestResult>>(epdManager_->getResultsCopy());
         updateCnt_ = epdManager_->getUpdateCount();
-        populateTable();
+        refreshResults();
         setModified();
         return {};
     }
@@ -504,6 +560,7 @@ namespace QaplaWindows {
     void EpdData::loadData(std::ifstream& in) {
         if (epdManager_ && !epdConfig_.filepath.empty()) {
             epdManager_->initialize(epdConfig_.filepath, epdConfig_.maxTimeInS, epdConfig_.minTimeInS, epdConfig_.seenPlies, 0, 0);
+            forgetSeenResults();
             bool dataLoaded = epdManager_->loadResults(in);
             state = dataLoaded ? State::Stopped : State::Cleared;
         }

@@ -334,8 +334,31 @@ namespace QaplaWindows {
         EpdConfig epdConfig_;
         EpdConfig scheduledConfig_;
         uint64_t updateCnt_ = 0;
+        /// Per engine the update count of the results last taken; see refreshResults().
+        std::vector<uint64_t> seenCounts_;
 
         void populateTable();
+
+        /**
+         * @brief Brings the copy of the results and the table up to date with the manager.
+         *
+         * Takes only the positions finished since the last call and sets only their cells; the
+         * whole set is copied and the table rebuilt only when the results were replaced. With
+         * 600 000 positions a whole copy cost a third of a second, and there was one for every
+         * position an engine finished.
+         */
+        void refreshResults();
+
+        /**
+         * @brief Forgets which results were taken, so the next refresh takes them all.
+         *
+         * Called wherever the manager's engines are created anew: their update counts start
+         * again, and a count seen from the engines before would pass for one seen from these.
+         */
+        void forgetSeenResults() {
+            seenCounts_.clear();
+        }
+
         std::optional<size_t> selectedIndex_;
 
 		std::shared_ptr<QaplaTester::EpdManager> epdManager_;
