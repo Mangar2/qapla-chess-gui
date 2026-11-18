@@ -179,7 +179,7 @@ namespace QaplaWindows {
             if (!rows_.empty()) {
                 rows_.erase(rows_.begin());
                 needsSort_ = true;
-                ++version_;
+                structureChanged();
             }
         }
 
@@ -230,12 +230,16 @@ namespace QaplaWindows {
          * @param value New cell content string.
          */
         void setField(size_t row, size_t column, const std::string& value) {
-            if (row < rows_.size() && column < columns_.size()) {
+            if (row < rows_.size() && column < columns_.size() && column < rows_[row].size()) {
                 if (rows_[row][column] == value) {
                     return;
                 }
                 rows_[row][column] = value;
-                updated();
+                // A cell, not the rows: the order may change only where the table sorts or
+                // filters by content, and those redo their index anyway.
+                needsSort_ = true;
+                needsFilter_ = true;
+                rowChanged(row);
             }
         }        
         
@@ -263,7 +267,7 @@ namespace QaplaWindows {
             if (col < columns_.size()) {
                 columns_[col] = column;
 			}
-            ++version_;
+            structureChanged();
 		}
 
         /**
@@ -272,7 +276,7 @@ namespace QaplaWindows {
          */
         void resizeColumns(size_t newSize) {
             columns_.resize(newSize);
-            ++version_;
+            structureChanged();
         }
 
         /**
@@ -402,6 +406,22 @@ namespace QaplaWindows {
          */
         [[nodiscard]] std::uint64_t version() const { return version_; }
 
+        /**
+         * @brief The version of the last change that may have added, removed or moved rows, or
+         *        changed the columns.
+         *
+         * A copy taken at a version before it has to be taken anew. One taken at or after it is
+         * brought up to date by the rows rowsChangedSince() names: with 600 000 rows, copying all
+         * of them for every cell that changed cost more than a frame has.
+         */
+        [[nodiscard]] std::uint64_t structureVersion() const { return structureVersion_; }
+
+        /**
+         * @brief The rows whose cells changed after version, each once.
+         * @param version A version at or after structureVersion(); before it, the answer is void.
+         */
+        [[nodiscard]] std::vector<size_t> rowsChangedSince(std::uint64_t version) const;
+
         /** @brief Whether the rows changed since they were last sorted. */
         [[nodiscard]] bool needsSort() const { return needsSort_; }
 
@@ -446,6 +466,12 @@ namespace QaplaWindows {
          */
         void updated(std::optional<size_t> addedRow = std::nullopt);
 
+        /** @brief Counts a change that may have added, removed or moved rows or changed columns. */
+        void structureChanged();
+
+        /** @brief Counts a change of the cells of one row, nothing else. */
+        void rowChanged(size_t row);
+
         void handleFiltering();
 
         bool clickable_ = false;
@@ -457,6 +483,9 @@ namespace QaplaWindows {
         std::optional<size_t> scrollToRow_;
         int lastInputFrame_ = -1;
         std::uint64_t version_ = 0;
+        std::uint64_t structureVersion_ = 0;
+        /// Version and row of every cell change since structureVersion_, in version order.
+        std::vector<std::pair<std::uint64_t, size_t>> changedRows_;
         std::string tableId_;
         QaplaUi::TableFlags tableFlags_ = QaplaUi::TableFlags::None;
         std::vector<ColumnDef> columns_;

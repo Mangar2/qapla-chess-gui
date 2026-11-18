@@ -23,7 +23,8 @@
  *
  * The table view never reads the application's table: it reads a copy taken in the frame
  * whenever the table's version changed. AppKit asks a data source for rows whenever it likes --
- * while scrolling, between frames -- and by then the table may have changed or be gone.
+ * while scrolling, between frames -- and by then the table may have changed or be gone. Where only
+ * cells changed, only their rows are copied again (ImGuiTable::rowsChangedSince).
  */
 
 #import "macos-views.h"
@@ -212,22 +213,50 @@ namespace QaplaMac {
             source->setWidths_ = widths;
         }
 
+        void copyRow(QPTableSource* source, const QaplaWindows::ImGuiTable& table, size_t position, size_t row) {
+            const size_t columns = table.columns().size();
+            auto& cells = source->rows_[position];
+            const size_t cellCount = std::min(columns, table.cellCount(row));
+            cells.resize(cellCount);
+            for (size_t column = 0; column < cellCount; ++column) {
+                bool right = false;
+                cells[column].text = table.cellText(row, column, right);
+                cells[column].alignRight = right;
+            }
+        }
+
         void takeSnapshot(QPTableSource* source, const QaplaWindows::ImGuiTable& table) {
             const size_t count = table.visibleRowCount();
-            const size_t columns = table.columns().size();
             source->rows_.assign(count, {});
             source->rowIndex_.assign(count, 0);
             for (size_t position = 0; position < count; ++position) {
                 const size_t row = table.rowAt(position);
                 source->rowIndex_[position] = row;
-                auto& cells = source->rows_[position];
-                const size_t cellCount = std::min(columns, table.cellCount(row));
-                cells.resize(cellCount);
-                for (size_t column = 0; column < cellCount; ++column) {
-                    bool right = false;
-                    cells[column].text = table.cellText(row, column, right);
-                    cells[column].alignRight = right;
+                copyRow(source, table, position, row);
+            }
+        }
+
+        /**
+         * @brief Copies again only the rows whose cells changed, and has the view redraw them.
+         *
+         * For a table whose rows stayed where they were: copying every row for every changed cell
+         * cost more than a frame has once a table held 600 000 rows.
+         */
+        void updateChangedRows(QPTableSource* source, const QaplaWindows::ImGuiTable& table) {
+            NSMutableIndexSet* positions = [NSMutableIndexSet indexSet];
+            for (const size_t row : table.rowsChangedSince(source->version_)) {
+                const auto position = table.positionOf(row);
+                if (!position || *position >= source->rows_.size()) {
+                    continue;
                 }
+                copyRow(source, table, *position, row);
+                [positions addIndex:*position];
+            }
+            if (positions.count > 0) {
+                NSTableView* tableView = source.tableView;
+                [tableView reloadDataForRowIndexes:positions
+                                     columnIndexes:[NSIndexSet indexSetWithIndexesInRange:
+                                                       NSMakeRange(0, static_cast<NSUInteger>(tableView.numberOfColumns))]];
             }
         }
     }
@@ -262,11 +291,14 @@ namespace QaplaMac {
             source->sortChanged_ = false;
         }
 
-        if (!source->hasVersion_ || source->version_ != table.version()) {
+        if (!source->hasVersion_ || source->version_ < table.structureVersion()) {
             takeSnapshot(source, table);
             source->version_ = table.version();
             source->hasVersion_ = true;
             [tableView reloadData];
+        } else if (source->version_ != table.version()) {
+            updateChangedRows(source, table);
+            source->version_ = table.version();
         }
 
         // The current row as the application has it, shown as the selection.

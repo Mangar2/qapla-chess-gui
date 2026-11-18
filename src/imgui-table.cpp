@@ -169,8 +169,37 @@ namespace QaplaWindows {
         return QaplaUi::calcTextSize(font(), QaplaUi::getFontSize(), text).x + padding;
     }
 
-    void ImGuiTable::updated(std::optional<size_t> addedRow) {
+    void ImGuiTable::structureChanged() {
         ++version_;
+        structureVersion_ = version_;
+        changedRows_.clear();
+    }
+
+    void ImGuiTable::rowChanged(size_t row) {
+        ++version_;
+        changedRows_.emplace_back(version_, row);
+        // Bounded: a log longer than the table names more rows than a new copy would read.
+        constexpr size_t minimumLog = 1024;
+        if (changedRows_.size() > std::max(minimumLog, rows_.size())) {
+            structureChanged();
+        }
+    }
+
+    std::vector<size_t> ImGuiTable::rowsChangedSince(std::uint64_t version) const {
+        const auto firstUnseen = std::ranges::upper_bound(changedRows_, version, {},
+            [](const auto& entry) { return entry.first; });
+        std::vector<size_t> rows;
+        for (auto entry = firstUnseen; entry != changedRows_.end(); ++entry) {
+            rows.push_back(entry->second);
+        }
+        std::ranges::sort(rows);
+        const auto duplicates = std::ranges::unique(rows);
+        rows.erase(duplicates.begin(), duplicates.end());
+        return rows;
+    }
+
+    void ImGuiTable::updated(std::optional<size_t> addedRow) {
+        structureChanged();
         needsSort_ = true;
         needsFilter_ = true;
         indexManager_.updateSize(rows_.size(), addedRow);
@@ -276,7 +305,7 @@ namespace QaplaWindows {
         }
         needsFilter_ = false;
         needsSort_ = true;
-        ++version_;
+        structureChanged();
         indexManager_.filter([&](size_t rowIndex) {
             const auto& row = rows_[rowIndex];
             return filter_.matches(row);
@@ -285,7 +314,7 @@ namespace QaplaWindows {
     
     void ImGuiTable::sortBy(std::optional<size_t> column, bool ascending) {
         needsSort_ = false;
-        ++version_;
+        structureChanged();
         if (!column) {
             return;
         }
@@ -304,6 +333,7 @@ namespace QaplaWindows {
     }
 
     std::optional<size_t> ImGuiTable::navigate(Navigation navigation, size_t pageRows) {
+        // Neither the rows nor a cell: only the current row moves, which a frontend shows apart.
         ++version_;
         switch (navigation) {
         case Navigation::Up: indexManager_.navigateUp(); break;
