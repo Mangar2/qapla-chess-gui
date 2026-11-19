@@ -42,9 +42,44 @@ namespace {
     };
 }
 
+/**
+ * A table row that draws its selection as in the active window, whether the window is active or
+ * not. AppKit greys the selection of a window in the background; the selected row is the game, the
+ * position or the entry the application works on, and that does not change with the focus.
+ */
+@interface QPTableRowView : NSTableRowView
+@end
+
+@implementation QPTableRowView
+- (BOOL)isEmphasized {
+    return YES;
+}
+- (void)setEmphasized:(BOOL)emphasized {
+    // AppKit sets this when the window loses or gains the focus; the row stays emphasized.
+}
+@end
+
+/**
+ * A table view that knows when it follows a click. NSTableView tracks the mouse inside mouseDown:
+ * until the button comes up, and sends its action before it returns; frames run meanwhile. The
+ * state of the hardware button cannot tell this: it says nothing of a click posted as an event, and
+ * it is set as well when the button went down somewhere else.
+ */
+@interface QPTableView : NSTableView
+@property (nonatomic, readonly) BOOL followingClick;
+@end
+
+@implementation QPTableView
+- (void)mouseDown:(NSEvent*)event {
+    _followingClick = YES;
+    [super mouseDown:event];
+    _followingClick = NO;
+}
+@end
+
 @interface QPTableSource : NSObject <NSTableViewDataSource, NSTableViewDelegate>
 @property (nonatomic) QaplaMac::Widget* widget;
-@property (nonatomic, strong) NSTableView* tableView;
+@property (nonatomic, strong) QPTableView* tableView;
 @property (nonatomic, strong) NSScrollView* scrollView;
 @end
 
@@ -86,6 +121,15 @@ namespace {
         field.stringValue = @"";
     }
     return field;
+}
+
+- (NSTableRowView*)tableView:(NSTableView*)tableView rowViewForRow:(NSInteger)row {
+    QPTableRowView* rowView = [tableView makeViewWithIdentifier:@"row" owner:self];
+    if (rowView == nil) {
+        rowView = [[QPTableRowView alloc] initWithFrame:NSZeroRect];
+        rowView.identifier = @"row";
+    }
+    return rowView;
 }
 
 - (BOOL)tableView:(NSTableView*)tableView shouldSelectRow:(NSInteger)row {
@@ -139,7 +183,7 @@ namespace QaplaMac {
         QPTableSource* source = [[QPTableSource alloc] init];
         source.widget = &widget;
 
-        NSTableView* tableView = [[NSTableView alloc] initWithFrame:NSZeroRect];
+        QPTableView* tableView = [[QPTableView alloc] initWithFrame:NSZeroRect];
         tableView.dataSource = source;
         tableView.delegate = source;
         tableView.target = source;
@@ -321,9 +365,11 @@ namespace QaplaMac {
         }
 
         // The current row as the application has it, shown as the selection -- but not while the
-        // mouse button is down: the row being clicked would be set back to the old one under it.
-        // The click is reported when the button is released, see rowClicked:.
-        if (([NSEvent pressedMouseButtons] & 1U) != 0) {
+        // table follows a click: the row being clicked would be set back to the old one under the
+        // mouse. The click is reported when the button is released, see rowClicked:. Nor while a
+        // click is still on its way: the frame after it gets here before the application has seen
+        // it, and set the selection back to the old row for one frame -- it jumped there and back.
+        if (source.tableView.followingClick || widget.pickedRow.has_value()) {
             return;
         }
         source->updatingSelection_ = true;
